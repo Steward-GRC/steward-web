@@ -1,0 +1,24 @@
+# The Steward header: two SPDX lines above the code, written as line comments,
+# as in:
+#   // Copyright 2026 The Steward Authors
+#   // SPDX-License-Identifier: Apache-2.0
+# CSS has no line comments, so each line is its own block comment there.
+golic:
+  licenses:
+    spdx-apache2: |
+      Copyright {{copyright}}
+      SPDX-License-Identifier: Apache-2.0
+  rules:
+    .ts:
+      prefix: "// "
+    .tsx:
+      prefix: "// "
+    .mts:
+      prefix: "// "
+    .mjs:
+      prefix: "// "
+    .js:
+      prefix: "// "
+    .css:
+      prefix: "/* "
+      suffix: " */"

@@ -1,0 +1,20 @@
+# GoLic, for more details see: https://github.com/Bugs5382/golic
+# Ignore everything
+*
+
+# But inject the licence header into these source types...
+!*.ts
+!*.tsx
+!*.mts
+!*.mjs
+!*.js
+!*.css
+
+# ...except dependencies, build output and generated files.
+node_modules
+**/node_modules/**
+dist/
+build/
+coverage/
+.react-router/
+**/generated/

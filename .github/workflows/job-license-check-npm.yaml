@@ -1,0 +1,46 @@
+name: License Check (npm)
+# Fail if a 3rd-party npm dependency carries a license outside the allowlist. No
+# SAST/vuln scanning (deliberately out of scope).
+#
+# This file ships only to repos with a root package.json (compose.sh by
+# manifest, the governance overlay by manifest), so it never starts a runner just
+# to find no package.json. The Go check lives in job-license-check-go.yaml the
+# same way; both replace the old two-job job-license-check.yaml, whose
+# off-ecosystem job billed a minute per run to do nothing.
+#
+# Pull requests only, and not while the PR is a draft; the PR run covers what
+# merges, so nothing reruns on push to main.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+jobs:
+  npm:
+    name: ⚖️ Dependency licenses (npm)
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.x
+
+      # pnpm workspaces: the npm-based checker can't read them, so the check
+      # reads `pnpm licenses list` for the production dependencies instead.
+      - name: Install dependencies
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+        run: |
+          corepack enable pnpm
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Check dependency licenses
+        run: node scripts/check-licenses.mjs

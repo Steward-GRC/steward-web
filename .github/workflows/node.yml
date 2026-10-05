@@ -1,0 +1,45 @@
+# Node build and test for steward-web. checks.yml calls it from its one
+# `checks` job, so its status check is `checks / Build & Test`.
+#
+# Steps, in order: install with the lockfile frozen and scripts off, then
+# `pnpm run check` (lint, typecheck, unit tests, builds and the repo's own
+# guards). pnpm comes through corepack at the version and SHA-512 pinned in
+# package.json's packageManager field. It takes no secrets.
+name: node
+
+on:
+  workflow_call:
+    inputs:
+      timeout-minutes:
+        description: Job timeout.
+        type: number
+        default: 25
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.x
+
+      - name: Enable pnpm
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Check
+        run: pnpm run check
