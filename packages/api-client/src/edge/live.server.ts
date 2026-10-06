@@ -3,6 +3,7 @@
 import type { Edge } from "../edge";
 
 import { gatewayFetch } from "../gatewayFetch";
+import { gatewayRestFetch } from "../gatewayRestFetch";
 import {
   AcknowledgePolicyDocument,
   ActivateOrganizationDocument,
@@ -255,6 +256,15 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(EnableUserDocument, { userId }, "EnableUser", { cookie });
     return data.enableUser;
   },
+  async fetchIdpCert(url, cookie) {
+    const body = await gatewayRestFetch<{ certificatePem: string }>(
+      "/admin/idp/fetch-cert",
+      { url },
+      "FetchIdpCert",
+      { cookie },
+    );
+    return body.certificatePem;
+  },
   async forceRotateSpCertificate(cookie) {
     const data = await gatewayFetch(
       ForceRotateSpCertificateDocument,
@@ -279,6 +289,9 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.groupMappings;
+  },
+  async importIdpMetadata(url, cookie) {
+    return gatewayRestFetch("/admin/idp/import-metadata", { url }, "ImportIdpMetadata", { cookie });
   },
   async issueCollabToken(input, cookie) {
     const data = await gatewayFetch(
@@ -312,6 +325,19 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(MeDocument, {}, "Me", { cookie });
     return data.me ?? null; // scrub:allow=fqdn
   },
+  async mintSsoTestLink(input, cookie) {
+    return gatewayRestFetch(
+      "/admin/sso/test-link",
+      {
+        alias: input.alias,
+        connectionId: input.connectionId,
+        returnPath: input.returnPath ?? "",
+        tenant: input.tenant ?? "",
+      },
+      "MintSsoTestLink",
+      { cookie },
+    );
+  },
   async moveGroup(groupId, newParentId, cookie) {
     const data = await gatewayFetch(MoveGroupDocument, { groupId, newParentId }, "MoveGroup", {
       cookie,
@@ -325,6 +351,11 @@ export const liveEdge: Edge = {
   async organizations(cookie) {
     const data = await gatewayFetch(OrganizationsDocument, {}, "Organizations", { cookie });
     return data.organizations;
+  },
+  async parseIdpMetadata(metadata, cookie) {
+    return gatewayRestFetch("/admin/idp/parse-metadata", { metadata }, "ParseIdpMetadata", {
+      cookie,
+    });
   },
   async policies(documentType, cookie) {
     const data = await gatewayFetch(PoliciesDocument, { documentType }, "Policies", { cookie });

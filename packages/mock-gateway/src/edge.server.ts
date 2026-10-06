@@ -302,9 +302,11 @@ export const mockEdge: Edge = {
         code: "ALREADY_EXISTS",
       });
     }
+    const seq = nextConnectionSeq++;
     const created: Organization = {
       allowLocal: false,
-      connectionId: mockId("connection", nextConnectionSeq++),
+      connectionAlias: mockId("connection-alias", seq),
+      connectionId: mockId("connection", seq),
       displayName: displayName ?? orgName,
       domain,
       enabled: false,
@@ -541,6 +543,8 @@ export const mockEdge: Edge = {
     const user = requireUser("EnableUser", userId);
     return replaceUser({ ...user, enabled: true });
   },
+  fetchIdpCert: () =>
+    Promise.resolve("-----BEGIN CERTIFICATE-----\nMOCK-IDP-CERT\n-----END CERTIFICATE-----"),
   forceRotateSpCertificate: () => {
     spCertificate = {
       active: true,
@@ -562,6 +566,13 @@ export const mockEdge: Edge = {
   },
   groupChildren: (parentId) => Promise.resolve(groups.filter((g) => g.parentId === parentId)),
   groupMappings: (connectionId) => Promise.resolve(groupMappings[connectionId] ?? []),
+  importIdpMetadata: () =>
+    Promise.resolve({
+      displayName: "Mock IdP",
+      entityId: "https://idp.mock.example/metadata",
+      signingCertificate: "-----BEGIN CERTIFICATE-----\nMOCK-IDP-CERT\n-----END CERTIFICATE-----",
+      ssoUrl: "https://idp.mock.example/sso",
+    }),
   issueCollabToken: async ({ draftId, policyId }) => {
     const policy = requirePolicy("IssueCollabToken", policyId);
     if (!policy.viewerCan.edit) {
@@ -584,6 +595,19 @@ export const mockEdge: Edge = {
     Promise.resolve(mockTemplateVersions.find((t) => t.templateId === templateId) ?? null),
   listUserSessions: (userId) => Promise.resolve(sessions[userId] ?? []),
   me: () => Promise.resolve(me),
+  mintSsoTestLink: async (input) => {
+    if (!organizations.some((o) => o.connectionId === input.connectionId)) {
+      throw new GatewayError("MintSsoTestLink", `connection ${input.connectionId} not found`, {
+        code: "NOT_FOUND",
+      });
+    }
+    return {
+      expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      url: `https://gateway.mock.example/auth/sso/start?connection=${encodeURIComponent(
+        input.alias,
+      )}&mode=test&testToken=${mockId("sso-test-token", 1)}`,
+    };
+  },
   moveGroup: async (groupId, newParentId) => {
     const group = requireGroup("MoveGroup", groupId);
     if (newParentId !== null) {
@@ -613,6 +637,13 @@ export const mockEdge: Edge = {
         .toSorted((a, b) => b.updated.localeCompare(a.updated)),
     ),
   organizations: () => Promise.resolve(organizations),
+  parseIdpMetadata: () =>
+    Promise.resolve({
+      displayName: "Mock IdP",
+      entityId: "https://idp.mock.example/metadata",
+      signingCertificate: "-----BEGIN CERTIFICATE-----\nMOCK-IDP-CERT\n-----END CERTIFICATE-----",
+      ssoUrl: "https://idp.mock.example/sso",
+    }),
   policies: (documentType) =>
     Promise.resolve(policies.filter((p) => p.documentType === documentType)),
   policy: (id) => Promise.resolve(policies.find((p) => p.id === id) ?? null),

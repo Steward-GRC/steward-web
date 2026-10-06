@@ -3,9 +3,10 @@
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Field, Input, PageHeader, Select, Textarea } from "@steward-web/ui";
 import { useState } from "react";
-import { data, Form, Link, redirect } from "react-router";
+import { data, Form, Link, redirect, useFetcher } from "react-router";
 
 import type { Route } from "./+types/organisations.new";
+import type { action as idpMetadataAction } from "./resources.idp-metadata";
 
 import { buildIdpConfig } from "../organisations/idpConfig";
 import { findProvider, IDP_PROVIDERS, type IdpProtocol } from "../organisations/idpProviders";
@@ -55,6 +56,67 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
   const [providerId, setProviderId] = useState("");
   const provider = findProvider(providerId);
 
+  // SAML fields are controlled so a metadata import (by URL or an uploaded file) can
+  // prefill them; displayName is controlled too since an import can set it.
+  const [displayName, setDisplayName] = useState("");
+  const [entityId, setEntityId] = useState("");
+  const [ssoUrl, setSsoUrl] = useState("");
+  const [signingCertificate, setSigningCertificate] = useState("");
+
+  const applyMetadata = (metadata: {
+    displayName: string;
+    entityId: string;
+    signingCertificate: string;
+    ssoUrl: string;
+  }) => {
+    setEntityId(metadata.entityId);
+    setSsoUrl(metadata.ssoUrl);
+    setSigningCertificate(metadata.signingCertificate);
+    if (metadata.displayName) setDisplayName(metadata.displayName);
+  };
+
+  const [metadataUrl, setMetadataUrl] = useState("");
+  const importFetcher = useFetcher<typeof idpMetadataAction>();
+  // Applies a fresh result the moment it lands, during render rather than in an effect
+  // (React's own "adjusting state when a prop changes" pattern): appliedImport mirrors
+  // the last fetcher.data this component has seen, so the body only runs once per result.
+  const [appliedImport, setAppliedImport] = useState(importFetcher.data);
+  if (importFetcher.data !== appliedImport) {
+    setAppliedImport(importFetcher.data);
+    if (importFetcher.data?.ok && importFetcher.data.intent === "import-url") {
+      applyMetadata(importFetcher.data.metadata);
+    }
+  }
+
+  const fileFetcher = useFetcher<typeof idpMetadataAction>();
+  const [appliedFile, setAppliedFile] = useState(fileFetcher.data);
+  if (fileFetcher.data !== appliedFile) {
+    setAppliedFile(fileFetcher.data);
+    if (fileFetcher.data?.ok && fileFetcher.data.intent === "parse-file") {
+      applyMetadata(fileFetcher.data.metadata);
+    }
+  }
+  const handleMetadataFile = (file: File | undefined) => {
+    if (!file) return;
+    const form = new FormData();
+    form.set("intent", "parse-file");
+    form.set("metadata", file);
+    void fileFetcher.submit(form, { action: "/resources/idp-metadata", method: "post" });
+  };
+
+  const [certUrl, setCertUrl] = useState("");
+  const certFetcher = useFetcher<typeof idpMetadataAction>();
+  const [appliedCert, setAppliedCert] = useState(certFetcher.data);
+  if (certFetcher.data !== appliedCert) {
+    setAppliedCert(certFetcher.data);
+    if (certFetcher.data?.ok && certFetcher.data.intent === "fetch-cert") {
+      setSigningCertificate(certFetcher.data.certificatePem);
+    }
+  }
+
+  const metadataFailure = (fetcher: typeof fileFetcher | typeof importFetcher) =>
+    fetcher.data && !fetcher.data.ok ? fetcher.data.failure : undefined;
+
   return (
     <div className="flex w-full max-w-xl flex-col gap-6 p-6">
       <PageHeader
@@ -80,7 +142,11 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
           />
         </Field>
         <Field hint="Shown on the sign-in screen." label="Display name (optional)">
-          <Input name="displayName" />
+          <Input
+            name="displayName"
+            onChange={(event) => setDisplayName(event.currentTarget.value)}
+            value={displayName}
+          />
         </Field>
 
         {provider ? (
@@ -111,15 +177,120 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
         {provider && provider.protocol !== "oidc" ? (
           <fieldset className="flex flex-col gap-3 rounded-md border border-dashed border-border p-3">
             <legend className="text-sm font-semibold text-ink">SAML connection</legend>
+
+            <Field
+              hint="Fetches the IdP's published SAML metadata and fills in the fields below."
+              label="Import metadata from a URL"
+            >
+              <div className="flex gap-2">
+                <Input
+                  onChange={(event) => setMetadataUrl(event.currentTarget.value)}
+                  placeholder="https://idp.example.org/metadata"
+                  value={metadataUrl}
+                />
+                <Button
+                  disabled={importFetcher.state !== "idle" || !metadataUrl.trim()}
+                  onClick={() => {
+                    const form = new FormData();
+                    form.set("intent", "import-url");
+                    form.set("url", metadataUrl.trim());
+                    void importFetcher.submit(form, {
+                      action: "/resources/idp-metadata",
+                      method: "post",
+                    });
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  {importFetcher.state === "idle" ? "Import" : "Importing…"}
+                </Button>
+              </div>
+            </Field>
+            {metadataFailure(importFetcher) ? (
+              <Banner
+                failure={metadataFailure(importFetcher)}
+                title="Couldn't import metadata from that URL"
+                tone="danger"
+              />
+            ) : null}
+
+            <Field
+              hint="Or upload the metadata file your IdP offers for download."
+              label="Import metadata from a file"
+            >
+              <Input
+                accept=".xml,text/xml,application/xml,application/samlmetadata+xml"
+                onChange={(event) => handleMetadataFile(event.currentTarget.files?.[0])}
+                type="file"
+              />
+            </Field>
+            {metadataFailure(fileFetcher) ? (
+              <Banner
+                failure={metadataFailure(fileFetcher)}
+                title="Couldn't parse that metadata file"
+                tone="danger"
+              />
+            ) : null}
+
             <Field label="Entity ID">
-              <Input name="entityId" placeholder="https://idp.example.org/metadata" />
+              <Input
+                name="entityId"
+                onChange={(event) => setEntityId(event.currentTarget.value)}
+                placeholder="https://idp.example.org/metadata"
+                value={entityId}
+              />
             </Field>
             <Field label="SSO URL">
-              <Input name="ssoUrl" placeholder="https://idp.example.org/sso" />
+              <Input
+                name="ssoUrl"
+                onChange={(event) => setSsoUrl(event.currentTarget.value)}
+                placeholder="https://idp.example.org/sso"
+                value={ssoUrl}
+              />
             </Field>
             <Field label="IdP signing certificate">
-              <Textarea className="min-h-24 font-mono text-xs" name="signingCertificate" />
+              <Textarea
+                className="min-h-24 font-mono text-xs"
+                name="signingCertificate"
+                onChange={(event) => setSigningCertificate(event.currentTarget.value)}
+                value={signingCertificate}
+              />
             </Field>
+            <Field
+              hint="Fetch just the signing certificate, if your IdP doesn't publish full metadata."
+              label="Fetch certificate from a URL"
+            >
+              <div className="flex gap-2">
+                <Input
+                  onChange={(event) => setCertUrl(event.currentTarget.value)}
+                  placeholder="https://idp.example.org/cert"
+                  value={certUrl}
+                />
+                <Button
+                  disabled={certFetcher.state !== "idle" || !certUrl.trim()}
+                  onClick={() => {
+                    const form = new FormData();
+                    form.set("intent", "fetch-cert");
+                    form.set("url", certUrl.trim());
+                    void certFetcher.submit(form, {
+                      action: "/resources/idp-metadata",
+                      method: "post",
+                    });
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  {certFetcher.state === "idle" ? "Fetch" : "Fetching…"}
+                </Button>
+              </div>
+            </Field>
+            {certFetcher.data && !certFetcher.data.ok ? (
+              <Banner
+                failure={certFetcher.data.failure}
+                title="Couldn't fetch a certificate from that URL"
+                tone="danger"
+              />
+            ) : null}
           </fieldset>
         ) : null}
 

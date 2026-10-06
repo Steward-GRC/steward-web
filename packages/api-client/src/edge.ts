@@ -198,6 +198,8 @@ export interface Edge {
   draftVersion(policyId: string, cookie?: string): Promise<null | PolicyVersion>;
 
   enableUser(userId: string, cookie?: string): Promise<User>;
+  /** Fetches an IdP signing certificate by URL (SSRF-guarded) and returns it as PEM. Site-admin only. */
+  fetchIdpCert(url: string, cookie?: string): Promise<string>;
   /** Mints a new SP signing certificate and activates it, superseding the previous one. Site-admin only. */
   forceRotateSpCertificate(cookie?: string): Promise<SpCertificate>;
   /** Grants a GLOBAL role (no category). Site-admin only. */
@@ -206,6 +208,9 @@ export interface Edge {
   groupChildren(parentId: null | string, cookie?: string): Promise<readonly Group[]>;
   /** An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only. */
   groupMappings(connectionId: string, cookie?: string): Promise<readonly GroupMapping[]>;
+  /** Fetches a SAML IdP's metadata document by URL (SSRF-guarded) and extracts the fields
+   *  needed to prefill a connection form. Site-admin only. */
+  importIdpMetadata(url: string, cookie?: string): Promise<ImportedIdpMetadata>;
   /** Issues a short-lived websocket token for the co-editing session. Refused unless the caller holds edit access to the draft. */
   issueCollabToken(input: IssueCollabTokenInput, cookie?: string): Promise<IssueCollabTokenPayload>;
   /** A template's current (newest) version, with its section outline. Null for a template with no version yet. */
@@ -214,12 +219,21 @@ export interface Edge {
   listUserSessions(userId: string, cookie?: string): Promise<readonly Session[]>;
   /** The signed-in user, or `null` when the session cookie is missing or expired. */
   me(cookie?: string): Promise<Me | null>;
+  /** Mints a scoped, time-bound Test-IdP link someone else can open to test a connection
+   *  (e.g. a user at the organisation being onboarded, who the admin isn't a user of the
+   *  IdP of). The result records back under the connection as the minting admin's test.
+   *  Site-admin only. */
+  mintSsoTestLink(input: MintSsoTestLinkInput, cookie?: string): Promise<MintedSsoTestLink>;
   /** Re-parents a group (and its subtree). A null newParentId promotes it to a root. */
   moveGroup(groupId: string, newParentId: null | string, cookie?: string): Promise<Group>;
   /** The CALLING user's own policies with a working draft, most-recently-updated first. */
   myDraftPolicies(cookie?: string): Promise<readonly Policy[]>;
   /** Every configured organisation SSO connection. Site-admin only. */
   organizations(cookie?: string): Promise<readonly Organization[]>;
+  /** Parses a SAML IdP metadata XML document — e.g. a file downloaded from the IdP — into
+   *  the same fields `importIdpMetadata` extracts. No network fetch, so no SSRF surface.
+   *  Site-admin only. */
+  parseIdpMetadata(metadata: string, cookie?: string): Promise<ImportedIdpMetadata>;
   /** The library catalog for one document type. Rejects with `GatewayError` when signed out. */
   policies(documentType: DocumentType, cookie?: string): Promise<readonly Policy[]>;
   /** One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it. */
@@ -303,9 +317,36 @@ export interface Edge {
   workflows(cookie?: string): Promise<readonly Workflow[]>;
 }
 
+/** The fields a SAML IdP's metadata (fetched by URL or parsed from an uploaded file)
+ *  prefills the connection form with. */
+export interface ImportedIdpMetadata {
+  displayName: string;
+  entityId: string;
+  signingCertificate: string;
+  ssoUrl: string;
+}
+
 export interface ListUsersInput {
   includeDeleted?: boolean;
   search?: string;
+}
+
+/** A minted, single-use Test-IdP link: `url` is the absolute, gateway-origin address to
+ *  open (in a popup or a full-tab redirect); `expiresAt` is an RFC3339 timestamp. */
+export interface MintedSsoTestLink {
+  expiresAt: string;
+  url: string;
+}
+
+/** Input to mint a scoped, time-bound Test-IdP link: `alias` and `connectionId` key the
+ *  connection being tested; `tenant` is the org's domain (SSOStart needs it to resolve the
+ *  broker tenant when there's no signed-in user's email to derive it from); `returnPath`
+ *  is where a full-tab fallback (no `window.opener`) redirects once the test completes. */
+export interface MintSsoTestLinkInput {
+  alias: string;
+  connectionId: string;
+  returnPath?: string;
+  tenant?: string;
 }
 
 export interface SubmitDraftGenerationInput {
