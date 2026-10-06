@@ -208,7 +208,7 @@ const nextDeadlineOf = (reportCase: ReportCase): null | string => {
     (n) => n.status !== NoticeStatus.Sent && n.status !== NoticeStatus.NotNeeded,
   );
   if (open.length === 0) return null;
-  return open.map((n) => n.dueOn).sort()[0]!;
+  return open.map((n) => n.dueOn).toSorted()[0]!;
 };
 
 /** A one-line summary for the case queue: the reporter's own words, trimmed to a readable
@@ -907,7 +907,7 @@ export const mockEdge: Edge = {
     replaceVersion({ ...version, appendices: reordered });
     return reordered;
   },
-  reportCase: (caseId) => Promise.resolve(requireReportCase("ReportCase", caseId)),
+  reportCase: async (caseId) => requireReportCase("ReportCase", caseId),
   reportCases: (statuses, assigneeUserId) => {
     const filtered = reportCases.filter(
       (c) =>
@@ -967,6 +967,19 @@ export const mockEdge: Edge = {
     policyVersions = [...policyVersions, created];
     replacePolicy({ ...policy, currentDraftVersionId: created.id });
     return created;
+  },
+  setCaseDiscoveryDate: async (caseId, discoveredOn) => {
+    const reportCase = requireReportCase("SetCaseDiscoveryDate", caseId);
+    return replaceReportCase({ ...reportCase, discoveredOn });
+  },
+  setCaseStatus: async (caseId, status) => {
+    const reportCase = requireReportCase("SetCaseStatus", caseId);
+    if (status === CaseStatus.Closed) {
+      throw new GatewayError("SetCaseStatus", "closing goes through closeCase", {
+        code: "INVALID_ARGUMENT",
+      });
+    }
+    return replaceReportCase({ ...reportCase, status });
   },
   signalWorkflow: async (policyVersionId, runId, taskId, signal, comment) => {
     if (SIGNALS_REQUIRING_COMMENT.has(signal) && comment.trim() === "") {
@@ -1046,6 +1059,26 @@ export const mockEdge: Edge = {
     replaceVersion({
       ...version,
       appendices: version.appendices.map((a) => (a.id === id ? updated : a)),
+    });
+    return updated;
+  },
+  updateCaseNotice: async (caseId, noticeId, status, sentOn) => {
+    const reportCase = requireReportCase("UpdateCaseNotice", caseId);
+    const notice = reportCase.notices.find((n) => n.id === noticeId);
+    if (!notice) {
+      throw new GatewayError("UpdateCaseNotice", `notice ${noticeId} not found`, {
+        code: "NOT_FOUND",
+      });
+    }
+    if (status === NoticeStatus.Sent && !sentOn) {
+      throw new GatewayError("UpdateCaseNotice", "sentOn is required with SENT", {
+        code: "INVALID_ARGUMENT",
+      });
+    }
+    const updated: CaseNotice = { ...notice, sentOn: sentOn ?? notice.sentOn, status };
+    replaceReportCase({
+      ...reportCase,
+      notices: reportCase.notices.map((n) => (n.id === noticeId ? updated : n)),
     });
     return updated;
   },

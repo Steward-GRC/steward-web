@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
+import { Badge, Card, CardBody, EmptyState, Input, PageHeader } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
 import { listCategories, listPolicies } from "@steward-web/ui/domain/server";
-import { Badge, Card, CardBody, EmptyState, Input, PageHeader } from "@steward-web/ui";
 import { Search } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { data, useNavigate, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/search";
 
-import { type SearchHitType, buildSearchIndex, searchHits } from "../search/searchIndex";
+import { buildSearchIndex, searchHits, type SearchHitType } from "../search/searchIndex";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await requireIdentityFromRequest(request);
@@ -32,8 +32,8 @@ const GROUP_ORDER: SearchHitType[] = ["Policy", "Category"];
 export default function SearchRoute({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("search");
   const navigate = useNavigate();
-  const [params, setParams] = useSearchParams();
-  const q = params.get("q") ?? "";
+  const [parameters, setParameters] = useSearchParams();
+  const q = parameters.get("q") ?? "";
   const [input, setInput] = useState(q);
 
   // Keep the local input in sync when the URL query changes (the browser back button, or a
@@ -53,19 +53,17 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
     type,
   })).filter((g) => g.items.length > 0);
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault();
     const next = input.trim();
-    setParams(next ? { q: next } : {}, { replace: true });
+    setParameters(next ? { q: next } : {}, { replace: true });
   };
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
       <PageHeader
         eyebrow={t("eyebrow")}
-        subtitle={
-          q ? t("subtitleResults", { count: hits.length, query: q }) : t("subtitleEmpty")
-        }
+        subtitle={q ? t("subtitleResults", { count: hits.length, query: q }) : t("subtitleEmpty")}
         title={t("title")}
       />
 
@@ -76,12 +74,11 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
         />
         <Input
           aria-label={t("title")}
-          autoFocus
           className="pl-8"
-          onChange={(e) => {
-            setInput(e.target.value);
-            const next = e.target.value.trim();
-            setParams(next ? { q: next } : {}, { replace: true });
+          onChange={(event) => {
+            setInput(event.target.value);
+            const next = event.target.value.trim();
+            setParameters(next ? { q: next } : {}, { replace: true });
           }}
           placeholder={t("placeholder")}
           type="search"
@@ -91,36 +88,41 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 
       <p className="text-xs text-muted">{t("operatorsHint")}</p>
 
-      {!q ? (
-        <EmptyState description={t("start.description")} title={t("start.title")} />
-      ) : groups.length === 0 ? (
-        <EmptyState description={t("noResults.description", { query: q })} title={t("noResults.title")} />
+      {q ? (
+        groups.length === 0 ? (
+          <EmptyState
+            description={t("noResults.description", { query: q })}
+            title={t("noResults.title")}
+          />
+        ) : (
+          groups.map((group) => (
+            <section className="flex flex-col gap-3" key={group.type}>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+                  {group.heading}
+                </h2>
+                <Badge tone="neutral">{group.items.length}</Badge>
+              </div>
+              <Card>
+                <CardBody className="flex flex-col p-0">
+                  {group.items.map((hit) => (
+                    <button
+                      className="flex flex-col items-start gap-0.5 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-sunken"
+                      key={`${group.type}-${hit.id}`}
+                      onClick={() => navigate(hit.to)}
+                      type="button"
+                    >
+                      <span className="text-sm font-medium text-ink">{hit.label}</span>
+                      {hit.hint ? <span className="text-xs text-muted">{hit.hint}</span> : null}
+                    </button>
+                  ))}
+                </CardBody>
+              </Card>
+            </section>
+          ))
+        )
       ) : (
-        groups.map((group) => (
-          <section className="flex flex-col gap-3" key={group.type}>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-                {group.heading}
-              </h2>
-              <Badge tone="neutral">{group.items.length}</Badge>
-            </div>
-            <Card>
-              <CardBody className="flex flex-col p-0">
-                {group.items.map((hit) => (
-                  <button
-                    className="flex flex-col items-start gap-0.5 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-sunken"
-                    key={`${group.type}-${hit.id}`}
-                    onClick={() => navigate(hit.to)}
-                    type="button"
-                  >
-                    <span className="text-sm font-medium text-ink">{hit.label}</span>
-                    {hit.hint ? <span className="text-xs text-muted">{hit.hint}</span> : null}
-                  </button>
-                ))}
-              </CardBody>
-            </Card>
-          </section>
-        ))
+        <EmptyState description={t("start.description")} title={t("start.title")} />
       )}
     </div>
   );

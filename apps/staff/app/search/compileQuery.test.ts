@@ -9,7 +9,7 @@ const rec = (text: string, fields: Record<string, string> = {}) => ({ text, ...f
 describe("compileQuery", () => {
   it("matches everything on empty or whitespace input", () => {
     expect(compileQuery("")(rec("anything"))).toBe(true);
-    expect(compileQuery("   ")(rec("anything"))).toBe(true);
+    expect(compileQuery(" ".repeat(3))(rec("anything"))).toBe(true);
   });
 
   it("matches a bare word as a substring of text, case-insensitively", () => {

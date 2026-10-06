@@ -17,8 +17,6 @@ import { policyPath } from "@steward-web/ui/domain";
 
 import { compileQuery, type SearchRecord } from "./compileQuery";
 
-export type SearchHitType = "Category" | "Policy";
-
 export type SearchHit = {
   hint?: string;
   id: string;
@@ -27,6 +25,8 @@ export type SearchHit = {
   to: string;
   type: SearchHitType;
 };
+
+export type SearchHitType = "Category" | "Policy";
 
 const lc = (v: string | undefined): string => (v ?? "").toLowerCase();
 

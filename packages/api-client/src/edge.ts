@@ -37,9 +37,9 @@ import type {
   PolicyDetail,
   PolicyVersion,
   ReportCase,
+  ReviewCadence,
   RiskAssessment,
   RiskFactorsInput,
-  ReviewCadence,
   Sensitivity,
   Session,
   SignalType,
@@ -189,13 +189,6 @@ export interface Edge {
     contentJson: string,
     cookie?: string,
   ): Promise<Appendix>;
-  /** Adds an IdP-group-claim-to-platform-group mapping for a connection. Site-admin only. */
-  addGroupMapping(
-    connectionId: string,
-    idpGroupClaimValue: string,
-    targetGroupId: string,
-    cookie?: string,
-  ): Promise<GroupMapping>;
   /** Adds an internal case note. Officers only; never shown to the reporter. */
   addCaseNote(caseId: string, body: string, cookie?: string): Promise<CaseNote>;
   /** Adds a notification-tracker entry; its deadline is set from the discovery date server-side. Officers only. */
@@ -206,6 +199,13 @@ export interface Edge {
     method?: string,
     cookie?: string,
   ): Promise<CaseNotice>;
+  /** Adds an IdP-group-claim-to-platform-group mapping for a connection. Site-admin only. */
+  addGroupMapping(
+    connectionId: string,
+    idpGroupClaimValue: string,
+    targetGroupId: string,
+    cookie?: string,
+  ): Promise<GroupMapping>;
   /** Registers a new organisation SSO connection, unverified and disabled. Site-admin only. */
   addOrganization(input: AddOrganizationInput, cookie?: string): Promise<Organization>;
   /** Whether AI is usable right now for the calling user. Never rejects; see `AiHealth.reason`. */

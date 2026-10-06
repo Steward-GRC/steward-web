@@ -34,7 +34,9 @@ const policy = (overrides: Partial<Policy> & Pick<Policy, "id" | "number" | "tit
   ...overrides,
 });
 
-const category = (overrides: Partial<Category> & Pick<Category, "id" | "name" | "slug">): Category => ({
+const category = (
+  overrides: Partial<Category> & Pick<Category, "id" | "name" | "slug">,
+): Category => ({
   subcategories: [],
   ...overrides,
 });
@@ -68,15 +70,21 @@ describe("buildSearchIndex", () => {
 describe("searchHits", () => {
   const index = buildSearchIndex(
     [
-      policy({ id: "p-1", number: "POL-0001", title: "Access control", category: "IT Security" }),
-      policy({ id: "p-2", number: "POL-0002", title: "Expense reports", category: "Finance" }),
+      policy({ category: "IT Security", id: "p-1", number: "POL-0001", title: "Access control" }),
+      policy({
+        category: "Finance",
+        id: "p-2",
+        number: "POL-0002",
+        subcategory: "Travel",
+        title: "Expense reports",
+      }),
     ],
     [category({ id: "c-1", name: "IT Security", slug: "it-security" })],
   );
 
   it("returns no hits for an empty query, rather than the whole catalog", () => {
     expect(searchHits(index, "")).toEqual([]);
-    expect(searchHits(index, "   ")).toEqual([]);
+    expect(searchHits(index, " ".repeat(3))).toEqual([]);
   });
 
   it("matches a bare word against any indexed field", () => {
@@ -91,6 +99,6 @@ describe("searchHits", () => {
 
   it("matches both a policy and its category for the same term", () => {
     const hits = searchHits(index, "security");
-    expect(hits.map((h) => h.id).sort()).toEqual(["c-1", "p-1"]);
+    expect(hits.map((h) => h.id).toSorted()).toEqual(["c-1", "p-1"]);
   });
 });

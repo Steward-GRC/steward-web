@@ -1021,7 +1021,7 @@ export const mockReportCases: ReportCase[] = [
     notices: [],
     outcome: null,
     receivedAt: "2026-04-05T09:40:00Z",
-    reporterUserId: mockUsers[1]?.id ?? mockId("user", 2),
+    reporterUserId: mockUsers[1]?.userId ?? mockId("user", 2),
     status: CaseStatus.InReview,
     thread: [
       {
@@ -1034,6 +1034,19 @@ export const mockReportCases: ReportCase[] = [
     ],
   },
   {
+    assessment: {
+      decidedAt: "2026-03-21T11:00:00Z",
+      decidedByUserId: mockMe.id,
+      decision: BreachDecision.Reportable,
+      factors: {
+        information: [InformationKind.Financial, InformationKind.Contact],
+        mitigation: RiskMitigation.NotAtAll,
+        recipient: RiskRecipient.UnknownPeople,
+        viewed: RiskViewed.Probably,
+      },
+      reason: "The laptop was unencrypted and not recovered; a vendor payment list is sensitive.",
+      suggestion: RiskSuggestion.NotificationLikelyRequired,
+    },
     assigneeUserId: mockMe.id,
     attachments: [],
     caseCode: mockId("case-code", 3),
@@ -1077,18 +1090,5 @@ export const mockReportCases: ReportCase[] = [
     reporterUserId: null,
     status: CaseStatus.NotificationDue,
     thread: [],
-    assessment: {
-      decidedAt: "2026-03-21T11:00:00Z",
-      decidedByUserId: mockMe.id,
-      decision: BreachDecision.Reportable,
-      factors: {
-        information: [InformationKind.Financial, InformationKind.Contact],
-        mitigation: RiskMitigation.NotAtAll,
-        recipient: RiskRecipient.UnknownPeople,
-        viewed: RiskViewed.Probably,
-      },
-      reason: "The laptop was unencrypted and not recovered; a vendor payment list is sensitive.",
-      suggestion: RiskSuggestion.NotificationLikelyRequired,
-    },
   },
 ];

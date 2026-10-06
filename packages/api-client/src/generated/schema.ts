@@ -186,9 +186,73 @@ export type AuthoringAssistResult = {
   readonly suggestion: Scalars["String"]["output"];
 };
 
+export enum BreachDecision {
+  NotReportable = "NOT_REPORTABLE",
+  Reportable = "REPORTABLE",
+}
+
 export type BreakGlassGrant = {
   readonly __typename?: "BreakGlassGrant";
   readonly grantedUntil: Scalars["DateTime"]["output"];
+};
+
+export type CaseNote = {
+  readonly __typename?: "CaseNote";
+  readonly authorUserId: Scalars["ID"]["output"];
+  readonly body: Scalars["String"]["output"];
+  readonly createdAt: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+};
+
+export type CaseNotice = {
+  readonly __typename?: "CaseNotice";
+  readonly daysAllowed: Scalars["Int"]["output"];
+  readonly dueOn: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly label: Scalars["String"]["output"];
+  readonly method: Scalars["String"]["output"];
+  readonly recipient: NoticeRecipient;
+  readonly sentOn?: Maybe<Scalars["String"]["output"]>;
+  readonly status: NoticeStatus;
+};
+
+export enum CaseOutcome {
+  Inconclusive = "INCONCLUSIVE",
+  NotSubstantiated = "NOT_SUBSTANTIATED",
+  Substantiated = "SUBSTANTIATED",
+}
+
+export type CaseQueue = {
+  readonly __typename?: "CaseQueue";
+  readonly cases: ReadonlyArray<CaseSummary>;
+  readonly counts: ReadonlyArray<CaseStatusCount>;
+};
+
+export enum CaseStatus {
+  Closed = "CLOSED",
+  InReview = "IN_REVIEW",
+  NeedsReporterReply = "NEEDS_REPORTER_REPLY",
+  New = "NEW",
+  NotificationDue = "NOTIFICATION_DUE",
+  RiskAssessment = "RISK_ASSESSMENT",
+}
+
+export type CaseStatusCount = {
+  readonly __typename?: "CaseStatusCount";
+  readonly count: Scalars["Int"]["output"];
+  readonly status: CaseStatus;
+};
+
+export type CaseSummary = {
+  readonly __typename?: "CaseSummary";
+  readonly assigneeUserId?: Maybe<Scalars["ID"]["output"]>;
+  readonly caseCode: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly kind: ReportKind;
+  readonly nextDeadline?: Maybe<Scalars["String"]["output"]>;
+  readonly receivedAt: Scalars["String"]["output"];
+  readonly status: CaseStatus;
+  readonly summary: Scalars["String"]["output"];
 };
 
 /** A category (and its subcategories) in the policy/procedure taxonomy. */
@@ -212,6 +276,17 @@ export type ComponentVersion = {
   readonly status: ComponentStatus;
   /** "unavailable" or "unknown" when it can't be read. */
   readonly version: Scalars["String"]["output"];
+};
+
+export type CorrectiveAction = {
+  readonly __typename?: "CorrectiveAction";
+  readonly description: Scalars["String"]["output"];
+  readonly policyId?: Maybe<Scalars["ID"]["output"]>;
+};
+
+export type CorrectiveActionInput = {
+  readonly description: Scalars["String"]["input"];
+  readonly policyId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 /** Result of deleteUser: the deleted user's id and how many active sessions were revoked. */
@@ -325,6 +400,13 @@ export type HistoryEntry = {
   readonly versionLabel: Scalars["String"]["output"];
 };
 
+export enum InformationKind {
+  Contact = "CONTACT",
+  Financial = "FINANCIAL",
+  Health = "HEALTH",
+  NotSure = "NOT_SURE",
+}
+
 export type IssueCollabTokenInput = {
   readonly draftId: Scalars["ID"]["input"];
   readonly policyId: Scalars["ID"]["input"];
@@ -361,6 +443,11 @@ export type Me = {
   readonly username: Scalars["String"]["output"];
 };
 
+export enum MessageAuthor {
+  Officer = "OFFICER",
+  Reporter = "REPORTER",
+}
+
 export type Mutation = {
   readonly __typename?: "Mutation";
   /** Records the CALLING user's acknowledgement of a published policy version. Refused when the caller isn't in the ack audience, or the version isn't published. */
@@ -368,6 +455,10 @@ export type Mutation = {
   /** Enables an organisation's SSO connection for sign-in. Site-admin only. */
   readonly activateOrganization: Organization;
   readonly addAppendix: Appendix;
+  /** Officers only: an internal note, never shown to the reporter. */
+  readonly addCaseNote: CaseNote;
+  /** Officers only: adds a notification-tracker entry; its deadline is set from the discovery date server-side. */
+  readonly addCaseNotice: CaseNotice;
   /** Adds an IdP-group-claim-to-platform-group mapping for a connection. Site-admin only. */
   readonly addGroupMapping: GroupMapping;
   /**
@@ -375,6 +466,8 @@ export type Mutation = {
    * domain is verified and the IdP connection passes its test. Site-admin only.
    */
   readonly addOrganization: Organization;
+  /** Officers only. A null assigneeUserId clears the assignee. */
+  readonly assignCase: ReportCase;
   /** A site admin's time-boxed, audited reveal of a sensitive policy's real content. A non-empty reason is required; the grant is recorded for audit. */
   readonly breakGlassReveal: BreakGlassGrant;
   /**
@@ -383,6 +476,8 @@ export type Mutation = {
    * re-verified and re-tested before re-activation. Site-admin only.
    */
   readonly changeOrgProtocol: Organization;
+  /** Officers only: the outcome, corrective actions and the optional closing message to the reporter. */
+  readonly closeCase: ReportCase;
   /** Creates a taxonomy group. Site-admin only. */
   readonly createGroup: Group;
   /** Creates a new policy/procedure with an empty working draft. The owner is the calling user. */
@@ -426,8 +521,12 @@ export type Mutation = {
    * root. Refused when the move would exceed the max depth or create a cycle. Site-admin only.
    */
   readonly moveGroup: Group;
+  /** Officers only: posts a message the reporter can see in the two-way thread. */
+  readonly postCaseMessage: ThreadMessage;
   /** Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content. */
   readonly publishDraft: PolicyVersion;
+  /** Officers only: records the guided risk assessment and its reportable/not-reportable decision. */
+  readonly recordRiskAssessment: RiskAssessment;
   /** Renames a group (name and slug). Does not renumber existing policies. Site-admin only. */
   readonly renameGroup: Group;
   readonly reorderAppendices: ReadonlyArray<Appendix>;
@@ -437,6 +536,10 @@ export type Mutation = {
   readonly revokeUserSessions: Scalars["Int"]["output"];
   /** Saves the author's edits to the policy's working draft. templateVersionId pins the template version the content was scaffolded from; null for a freeform draft. */
   readonly saveDraft: PolicyVersion;
+  /** Officers only: sets the discovery date every notification deadline counts from. */
+  readonly setCaseDiscoveryDate: ReportCase;
+  /** Officers only. Any status but CLOSED; closing goes through closeCase. */
+  readonly setCaseStatus: ReportCase;
   /**
    * Deliver an approver decision to an active run. The actor is bound server-side. The comment
    * is required for APPROVE and REJECT signals (the workflow service rejects an empty one).
@@ -458,6 +561,8 @@ export type Mutation = {
   /** Submit review & gap-analysis of an existing draft as an async job; the result is a findings list, never an edit applied to the policy. */
   readonly submitPolicyReview: AiJobHandle;
   readonly updateAppendix: Appendix;
+  /** Officers only. sentOn (YYYY-MM-DD) is required with SENT. */
+  readonly updateCaseNotice: CaseNotice;
   /**
    * Sets a group's inherited defaults (template, workflow) and governance (owners, review
    * cadence). Site-admin only.
@@ -490,6 +595,18 @@ export type MutationAddAppendixArgs = {
   title: Scalars["String"]["input"];
 };
 
+export type MutationAddCaseNoteArgs = {
+  body: Scalars["String"]["input"];
+  caseId: Scalars["ID"]["input"];
+};
+
+export type MutationAddCaseNoticeArgs = {
+  caseId: Scalars["ID"]["input"];
+  label?: InputMaybe<Scalars["String"]["input"]>;
+  method?: InputMaybe<Scalars["String"]["input"]>;
+  recipient: NoticeRecipient;
+};
+
 export type MutationAddGroupMappingArgs = {
   connectionId: Scalars["ID"]["input"];
   idpGroupClaimValue: Scalars["String"]["input"];
@@ -498,6 +615,11 @@ export type MutationAddGroupMappingArgs = {
 
 export type MutationAddOrganizationArgs = {
   input: AddOrganizationInput;
+};
+
+export type MutationAssignCaseArgs = {
+  assigneeUserId?: InputMaybe<Scalars["ID"]["input"]>;
+  caseId: Scalars["ID"]["input"];
 };
 
 export type MutationBreakGlassRevealArgs = {
@@ -510,6 +632,13 @@ export type MutationChangeOrgProtocolArgs = {
   domain: Scalars["String"]["input"];
   protocol: Scalars["String"]["input"];
   secretRef?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type MutationCloseCaseArgs = {
+  caseId: Scalars["ID"]["input"];
+  closingMessage?: InputMaybe<Scalars["String"]["input"]>;
+  correctiveActions?: InputMaybe<ReadonlyArray<CorrectiveActionInput>>;
+  outcome: CaseOutcome;
 };
 
 export type MutationCreateGroupArgs = {
@@ -576,8 +705,20 @@ export type MutationMoveGroupArgs = {
   newParentId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
+export type MutationPostCaseMessageArgs = {
+  body: Scalars["String"]["input"];
+  caseId: Scalars["ID"]["input"];
+};
+
 export type MutationPublishDraftArgs = {
   policyId: Scalars["ID"]["input"];
+};
+
+export type MutationRecordRiskAssessmentArgs = {
+  caseId: Scalars["ID"]["input"];
+  decision: BreachDecision;
+  factors: RiskFactorsInput;
+  reason: Scalars["String"]["input"];
 };
 
 export type MutationRenameGroupArgs = {
@@ -607,6 +748,16 @@ export type MutationSaveDraftArgs = {
   templateVersionId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
+export type MutationSetCaseDiscoveryDateArgs = {
+  caseId: Scalars["ID"]["input"];
+  discoveredOn: Scalars["String"]["input"];
+};
+
+export type MutationSetCaseStatusArgs = {
+  caseId: Scalars["ID"]["input"];
+  status: CaseStatus;
+};
+
 export type MutationSignalWorkflowArgs = {
   comment: Scalars["String"]["input"];
   policyVersionId: Scalars["ID"]["input"];
@@ -632,6 +783,13 @@ export type MutationUpdateAppendixArgs = {
   contentJson: Scalars["String"]["input"];
   id: Scalars["ID"]["input"];
   title: Scalars["String"]["input"];
+};
+
+export type MutationUpdateCaseNoticeArgs = {
+  caseId: Scalars["ID"]["input"];
+  noticeId: Scalars["ID"]["input"];
+  sentOn?: InputMaybe<Scalars["String"]["input"]>;
+  status: NoticeStatus;
 };
 
 export type MutationUpdateGroupSettingsArgs = {
@@ -664,6 +822,20 @@ export type MutationUpdateUserProfileArgs = {
 export type MutationVerifyDomainArgs = {
   domain: Scalars["String"]["input"];
 };
+
+export enum NoticeRecipient {
+  AffectedPeople = "AFFECTED_PEOPLE",
+  Media = "MEDIA",
+  Other = "OTHER",
+  Regulator = "REGULATOR",
+}
+
+export enum NoticeStatus {
+  Draft = "DRAFT",
+  NotNeeded = "NOT_NEEDED",
+  NotSent = "NOT_SENT",
+  Sent = "SENT",
+}
 
 /** One organisation's SSO connection, keyed by email domain. */
 export type Organization = {
@@ -895,6 +1067,10 @@ export type Query = {
    * block on, orphan or drop. Site-admin only.
    */
   readonly previewUserDeletion: UserDeletionPreview;
+  /** Officers only: one case's full detail. */
+  readonly reportCase: ReportCase;
+  /** Officers only: the case queue, optionally filtered by status and/or assignee. */
+  readonly reportCases: CaseQueue;
   /** The platform's active SP (service-provider) signing certificate. Site-admin only. */
   readonly spCertificate: SpCertificate;
   /** The templates selectable as a group's default. Site-admin only. */
@@ -983,6 +1159,15 @@ export type QueryPreviewUserDeletionArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type QueryReportCaseArgs = {
+  caseId: Scalars["ID"]["input"];
+};
+
+export type QueryReportCasesArgs = {
+  assigneeUserId?: InputMaybe<Scalars["ID"]["input"]>;
+  statuses?: InputMaybe<ReadonlyArray<CaseStatus>>;
+};
+
 export type QueryTemplatesArgs = {
   ownerGroupId?: InputMaybe<Scalars["ID"]["input"]>;
 };
@@ -1017,11 +1202,111 @@ export type RelatedPolicy = {
   readonly title: Scalars["String"]["output"];
 };
 
+export enum ReportAnswer {
+  No = "NO",
+  NotSure = "NOT_SURE",
+  Yes = "YES",
+}
+
+/** Attachment metadata only (reporting strips the file's own metadata server-side). Downloading the content is a follow-up (reportAttachmentContent, not vendored here). */
+export type ReportAttachment = {
+  readonly __typename?: "ReportAttachment";
+  readonly contentType: Scalars["String"]["output"];
+  readonly filename: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly metadataStripped: Scalars["Boolean"]["output"];
+  readonly sizeBytes: Scalars["Int"]["output"];
+};
+
+export type ReportCase = {
+  readonly __typename?: "ReportCase";
+  readonly assessment?: Maybe<RiskAssessment>;
+  readonly assigneeUserId?: Maybe<Scalars["ID"]["output"]>;
+  readonly attachments: ReadonlyArray<ReportAttachment>;
+  readonly caseCode: Scalars["String"]["output"];
+  readonly closedAt?: Maybe<Scalars["String"]["output"]>;
+  readonly correctiveActions: ReadonlyArray<CorrectiveAction>;
+  readonly details: ReportDetails;
+  readonly discoveredOn?: Maybe<Scalars["String"]["output"]>;
+  readonly id: Scalars["ID"]["output"];
+  readonly kind: ReportKind;
+  readonly notes: ReadonlyArray<CaseNote>;
+  readonly notices: ReadonlyArray<CaseNotice>;
+  readonly outcome?: Maybe<CaseOutcome>;
+  readonly receivedAt: Scalars["String"]["output"];
+  readonly reporterUserId?: Maybe<Scalars["ID"]["output"]>;
+  readonly status: CaseStatus;
+  readonly thread: ReadonlyArray<ThreadMessage>;
+};
+
+/** What the reporter told us. Nothing here asks who the reporter is. */
+export type ReportDetails = {
+  readonly __typename?: "ReportDetails";
+  readonly informationKinds: ReadonlyArray<InformationKind>;
+  readonly location: Scalars["String"]["output"];
+  readonly occurred: Scalars["String"]["output"];
+  readonly stillHappening?: Maybe<ReportAnswer>;
+  readonly whatHappened: Scalars["String"]["output"];
+};
+
+export enum ReportKind {
+  Anonymous = "ANONYMOUS",
+  Named = "NAMED",
+}
+
 export enum ReviewCadence {
   Annual = "ANNUAL",
   Biennial = "BIENNIAL",
   None = "NONE",
   OnDate = "ON_DATE",
+}
+
+export type RiskAssessment = {
+  readonly __typename?: "RiskAssessment";
+  readonly decidedAt: Scalars["String"]["output"];
+  readonly decidedByUserId: Scalars["ID"]["output"];
+  readonly decision?: Maybe<BreachDecision>;
+  readonly factors: RiskFactors;
+  readonly reason: Scalars["String"]["output"];
+  readonly suggestion?: Maybe<RiskSuggestion>;
+};
+
+export type RiskFactors = {
+  readonly __typename?: "RiskFactors";
+  readonly information: ReadonlyArray<InformationKind>;
+  readonly mitigation?: Maybe<RiskMitigation>;
+  readonly recipient?: Maybe<RiskRecipient>;
+  readonly viewed?: Maybe<RiskViewed>;
+};
+
+export type RiskFactorsInput = {
+  readonly information: ReadonlyArray<InformationKind>;
+  readonly mitigation: RiskMitigation;
+  readonly recipient: RiskRecipient;
+  readonly viewed: RiskViewed;
+};
+
+export enum RiskMitigation {
+  Fully = "FULLY",
+  NotAtAll = "NOT_AT_ALL",
+  Partly = "PARTLY",
+}
+
+export enum RiskRecipient {
+  AnotherOrganisation = "ANOTHER_ORGANISATION",
+  StaffOnly = "STAFF_ONLY",
+  UnknownPeople = "UNKNOWN_PEOPLE",
+}
+
+export enum RiskSuggestion {
+  LowProbabilityOfCompromise = "LOW_PROBABILITY_OF_COMPROMISE",
+  NotificationLikelyRequired = "NOTIFICATION_LIKELY_REQUIRED",
+}
+
+export enum RiskViewed {
+  No = "NO",
+  Probably = "PROBABLY",
+  Yes = "YES",
 }
 
 /** One section of a template's outline; a draft scaffolded from a template keeps these keys. */
@@ -1134,6 +1419,15 @@ export type TemplateVersion = {
   readonly sections: ReadonlyArray<Section>;
   readonly templateId: Scalars["ID"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
+};
+
+export type ThreadMessage = {
+  readonly __typename?: "ThreadMessage";
+  readonly author: MessageAuthor;
+  readonly body: Scalars["String"]["output"];
+  readonly createdAt: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly officerUserId?: Maybe<Scalars["ID"]["output"]>;
 };
 
 export type UpcomingApproval = {

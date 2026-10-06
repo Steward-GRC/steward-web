@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // ---------------------------------------------------------------------------
 // Query-language parser → predicate. Generic and app-agnostic: a record is a
-// `text` blob plus named fields (all pre-lowercased by the caller).
+// `text` blob plus named fields; matching lowercases both sides, so the caller
+// doesn't have to.
 //
 // Grammar (Google-style, case-insensitive):
 //   orExpr   → andExpr ('OR' andExpr)*       — OR binds looser than AND
@@ -36,48 +37,54 @@ type Token =
 const tokenize = (input: string): Token[] => {
   const tokens: Token[] = [];
   const s = input;
-  let i = 0;
+  let index = 0;
 
   // Read a value starting at i: either a "quoted phrase" or a bare run.
   // Returns the value (lowercased) and advances past it.
   const readValue = (): string => {
-    if (s[i] === '"') {
-      i++; // opening quote
+    if (s[index] === '"') {
+      index++; // opening quote
       let v = "";
-      while (i < s.length && s[i] !== '"') {
-        v += s[i];
-        i++;
+      while (index < s.length && s[index] !== '"') {
+        v += s[index];
+        index++;
       }
-      if (i < s.length) i++; // closing quote (if present)
+      if (index < s.length) index++; // closing quote (if present)
       return v.toLowerCase();
     }
     let v = "";
-    while (i < s.length && !/\s/.test(s[i]!) && s[i] !== "(" && s[i] !== ")" && s[i] !== ":") {
-      v += s[i];
-      i++;
+    while (
+      index < s.length &&
+      !/\s/.test(s[index]!) &&
+      s[index] !== "(" &&
+      s[index] !== ")" &&
+      s[index] !== ":"
+    ) {
+      v += s[index];
+      index++;
     }
     return v.toLowerCase();
   };
 
-  while (i < s.length) {
-    const c = s[i]!;
+  while (index < s.length) {
+    const c = s[index]!;
     if (/\s/.test(c)) {
-      i++;
+      index++;
       continue;
     }
     if (c === "(") {
       tokens.push({ kind: "LPAREN" });
-      i++;
+      index++;
       continue;
     }
     if (c === ")") {
       tokens.push({ kind: "RPAREN" });
-      i++;
+      index++;
       continue;
     }
     if (c === "-") {
       tokens.push({ kind: "MINUS" });
-      i++;
+      index++;
       continue;
     }
     if (c === '"') {
@@ -86,16 +93,22 @@ const tokenize = (input: string): Token[] => {
     }
 
     // Bare run: could be a keyword (OR/NOT), a field:value, or a word.
-    const start = i;
+    const start = index;
     let run = "";
-    while (i < s.length && !/\s/.test(s[i]!) && s[i] !== "(" && s[i] !== ")" && s[i] !== ":") {
-      run += s[i];
-      i++;
+    while (
+      index < s.length &&
+      !/\s/.test(s[index]!) &&
+      s[index] !== "(" &&
+      s[index] !== ")" &&
+      s[index] !== ":"
+    ) {
+      run += s[index];
+      index++;
     }
 
-    if (s[i] === ":") {
+    if (s[index] === ":") {
       // field:value
-      i++; // colon
+      index++; // colon
       const name = run.toLowerCase();
       const value = readValue();
       tokens.push({ kind: "FIELD", name, value });
@@ -113,7 +126,7 @@ const tokenize = (input: string): Token[] => {
     }
     if (run.length === 0) {
       // Defensive: avoid infinite loop on an unexpected char.
-      i = start + 1;
+      index = start + 1;
       continue;
     }
     tokens.push({ kind: "WORD", value: run.toLowerCase() });
@@ -132,7 +145,7 @@ export const compileQuery = (input: string): Predicate => {
   const peek = (): Token | undefined => tokens[pos];
 
   // term → (NOT|MINUS) term | '(' orExpr ')' | FIELD | PHRASE | WORD
-  const parseTerm = (): Predicate | null => {
+  const parseTerm = (): null | Predicate => {
     const t = peek();
     if (!t) return null;
 
@@ -162,13 +175,13 @@ export const compileQuery = (input: string): Predicate => {
     if (t.kind === "FIELD") {
       pos++;
       const { name, value } = t;
-      return (rec) => (rec[name] ?? "").includes(value);
+      return (rec) => (rec[name] ?? "").toLowerCase().includes(value);
     }
 
     if (t.kind === "PHRASE" || t.kind === "WORD") {
       pos++;
       const value = t.value;
-      return (rec) => rec.text.includes(value);
+      return (rec) => rec.text.toLowerCase().includes(value);
     }
 
     pos++;
