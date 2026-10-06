@@ -463,6 +463,70 @@ describe("mockEdge users directory", () => {
     });
   });
 
+  describe("workflows", () => {
+    it("createWorkflowDef() adds a workflow with its stages, visible from workflowDefs() and workflows()", async () => {
+      const created = await mockEdge.createWorkflowDef("Legal review", "A legal sign-off.", [
+        { approvers: ["u-legal"], name: "Legal", quorum: "one" },
+      ]);
+      expect(created).toMatchObject({
+        description: "A legal sign-off.",
+        name: "Legal review",
+        version: 1,
+      });
+      expect(created.stages).toEqual([
+        {
+          approvers: ["u-legal"],
+          approversByCategory: [],
+          groupUnits: [],
+          id: created.stages[0]!.id,
+          name: "Legal",
+          pinnedLast: false,
+          quorum: "one",
+          rejectOnSlaBreach: false,
+          slaDays: null,
+        },
+      ]);
+
+      const defs = await mockEdge.workflowDefs();
+      expect(defs.some((w) => w.id === created.id)).toBe(true);
+      const simple = await mockEdge.workflows();
+      expect(simple.some((w) => w.id === created.id)).toBe(true);
+    });
+
+    it("workflowDef() answers null for an id that doesn't exist", async () => {
+      expect(await mockEdge.workflowDef("no-such-workflow")).toBeNull();
+    });
+
+    it("updateWorkflowDef() replaces the stages and bumps the version", async () => {
+      const created = await mockEdge.createWorkflowDef("Replaceable", null, [
+        { approvers: ["u-1"], name: "First", quorum: "one" },
+      ]);
+      const updated = await mockEdge.updateWorkflowDef(
+        created.id,
+        "Replaceable",
+        "Now with two stages",
+        [
+          { approvers: ["u-1"], name: "First", quorum: "one" },
+          { approvers: ["u-2"], name: "Second", quorum: "all" },
+        ],
+      );
+      expect(updated.version).toBe(created.version + 1);
+      expect(updated.stages.map((s) => s.name)).toEqual(["First", "Second"]);
+    });
+
+    it("archiveWorkflowDef() removes it from workflowDefs()", async () => {
+      const created = await mockEdge.createWorkflowDef("Temporary", null, [
+        { approvers: [], name: "Only stage", quorum: "one" },
+      ]);
+      expect(await mockEdge.archiveWorkflowDef(created.id)).toBe(true);
+      const defs = await mockEdge.workflowDefs();
+      expect(defs.some((w) => w.id === created.id)).toBe(false);
+      await expect(mockEdge.archiveWorkflowDef(created.id)).rejects.toMatchObject({
+        name: "GatewayError",
+      });
+    });
+  });
+
   describe("authoring", () => {
     it("createPolicy() scaffolds an empty working draft from the chosen template", async () => {
       const [group] = await mockEdge.authorableGroups();

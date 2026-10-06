@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
         "admin-guide/first-run-setup",
         "admin-guide/users-and-roles",
         "admin-guide/groups",
+        "admin-guide/workflows",
         "admin-guide/organisations-and-sso",
         "admin-guide/audit-log",
       ],

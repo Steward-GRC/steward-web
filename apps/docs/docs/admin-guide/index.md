@@ -19,6 +19,8 @@ do this work under the `/admin` part of the site.
   the site-admin role.
 - **[Groups](/admin-guide/groups)** — how to build the category tree and set each category's
   defaults.
+- **[Workflows](/admin-guide/workflows)** — how to build an approval chain and set which
+  approvers must sign off.
 - **[Organisations and single sign-on](/admin-guide/organisations-and-sso)** — how to connect an
   identity provider and control who is provisioned automatically.
 - **[Audit log](/admin-guide/audit-log)** — how to read and verify the tamper-evident record of

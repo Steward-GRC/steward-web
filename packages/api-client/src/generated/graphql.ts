@@ -194,6 +194,12 @@ export type AppendixFieldsFragment = {
   readonly letter: string;
 };
 
+export type ArchiveWorkflowDefMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type ArchiveWorkflowDefMutation = { readonly archiveWorkflowDef: boolean };
+
 export type AssignCaseMutationVariables = Exact<{
   caseId: string | number;
   assigneeUserId?: string | number | null | undefined;
@@ -650,6 +656,39 @@ export type CreateTemplateVersionMutation = {
       readonly blocks: ReadonlyArray<{
         readonly type: string;
         readonly contentJson: string | null;
+      }>;
+    }>;
+  };
+};
+
+export type CreateWorkflowDefMutationVariables = Exact<{
+  name: string;
+  description?: string | null | undefined;
+  stages: ReadonlyArray<Types.WorkflowStageInput> | Types.WorkflowStageInput;
+}>;
+
+export type CreateWorkflowDefMutation = {
+  readonly createWorkflowDef: {
+    readonly id: string;
+    readonly name: string;
+    readonly description: string | null;
+    readonly version: number;
+    readonly stages: ReadonlyArray<{
+      readonly id: string;
+      readonly name: string;
+      readonly approvers: ReadonlyArray<string>;
+      readonly quorum: string;
+      readonly slaDays: number | null;
+      readonly rejectOnSlaBreach: boolean | null;
+      readonly pinnedLast: boolean | null;
+      readonly approversByCategory: ReadonlyArray<{
+        readonly categoryId: string;
+        readonly approverIds: ReadonlyArray<string>;
+      }>;
+      readonly groupUnits: ReadonlyArray<{
+        readonly groupId: string;
+        readonly internalQuorum: string;
+        readonly memberUserIds: ReadonlyArray<string>;
       }>;
     }>;
   };
@@ -2231,6 +2270,40 @@ export type UpdateUserProfileMutation = {
   };
 };
 
+export type UpdateWorkflowDefMutationVariables = Exact<{
+  id: string | number;
+  name: string;
+  description?: string | null | undefined;
+  stages: ReadonlyArray<Types.WorkflowStageInput> | Types.WorkflowStageInput;
+}>;
+
+export type UpdateWorkflowDefMutation = {
+  readonly updateWorkflowDef: {
+    readonly id: string;
+    readonly name: string;
+    readonly description: string | null;
+    readonly version: number;
+    readonly stages: ReadonlyArray<{
+      readonly id: string;
+      readonly name: string;
+      readonly approvers: ReadonlyArray<string>;
+      readonly quorum: string;
+      readonly slaDays: number | null;
+      readonly rejectOnSlaBreach: boolean | null;
+      readonly pinnedLast: boolean | null;
+      readonly approversByCategory: ReadonlyArray<{
+        readonly categoryId: string;
+        readonly approverIds: ReadonlyArray<string>;
+      }>;
+      readonly groupUnits: ReadonlyArray<{
+        readonly groupId: string;
+        readonly internalQuorum: string;
+        readonly memberUserIds: ReadonlyArray<string>;
+      }>;
+    }>;
+  };
+};
+
 export type UserFieldsFragment = {
   readonly userId: string;
   readonly name: string;
@@ -2308,10 +2381,108 @@ export type VerifyDomainMutation = {
   };
 };
 
+export type WorkflowDefQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+export type WorkflowDefQuery = {
+  readonly workflowDef: {
+    readonly id: string;
+    readonly name: string;
+    readonly description: string | null;
+    readonly version: number;
+    readonly stages: ReadonlyArray<{
+      readonly id: string;
+      readonly name: string;
+      readonly approvers: ReadonlyArray<string>;
+      readonly quorum: string;
+      readonly slaDays: number | null;
+      readonly rejectOnSlaBreach: boolean | null;
+      readonly pinnedLast: boolean | null;
+      readonly approversByCategory: ReadonlyArray<{
+        readonly categoryId: string;
+        readonly approverIds: ReadonlyArray<string>;
+      }>;
+      readonly groupUnits: ReadonlyArray<{
+        readonly groupId: string;
+        readonly internalQuorum: string;
+        readonly memberUserIds: ReadonlyArray<string>;
+      }>;
+    }>;
+  } | null;
+};
+
+export type WorkflowDefFieldsFragment = {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly version: number;
+  readonly stages: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly approvers: ReadonlyArray<string>;
+    readonly quorum: string;
+    readonly slaDays: number | null;
+    readonly rejectOnSlaBreach: boolean | null;
+    readonly pinnedLast: boolean | null;
+    readonly approversByCategory: ReadonlyArray<{
+      readonly categoryId: string;
+      readonly approverIds: ReadonlyArray<string>;
+    }>;
+    readonly groupUnits: ReadonlyArray<{
+      readonly groupId: string;
+      readonly internalQuorum: string;
+      readonly memberUserIds: ReadonlyArray<string>;
+    }>;
+  }>;
+};
+
 export type WorkflowDefsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type WorkflowDefsQuery = {
-  readonly workflowDefs: ReadonlyArray<{ readonly id: string; readonly name: string }>;
+  readonly workflowDefs: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly description: string | null;
+    readonly version: number;
+    readonly stages: ReadonlyArray<{
+      readonly id: string;
+      readonly name: string;
+      readonly approvers: ReadonlyArray<string>;
+      readonly quorum: string;
+      readonly slaDays: number | null;
+      readonly rejectOnSlaBreach: boolean | null;
+      readonly pinnedLast: boolean | null;
+      readonly approversByCategory: ReadonlyArray<{
+        readonly categoryId: string;
+        readonly approverIds: ReadonlyArray<string>;
+      }>;
+      readonly groupUnits: ReadonlyArray<{
+        readonly groupId: string;
+        readonly internalQuorum: string;
+        readonly memberUserIds: ReadonlyArray<string>;
+      }>;
+    }>;
+  }>;
+};
+
+export type WorkflowStageDefFieldsFragment = {
+  readonly id: string;
+  readonly name: string;
+  readonly approvers: ReadonlyArray<string>;
+  readonly quorum: string;
+  readonly slaDays: number | null;
+  readonly rejectOnSlaBreach: boolean | null;
+  readonly pinnedLast: boolean | null;
+  readonly approversByCategory: ReadonlyArray<{
+    readonly categoryId: string;
+    readonly approverIds: ReadonlyArray<string>;
+  }>;
+  readonly groupUnits: ReadonlyArray<{
+    readonly groupId: string;
+    readonly internalQuorum: string;
+    readonly memberUserIds: ReadonlyArray<string>;
+  }>;
 };
 
 export type WorkflowStatusQueryVariables = Exact<{
@@ -2788,6 +2959,120 @@ export const UserFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<UserFieldsFragment, unknown>;
+export const WorkflowStageDefFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowStageDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowStageDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "approvers" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "approversByCategory" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "approverIds" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "groupUnits" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "internalQuorum" } },
+                { kind: "Field", name: { kind: "Name", value: "memberUserIds" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "quorum" } },
+          { kind: "Field", name: { kind: "Name", value: "slaDays" } },
+          { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<WorkflowStageDefFieldsFragment, unknown>;
+export const WorkflowDefFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "description" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "stages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowStageDefFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowStageDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowStageDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "approvers" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "approversByCategory" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "approverIds" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "groupUnits" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "internalQuorum" } },
+                { kind: "Field", name: { kind: "Name", value: "memberUserIds" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "quorum" } },
+          { kind: "Field", name: { kind: "Name", value: "slaDays" } },
+          { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<WorkflowDefFieldsFragment, unknown>;
 export const AckStatusDocument = {
   kind: "Document",
   definitions: [
@@ -3499,6 +3784,42 @@ export const AiJobResultContentDocument = {
     },
   ],
 } as unknown as DocumentNode<AiJobResultContentQuery, AiJobResultContentQueryVariables>;
+export const ArchiveWorkflowDefDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ArchiveWorkflowDef" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "archiveWorkflowDef" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ArchiveWorkflowDefMutation, ArchiveWorkflowDefMutationVariables>;
 export const AssignCaseDocument = {
   kind: "Document",
   definitions: [
@@ -4798,6 +5119,141 @@ export const CreateTemplateVersionDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateTemplateVersionMutation, CreateTemplateVersionMutationVariables>;
+export const CreateWorkflowDefDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreateWorkflowDef" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "name" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "description" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "stages" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "WorkflowStageInput" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createWorkflowDef" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "name" },
+                value: { kind: "Variable", name: { kind: "Name", value: "name" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "description" },
+                value: { kind: "Variable", name: { kind: "Name", value: "description" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "stages" },
+                value: { kind: "Variable", name: { kind: "Name", value: "stages" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowDefFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowStageDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowStageDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "approvers" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "approversByCategory" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "approverIds" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "groupUnits" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "internalQuorum" } },
+                { kind: "Field", name: { kind: "Name", value: "memberUserIds" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "quorum" } },
+          { kind: "Field", name: { kind: "Name", value: "slaDays" } },
+          { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "description" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "stages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowStageDefFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateWorkflowDefMutation, CreateWorkflowDefMutationVariables>;
 export const DeleteAppendixDocument = {
   kind: "Document",
   definitions: [
@@ -9830,6 +10286,154 @@ export const UpdateUserProfileDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateUserProfileMutation, UpdateUserProfileMutationVariables>;
+export const UpdateWorkflowDefDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateWorkflowDef" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "name" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "description" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "stages" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "WorkflowStageInput" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateWorkflowDef" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "name" },
+                value: { kind: "Variable", name: { kind: "Name", value: "name" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "description" },
+                value: { kind: "Variable", name: { kind: "Name", value: "description" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "stages" },
+                value: { kind: "Variable", name: { kind: "Name", value: "stages" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowDefFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowStageDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowStageDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "approvers" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "approversByCategory" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "approverIds" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "groupUnits" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "internalQuorum" } },
+                { kind: "Field", name: { kind: "Name", value: "memberUserIds" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "quorum" } },
+          { kind: "Field", name: { kind: "Name", value: "slaDays" } },
+          { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "description" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "stages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowStageDefFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateWorkflowDefMutation, UpdateWorkflowDefMutationVariables>;
 export const UsersDocument = {
   kind: "Document",
   definitions: [
@@ -10048,6 +10652,112 @@ export const VerifyDomainDocument = {
     },
   ],
 } as unknown as DocumentNode<VerifyDomainMutation, VerifyDomainMutationVariables>;
+export const WorkflowDefDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "WorkflowDef" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "workflowDef" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowDefFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowStageDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowStageDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "approvers" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "approversByCategory" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "approverIds" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "groupUnits" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "internalQuorum" } },
+                { kind: "Field", name: { kind: "Name", value: "memberUserIds" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "quorum" } },
+          { kind: "Field", name: { kind: "Name", value: "slaDays" } },
+          { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "description" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "stages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowStageDefFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<WorkflowDefQuery, WorkflowDefQueryVariables>;
 export const WorkflowDefsDocument = {
   kind: "Document",
   definitions: [
@@ -10064,8 +10774,71 @@ export const WorkflowDefsDocument = {
             selectionSet: {
               kind: "SelectionSet",
               selections: [
-                { kind: "Field", name: { kind: "Name", value: "id" } },
-                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowDefFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowStageDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowStageDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "approvers" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "approversByCategory" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "approverIds" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "groupUnits" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "internalQuorum" } },
+                { kind: "Field", name: { kind: "Name", value: "memberUserIds" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "quorum" } },
+          { kind: "Field", name: { kind: "Name", value: "slaDays" } },
+          { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "WorkflowDefFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "WorkflowDef" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "description" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "stages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "WorkflowStageDefFields" } },
               ],
             },
           },
