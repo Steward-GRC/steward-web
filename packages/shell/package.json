@@ -1,0 +1,24 @@
+{
+  "name": "@steward-web/shell",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The app chrome, Copy diagnostics and the refusal and route-error helpers both apps share.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@steward-web/api-client": "workspace:*",
+    "@steward-web/i18n": "workspace:*",
+    "@steward-web/ui": "workspace:*",
+    "react": "^19.3.0",
+    "react-router": "^8.4.0"
+  },
+  "devDependencies": {
+    "@steward-web/vite-config": "workspace:*"
+  }
+}

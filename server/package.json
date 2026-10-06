@@ -1,0 +1,16 @@
+{
+  "name": "@steward-web/server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Node server image: one build, picking its app from APP, with /livez, /readyz and the /query proxy.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@react-router/node": "^8.4.0",
+    "react-router": "^8.4.0"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@steward-web/admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The admin app: Steward's admin console, server-rendered.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "react-router build",
+    "build:mock": "react-router build --mode mock",
+    "dev": "react-router dev",
+    "dev:mock": "react-router dev --mode mock",
+    "typecheck": "react-router typegen && tsc -b"
+  },
+  "dependencies": {
+    "@steward-web/auth": "workspace:*",
+    "@steward-web/i18n": "workspace:*",
+    "@steward-web/shell": "workspace:*",
+    "@steward-web/ui": "workspace:*",
+    "isbot": "^5.2.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router": "^8.4.0"
+  },
+  "devDependencies": {
+    "@react-router/dev": "^8.4.0",
+    "@react-router/node": "^8.4.0",
+    "@steward-web/vite-config": "workspace:*"
+  }
+}

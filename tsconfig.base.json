@@ -22,8 +22,14 @@
     "noEmit": true,
     "types": ["node", "vite/client", "vitest/globals", "@testing-library/jest-dom/vitest"],
     "paths": {
+      "#api/*": ["./packages/api-client/src/*"],
+      "#auth/*": ["./packages/auth/src/*"],
+      "#i18n/*": ["./packages/i18n/src/*"],
+      "#mock/*": ["./packages/mock-gateway/src/*"],
+      "#shell/*": ["./packages/shell/src/*"],
       "#ui/*": ["./packages/ui/src/*"],
-      "#i18n/*": ["./packages/i18n/src/*"]
+      "@steward-web/edge.server": ["./packages/api-client/src/edge/live.server.ts"],
+      "@steward-web/mock-banner": ["./packages/shell/src/NoMockBanner.tsx"]
     }
   },
   "files": ["./types/env.d.ts"]
