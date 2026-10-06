@@ -41,7 +41,7 @@ import {
   type UpcomingApproval,
   type User,
   type UserDeletionPreview,
-  type Workflow,
+  type WorkflowDef,
   type WorkflowStatus,
 } from "@steward-web/api-client";
 import { permissionsForRoles } from "@steward-web/auth";
@@ -378,9 +378,56 @@ export const mockTemplates: Template[] = [
   },
 ];
 
-export const mockWorkflows: Workflow[] = [
-  { id: mockId("workflow", 1), name: "Single approver" },
-  { id: mockId("workflow", 2), name: "Security review board" },
+export const mockWorkflows: WorkflowDef[] = [
+  {
+    description: "A single named approver signs off.",
+    id: mockId("workflow", 1),
+    name: "Single approver",
+    stages: [
+      {
+        approvers: [mockId("user", 2)],
+        approversByCategory: [],
+        groupUnits: [],
+        id: mockId("workflow-stage", 1),
+        name: "Approval",
+        pinnedLast: false,
+        quorum: "one",
+        rejectOnSlaBreach: false,
+        slaDays: null,
+      },
+    ],
+    version: 1,
+  },
+  {
+    description: "A review board, then a final sign-off.",
+    id: mockId("workflow", 2),
+    name: "Security review board",
+    stages: [
+      {
+        approvers: [mockId("user", 2), mockId("user", 3)],
+        approversByCategory: [],
+        groupUnits: [],
+        id: mockId("workflow-stage", 2),
+        name: "Board review",
+        pinnedLast: false,
+        quorum: "majority",
+        rejectOnSlaBreach: true,
+        slaDays: 5,
+      },
+      {
+        approvers: [mockMe.id],
+        approversByCategory: [],
+        groupUnits: [],
+        id: mockId("workflow-stage", 3),
+        name: "Final sign-off",
+        pinnedLast: true,
+        quorum: "one",
+        rejectOnSlaBreach: false,
+        slaDays: null,
+      },
+    ],
+    version: 1,
+  },
 ];
 
 /** The library catalog: policies and procedures across every category, status and sensitivity. */

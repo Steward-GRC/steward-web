@@ -33,6 +33,9 @@ export default [
   route("templates", "routes/templates.tsx"),
   route("templates/new", "routes/templates.new.tsx"),
   route("templates/:code", "routes/templates.$code.tsx"),
+  route("workflows", "routes/workflows.tsx"),
+  route("workflows/new", "routes/workflows.new.tsx"),
+  route("workflows/:id", "routes/workflows.$id.tsx"),
   route("setup", "routes/setup.tsx"),
   route("audit", "routes/audit.tsx"),
 ] satisfies RouteConfig;

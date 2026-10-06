@@ -17,6 +17,7 @@ import {
   AiHealthDocument,
   AiJobDocument,
   AiJobResultContentDocument,
+  ArchiveWorkflowDefDocument,
   AssignCaseDocument,
   AuditLogDocument,
   AuthoringAssistDocument,
@@ -32,6 +33,7 @@ import {
   CreatePolicyDocument,
   CreateTemplateDocument,
   CreateTemplateVersionDocument,
+  CreateWorkflowDefDocument,
   DeleteAppendixDocument,
   DeleteCategoryDocument,
   DeleteGroupMappingDocument,
@@ -100,9 +102,11 @@ import {
   UpdateMyProfileDocument,
   UpdateTemplateVersionSectionsDocument,
   UpdateUserProfileDocument,
+  UpdateWorkflowDefDocument,
   UsersDocument,
   VerifyAuditChainDocument,
   VerifyDomainDocument,
+  WorkflowDefDocument,
   WorkflowDefsDocument,
   WorkflowStatusDocument,
 } from "../generated/graphql";
@@ -375,6 +379,12 @@ export const liveEdge: Edge = {
     );
     return data.aiJobResultContent;
   },
+  async archiveWorkflowDef(id, cookie) {
+    const data = await gatewayFetch(ArchiveWorkflowDefDocument, { id }, "ArchiveWorkflowDef", {
+      cookie,
+    });
+    return data.archiveWorkflowDef;
+  },
   async assignCase(caseId, assigneeUserId, cookie) {
     const data = await gatewayFetch(AssignCaseDocument, { assigneeUserId, caseId }, "AssignCase", {
       cookie,
@@ -481,6 +491,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.createTemplateVersion;
+  },
+  async createWorkflowDef(name, description, stages, cookie) {
+    const data = await gatewayFetch(
+      CreateWorkflowDefDocument,
+      { description, name, stages },
+      "CreateWorkflowDef",
+      { cookie },
+    );
+    return data.createWorkflowDef;
   },
   async deleteAppendix(id, cookie) {
     const data = await gatewayFetch(DeleteAppendixDocument, { id }, "DeleteAppendix", { cookie });
@@ -1028,6 +1047,15 @@ export const liveEdge: Edge = {
     );
     return data.updateUserProfile;
   },
+  async updateWorkflowDef(id, name, description, stages, cookie) {
+    const data = await gatewayFetch(
+      UpdateWorkflowDefDocument,
+      { description, id, name, stages },
+      "UpdateWorkflowDef",
+      { cookie },
+    );
+    return data.updateWorkflowDef;
+  },
   async users(input, cookie) {
     const data = await gatewayFetch(UsersDocument, input, "Users", { cookie });
     return data.users;
@@ -1044,6 +1072,14 @@ export const liveEdge: Edge = {
   async verifyDomain(domain, cookie) {
     const data = await gatewayFetch(VerifyDomainDocument, { domain }, "VerifyDomain", { cookie });
     return data.verifyDomain;
+  },
+  async workflowDef(id, cookie) {
+    const data = await gatewayFetch(WorkflowDefDocument, { id }, "WorkflowDef", { cookie });
+    return data.workflowDef ?? null;
+  },
+  async workflowDefs(cookie) {
+    const data = await gatewayFetch(WorkflowDefsDocument, {}, "WorkflowDefs", { cookie });
+    return data.workflowDefs;
   },
   async workflows(cookie) {
     const data = await gatewayFetch(WorkflowDefsDocument, {}, "WorkflowDefs", { cookie });

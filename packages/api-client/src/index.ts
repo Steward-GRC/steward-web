@@ -23,6 +23,7 @@ export type {
   CaseStatusCount,
   CaseSummary,
   Category,
+  CategoryApproversInput,
   CorrectiveAction,
   CorrectiveActionInput,
   CreateGroupInput,
@@ -33,6 +34,7 @@ export type {
   Edge,
   Group,
   GroupMapping,
+  GroupUnitInput,
   HistoryEntry,
   ImportedIdpMetadata,
   IssueCollabTokenInput,
@@ -82,6 +84,9 @@ export type {
   UserLabel,
   UserPage,
   Workflow,
+  WorkflowDef,
+  WorkflowStageDef,
+  WorkflowStageInput,
   WorkflowStatus,
 } from "./edge";
 export {

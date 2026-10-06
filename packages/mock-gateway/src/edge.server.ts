@@ -18,6 +18,8 @@ import type {
   ThreadMessage,
   User,
   UserDeletionPreview,
+  WorkflowDef,
+  WorkflowStageInput,
   WorkflowStatus,
 } from "@steward-web/api-client";
 
@@ -99,6 +101,9 @@ let templates = [...mockTemplates];
 let nextTemplateSeq = mockTemplates.length + 1;
 let templateVersionList = [...mockTemplateVersions];
 let nextTemplateVersionSeq = mockTemplateVersions.length + 1;
+let workflowDefs = [...mockWorkflows];
+let nextWorkflowSeq = mockWorkflows.length + 1;
+let nextWorkflowStageSeq = mockWorkflows.flatMap((w) => w.stages).length + 1;
 let pendingTasks = [...mockPendingTasks];
 let workflowStatuses = structuredClone(mockWorkflowStatuses);
 let reportCases = structuredClone(mockReportCases);
@@ -172,6 +177,28 @@ const normalizeSections = (sections: readonly SectionInput[]): TemplateVersion["
     title: s.title,
   }));
 
+/** Applies the schema's WorkflowStageInput defaults (no SLA, not reject-on-breach, not
+ *  pinned-last, no category/group overrides) and mints a stage id for a newly added stage. */
+const normalizeStages = (stages: readonly WorkflowStageInput[]): WorkflowDef["stages"] =>
+  stages.map((s) => ({
+    approvers: [...s.approvers],
+    approversByCategory: (s.approversByCategory ?? []).map((c) => ({
+      approverIds: [...c.approverIds],
+      categoryId: c.categoryId,
+    })),
+    groupUnits: (s.groupUnits ?? []).map((g) => ({
+      groupId: g.groupId,
+      internalQuorum: g.internalQuorum,
+      memberUserIds: [...g.memberUserIds],
+    })),
+    id: s.id ?? mockId("workflow-stage", nextWorkflowStageSeq++),
+    name: s.name,
+    pinnedLast: s.pinnedLast ?? false,
+    quorum: s.quorum,
+    rejectOnSlaBreach: s.rejectOnSlaBreach ?? false,
+    slaDays: s.slaDays ?? null,
+  }));
+
 /** The newest version of a template by `versionNo`, optionally restricted to published ones
  *  (the one offered when creating a new policy). */
 const latestTemplateVersionFor = (
@@ -181,6 +208,19 @@ const latestTemplateVersionFor = (
   templateVersionList
     .filter((v) => v.templateId === templateId && (!publishedOnly || v.status === "published"))
     .toSorted((a, b) => b.versionNo - a.versionNo)[0];
+
+const requireWorkflowDef = (operation: string, id: string): WorkflowDef => {
+  const workflowDef = workflowDefs.find((w) => w.id === id);
+  if (!workflowDef) {
+    throw new GatewayError(operation, `workflow ${id} not found`, { code: "NOT_FOUND" });
+  }
+  return workflowDef;
+};
+
+const replaceWorkflowDef = (updated: WorkflowDef): WorkflowDef => {
+  workflowDefs = workflowDefs.map((w) => (w.id === updated.id ? updated : w));
+  return updated;
+};
 
 const requireOrganization = (operation: string, domain: string): Organization => {
   const org = organizations.find((o) => o.domain === domain);
@@ -536,6 +576,11 @@ export const mockEdge: Edge = {
     }
     return { operation: "DRAFT", resultJson: job.resultJson };
   },
+  archiveWorkflowDef: async (id) => {
+    requireWorkflowDef("ArchiveWorkflowDef", id);
+    workflowDefs = workflowDefs.filter((w) => w.id !== id);
+    return true;
+  },
   assignCase: async (caseId, assigneeUserId) => {
     const reportCase = requireReportCase("AssignCase", caseId);
     return replaceReportCase({ ...reportCase, assigneeUserId: assigneeUserId ?? null });
@@ -714,6 +759,17 @@ export const mockEdge: Edge = {
       versionNo,
     };
     templateVersionList = [...templateVersionList, created];
+    return created;
+  },
+  createWorkflowDef: async (name, description, stages) => {
+    const created: WorkflowDef = {
+      description: description ?? null,
+      id: mockId("workflow", nextWorkflowSeq++),
+      name,
+      stages: normalizeStages(stages),
+      version: 1,
+    };
+    workflowDefs = [...workflowDefs, created];
     return created;
   },
   deleteAppendix: async (id) => {
@@ -1359,6 +1415,16 @@ export const mockEdge: Edge = {
       name,
     });
   },
+  updateWorkflowDef: async (id, name, description, stages) => {
+    const current = requireWorkflowDef("UpdateWorkflowDef", id);
+    return replaceWorkflowDef({
+      ...current,
+      description: description ?? null,
+      name,
+      stages: normalizeStages(stages),
+      version: current.version + 1,
+    });
+  },
   users: ({ includeDeleted, search } = {}) => {
     const needle = search?.trim().toLowerCase();
     const filtered = users
@@ -1386,7 +1452,9 @@ export const mockEdge: Edge = {
     const org = requireOrganization("VerifyDomain", domain);
     return replaceOrganization({ ...org, verified: true });
   },
-  workflows: () => Promise.resolve(mockWorkflows),
+  workflowDef: (id) => Promise.resolve(workflowDefs.find((w) => w.id === id) ?? null),
+  workflowDefs: () => Promise.resolve(workflowDefs),
+  workflows: () => Promise.resolve(workflowDefs),
   workflowStatus: (policyVersionId) =>
     Promise.resolve(workflowStatuses[policyVersionId] ?? NO_WORKFLOW_STATUS),
 };

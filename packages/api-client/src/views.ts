@@ -4,6 +4,7 @@ import type {
   LatestTemplateVersionQuery,
   SearchUsersQuery,
   UserFieldsFragment,
+  WorkflowDefQuery,
 } from "./generated/graphql";
 import type {
   AckTrigger,
@@ -237,3 +238,9 @@ export interface Workflow {
   readonly id: string;
   readonly name: string;
 }
+
+/** A workflow definition's full detail: its ordered approval stages, for admin management. */
+export type WorkflowDef = NonNullable<WorkflowDefQuery["workflowDef"]>;
+
+/** One stage of a workflow definition's approval chain. */
+export type WorkflowStageDef = WorkflowDef["stages"][number];

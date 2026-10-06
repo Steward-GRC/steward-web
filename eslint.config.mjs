@@ -80,6 +80,10 @@ const config = [
         "error",
         {
           allowList: {
+            // The gateway schema's own type and operation names (WorkflowDef,
+            // WorkflowDefDocument, ...): not renaming what the wire format calls itself.
+            Def: true,
+            def: true,
             env: true,
             ImportMetaEnv: true,
             Props: true,
