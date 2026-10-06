@@ -4,8 +4,42 @@
     "major": "Major",
     "minor": "Minor"
   },
+  "library": {
+    "categoryCount": "{{count}} {{noun}}",
+    "empty": {
+      "description": "Try a different category, or clear the filters.",
+      "title": "No {{noun}} match these filters."
+    },
+    "filters": {
+      "category": "Category",
+      "clear": "Clear filters",
+      "search": "Search",
+      "starred": "Starred",
+      "subcategory": "Subcategory"
+    },
+    "policies": {
+      "subtitle": "Draft, publish, and manage your group's policies.",
+      "title": "Policies"
+    },
+    "procedures": {
+      "subtitle": "Step-by-step guides in the same library.",
+      "title": "Procedures"
+    },
+    "table": {
+      "category": "Category",
+      "number": "Number",
+      "sensitivity": "Sensitivity",
+      "status": "Status",
+      "subcategory": "Subcategory",
+      "title": "Title",
+      "updated": "Updated",
+      "version": "Version"
+    },
+    "toggleStar": "Star {{number}}"
+  },
   "sensitivity": {
-    "sensitive": "Sensitive"
+    "sensitive": "Sensitive",
+    "standard": "Standard"
   },
   "status": {
     "approved": "Approved",

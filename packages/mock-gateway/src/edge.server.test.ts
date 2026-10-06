@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { DocumentType } from "@steward-web/api-client";
 import { describe, expect, it } from "vitest";
 
 import { mockEdge } from "./edge.server";
@@ -24,5 +25,21 @@ describe("mockEdge", () => {
 
     const me = await mockEdge.me();
     expect(me).toMatchObject({ firstName: "Ada", lastName: "Lovelace", name: "Ada Lovelace" });
+  });
+
+  it("categories() answers the mock-id taxonomy, no network and no cookie", async () => {
+    const categories = await mockEdge.categories();
+    expect(categories.length).toBeGreaterThan(0);
+    for (const category of categories) expect(category.id).toContain(MOCK_MARKER);
+  });
+
+  it("policies() filters the catalog to the requested document type", async () => {
+    const policies = await mockEdge.policies(DocumentType.Policy);
+    expect(policies.length).toBeGreaterThan(0);
+    for (const policy of policies) expect(policy.documentType).toBe(DocumentType.Policy);
+
+    const procedures = await mockEdge.policies(DocumentType.Procedure);
+    expect(procedures.length).toBeGreaterThan(0);
+    for (const procedure of procedures) expect(procedure.documentType).toBe(DocumentType.Procedure);
   });
 });

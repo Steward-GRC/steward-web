@@ -6,6 +6,17 @@ export type Incremental<T> =
 import type * as Types from "./schema";
 
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
+export type CategoriesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type CategoriesQuery = {
+  readonly categories: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly slug: string;
+    readonly subcategories: ReadonlyArray<string>;
+  }>;
+};
+
 export type DiagnosticsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type DiagnosticsQuery = {
@@ -60,6 +71,25 @@ export type MeQuery = {
   } | null;
 };
 
+export type PoliciesQueryVariables = Exact<{
+  documentType: Types.DocumentType;
+}>;
+
+export type PoliciesQuery = {
+  readonly policies: ReadonlyArray<{
+    readonly id: string;
+    readonly number: string;
+    readonly title: string;
+    readonly category: string;
+    readonly subcategory: string;
+    readonly sensitivity: Types.Sensitivity;
+    readonly status: Types.PolicyStatus;
+    readonly version: string;
+    readonly updated: string;
+    readonly documentType: Types.DocumentType;
+  }>;
+};
+
 export type UpdateMyProfileMutationVariables = Exact<{
   firstName: string;
   lastName: string;
@@ -78,6 +108,34 @@ export type UpdateMyProfileMutation = {
   };
 };
 
+export const CategoriesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "Categories" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categories" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "slug" } },
+                { kind: "Field", name: { kind: "Name", value: "subcategories" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CategoriesQuery, CategoriesQueryVariables>;
 export const DiagnosticsDocument = {
   kind: "Document",
   definitions: [
@@ -201,6 +259,57 @@ export const MeDocument = {
     },
   ],
 } as unknown as DocumentNode<MeQuery, MeQueryVariables>;
+export const PoliciesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "Policies" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "documentType" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "DocumentType" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policies" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "documentType" },
+                value: { kind: "Variable", name: { kind: "Name", value: "documentType" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "subcategory" } },
+                { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "version" } },
+                { kind: "Field", name: { kind: "Name", value: "updated" } },
+                { kind: "Field", name: { kind: "Name", value: "documentType" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PoliciesQuery, PoliciesQueryVariables>;
 export const UpdateMyProfileDocument = {
   kind: "Document",
   definitions: [
