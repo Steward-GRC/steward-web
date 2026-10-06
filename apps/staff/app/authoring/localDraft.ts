@@ -5,10 +5,18 @@
 // return, and clear it on submit. Pure helpers here so the dedupe/emptiness logic is
 // unit-tested directly; the debounced write loop lives in useResumableDraft.
 
-const KEY = "steward-web:staff:new-policy-draft";
+// Versioned so a value written by an earlier release, from before drafts were Lexical
+// documents, is never read back into the form or the editor.
+const KEY = "steward-web:staff:new-policy-draft:v2";
+const RETIRED_KEYS = ["steward-web:staff:new-policy-draft"];
+
+const dropRetired = (): void => {
+  for (const key of RETIRED_KEYS) localStorage.removeItem(key);
+};
 
 export const readLocalDraft = <T>(): null | T => {
   try {
+    dropRetired();
     const raw = localStorage.getItem(KEY);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {

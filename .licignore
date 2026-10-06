@@ -19,3 +19,9 @@ coverage/
 .react-router/
 **/generated/
 **/generated/**
+
+# packages/editor is MIT-licensed (a fork of Ghost's Koenig editor, see its LICENSE and
+# README). Its upstream files carry Ghost's licence through that LICENSE file, not per-file
+# headers, and the files written for the fork say MIT in their own SPDX line, so the
+# Apache-2.0 header check doesn't apply to it.
+packages/editor/**

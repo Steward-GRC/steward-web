@@ -32,6 +32,27 @@ describe("readLocalDraft / writeLocalDraft / clearLocalDraft", () => {
   });
 });
 
+describe("the storage key change", () => {
+  const legacyKey = "steward-web:staff:new-policy-draft";
+
+  it("discards an entry left under the earlier key instead of resuming it", () => {
+    localStorage.setItem(
+      legacyKey,
+      JSON.stringify([{ sectionKey: "purpose", text: "plain text", title: "Purpose" }]),
+    );
+    expect(readLocalDraft()).toBeNull();
+    expect(localStorage.getItem(legacyKey)).toBeNull();
+  });
+
+  it("keeps a draft written under the current key", () => {
+    localStorage.setItem(legacyKey, JSON.stringify({ title: "old" }));
+    const draft = { ...emptyNewPolicyDraft(), title: "Current" };
+    writeLocalDraft(draft);
+    expect(readLocalDraft()).toEqual(draft);
+    expect(localStorage.getItem(legacyKey)).toBeNull();
+  });
+});
+
 describe("newPolicyDraftHasContent", () => {
   it("is false for an untouched form", () => {
     expect(newPolicyDraftHasContent(emptyNewPolicyDraft())).toBe(false);
