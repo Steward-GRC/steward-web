@@ -269,6 +269,21 @@ export type HistoryEntry = {
   readonly versionLabel: Scalars["String"]["output"];
 };
 
+export type IssueCollabTokenInput = {
+  readonly draftId: Scalars["ID"]["input"];
+  readonly policyId: Scalars["ID"]["input"];
+  /** The draft's pinned template version; null for a freeform draft. */
+  readonly templateVersionId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
+export type IssueCollabTokenPayload = {
+  readonly __typename?: "IssueCollabTokenPayload";
+  /** ISO-8601; the client reconnects (issuing a fresh token) once past this instant. */
+  readonly expiresAt: Scalars["String"]["output"];
+  readonly token: Scalars["String"]["output"];
+  readonly wsUrl: Scalars["String"]["output"];
+};
+
 /** One IdP connection config entry (e.g. SAML entityId/ssoUrl/signingCertificate, or OIDC issuer/clientId). */
 export type KeyValueInput = {
   readonly key: Scalars["String"]["input"];
@@ -345,6 +360,11 @@ export type Mutation = {
   readonly forceRotateSpCertificate: SpCertificate;
   /** Grants a GLOBAL role (no category). Site-admin only. */
   readonly grantRole: User;
+  /**
+   * Issues a short-lived websocket token for the co-editing session. The caller must already
+   * hold edit access to the draft; refused otherwise.
+   */
+  readonly issueCollabToken: IssueCollabTokenPayload;
   /**
    * Re-parents a group (and its whole descendant subtree). A null newParentId promotes it to a
    * root. Refused when the move would exceed the max depth or create a cycle. Site-admin only.
@@ -479,6 +499,10 @@ export type MutationEnableUserArgs = {
 export type MutationGrantRoleArgs = {
   role: Scalars["String"]["input"];
   userId: Scalars["ID"]["input"];
+};
+
+export type MutationIssueCollabTokenArgs = {
+  input: IssueCollabTokenInput;
 };
 
 export type MutationMoveGroupArgs = {

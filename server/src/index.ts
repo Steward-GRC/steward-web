@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { type ServerBuild } from "react-router";
 
+import { attachCollabServer } from "./collabServer.ts";
 import { createReadinessChecker } from "./health.ts";
 import { proxyQuery } from "./queryProxy.ts";
 import { resolveStaticAsset } from "./static.ts";
@@ -91,6 +92,8 @@ const server = createServer((request, response) => {
 
   ssrListener(request, response);
 });
+
+attachCollabServer(server);
 
 server.listen(PORT, () => {
   // One structured line: entry and exit logging per the repo's rule, trace-level detail is

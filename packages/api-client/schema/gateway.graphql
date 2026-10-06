@@ -827,3 +827,30 @@ extend type Mutation {
   "Submit review & gap-analysis of an existing draft as an async job; the result is a findings list, never an edit applied to the policy."
   submitPolicyReview(input: SubmitPolicyReviewInput!): AIJobHandle!
 }
+
+# --- Collaboration: real-time co-editing session tokens ---
+# wsUrl is same-origin (this app's own server proxies or, for now, hosts the relay itself;
+# see server/src/collabServer.ts) so the browser never holds a cross-origin connection or an
+# API token. The caller sends the token as the first message after connecting, never in the
+# URL, so it never lands in an access log.
+input IssueCollabTokenInput {
+  policyId: ID!
+  draftId: ID!
+  "The draft's pinned template version; null for a freeform draft."
+  templateVersionId: ID
+}
+
+type IssueCollabTokenPayload {
+  token: String!
+  wsUrl: String!
+  "ISO-8601; the client reconnects (issuing a fresh token) once past this instant."
+  expiresAt: String!
+}
+
+extend type Mutation {
+  """
+  Issues a short-lived websocket token for the co-editing session. The caller must already
+  hold edit access to the draft; refused otherwise.
+  """
+  issueCollabToken(input: IssueCollabTokenInput!): IssueCollabTokenPayload!
+}

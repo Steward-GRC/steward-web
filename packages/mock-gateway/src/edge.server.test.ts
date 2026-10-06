@@ -454,6 +454,30 @@ describe("mockEdge users directory", () => {
       await expect(mockEdge.aiJob("no-such-job")).rejects.toMatchObject({ name: "GatewayError" });
     });
   });
+
+  describe("collaboration", () => {
+    it("issueCollabToken() answers a same-origin wsUrl and a future expiry for an editable draft", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        title: "Collab Fixture",
+      });
+      const payload = await mockEdge.issueCollabToken({
+        draftId: created.currentDraftVersionId!,
+        policyId: created.id,
+      });
+      expect(payload.wsUrl).toBe("/collab");
+      expect(payload.token.length).toBeGreaterThan(0);
+      expect(new Date(payload.expiresAt).getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it("issueCollabToken() rejects a policy the caller can't edit", async () => {
+      await expect(
+        mockEdge.issueCollabToken({ draftId: "no-such-draft", policyId: "no-such-policy" }),
+      ).rejects.toMatchObject({ name: "GatewayError" });
+    });
+  });
 });
 
 describe("mockEdge organisations directory", () => {
