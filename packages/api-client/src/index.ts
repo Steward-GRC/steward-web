@@ -4,6 +4,7 @@ export type {
   AckStatus,
   AddOrganizationInput,
   AiHealth,
+  AiJobResult,
   AIJobResultContent,
   AiJobStatus,
   Appendix,

@@ -333,6 +333,12 @@ importers:
       graphql:
         specifier: ^17.0.2
         version: 17.0.2
+      graphql-ws:
+        specifier: ^6.3.0
+        version: 6.3.0(graphql@17.0.2)(ws@8.22.0)
+      ws:
+        specifier: ^8.22.0
+        version: 8.22.0
     devDependencies:
       '@graphql-codegen/cli':
         specifier: ^7.4.4
@@ -349,6 +355,9 @@ importers:
       '@steward-web/vite-config':
         specifier: workspace:*
         version: link:../vite-config
+      '@types/ws':
+        specifier: ^8.18.2
+        version: 8.18.2
 
   packages/auth:
     dependencies:

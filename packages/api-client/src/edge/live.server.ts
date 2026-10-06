@@ -90,6 +90,7 @@ import {
   WorkflowStatusDocument,
 } from "../generated/graphql";
 import { DocumentType } from "../generated/schema";
+import { awaitAiJobResult } from "./aiJobResult.server";
 import {
   appendixText,
   bodyTextFromContent,
@@ -346,6 +347,9 @@ export const liveEdge: Edge = {
   async aiJob(jobId, cookie) {
     const data = await gatewayFetch(AiJobDocument, { jobId }, "AiJob", { cookie });
     return data.aiJob;
+  },
+  aiJobResult(jobId, cookie, signal) {
+    return awaitAiJobResult(jobId, cookie, signal);
   },
   async aiJobResultContent(resultRef, cookie) {
     const data = await gatewayFetch(
