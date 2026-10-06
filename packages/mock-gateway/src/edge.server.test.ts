@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { DocumentType } from "@steward-web/api-client";
+import { DocumentType, ReviewCadence } from "@steward-web/api-client";
 import { describe, expect, it } from "vitest";
 
 import { mockEdge } from "./edge.server";
@@ -164,5 +164,123 @@ describe("mockEdge users directory", () => {
 
     const page = await mockEdge.users({ includeDeleted: true });
     expect(page.users.find((u) => u.userId === mockId("user", 2))?.deletedAt).toBeTruthy();
+  });
+
+  it("groupChildren() lists the fixture's root and its direct children", async () => {
+    const roots = await mockEdge.groupChildren(null);
+    const root = roots.find((g) => g.name === "Meridian Holdings");
+    expect(root).toBeDefined();
+    const children = await mockEdge.groupChildren(root!.id);
+    expect(children.map((g) => g.name)).toEqual(["IT Security"]);
+  });
+
+  it("createGroup() refuses a duplicate slug under the same parent", async () => {
+    await expect(
+      mockEdge.createGroup({
+        name: "Meridian Holdings",
+        parentId: null,
+        slug: "meridian-holdings",
+      }),
+    ).rejects.toMatchObject({ code: "ALREADY_EXISTS" });
+  });
+
+  it("createGroup(), renameGroup() and deleteGroup() manage an isolated new tree", async () => {
+    const root = await mockEdge.createGroup({ name: "Acme", parentId: null, slug: "acme" });
+    const child = await mockEdge.createGroup({ name: "Ops", parentId: root.id, slug: "ops" });
+    const rootChildren = await mockEdge.groupChildren(root.id);
+    expect(rootChildren.map((g) => g.id)).toEqual([child.id]);
+
+    const renamed = await mockEdge.renameGroup(child.id, "Operations", "operations");
+    expect(renamed).toMatchObject({ name: "Operations", slug: "operations" });
+
+    await mockEdge.deleteGroup(root.id);
+    expect(await mockEdge.groupChildren(root.id)).toEqual([]);
+    const roots = await mockEdge.groupChildren(null);
+    expect(roots.map((g) => g.id)).not.toContain(root.id);
+  });
+
+  it("moveGroup() refuses moving a group under its own descendant", async () => {
+    const root = await mockEdge.createGroup({
+      name: "Cycle root",
+      parentId: null,
+      slug: "cycle-root",
+    });
+    const child = await mockEdge.createGroup({
+      name: "Cycle child",
+      parentId: root.id,
+      slug: "cycle-child",
+    });
+    await expect(mockEdge.moveGroup(root.id, child.id)).rejects.toMatchObject({
+      code: "INVALID_ARGUMENT",
+    });
+  });
+
+  it("moveGroup() refuses a move that would exceed the max depth", async () => {
+    const root = await mockEdge.createGroup({
+      name: "Depth root",
+      parentId: null,
+      slug: "depth-root",
+    });
+    const level2 = await mockEdge.createGroup({
+      name: "Depth 2",
+      parentId: root.id,
+      slug: "depth-2",
+    });
+    const level3 = await mockEdge.createGroup({
+      name: "Depth 3",
+      parentId: level2.id,
+      slug: "depth-3",
+    });
+    const level4 = await mockEdge.createGroup({
+      name: "Depth 4",
+      parentId: level3.id,
+      slug: "depth-4",
+    });
+    const other = await mockEdge.createGroup({ name: "Other", parentId: null, slug: "other" });
+    await expect(mockEdge.moveGroup(other.id, level4.id)).rejects.toMatchObject({
+      code: "FAILED_PRECONDITION",
+    });
+  });
+
+  it("moveGroup() re-parents a group to the top level", async () => {
+    const root = await mockEdge.createGroup({
+      name: "Move root",
+      parentId: null,
+      slug: "move-root",
+    });
+    const child = await mockEdge.createGroup({
+      name: "Move child",
+      parentId: root.id,
+      slug: "move-child",
+    });
+    const moved = await mockEdge.moveGroup(child.id, null);
+    expect(moved.parentId).toBeNull();
+  });
+
+  it("updateGroupSettings() persists defaults and governance", async () => {
+    const group = await mockEdge.createGroup({
+      name: "Settings",
+      parentId: null,
+      slug: "settings",
+    });
+    const updated = await mockEdge.updateGroupSettings({
+      defaultTemplateNone: true,
+      id: group.id,
+      owners: [mockId("user", 2)],
+      reviewCadence: ReviewCadence.Annual,
+    });
+    expect(updated).toMatchObject({
+      defaultTemplateId: null,
+      defaultTemplateNone: true,
+      owners: [mockId("user", 2)],
+      reviewCadence: ReviewCadence.Annual,
+    });
+  });
+
+  it("templates() and workflows() answer the fixture lists", async () => {
+    const templates = await mockEdge.templates();
+    const workflows = await mockEdge.workflows();
+    expect(templates.length).toBeGreaterThan(0);
+    expect(workflows.length).toBeGreaterThan(0);
   });
 });

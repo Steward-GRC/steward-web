@@ -12,6 +12,7 @@
 export const PERMISSIONS = {
   AdminManage: "admin.manage",
   AuditRead: "audit.read",
+  GroupManage: "group.manage",
   PolicyApprove: "policy.approve",
   PolicyAuthor: "policy.author",
   PolicyRead: "policy.read",

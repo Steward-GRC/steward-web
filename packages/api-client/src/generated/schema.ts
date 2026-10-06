@@ -12,10 +12,10 @@ export type Scalars = {
    * file is hand-pinned from the original gateway's v3.0.0 SDL (see ../schema-refs.env),
    * trimmed to the operations steward-web actually sends: the signed-in user, the
    * diagnostics report, editing one's own display name, the policy/procedure library browse
-   * (categories and the catalog), and the admin user directory. It gains more of the
-   * upstream schema as later ports add operations, and schema-generate.sh switches from this
-   * vendored copy to a live fetch once steward-gateway publishes its own schema on its main
-   * branch.
+   * (categories and the catalog), the admin user directory and the admin group directory. It
+   * gains more of the upstream schema as later ports add operations, and schema-generate.sh
+   * switches from this vendored copy to a live fetch once steward-gateway publishes its own
+   * schema on its main branch.
    *
    * Identity-provider-specific wording in the original schema's descriptions is dropped (Steward
    * signs in through Ory Kratos); nothing else about the shape of these operations has changed.
@@ -134,6 +134,29 @@ export enum DocumentType {
   Procedure = "PROCEDURE",
 }
 
+/** A taxonomy group: the policy/procedure library's org hierarchy. */
+export type Group = {
+  readonly __typename?: "Group";
+  /**
+   * Template tri-state: defaultTemplateNone=true means explicit none (freeform); a set
+   * defaultTemplateId means that template; both unset means inherit from the ancestor chain.
+   */
+  readonly defaultTemplateId?: Maybe<Scalars["ID"]["output"]>;
+  readonly defaultTemplateNone: Scalars["Boolean"]["output"];
+  /** Never inherited: null means no default workflow (publish without approval). */
+  readonly defaultWorkflowId?: Maybe<Scalars["ID"]["output"]>;
+  readonly id: Scalars["ID"]["output"];
+  readonly name: Scalars["String"]["output"];
+  /** Reviews this group's policies on reviewCadence. Inherited by sub-groups below a department. */
+  readonly owners: ReadonlyArray<Scalars["ID"]["output"]>;
+  /** Null for a root (top-level) group. */
+  readonly parentId?: Maybe<Scalars["ID"]["output"]>;
+  readonly reviewCadence: ReviewCadence;
+  /** Set only when reviewCadence is ON_DATE. */
+  readonly reviewDate?: Maybe<Scalars["String"]["output"]>;
+  readonly slug: Scalars["String"]["output"];
+};
+
 /** One append-only event in a policy's combined publish-and-approval history (U18): submitted, a stage decision, published, changes requested, or withdrawn. */
 export type HistoryEntry = {
   readonly __typename?: "HistoryEntry";
@@ -166,6 +189,13 @@ export type Mutation = {
   readonly acknowledgePolicy: AckStatus;
   /** A site admin's time-boxed, audited reveal of a sensitive policy's real content. A non-empty reason is required; the grant is recorded for audit. */
   readonly breakGlassReveal: BreakGlassGrant;
+  /** Creates a taxonomy group. Site-admin only. */
+  readonly createGroup: Group;
+  /**
+   * Deletes a group and its policy-free descendants. Refused when the group or any descendant
+   * owns policies. Site-admin only.
+   */
+  readonly deleteGroup: Scalars["Boolean"]["output"];
   /**
    * Soft-deletes a user: revokes their sessions and drops their access. Never deletes a policy
    * they own; deleteUser is refused while previewUserDeletion reports blocksDelete. Site-admin
@@ -176,10 +206,22 @@ export type Mutation = {
   readonly enableUser: User;
   /** Grants a GLOBAL role (no category). Site-admin only. */
   readonly grantRole: User;
+  /**
+   * Re-parents a group (and its whole descendant subtree). A null newParentId promotes it to a
+   * root. Refused when the move would exceed the max depth or create a cycle. Site-admin only.
+   */
+  readonly moveGroup: Group;
+  /** Renames a group (name and slug). Does not renumber existing policies. Site-admin only. */
+  readonly renameGroup: Group;
   /** Revokes a GLOBAL role (no category). Site-admin only. */
   readonly revokeRole: User;
   /** Revokes every active session for a user, signing them out everywhere. Site-admin only. */
   readonly revokeUserSessions: Scalars["Int"]["output"];
+  /**
+   * Sets a group's inherited defaults (template, workflow) and governance (owners, review
+   * cadence). Site-admin only.
+   */
+  readonly updateGroupSettings: Group;
   /** Edits the CALLING user's own name. Refused when signed out. */
   readonly updateMyProfile: Me;
   /** Edits another user's name and email. Local (non-federated) accounts only, site-admin only. */
@@ -193,6 +235,16 @@ export type MutationAcknowledgePolicyArgs = {
 export type MutationBreakGlassRevealArgs = {
   policyId: Scalars["ID"]["input"];
   reason: Scalars["String"]["input"];
+};
+
+export type MutationCreateGroupArgs = {
+  name: Scalars["String"]["input"];
+  parentId?: InputMaybe<Scalars["ID"]["input"]>;
+  slug: Scalars["String"]["input"];
+};
+
+export type MutationDeleteGroupArgs = {
+  id: Scalars["ID"]["input"];
 };
 
 export type MutationDeleteUserArgs = {
@@ -212,6 +264,17 @@ export type MutationGrantRoleArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationMoveGroupArgs = {
+  groupId: Scalars["ID"]["input"];
+  newParentId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
+export type MutationRenameGroupArgs = {
+  id: Scalars["ID"]["input"];
+  name: Scalars["String"]["input"];
+  slug: Scalars["String"]["input"];
+};
+
 export type MutationRevokeRoleArgs = {
   role: Scalars["String"]["input"];
   userId: Scalars["ID"]["input"];
@@ -220,6 +283,16 @@ export type MutationRevokeRoleArgs = {
 export type MutationRevokeUserSessionsArgs = {
   reason?: InputMaybe<Scalars["String"]["input"]>;
   userId: Scalars["ID"]["input"];
+};
+
+export type MutationUpdateGroupSettingsArgs = {
+  defaultTemplateId?: InputMaybe<Scalars["ID"]["input"]>;
+  defaultTemplateNone?: InputMaybe<Scalars["Boolean"]["input"]>;
+  defaultWorkflowId?: InputMaybe<Scalars["ID"]["input"]>;
+  id: Scalars["ID"]["input"];
+  owners?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
+  reviewCadence?: InputMaybe<ReviewCadence>;
+  reviewDate?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MutationUpdateMyProfileArgs = {
@@ -355,6 +428,8 @@ export type Query = {
   readonly categories: ReadonlyArray<Category>;
   /** Build and version facts for a bug report. Any signed-in user; refused when signed out. */
   readonly diagnostics: Diagnostics;
+  /** A group's direct children. A null parentId lists the root groups. Site-admin only. */
+  readonly groupChildren: ReadonlyArray<Group>;
   /** A user's sessions, site-admin only. */
   readonly listUserSessions: ReadonlyArray<Session>;
   /** The signed-in user, from the verified session. Null when signed out. */
@@ -368,11 +443,19 @@ export type Query = {
    * block on, orphan or drop. Site-admin only.
    */
   readonly previewUserDeletion: UserDeletionPreview;
+  /** The templates selectable as a group's default. Site-admin only. */
+  readonly templates: ReadonlyArray<Template>;
   /**
    * The platform's users, site-admin only. search filters by email substring; includeDeleted
    * also returns tombstoned accounts.
    */
   readonly users: UserPage;
+  /** The workflows selectable as a group's default. Site-admin only. */
+  readonly workflows: ReadonlyArray<Workflow>;
+};
+
+export type QueryGroupChildrenArgs = {
+  parentId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type QueryListUserSessionsArgs = {
@@ -390,6 +473,10 @@ export type QueryPolicyDetailArgs = {
 
 export type QueryPreviewUserDeletionArgs = {
   userId: Scalars["ID"]["input"];
+};
+
+export type QueryTemplatesArgs = {
+  ownerGroupId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type QueryUsersArgs = {
@@ -413,6 +500,13 @@ export type RelatedPolicy = {
   readonly title: Scalars["String"]["output"];
 };
 
+export enum ReviewCadence {
+  Annual = "ANNUAL",
+  Biennial = "BIENNIAL",
+  None = "NONE",
+  OnDate = "ON_DATE",
+}
+
 export enum Sensitivity {
   Sensitive = "SENSITIVE",
   Standard = "STANDARD",
@@ -428,6 +522,13 @@ export type Session = {
   readonly revokedAt?: Maybe<Scalars["String"]["output"]>;
   readonly sessionId: Scalars["ID"]["output"];
   readonly userAgent: Scalars["String"]["output"];
+};
+
+/** A template selectable as a group's default. */
+export type Template = {
+  readonly __typename?: "Template";
+  readonly id: Scalars["ID"]["output"];
+  readonly name: Scalars["String"]["output"];
 };
 
 /** One platform user. */
@@ -504,4 +605,11 @@ export type UserPage = {
   readonly __typename?: "UserPage";
   readonly nextPageToken: Scalars["String"]["output"];
   readonly users: ReadonlyArray<User>;
+};
+
+/** A workflow definition selectable as a group's default. */
+export type Workflow = {
+  readonly __typename?: "Workflow";
+  readonly id: Scalars["ID"]["output"];
+  readonly name: Scalars["String"]["output"];
 };

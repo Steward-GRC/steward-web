@@ -1,0 +1,5 @@
+query GroupChildren($parentId: ID) {
+  groupChildren(parentId: $parentId) {
+    ...GroupFields
+  }
+}

@@ -1,0 +1,6 @@
+query Templates {
+  templates {
+    id
+    name
+  }
+}
