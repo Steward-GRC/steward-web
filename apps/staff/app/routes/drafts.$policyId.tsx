@@ -246,7 +246,11 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     const resolver = collabResolvers.current.shift();
     if (!resolver) return;
     if (collabFetcher.data.ok && "token" in collabFetcher.data) {
-      resolver.resolve({ token: collabFetcher.data.token, wsUrl: collabFetcher.data.wsUrl });
+      resolver.resolve({
+        expiresAt: collabFetcher.data.expiresAt,
+        token: collabFetcher.data.token,
+        wsUrl: collabFetcher.data.wsUrl,
+      });
     } else {
       resolver.reject(new Error("the collab token request was refused"));
     }
@@ -277,7 +281,28 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     );
   }, []);
 
-  const collabSession = useCollabSession(draft?.id ?? null, getCollabToken, onRemoteSectionUpdate);
+  const getCollabContentJSON = useCallback(() => stringifyDraftSections(sections), [sections]);
+
+  const [collabNotice, setCollabNotice] = useState<null | string>(null);
+  const [collabReadOnly, setCollabReadOnly] = useState(false);
+  const onCollabSnapshotRejected = useCallback((message: string) => {
+    setCollabNotice(`Not saved collaboratively: ${message}`);
+  }, []);
+  const onCollabPublishedElsewhere = useCallback(() => {
+    setCollabReadOnly(true);
+    setCollabNotice(
+      "This draft was just published elsewhere. Reload to see the published version.",
+    );
+  }, []);
+
+  const collabSession = useCollabSession(
+    draft?.id ?? null,
+    getCollabToken,
+    onRemoteSectionUpdate,
+    getCollabContentJSON,
+    onCollabSnapshotRejected,
+    onCollabPublishedElsewhere,
+  );
 
   if (!draft) {
     return (
@@ -439,7 +464,10 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
           <publishFetcher.Form method="post">
             <input name="intent" type="hidden" value="publish" />
-            <Button disabled={publishFetcher.state !== "idle" || missing.length > 0} type="submit">
+            <Button
+              disabled={publishFetcher.state !== "idle" || missing.length > 0 || collabReadOnly}
+              type="submit"
+            >
               {t("editor.actions.publish")}
             </Button>
           </publishFetcher.Form>
@@ -472,6 +500,10 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         <Banner title={t("editor.requiredMissing", { sections: missing.join(", ") })} tone="warn" />
       ) : null}
 
+      {collabNotice ? (
+        <Banner title={collabNotice} tone={collabReadOnly ? "info" : "warn"} />
+      ) : null}
+
       <saveFetcher.Form className="grid gap-6" method="post">
         <input name="intent" type="hidden" value="save" />
         <input name="sectionsJson" type="hidden" value={sectionsJson} />
@@ -497,6 +529,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               ) : null}
             </div>
             <Textarea
+              disabled={collabReadOnly}
               onChange={(event) => setSectionText(section.sectionKey, event.target.value)}
               value={section.text}
             />
@@ -544,7 +577,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
         <Button
           className="justify-self-start"
-          disabled={saveFetcher.state !== "idle"}
+          disabled={saveFetcher.state !== "idle" || collabReadOnly}
           type="submit"
         >
           {tCommon("actions.save")}
