@@ -1,13 +1,14 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { type SerializedNode, serializeDocument, wrapRoot } from "@steward-web/editor-steward";
 import { describe, expect, it } from "vitest";
 
 import {
-  ensureTemplateSections,
+  aiSections,
+  applyAiText,
+  draftDocument,
+  fillGenerated,
   missingRequiredSections,
-  parseDraftSections,
-  scaffoldFromTemplate,
-  stringifyDraftSections,
 } from "./sections";
 
 const outline = [
@@ -15,71 +16,87 @@ const outline = [
   { key: "scope", level: 1, order: 1, required: false, title: "Scope" },
 ];
 
-describe("parseDraftSections", () => {
-  it("parses a stored JSON array", () => {
-    const json = stringifyDraftSections([{ sectionKey: "purpose", text: "hi", title: "Purpose" }]);
-    expect(parseDraftSections(json)).toEqual([
-      { sectionKey: "purpose", text: "hi", title: "Purpose" },
-    ]);
+const text = (value: string): SerializedNode => ({ text: value, type: "text", version: 1 });
+const heading = (title: string, level = 1): SerializedNode => ({
+  children: [text(title)],
+  tag: `h${level}`,
+  type: "heading",
+  version: 1,
+});
+const paragraph = (value: string): SerializedNode => ({
+  children: [text(value)],
+  type: "paragraph",
+  version: 1,
+});
+const stored = (...children: SerializedNode[]) => serializeDocument(wrapRoot(children));
+
+describe("draftDocument", () => {
+  it("opens a template draft with every template section present", () => {
+    const document = draftDocument(stored(heading("Scope"), paragraph("All staff")), outline);
+    expect(aiSections(document, outline).map((s) => s.key)).toEqual(["purpose", "scope"]);
+    expect(aiSections(document, outline)[1]?.text).toBe("All staff");
   });
 
-  it("answers no sections for null, undefined, empty or malformed content", () => {
-    expect(parseDraftSections(null)).toEqual([]);
-    expect(parseDraftSections()).toEqual([]);
-    expect(parseDraftSections("")).toEqual([]);
-    expect(parseDraftSections("{not json")).toEqual([]);
-    expect(parseDraftSections('{"not":"an array"}')).toEqual([]);
+  it("starts a template draft from its scaffold when nothing is stored yet", () => {
+    expect(missingRequiredSections(draftDocument(null, outline), outline)).toEqual(["Purpose"]);
+  });
+
+  it("drops a stored value that isn't an editor state, such as the earlier plain-text format", () => {
+    const old = JSON.stringify([{ sectionKey: "purpose", text: "old", title: "Purpose" }]);
+    const document = draftDocument(old, []);
+    expect(document.root.children).toHaveLength(1);
+    expect(JSON.stringify(document)).not.toContain("old");
   });
 });
 
-describe("scaffoldFromTemplate", () => {
-  it("builds one empty section per template section, in template order", () => {
-    expect(scaffoldFromTemplate(outline)).toEqual([
-      { sectionKey: "purpose", text: "", title: "Purpose" },
-      { sectionKey: "scope", text: "", title: "Scope" },
-    ]);
+describe("missingRequiredSections (the publish gate) on the Lexical tree", () => {
+  it("blocks while a required section's heading has nothing under it", () => {
+    const document = draftDocument(stored(heading("Purpose"), heading("Scope")), outline);
+    expect(missingRequiredSections(document, outline)).toEqual(["Purpose"]);
   });
 
-  it("orders by the template's `order`, not array position", () => {
-    const reversed = [outline[1]!, outline[0]!];
-    expect(scaffoldFromTemplate(reversed).map((s) => s.sectionKey)).toEqual(["purpose", "scope"]);
-  });
-});
-
-describe("ensureTemplateSections", () => {
-  it("keeps already-authored text for a present section", () => {
-    const current = [{ sectionKey: "purpose", text: "already written", title: "Purpose" }];
-    const result = ensureTemplateSections(current, outline);
-    expect(result).toEqual([
-      { sectionKey: "purpose", text: "already written", title: "Purpose" },
-      { sectionKey: "scope", text: "", title: "Scope" },
-    ]);
+  it("clears once the section has text, including text under a sub-heading", () => {
+    const filled = draftDocument(stored(heading("Purpose"), paragraph("Why")), outline);
+    const nested = draftDocument(
+      stored(heading("Purpose"), heading("Detail", 2), paragraph("Why")),
+      outline,
+    );
+    expect(missingRequiredSections(filled, outline)).toEqual([]);
+    expect(missingRequiredSections(nested, outline)).toEqual([]);
   });
 
-  it("fills in a template section missing entirely", () => {
-    const result = ensureTemplateSections([], outline);
-    expect(result.map((s) => s.sectionKey)).toEqual(["purpose", "scope"]);
+  it("ignores whitespace-only text", () => {
+    const document = draftDocument(stored(heading("Purpose"), paragraph(" ".repeat(3))), outline);
+    expect(missingRequiredSections(document, outline)).toEqual(["Purpose"]);
+  });
+
+  it("never blocks a freeform draft", () => {
+    expect(missingRequiredSections(draftDocument(null, []), [])).toEqual([]);
   });
 });
 
-describe("missingRequiredSections", () => {
-  it("lists required sections with no non-blank text", () => {
-    const sections = [
-      { sectionKey: "purpose", text: "  ", title: "Purpose" },
-      { sectionKey: "scope", text: "", title: "Scope" },
-    ];
-    expect(missingRequiredSections(sections, outline)).toEqual(["Purpose"]);
+describe("the AI section helpers", () => {
+  it("treat a freeform draft as one Content section", () => {
+    const document = draftDocument(stored(paragraph("One"), paragraph("Two")), []);
+    expect(aiSections(document, [])).toEqual([
+      { key: "content", text: "One\n\nTwo", title: "Content" },
+    ]);
+    const rewritten = applyAiText(document, [], "content", "Rewritten");
+    expect(aiSections(rewritten, [])[0]?.text).toBe("Rewritten");
   });
 
-  it("answers empty once every required section has content", () => {
-    const sections = [
-      { sectionKey: "purpose", text: "filled in", title: "Purpose" },
-      { sectionKey: "scope", text: "", title: "Scope" },
-    ];
-    expect(missingRequiredSections(sections, outline)).toEqual([]);
+  it("apply a suggestion to one template section only", () => {
+    const document = draftDocument(stored(heading("Purpose"), paragraph("Old")), outline);
+    const result = applyAiText(document, outline, "purpose", "New");
+    expect(aiSections(result, outline).map((s) => s.text)).toEqual(["New", ""]);
   });
 
-  it("never flags a section the template doesn't mark required", () => {
-    expect(missingRequiredSections([], [outline[1]!])).toEqual([]);
+  it("fill generated text into empty sections and leave authored ones", () => {
+    const document = draftDocument(stored(heading("Purpose"), paragraph("Mine")), outline);
+    const result = fillGenerated(document, outline, [
+      { sectionKey: "purpose", text: "Generated purpose" },
+      { sectionKey: "scope", text: "Generated scope" },
+    ]);
+    expect(aiSections(result, outline).map((s) => s.text)).toEqual(["Mine", "Generated scope"]);
   });
 });

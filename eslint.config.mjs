@@ -7,7 +7,25 @@ import globals from "globals";
 
 const shared = createESLintConfig({ enable: ["eslintA11y", "eslintTesting"] });
 
-export default [
+// packages/editor carries a fork of an MIT editor's sources. They keep upstream's own style so
+// later upstream fixes can be carried over by hand, so the shared rules skip them. They still
+// get a parser and the one rule that matters here: the core never imports a workspace package
+// (the Steward adapter included). Code written for the fork (src/additions) is linted as usual.
+const editorFork = [
+  "packages/editor/src/koenig-lexical/**",
+  "packages/editor/src/kg-default-nodes/**",
+  "packages/editor/src/kg-default-transforms/**",
+  "packages/editor/tailwind.config.cjs",
+];
+const typescriptParser = shared.find((config) => config.languageOptions?.parser)?.languageOptions
+  .parser;
+const sharedPlugins = Object.assign({}, ...shared.map((config) => config.plugins ?? {}));
+const skipFork = (config) =>
+  Object.keys(config).some((key) => key !== "ignores" && key !== "name")
+    ? { ...config, ignores: [...(config.ignores ?? []), ...editorFork] }
+    : config;
+
+const config = [
   {
     ignores: [
       "**/dist/**",
@@ -73,4 +91,32 @@ export default [
       ],
     },
   },
+];
+
+const editorCoreImports = {
+  "no-restricted-imports": [
+    "error",
+    {
+      patterns: [
+        {
+          group: ["@steward-web/*"],
+          message:
+            "The editor core stands alone: Steward code belongs in @steward-web/editor-steward.",
+        },
+      ],
+    },
+  ],
+};
+
+export default [
+  ...config.map((entry) => skipFork(entry)),
+  {
+    files: editorFork.map((glob) => `${glob}/*.{ts,tsx}`),
+    languageOptions: { parser: typescriptParser },
+    // Upstream's inline directives name these plugins' rules; load them so the directives resolve.
+    linterOptions: { reportUnusedDisableDirectives: "off" },
+    plugins: { react: sharedPlugins.react, "react-hooks": reactHooks },
+    rules: editorCoreImports,
+  },
+  { files: ["packages/editor/**/*.{ts,tsx,mjs,js}"], rules: editorCoreImports },
 ];

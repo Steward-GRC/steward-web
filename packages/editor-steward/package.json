@@ -1,0 +1,41 @@
+{
+  "name": "@steward-web/editor-steward",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Steward's adapter for the editor: the collab wiring, Steward's own nodes, i18n, theme and the server-rendered read-only view.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./document": "./src/document/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@lexical/clipboard": "^0.52.0",
+    "@lexical/code": "^0.52.0",
+    "@lexical/html": "^0.52.0",
+    "@lexical/link": "^0.52.0",
+    "@lexical/list": "^0.52.0",
+    "@lexical/markdown": "^0.52.0",
+    "@lexical/react": "^0.52.0",
+    "@lexical/rich-text": "^0.52.0",
+    "@lexical/selection": "^0.52.0",
+    "@lexical/table": "^0.52.0",
+    "@lexical/text": "^0.52.0",
+    "@lexical/utils": "^0.52.0",
+    "@lexical/yjs": "^0.52.0",
+    "@steward-web/editor": "workspace:*",
+    "@steward-web/i18n": "workspace:*",
+    "lexical": "^0.52.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.31"
+  },
+  "devDependencies": {
+    "@steward-web/vite-config": "workspace:*"
+  }
+}

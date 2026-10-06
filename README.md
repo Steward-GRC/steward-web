@@ -13,6 +13,11 @@ pnpm install --ignore-scripts
 pnpm run check     # lint, typecheck, unit tests and builds
 ```
 
+## 📚 Docs
+
+- [The authoring editor](docs/authoring-editor.md): what staff get, the draft format and
+  co-editing.
+
 ## 🤝 Contributing
 
 Read the org's [CONTRIBUTING](https://github.com/Steward-GRC/.github/blob/main/CONTRIBUTING.md) and

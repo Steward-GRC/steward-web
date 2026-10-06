@@ -3,6 +3,12 @@
 import { AssistOperation } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import {
+  parseDocument,
+  type SerializedDocument,
+  serializeDocument,
+  type StewardEditorHandle,
+} from "@steward-web/editor-steward";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
@@ -21,7 +27,7 @@ import {
   Select,
   Textarea,
 } from "@steward-web/ui";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, Form, Link, useFetcher } from "react-router";
 
 import type { Route } from "./+types/drafts.$policyId";
@@ -45,17 +51,22 @@ import {
 } from "../authoring/authoring.server";
 import { issueCollabToken } from "../authoring/collab/collab.server";
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
+import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
 import {
-  type DraftSection,
-  ensureTemplateSections,
+  aiSections,
+  applyAiText,
+  draftDocument,
+  fillGenerated,
   missingRequiredSections,
-  parseDraftSections,
-  scaffoldFromTemplate,
-  stringifyDraftSections,
 } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
 
-const FREEFORM_SECTION = { key: "content", level: 1, order: 0, required: false, title: "Content" };
+/** A section as the AI forms post it: its key, title and plain text. */
+interface SectionPayload {
+  sectionKey: string;
+  text: string;
+  title: string;
+}
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
@@ -118,7 +129,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         return data({ intent, ok: true } as const);
       }
       case "generate": {
-        const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as DraftSection[];
+        const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as SectionPayload[];
         const { jobId } = await submitDraftGeneration(request, {
           brief: String(form.get("brief") ?? ""),
           sections: sections.map((s, index) => ({
@@ -134,7 +145,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         return data({ intent, ok: true } as const);
       }
       case "review": {
-        const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as DraftSection[];
+        const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as SectionPayload[];
         const { jobId } = await submitPolicyReview(request, {
           policyId,
           sections: sections.map((s) => ({ content: s.text, key: s.sectionKey, title: s.title })),
@@ -143,9 +154,11 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         return data({ intent, jobId, ok: true } as const);
       }
       case "save": {
-        const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as DraftSection[];
+        // The editor's serialized state. Refuse anything that isn't one rather than store it.
+        const document = parseDocument(String(form.get("contentJson") ?? ""));
+        if (!document) throw new Response("Bad Request", { status: 400 });
         const templateVersionId = String(form.get("templateVersionId") ?? "") || null;
-        await saveDraft(request, policyId, stringifyDraftSections(sections), templateVersionId);
+        await saveDraft(request, policyId, serializeDocument(document), templateVersionId);
         return data({ intent, ok: true } as const);
       }
       case "update-appendix": {
@@ -205,17 +218,18 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     reason: loaderData.aiHealth.reason ?? null,
   });
 
-  const outline = templateVersion?.sections ?? (policy.templateNone ? [] : [FREEFORM_SECTION]);
+  const outline = templateVersion?.sections ?? [];
 
-  const [sections, setSections] = useState<DraftSection[]>(() => {
-    const parsed = parseDraftSections(draft?.contentJson);
-    return outline.length > 0
-      ? ensureTemplateSections(parsed, outline)
-      : parsed.length > 0
-        ? parsed
-        : scaffoldFromTemplate([FREEFORM_SECTION]);
-  });
-  const [assistSectionKey, setAssistSectionKey] = useState<null | string>(null);
+  // The document the editor opens with, and the one it holds now (kept current from the
+  // editor's own change events, remote edits included).
+  const [initialDocument] = useState(() => draftDocument(draft?.contentJson, outline));
+  const [content, setContent] = useState<SerializedDocument>(initialDocument);
+  const contentRef = useRef(initialDocument);
+  const editorRef = useRef<null | StewardEditorHandle>(null);
+  const [assistOpen, setAssistOpen] = useState(false);
+  const [assistSectionKey, setAssistSectionKey] = useState<string>(
+    () => aiSections(initialDocument, outline)[0]?.key ?? "",
+  );
   const [appliedGenerateJobId, setAppliedGenerateJobId] = useState<null | string>(null);
 
   const saveFetcher = useFetcher<typeof action>();
@@ -273,13 +287,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `collabFetcher` is stable per mount
   }, [draft?.id, draft?.templateVersionId]);
 
-  const onRemoteSectionUpdate = useCallback((sectionKey: string, text: string) => {
-    setSections((current) =>
-      current.map((s) => (s.sectionKey === sectionKey ? { ...s, text } : s)),
-    );
-  }, []);
-
-  const getCollabContentJSON = useCallback(() => stringifyDraftSections(sections), [sections]);
+  const getCollabContentJSON = useCallback(() => serializeDocument(contentRef.current), []);
 
   const [collabNotice, setCollabNotice] = useState<null | string>(null);
   const [collabReadOnly, setCollabReadOnly] = useState(false);
@@ -293,13 +301,25 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     );
   }, []);
 
-  const collabSession = useCollabSession(
-    draft?.id ?? null,
-    getCollabToken,
-    onRemoteSectionUpdate,
-    getCollabContentJSON,
-    onCollabSnapshotRejected,
-    onCollabPublishedElsewhere,
+  const collabCallbacks = useMemo(
+    () => ({
+      getContentJSON: getCollabContentJSON,
+      getToken: getCollabToken,
+      onPublishedElsewhere: onCollabPublishedElsewhere,
+      onSnapshotRejected: onCollabSnapshotRejected,
+    }),
+    [getCollabContentJSON, getCollabToken, onCollabPublishedElsewhere, onCollabSnapshotRejected],
+  );
+  const collabSession = useCollabSession(draft?.id ?? null, collabCallbacks);
+  const { touch: touchCollab } = collabSession;
+
+  const onDocumentChange = useCallback(
+    (next: SerializedDocument) => {
+      contentRef.current = next;
+      setContent(next);
+      touchCollab();
+    },
+    [touchCollab],
   );
 
   if (!draft) {
@@ -310,15 +330,21 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  const setSectionText = (sectionKey: string, text: string) => {
-    setSections((current) =>
-      current.map((s) => (s.sectionKey === sectionKey ? { ...s, text } : s)),
-    );
-    collabSession.sendUpdate(sectionKey, text);
+  /** Replace the document: through the editor when it's mounted, so a live room syncs it. */
+  const replaceDocument = (next: SerializedDocument) => {
+    if (editorRef.current) {
+      editorRef.current.setDocument(next);
+      return;
+    }
+    onDocumentChange(next);
   };
 
-  const missing = missingRequiredSections(sections, outline);
-  const sectionsJson = stringifyDraftSections(sections);
+  const sectionTexts = aiSections(content, outline);
+  const missing = missingRequiredSections(content, outline);
+  const sectionsJson = JSON.stringify(
+    sectionTexts.map((s) => ({ sectionKey: s.key, text: s.text, title: s.title })),
+  );
+  const assistSection = sectionTexts.find((s) => s.key === assistSectionKey) ?? sectionTexts[0];
   const assistSuggestion =
     assistFetcher.data?.ok && "sectionKey" in assistFetcher.data ? assistFetcher.data : null;
 
@@ -390,16 +416,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
                       ))}
                       <Button
                         onClick={() => {
-                          setSections((current) =>
-                            current.map((section) => {
-                              const generated = generateResult.sections.find(
-                                (g) => g.sectionKey === section.sectionKey,
-                              );
-                              return generated && section.text.trim() === ""
-                                ? { ...section, text: generated.text }
-                                : section;
-                            }),
-                          );
+                          replaceDocument(fillGenerated(content, outline, generateResult.sections));
                           setAppliedGenerateJobId(generateJobId);
                         }}
                         type="button"
@@ -503,77 +520,35 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         <Banner title={collabNotice} tone={collabReadOnly ? "info" : "warn"} />
       ) : null}
 
-      <saveFetcher.Form className="grid gap-6" method="post">
+      <saveFetcher.Form className="grid gap-4" method="post">
         <input name="intent" type="hidden" value="save" />
-        <input name="sectionsJson" type="hidden" value={sectionsJson} />
+        <input name="contentJson" type="hidden" value={serializeDocument(content)} />
         <input name="templateVersionId" type="hidden" value={draft.templateVersionId ?? ""} />
 
-        {sections.map((section) => (
-          <div className="grid gap-2" key={section.sectionKey}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-ink">{section.title}</h2>
-              {aiHealth.available ? (
-                <Button
-                  onClick={() =>
-                    setAssistSectionKey(
-                      section.sectionKey === assistSectionKey ? null : section.sectionKey,
-                    )
-                  }
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  {tAi("assist.title")}
-                </Button>
-              ) : null}
-            </div>
-            <Textarea
-              disabled={collabReadOnly}
-              onChange={(event) => setSectionText(section.sectionKey, event.target.value)}
-              value={section.text}
-            />
-            {assistSectionKey === section.sectionKey ? (
-              <assistFetcher.Form
-                className="grid gap-2 rounded-md border border-border p-3"
-                method="post"
-              >
-                <input name="intent" type="hidden" value="assist" />
-                <input name="versionId" type="hidden" value={draft?.id ?? ""} />
-                <input name="sectionKey" type="hidden" value={section.sectionKey} />
-                <input name="editableContent" type="hidden" value={section.text} />
-                <Field label={tAi("assist.operationLabel")}>
-                  <Select
-                    name="operation"
-                    options={Object.values(AssistOperation).map((operation) => ({
-                      label: tAi(`assist.operation.${operation}`),
-                      value: operation,
-                    }))}
-                  />
-                </Field>
-                <Field label={tAi("assist.instruction")}>
-                  <Input name="instruction" />
-                </Field>
-                <Button disabled={assistFetcher.state !== "idle"} type="submit">
-                  {tAi("assist.ask")}
-                </Button>
-                {assistSuggestion && assistSuggestion.sectionKey === section.sectionKey ? (
-                  <div className="grid gap-2">
-                    <p className="text-sm">{assistSuggestion.suggestion}</p>
-                    <Button
-                      onClick={() => {
-                        setSectionText(section.sectionKey, assistSuggestion.suggestion);
-                        setAssistSectionKey(null);
-                      }}
-                      type="button"
-                    >
-                      {tAi("assist.apply")}
-                    </Button>
-                  </div>
-                ) : null}
-              </assistFetcher.Form>
-            ) : null}
+        {aiHealth.available ? (
+          <div className="flex justify-end">
+            <Button
+              onClick={() => setAssistOpen((open) => !open)}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              {tAi("assist.title")}
+            </Button>
           </div>
-        ))}
+        ) : null}
+
+        <DraftDocumentEditor
+          collaboration={collabSession.mode === "live" ? collabSession.collaboration : null}
+          initialDocument={initialDocument}
+          key={collabSession.mode}
+          onChange={onDocumentChange}
+          onReady={(handle) => {
+            editorRef.current = handle;
+          }}
+          readOnly={collabReadOnly}
+          ready={collabSession.mode !== "pending"}
+        />
 
         <Button
           className="justify-self-start"
@@ -583,6 +558,61 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
           {tCommon("actions.save")}
         </Button>
       </saveFetcher.Form>
+
+      {assistOpen && aiHealth.available && assistSection ? (
+        <assistFetcher.Form
+          className="grid gap-2 rounded-md border border-border p-3"
+          method="post"
+        >
+          <input name="intent" type="hidden" value="assist" />
+          <input name="versionId" type="hidden" value={draft.id} />
+          <input name="sectionKey" type="hidden" value={assistSection.key} />
+          <input name="editableContent" type="hidden" value={assistSection.text} />
+          {sectionTexts.length > 1 ? (
+            <Field label={tAi("assist.section")}>
+              <Select
+                onValueChange={setAssistSectionKey}
+                options={sectionTexts.map((section) => ({
+                  label: section.title,
+                  value: section.key,
+                }))}
+                value={assistSection.key}
+              />
+            </Field>
+          ) : null}
+          <Field label={tAi("assist.operationLabel")}>
+            <Select
+              name="operation"
+              options={Object.values(AssistOperation).map((operation) => ({
+                label: tAi(`assist.operation.${operation}`),
+                value: operation,
+              }))}
+            />
+          </Field>
+          <Field label={tAi("assist.instruction")}>
+            <Input name="instruction" />
+          </Field>
+          <Button disabled={assistFetcher.state !== "idle"} type="submit">
+            {tAi("assist.ask")}
+          </Button>
+          {assistSuggestion && assistSuggestion.sectionKey === assistSection.key ? (
+            <div className="grid gap-2">
+              <p className="text-sm">{assistSuggestion.suggestion}</p>
+              <Button
+                onClick={() => {
+                  replaceDocument(
+                    applyAiText(content, outline, assistSection.key, assistSuggestion.suggestion),
+                  );
+                  setAssistOpen(false);
+                }}
+                type="button"
+              >
+                {tAi("assist.apply")}
+              </Button>
+            </div>
+          ) : null}
+        </assistFetcher.Form>
+      ) : null}
 
       <div className="grid gap-2">
         <h2 className="text-base font-semibold text-ink">{t("editor.appendices.title")}</h2>

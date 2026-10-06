@@ -1,75 +1,80 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-// Content plumbing for the editor: a draft's `contentJson` is a JSON-encoded array of plain
-// per-section text (the gateway stores `PolicyVersion.contentJson` opaquely), not the
-// original's rich Lexical document — no shared document renderer exists yet. Pure helpers
-// here so the scaffold/gate logic is unit-tested directly, the same way the original's
-// authoring.ts was.
+// The draft's content for the editor: `contentJson` holds the Lexical serialized editor state
+// (the format steward-core validates), with each template section as a heading followed by
+// its body. A freeform draft has no outline and is one "Content" section for the AI features.
+import {
+  applySectionText,
+  ensureTemplateSections,
+  extractSections,
+  fillEmptySections,
+  nodeText,
+  paragraphsFromText,
+  parseDocument,
+  type SectionText,
+  type SerializedDocument,
+  type TemplateSectionOutline,
+  wrapRoot,
+} from "@steward-web/editor-steward/document";
 
-export interface DraftSection {
-  sectionKey: string;
-  text: string;
-  title: string;
-}
+export {
+  missingRequiredSections,
+  type SectionText,
+  type SerializedDocument,
+  type TemplateSectionOutline,
+} from "@steward-web/editor-steward/document";
 
-export interface TemplateSectionOutline {
-  key: string;
-  level: number;
-  order: number;
-  required: boolean;
-  title: string;
-}
-
-/** Stored `contentJson` -> sections, for the editor's read path. An unparseable or absent
- *  value is treated as no sections — the safer outcome — rather than throwing mid-render. */
-export const parseDraftSections = (contentJson?: null | string): DraftSection[] => {
-  if (!contentJson) return [];
-  try {
-    const parsed = JSON.parse(contentJson) as unknown;
-    return Array.isArray(parsed) ? (parsed as DraftSection[]) : [];
-  } catch {
-    return [];
-  }
-};
-
-/** Sections -> the string `saveDraft` persists. */
-export const stringifyDraftSections = (sections: readonly DraftSection[]): string =>
-  JSON.stringify(sections);
-
-const ordered = (sections: readonly TemplateSectionOutline[]): TemplateSectionOutline[] =>
-  [...sections].toSorted((a, b) => a.order - b.order);
-
-/** Build a fresh, empty draft from a template's section outline, in template order. */
-export const scaffoldFromTemplate = (sections: readonly TemplateSectionOutline[]): DraftSection[] =>
-  ordered(sections).map((s) => ({ sectionKey: s.key, text: "", title: s.title }));
+const FREEFORM_KEY = "content";
+const FREEFORM_TITLE = "Content";
 
 /**
- * When editing a template-based draft, make sure every template section is present, in
- * template order, keeping any already-authored text. A section the author added outside the
- * template's outline (rare, but a template can change after a draft started) is dropped from
- * the editor's own list here — it isn't lost: it stays in the stored `contentJson` for any
- * reader of the raw draft, this just keeps the template's current outline in front of the
- * author.
+ * Stored `contentJson` -> the document the editor opens. A template draft always shows the
+ * template's whole outline. Anything that isn't an editor state (the earlier plain-text
+ * section array included) is not fed to the editor: the draft opens from the scaffold.
  */
-export const ensureTemplateSections = (
-  current: readonly DraftSection[],
-  templateSections: readonly TemplateSectionOutline[],
-): DraftSection[] => {
-  const byKey = new Map(current.map((s) => [s.sectionKey, s]));
-  return ordered(templateSections).map(
-    (s) => byKey.get(s.key) ?? { sectionKey: s.key, text: "", title: s.title },
-  );
+export const draftDocument = (
+  contentJson: null | string | undefined,
+  outline: readonly TemplateSectionOutline[],
+): SerializedDocument => {
+  const parsed = parseDocument(contentJson);
+  if (outline.length > 0) return ensureTemplateSections(parsed, outline);
+  return parsed ?? wrapRoot([]);
 };
 
-/**
- * Titles of required template sections with no non-blank text yet — the submit/publish gate.
- * Mirrors the gateway's own `publishDraft` check so the editor can show the same refusal
- * before the round trip, not just after.
- */
-export const missingRequiredSections = (
-  sections: readonly DraftSection[],
-  templateSections: readonly TemplateSectionOutline[],
-): string[] => {
-  const filled = new Set(sections.filter((s) => s.text.trim() !== "").map((s) => s.sectionKey));
-  return templateSections.filter((s) => s.required && !filled.has(s.key)).map((s) => s.title);
+/** The draft's sections as plain text, for AI review, generation and assist. */
+export const aiSections = (
+  document: SerializedDocument,
+  outline: readonly TemplateSectionOutline[],
+): SectionText[] => {
+  if (outline.length > 0) return extractSections(document, outline);
+  const body = document.root.children
+    .map((node) => nodeText(node).trim())
+    .filter(Boolean)
+    .join("\n\n");
+  return [{ key: FREEFORM_KEY, text: body, title: FREEFORM_TITLE }];
+};
+
+/** Put AI text into one section; for a freeform draft it replaces the whole body. */
+export const applyAiText = (
+  document: SerializedDocument,
+  outline: readonly TemplateSectionOutline[],
+  sectionKey: string,
+  value: string,
+): SerializedDocument => {
+  if (outline.length > 0) return applySectionText(document, outline, sectionKey, value);
+  return { ...document, root: { ...document.root, children: paragraphsFromText(value) } };
+};
+
+/** Apply a generation job's sections to the ones still empty. */
+export const fillGenerated = (
+  document: SerializedDocument,
+  outline: readonly TemplateSectionOutline[],
+  generated: readonly { sectionKey: string; text: string }[],
+): SerializedDocument => {
+  if (outline.length > 0) return fillEmptySections(document, outline, generated);
+  const freeform = generated.find((g) => g.sectionKey === FREEFORM_KEY);
+  const current = aiSections(document, outline)[0]?.text ?? "";
+  return freeform && current === ""
+    ? applyAiText(document, outline, FREEFORM_KEY, freeform.text)
+    : document;
 };

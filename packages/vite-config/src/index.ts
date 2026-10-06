@@ -5,6 +5,7 @@ import type { UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import svgr from "vite-plugin-svgr";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
@@ -92,6 +93,9 @@ export const sharedAliases = (edge: EdgeChoice): Record<string, string> => ({
   "#ui": source("ui"),
 });
 
+/** The rich-text editor imports its icons as React components (`*.svg?react`). */
+export const editorPlugins = () => [svgr()];
+
 /** Vitest settings for a package or an app: jsdom, globals and the shared setup file. */
 export const testConfig = (directory: string) => ({
   css: false,
@@ -107,7 +111,7 @@ export const packageConfig = (
   directory: string,
 ): { test: ReturnType<typeof testConfig> } & UserConfig => ({
   define: buildInfoDefines({}),
-  plugins: [react()],
+  plugins: [react(), ...editorPlugins()],
   resolve: { alias: sharedAliases(chooseEdge("test", {})) },
   test: testConfig(directory),
 });

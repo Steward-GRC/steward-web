@@ -12,6 +12,7 @@
 //   - flush points really flush, and a published room really stops sending;
 //   - the token is re-minted and handed to the provider before it expires.
 import { describe, expect, it } from "vitest";
+import { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
 import { decodeSnapshotFrame, MSG_SNAPSHOT } from "./protocol";
@@ -121,6 +122,8 @@ interface Harness {
 
 const harness = (
   overrides: {
+    awareness?: Awareness;
+    doc?: Y.Doc;
     mintToken?: () => Promise<CollabToken | undefined>;
     snapshot?: () => SnapshotPayload | undefined;
   } = {},
@@ -130,7 +133,8 @@ const harness = (
   const controls: unknown[] = [];
   const oversized: number[] = [];
   const session = new CollabSession({
-    doc: new Y.Doc(),
+    awareness: overrides.awareness,
+    doc: overrides.doc ?? new Y.Doc(),
     mintToken: overrides.mintToken ?? (async () => tokenExpiring(300_000)),
     onControl: (message) => controls.push(message),
     onOversize: (bytes) => oversized.push(bytes),
@@ -206,6 +210,17 @@ describe("CollabSession", () => {
       expect(url.host).toBe("policy.example.org");
       expect(url.pathname).toBe("/collab/ws/draft-1");
       expect(url.searchParams.get("token")).toBe("jwt-1");
+      h.session.stop();
+    });
+
+    it("syncs presence on the awareness the editor was given", async () => {
+      // The editor binds its carets to an awareness before the socket exists; the provider
+      // must carry that same one, or remote carets never show.
+      const document = new Y.Doc();
+      const awareness = new Awareness(document);
+      const h = harness({ awareness, doc: document });
+      await h.session.start();
+      expect(h.session.wsProvider?.awareness).toBe(awareness);
       h.session.stop();
     });
 

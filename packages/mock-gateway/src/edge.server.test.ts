@@ -16,10 +16,20 @@ import {
   RiskViewed,
   Sensitivity,
 } from "@steward-web/api-client";
+import {
+  paragraphsFromText,
+  parseDocument,
+  serializeDocument,
+  wrapRoot,
+} from "@steward-web/editor-steward/document";
 import { describe, expect, it } from "vitest";
 
 import { mockEdge } from "./edge.server";
 import { MOCK_MARKER, mockId } from "./marker";
+
+/** A freeform draft's stored content: a Lexical editor state with one paragraph of text. */
+const lexicalDraft = (text: string): string =>
+  serializeDocument(wrapRoot(paragraphsFromText(text)));
 
 describe("mockEdge", () => {
   it("answers me() with a mock-id persona, no network and no cookie", async () => {
@@ -313,8 +323,8 @@ describe("mockEdge users directory", () => {
       expect(created.currentPublishedVersionId).toBeNull();
 
       const draft = await mockEdge.draftVersion(created.id);
-      const sections = JSON.parse(draft!.contentJson) as { sectionKey: string }[];
-      expect(sections.length).toBeGreaterThan(0);
+      const document = parseDocument(draft!.contentJson);
+      expect(document?.root.children.some((node) => node.type === "heading")).toBe(true);
     });
 
     it("saveDraft() persists edits, visible on the next draftVersion() read", async () => {
@@ -324,7 +334,7 @@ describe("mockEdge users directory", () => {
         sensitivity: Sensitivity.Standard,
         title: "Freeform Draft",
       });
-      const content = JSON.stringify([{ sectionKey: "body", text: "hello", title: "Body" }]);
+      const content = lexicalDraft("hello");
       await mockEdge.saveDraft(created.id, content, null);
 
       const draft = await mockEdge.draftVersion(created.id);
@@ -345,6 +355,32 @@ describe("mockEdge users directory", () => {
       });
     });
 
+    it("publishDraft() reads the required sections off the Lexical tree", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      const [template] = await mockEdge.authorableTemplates(null);
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        templateId: template!.id,
+        title: "Filled Template Draft",
+      });
+      const draft = await mockEdge.draftVersion(created.id);
+      const scaffold = parseDocument(draft!.contentJson)!;
+      const filled = {
+        ...scaffold,
+        root: {
+          ...scaffold.root,
+          children: scaffold.root.children.flatMap((node) =>
+            node.type === "heading" ? [node, ...paragraphsFromText("Filled in.")] : [node],
+          ),
+        },
+      };
+      await mockEdge.saveDraft(created.id, serializeDocument(filled), draft!.templateVersionId);
+      await expect(mockEdge.publishDraft(created.id)).resolves.toMatchObject({
+        status: "PUBLISHED",
+      });
+    });
+
     it("publishDraft() cuts a published version once every required section is filled", async () => {
       const [group] = await mockEdge.authorableGroups();
       const created = await mockEdge.createPolicy({
@@ -352,11 +388,7 @@ describe("mockEdge users directory", () => {
         sensitivity: Sensitivity.Standard,
         title: "Complete Freeform Draft",
       });
-      await mockEdge.saveDraft(
-        created.id,
-        JSON.stringify([{ sectionKey: "body", text: "content", title: "Body" }]),
-        null,
-      );
+      await mockEdge.saveDraft(created.id, lexicalDraft("content"), null);
       const published = await mockEdge.publishDraft(created.id);
       expect(published.status).toBe("PUBLISHED");
 

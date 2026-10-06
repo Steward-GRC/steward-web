@@ -57,3 +57,7 @@ Follow the logging rules in `CLAUDE.md`. In short:
 - Open every PR as a draft. CI skips drafts, so run the full checks locally, push once they pass,
   and mark the PR ready when the work is finished; see CLAUDE.md "CI and Actions minutes".
 - <project-specific conventions, non-obvious constraints, and traps an agent should know>
+- `packages/editor` is an MIT fork of an upstream editor (see its README for the upstream
+  commit). Keep upstream's code style in its folders, never import a `@steward-web/*` package
+  from it, and put Steward-specific code in `packages/editor-steward`. Rebuild
+  `packages/editor/src/generated/koenig.css` with its `build:css` script after changing a class.

@@ -34,6 +34,12 @@ import {
   RiskSuggestion,
   SignalType,
 } from "@steward-web/api-client";
+import {
+  missingRequiredSections as missingSectionsInDocument,
+  parseDocument,
+  scaffoldFromTemplate,
+  serializeDocument,
+} from "@steward-web/editor-steward/document";
 
 import {
   mockAiConfig,
@@ -270,35 +276,13 @@ const requireAppendix = (
   throw new GatewayError(operation, `appendix ${id} not found`, { code: "NOT_FOUND" });
 };
 
-/** Parses a draft's `contentJson` (a JSON array of `{ sectionKey, title, text }`); an
- *  unparseable or absent value is treated as no sections, the safer outcome for the
- *  required-section gate below. */
-const draftSections = (
-  contentJson: string,
-): { sectionKey: string; text: string; title: string }[] => {
-  try {
-    const parsed = JSON.parse(contentJson) as unknown;
-    return Array.isArray(parsed)
-      ? (parsed as { sectionKey: string; text: string; title: string }[])
-      : [];
-  } catch {
-    return [];
-  }
-};
-
-/** Titles of required template sections with no non-blank text yet, for `publishDraft`'s gate. */
+/** Titles of required template sections with no text yet, for `publishDraft`'s gate: the
+ *  same check the gateway makes, read off the draft's Lexical tree. */
 const missingRequiredSections = (version: PolicyVersion): string[] => {
   if (!version.templateVersionId) return [];
   const templateVersion = mockTemplateVersions.find((t) => t.id === version.templateVersionId);
   if (!templateVersion) return [];
-  const filled = new Set(
-    draftSections(version.contentJson)
-      .filter((s) => s.text.trim() !== "")
-      .map((s) => s.sectionKey),
-  );
-  return templateVersion.sections
-    .filter((s) => s.required && !filled.has(s.key))
-    .map((s) => s.title);
+  return missingSectionsInDocument(parseDocument(version.contentJson), templateVersion.sections);
 };
 
 interface MockAiJob {
@@ -595,14 +579,12 @@ export const mockEdge: Edge = {
       : undefined;
     const draftId = nextMockPolicyVersionId();
     const policyId = nextMockPolicyId();
-    const sections = (templateVersion?.sections ?? [])
-      .toSorted((a, b) => a.order - b.order)
-      .map((s) => ({ sectionKey: s.key, text: "", title: s.title }));
+    const scaffold = scaffoldFromTemplate(templateVersion?.sections ?? []);
     policyVersions = [
       ...policyVersions,
       {
         appendices: [],
-        contentJson: JSON.stringify(sections),
+        contentJson: serializeDocument(scaffold),
         id: draftId,
         policyId,
         status: "DRAFT",
