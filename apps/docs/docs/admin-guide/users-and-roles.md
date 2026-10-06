@@ -19,6 +19,9 @@ The **Users** page lists everyone's status and roles. Open a user to:
 - **Edit their name and email**, for a local account.
 - **Grant or remove the site-admin role.** Site-admin is the one global role in this release: it
   gives full access to users, organisations and the audit log.
+- **See their sessions**: when each was issued and signed in, when it was last used (to within
+  a minute or so; a dash for a session not used since it signed in), when it expires and the
+  device's IP address.
 - **Revoke their active sessions**, signing them out everywhere.
 - **Delete the account.** Steward previews what the deletion would affect before you confirm, so
   you can see the impact first.

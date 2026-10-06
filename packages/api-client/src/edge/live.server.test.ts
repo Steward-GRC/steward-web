@@ -365,3 +365,39 @@ describe("liveEdge.draftVersion", () => {
     expect(calls.map((c) => c.operation)).toEqual(["Policy"]);
   });
 });
+
+describe("liveEdge.listUserSessions last seen", () => {
+  it("carries the gateway's lastSeenAt, null for a session never seen", async () => {
+    routeGateway({
+      ListUserSessions: () => ({
+        listUserSessions: [
+          {
+            active: true,
+            authenticatedAt: "2026-01-01T08:00:00Z",
+            clientIp: null,
+            expiresAt: "2026-01-02T00:00:00Z",
+            issuedAt: "2026-01-01T08:00:00Z",
+            lastSeenAt: "2026-01-01T09:30:00Z",
+            sessionId: "s-1",
+            userAgent: "Mozilla/5.0",
+            userId: "u-3",
+          },
+          {
+            active: true,
+            authenticatedAt: "2026-01-01T07:00:00Z",
+            clientIp: null,
+            expiresAt: "2026-01-02T00:00:00Z",
+            issuedAt: "2026-01-01T07:00:00Z",
+            lastSeenAt: null,
+            sessionId: "s-2",
+            userAgent: "Mozilla/5.0",
+            userId: "u-3",
+          },
+        ],
+      }),
+    });
+    const [seen, unseen] = await liveEdge.listUserSessions("u-3");
+    expect(seen?.lastSeenAt).toBe("2026-01-01T09:30:00Z");
+    expect(unseen?.lastSeenAt).toBeNull();
+  });
+});

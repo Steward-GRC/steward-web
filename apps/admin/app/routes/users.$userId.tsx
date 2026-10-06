@@ -30,6 +30,7 @@ import { data, Form, Link, redirect } from "react-router";
 import type { Route } from "./+types/users.$userId";
 
 import { BASELINE_ROLE, GLOBAL_ROLES, roleLabel } from "../users/roles";
+import { lastSeenLabel } from "../users/sessionTimes";
 import {
   deleteUser,
   findUser,
@@ -276,6 +277,7 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
                     <TH>Status</TH>
                     <TH>Issued</TH>
                     <TH>Signed in</TH>
+                    <TH>Last seen</TH>
                     <TH>Expires</TH>
                     <TH>Client IP</TH>
                   </tr>
@@ -296,6 +298,7 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
                         <TD className="text-muted">
                           {new Date(session.authenticatedAt).toLocaleString()}
                         </TD>
+                        <TD className="text-muted">{lastSeenLabel(session)}</TD>
                         <TD className="text-muted">
                           {new Date(session.expiresAt).toLocaleString()}
                         </TD>
