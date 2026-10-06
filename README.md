@@ -13,10 +13,13 @@ pnpm install --ignore-scripts
 pnpm run check     # lint, typecheck, unit tests and builds
 ```
 
-## 📚 Docs
+## 📚 Documentation
 
 - [The authoring editor](docs/authoring-editor.md): what staff get, the draft format and
   co-editing.
+- [`docs/configuration.md`](docs/configuration.md) — every build argument and environment variable, with its default
+- [`docs/development.md`](docs/development.md) — the workspace, the codegen step and the mock build
+- [`docs/runbook.md`](docs/runbook.md) — the health probes, reading the build info, and calling other services
 
 ## 🤝 Contributing
 
