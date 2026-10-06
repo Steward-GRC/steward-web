@@ -1,25 +1,31 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Edge, User, UserDeletionPreview } from "@steward-web/api-client";
+import type { Edge, Group, User, UserDeletionPreview } from "@steward-web/api-client";
 
-import { GatewayError } from "@steward-web/api-client";
+import { GatewayError, ReviewCadence } from "@steward-web/api-client";
 
 import {
   mockCategories,
   mockDiagnostics,
+  mockGroups,
   mockMe,
   mockPolicies,
   mockPolicyDetails,
   mockSessions,
+  mockTemplates,
   mockUserDeletionPreviews,
   mockUsers,
+  mockWorkflows,
 } from "./fixtures";
+import { mockId } from "./marker";
 
 // Mutable so `updateMyProfile`, `acknowledgePolicy` and `breakGlassReveal` below can persist
 // their effect across calls in the same process, the way the live gateway would. `fixtures.ts`
 // still exports the starting values.
 let me = mockMe;
 let users = [...mockUsers];
+let groups = [...mockGroups];
+let nextGroupSeq = mockGroups.length + 1;
 const sessions = structuredClone(mockSessions);
 let policyDetails = mockPolicyDetails;
 
@@ -35,6 +41,51 @@ const requireUser = (operation: string, userId: string): User => {
 const replaceUser = (updated: User): User => {
   users = users.map((u) => (u.userId === updated.userId ? updated : u));
   return updated;
+};
+
+const requireGroup = (operation: string, id: string): Group => {
+  const group = groups.find((g) => g.id === id);
+  if (!group) throw new GatewayError(operation, `group ${id} not found`, { code: "NOT_FOUND" });
+  return group;
+};
+
+const replaceGroup = (updated: Group): Group => {
+  groups = groups.map((g) => (g.id === updated.id ? updated : g));
+  return updated;
+};
+
+// The maximum taxonomy depth the backend enforces (root = depth 1). Mirrors the original
+// gateway's own guard so a move or create behaves the same in mock and live mode.
+const MAX_GROUP_DEPTH = 3;
+
+const depthOf = (groupId: string): number => {
+  let depth = 0;
+  let current: Group | undefined = groups.find((g) => g.id === groupId);
+  while (current) {
+    depth += 1;
+    current = current.parentId ? groups.find((g) => g.id === current!.parentId) : undefined;
+  }
+  return depth;
+};
+
+const subtreeHeight = (groupId: string): number => {
+  const children = groups.filter((g) => g.parentId === groupId);
+  return children.length === 0 ? 1 : 1 + Math.max(...children.map((c) => subtreeHeight(c.id)));
+};
+
+const subtreeIds = (groupId: string): Set<string> => {
+  const ids = new Set<string>([groupId]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const g of groups) {
+      if (g.parentId && ids.has(g.parentId) && !ids.has(g.id)) {
+        ids.add(g.id);
+        grew = true;
+      }
+    }
+  }
+  return ids;
 };
 
 /**
@@ -67,6 +118,36 @@ export const mockEdge: Edge = {
     return { grantedUntil: new Date(Date.now() + BREAK_GLASS_GRANT_MS).toISOString() };
   },
   categories: () => Promise.resolve(mockCategories),
+  createGroup: async ({ name, parentId, slug }) => {
+    if (groups.some((g) => g.parentId === parentId && g.slug === slug)) {
+      throw new GatewayError(
+        "CreateGroup",
+        `a group with slug "${slug}" already exists under this parent`,
+        {
+          code: "ALREADY_EXISTS",
+        },
+      );
+    }
+    const created: Group = {
+      defaultTemplateId: null,
+      defaultTemplateNone: false,
+      defaultWorkflowId: null,
+      id: mockId("group", nextGroupSeq++),
+      name,
+      owners: [],
+      parentId,
+      reviewCadence: ReviewCadence.None,
+      reviewDate: null,
+      slug,
+    };
+    groups = [...groups, created];
+    return created;
+  },
+  deleteGroup: async (id) => {
+    requireGroup("DeleteGroup", id);
+    groups = groups.filter((g) => !subtreeIds(id).has(g.id));
+    return true;
+  },
   deleteUser: async (userId) => {
     const user = requireUser("DeleteUser", userId);
     const preview = mockUserDeletionPreviews[userId];
@@ -107,8 +188,31 @@ export const mockEdge: Edge = {
     const roles = user.roles.includes(role) ? user.roles : [...user.roles, role];
     return replaceUser({ ...user, roles });
   },
+  groupChildren: (parentId) => Promise.resolve(groups.filter((g) => g.parentId === parentId)),
   listUserSessions: (userId) => Promise.resolve(sessions[userId] ?? []),
   me: () => Promise.resolve(me),
+  moveGroup: async (groupId, newParentId) => {
+    const group = requireGroup("MoveGroup", groupId);
+    if (newParentId !== null) {
+      requireGroup("MoveGroup", newParentId);
+      if (subtreeIds(groupId).has(newParentId)) {
+        throw new GatewayError("MoveGroup", "a group can't be moved under itself or a descendant", {
+          code: "INVALID_ARGUMENT",
+        });
+      }
+    }
+    const resultDepth = (newParentId === null ? 0 : depthOf(newParentId)) + subtreeHeight(groupId);
+    if (resultDepth > MAX_GROUP_DEPTH) {
+      throw new GatewayError(
+        "MoveGroup",
+        `that move would exceed the maximum depth of ${MAX_GROUP_DEPTH}`,
+        {
+          code: "FAILED_PRECONDITION",
+        },
+      );
+    }
+    return replaceGroup({ ...group, parentId: newParentId });
+  },
   policies: (documentType) =>
     Promise.resolve(mockPolicies.filter((p) => p.documentType === documentType)),
   policyDetail: (documentType, number) =>
@@ -127,6 +231,19 @@ export const mockEdge: Edge = {
     };
     return mockUserDeletionPreviews[userId] ?? fallback;
   },
+  renameGroup: async (id, name, slug) => {
+    const group = requireGroup("RenameGroup", id);
+    if (groups.some((g) => g.id !== id && g.parentId === group.parentId && g.slug === slug)) {
+      throw new GatewayError(
+        "RenameGroup",
+        `a group with slug "${slug}" already exists under this parent`,
+        {
+          code: "ALREADY_EXISTS",
+        },
+      );
+    }
+    return replaceGroup({ ...group, name, slug });
+  },
   revokeRole: async (userId, role) => {
     const user = requireUser("RevokeRole", userId);
     return replaceUser({ ...user, roles: user.roles.filter((r) => r !== role) });
@@ -137,6 +254,27 @@ export const mockEdge: Edge = {
     sessions[userId] = current.map((s) => (s.revokedAt ? s : { ...s, revokedAt }));
     void reason; // the mock audits nothing; the live gateway records it
     return current.filter((s) => !s.revokedAt).length;
+  },
+  templates: () => Promise.resolve(mockTemplates),
+  updateGroupSettings: async ({
+    defaultTemplateId = null,
+    defaultTemplateNone = false,
+    defaultWorkflowId = null,
+    id,
+    owners = [],
+    reviewCadence = ReviewCadence.None,
+    reviewDate = null,
+  }) => {
+    const group = requireGroup("UpdateGroupSettings", id);
+    return replaceGroup({
+      ...group,
+      defaultTemplateId,
+      defaultTemplateNone,
+      defaultWorkflowId,
+      owners: [...owners],
+      reviewCadence,
+      reviewDate,
+    });
   },
   updateMyProfile: ({ firstName, lastName }) => {
     me = { ...me, firstName, lastName, name: `${firstName} ${lastName}`.trim() };
@@ -163,6 +301,7 @@ export const mockEdge: Edge = {
       .filter((u) => !needle || u.email.toLowerCase().includes(needle));
     return Promise.resolve({ nextPageToken: "", users: filtered });
   },
+  workflows: () => Promise.resolve(mockWorkflows),
 };
 
 export default mockEdge;

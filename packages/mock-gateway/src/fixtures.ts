@@ -6,15 +6,19 @@ import {
   DeletionItemKind,
   type Diagnostics,
   DocumentType,
+  type Group,
   type Me,
   type Policy,
   type PolicyDetail,
   PolicyStatus,
   ReferenceKind,
+  ReviewCadence,
   Sensitivity,
   type Session,
+  type Template,
   type User,
   type UserDeletionPreview,
+  type Workflow,
 } from "@steward-web/api-client";
 import { permissionsForRoles } from "@steward-web/auth";
 
@@ -207,6 +211,57 @@ export const mockCategories: Category[] = [
     slug: "procurement",
     subcategories: ["Due Diligence"],
   },
+];
+
+/** The group directory: a two-level hierarchy under one root, for exercising the admin
+ *  groups area (rename, move, defaults, governance). */
+export const mockGroups: Group[] = [
+  {
+    defaultTemplateId: null,
+    defaultTemplateNone: false,
+    defaultWorkflowId: null,
+    id: mockId("group", 1),
+    name: "Meridian Holdings",
+    owners: [mockMe.id],
+    parentId: null,
+    reviewCadence: ReviewCadence.Annual,
+    reviewDate: null,
+    slug: "meridian-holdings",
+  },
+  {
+    defaultTemplateId: mockId("template", 1),
+    defaultTemplateNone: false,
+    defaultWorkflowId: null,
+    id: mockId("group", 2),
+    name: "IT Security",
+    owners: [mockId("user", 2)],
+    parentId: mockId("group", 1),
+    reviewCadence: ReviewCadence.Biennial,
+    reviewDate: null,
+    slug: "it-security",
+  },
+  {
+    defaultTemplateId: null,
+    defaultTemplateNone: true,
+    defaultWorkflowId: null,
+    id: mockId("group", 3),
+    name: "Infrastructure",
+    owners: [],
+    parentId: mockId("group", 2),
+    reviewCadence: ReviewCadence.None,
+    reviewDate: null,
+    slug: "infrastructure",
+  },
+];
+
+export const mockTemplates: Template[] = [
+  { id: mockId("template", 1), name: "Standard policy" },
+  { id: mockId("template", 2), name: "Procedure runbook" },
+];
+
+export const mockWorkflows: Workflow[] = [
+  { id: mockId("workflow", 1), name: "Single approver" },
+  { id: mockId("workflow", 2), name: "Security review board" },
 ];
 
 /** The library catalog: policies and procedures across every category, status and sensitivity. */

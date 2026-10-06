@@ -1,0 +1,5 @@
+mutation MoveGroup($groupId: ID!, $newParentId: ID) {
+  moveGroup(groupId: $groupId, newParentId: $newParentId) {
+    ...GroupFields
+  }
+}

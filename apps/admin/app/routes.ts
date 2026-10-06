@@ -14,4 +14,7 @@ export default [
   route("profile", "routes/profile.tsx"),
   route("users", "routes/users.tsx"),
   route("users/:userId", "routes/users.$userId.tsx"),
+  route("groups", "routes/groups.tsx"),
+  route("groups/new", "routes/groups.new.tsx"),
+  route("groups/:groupId", "routes/groups.$groupId.tsx"),
 ] satisfies RouteConfig;
