@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 // The app-level i18n wiring. Each app mounts exactly one of these; shared
 // packages neither mount nor require it (see i18n.ts for why).
 //
@@ -61,7 +63,7 @@ export type I18nProviderProps = {
    * The signed-in user's stored locale preference, or null/undefined when
    * unauthenticated, still loading, or not exposed by the backend yet.
    *
-   * ⚠ the gateway `me` query does NOT expose `locale` today, so both
+   * Caution: the gateway `me` query does NOT expose `locale` today, so both
    * apps pass `undefined` here. This prop is the ONE seam that has to change
    * when it does — see README.md "Wiring the account preference".
    */

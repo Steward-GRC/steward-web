@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 export { Loader, Lockup, Mark, type MarkProps, SMALL_MARK_PX } from "./brand/Mark";
 export {
   ApproverPill,

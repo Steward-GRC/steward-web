@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

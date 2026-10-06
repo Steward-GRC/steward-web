@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 // The set of locales the UI actually ships catalogs for, plus the namespace
 // list. This package lands the framework English-ONLY ("i18n-ready"): additional
 // languages are DATA, not code — adding one is (1) a new folder under
@@ -23,7 +25,7 @@ export type LocaleDescriptor = {
 
 export type LocaleTag = string;
 
-// ⚠ Adding a locale here without a matching src/locales/<tag>/ folder makes it
+// Caution: adding a locale here without a matching src/locales/<tag>/ folder makes it
 // selectable but untranslated (every key falls back to English). resources.ts is
 // typed so the namespace files and NAMESPACES cannot drift apart.
 export const SUPPORTED_LOCALES: readonly LocaleDescriptor[] = [

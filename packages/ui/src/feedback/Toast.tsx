@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { AlertTriangle, CheckCircle2, Info, type LucideIcon, OctagonAlert, X } from "lucide-react";
 import { type ReactNode } from "react";

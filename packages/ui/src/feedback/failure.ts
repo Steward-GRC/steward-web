@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 /**
  * The facts about a failed action that a diagnostics report may carry. Only these typed,
  * allow-listed fields: never a whole error or response object, never a refusal's free-text

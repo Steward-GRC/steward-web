@@ -1,3 +1,7 @@
+/* 
+Copyright 2026 The Steward Authors
+SPDX-License-Identifier: Apache-2.0
+ */
 /* The Steward theme for Tailwind v4, from the design tokens (program design, tokens.json). */
 @import "tailwindcss";
 /* The fonts are OFL and self-hosted: bundled from @fontsource, never fetched from a font service. */

@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
 import { currentLocale, i18n } from "./i18n";

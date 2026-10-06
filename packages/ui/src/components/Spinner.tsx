@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 import { cn } from "#ui/lib/cn";
 
 /** A small busy indicator. Decorative: the control it sits in carries the busy state. */

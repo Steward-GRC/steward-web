@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 import { type ComponentProps } from "react";

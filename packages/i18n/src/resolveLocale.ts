@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 // Locale resolution — a PURE function so the precedence chain is testable
 // without a browser, a provider, or a live session.
 //

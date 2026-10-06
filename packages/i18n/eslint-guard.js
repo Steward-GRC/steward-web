@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 // The i18n regression guard, shared by apps/staff and
 // apps/admin so the two can never drift apart. Imported as
 // `@steward-web/i18n/eslint-guard`.
@@ -42,7 +44,7 @@ const OPTIONS = {
     // Machine-facing attributes that happen to take strings. Flagging these is
     // pure noise and trains reviewers to ignore the rule.
     //
-    // ⚠ These are REGEX sources, not globs — the plugin wraps each one as
+    // Caution: these are REGEX sources, not globs — the plugin wraps each one as
     // /^<source>$/. So a wildcard must be written `data-.*`, never `data-*`
     // (which would mean "data" followed by any number of hyphens).
     exclude: [

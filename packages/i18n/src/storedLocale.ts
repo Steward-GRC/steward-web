@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 // The browser-local half of the locale preference (precedence step 2 in
 // resolveLocale.ts).
 //

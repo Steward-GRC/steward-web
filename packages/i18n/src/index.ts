@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 // The ONLY module the rest of the monorepo imports i18n from.
 //
 // react-i18next / i18next are re-exported here rather than imported directly by

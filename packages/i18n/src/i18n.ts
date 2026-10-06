@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 // THE i18next instance. There is exactly one, and this module is the only place
 // in the monorepo that calls `init()`.
 //

@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 // The bundled catalog.
 //
 // Resources are STATIC imports, not an http-backend fetch, for three reasons:

@@ -1,3 +1,5 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
 import { type ReactNode } from "react";
 
 import { cn } from "#ui/lib/cn";
