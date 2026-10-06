@@ -302,6 +302,39 @@ describe("mockEdge users directory", () => {
     });
   });
 
+  it("updateGroupSettings() sets the ack-audience/exclusion overrides and marks ackEveryone explicit", async () => {
+    const group = await mockEdge.createGroup({
+      name: "Governance",
+      parentId: null,
+      slug: "governance",
+    });
+    expect(group.ackEveryoneSet).toBe(false);
+
+    const updated = await mockEdge.updateGroupSettings({
+      ackEveryone: true,
+      exclusionGroupIds: ["legal-hold"],
+      id: group.id,
+      idpGroupIds: ["finance-staff"],
+    });
+    expect(updated).toMatchObject({
+      ackEveryone: true,
+      ackEveryoneSet: true,
+      exclusionGroupIds: ["legal-hold"],
+      idpGroupIds: ["finance-staff"],
+    });
+
+    // A later patch that doesn't touch these fields leaves them as they were.
+    const untouched = await mockEdge.updateGroupSettings({
+      id: group.id,
+      reviewCadence: ReviewCadence.Annual,
+    });
+    expect(untouched).toMatchObject({
+      ackEveryone: true,
+      exclusionGroupIds: ["legal-hold"],
+      idpGroupIds: ["finance-staff"],
+    });
+  });
+
   it("templates() and workflows() answer the fixture lists", async () => {
     const templates = await mockEdge.templates();
     const workflows = await mockEdge.workflows();

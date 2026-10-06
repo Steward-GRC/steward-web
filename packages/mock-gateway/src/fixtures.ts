@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
+  AckTrigger,
   ApprovalStatus,
   type AuditRecord,
   BreachDecision,
@@ -268,10 +269,15 @@ export const mockCategories: Category[] = [
  *  groups area (rename, move, defaults, governance). */
 export const mockGroups: Group[] = [
   {
+    ackEveryone: true,
+    ackEveryoneSet: true,
+    ackTriggers: AckTrigger.OnPublish,
     defaultTemplateId: null,
     defaultTemplateNone: false,
     defaultWorkflowId: null,
+    exclusionGroupIds: null,
     id: mockId("group", 1),
+    idpGroupIds: null,
     name: "Meridian Holdings",
     owners: [mockMe.id],
     parentId: null,
@@ -280,10 +286,15 @@ export const mockGroups: Group[] = [
     slug: "meridian-holdings",
   },
   {
+    ackEveryone: false,
+    ackEveryoneSet: false,
+    ackTriggers: AckTrigger.None,
     defaultTemplateId: mockId("template", 1),
     defaultTemplateNone: false,
     defaultWorkflowId: null,
+    exclusionGroupIds: null,
     id: mockId("group", 2),
+    idpGroupIds: ["it-security-staff"],
     name: "IT Security",
     owners: [mockId("user", 2)],
     parentId: mockId("group", 1),
@@ -292,10 +303,15 @@ export const mockGroups: Group[] = [
     slug: "it-security",
   },
   {
+    ackEveryone: false,
+    ackEveryoneSet: false,
+    ackTriggers: AckTrigger.OnChange,
     defaultTemplateId: null,
     defaultTemplateNone: true,
     defaultWorkflowId: null,
+    exclusionGroupIds: [],
     id: mockId("group", 3),
+    idpGroupIds: null,
     name: "Infrastructure",
     owners: [],
     parentId: mockId("group", 2),

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type {
   AccountMergePreview,
+  AckTrigger,
   AddOrganizationInput,
   AiHealth,
   AiJobResult,
@@ -113,6 +114,7 @@ export type {
   WorkflowStatus,
 } from "./generated/schema";
 export {
+  AckTrigger,
   AiJobPhase,
   ApprovalStatus,
   AssistOperation,
@@ -604,10 +606,18 @@ export interface SubmitPolicyReviewInput {
 }
 
 export interface UpdateGroupSettingsInput {
+  /** Unset leaves it unchanged; set carries a new explicit value (there is no way to go back
+   *  to "inherited" through this input — the gateway has no separate unset operation for it). */
+  ackEveryone?: boolean;
+  ackTriggers?: AckTrigger;
   defaultTemplateId?: null | string;
   defaultTemplateNone?: boolean;
   defaultWorkflowId?: null | string;
+  /** Unset leaves it unchanged; null or an array both carry an explicit override (null means
+   *  "no exclusions", not "inherit" — there is no way to go back to inherited here either). */
+  exclusionGroupIds?: null | readonly string[];
   id: string;
+  idpGroupIds?: null | readonly string[];
   owners?: readonly string[];
   reviewCadence?: ReviewCadence;
   reviewDate?: null | string;

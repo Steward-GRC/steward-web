@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Group, ReviewCadence, Template, Workflow } from "@steward-web/api-client";
+import type { AckTrigger, Group, ReviewCadence, Template, Workflow } from "@steward-web/api-client";
 
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
@@ -119,6 +119,58 @@ export const ownsOwners = (groups: readonly Group[], group: Group): boolean => {
   return group.parentId == null || rootIds.has(group.parentId);
 };
 
+/** Walks a group's ancestor chain, closest first (itself included), for the nearest one that
+ *  carries its own value for a tri-state governance field. Undefined when nothing in the
+ *  chain has set one. */
+const nearestAncestorValue = <T>(
+  groups: readonly Group[],
+  group: Group,
+  hasOwnValue: (g: Group) => boolean,
+  ownValue: (g: Group) => T,
+): T | undefined => {
+  let current: Group | undefined = group;
+  while (current) {
+    if (hasOwnValue(current)) return ownValue(current);
+    current = current.parentId ? groups.find((g) => g.id === current!.parentId) : undefined;
+  }
+  return undefined;
+};
+
+/** The resolved ack-audience IdP group names: this group's own override, or the nearest
+ *  ancestor's. Null (no override anywhere in the chain) reads as "no explicit audience". */
+export const effectiveIdpGroupIds = (
+  groups: readonly Group[],
+  group: Group,
+): null | readonly string[] =>
+  nearestAncestorValue(
+    groups,
+    group,
+    (g) => g.idpGroupIds != null,
+    (g) => g.idpGroupIds!,
+  ) ?? null;
+
+/** Same nearest-ancestor-wins resolution for the exclusion-group override. */
+export const effectiveExclusionGroupIds = (
+  groups: readonly Group[],
+  group: Group,
+): null | readonly string[] =>
+  nearestAncestorValue(
+    groups,
+    group,
+    (g) => g.exclusionGroupIds != null,
+    (g) => g.exclusionGroupIds!,
+  ) ?? null;
+
+/** The resolved ack-audience "Everyone" flag: the nearest ancestor (itself included) that set
+ *  it explicitly, else false — no category in the chain has set it. */
+export const effectiveAckEveryone = (groups: readonly Group[], group: Group): boolean =>
+  nearestAncestorValue(
+    groups,
+    group,
+    (g) => g.ackEveryoneSet,
+    (g) => g.ackEveryone,
+  ) ?? false;
+
 const requireGroupManage = (request: Request) =>
   requirePermissionFromRequest(request, PERMISSIONS.GroupManage, "/");
 
@@ -194,9 +246,13 @@ export const moveGroup = async (
 };
 
 export interface GroupSettingsPatch {
+  ackEveryone: boolean;
+  ackTriggers: AckTrigger;
   defaultTemplateId: null | string;
   defaultTemplateNone: boolean;
   defaultWorkflowId: null | string;
+  exclusionGroupIds: null | readonly string[];
+  idpGroupIds: null | readonly string[];
   owners: readonly string[];
   reviewCadence: ReviewCadence;
   reviewDate: null | string;
