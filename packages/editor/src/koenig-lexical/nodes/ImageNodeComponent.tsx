@@ -140,7 +140,7 @@ export function ImageNodeComponent({nodeKey, initialFile, src, altText, captionE
     };
 
     // when card is inserted from the card menu or slash command we want to show the file picker immediately
-    // uses a setTimeout to avoid issues with React rendering the component twice in dev mode 🙈
+    // uses a setTimeout to avoid issues with React rendering the component twice in dev mode
     React.useEffect(() => {
         if (!triggerFileDialog) {
             return;

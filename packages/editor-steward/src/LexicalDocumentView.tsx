@@ -120,7 +120,7 @@ const renderNode = (node: SerializedNode, key: number): ReactNode => {
       return createElement(tag, { key }, renderChildren(node));
     }
     case "listitem": {
-      const marker = node.checked === true ? "☑ " : node.checked === false ? "☐ " : null;
+      const marker = node.checked === true ? "[x] " : node.checked === false ? "[ ] " : null;
       return (
         <li key={key}>
           {marker}

@@ -16,7 +16,7 @@ export interface CalloutNode {
 
 const calloutProperties = [
     {name: 'calloutText', default: '', wordCount: true},
-    {name: 'calloutEmoji', default: '💡'},
+    {name: 'calloutEmoji', default: '\u{1F4A1}'},
     {name: 'backgroundColor', default: 'blue'}
 ] as const satisfies readonly DecoratorNodeProperty[];
 
@@ -29,7 +29,7 @@ export class CalloutNode extends generateDecoratorNode({
     constructor({calloutText, calloutEmoji, backgroundColor}: CalloutData = {}, key?: string) {
         super({}, key);
         this.__calloutText = calloutText || '';
-        this.__calloutEmoji = calloutEmoji ?? '💡';
+        this.__calloutEmoji = calloutEmoji ?? '\u{1F4A1}';
         this.__backgroundColor = backgroundColor || 'blue';
     }
 

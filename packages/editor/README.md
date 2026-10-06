@@ -37,6 +37,8 @@ one, apply the change by hand, and update the commit here. Upstream history is n
 - Markdown paste converts with `@lexical/markdown` rather than upstream's Markdown renderer.
 - The card menu's links to upstream's help pages are gone, and links to outside sites in
   comments are written as plain references.
+- Emoji in the sources are written as escapes (the callout's default icon) or dropped from
+  copy and comments.
 - Kept: the content styles, the "+" and slash card menus, the floating format and link
   toolbars, card selection, drag to reorder, remote carets, and the image, callout, toggle,
   divider and aside cards.

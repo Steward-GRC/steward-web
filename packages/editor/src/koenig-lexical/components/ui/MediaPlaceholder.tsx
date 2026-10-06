@@ -116,7 +116,7 @@ export function MediaPlaceholder({
         >
             <div className={containerClasses}>
                 {isDraggedOver ? (
-                    <CardText text={`Drop ${multiple ? '\'em' : 'it'} like it's hot 🔥`} type={type} />
+                    <CardText text={`Drop ${multiple ? 'them' : 'it'} here`} type={type} />
                 ) : (
                     <button
                         className={buttonClasses}

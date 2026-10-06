@@ -27,7 +27,7 @@ export function CalloutNodeComponent({nodeKey, textEditor, textEditorInitialStat
             const node = $getNodeByKey(nodeKey);
             setHasEmoji(event.target.checked);
             if (event.target.checked && emoji === '') {
-                node.calloutEmoji = '💡';
+                node.calloutEmoji = '\u{1F4A1}';
             } else {
                 node.calloutEmoji = event.target.checked ? emoji : '';
             }

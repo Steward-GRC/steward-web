@@ -88,7 +88,7 @@ export function CalloutCard({
     hasEmoji = true,
     handleColorChange,
     changeEmoji,
-    calloutEmoji = '💡',
+    calloutEmoji = '\u{1F4A1}',
     textEditor,
     textEditorInitialState,
     nodeKey,
