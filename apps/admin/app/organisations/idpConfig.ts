@@ -42,3 +42,8 @@ export const buildIdpConfig = (draft: IdpConfigDraft): KeyValueInput[] => {
   }
   return saml;
 };
+
+/** Flattens a `buildIdpConfig` list into the plain record the setup bootstrap's `sso.config`
+ *  carries (the gateway's Day-0 SSO provisioning input isn't key/value-shaped). */
+export const idpConfigToRecord = (config: KeyValueInput[]): Record<string, string> =>
+  Object.fromEntries(config.map(({ key, value }) => [key, value]));

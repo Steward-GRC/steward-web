@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { buildIdpConfig } from "./idpConfig";
+import { buildIdpConfig, idpConfigToRecord } from "./idpConfig";
 
 describe("buildIdpConfig", () => {
   it("builds the OIDC key/value pair for an OIDC draft", () => {
@@ -41,5 +41,23 @@ describe("buildIdpConfig", () => {
 
     const withoutUrl = buildIdpConfig({ protocol: "saml" });
     expect(withoutUrl.some((entry) => entry.key === "idpInitiatedSsoUrl")).toBe(false);
+  });
+});
+
+describe("idpConfigToRecord", () => {
+  it("flattens a key/value list into a plain record", () => {
+    expect(
+      idpConfigToRecord([
+        { key: "entityId", value: "https://idp.example.org/metadata" },
+        { key: "signingCertificate", value: "-----BEGIN CERTIFICATE-----" },
+      ]),
+    ).toEqual({
+      entityId: "https://idp.example.org/metadata",
+      signingCertificate: "-----BEGIN CERTIFICATE-----",
+    });
+  });
+
+  it("returns an empty record for an empty list", () => {
+    expect(idpConfigToRecord([])).toEqual({});
   });
 });
