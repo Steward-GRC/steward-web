@@ -20,16 +20,18 @@ export const isMockRun = (argv: string[] = process.argv): boolean => {
 };
 
 export interface EdgeChoice {
+  /** The client component every app imports as `@steward-web/mock-banner`. */
+  banner: string;
   mock: boolean;
   /** The server module every app imports as `@steward-web/edge.server`. */
   module: string;
 }
 
 /**
- * Pick the network edge for a build. The choice is made here, at build time, from the Vite
- * mode alone: `--mode mock` swaps in the mock gateway, everything else is live. A
- * STEWARD_MOCK variable on a live build is refused, so a production build can't be talked
- * into mock mode.
+ * Pick the network edge (and its banner) for a build. The choice is made here, at build
+ * time, from the Vite mode alone: `--mode mock` swaps in the mock gateway and its persistent
+ * "MOCK DATA" banner, everything else is live. A STEWARD_MOCK variable on a live build is
+ * refused, so a production build can't be talked into mock mode.
  */
 export const chooseEdge = (
   mode: string,
@@ -43,6 +45,9 @@ export const chooseEdge = (
     );
   }
   return {
+    banner: mock
+      ? path.join(source("mock-gateway"), "MockBanner.tsx")
+      : path.join(source("shell"), "NoMockBanner.tsx"),
     mock,
     module: mock
       ? path.join(source("mock-gateway"), "edge.server.ts")
@@ -75,9 +80,10 @@ export const buildInfoDefines = (
   };
 };
 
-/** Aliases shared by every app and package: the package-internal prefixes and the edge. */
-export const sharedAliases = (edgeModule: string): Record<string, string> => ({
-  "@steward-web/edge.server": edgeModule,
+/** Aliases shared by every app and package: the package-internal prefixes, the edge and its banner. */
+export const sharedAliases = (edge: EdgeChoice): Record<string, string> => ({
+  "@steward-web/edge.server": edge.module,
+  "@steward-web/mock-banner": edge.banner,
   "#api": source("api-client"),
   "#auth": source("auth"),
   "#i18n": source("i18n"),
@@ -102,6 +108,6 @@ export const packageConfig = (
 ): { test: ReturnType<typeof testConfig> } & UserConfig => ({
   define: buildInfoDefines({}),
   plugins: [react()],
-  resolve: { alias: sharedAliases(chooseEdge("test", {}).module) },
+  resolve: { alias: sharedAliases(chooseEdge("test", {})) },
   test: testConfig(directory),
 });

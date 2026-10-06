@@ -1,4 +1,13 @@
 {
+  "refusal": {
+    "forbidden": "You don't have permission to do that.",
+    "generic": "Something went wrong on our end.",
+    "notFound": "That couldn't be found.",
+    "signedOut": "Sign in to continue."
+  },
+  "route": {
+    "action": "load this page"
+  },
   "reach": {
     "description": "Something went wrong on our end. Try again in a moment — if it keeps happening, contact support.",
     "reference": "Reference: {{reference}}",

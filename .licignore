@@ -18,3 +18,4 @@ build/
 coverage/
 .react-router/
 **/generated/
+**/generated/**
