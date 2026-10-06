@@ -1,7 +1,0 @@
-query PolicyVersionMeta($id: ID!) {
-  policyVersion(id: $id) {
-    id
-    versionNo
-    status
-  }
-}

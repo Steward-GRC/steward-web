@@ -3,7 +3,7 @@
 import type { AuthoringPolicyFieldsFragment } from "../generated/graphql";
 
 import { GatewayError } from "../gatewayFetch";
-import { type Policy, PolicyStatus } from "../views";
+import { type HistoryEntry, type Policy, PolicyStatus } from "../views";
 
 /** The part of a gateway `Category` the library's names are built from. */
 export interface CategoryNode {
@@ -72,10 +72,10 @@ export const policyStatusOf = (hasPublished: boolean, versionStatus?: string): P
   return statuses.has(upper) ? (upper as PolicyStatus) : PolicyStatus.Draft;
 };
 
-/** The gateway policy, its current version and its category names as the library row. */
+/** The gateway policy and its category names as the library row; the current version's
+ *  number and status come straight off the policy row, with no extra version read. */
 export const toPolicyView = (
   policy: Omit<AuthoringPolicyFieldsFragment, "ownerName">,
-  version: { status: string; versionNo: number } | null,
   names: { category: string; subcategory: string },
 ): Policy => ({
   category: names.category,
@@ -88,13 +88,16 @@ export const toPolicyView = (
   ownerUserId: policy.ownerUserId,
   retiredAt: policy.retiredAt,
   sensitivity: policy.sensitivity,
-  status: policyStatusOf(Boolean(policy.currentPublishedVersionId), version?.status),
+  status: policyStatusOf(
+    Boolean(policy.currentPublishedVersionId),
+    policy.currentVersionStatus ?? undefined,
+  ),
   subcategory: names.subcategory,
   templateId: policy.templateId,
   templateNone: policy.templateNone,
   title: policy.title,
-  updated: null,
-  version: version ? String(version.versionNo) : "",
+  updated: policy.updatedAt,
+  version: policy.currentVersionNo === null ? "" : String(policy.currentVersionNo),
   viewerCan: policy.viewerCan,
 });
 
@@ -102,3 +105,29 @@ export const toPolicyView = (
 export const isUnauthenticated = (error: unknown): boolean =>
   error instanceof GatewayError &&
   (error.status === 401 || error.code?.toUpperCase() === "UNAUTHENTICATED");
+
+/** One audit action's `type.verb` prefix the reader's history strips to a bare lifecycle
+ *  kind (e.g. "policy.published" -> "published"), matching the short tokens the reader's
+ *  event badges and translations key off. Any other action is kept as-is. */
+const POLICY_ACTION_PREFIX = "policy.";
+const historyKindOf = (action: string): string =>
+  action.startsWith(POLICY_ACTION_PREFIX) ? action.slice(POLICY_ACTION_PREFIX.length) : action;
+
+/**
+ * A policy's audit records as the reader's history: oldest first (the gateway's own
+ * `auditLog` reads newest first), each attributed to `versionLabel` since the audit trail
+ * carries no per-event version number. `comment` and `stage` are null for the same reason:
+ * the audit record has neither.
+ */
+export const historyFromAuditLog = (
+  records: readonly { action: string; actorName?: null | string; occurredAt: string }[],
+  versionLabel: string,
+): HistoryEntry[] =>
+  records.toReversed().map((r) => ({
+    actorName: r.actorName ?? null,
+    at: r.occurredAt,
+    comment: null,
+    kind: historyKindOf(r.action),
+    stage: null,
+    versionLabel,
+  }));

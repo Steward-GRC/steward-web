@@ -10,6 +10,7 @@ import {
   bodyTextFromContent,
   categoryNames,
   type CategoryNode,
+  historyFromAuditLog,
   isUnauthenticated,
   policyStatusOf,
   toPolicyView,
@@ -82,11 +83,13 @@ describe("policyStatusOf", () => {
 });
 
 describe("toPolicyView", () => {
-  it("assembles the library row from the gateway policy, its version and its names", () => {
+  it("assembles the library row from the gateway policy and its names, with no extra version read", () => {
     const view = toPolicyView(
       {
         currentDraftVersionId: null,
         currentPublishedVersionId: "v2",
+        currentVersionNo: 3,
+        currentVersionStatus: "published",
         documentType: DocumentType.Policy,
         homeCategoryId: "child",
         id: "p1",
@@ -97,6 +100,7 @@ describe("toPolicyView", () => {
         templateId: null,
         templateNone: true,
         title: "Travel",
+        updatedAt: "2026-09-02T00:00:00Z",
         viewerCan: {
           ack: true,
           approve: false,
@@ -107,7 +111,6 @@ describe("toPolicyView", () => {
           submit: false,
         },
       },
-      { status: "published", versionNo: 3 },
       { category: "Finance", subcategory: "Travel" },
     );
     expect(view).toMatchObject({
@@ -115,7 +118,7 @@ describe("toPolicyView", () => {
       homeGroupId: "child",
       status: PolicyStatus.Published,
       subcategory: "Travel",
-      updated: null,
+      updated: "2026-09-02T00:00:00Z",
       version: "3",
     });
   });
@@ -125,6 +128,8 @@ describe("toPolicyView", () => {
       {
         currentDraftVersionId: "d1",
         currentPublishedVersionId: null,
+        currentVersionNo: null,
+        currentVersionStatus: null,
         documentType: DocumentType.Procedure,
         homeCategoryId: "root",
         id: "p2",
@@ -135,6 +140,7 @@ describe("toPolicyView", () => {
         templateId: null,
         templateNone: false,
         title: "Claims",
+        updatedAt: null,
         viewerCan: {
           ack: false,
           approve: false,
@@ -145,11 +151,66 @@ describe("toPolicyView", () => {
           submit: true,
         },
       },
-      null,
       { category: "Finance", subcategory: "" },
     );
     expect(view.version).toBe("");
     expect(view.status).toBe(PolicyStatus.Draft);
+    expect(view.updated).toBeNull();
+  });
+});
+
+describe("historyFromAuditLog", () => {
+  it("reverses the gateway's newest-first page and strips the policy. action prefix", () => {
+    const history = historyFromAuditLog(
+      [
+        {
+          action: "policy.published",
+          actorName: "Ada Lovelace",
+          occurredAt: "2026-08-12T00:00:00Z",
+        },
+        {
+          action: "policy.submitted",
+          actorName: "Ada Lovelace",
+          occurredAt: "2026-07-29T09:15:00Z",
+        },
+      ],
+      "2.0.0",
+    );
+    expect(history).toEqual([
+      {
+        actorName: "Ada Lovelace",
+        at: "2026-07-29T09:15:00Z",
+        comment: null,
+        kind: "submitted",
+        stage: null,
+        versionLabel: "2.0.0",
+      },
+      {
+        actorName: "Ada Lovelace",
+        at: "2026-08-12T00:00:00Z",
+        comment: null,
+        kind: "published",
+        stage: null,
+        versionLabel: "2.0.0",
+      },
+    ]);
+  });
+
+  it("keeps an action with no recognised prefix, and a missing actor as null", () => {
+    const history = historyFromAuditLog(
+      [{ action: "workflow.decided", actorName: null, occurredAt: "2026-08-05T11:05:00Z" }],
+      "2.0.0",
+    );
+    expect(history).toEqual([
+      {
+        actorName: null,
+        at: "2026-08-05T11:05:00Z",
+        comment: null,
+        kind: "workflow.decided",
+        stage: null,
+        versionLabel: "2.0.0",
+      },
+    ]);
   });
 });
 
