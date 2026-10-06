@@ -13,8 +13,8 @@ export type Scalars = {
    * trimmed to the operations steward-web actually sends: the signed-in user, the
    * diagnostics report, editing one's own display name, the policy/procedure library browse
    * (categories and the catalog), the admin user directory, the admin group directory, the
-   * admin organisation directory, and the staff authoring area (the editor and its AI
-   * drafting/review assist). It
+   * admin organisation/SSO directory, the staff authoring area (the editor and its AI
+   * drafting/review assist) and the admin audit log. It
    * gains more of the upstream schema as later ports add operations, and schema-generate.sh
    * switches from this vendored copy to a live fetch once steward-gateway publishes its own
    * schema on its main branch.
@@ -115,6 +115,48 @@ export enum AssistOperation {
   AssistOperationSummarize = "ASSIST_OPERATION_SUMMARIZE",
   AssistOperationUnspecified = "ASSIST_OPERATION_UNSPECIFIED",
 }
+
+/**
+ * The result of recomputing a hash-chain segment. valid is false the moment one record's
+ * recordHash fails to match the hash of its own fields plus the prior record's recordHash.
+ */
+export type AuditChainVerification = {
+  readonly __typename?: "AuditChainVerification";
+  readonly errors: ReadonlyArray<Scalars["String"]["output"]>;
+  readonly recordsChecked: Scalars["Int"]["output"];
+  readonly valid: Scalars["Boolean"]["output"];
+};
+
+export type AuditQueryPage = {
+  readonly __typename?: "AuditQueryPage";
+  readonly nextPageToken: Scalars["String"]["output"];
+  readonly records: ReadonlyArray<AuditRecord>;
+};
+
+/** One tamper-evident audit record: the hash chain links recordHash to the prior record's own. */
+export type AuditRecord = {
+  readonly __typename?: "AuditRecord";
+  readonly action: Scalars["String"]["output"];
+  /**
+   * Human-readable labels resolved server-side at read time from the actor/group/subject ids
+   * above, so the UI never has to fan out its own lookups. Null on a resolution miss, in which
+   * case the caller falls back to the raw id.
+   */
+  readonly actorName?: Maybe<Scalars["String"]["output"]>;
+  readonly actorUserId: Scalars["ID"]["output"];
+  readonly groupId: Scalars["ID"]["output"];
+  readonly groupName?: Maybe<Scalars["String"]["output"]>;
+  readonly id: Scalars["String"]["output"];
+  readonly legalBasisExempt: Scalars["Boolean"]["output"];
+  /** ISO-8601. */
+  readonly occurredAt: Scalars["String"]["output"];
+  readonly prevHash: Scalars["String"]["output"];
+  readonly recordHash: Scalars["String"]["output"];
+  readonly recordUuid: Scalars["ID"]["output"];
+  readonly subject: Scalars["String"]["output"];
+  readonly subjectLabel?: Maybe<Scalars["String"]["output"]>;
+  readonly tier: Scalars["String"]["output"];
+};
 
 export type AuthoringAssistInput = {
   readonly editableContent: Scalars["String"]["input"];
@@ -768,6 +810,8 @@ export type Query = {
   readonly aiJob: AiJobStatus;
   /** Fetch a completed async AI job's content by resultRef (AIJobStatus.resultRef once phase is SUCCEEDED). */
   readonly aiJobResultContent: AiJobResultContent;
+  /** A page of audit records, newest first. tier/groupId/actorUserId/subject filter server-side; action and a date range are left to the caller. Site-admin only. */
+  readonly auditLog: AuditQueryPage;
   /** The groups any signed-in author may create a policy under (unlike groupChildren, not site-admin-gated). */
   readonly authorableGroups: ReadonlyArray<Group>;
   /** The templates selectable when creating a policy (unlike templates, not site-admin-gated). */
@@ -814,6 +858,8 @@ export type Query = {
    * also returns tombstoned accounts.
    */
   readonly users: UserPage;
+  /** Recomputes the hash chain across [fromRecordId, toRecordId] and reports whether it still holds. Site-admin only. */
+  readonly verifyAuditChain: AuditChainVerification;
   /** The workflows selectable as a group's default. Site-admin only. */
   readonly workflows: ReadonlyArray<Workflow>;
 };
@@ -824,6 +870,15 @@ export type QueryAiJobArgs = {
 
 export type QueryAiJobResultContentArgs = {
   resultRef: Scalars["String"]["input"];
+};
+
+export type QueryAuditLogArgs = {
+  actorUserId?: InputMaybe<Scalars["ID"]["input"]>;
+  groupId?: InputMaybe<Scalars["ID"]["input"]>;
+  pageSize?: InputMaybe<Scalars["Int"]["input"]>;
+  pageToken?: InputMaybe<Scalars["String"]["input"]>;
+  subject?: InputMaybe<Scalars["String"]["input"]>;
+  tier?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type QueryAuthorableTemplatesArgs = {
@@ -880,6 +935,11 @@ export type QueryUsersArgs = {
   pageSize?: InputMaybe<Scalars["Int"]["input"]>;
   pageToken?: InputMaybe<Scalars["String"]["input"]>;
   search?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type QueryVerifyAuditChainArgs = {
+  fromRecordId: Scalars["String"]["input"];
+  toRecordId: Scalars["String"]["input"];
 };
 
 export enum ReferenceKind {

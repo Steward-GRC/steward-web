@@ -588,3 +588,45 @@ describe("mockEdge organisations directory", () => {
     expect(after.serial).toBe(rotated.serial);
   });
 });
+
+describe("mockEdge audit log", () => {
+  it("auditLog() answers the fixture records, newest first", async () => {
+    const page = await mockEdge.auditLog({});
+    expect(page.records.length).toBeGreaterThan(0);
+    const occurredAts = page.records.map((r) => r.occurredAt);
+    expect(occurredAts).toEqual([...occurredAts].toSorted().toReversed());
+  });
+
+  it("auditLog() filters by tier, groupId, actorUserId and a subject substring", async () => {
+    const activity = await mockEdge.auditLog({ tier: "activity" });
+    expect(activity.records.every((r) => r.tier === "activity")).toBe(true);
+
+    const byGroup = await mockEdge.auditLog({ groupId: mockId("group", 2) });
+    expect(byGroup.records.every((r) => r.groupId === mockId("group", 2))).toBe(true);
+
+    const byActor = await mockEdge.auditLog({ actorUserId: mockId("user", 3) });
+    expect(byActor.records.every((r) => r.actorUserId === mockId("user", 3))).toBe(true);
+
+    const bySubject = await mockEdge.auditLog({ subject: "user:" });
+    expect(bySubject.records.every((r) => r.subject.startsWith("user:"))).toBe(true);
+  });
+
+  it("auditLog() caps the page at pageSize", async () => {
+    const page = await mockEdge.auditLog({ pageSize: 2 });
+    expect(page.records).toHaveLength(2);
+  });
+
+  it("verifyAuditChain() reports a valid chain across the whole fixture range", async () => {
+    const all = await mockEdge.auditLog({});
+    const ids = all.records.map((r) => r.id);
+    const result = await mockEdge.verifyAuditChain(ids.at(-1)!, ids[0]!);
+    expect(result).toMatchObject({ errors: [], valid: true });
+    expect(result.recordsChecked).toBe(all.records.length);
+  });
+
+  it("verifyAuditChain() rejects an unknown record id", async () => {
+    await expect(mockEdge.verifyAuditChain("1", "no-such-id")).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+});

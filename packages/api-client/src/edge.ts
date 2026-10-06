@@ -8,6 +8,8 @@ import type {
   AiJobStatus,
   Appendix,
   AssistOperation,
+  AuditChainVerification,
+  AuditQueryPage,
   AuthoringAssistResult,
   BreakGlassGrant,
   Category,
@@ -44,6 +46,9 @@ export type {
   AiHealth,
   AiJobStatus,
   Appendix,
+  AuditChainVerification,
+  AuditQueryPage,
+  AuditRecord,
   AuthoringAssistResult,
   BreakGlassGrant,
   Category,
@@ -89,6 +94,15 @@ export {
 
 /** `AiJobResultContent` is renamed on export only to avoid colliding with the `Edge` method of the same name. */
 export type AIJobResultContent = AiJobResultContentSchema;
+
+export interface AuditLogFilters {
+  actorUserId?: string;
+  groupId?: string;
+  pageSize?: number;
+  pageToken?: string;
+  subject?: string;
+  tier?: string;
+}
 
 export interface AuthoringAssistInput {
   editableContent: string;
@@ -139,6 +153,8 @@ export interface Edge {
   aiJob(jobId: string, cookie?: string): Promise<AiJobStatus>;
   /** Fetches a completed async AI job's content by `AIJobStatus.resultRef`. */
   aiJobResultContent(resultRef: string, cookie?: string): Promise<AIJobResultContent>;
+  /** A page of audit records, newest first. Site-admin only. */
+  auditLog(filters: AuditLogFilters, cookie?: string): Promise<AuditQueryPage>;
   /** The groups any signed-in author may create a policy under (not site-admin-gated). */
   authorableGroups(cookie?: string): Promise<readonly Group[]>;
   /** The templates selectable when creating a policy (not site-admin-gated). */
@@ -275,6 +291,12 @@ export interface Edge {
   updateUserProfile(userId: string, name: string, email: string, cookie?: string): Promise<User>;
   /** The platform's users, site-admin only. */
   users(input: ListUsersInput, cookie?: string): Promise<UserPage>;
+  /** Recomputes the hash chain across a record range and reports whether it still holds. Site-admin only. */
+  verifyAuditChain(
+    fromRecordId: string,
+    toRecordId: string,
+    cookie?: string,
+  ): Promise<AuditChainVerification>;
   /** Checks the domain's DNS TXT record against its verification token. Site-admin only. */
   verifyDomain(domain: string, cookie?: string): Promise<Organization>;
   /** The workflows selectable as a group's default. Site-admin only. */
