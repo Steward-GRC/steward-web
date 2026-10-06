@@ -9,16 +9,22 @@ import {
   mockDiagnostics,
   mockMe,
   mockPolicies,
+  mockPolicyDetails,
   mockSessions,
   mockUserDeletionPreviews,
   mockUsers,
 } from "./fixtures";
 
-// Mutable so `updateMyProfile` below can persist its edit across calls in the same
-// process, the way the live gateway would. `fixtures.ts` still exports the starting values.
+// Mutable so `updateMyProfile`, `acknowledgePolicy` and `breakGlassReveal` below can persist
+// their effect across calls in the same process, the way the live gateway would. `fixtures.ts`
+// still exports the starting values.
 let me = mockMe;
 let users = [...mockUsers];
 const sessions = structuredClone(mockSessions);
+let policyDetails = mockPolicyDetails;
+
+/** How long a mock break-glass grant lasts, matching the real grant's order of magnitude. */
+const BREAK_GLASS_GRANT_MS = 5 * 60 * 1000;
 
 const requireUser = (operation: string, userId: string): User => {
   const user = users.find((u) => u.userId === userId);
@@ -37,6 +43,29 @@ const replaceUser = (updated: User): User => {
  * `chooseEdge`); a live build never imports this module.
  */
 export const mockEdge: Edge = {
+  acknowledgePolicy: async (policyVersionId) => {
+    const detail = policyDetails.find((d) => d.currentVersionId === policyVersionId);
+    if (!detail?.ack) {
+      throw new GatewayError("AcknowledgePolicy", "Unknown policy version.", {
+        code: "NOT_FOUND",
+      });
+    }
+    const ackedAt = new Date().toISOString();
+    const ack = { ackedAt, acknowledged: true, required: true };
+    policyDetails = policyDetails.map((d) => (d === detail ? { ...d, ack } : d));
+    return ack;
+  },
+  breakGlassReveal: async (policyId, reason) => {
+    if (!reason.trim()) {
+      throw new GatewayError("BreakGlassReveal", "A reason is required.", {
+        code: "INVALID_ARGUMENT",
+      });
+    }
+    policyDetails = policyDetails.map((d) =>
+      d.id === policyId ? { ...d, contentObfuscated: false } : d,
+    );
+    return { grantedUntil: new Date(Date.now() + BREAK_GLASS_GRANT_MS).toISOString() };
+  },
   categories: () => Promise.resolve(mockCategories),
   deleteUser: async (userId) => {
     const user = requireUser("DeleteUser", userId);
@@ -82,6 +111,10 @@ export const mockEdge: Edge = {
   me: () => Promise.resolve(me),
   policies: (documentType) =>
     Promise.resolve(mockPolicies.filter((p) => p.documentType === documentType)),
+  policyDetail: (documentType, number) =>
+    Promise.resolve(
+      policyDetails.find((d) => d.documentType === documentType && d.number === number) ?? null,
+    ),
   previewUserDeletion: async (userId) => {
     const user = requireUser("PreviewUserDeletion", userId);
     const fallback: UserDeletionPreview = {

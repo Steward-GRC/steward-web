@@ -37,6 +37,102 @@
     },
     "toggleStar": "Star {{number}}"
   },
+  "reader": {
+    "ack": {
+      "acknowledge": "Acknowledge",
+      "doneBody": "You acknowledged this policy on {{date}}.",
+      "doneTitle": "Acknowledged",
+      "pendingBody": "Please take a moment to read this policy, then confirm you've reviewed it.",
+      "pendingTitle": "Please review and confirm"
+    },
+    "appendices": {
+      "empty": "No appendices.",
+      "title": "Appendices"
+    },
+    "back": "Back to the library",
+    "changes": {
+      "empty": "No changes from the version it superseded.",
+      "legend": "Added in the newer version is underlined; removed from the older version is struck through.",
+      "title": "Changes",
+      "versusPrior": "Changes vs. version {{version}}"
+    },
+    "contacts": {
+      "empty": "No contacts attached.",
+      "title": "Contacts"
+    },
+    "definitions": {
+      "empty": "This policy has no defined terms yet.",
+      "title": "Definitions"
+    },
+    "dialogs": {
+      "acknowledge": {
+        "confirm": "Acknowledge",
+        "description": "This confirms you've read and understood this policy. Your name and the time are recorded.",
+        "title": "Acknowledge this policy"
+      },
+      "breakGlass": {
+        "confirm": "Break glass to reveal",
+        "description": "This access is recorded for audit. Give a reason for revealing this policy's real content.",
+        "reasonLabel": "Reason",
+        "title": "Break glass to reveal"
+      }
+    },
+    "history": {
+      "empty": "No approval activity yet.",
+      "events": {
+        "changesRequested": "Changes requested",
+        "decided": "{{stage}} approved",
+        "inReview": "In review · {{stage}}",
+        "published": "Published v{{version}}",
+        "rejected": "Rejected",
+        "submitted": "Submitted for approval",
+        "superseded": "Superseded",
+        "withdrawn": "Withdrawn"
+      },
+      "title": "History & approvals"
+    },
+    "metadata": {
+      "owner": "Owner",
+      "published": "Published",
+      "sensitivity": "Sensitivity",
+      "status": "Status",
+      "updated": "Last updated",
+      "version": "Version"
+    },
+    "notices": {
+      "inReview": "A new version is in review.",
+      "rejected": "An approver returned this draft. Address the feedback and resubmit.",
+      "superseded": "This version has been superseded.",
+      "withdrawn": "This version was withdrawn."
+    },
+    "redacted": {
+      "body": "You're outside this sensitive policy's read audience, so its content is obfuscated.",
+      "breakGlass": "Break glass to reveal",
+      "noPermission": "You don't have permission to reveal it. Contact a compliance admin if you need access.",
+      "title": "Sensitive content is hidden"
+    },
+    "related": {
+      "empty": "No related policies.",
+      "title": "Related"
+    },
+    "references": {
+      "empty": "No references attached.",
+      "kind": {
+        "link": "Link",
+        "standard": "Standard",
+        "text": "Text"
+      },
+      "title": "References"
+    },
+    "tabs": {
+      "changes": "Changes",
+      "contacts": "Contacts",
+      "definitions": "Definitions",
+      "related": "Related",
+      "references": "References",
+      "view": "View"
+    }
+  },
   "sensitivity": {
     "sensitive": "Sensitive",
     "standard": "Standard"

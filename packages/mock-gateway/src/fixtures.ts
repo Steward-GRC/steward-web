@@ -8,7 +8,9 @@ import {
   DocumentType,
   type Me,
   type Policy,
+  type PolicyDetail,
   PolicyStatus,
+  ReferenceKind,
   Sensitivity,
   type Session,
   type User,
@@ -292,5 +294,250 @@ export const mockPolicies: Policy[] = [
     title: "Gift Disclosure",
     updated: "2026-07-09T00:00:00Z",
     version: "1.0.0",
+  },
+];
+
+/** The shared defaults every reader fixture starts from, before its own overrides. */
+const readerDefaultsFor = (policy: Policy, n: number): PolicyDetail => ({
+  ack:
+    policy.documentType === DocumentType.Procedure
+      ? null
+      : { ackedAt: null, acknowledged: false, required: false },
+  appendices: [],
+  bodyText: `This is the current published text of ${policy.title}. It sets out what the organisation expects and who it applies to.`,
+  canBreakGlass: false,
+  category: policy.category,
+  contacts: [],
+  contentObfuscated: false,
+  currentVersionId: mockId("policy-version", n),
+  definitions: [],
+  documentType: policy.documentType,
+  history: [],
+  id: policy.id,
+  number: policy.number,
+  ownerName: mockMe.name,
+  priorVersion: null,
+  published: policy.status === PolicyStatus.Published ? policy.updated : null,
+  references: [],
+  related: [],
+  sensitivity: policy.sensitivity,
+  status: policy.status,
+  subcategory: policy.subcategory,
+  title: policy.title,
+  updated: policy.updated,
+  version: policy.version,
+});
+
+/**
+ * The reader's full detail for every row in `mockPolicies`, one entry each, covering the
+ * states the reader has to render: an acknowledgement pending and one already given, a
+ * sensitive document redacted and one not, every lifecycle status's history notice, and a
+ * version with a diff against the one it superseded and one without (its first version).
+ */
+export const mockPolicyDetails: PolicyDetail[] = [
+  {
+    ...readerDefaultsFor(mockPolicies[0]!, 1),
+    ack: { ackedAt: null, acknowledged: false, required: true },
+    appendices: [
+      {
+        id: mockId("appendix", 1),
+        letter: "A",
+        text: "Per-diem rates by country, reviewed annually by Finance.",
+        title: "Per-diem rates",
+      },
+    ],
+    contacts: [
+      {
+        department: "Finance",
+        email: "finance@example.org",
+        hours: "Mon-Fri, 9am-5pm",
+        id: mockId("contact", 1),
+        label: "Expense queries",
+        name: null,
+        notes: null,
+        phone: null,
+        role: "Finance help desk",
+      },
+    ],
+    definitions: [
+      {
+        definition: "A cost incurred for official organisation business, not personal use.",
+        id: mockId("definition", 1),
+        term: "Business expense",
+      },
+    ],
+    history: [
+      {
+        actorName: mockMe.name,
+        at: "2026-07-29T09:15:00Z",
+        comment: null,
+        kind: "submitted",
+        stage: null,
+        versionLabel: "2.0.0",
+      },
+      {
+        actorName: mockMe.name,
+        at: "2026-08-05T11:05:00Z",
+        comment: "Looks right.",
+        kind: "decided",
+        stage: "Finance review",
+        versionLabel: "2.0.0",
+      },
+      {
+        actorName: mockMe.name,
+        at: "2026-08-12T00:00:00Z",
+        comment: null,
+        kind: "published",
+        stage: null,
+        versionLabel: "2.0.0",
+      },
+    ],
+    priorVersion: {
+      diff: [
+        {
+          changeType: "modified",
+          sectionKey: "per-diem",
+          sectionTitle: "Per-diem rates",
+          wordDiffHtml: "Rates were <del>USD-only</del> <ins>reviewed per country</ins>.",
+        },
+      ],
+      version: "1.0.0",
+    },
+    references: [
+      {
+        body: null,
+        clause: "4.2",
+        id: mockId("reference", 1),
+        kind: ReferenceKind.Standard,
+        label: "ISO 37301",
+        url: null,
+      },
+      {
+        body: null,
+        clause: null,
+        id: mockId("reference", 2),
+        kind: ReferenceKind.Link,
+        label: "Travel booking portal",
+        url: "https://example.org/travel",
+      },
+    ],
+    related: [{ number: "PRC-HR-003", policyId: mockId("policy", 7), title: "Gift Disclosure" }],
+  },
+  {
+    ...readerDefaultsFor(mockPolicies[1]!, 2),
+    ack: { ackedAt: null, acknowledged: false, required: false },
+    bodyText: "Sensitive content is hidden",
+    canBreakGlass: true,
+    contentObfuscated: true,
+    history: [
+      {
+        actorName: mockMe.name,
+        at: "2026-09-02T00:00:00Z",
+        comment: null,
+        kind: "submitted",
+        stage: null,
+        versionLabel: "1.0.0",
+      },
+    ],
+  },
+  {
+    ...readerDefaultsFor(mockPolicies[2]!, 3),
+    ack: { ackedAt: null, acknowledged: false, required: false },
+    history: [
+      {
+        actorName: mockMe.name,
+        at: "2026-09-13T14:30:00Z",
+        comment: null,
+        kind: "submitted",
+        stage: null,
+        versionLabel: "3.1.0",
+      },
+      {
+        actorName: null,
+        at: "2026-09-20T00:00:00Z",
+        comment: null,
+        kind: "inReview",
+        stage: "Data Governance review",
+        versionLabel: "3.1.0",
+      },
+    ],
+  },
+  {
+    ...readerDefaultsFor(mockPolicies[3]!, 4),
+    ack: { ackedAt: "2026-05-03T10:00:00Z", acknowledged: true, required: true },
+    history: [
+      {
+        actorName: mockMe.name,
+        at: "2026-04-20T09:15:00Z",
+        comment: null,
+        kind: "submitted",
+        stage: null,
+        versionLabel: "1.0.0",
+      },
+      {
+        actorName: mockMe.name,
+        at: "2026-05-01T00:00:00Z",
+        comment: null,
+        kind: "published",
+        stage: null,
+        versionLabel: "1.0.0",
+      },
+      {
+        actorName: null,
+        at: "2026-09-01T00:00:00Z",
+        comment: "Replaced by the hybrid-work update.",
+        kind: "superseded",
+        stage: null,
+        versionLabel: "1.0.0",
+      },
+    ],
+  },
+  {
+    ...readerDefaultsFor(mockPolicies[4]!, 5),
+    ack: { ackedAt: null, acknowledged: false, required: false },
+    history: [
+      {
+        actorName: null,
+        at: "2026-03-18T00:00:00Z",
+        comment: "No longer needed; vendor onboarding moved to Procurement's own tool.",
+        kind: "withdrawn",
+        stage: null,
+        versionLabel: "1.1.0",
+      },
+    ],
+  },
+  {
+    ...readerDefaultsFor(mockPolicies[5]!, 6),
+    history: [
+      {
+        actorName: mockMe.name,
+        at: "2026-09-28T00:00:00Z",
+        comment: null,
+        kind: "published",
+        stage: null,
+        versionLabel: "4.0.0",
+      },
+    ],
+  },
+  {
+    ...readerDefaultsFor(mockPolicies[6]!, 7),
+    history: [
+      {
+        actorName: mockMe.name,
+        at: "2026-06-25T09:15:00Z",
+        comment: null,
+        kind: "submitted",
+        stage: null,
+        versionLabel: "1.0.0",
+      },
+      {
+        actorName: null,
+        at: "2026-07-09T00:00:00Z",
+        comment: "Needs the disclosure threshold spelled out.",
+        kind: "changesRequested",
+        stage: "Ethics review",
+        versionLabel: "1.0.0",
+      },
+    ],
   },
 ];

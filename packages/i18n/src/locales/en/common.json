@@ -1,5 +1,6 @@
 {
   "actions": {
+    "cancel": "Cancel",
     "close": "Close",
     "dismiss": "Dismiss",
     "save": "Save"

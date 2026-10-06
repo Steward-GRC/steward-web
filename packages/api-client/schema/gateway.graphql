@@ -16,6 +16,18 @@ signs in through Ory Kratos); nothing else about the shape of these operations h
 policy's display category, status and version by walking its home group's ancestor chain
 and its version history. steward-gateway is pinned to return that same aggregated shape
 once it ports the query; `Sensitivity` and `DocumentType` are the original enums unchanged.
+
+`PolicyDetail` is the reader's own aggregated view, for the same reason: steward-gateway's
+real schema answers a policy's content, appendices, related/reference/contact/definition
+attachments, acknowledgement state and history through several separate reads (`policy`,
+`policyVersion`, `relatedPolicies`, `policyReferences`, `policyContactBlocks`,
+`policyDefinitionEntries`, `ackStatus`, `assignmentHistory`, `workflowStatus`) keyed by
+backend id, with no "find by number" lookup yet. `policyDetail` is this port's own
+BFF-shaped aggregation (found by the number the library already links to), pending a
+steward-gateway query that does the same. Document body and appendix content are plain
+text here, not the original's rich Lexical JSON: no shared document renderer exists yet
+(it lands with the authoring/editor area), so the reader shows a plain-text rendering
+until one does.
 """
 scalar DateTime
 
@@ -28,11 +40,17 @@ type Query {
   me: Me
   "The library catalog for one document type. Any signed-in user."
   policies(documentType: DocumentType!): [Policy!]!
+  "The reader's full detail for one policy/procedure, found by number. Null when there is no such document, or the caller cannot see it at all."
+  policyDetail(documentType: DocumentType!, number: String!): PolicyDetail
 }
 
 type Mutation {
   "Edits the CALLING user's own name. Refused when signed out."
   updateMyProfile(firstName: String!, lastName: String!): Me!
+  "Records the CALLING user's acknowledgement of a published policy version. Refused when the caller isn't in the ack audience, or the version isn't published."
+  acknowledgePolicy(policyVersionId: ID!): AckStatus!
+  "A site admin's time-boxed, audited reveal of a sensitive policy's real content. A non-empty reason is required; the grant is recorded for audit."
+  breakGlassReveal(policyId: ID!, reason: String!): BreakGlassGrant!
 }
 
 # The admin user directory: global roles, sessions and deletion only. Category-scoped
@@ -267,4 +285,123 @@ enum PolicyStatus {
 enum Sensitivity {
   SENSITIVE
   STANDARD
+}
+
+"The reader's full view of one policy or procedure (U7 in the original design)."
+type PolicyDetail {
+  "The appendix list of the current version (published, or the working draft when there is no published version yet)."
+  appendices: [PolicyAppendix!]!
+  "This caller's acknowledgement of the current published version, when the document carries acknowledgement at all."
+  ack: AckStatus
+  bodyText: String!
+  canBreakGlass: Boolean!
+  category: String!
+  "True while this caller sees the body and panels below obfuscated, because they are outside the policy's sensitive read audience."
+  contentObfuscated: Boolean!
+  contacts: [PolicyContact!]!
+  "The current version's id, for `acknowledgePolicy`. Null when there is no published version yet."
+  currentVersionId: ID
+  definitions: [PolicyDefinition!]!
+  documentType: DocumentType!
+  history: [HistoryEntry!]!
+  id: ID!
+  number: String!
+  "A summary of the current version against the one it superseded. Null for a first version."
+  priorVersion: PolicyVersionSummary
+  "Resolved from the owning user; null when the lookup is unavailable."
+  ownerName: String
+  published: DateTime
+  related: [RelatedPolicy!]!
+  references: [PolicyReference!]!
+  sensitivity: Sensitivity!
+  status: PolicyStatus!
+  subcategory: String!
+  title: String!
+  updated: DateTime!
+  version: String!
+}
+
+type PolicyAppendix {
+  id: ID!
+  letter: String!
+  text: String!
+  title: String!
+}
+
+"A reusable glossary entry attached to this policy (the original's PolicyDefinitions, U13)."
+type PolicyDefinition {
+  definition: String!
+  id: ID!
+  term: String!
+}
+
+"A structured link to another policy (U14). One-way; the link target's own number and title are resolved live."
+type RelatedPolicy {
+  number: String!
+  policyId: ID!
+  title: String!
+}
+
+enum ReferenceKind {
+  LINK
+  STANDARD
+  TEXT
+}
+
+"A references/standards entry attached to this policy (U15)."
+type PolicyReference {
+  body: String
+  clause: String
+  id: ID!
+  kind: ReferenceKind!
+  label: String!
+  url: String
+}
+
+"A reusable contact block attached to this policy (U16)."
+type PolicyContact {
+  department: String
+  email: String
+  hours: String
+  id: ID!
+  label: String!
+  name: String
+  notes: String
+  phone: String
+  role: String
+}
+
+"This caller's acknowledgement of one policy version."
+type AckStatus {
+  acknowledged: Boolean!
+  ackedAt: DateTime
+  "True when this caller is in the ack audience at all; false means no banner is shown."
+  required: Boolean!
+}
+
+type BreakGlassGrant {
+  grantedUntil: DateTime!
+}
+
+"One append-only event in a policy's combined publish-and-approval history (U18): submitted, a stage decision, published, changes requested, or withdrawn."
+type HistoryEntry {
+  actorName: String
+  comment: String
+  at: DateTime!
+  kind: String!
+  stage: String
+  versionLabel: String!
+}
+
+"The diff between the current version and the one it superseded (U12/U19)."
+type PolicyVersionSummary {
+  diff: [PolicySectionDiff!]!
+  version: String!
+}
+
+type PolicySectionDiff {
+  changeType: String!
+  sectionKey: String!
+  sectionTitle: String!
+  wordDiffHtml: String
 }
