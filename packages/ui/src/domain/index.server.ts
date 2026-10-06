@@ -4,3 +4,4 @@
 // library catalog imports this entry, never `@steward-web/ui/domain` (which must stay safe to
 // bundle for the browser).
 export { listCategories, listPolicies } from "./policies.server";
+export { acknowledgePolicy, breakGlassReveal, getPolicyDetail } from "./policyDetail.server";

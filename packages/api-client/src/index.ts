@@ -1,21 +1,36 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 export type {
+  AckStatus,
+  BreakGlassGrant,
   Category,
   DeleteUserResult,
   Diagnostics,
   Edge,
+  HistoryEntry,
   ListUsersInput,
   Me,
   Policy,
+  PolicyAppendix,
+  PolicyContact,
+  PolicyDefinition,
+  PolicyDetail,
+  PolicyReference,
+  PolicySectionDiff,
+  PolicyVersionSummary,
+  RelatedPolicy,
   Session,
   User,
   UserDeletionPreview,
   UserPage,
 } from "./edge";
-export { DocumentType, PolicyStatus, Sensitivity } from "./edge";
+export { DocumentType, PolicyStatus, ReferenceKind, Sensitivity } from "./edge";
 export { GatewayError, gatewayFetch, type GatewayRequest } from "./gatewayFetch";
 export {
+  AcknowledgePolicyDocument,
+  type AcknowledgePolicyMutation,
+  BreakGlassRevealDocument,
+  type BreakGlassRevealMutation,
   CategoriesDocument,
   type CategoriesQuery,
   DeleteUserDocument,
@@ -34,6 +49,8 @@ export {
   type MeQuery,
   PoliciesDocument,
   type PoliciesQuery,
+  PolicyDetailDocument,
+  type PolicyDetailQuery,
   PreviewUserDeletionDocument,
   type PreviewUserDeletionQuery,
   RevokeRoleDocument,

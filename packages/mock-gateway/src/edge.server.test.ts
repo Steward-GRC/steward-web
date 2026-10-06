@@ -42,6 +42,49 @@ describe("mockEdge", () => {
     expect(procedures.length).toBeGreaterThan(0);
     for (const procedure of procedures) expect(procedure.documentType).toBe(DocumentType.Procedure);
   });
+
+  it("policyDetail() finds the reader's detail by number and document type", async () => {
+    const detail = await mockEdge.policyDetail(DocumentType.Policy, "POL-FINANCE-001");
+    expect(detail?.title).toBe("Expense Claims");
+    expect(detail?.id).toContain(MOCK_MARKER);
+  });
+
+  it("policyDetail() answers null for a number that doesn't exist", async () => {
+    expect(await mockEdge.policyDetail(DocumentType.Policy, "POL-NO-SUCH-999")).toBeNull();
+  });
+
+  it("acknowledgePolicy() records the acknowledgement, visible on the next policyDetail() read", async () => {
+    const before = await mockEdge.policyDetail(DocumentType.Policy, "POL-FINANCE-001");
+    const ack = await mockEdge.acknowledgePolicy(before!.currentVersionId!);
+    expect(ack.acknowledged).toBe(true);
+    expect(ack.ackedAt).not.toBeNull();
+
+    const after = await mockEdge.policyDetail(DocumentType.Policy, "POL-FINANCE-001");
+    expect(after?.ack?.acknowledged).toBe(true);
+  });
+
+  it("acknowledgePolicy() rejects an unknown policy version id", async () => {
+    await expect(mockEdge.acknowledgePolicy("no-such-version")).rejects.toMatchObject({
+      name: "GatewayError",
+    });
+  });
+
+  it("breakGlassReveal() requires a non-empty reason", async () => {
+    await expect(mockEdge.breakGlassReveal("some-id", "  ")).rejects.toMatchObject({
+      name: "GatewayError",
+    });
+  });
+
+  it("breakGlassReveal() lifts the redaction for that policy's next policyDetail() read", async () => {
+    const before = await mockEdge.policyDetail(DocumentType.Policy, "POL-ITSEC-004");
+    expect(before?.contentObfuscated).toBe(true);
+
+    const grant = await mockEdge.breakGlassReveal(before!.id, "incident investigation");
+    expect(new Date(grant.grantedUntil).getTime()).toBeGreaterThan(Date.now());
+
+    const after = await mockEdge.policyDetail(DocumentType.Policy, "POL-ITSEC-004");
+    expect(after?.contentObfuscated).toBe(false);
+  });
 });
 
 describe("mockEdge users directory", () => {
