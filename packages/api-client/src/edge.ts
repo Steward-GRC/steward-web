@@ -171,6 +171,12 @@ export interface AuthoringAssistInput {
   versionId: string;
 }
 
+/** A boilerplate content block within a template section, as Lexical state (validated by core). */
+export interface BlockInput {
+  contentJson?: null | string;
+  type: string;
+}
+
 export interface CreateGroupInput {
   name: string;
   parentId: null | string;
@@ -262,6 +268,14 @@ export interface Edge {
   createGroup(input: CreateGroupInput, cookie?: string): Promise<Group>;
   /** Creates a new policy/procedure with an empty working draft. The owner is the calling user. */
   createPolicy(input: CreatePolicyInput, cookie?: string): Promise<Policy>;
+  /** Creates a template, selectable as a group's default once it has a published version. Site-admin only. */
+  createTemplate(name: string, ownerCategoryId?: null | string, cookie?: string): Promise<Template>;
+  /** Starts a new draft version of a template, carrying the given sections forward. Site-admin only. */
+  createTemplateVersion(
+    templateId: string,
+    sections: readonly SectionInput[],
+    cookie?: string,
+  ): Promise<TemplateVersion>;
   /** Deletes a library appendix. */
   deleteAppendix(id: string, cookie?: string): Promise<boolean>;
   /** Deletes a group and its policy-free descendants. Site-admin only. */
@@ -270,6 +284,9 @@ export interface Edge {
   deleteGroupMapping(mappingId: string, cookie?: string): Promise<boolean>;
   /** Removes an organisation's SSO connection. Irreversible. Site-admin only. */
   deleteOrganization(domain: string, cookie?: string): Promise<boolean>;
+  /** Hard-deletes an unreferenced template and its versions. Dev-only, server-gated; fails if any
+   *  policy references it (retire it instead). Site-admin only. */
+  deleteTemplate(id: string, cookie?: string): Promise<boolean>;
   /** Soft-deletes a user. Rejects with `GatewayError` while the preview reports `blocksDelete`. */
   deleteUser(userId: string, cookie?: string): Promise<DeleteUserResult>;
   /** The gateway's own diagnostics read. Rejects with `GatewayError` when signed out. */
@@ -279,6 +296,8 @@ export interface Edge {
   disableUser(userId: string, cookie?: string): Promise<User>;
   /** Discards a policy's working draft, leaving any published version untouched. */
   discardDraft(policyId: string, cookie?: string): Promise<boolean>;
+  /** Discards (deletes) a draft template version. Published versions can't be discarded. Site-admin only. */
+  discardTemplateVersion(id: string, cookie?: string): Promise<boolean>;
   /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
   draftVersion(policyId: string, cookie?: string): Promise<null | PolicyVersion>;
 
@@ -337,6 +356,8 @@ export interface Edge {
   previewUserDeletion(userId: string, cookie?: string): Promise<UserDeletionPreview>;
   /** Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content. */
   publishDraft(policyId: string, cookie?: string): Promise<PolicyVersion>;
+  /** Publishes a draft template version; it becomes the template's active version for new policies. Site-admin only. */
+  publishTemplateVersion(id: string, cookie?: string): Promise<TemplateVersion>;
   /** Records the guided risk assessment and its reportable/not-reportable decision. Officers only. */
   recordRiskAssessment(
     caseId: string,
@@ -347,6 +368,8 @@ export interface Edge {
   ): Promise<RiskAssessment>;
   /** Renames a group (name and slug). Site-admin only. */
   renameGroup(id: string, name: string, slug: string, cookie?: string): Promise<Group>;
+  /** Renames a template. Template-level, non-versioned: does not create a new template version. Site-admin only. */
+  renameTemplate(id: string, name: string, cookie?: string): Promise<Template>;
   /** Reorders a policy version's appendices. */
   reorderAppendices(
     policyVersionId: string,
@@ -361,6 +384,9 @@ export interface Edge {
     assigneeUserId?: string,
     cookie?: string,
   ): Promise<CaseQueue>;
+  /** Retires (soft-deletes) a template: hidden from listings and pickers, but its versions keep
+   *  working for policies that already pinned them. Site-admin only. */
+  retireTemplate(id: string, cookie?: string): Promise<Template>;
   /** Revokes a GLOBAL role (no category). Site-admin only. */
   revokeRole(userId: string, role: string, cookie?: string): Promise<User>;
   /** Revokes every active session for a user. Returns how many were revoked. */
@@ -406,6 +432,8 @@ export interface Edge {
   submitPolicyReview(input: SubmitPolicyReviewInput, cookie?: string): Promise<{ jobId: string }>;
   /** The templates selectable as a group's default. Site-admin only. */
   templates(cookie?: string): Promise<readonly Template[]>;
+  /** All of a template's versions, newest first, drafts included. Site-admin only. */
+  templateVersions(templateId: string, cookie?: string): Promise<readonly TemplateVersion[]>;
   /**
    * Approvals where the calling user is an approver on a future (not-yet-reached) stage —
    * visibility/heads-up, not yet actionable. The approver id is bound server-side.
@@ -436,6 +464,13 @@ export interface Edge {
   ): Promise<Organization>;
   /** Edits the CALLING user's own name. Rejects with `GatewayError` when signed out. */
   updateMyProfile(input: UpdateMyProfileInput, cookie?: string): Promise<Me>;
+  /** Saves a draft template version's section outline (the authoring "Save"). Published versions
+   *  are immutable. Site-admin only. */
+  updateTemplateVersionSections(
+    id: string,
+    sections: readonly SectionInput[],
+    cookie?: string,
+  ): Promise<TemplateVersion>;
   /** Edits another user's name and email. Local accounts only, site-admin only. */
   updateUserProfile(userId: string, name: string, email: string, cookie?: string): Promise<User>;
   /** The platform's users, site-admin only. */
@@ -487,6 +522,19 @@ export interface MintSsoTestLinkInput {
   connectionId: string;
   returnPath?: string;
   tenant?: string;
+}
+
+/** One section of a template version's outline: `key` is the stable identifier the authoring
+ *  side matches a document's headings against; `level` is the heading depth (H1-H5), `order`
+ *  its position, and `blocks` its boilerplate content (optional, empty when the section has
+ *  none). */
+export interface SectionInput {
+  blocks: readonly BlockInput[];
+  key: string;
+  level?: number;
+  order: number;
+  required?: boolean;
+  title: string;
 }
 
 export interface SubmitDraftGenerationInput {
