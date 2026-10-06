@@ -4,10 +4,12 @@ import { index, route, type RouteConfig } from "@react-router/dev/routes";
 
 /**
  * The admin feature areas (users, groups, organisations, SSO, setup, audit)
- * each add their own `route()` call here as their own port PR lands; this PR carries only
- * the frame (`root.tsx`) and sign-in.
+ * each add their own `route()` call here as their own port PR lands; this PR carries the
+ * frame (`root.tsx`), sign-in and the account menu's "Your profile" page (U32: name only —
+ * security and preferences are their own follow-up PRs).
  */
 export default [
   index("routes/home.tsx"),
   route("sign-in", "routes/sign-in.tsx"),
+  route("profile", "routes/profile.tsx"),
 ] satisfies RouteConfig;

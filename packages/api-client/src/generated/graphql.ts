@@ -52,10 +52,30 @@ export type MeQuery = {
     readonly id: string;
     readonly username: string;
     readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
     readonly email: string;
     readonly roles: ReadonlyArray<string>;
     readonly permissions: ReadonlyArray<string>;
   } | null;
+};
+
+export type UpdateMyProfileMutationVariables = Exact<{
+  firstName: string;
+  lastName: string;
+}>;
+
+export type UpdateMyProfileMutation = {
+  readonly updateMyProfile: {
+    readonly id: string;
+    readonly username: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly roles: ReadonlyArray<string>;
+    readonly permissions: ReadonlyArray<string>;
+  };
 };
 
 export const DiagnosticsDocument = {
@@ -168,6 +188,8 @@ export const MeDocument = {
                 { kind: "Field", name: { kind: "Name", value: "id" } },
                 { kind: "Field", name: { kind: "Name", value: "username" } },
                 { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "firstName" } },
+                { kind: "Field", name: { kind: "Name", value: "lastName" } },
                 { kind: "Field", name: { kind: "Name", value: "email" } },
                 { kind: "Field", name: { kind: "Name", value: "roles" } },
                 { kind: "Field", name: { kind: "Name", value: "permissions" } },
@@ -179,3 +201,65 @@ export const MeDocument = {
     },
   ],
 } as unknown as DocumentNode<MeQuery, MeQueryVariables>;
+export const UpdateMyProfileDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateMyProfile" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "firstName" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "lastName" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateMyProfile" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "firstName" },
+                value: { kind: "Variable", name: { kind: "Name", value: "firstName" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "lastName" },
+                value: { kind: "Variable", name: { kind: "Name", value: "lastName" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "username" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "firstName" } },
+                { kind: "Field", name: { kind: "Name", value: "lastName" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "roles" } },
+                { kind: "Field", name: { kind: "Name", value: "permissions" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateMyProfileMutation, UpdateMyProfileMutationVariables>;

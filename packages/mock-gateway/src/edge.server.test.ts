@@ -17,4 +17,12 @@ describe("mockEdge", () => {
     expect(diagnostics.traceId).toContain(MOCK_MARKER);
     expect(diagnostics.gateway.version).toBe("mock");
   });
+
+  it("updateMyProfile() persists the edited name for later me() calls", async () => {
+    const updated = await mockEdge.updateMyProfile({ firstName: "Ada", lastName: "Lovelace" });
+    expect(updated).toMatchObject({ firstName: "Ada", lastName: "Lovelace", name: "Ada Lovelace" });
+
+    const me = await mockEdge.me();
+    expect(me).toMatchObject({ firstName: "Ada", lastName: "Lovelace", name: "Ada Lovelace" });
+  });
 });

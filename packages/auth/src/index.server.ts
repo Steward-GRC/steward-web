@@ -10,3 +10,4 @@ export {
 } from "./guards.server";
 export { fetchLoginFlow, KratosError, submitLogin } from "./kratosClient.server";
 export { identityFromRequest } from "./requestIdentity.server";
+export { updateMyProfile, type UpdateMyProfileInput } from "./updateProfile.server";

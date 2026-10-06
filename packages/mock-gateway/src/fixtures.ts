@@ -11,7 +11,9 @@ const MOCK_COMMIT = "mock";
 /** One signed-in persona for local and demo use: a site admin, so every screen is reachable. */
 export const mockMe: Me = {
   email: "demo@example.com",
+  firstName: "Demo",
   id: mockId("user", 1),
+  lastName: "Admin",
   name: "Demo Admin",
   permissions: permissionsForRoles(["site-admin"]),
   roles: ["site-admin"],

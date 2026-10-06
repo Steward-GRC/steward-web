@@ -3,13 +3,14 @@
 import { useTranslation } from "@steward-web/i18n";
 import { Lockup, Menu, MenuContent, MenuItem, MenuTrigger } from "@steward-web/ui";
 import { type ReactNode, useState } from "react";
+import { Link } from "react-router";
 
 import { AboutDiagnostics } from "./AboutDiagnostics";
 
 /**
- * The header, account menu (today, just About and diagnostics; sign-out and profile land
- * with the feature areas) and main content area both apps mount inside their root `Layout`.
- * `Layout` is what carries `DiagnosticsProvider` and the toast host (see each app's
+ * The header, account menu (today, About and diagnostics plus Your profile; sign-out lands
+ * with its own feature area) and main content area both apps mount inside their root
+ * `Layout`. `Layout` is what carries `DiagnosticsProvider` and the toast host (see each app's
  * `root.tsx`): it wraps the route tree AND the route error boundary, so Copy diagnostics is
  * live even on a page this shell never got to render.
  */
@@ -32,6 +33,9 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
             </button>
           </MenuTrigger>
           <MenuContent>
+            <MenuItem asChild>
+              <Link to="/profile">{t("account.profile")}</Link>
+            </MenuItem>
             <MenuItem onSelect={() => setAboutOpen(true)}>{t("about.menuEntry")}</MenuItem>
           </MenuContent>
         </Menu>

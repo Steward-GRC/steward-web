@@ -10,13 +10,14 @@ export type Scalars = {
   /**
    * Vendored slice of the gateway schema. Steward's own gateway is not ported yet, so this
    * file is hand-pinned from the original gateway's v3.0.0 SDL (see ../schema-refs.env),
-   * trimmed to the operations steward-web actually sends: the signed-in user and the
-   * diagnostics report. It gains more of the upstream schema as later ports add
-   * operations, and schema-generate.sh switches from this vendored copy to a live fetch
-   * once steward-gateway publishes its own schema on its main branch.
+   * trimmed to the operations steward-web actually sends: the signed-in user, the
+   * diagnostics report, and editing one's own display name. It gains more of the upstream
+   * schema as later ports add operations, and schema-generate.sh switches from this
+   * vendored copy to a live fetch once steward-gateway publishes its own schema on its
+   * main branch.
    *
    * Identity-provider-specific wording in the original schema's descriptions is dropped (Steward
-   * signs in through Ory Kratos); nothing else about the shape of these two operations has changed.
+   * signs in through Ory Kratos); nothing else about the shape of these operations has changed.
    */
   DateTime: { input: string; output: string };
 };
@@ -70,11 +71,26 @@ export type DiagnosticsActor = {
 export type Me = {
   readonly __typename?: "Me";
   readonly email: Scalars["String"]["output"];
+  /** Structured given name; empty when the identity provider sent none and the user hasn't set it. */
+  readonly firstName: Scalars["String"]["output"];
   readonly id: Scalars["ID"]["output"];
+  /** Structured family name; empty when the identity provider sent none and the user hasn't set it. */
+  readonly lastName: Scalars["String"]["output"];
   readonly name: Scalars["String"]["output"];
   readonly permissions: ReadonlyArray<Scalars["String"]["output"]>;
   readonly roles: ReadonlyArray<Scalars["String"]["output"]>;
   readonly username: Scalars["String"]["output"];
+};
+
+export type Mutation = {
+  readonly __typename?: "Mutation";
+  /** Edits the CALLING user's own name. Refused when signed out. */
+  readonly updateMyProfile: Me;
+};
+
+export type MutationUpdateMyProfileArgs = {
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
 };
 
 export type Query = {

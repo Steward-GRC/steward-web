@@ -4,6 +4,9 @@
     "title": "About Steward",
     "version": "Version {{version}} ({{commit}})"
   },
+  "account": {
+    "profile": "Your profile"
+  },
   "copyDiagnostics": {
     "action": "Copy diagnostics",
     "announced": "Diagnostics copied",
@@ -15,4 +18,3 @@
     "title": "Mock data"
   }
 }
-

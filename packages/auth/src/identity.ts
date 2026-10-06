@@ -13,8 +13,12 @@
 
 export interface Identity {
   email: string;
+  /** Structured given name; "" when the identity provider sent none and the user hasn't set it. */
+  firstName: string;
   id: string;
   isSiteAdmin: boolean;
+  /** Structured family name; "" when the identity provider sent none and the user hasn't set it. */
+  lastName: string;
   name: string;
   permissions: ReadonlySet<string>;
   roles: readonly string[];
@@ -23,7 +27,9 @@ export interface Identity {
 
 export interface Me {
   email: string;
+  firstName: string;
   id: string;
+  lastName: string;
   name: string;
   permissions: readonly string[];
   roles: readonly string[];
@@ -32,8 +38,10 @@ export interface Me {
 
 export const NO_ACCESS: Identity = {
   email: "",
+  firstName: "",
   id: "",
   isSiteAdmin: false,
+  lastName: "",
   name: "",
   permissions: new Set(),
   roles: [],
