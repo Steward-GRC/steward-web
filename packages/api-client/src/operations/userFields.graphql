@@ -12,4 +12,8 @@ fragment UserFields on User {
   username
   deletedAt
   mergedIntoUserId
+  memberships {
+    groupId
+    source
+  }
 }

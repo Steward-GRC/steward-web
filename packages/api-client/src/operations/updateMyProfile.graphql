@@ -8,5 +8,6 @@ mutation UpdateMyProfile($firstName: String!, $lastName: String!) {
     email
     roles
     permissions
+    managedGroupIds
   }
 }
