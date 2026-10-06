@@ -490,3 +490,135 @@ type PolicySectionDiff {
   sectionTitle: String!
   wordDiffHtml: String
 }
+
+# The admin organisation directory: SAML/OIDC single sign-on connections, one per email
+# domain. An Organization must clear two independent gates before it can be activated:
+# `verified` (domain ownership, by DNS TXT record) and `testPassed` (an end-to-end IdP
+# login test). Nothing here sets testPassed — that gate is flipped by the sign-in-side SSO
+# flow once it exists; until then every connection stays activatable-in-principle but
+# ungated in practice, which this port surfaces honestly rather than faking a pass. The SP
+# (service-provider) signing certificate is platform-wide, not per-connection. The
+# original's REST convenience endpoints (importing IdP metadata from a URL or file,
+# fetching a signing certificate by URL, minting a time-boxed remote test link) are not
+# carried over: they sit outside the GraphQL contract every other operation here uses, and
+# manual entry of the IdP fields already covers the same ground.
+extend type Query {
+  "Every configured organisation SSO connection. Site-admin only."
+  organizations: [Organization!]!
+  "An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only."
+  groupMappings(connectionId: ID!): [GroupMapping!]!
+  "The platform's active SP (service-provider) signing certificate. Site-admin only."
+  spCertificate: SpCertificate!
+}
+
+extend type Mutation {
+  """
+  Registers a new organisation SSO connection: unverified, untested and disabled until the
+  domain is verified and the IdP connection passes its test. Site-admin only.
+  """
+  addOrganization(input: AddOrganizationInput!): Organization!
+  """
+  Mints a DNS TXT domain-verification challenge. The token is stable by default; rotate:
+  true mints a fresh one, which also revokes the domain's prior verified proof. Site-admin
+  only.
+  """
+  startDomainVerification(domain: String!, rotate: Boolean): DomainVerification!
+  "Checks the domain's DNS TXT record against its verification token. Site-admin only."
+  verifyDomain(domain: String!): Organization!
+  "Enables an organisation's SSO connection for sign-in. Site-admin only."
+  activateOrganization(domain: String!): Organization!
+  "Disables an organisation's SSO connection. Does not clear its gates. Site-admin only."
+  disableOrganization(domain: String!): Organization!
+  """
+  Updates an organisation's per-connection login toggles. Each argument is optional; omit
+  one to leave it unchanged. Site-admin only.
+  """
+  updateIdPConnection(domain: String!, jitEnabled: Boolean, allowLocal: Boolean): Organization!
+  """
+  Changes an organisation's IdP protocol (SAML <-> OIDC). DESTRUCTIVE: it resets the
+  connection to the start, clearing both gates and disabling it, so the domain must be
+  re-verified and re-tested before re-activation. Site-admin only.
+  """
+  changeOrgProtocol(
+    domain: String!
+    protocol: String!
+    config: [KeyValueInput!]
+    secretRef: String
+  ): Organization!
+  "Removes an organisation's SSO connection. Irreversible. Site-admin only."
+  deleteOrganization(domain: String!): Boolean!
+  "Adds an IdP-group-claim-to-platform-group mapping for a connection. Site-admin only."
+  addGroupMapping(connectionId: ID!, idpGroupClaimValue: String!, targetGroupId: ID!): GroupMapping!
+  "Removes a group mapping by id. Site-admin only."
+  deleteGroupMapping(mappingId: ID!): Boolean!
+  """
+  Mints a new SP signing certificate and activates it immediately, superseding the previous
+  one. Site-admin only.
+  """
+  forceRotateSpCertificate: SpCertificate!
+}
+
+"One organisation's SSO connection, keyed by email domain."
+type Organization {
+  "Identity-service connection id; keys SP-cert-independent, per-connection calls."
+  connectionId: ID!
+  displayName: String!
+  domain: String!
+  "Currently live for sign-in. Both gates must have passed to activate."
+  enabled: Boolean!
+  "When true, an unknown SSO email is auto-provisioned on first sign-in."
+  jitEnabled: Boolean!
+  orgName: String!
+  "'saml' | 'oidc'"
+  protocol: String!
+  "End-to-end IdP login test gate."
+  testPassed: Boolean!
+  "Domain-ownership gate (DNS TXT verification)."
+  verified: Boolean!
+  "When true, this organisation's users may also sign in with a local password."
+  allowLocal: Boolean!
+}
+
+"One SP (service-provider) signing certificate. At most one is active at a time."
+type SpCertificate {
+  active: Boolean!
+  certPem: String!
+  notAfter: String!
+  serial: String!
+  spMetadataXml: String!
+}
+
+"""
+Maps one asserted IdP group-claim value to a platform group by id. The target is a group
+id, not a name, so JIT provisioning never grants the wrong same-named group.
+"""
+type GroupMapping {
+  connectionId: ID!
+  id: ID!
+  idpGroupClaimValue: String!
+  targetGroupId: ID!
+}
+
+"DNS TXT domain-verification challenge. Publish dnsRecordValue at dnsRecordName, then verify."
+type DomainVerification {
+  dnsRecordName: String!
+  dnsRecordValue: String!
+  instructions: String!
+  token: String!
+}
+
+"One IdP connection config entry (e.g. SAML entityId/ssoUrl/signingCertificate, or OIDC issuer/clientId)."
+input KeyValueInput {
+  key: String!
+  value: String!
+}
+
+"A new organisation SSO connection. secretRef names the stored client secret (OIDC)."
+input AddOrganizationInput {
+  config: [KeyValueInput!]
+  displayName: String
+  domain: String!
+  orgName: String!
+  protocol: String!
+  secretRef: String
+}

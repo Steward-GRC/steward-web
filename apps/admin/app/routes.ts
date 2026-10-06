@@ -17,4 +17,7 @@ export default [
   route("groups", "routes/groups.tsx"),
   route("groups/new", "routes/groups.new.tsx"),
   route("groups/:groupId", "routes/groups.$groupId.tsx"),
+  route("organisations", "routes/organisations.tsx"),
+  route("organisations/new", "routes/organisations.new.tsx"),
+  route("organisations/:domain", "routes/organisations.$domain.tsx"),
 ] satisfies RouteConfig;

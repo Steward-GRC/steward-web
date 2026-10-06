@@ -284,3 +284,112 @@ describe("mockEdge users directory", () => {
     expect(workflows.length).toBeGreaterThan(0);
   });
 });
+
+describe("mockEdge organisations directory", () => {
+  it("organizations() lists the fixture connections", async () => {
+    const orgs = await mockEdge.organizations();
+    expect(orgs.some((o) => o.domain === "partner.example.net")).toBe(true);
+  });
+
+  it("addOrganization() refuses a domain that's already registered", async () => {
+    await expect(
+      mockEdge.addOrganization({
+        domain: "partner.example.net",
+        orgName: "Partner Example",
+        protocol: "saml",
+      }),
+    ).rejects.toMatchObject({ code: "ALREADY_EXISTS" });
+  });
+
+  it("addOrganization() registers a new connection, unverified and untested", async () => {
+    const created = await mockEdge.addOrganization({
+      domain: "acme.example.org",
+      orgName: "Acme",
+      protocol: "oidc",
+    });
+    expect(created).toMatchObject({
+      domain: "acme.example.org",
+      enabled: false,
+      protocol: "oidc",
+      testPassed: false,
+      verified: false,
+    });
+  });
+
+  it("startDomainVerification() mints a stable token; rotate revokes the prior verified proof", async () => {
+    const first = await mockEdge.startDomainVerification("partner.example.net");
+    const second = await mockEdge.startDomainVerification("partner.example.net");
+    expect(second.token).toBe(first.token);
+
+    const rotated = await mockEdge.startDomainVerification("partner.example.net", true);
+    expect(rotated.token).not.toBe(first.token);
+    const orgs = await mockEdge.organizations();
+    expect(orgs.find((o) => o.domain === "partner.example.net")?.verified).toBe(false);
+  });
+
+  it("verifyDomain() flips the verified gate", async () => {
+    const verified = await mockEdge.verifyDomain("partner.example.net");
+    expect(verified.verified).toBe(true);
+  });
+
+  it("activateOrganization() refuses while either gate is unmet", async () => {
+    await expect(mockEdge.activateOrganization("partner.example.net")).rejects.toMatchObject({
+      code: "FAILED_PRECONDITION",
+    });
+  });
+
+  it("disableOrganization() turns a connection off without clearing its gates", async () => {
+    const disabled = await mockEdge.disableOrganization("partner.example.net");
+    expect(disabled).toMatchObject({ enabled: false, verified: true });
+  });
+
+  it("updateIdPConnection() flips only the toggle that's passed", async () => {
+    const updated = await mockEdge.updateIdPConnection("partner.example.net", {
+      allowLocal: true,
+    });
+    expect(updated).toMatchObject({ allowLocal: true, jitEnabled: true });
+  });
+
+  it("changeOrgProtocol() resets both gates and disables the connection", async () => {
+    const changed = await mockEdge.changeOrgProtocol("partner.example.net", "oidc");
+    expect(changed).toMatchObject({
+      enabled: false,
+      protocol: "oidc",
+      testPassed: false,
+      verified: false,
+    });
+  });
+
+  it("groupMappings(), addGroupMapping() and deleteGroupMapping() manage a connection's mappings", async () => {
+    const before = await mockEdge.groupMappings(mockId("connection", 1));
+    expect(before.length).toBeGreaterThan(0);
+
+    const added = await mockEdge.addGroupMapping(
+      mockId("connection", 1),
+      "it-security",
+      mockId("group", 2),
+    );
+    const afterAdd = await mockEdge.groupMappings(mockId("connection", 1));
+    expect(afterAdd.map((m) => m.id)).toContain(added.id);
+
+    await mockEdge.deleteGroupMapping(added.id);
+    const afterDelete = await mockEdge.groupMappings(mockId("connection", 1));
+    expect(afterDelete.map((m) => m.id)).not.toContain(added.id);
+  });
+
+  it("deleteOrganization() removes the connection", async () => {
+    await mockEdge.deleteOrganization("partner.example.net");
+    const orgs = await mockEdge.organizations();
+    expect(orgs.some((o) => o.domain === "partner.example.net")).toBe(false);
+  });
+
+  it("spCertificate() answers the active certificate; forceRotateSpCertificate() supersedes it", async () => {
+    const before = await mockEdge.spCertificate();
+    expect(before.active).toBe(true);
+
+    const rotated = await mockEdge.forceRotateSpCertificate();
+    expect(rotated.serial).not.toBe(before.serial);
+    const after = await mockEdge.spCertificate();
+    expect(after.serial).toBe(rotated.serial);
+  });
+});

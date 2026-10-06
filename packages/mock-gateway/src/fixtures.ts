@@ -7,7 +7,9 @@ import {
   type Diagnostics,
   DocumentType,
   type Group,
+  type GroupMapping,
   type Me,
+  type Organization,
   type Policy,
   type PolicyDetail,
   PolicyStatus,
@@ -15,6 +17,7 @@ import {
   ReviewCadence,
   Sensitivity,
   type Session,
+  type SpCertificate,
   type Template,
   type User,
   type UserDeletionPreview,
@@ -253,6 +256,45 @@ export const mockGroups: Group[] = [
     slug: "infrastructure",
   },
 ];
+
+/** The organisation SSO directory: one connection part-way through the two activation
+ *  gates (domain verified, IdP test not yet passed), so the admin area's status badges
+ *  and the activation gate are both exercisable locally. */
+export const mockOrganizations: Organization[] = [
+  {
+    allowLocal: false,
+    connectionId: mockId("connection", 1),
+    displayName: "Partner",
+    domain: "partner.example.net",
+    enabled: false,
+    jitEnabled: true,
+    orgName: "Partner Example",
+    protocol: "saml",
+    testPassed: false,
+    verified: true,
+  },
+];
+
+/** The platform's one SP (service-provider) signing certificate. */
+export const mockSpCertificate: SpCertificate = {
+  active: true,
+  certPem: "-----BEGIN CERTIFICATE-----\nMOCK\n-----END CERTIFICATE-----",
+  notAfter: "2027-01-01T00:00:00Z",
+  serial: mockId("sp-cert", 1),
+  spMetadataXml: "<EntityDescriptor/>",
+};
+
+/** IdP-group-claim-to-platform-group mappings, keyed by connection id. */
+export const mockGroupMappings: Record<string, GroupMapping[]> = {
+  [mockId("connection", 1)]: [
+    {
+      connectionId: mockId("connection", 1),
+      id: mockId("group-mapping", 1),
+      idpGroupClaimValue: "engineering",
+      targetGroupId: mockId("group", 2),
+    },
+  ],
+};
 
 export const mockTemplates: Template[] = [
   { id: mockId("template", 1), name: "Standard policy" },
