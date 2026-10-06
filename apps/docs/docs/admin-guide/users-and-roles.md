@@ -36,6 +36,25 @@ account shows a **deleted** or **merged** badge; a merged account links to the a
 merged into. Closed accounts are read-only and never appear in user pickers, such as when you
 choose a group's owner.
 
+## 🔀 Merging duplicate accounts
+
+When the same person ends up with two accounts (a common SSO-onboarding mishap), **Merge
+accounts** on the Users page moves everything the duplicate owns onto the one you want to keep,
+then closes the duplicate. Pick the **source** (closed afterward) and the **target** (keeps the
+records), then **Preview merge** to see exactly what would move before anything changes. Merging
+is irreversible.
+
+## 👪 My groups, for group-managers
+
+A user can be made a **local group-manager** of one or more groups without holding the
+site-admin role. A group-manager sees **My groups**, scoped to only the groups they manage, and
+can add or remove manual members there. Memberships synced from your identity provider stay
+read-only, the same as on the Users page.
+
+:::note
+Granting someone the local group-manager role isn't exposed on the Users page yet.
+:::
+
 ## ➡️ What comes next
 
 With people in place, review your category tree — Steward's admin app calls a category a

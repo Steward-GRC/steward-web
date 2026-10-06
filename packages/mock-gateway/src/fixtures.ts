@@ -57,12 +57,15 @@ import { mockId } from "./marker";
 const MOCK_VERSION = "mock";
 const MOCK_COMMIT = "mock";
 
-/** One signed-in persona for local and demo use: a site admin, so every screen is reachable. */
+/** One signed-in persona for local and demo use: a site admin, so every screen is reachable.
+ *  Also a LOCAL group-manager of group 2 ("IT Security"), so the "My groups" editor has real
+ *  demo data without needing a separate non-admin persona. */
 export const mockMe: Me = {
   email: "demo@example.com",
   firstName: "Demo",
   id: mockId("user", 1),
   lastName: "Admin",
+  managedGroupIds: [mockId("group", 2)],
   name: "Demo Admin",
   permissions: permissionsForRoles(["site-admin"]),
   roles: ["site-admin"],
@@ -81,6 +84,7 @@ export const mockUsers: User[] = [
     isRoot: true,
     lastName: mockMe.lastName,
     localAccount: false,
+    memberships: [],
     mergedIntoUserId: null,
     name: mockMe.name,
     roles: mockMe.roles,
@@ -96,6 +100,7 @@ export const mockUsers: User[] = [
     isRoot: false,
     lastName: "Hopper",
     localAccount: false,
+    memberships: [{ groupId: mockId("group", 2), source: "manual" }],
     mergedIntoUserId: null,
     name: "Grace Hopper",
     roles: [],
@@ -111,6 +116,7 @@ export const mockUsers: User[] = [
     isRoot: false,
     lastName: "Lovelace",
     localAccount: true,
+    memberships: [],
     mergedIntoUserId: null,
     name: "Ada Lovelace",
     roles: ["site-admin"],
@@ -126,6 +132,7 @@ export const mockUsers: User[] = [
     isRoot: false,
     lastName: "Hamilton",
     localAccount: false,
+    memberships: [{ groupId: mockId("group", 2), source: "idp-sync" }],
     mergedIntoUserId: null,
     name: "Margaret Hamilton",
     roles: [],
@@ -141,6 +148,7 @@ export const mockUsers: User[] = [
     isRoot: false,
     lastName: "Johnson",
     localAccount: true,
+    memberships: [],
     mergedIntoUserId: null,
     name: "Katherine Johnson",
     roles: [],
@@ -156,6 +164,7 @@ export const mockUsers: User[] = [
     isRoot: false,
     lastName: "Lamarr",
     localAccount: true,
+    memberships: [],
     mergedIntoUserId: mockId("user", 3),
     name: "Hedy Lamarr",
     roles: [],

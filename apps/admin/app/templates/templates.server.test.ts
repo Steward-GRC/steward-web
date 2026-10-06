@@ -20,6 +20,7 @@ import {
 
 const siteAdminMe = {
   email: "admin@example.com",
+  managedGroupIds: [],
   name: "Admin",
   permissions: ["group.manage"],
   roles: ["site-admin"],
@@ -29,6 +30,7 @@ const siteAdminMe = {
 
 const readerMe = {
   email: "reader@example.com",
+  managedGroupIds: [],
   name: "Reader",
   permissions: [],
   roles: ["reader"],

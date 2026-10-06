@@ -16,9 +16,13 @@ export interface Identity {
   /** Structured given name; "" when the identity provider sent none and the user hasn't set it. */
   firstName: string;
   id: string;
+  /** True when managedGroupIds is non-empty: a LOCAL group-manager of at least one group. */
+  isGroupManager: boolean;
   isSiteAdmin: boolean;
   /** Structured family name; "" when the identity provider sent none and the user hasn't set it. */
   lastName: string;
+  /** Platform group ids this user is a LOCAL group-manager of, for the "My groups" editor. */
+  managedGroupIds: readonly string[];
   name: string;
   permissions: ReadonlySet<string>;
   roles: readonly string[];
@@ -30,6 +34,7 @@ export interface Me {
   firstName: string;
   id: string;
   lastName: string;
+  managedGroupIds: readonly string[];
   name: string;
   permissions: readonly string[];
   roles: readonly string[];
@@ -40,8 +45,10 @@ export const NO_ACCESS: Identity = {
   email: "",
   firstName: "",
   id: "",
+  isGroupManager: false,
   isSiteAdmin: false,
   lastName: "",
+  managedGroupIds: [],
   name: "",
   permissions: new Set(),
   roles: [],
@@ -51,6 +58,7 @@ export const NO_ACCESS: Identity = {
 /** `site-admin` is the one role that grants every permission; see `catalog.ts`. */
 export const identityFromMe = (me: Me): Identity => ({
   ...me,
+  isGroupManager: me.managedGroupIds.length > 0,
   isSiteAdmin: me.roles.includes("site-admin"),
   permissions: new Set(me.permissions),
 });

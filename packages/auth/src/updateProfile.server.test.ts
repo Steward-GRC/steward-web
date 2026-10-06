@@ -17,6 +17,7 @@ describe("updateMyProfile", () => {
             email: "a@example.com",
             firstName: "Ada",
             lastName: "Lovelace",
+            managedGroupIds: [],
             name: "Ada Lovelace",
             permissions: ["policy.read"],
             roles: ["reader"],

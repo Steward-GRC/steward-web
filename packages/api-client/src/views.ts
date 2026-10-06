@@ -1,6 +1,10 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { LatestTemplateVersionQuery, UserFieldsFragment } from "./generated/graphql";
+import type {
+  LatestTemplateVersionQuery,
+  SearchUsersQuery,
+  UserFieldsFragment,
+} from "./generated/graphql";
 import type {
   DocumentType,
   PolicyViewerCan,
@@ -80,6 +84,8 @@ export interface Me {
   readonly firstName: string;
   readonly id: string;
   readonly lastName: string;
+  /** Platform group ids the caller is a LOCAL group-manager of; empty for everyone else. */
+  readonly managedGroupIds: readonly string[];
   readonly name: string;
   readonly permissions: readonly string[];
   readonly roles: readonly string[];
@@ -204,6 +210,10 @@ export type TemplateVersion = NonNullable<LatestTemplateVersionQuery["latestTemp
 
 /** One admin user-directory row: the gateway's `User`, trimmed to what the directory reads. */
 export type User = UserFieldsFragment;
+
+/** A lightweight id+name(+email) pair from the `searchUsers` typeahead — any authenticated
+ *  caller, unlike the site-admin-only directory. */
+export type UserLabel = SearchUsersQuery["searchUsers"][number];
 
 export interface UserPage {
   readonly nextPageToken: string;

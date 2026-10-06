@@ -120,6 +120,30 @@ export type AddOrganizationMutation = {
   };
 };
 
+export type AddUserToGroupMutationVariables = Exact<{
+  userId: string | number;
+  groupId: string | number;
+}>;
+
+export type AddUserToGroupMutation = {
+  readonly addUserToGroup: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly idpGroups: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
+  };
+};
+
 export type AiHealthQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AiHealthQuery = {
@@ -756,6 +780,7 @@ export type DisableUserMutation = {
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
 
@@ -790,6 +815,7 @@ export type EnableUserMutation = {
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
 
@@ -825,6 +851,7 @@ export type GrantRoleMutation = {
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
 
@@ -896,6 +923,29 @@ export type ListUserSessionsQuery = {
   }>;
 };
 
+export type ManagedGroupMembersQueryVariables = Exact<{
+  groupId: string | number;
+}>;
+
+export type ManagedGroupMembersQuery = {
+  readonly managedGroupMembers: ReadonlyArray<{
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly idpGroups: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
+  }>;
+};
+
 export type MeQueryVariables = Exact<{ [key: string]: never }>;
 
 export type MeQuery = {
@@ -908,7 +958,36 @@ export type MeQuery = {
     readonly email: string;
     readonly roles: ReadonlyArray<string>;
     readonly permissions: ReadonlyArray<string>;
+    readonly managedGroupIds: ReadonlyArray<string>;
     readonly scopes: { readonly author: ReadonlyArray<string> };
+  };
+};
+
+export type MergeAccountsMutationVariables = Exact<{
+  sourceUserId: string | number;
+  targetUserId: string | number;
+  confirmPrivileged?: boolean | null | undefined;
+  idempotencyKey?: string | null | undefined;
+}>;
+
+export type MergeAccountsMutation = {
+  readonly mergeAccounts: {
+    readonly mergeOperationId: string;
+    readonly status: Types.MergeStatus;
+    readonly counts: {
+      readonly policiesOwned: number;
+      readonly raciGrants: number;
+      readonly acknowledgmentsMoved: number;
+      readonly acknowledgmentsDeduped: number;
+      readonly workflowItems: number;
+      readonly preferences: number;
+    };
+    readonly steps: ReadonlyArray<{
+      readonly step: string;
+      readonly status: Types.MergeStepStatus;
+      readonly detail: string;
+      readonly error: string;
+    }>;
   };
 };
 
@@ -1223,6 +1302,34 @@ export type PostCaseMessageMutation = {
   };
 };
 
+export type PreviewAccountMergeQueryVariables = Exact<{
+  sourceUserId: string | number;
+  targetUserId: string | number;
+}>;
+
+export type PreviewAccountMergeQuery = {
+  readonly previewAccountMerge: {
+    readonly sourceUserId: string;
+    readonly targetUserId: string;
+    readonly requiresPrivilegedConfirm: boolean;
+    readonly counts: {
+      readonly policiesOwned: number;
+      readonly raciGrants: number;
+      readonly acknowledgmentsMoved: number;
+      readonly acknowledgmentsDeduped: number;
+      readonly workflowItems: number;
+      readonly preferences: number;
+    };
+    readonly items: ReadonlyArray<{
+      readonly kind: Types.MergeItemKind;
+      readonly refId: string;
+      readonly label: string;
+      readonly detail: string;
+    }>;
+    readonly warnings: ReadonlyArray<{ readonly code: string; readonly message: string }>;
+  };
+};
+
 export type PreviewUserDeletionQueryVariables = Exact<{
   userId: string | number;
 }>;
@@ -1330,6 +1437,30 @@ export type RecordRiskAssessmentMutation = {
       readonly viewed: Types.RiskViewed | null;
       readonly mitigation: Types.RiskMitigation | null;
     };
+  };
+};
+
+export type RemoveUserFromGroupMutationVariables = Exact<{
+  userId: string | number;
+  groupId: string | number;
+}>;
+
+export type RemoveUserFromGroupMutation = {
+  readonly removeUserFromGroup: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly idpGroups: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
 
@@ -1584,6 +1715,7 @@ export type RevokeRoleMutation = {
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
 
@@ -1619,6 +1751,19 @@ export type SaveDraftMutation = {
       readonly letter: string;
     }>;
   };
+};
+
+export type SearchUsersQueryVariables = Exact<{
+  query: string;
+  limit?: number | null | undefined;
+}>;
+
+export type SearchUsersQuery = {
+  readonly searchUsers: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly email: string | null;
+  }>;
 };
 
 export type SetCaseDiscoveryDateMutationVariables = Exact<{
@@ -2023,6 +2168,7 @@ export type UpdateMyProfileMutation = {
     readonly email: string;
     readonly roles: ReadonlyArray<string>;
     readonly permissions: ReadonlyArray<string>;
+    readonly managedGroupIds: ReadonlyArray<string>;
   };
 };
 
@@ -2072,6 +2218,7 @@ export type UpdateUserProfileMutation = {
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
 
@@ -2089,6 +2236,7 @@ export type UserFieldsFragment = {
   readonly username: string;
   readonly deletedAt: string | null;
   readonly mergedIntoUserId: string | null;
+  readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
 };
 
 export type UsersQueryVariables = Exact<{
@@ -2113,6 +2261,7 @@ export type UsersQuery = {
       readonly username: string;
       readonly deletedAt: string | null;
       readonly mergedIntoUserId: string | null;
+      readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
     }>;
   };
 };
@@ -2613,6 +2762,17 @@ export const UserFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "username" } },
           { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
           { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -3082,6 +3242,93 @@ export const AddOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<AddOrganizationMutation, AddOrganizationMutationVariables>;
+export const AddUserToGroupDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "AddUserToGroup" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "addUserToGroup" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "groupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddUserToGroupMutation, AddUserToGroupMutationVariables>;
 export const AiHealthDocument = {
   kind: "Document",
   definitions: [
@@ -5030,6 +5277,17 @@ export const DisableUserDocument = {
           { kind: "Field", name: { kind: "Name", value: "username" } },
           { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
           { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -5168,6 +5426,17 @@ export const EnableUserDocument = {
           { kind: "Field", name: { kind: "Name", value: "username" } },
           { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
           { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -5276,6 +5545,17 @@ export const GrantRoleDocument = {
           { kind: "Field", name: { kind: "Name", value: "username" } },
           { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
           { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -5535,6 +5815,80 @@ export const ListUserSessionsDocument = {
     },
   ],
 } as unknown as DocumentNode<ListUserSessionsQuery, ListUserSessionsQueryVariables>;
+export const ManagedGroupMembersDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ManagedGroupMembers" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "managedGroupMembers" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "groupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ManagedGroupMembersQuery, ManagedGroupMembersQueryVariables>;
 export const MeDocument = {
   kind: "Document",
   definitions: [
@@ -5559,6 +5913,7 @@ export const MeDocument = {
                 { kind: "Field", name: { kind: "Name", value: "email" } },
                 { kind: "Field", name: { kind: "Name", value: "roles" } },
                 { kind: "Field", name: { kind: "Name", value: "permissions" } },
+                { kind: "Field", name: { kind: "Name", value: "managedGroupIds" } },
                 {
                   kind: "Field",
                   name: { kind: "Name", value: "scopes" },
@@ -5575,6 +5930,110 @@ export const MeDocument = {
     },
   ],
 } as unknown as DocumentNode<MeQuery, MeQueryVariables>;
+export const MergeAccountsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "MergeAccounts" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "sourceUserId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "targetUserId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "confirmPrivileged" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "idempotencyKey" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "mergeAccounts" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "sourceUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "sourceUserId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "targetUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "targetUserId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "confirmPrivileged" },
+                value: { kind: "Variable", name: { kind: "Name", value: "confirmPrivileged" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "idempotencyKey" },
+                value: { kind: "Variable", name: { kind: "Name", value: "idempotencyKey" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "mergeOperationId" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "counts" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "policiesOwned" } },
+                      { kind: "Field", name: { kind: "Name", value: "raciGrants" } },
+                      { kind: "Field", name: { kind: "Name", value: "acknowledgmentsMoved" } },
+                      { kind: "Field", name: { kind: "Name", value: "acknowledgmentsDeduped" } },
+                      { kind: "Field", name: { kind: "Name", value: "workflowItems" } },
+                      { kind: "Field", name: { kind: "Name", value: "preferences" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "steps" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "step" } },
+                      { kind: "Field", name: { kind: "Name", value: "status" } },
+                      { kind: "Field", name: { kind: "Name", value: "detail" } },
+                      { kind: "Field", name: { kind: "Name", value: "error" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MergeAccountsMutation, MergeAccountsMutationVariables>;
 export const MoveCategoryDocument = {
   kind: "Document",
   definitions: [
@@ -6360,6 +6819,102 @@ export const PostCaseMessageDocument = {
     },
   ],
 } as unknown as DocumentNode<PostCaseMessageMutation, PostCaseMessageMutationVariables>;
+export const PreviewAccountMergeDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PreviewAccountMerge" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "sourceUserId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "targetUserId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "previewAccountMerge" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "sourceUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "sourceUserId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "targetUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "targetUserId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "sourceUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "targetUserId" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "counts" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "policiesOwned" } },
+                      { kind: "Field", name: { kind: "Name", value: "raciGrants" } },
+                      { kind: "Field", name: { kind: "Name", value: "acknowledgmentsMoved" } },
+                      { kind: "Field", name: { kind: "Name", value: "acknowledgmentsDeduped" } },
+                      { kind: "Field", name: { kind: "Name", value: "workflowItems" } },
+                      { kind: "Field", name: { kind: "Name", value: "preferences" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "items" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "kind" } },
+                      { kind: "Field", name: { kind: "Name", value: "refId" } },
+                      { kind: "Field", name: { kind: "Name", value: "label" } },
+                      { kind: "Field", name: { kind: "Name", value: "detail" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "warnings" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "code" } },
+                      { kind: "Field", name: { kind: "Name", value: "message" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "requiresPrivilegedConfirm" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PreviewAccountMergeQuery, PreviewAccountMergeQueryVariables>;
 export const PreviewUserDeletionDocument = {
   kind: "Document",
   definitions: [
@@ -6756,6 +7311,93 @@ export const RecordRiskAssessmentDocument = {
     },
   ],
 } as unknown as DocumentNode<RecordRiskAssessmentMutation, RecordRiskAssessmentMutationVariables>;
+export const RemoveUserFromGroupDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RemoveUserFromGroup" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "removeUserFromGroup" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "groupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RemoveUserFromGroupMutation, RemoveUserFromGroupMutationVariables>;
 export const RenameCategoryDocument = {
   kind: "Document",
   definitions: [
@@ -7377,6 +8019,17 @@ export const RevokeRoleDocument = {
           { kind: "Field", name: { kind: "Name", value: "username" } },
           { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
           { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -7537,6 +8190,60 @@ export const SaveDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<SaveDraftMutation, SaveDraftMutationVariables>;
+export const SearchUsersDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "SearchUsers" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "query" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "limit" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "searchUsers" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "query" },
+                value: { kind: "Variable", name: { kind: "Name", value: "query" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "limit" },
+                value: { kind: "Variable", name: { kind: "Name", value: "limit" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SearchUsersQuery, SearchUsersQueryVariables>;
 export const SetCaseDiscoveryDateDocument = {
   kind: "Document",
   definitions: [
@@ -8893,6 +9600,7 @@ export const UpdateMyProfileDocument = {
                 { kind: "Field", name: { kind: "Name", value: "email" } },
                 { kind: "Field", name: { kind: "Name", value: "roles" } },
                 { kind: "Field", name: { kind: "Name", value: "permissions" } },
+                { kind: "Field", name: { kind: "Name", value: "managedGroupIds" } },
               ],
             },
           },
@@ -9088,6 +9796,17 @@ export const UpdateUserProfileDocument = {
           { kind: "Field", name: { kind: "Name", value: "username" } },
           { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
           { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -9175,6 +9894,17 @@ export const UsersDocument = {
           { kind: "Field", name: { kind: "Name", value: "username" } },
           { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
           { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
         ],
       },
     },
