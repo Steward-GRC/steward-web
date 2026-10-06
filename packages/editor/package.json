@@ -1,0 +1,75 @@
+{
+  "name": "@steward-web/editor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A build of Ghost's Koenig editor on the workspace's own Lexical, React and Yjs.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./styles.css": "./src/generated/koenig.css"
+  },
+  "imports": {
+    "#kg-default-nodes": "./src/kg-default-nodes/index.ts",
+    "#kg-default-nodes/visibility": "./src/kg-default-nodes/visibility.ts",
+    "#kg-default-transforms": "./src/kg-default-transforms/index.ts"
+  },
+  "scripts": {
+    "build:css": "node scripts/build-css.mjs",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "peerDependencies": {
+    "@lexical/clipboard": "^0.52.0",
+    "@lexical/code": "^0.52.0",
+    "@lexical/html": "^0.52.0",
+    "@lexical/link": "^0.52.0",
+    "@lexical/list": "^0.52.0",
+    "@lexical/markdown": "^0.52.0",
+    "@lexical/react": "^0.52.0",
+    "@lexical/rich-text": "^0.52.0",
+    "@lexical/selection": "^0.52.0",
+    "@lexical/table": "^0.52.0",
+    "@lexical/text": "^0.52.0",
+    "@lexical/utils": "^0.52.0",
+    "@lexical/yjs": "^0.52.0",
+    "lexical": "^0.52.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "yjs": "^13.6.31"
+  },
+  "dependencies": {
+    "@tryghost/kg-clean-basic-html": "^4.3.5",
+    "clsx": "^2.1.1",
+    "dompurify": "^3.4.16",
+    "eventemitter3": "^5.0.4",
+    "lodash": "^4.18.1",
+    "react-colorful": "^5.8.1",
+    "react-error-boundary": "^6.1.6"
+  },
+  "devDependencies": {
+    "@lexical/clipboard": "^0.52.0",
+    "@lexical/code": "^0.52.0",
+    "@lexical/html": "^0.52.0",
+    "@lexical/link": "^0.52.0",
+    "@lexical/list": "^0.52.0",
+    "@lexical/markdown": "^0.52.0",
+    "@lexical/react": "^0.52.0",
+    "@lexical/rich-text": "^0.52.0",
+    "@lexical/selection": "^0.52.0",
+    "@lexical/table": "^0.52.0",
+    "@lexical/text": "^0.52.0",
+    "@lexical/utils": "^0.52.0",
+    "@lexical/yjs": "^0.52.0",
+    "@types/lodash": "^4.17.25",
+    "lexical": "^0.52.0",
+    "postcss": "^8.5.29",
+    "postcss-import": "^16.2.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tailwindcss": "^3.4.19",
+    "yjs": "^13.6.31"
+  }
+}

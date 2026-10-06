@@ -44,6 +44,13 @@ import {
   type WorkflowStatus,
 } from "@steward-web/api-client";
 import { permissionsForRoles } from "@steward-web/auth";
+import {
+  emptyParagraph,
+  paragraphsFromText,
+  type SerializedNode,
+  serializeDocument,
+  wrapRoot,
+} from "@steward-web/editor-steward/document";
 
 import { mockId } from "./marker";
 
@@ -763,7 +770,20 @@ export const mockTemplateVersions: TemplateVersion[] = [
 ];
 
 /** The working draft for POL-ITSEC-004 (`mockPolicies[1]`, the one DRAFT-status fixture row):
- *  a freeform draft with one section filled and an appendix, for the editor to open. */
+ *  a freeform draft with one section filled and an appendix, for the editor to open. Its
+ *  content is a Lexical editor state, a heading per section. */
+const heading = (title: string): SerializedNode => ({
+  children: [
+    { detail: 0, format: 0, mode: "normal", style: "", text: title, type: "text", version: 1 },
+  ],
+  direction: null,
+  format: "",
+  indent: 0,
+  tag: "h1",
+  type: "heading",
+  version: 1,
+});
+
 export const mockPolicyVersions: PolicyVersion[] = [
   {
     appendices: [
@@ -776,14 +796,14 @@ export const mockPolicyVersions: PolicyVersion[] = [
         title: "Review notes",
       },
     ],
-    contentJson: JSON.stringify([
-      {
-        sectionKey: "purpose",
-        text: "This policy sets out how organisation-owned systems may be used.",
-        title: "Purpose",
-      },
-      { sectionKey: "scope", text: "", title: "Scope" },
-    ]),
+    contentJson: serializeDocument(
+      wrapRoot([
+        heading("Purpose"),
+        ...paragraphsFromText("This policy sets out how organisation-owned systems may be used."),
+        heading("Scope"),
+        emptyParagraph(),
+      ]),
+    ),
     id: mockId("policy-version", 2),
     policyId: mockId("policy", 2),
     status: "DRAFT",

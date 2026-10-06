@@ -1,5 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { Awareness } from "y-protocols/awareness";
+
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
@@ -44,6 +46,12 @@ export const SNAPSHOT_DEBOUNCE_MS = 5000;
 export const MAX_SNAPSHOT_BYTES = 1 << 20;
 
 export interface CollabSessionOptions {
+  /**
+   * The presence the room syncs. The editor binds its carets to it before the socket exists,
+   * so the provider must carry this one rather than make its own. Owned by the session from
+   * here on: `stop()` destroys it.
+   */
+  awareness?: Awareness;
   /** The Yjs document the room syncs. */
   doc: Y.Doc;
   /**
@@ -207,6 +215,7 @@ export class CollabSession {
     }
 
     const provider = new WebsocketProvider(target.serverUrl, target.room, this.options.doc, {
+      ...(this.options.awareness ? { awareness: this.options.awareness } : {}),
       connect: false,
       // Cross-tab BroadcastChannel is disabled on purpose: it would let two of the author's
       // own tabs converge WITHOUT the relay, which is the one component that binds

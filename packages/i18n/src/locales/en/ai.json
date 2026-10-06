@@ -11,6 +11,7 @@
       "ASSIST_OPERATION_SUMMARIZE": "Summarize"
     },
     "operationLabel": "Operation",
+    "section": "Section",
     "title": "AI assist",
     "unavailable": "AI assist isn't available right now."
   },

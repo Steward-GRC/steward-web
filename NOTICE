@@ -3,3 +3,7 @@ Copyright 2026 The Steward Authors
 Originally written by @Bugs5382 (https://github.com/Bugs5382).
 
 This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+packages/editor contains a modified copy of the Koenig editor
+(https://github.com/TryGhost/Koenig), Copyright (c) 2013-2026 Ghost Foundation, licensed under
+the MIT License (see packages/editor/LICENSE).
