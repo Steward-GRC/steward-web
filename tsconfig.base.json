@@ -28,6 +28,7 @@
       "#mock/*": ["./packages/mock-gateway/src/*"],
       "#shell/*": ["./packages/shell/src/*"],
       "#ui/*": ["./packages/ui/src/*"],
+      "@steward-web/dev-ui-issue-button": ["./packages/shell/src/NoDevelopmentUiIssueButton.tsx"],
       "@steward-web/edge.server": ["./packages/api-client/src/edge/live.server.ts"],
       "@steward-web/mock-banner": ["./packages/shell/src/NoMockBanner.tsx"]
     }

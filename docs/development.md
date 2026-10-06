@@ -66,6 +66,43 @@ that has `STEWARD_MOCK` set to anything but empty or `false`, so a production bu
 talked into serving mock data. `pnpm run check:no-mock-leak` (part of `pnpm run check`) scans
 each app's live `build/` output for the mock marker as a regression guard.
 
+## The dev UI-issue button
+
+A "Copy for UI issue" button, for local development only, in both the staff and admin apps.
+One click copies a single line of compact JSON describing the current page, for pasting into
+an issue or a chat.
+
+It needs two things set together, the same two-flag pattern the mock build uses:
+
+```bash
+# Build with the button's code included.
+pnpm --filter @steward-web/staff exec vite build  # or docker build --build-arg DEV_UI_ISSUE_COPY=true ...
+
+# Run the server with the button turned on.
+STEWARD_DEV_UI_ISSUE_COPY=true pnpm --filter @steward-web/staff run dev
+```
+
+`DEV_UI_ISSUE_COPY=true` (the Dockerfile build argument, `STEWARD_DEV_UI_ISSUE_COPY_BUILD` once
+it reaches the build) is what lets the button's code into the bundle at all:
+`packages/vite-config`'s `chooseDevUiIssueButton` aliases `@steward-web/dev-ui-issue-button` to
+the real button only then, a no-op otherwise, the same tree-shaking swap the mock banner uses.
+`STEWARD_DEV_UI_ISSUE_COPY=true` is the server env the root loader reads to decide whether to
+actually render it. Both default to off, and either one being off hides the button.
+`pnpm run check:no-dev-ui-issue-leak` (part of `pnpm run check`) scans each app's live `build/`
+output for the button's marker as a regression guard, the same way `check:no-mock-leak` guards
+the mock banner.
+
+What it copies (schema v1, shared with every product's web repos — see
+`packages/shell/src/uiIssueBundle.ts`): one line of minified JSON with fixed keys in a fixed
+order (`v`, `product`, `app`, `sha`, `route`, `path`, `params`, `role`, `vw`, `vh`, `dpr`, `ua`,
+`t`, `theme`, `locale`, `clicked`, `lastErr`, `recentErrors`); a key with no value is omitted,
+never set to null. `path` is the route pattern, not the concrete URL; `params` carries only the
+matched route's own params; `role` is the signed-in user's role, never a username, display name
+or email; `clicked` is the last clicked element's `data-testid` or a short CSS selector, never
+its text; `lastErr`/`recentErrors` hold redacted, 200-character-capped error messages, up to 5
+of them, newest first. Nothing it copies ever includes secrets, tokens, cookies, query strings
+or form data.
+
 ## Tests
 
 Vitest, colocated `*.test.ts`/`*.test.tsx` files, Testing Library for components. No

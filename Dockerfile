@@ -6,13 +6,20 @@
 # buildInfoDefines, read at build time) and the server's Steward-Version / Steward-Commit
 # health headers (read from the environment at runtime). Unstamped, they fall back to "dev"
 # and "unknown".
+#
+# DEV_UI_ISSUE_COPY defaults to false: it only ever flips to true for a local dev image, never
+# for a release build. packages/vite-config's chooseDevUiIssueButton reads it (as
+# STEWARD_DEV_UI_ISSUE_COPY_BUILD) at build time and aliases the dev UI-issue button's real
+# code in only when it is "true", so a release build never carries that code at all.
 
 FROM node:24-bookworm-slim AS build
 ARG APP
 ARG VERSION
 ARG COMMIT
+ARG DEV_UI_ISSUE_COPY=false
 ENV VERSION=${VERSION}
 ENV COMMIT=${COMMIT}
+ENV STEWARD_DEV_UI_ISSUE_COPY_BUILD=${DEV_UI_ISSUE_COPY}
 WORKDIR /repo
 
 RUN corepack enable

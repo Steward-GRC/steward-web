@@ -29,9 +29,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:licenses": "node scripts/check-licenses.mjs",
+    "check:no-dev-ui-issue-leak": "node scripts/check-no-development-ui-issue-leak.mjs",
     "check:no-mock-leak": "node scripts/check-no-mock-leak.mjs",
     "check:schema": "bash packages/api-client/scripts/schema-check.sh",
-    "check": "pnpm run check:schema && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:no-mock-leak"
+    "check": "pnpm run check:schema && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:no-mock-leak && pnpm run check:no-dev-ui-issue-leak"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
