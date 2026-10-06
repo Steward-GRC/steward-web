@@ -23,6 +23,12 @@ pnpm --filter @steward-web/admin run dev
 Both talk to `GATEWAY_URL` (default `http://localhost:8080/query`; see
 `docs/configuration.md`) unless started with `dev:mock` (below).
 
+`apps/docs` is a standalone Docusaurus site with no gateway dependency; run it the same way:
+
+```bash
+pnpm --filter @steward-web/docs run dev
+```
+
 ## The codegen step (`packages/api-client`)
 
 The gateway's GraphQL schema is pinned to a steward-gateway commit, not fetched on every
