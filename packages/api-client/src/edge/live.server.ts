@@ -5,10 +5,20 @@ import type { Edge } from "../edge";
 import { gatewayFetch } from "../gatewayFetch";
 import {
   CategoriesDocument,
+  DeleteUserDocument,
   DiagnosticsDocument,
+  DisableUserDocument,
+  EnableUserDocument,
+  GrantRoleDocument,
+  ListUserSessionsDocument,
   MeDocument,
   PoliciesDocument,
+  PreviewUserDeletionDocument,
+  RevokeRoleDocument,
+  RevokeUserSessionsDocument,
   UpdateMyProfileDocument,
+  UpdateUserProfileDocument,
+  UsersDocument,
 } from "../generated/graphql";
 
 /** The live edge: every call is a real POST to `GATEWAY_URL`, cookie forwarded. */
@@ -17,9 +27,32 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(CategoriesDocument, {}, "Categories", { cookie });
     return data.categories;
   },
+  async deleteUser(userId, cookie) {
+    const data = await gatewayFetch(DeleteUserDocument, { userId }, "DeleteUser", { cookie });
+    return data.deleteUser;
+  },
   async diagnostics(cookie) {
     const data = await gatewayFetch(DiagnosticsDocument, {}, "Diagnostics", { cookie });
     return data.diagnostics;
+  },
+  async disableUser(userId, cookie) {
+    const data = await gatewayFetch(DisableUserDocument, { userId }, "DisableUser", { cookie });
+    return data.disableUser;
+  },
+
+  async enableUser(userId, cookie) {
+    const data = await gatewayFetch(EnableUserDocument, { userId }, "EnableUser", { cookie });
+    return data.enableUser;
+  },
+  async grantRole(userId, role, cookie) {
+    const data = await gatewayFetch(GrantRoleDocument, { role, userId }, "GrantRole", { cookie });
+    return data.grantRole;
+  },
+  async listUserSessions(userId, cookie) {
+    const data = await gatewayFetch(ListUserSessionsDocument, { userId }, "ListUserSessions", {
+      cookie,
+    });
+    return data.listUserSessions;
   },
   async me(cookie) {
     const data = await gatewayFetch(MeDocument, {}, "Me", { cookie });
@@ -29,9 +62,46 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(PoliciesDocument, { documentType }, "Policies", { cookie });
     return data.policies;
   },
+  async previewUserDeletion(userId, cookie) {
+    const data = await gatewayFetch(
+      PreviewUserDeletionDocument,
+      { userId },
+      "PreviewUserDeletion",
+      { cookie },
+    );
+    return data.previewUserDeletion;
+  },
+  async revokeRole(userId, role, cookie) {
+    const data = await gatewayFetch(RevokeRoleDocument, { role, userId }, "RevokeRole", {
+      cookie,
+    });
+    return data.revokeRole;
+  },
+  async revokeUserSessions(userId, reason, cookie) {
+    const data = await gatewayFetch(
+      RevokeUserSessionsDocument,
+      { reason, userId },
+      "RevokeUserSessions",
+      { cookie },
+    );
+    return data.revokeUserSessions;
+  },
   async updateMyProfile(input, cookie) {
     const data = await gatewayFetch(UpdateMyProfileDocument, input, "UpdateMyProfile", { cookie });
     return data.updateMyProfile;
+  },
+  async updateUserProfile(userId, name, email, cookie) {
+    const data = await gatewayFetch(
+      UpdateUserProfileDocument,
+      { email, name, userId },
+      "UpdateUserProfile",
+      { cookie },
+    );
+    return data.updateUserProfile;
+  },
+  async users(input, cookie) {
+    const data = await gatewayFetch(UsersDocument, input, "Users", { cookie });
+    return data.users;
   },
 };
 

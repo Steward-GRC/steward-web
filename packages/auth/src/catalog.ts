@@ -16,7 +16,9 @@ export const PERMISSIONS = {
   PolicyAuthor: "policy.author",
   PolicyRead: "policy.read",
   PolicyReadSensitive: "policy.read_sensitive",
+  SessionManage: "session.manage",
   SettingsManage: "settings.manage",
+  UserManage: "user.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

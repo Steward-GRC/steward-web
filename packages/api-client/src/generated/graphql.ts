@@ -17,6 +17,14 @@ export type CategoriesQuery = {
   }>;
 };
 
+export type DeleteUserMutationVariables = Exact<{
+  userId: string | number;
+}>;
+
+export type DeleteUserMutation = {
+  readonly deleteUser: { readonly userId: string; readonly revokedSessions: number };
+};
+
 export type DiagnosticsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type DiagnosticsQuery = {
@@ -56,6 +64,89 @@ export type DiagnosticsQuery = {
   };
 };
 
+export type DisableUserMutationVariables = Exact<{
+  userId: string | number;
+}>;
+
+export type DisableUserMutation = {
+  readonly disableUser: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly adGroups: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+  };
+};
+
+export type EnableUserMutationVariables = Exact<{
+  userId: string | number;
+}>;
+
+export type EnableUserMutation = {
+  readonly enableUser: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly adGroups: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+  };
+};
+
+export type GrantRoleMutationVariables = Exact<{
+  userId: string | number;
+  role: string;
+}>;
+
+export type GrantRoleMutation = {
+  readonly grantRole: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly adGroups: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+  };
+};
+
+export type ListUserSessionsQueryVariables = Exact<{
+  userId: string | number;
+}>;
+
+export type ListUserSessionsQuery = {
+  readonly listUserSessions: ReadonlyArray<{
+    readonly sessionId: string;
+    readonly issuedAt: string;
+    readonly lastSeenAt: string;
+    readonly expiresAt: string;
+    readonly revokedAt: string | null;
+    readonly clientIp: string;
+    readonly userAgent: string;
+  }>;
+};
+
 export type MeQueryVariables = Exact<{ [key: string]: never }>;
 
 export type MeQuery = {
@@ -90,6 +181,63 @@ export type PoliciesQuery = {
   }>;
 };
 
+export type PreviewUserDeletionQueryVariables = Exact<{
+  userId: string | number;
+}>;
+
+export type PreviewUserDeletionQuery = {
+  readonly previewUserDeletion: {
+    readonly userId: string;
+    readonly blocksDelete: boolean;
+    readonly locallyAuthenticable: boolean;
+    readonly counts: {
+      readonly pendingApprovals: number;
+      readonly ownedPolicies: number;
+      readonly raciGrants: number;
+      readonly roles: number;
+      readonly accessRows: number;
+    };
+    readonly items: ReadonlyArray<{
+      readonly kind: Types.DeletionItemKind;
+      readonly refId: string;
+      readonly label: string;
+      readonly detail: string;
+      readonly blocksDelete: boolean;
+    }>;
+    readonly warnings: ReadonlyArray<{ readonly code: string; readonly message: string }>;
+  };
+};
+
+export type RevokeRoleMutationVariables = Exact<{
+  userId: string | number;
+  role: string;
+}>;
+
+export type RevokeRoleMutation = {
+  readonly revokeRole: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly adGroups: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+  };
+};
+
+export type RevokeUserSessionsMutationVariables = Exact<{
+  userId: string | number;
+  reason?: string | null | undefined;
+}>;
+
+export type RevokeUserSessionsMutation = { readonly revokeUserSessions: number };
+
 export type UpdateMyProfileMutationVariables = Exact<{
   firstName: string;
   lastName: string;
@@ -108,6 +256,100 @@ export type UpdateMyProfileMutation = {
   };
 };
 
+export type UpdateUserProfileMutationVariables = Exact<{
+  userId: string | number;
+  name: string;
+  email: string;
+}>;
+
+export type UpdateUserProfileMutation = {
+  readonly updateUserProfile: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly adGroups: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+  };
+};
+
+export type UserFieldsFragment = {
+  readonly userId: string;
+  readonly name: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string;
+  readonly enabled: boolean;
+  readonly roles: ReadonlyArray<string>;
+  readonly adGroups: ReadonlyArray<string>;
+  readonly isRoot: boolean;
+  readonly localAccount: boolean;
+  readonly username: string;
+  readonly deletedAt: string | null;
+  readonly mergedIntoUserId: string | null;
+};
+
+export type UsersQueryVariables = Exact<{
+  search?: string | null | undefined;
+  includeDeleted?: boolean | null | undefined;
+}>;
+
+export type UsersQuery = {
+  readonly users: {
+    readonly nextPageToken: string;
+    readonly users: ReadonlyArray<{
+      readonly userId: string;
+      readonly name: string;
+      readonly firstName: string;
+      readonly lastName: string;
+      readonly email: string;
+      readonly enabled: boolean;
+      readonly roles: ReadonlyArray<string>;
+      readonly adGroups: ReadonlyArray<string>;
+      readonly isRoot: boolean;
+      readonly localAccount: boolean;
+      readonly username: string;
+      readonly deletedAt: string | null;
+      readonly mergedIntoUserId: string | null;
+    }>;
+  };
+};
+
+export const UserFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "adGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UserFieldsFragment, unknown>;
 export const CategoriesDocument = {
   kind: "Document",
   definitions: [
@@ -136,6 +378,49 @@ export const CategoriesDocument = {
     },
   ],
 } as unknown as DocumentNode<CategoriesQuery, CategoriesQueryVariables>;
+export const DeleteUserDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteUser" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteUser" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "revokedSessions" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteUserMutation, DeleteUserMutationVariables>;
 export const DiagnosticsDocument = {
   kind: "Document",
   definitions: [
@@ -227,6 +512,256 @@ export const DiagnosticsDocument = {
     },
   ],
 } as unknown as DocumentNode<DiagnosticsQuery, DiagnosticsQueryVariables>;
+export const DisableUserDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DisableUser" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "disableUser" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "adGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DisableUserMutation, DisableUserMutationVariables>;
+export const EnableUserDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "EnableUser" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "enableUser" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "adGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EnableUserMutation, EnableUserMutationVariables>;
+export const GrantRoleDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "GrantRole" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "role" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "grantRole" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "role" },
+                value: { kind: "Variable", name: { kind: "Name", value: "role" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "adGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GrantRoleMutation, GrantRoleMutationVariables>;
+export const ListUserSessionsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ListUserSessions" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "listUserSessions" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "sessionId" } },
+                { kind: "Field", name: { kind: "Name", value: "issuedAt" } },
+                { kind: "Field", name: { kind: "Name", value: "lastSeenAt" } },
+                { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+                { kind: "Field", name: { kind: "Name", value: "revokedAt" } },
+                { kind: "Field", name: { kind: "Name", value: "clientIp" } },
+                { kind: "Field", name: { kind: "Name", value: "userAgent" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ListUserSessionsQuery, ListUserSessionsQueryVariables>;
 export const MeDocument = {
   kind: "Document",
   definitions: [
@@ -310,6 +845,211 @@ export const PoliciesDocument = {
     },
   ],
 } as unknown as DocumentNode<PoliciesQuery, PoliciesQueryVariables>;
+export const PreviewUserDeletionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PreviewUserDeletion" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "previewUserDeletion" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "blocksDelete" } },
+                { kind: "Field", name: { kind: "Name", value: "locallyAuthenticable" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "counts" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "pendingApprovals" } },
+                      { kind: "Field", name: { kind: "Name", value: "ownedPolicies" } },
+                      { kind: "Field", name: { kind: "Name", value: "raciGrants" } },
+                      { kind: "Field", name: { kind: "Name", value: "roles" } },
+                      { kind: "Field", name: { kind: "Name", value: "accessRows" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "items" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "kind" } },
+                      { kind: "Field", name: { kind: "Name", value: "refId" } },
+                      { kind: "Field", name: { kind: "Name", value: "label" } },
+                      { kind: "Field", name: { kind: "Name", value: "detail" } },
+                      { kind: "Field", name: { kind: "Name", value: "blocksDelete" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "warnings" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "code" } },
+                      { kind: "Field", name: { kind: "Name", value: "message" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PreviewUserDeletionQuery, PreviewUserDeletionQueryVariables>;
+export const RevokeRoleDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RevokeRole" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "role" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "revokeRole" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "role" },
+                value: { kind: "Variable", name: { kind: "Name", value: "role" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "adGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RevokeRoleMutation, RevokeRoleMutationVariables>;
+export const RevokeUserSessionsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RevokeUserSessions" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "revokeUserSessions" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "reason" },
+                value: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RevokeUserSessionsMutation, RevokeUserSessionsMutationVariables>;
 export const UpdateMyProfileDocument = {
   kind: "Document",
   definitions: [
@@ -372,3 +1112,179 @@ export const UpdateMyProfileDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateMyProfileMutation, UpdateMyProfileMutationVariables>;
+export const UpdateUserProfileDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateUserProfile" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "name" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "email" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateUserProfile" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "name" },
+                value: { kind: "Variable", name: { kind: "Name", value: "name" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "email" },
+                value: { kind: "Variable", name: { kind: "Name", value: "email" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "adGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateUserProfileMutation, UpdateUserProfileMutationVariables>;
+export const UsersDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "Users" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "search" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "includeDeleted" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "users" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "search" },
+                value: { kind: "Variable", name: { kind: "Name", value: "search" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "pageSize" },
+                value: { kind: "IntValue", value: "200" },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "includeDeleted" },
+                value: { kind: "Variable", name: { kind: "Name", value: "includeDeleted" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "nextPageToken" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "users" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "adGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UsersQuery, UsersQueryVariables>;

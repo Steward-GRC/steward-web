@@ -1,21 +1,57 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-export type { Category, Diagnostics, Edge, Me, Policy } from "./edge";
+export type {
+  Category,
+  DeleteUserResult,
+  Diagnostics,
+  Edge,
+  ListUsersInput,
+  Me,
+  Policy,
+  Session,
+  User,
+  UserDeletionPreview,
+  UserPage,
+} from "./edge";
 export { DocumentType, PolicyStatus, Sensitivity } from "./edge";
 export { GatewayError, gatewayFetch, type GatewayRequest } from "./gatewayFetch";
 export {
   CategoriesDocument,
   type CategoriesQuery,
+  DeleteUserDocument,
+  type DeleteUserMutation,
   DiagnosticsDocument,
   type DiagnosticsQuery,
+  DisableUserDocument,
+  type DisableUserMutation,
+  EnableUserDocument,
+  type EnableUserMutation,
+  GrantRoleDocument,
+  type GrantRoleMutation,
+  ListUserSessionsDocument,
+  type ListUserSessionsQuery,
   MeDocument,
   type MeQuery,
   PoliciesDocument,
   type PoliciesQuery,
+  PreviewUserDeletionDocument,
+  type PreviewUserDeletionQuery,
+  RevokeRoleDocument,
+  type RevokeRoleMutation,
+  RevokeUserSessionsDocument,
+  type RevokeUserSessionsMutation,
+  UpdateUserProfileDocument,
+  type UpdateUserProfileMutation,
+  UsersDocument,
+  type UsersQuery,
 } from "./generated/graphql";
 export {
   ComponentStatus,
   type ComponentVersion,
+  DeletionItemKind,
   type DiagnosticsActingAs,
   type DiagnosticsActor,
+  type UserDeletionCounts,
+  type UserDeletionPreviewItem,
+  type UserDeletionWarning,
 } from "./generated/schema";

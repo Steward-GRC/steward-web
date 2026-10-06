@@ -4,7 +4,7 @@ import { DocumentType } from "@steward-web/api-client";
 import { describe, expect, it } from "vitest";
 
 import { mockEdge } from "./edge.server";
-import { MOCK_MARKER } from "./marker";
+import { MOCK_MARKER, mockId } from "./marker";
 
 describe("mockEdge", () => {
   it("answers me() with a mock-id persona, no network and no cookie", async () => {
@@ -41,5 +41,85 @@ describe("mockEdge", () => {
     const procedures = await mockEdge.policies(DocumentType.Procedure);
     expect(procedures.length).toBeGreaterThan(0);
     for (const procedure of procedures) expect(procedure.documentType).toBe(DocumentType.Procedure);
+  });
+});
+
+describe("mockEdge users directory", () => {
+  it("users() excludes tombstoned accounts unless includeDeleted is set", async () => {
+    const live = await mockEdge.users({});
+    expect(live.users.some((u) => u.userId === mockId("user", 6))).toBe(false);
+
+    const withDeleted = await mockEdge.users({ includeDeleted: true });
+    const merged = withDeleted.users.find((u) => u.userId === mockId("user", 6));
+    expect(merged?.mergedIntoUserId).toBe(mockId("user", 3));
+  });
+
+  it("users() filters by an email substring", async () => {
+    const page = await mockEdge.users({ search: "hopper" });
+    expect(page.users.map((u) => u.userId)).toEqual([mockId("user", 2)]);
+  });
+
+  it("disableUser() refuses the protected root", async () => {
+    await expect(mockEdge.disableUser(mockId("user", 1))).rejects.toMatchObject({
+      code: "ROOT_PROTECTED",
+    });
+  });
+
+  it("enableUser() flips a disabled account on", async () => {
+    const updated = await mockEdge.enableUser(mockId("user", 4));
+    expect(updated.enabled).toBe(true);
+  });
+
+  it("updateUserProfile() edits another user's name and email", async () => {
+    const updated = await mockEdge.updateUserProfile(
+      mockId("user", 4),
+      "Meg Hamilton",
+      "meg@example.com",
+    );
+    expect(updated).toMatchObject({ email: "meg@example.com", name: "Meg Hamilton" });
+  });
+
+  it("grantRole() then revokeRole() round-trips a global role", async () => {
+    const granted = await mockEdge.grantRole(mockId("user", 2), "site-admin");
+    expect(granted.roles).toContain("site-admin");
+
+    const revoked = await mockEdge.revokeRole(mockId("user", 2), "site-admin");
+    expect(revoked.roles).not.toContain("site-admin");
+  });
+
+  it("listUserSessions() then revokeUserSessions() signs the user out everywhere", async () => {
+    const before = await mockEdge.listUserSessions(mockId("user", 3));
+    expect(before.some((s) => !s.revokedAt)).toBe(true);
+
+    const revokedCount = await mockEdge.revokeUserSessions(mockId("user", 3), "test");
+    expect(revokedCount).toBe(before.length);
+
+    const after = await mockEdge.listUserSessions(mockId("user", 3));
+    expect(after.every((s) => s.revokedAt)).toBe(true);
+  });
+
+  it("previewUserDeletion() reports the canned, blocking preview for a fixture with one", async () => {
+    const preview = await mockEdge.previewUserDeletion(mockId("user", 3));
+    expect(preview.blocksDelete).toBe(true);
+    expect(preview.items.some((index) => index.blocksDelete)).toBe(true);
+  });
+
+  it("previewUserDeletion() falls back to a clean preview otherwise", async () => {
+    const preview = await mockEdge.previewUserDeletion(mockId("user", 2));
+    expect(preview).toMatchObject({ blocksDelete: false, items: [] });
+  });
+
+  it("deleteUser() refuses while the preview blocks", async () => {
+    await expect(mockEdge.deleteUser(mockId("user", 3))).rejects.toMatchObject({
+      code: "DELETE_BLOCKED",
+    });
+  });
+
+  it("deleteUser() soft-deletes an unblocked user and reports revoked sessions", async () => {
+    const result = await mockEdge.deleteUser(mockId("user", 2));
+    expect(result).toEqual({ revokedSessions: 0, userId: mockId("user", 2) });
+
+    const page = await mockEdge.users({ includeDeleted: true });
+    expect(page.users.find((u) => u.userId === mockId("user", 2))?.deletedAt).toBeTruthy();
   });
 });

@@ -1,0 +1,25 @@
+query PreviewUserDeletion($userId: ID!) {
+  previewUserDeletion(userId: $userId) {
+    userId
+    blocksDelete
+    locallyAuthenticable
+    counts {
+      pendingApprovals
+      ownedPolicies
+      raciGrants
+      roles
+      accessRows
+    }
+    items {
+      kind
+      refId
+      label
+      detail
+      blocksDelete
+    }
+    warnings {
+      code
+      message
+    }
+  }
+}
