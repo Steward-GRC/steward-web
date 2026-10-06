@@ -4,8 +4,8 @@ file is hand-pinned from the original gateway's v3.0.0 SDL (see ../schema-refs.e
 trimmed to the operations steward-web actually sends: the signed-in user, the
 diagnostics report, editing one's own display name, the policy/procedure library browse
 (categories and the catalog), the admin user directory, the admin group directory, the
-admin organisation directory, and the staff authoring area (the editor and its AI
-drafting/review assist). It
+admin organisation/SSO directory, the staff authoring area (the editor and its AI
+drafting/review assist) and the admin audit log. It
 gains more of the upstream schema as later ports add operations, and schema-generate.sh
 switches from this vendored copy to a live fetch once steward-gateway publishes its own
 schema on its main branch.
@@ -853,4 +853,63 @@ extend type Mutation {
   hold edit access to the draft; refused otherwise.
   """
   issueCollabToken(input: IssueCollabTokenInput!): IssueCollabTokenPayload!
+}
+
+# The admin audit log: a tamper-evident, hash-chained record of every consequential action.
+# Trimmed to the two operations the admin audit area sends (the segment/checkpoint query
+# behind the original's export flow is not carried — no export in this port). Record ids
+# are String, not ID: the backing store's ids are 64-bit and a GraphQL ID round-trips
+# through a JS Number in some clients, which truncates a ones past 2^53; String avoids that
+# regardless of which client reads it.
+extend type Query {
+  "A page of audit records, newest first. tier/groupId/actorUserId/subject filter server-side; action and a date range are left to the caller. Site-admin only."
+  auditLog(
+    tier: String
+    groupId: ID
+    actorUserId: ID
+    subject: String
+    pageSize: Int
+    pageToken: String
+  ): AuditQueryPage!
+  "Recomputes the hash chain across [fromRecordId, toRecordId] and reports whether it still holds. Site-admin only."
+  verifyAuditChain(fromRecordId: String!, toRecordId: String!): AuditChainVerification!
+}
+
+"One tamper-evident audit record: the hash chain links recordHash to the prior record's own."
+type AuditRecord {
+  id: String!
+  recordUuid: ID!
+  tier: String!
+  action: String!
+  actorUserId: ID!
+  subject: String!
+  groupId: ID!
+  "ISO-8601."
+  occurredAt: String!
+  prevHash: String!
+  recordHash: String!
+  legalBasisExempt: Boolean!
+  """
+  Human-readable labels resolved server-side at read time from the actor/group/subject ids
+  above, so the UI never has to fan out its own lookups. Null on a resolution miss, in which
+  case the caller falls back to the raw id.
+  """
+  actorName: String
+  groupName: String
+  subjectLabel: String
+}
+
+type AuditQueryPage {
+  records: [AuditRecord!]!
+  nextPageToken: String!
+}
+
+"""
+The result of recomputing a hash-chain segment. valid is false the moment one record's
+recordHash fails to match the hash of its own fields plus the prior record's recordHash.
+"""
+type AuditChainVerification {
+  valid: Boolean!
+  recordsChecked: Int!
+  errors: [String!]!
 }

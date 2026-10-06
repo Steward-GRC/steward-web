@@ -24,6 +24,7 @@ import {
 import {
   mockAiConfig,
   mockAppendixLetter,
+  mockAuditRecords,
   mockCategories,
   mockDiagnostics,
   mockGroupMappings,
@@ -341,6 +342,15 @@ export const mockEdge: Edge = {
       });
     }
     return { operation: "DRAFT", resultJson: job.resultJson };
+  },
+  auditLog: ({ actorUserId, groupId, pageSize, subject, tier } = {}) => {
+    const filtered = mockAuditRecords
+      .filter((r) => !tier || r.tier === tier)
+      .filter((r) => !groupId || r.groupId === groupId)
+      .filter((r) => !actorUserId || r.actorUserId === actorUserId)
+      .filter((r) => !subject || r.subject.includes(subject));
+    const records = pageSize == undefined ? filtered : filtered.slice(0, pageSize);
+    return Promise.resolve({ nextPageToken: "", records });
   },
   authorableGroups: () => Promise.resolve(groups),
   authorableTemplates: () => Promise.resolve(mockTemplates),
@@ -805,6 +815,22 @@ export const mockEdge: Edge = {
       .filter((u) => includeDeleted || !u.deletedAt)
       .filter((u) => !needle || u.email.toLowerCase().includes(needle));
     return Promise.resolve({ nextPageToken: "", users: filtered });
+  },
+  verifyAuditChain: async (fromRecordId, toRecordId) => {
+    const byId = new Map(mockAuditRecords.map((r) => [r.id, r]));
+    if (!byId.has(fromRecordId) || !byId.has(toRecordId)) {
+      throw new GatewayError("VerifyAuditChain", "unknown record id", { code: "NOT_FOUND" });
+    }
+    const lo = Math.min(Number(fromRecordId), Number(toRecordId));
+    const hi = Math.max(Number(fromRecordId), Number(toRecordId));
+    const segment = mockAuditRecords
+      .filter((r) => Number(r.id) >= lo && Number(r.id) <= hi)
+      .toSorted((a, b) => Number(a.id) - Number(b.id));
+    const errors = segment
+      .slice(1)
+      .filter((record, index) => record.prevHash !== segment[index]!.recordHash)
+      .map((record) => `record ${record.id} does not chain from its predecessor`);
+    return { errors, recordsChecked: segment.length, valid: errors.length === 0 };
   },
   verifyDomain: async (domain) => {
     const org = requireOrganization("VerifyDomain", domain);
