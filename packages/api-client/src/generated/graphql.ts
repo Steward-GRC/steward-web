@@ -139,6 +139,20 @@ export type AiJobQuery = {
   };
 };
 
+export type AiJobResultSubscriptionVariables = Exact<{
+  jobId: string | number;
+}>;
+
+export type AiJobResultSubscription = {
+  readonly aiJobResult: {
+    readonly jobId: string;
+    readonly phase: Types.AiJobPhase;
+    readonly resultRef: string | null;
+    readonly error: string | null;
+    readonly finishedAt: string | null;
+  };
+};
+
 export type AiJobResultContentQueryVariables = Exact<{
   resultRef: string;
 }>;
@@ -2783,6 +2797,52 @@ export const AiJobDocument = {
     },
   ],
 } as unknown as DocumentNode<AiJobQuery, AiJobQueryVariables>;
+export const AiJobResultDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "subscription",
+      name: { kind: "Name", value: "AiJobResult" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "jobId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "aiJobResult" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "jobId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "jobId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "jobId" } },
+                { kind: "Field", name: { kind: "Name", value: "phase" } },
+                { kind: "Field", name: { kind: "Name", value: "resultRef" } },
+                { kind: "Field", name: { kind: "Name", value: "error" } },
+                { kind: "Field", name: { kind: "Name", value: "finishedAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AiJobResultSubscription, AiJobResultSubscriptionVariables>;
 export const AiJobResultContentDocument = {
   kind: "Document",
   definitions: [

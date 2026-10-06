@@ -14,13 +14,16 @@
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
-    "graphql": "^17.0.2"
+    "graphql": "^17.0.2",
+    "graphql-ws": "^6.3.0",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^7.4.4",
     "@graphql-codegen/typed-document-node": "^7.1.1",
     "@graphql-codegen/typescript": "^6.1.1",
     "@graphql-codegen/typescript-operations": "^6.1.10",
-    "@steward-web/vite-config": "workspace:*"
+    "@steward-web/vite-config": "workspace:*",
+    "@types/ws": "^8.18.2"
   }
 }

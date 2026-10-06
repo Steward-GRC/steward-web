@@ -3,6 +3,7 @@
 import type {
   AddOrganizationInput,
   AiHealth,
+  AiJobResult,
   AiJobResultContent as AiJobResultContentSchema,
   AiJobStatus,
   Appendix,
@@ -62,6 +63,7 @@ import { DocumentType } from "./generated/schema";
 export type {
   AddOrganizationInput,
   AiHealth,
+  AiJobResult,
   AiJobStatus,
   Appendix,
   AuditChainVerification,
@@ -218,6 +220,12 @@ export interface Edge {
   aiHealth(cookie?: string): Promise<AiHealth>;
   /** Polls an async AI job's status by id. */
   aiJob(jobId: string, cookie?: string): Promise<AiJobStatus>;
+  /**
+   * Waits for async AI job `jobId`'s single terminal push over the gateway's `aiJobResult`
+   * subscription — resolved immediately if the job was already terminal when the
+   * subscription opened. `signal` cancels the wait.
+   */
+  aiJobResult(jobId: string, cookie?: string, signal?: AbortSignal): Promise<AiJobResult>;
   /** Fetches a completed async AI job's content by `AIJobStatus.resultRef`. */
   aiJobResultContent(resultRef: string, cookie?: string): Promise<AIJobResultContent>;
   /** Sets or clears (null) a case's assignee. Officers only. */

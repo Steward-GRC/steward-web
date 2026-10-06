@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import type {
   AiHealth,
+  AiJobResult,
   AIJobResultContent,
-  AiJobStatus,
   AssistOperation,
   AuthoringAssistResult,
   SubmitDraftGenerationInput,
@@ -44,8 +44,14 @@ export const submitPolicyReview = (
   input: SubmitPolicyReviewInput,
 ): Promise<{ jobId: string }> => edge.submitPolicyReview(input, cookieOf(request));
 
-export const getAiJob = (request: Request, jobId: string): Promise<AiJobStatus> =>
-  edge.aiJob(jobId, cookieOf(request));
+/** Waits for async job `jobId`'s single terminal push over the gateway's `aiJobResult`
+ *  subscription. `signal` cancels the wait when the caller (the `ai-jobs` SSE route) is
+ *  abandoned. */
+export const awaitAiJobResult = (
+  request: Request,
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<AiJobResult> => edge.aiJobResult(jobId, cookieOf(request), signal);
 
 export const getAiJobResultContent = (
   request: Request,

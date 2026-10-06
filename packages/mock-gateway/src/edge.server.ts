@@ -460,6 +460,23 @@ export const mockEdge: Edge = {
       resultRef: aiJobPhase(job) === AiJobPhase.AiJobPhaseSucceeded ? jobId : null,
     };
   },
+  aiJobResult: async (jobId) => {
+    const job = aiJobs.get(jobId);
+    if (!job) {
+      throw new GatewayError("AiJobResult", `AI job ${jobId} not found`, { code: "NOT_FOUND" });
+    }
+    // The real subscription carries only the job's terminal outcome, never an intermediate
+    // phase, so — unlike aiJob() above — there is no polls count to advance: the mock job is
+    // already fully resolved the moment it was submitted.
+    const phase = job.error ? AiJobPhase.AiJobPhaseFailed : AiJobPhase.AiJobPhaseSucceeded;
+    return {
+      error: job.error,
+      finishedAt: new Date().toISOString(),
+      jobId,
+      phase,
+      resultRef: phase === AiJobPhase.AiJobPhaseSucceeded ? jobId : null,
+    };
+  },
   aiJobResultContent: async (resultRef) => {
     const job = aiJobs.get(resultRef);
     if (!job?.resultJson) {
