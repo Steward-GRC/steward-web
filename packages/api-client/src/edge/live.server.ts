@@ -7,21 +7,29 @@ import {
   AcknowledgePolicyDocument,
   BreakGlassRevealDocument,
   CategoriesDocument,
+  CreateGroupDocument,
+  DeleteGroupDocument,
   DeleteUserDocument,
   DiagnosticsDocument,
   DisableUserDocument,
   EnableUserDocument,
   GrantRoleDocument,
+  GroupChildrenDocument,
   ListUserSessionsDocument,
   MeDocument,
+  MoveGroupDocument,
   PoliciesDocument,
   PolicyDetailDocument,
   PreviewUserDeletionDocument,
+  RenameGroupDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
+  TemplatesDocument,
+  UpdateGroupSettingsDocument,
   UpdateMyProfileDocument,
   UpdateUserProfileDocument,
   UsersDocument,
+  WorkflowsDocument,
 } from "../generated/graphql";
 
 /** The live edge: every call is a real POST to `GATEWAY_URL`, cookie forwarded. */
@@ -48,6 +56,14 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(CategoriesDocument, {}, "Categories", { cookie });
     return data.categories;
   },
+  async createGroup(input, cookie) {
+    const data = await gatewayFetch(CreateGroupDocument, input, "CreateGroup", { cookie });
+    return data.createGroup;
+  },
+  async deleteGroup(id, cookie) {
+    const data = await gatewayFetch(DeleteGroupDocument, { id }, "DeleteGroup", { cookie });
+    return data.deleteGroup;
+  },
   async deleteUser(userId, cookie) {
     const data = await gatewayFetch(DeleteUserDocument, { userId }, "DeleteUser", { cookie });
     return data.deleteUser;
@@ -69,6 +85,12 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(GrantRoleDocument, { role, userId }, "GrantRole", { cookie });
     return data.grantRole;
   },
+  async groupChildren(parentId, cookie) {
+    const data = await gatewayFetch(GroupChildrenDocument, { parentId }, "GroupChildren", {
+      cookie,
+    });
+    return data.groupChildren;
+  },
   async listUserSessions(userId, cookie) {
     const data = await gatewayFetch(ListUserSessionsDocument, { userId }, "ListUserSessions", {
       cookie,
@@ -78,6 +100,12 @@ export const liveEdge: Edge = {
   async me(cookie) {
     const data = await gatewayFetch(MeDocument, {}, "Me", { cookie });
     return data.me ?? null; // scrub:allow=fqdn
+  },
+  async moveGroup(groupId, newParentId, cookie) {
+    const data = await gatewayFetch(MoveGroupDocument, { groupId, newParentId }, "MoveGroup", {
+      cookie,
+    });
+    return data.moveGroup;
   },
   async policies(documentType, cookie) {
     const data = await gatewayFetch(PoliciesDocument, { documentType }, "Policies", { cookie });
@@ -101,6 +129,12 @@ export const liveEdge: Edge = {
     );
     return data.previewUserDeletion;
   },
+  async renameGroup(id, name, slug, cookie) {
+    const data = await gatewayFetch(RenameGroupDocument, { id, name, slug }, "RenameGroup", {
+      cookie,
+    });
+    return data.renameGroup;
+  },
   async revokeRole(userId, role, cookie) {
     const data = await gatewayFetch(RevokeRoleDocument, { role, userId }, "RevokeRole", {
       cookie,
@@ -115,6 +149,16 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.revokeUserSessions;
+  },
+  async templates(cookie) {
+    const data = await gatewayFetch(TemplatesDocument, {}, "Templates", { cookie });
+    return data.templates;
+  },
+  async updateGroupSettings(input, cookie) {
+    const data = await gatewayFetch(UpdateGroupSettingsDocument, input, "UpdateGroupSettings", {
+      cookie,
+    });
+    return data.updateGroupSettings;
   },
   async updateMyProfile(input, cookie) {
     const data = await gatewayFetch(UpdateMyProfileDocument, input, "UpdateMyProfile", { cookie });
@@ -132,6 +176,10 @@ export const liveEdge: Edge = {
   async users(input, cookie) {
     const data = await gatewayFetch(UsersDocument, input, "Users", { cookie });
     return data.users;
+  },
+  async workflows(cookie) {
+    const data = await gatewayFetch(WorkflowsDocument, {}, "Workflows", { cookie });
+    return data.workflows;
   },
 };
 

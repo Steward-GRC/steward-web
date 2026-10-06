@@ -1,0 +1,12 @@
+fragment GroupFields on Group {
+  id
+  name
+  slug
+  parentId
+  defaultTemplateId
+  defaultTemplateNone
+  defaultWorkflowId
+  owners
+  reviewCadence
+  reviewDate
+}

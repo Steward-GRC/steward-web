@@ -3,10 +3,10 @@ Vendored slice of the gateway schema. Steward's own gateway is not ported yet, s
 file is hand-pinned from the original gateway's v3.0.0 SDL (see ../schema-refs.env),
 trimmed to the operations steward-web actually sends: the signed-in user, the
 diagnostics report, editing one's own display name, the policy/procedure library browse
-(categories and the catalog), and the admin user directory. It gains more of the
-upstream schema as later ports add operations, and schema-generate.sh switches from this
-vendored copy to a live fetch once steward-gateway publishes its own schema on its main
-branch.
+(categories and the catalog), the admin user directory and the admin group directory. It
+gains more of the upstream schema as later ports add operations, and schema-generate.sh
+switches from this vendored copy to a live fetch once steward-gateway publishes its own
+schema on its main branch.
 
 Identity-provider-specific wording in the original schema's descriptions is dropped (Steward
 signs in through Ory Kratos); nothing else about the shape of these operations has changed.
@@ -242,6 +242,91 @@ type ComponentVersion {
 enum ComponentStatus {
   OK
   UNAVAILABLE
+}
+
+# The admin group directory: the taxonomy group's identity, hierarchy, inherited defaults
+# and governance (owners, review cadence). The original's acknowledgement-audience fields
+# (ackTriggers/ackEveryone/adGroupIds/exclusionGroupIds) had no reachable editor in the
+# source UI (the only picker that wrote them was removed when its lldap-backed directory
+# retired) and are dropped rather than carried over unused.
+extend type Query {
+  "A group's direct children. A null parentId lists the root groups. Site-admin only."
+  groupChildren(parentId: ID): [Group!]!
+  "The templates selectable as a group's default. Site-admin only."
+  templates(ownerGroupId: ID): [Template!]!
+  "The workflows selectable as a group's default. Site-admin only."
+  workflows: [Workflow!]!
+}
+
+extend type Mutation {
+  "Creates a taxonomy group. Site-admin only."
+  createGroup(name: String!, slug: String!, parentId: ID): Group!
+  "Renames a group (name and slug). Does not renumber existing policies. Site-admin only."
+  renameGroup(id: ID!, name: String!, slug: String!): Group!
+  """
+  Deletes a group and its policy-free descendants. Refused when the group or any descendant
+  owns policies. Site-admin only.
+  """
+  deleteGroup(id: ID!): Boolean!
+  """
+  Re-parents a group (and its whole descendant subtree). A null newParentId promotes it to a
+  root. Refused when the move would exceed the max depth or create a cycle. Site-admin only.
+  """
+  moveGroup(groupId: ID!, newParentId: ID): Group!
+  """
+  Sets a group's inherited defaults (template, workflow) and governance (owners, review
+  cadence). Site-admin only.
+  """
+  updateGroupSettings(
+    id: ID!
+    defaultTemplateId: ID
+    defaultTemplateNone: Boolean
+    defaultWorkflowId: ID
+    owners: [ID!]
+    reviewCadence: ReviewCadence
+    reviewDate: String
+  ): Group!
+}
+
+enum ReviewCadence {
+  NONE
+  ANNUAL
+  BIENNIAL
+  ON_DATE
+}
+
+"A taxonomy group: the policy/procedure library's org hierarchy."
+type Group {
+  id: ID!
+  name: String!
+  slug: String!
+  "Null for a root (top-level) group."
+  parentId: ID
+  """
+  Template tri-state: defaultTemplateNone=true means explicit none (freeform); a set
+  defaultTemplateId means that template; both unset means inherit from the ancestor chain.
+  """
+  defaultTemplateId: ID
+  defaultTemplateNone: Boolean!
+  "Never inherited: null means no default workflow (publish without approval)."
+  defaultWorkflowId: ID
+  "Reviews this group's policies on reviewCadence. Inherited by sub-groups below a department."
+  owners: [ID!]!
+  reviewCadence: ReviewCadence!
+  "Set only when reviewCadence is ON_DATE."
+  reviewDate: String
+}
+
+"A template selectable as a group's default."
+type Template {
+  id: ID!
+  name: String!
+}
+
+"A workflow definition selectable as a group's default."
+type Workflow {
+  id: ID!
+  name: String!
 }
 
 "A category (and its subcategories) in the policy/procedure taxonomy."
