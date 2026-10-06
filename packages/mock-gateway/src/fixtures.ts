@@ -185,6 +185,7 @@ export const mockSessions: Record<string, Session[]> = {
       clientIp: "203.0.113.42",
       expiresAt: "2026-01-02T00:00:00Z",
       issuedAt: "2026-01-01T08:00:00Z",
+      lastSeenAt: "2026-01-01T09:30:00Z",
       sessionId: mockId("session", 1),
       userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
       userId: mockId("user", 3),

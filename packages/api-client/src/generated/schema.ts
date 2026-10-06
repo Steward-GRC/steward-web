@@ -2869,6 +2869,7 @@ export type Session = {
   readonly clientIp?: Maybe<Scalars["String"]["output"]>;
   readonly expiresAt: Scalars["String"]["output"];
   readonly issuedAt: Scalars["String"]["output"];
+  readonly lastSeenAt?: Maybe<Scalars["String"]["output"]>;
   readonly sessionId: Scalars["ID"]["output"];
   readonly userAgent: Scalars["String"]["output"];
   readonly userId: Scalars["ID"]["output"];

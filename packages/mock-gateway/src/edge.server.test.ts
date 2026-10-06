@@ -167,6 +167,11 @@ describe("mockEdge users directory", () => {
     expect(after.every((s) => !s.active)).toBe(true);
   });
 
+  it("listUserSessions() shows when a session was last used", async () => {
+    const [session] = await mockEdge.listUserSessions(mockId("user", 3));
+    expect(session?.lastSeenAt).toBe("2026-01-01T09:30:00Z");
+  });
+
   it("previewUserDeletion() reports the canned, blocking preview for a fixture with one", async () => {
     const preview = await mockEdge.previewUserDeletion(mockId("user", 3));
     expect(preview.blocksDelete).toBe(true);
