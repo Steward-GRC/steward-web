@@ -19,7 +19,11 @@ import type {
   CaseOutcome,
   CaseQueue,
   CaseStatus,
+  ContactBlock,
+  ContactBlockInput,
   CorrectiveActionInput,
+  DefinitionEntry,
+  DefinitionEntryInput,
   DeleteUserResult,
   Diagnostics,
   DomainVerification,
@@ -33,6 +37,8 @@ import type {
   Organization,
   PendingTask,
   PolicyVersion,
+  Reference,
+  ReferenceInput,
   ReportCase,
   ReviewCadence,
   RiskAssessment,
@@ -81,8 +87,12 @@ export type {
   CaseQueue,
   CaseStatusCount,
   CaseSummary,
+  ContactBlock,
+  ContactBlockInput,
   CorrectiveAction,
   CorrectiveActionInput,
+  DefinitionEntry,
+  DefinitionEntryInput,
   DeleteUserResult,
   Diagnostics,
   DomainVerification,
@@ -98,6 +108,8 @@ export type {
   Organization,
   PendingTask,
   PolicyVersion,
+  Reference,
+  ReferenceInput,
   RelatedPolicy,
   ReportAttachment,
   ReportCase,
@@ -294,10 +306,18 @@ export interface Edge {
     closingMessage?: string,
     cookie?: string,
   ): Promise<ReportCase>;
+  /** The reusable contact-block library (admin), active only unless includeArchived. */
+  contactBlocks(includeArchived?: boolean, cookie?: string): Promise<readonly ContactBlock[]>;
+  /** Adds a reusable contact block to the library. */
+  createContactBlock(block: ContactBlockInput, cookie?: string): Promise<ContactBlock>;
+  /** Adds a reusable, category-scoped definition entry to the library. */
+  createDefinition(input: DefinitionEntryInput, cookie?: string): Promise<DefinitionEntry>;
   /** Creates a taxonomy group. Site-admin only. */
   createGroup(input: CreateGroupInput, cookie?: string): Promise<Group>;
   /** Creates a new policy/procedure with an empty working draft. The owner is the calling user. */
   createPolicy(input: CreatePolicyInput, cookie?: string): Promise<Policy>;
+  /** Adds a reusable reference/standard entry to the library. */
+  createReference(input: ReferenceInput, cookie?: string): Promise<Reference>;
   /** Creates a template, selectable as a group's default once it has a published version. Site-admin only. */
   createTemplate(name: string, ownerCategoryId?: null | string, cookie?: string): Promise<Template>;
   /** Starts a new draft version of a template, carrying the given sections forward. Site-admin only. */
@@ -313,14 +333,27 @@ export interface Edge {
     stages: readonly WorkflowStageInput[],
     cookie?: string,
   ): Promise<WorkflowDef>;
+  /** The reusable, category-scoped definitions library (admin). A null categoryId lists every
+   *  category's entries; active only unless includeArchived. */
+  definitions(
+    categoryId: null | string,
+    includeArchived?: boolean,
+    cookie?: string,
+  ): Promise<readonly DefinitionEntry[]>;
   /** Deletes a library appendix. */
   deleteAppendix(id: string, cookie?: string): Promise<boolean>;
+  /** Hard-deletes a definition entry. The gateway refuses while anything attaches it (archive
+   *  instead). */
+  deleteDefinition(id: string, cookie?: string): Promise<boolean>;
   /** Deletes a group and its policy-free descendants. Site-admin only. */
   deleteGroup(id: string, cookie?: string): Promise<boolean>;
   /** Removes a group mapping by id. Site-admin only. */
   deleteGroupMapping(mappingId: string, cookie?: string): Promise<boolean>;
   /** Removes an organisation's SSO connection. Irreversible. Site-admin only. */
   deleteOrganization(domain: string, cookie?: string): Promise<boolean>;
+  /** Hard-deletes a reference/standard entry. The gateway refuses while anything attaches it
+   *  (archive instead). */
+  deleteReference(id: string, cookie?: string): Promise<boolean>;
   /** Hard-deletes an unreferenced template and its versions. Dev-only, server-gated; fails if any
    *  policy references it (retire it instead). Site-admin only. */
   deleteTemplate(id: string, cookie?: string): Promise<boolean>;
@@ -433,6 +466,8 @@ export interface Edge {
     reason: string,
     cookie?: string,
   ): Promise<RiskAssessment>;
+  /** The reusable references/standards library (admin), active only unless includeArchived. */
+  references(includeArchived?: boolean, cookie?: string): Promise<readonly Reference[]>;
   /** Removes a MANUAL membership from a platform group. Authorized for site-admins and for a
    *  LOCAL group-manager of groupId; refuses an IdP-synced membership (it is read-only here). */
   removeUserFromGroup(userId: string, groupId: string, cookie?: string): Promise<User>;
@@ -475,6 +510,12 @@ export interface Edge {
   setCaseDiscoveryDate(caseId: string, discoveredOn: string, cookie?: string): Promise<ReportCase>;
   /** Any status but CLOSED; closing goes through `closeCase`. Officers only. */
   setCaseStatus(caseId: string, status: CaseStatus, cookie?: string): Promise<ReportCase>;
+  /** Archive (true) or restore (false) a contact-block library entry. */
+  setContactBlockArchived(id: string, archived: boolean, cookie?: string): Promise<ContactBlock>;
+  /** Archive (true) or restore (false) a definitions-library entry. */
+  setDefinitionArchived(id: string, archived: boolean, cookie?: string): Promise<DefinitionEntry>;
+  /** Archive (true) or restore (false) a references-library entry. */
+  setReferenceArchived(id: string, archived: boolean, cookie?: string): Promise<Reference>;
   /**
    * Delivers the calling user's approve/reject decision to an active approval run. The actor
    * is bound server-side; runId/taskId are advisory (a stale cached inbox row refuses with
@@ -527,6 +568,14 @@ export interface Edge {
     sentOn?: string,
     cookie?: string,
   ): Promise<CaseNotice>;
+  /** Edits a reusable contact-block library entry. */
+  updateContactBlock(id: string, block: ContactBlockInput, cookie?: string): Promise<ContactBlock>;
+  /** Edits a reusable, category-scoped definitions-library entry. The category is immutable. */
+  updateDefinition(
+    id: string,
+    input: DefinitionEntryInput,
+    cookie?: string,
+  ): Promise<DefinitionEntry>;
   /** Sets a group's inherited defaults and governance. Site-admin only. */
   updateGroupSettings(input: UpdateGroupSettingsInput, cookie?: string): Promise<Group>;
   /** Updates an organisation's per-connection login toggles. Site-admin only. */
@@ -537,6 +586,8 @@ export interface Edge {
   ): Promise<Organization>;
   /** Edits the CALLING user's own name. Rejects with `GatewayError` when signed out. */
   updateMyProfile(input: UpdateMyProfileInput, cookie?: string): Promise<Me>;
+  /** Edits a reusable references/standards library entry. */
+  updateReference(id: string, input: ReferenceInput, cookie?: string): Promise<Reference>;
   /** Saves a draft template version's section outline (the authoring "Save"). Published versions
    *  are immutable. Site-admin only. */
   updateTemplateVersionSections(

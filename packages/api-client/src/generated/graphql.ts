@@ -557,6 +557,26 @@ export type CloseCaseMutation = {
   };
 };
 
+export type ContactBlocksQueryVariables = Exact<{
+  includeArchived?: boolean | null | undefined;
+}>;
+
+export type ContactBlocksQuery = {
+  readonly contactBlocks: ReadonlyArray<{
+    readonly id: string;
+    readonly label: string;
+    readonly name: string | null;
+    readonly role: string | null;
+    readonly department: string | null;
+    readonly email: string | null;
+    readonly phone: string | null;
+    readonly hours: string | null;
+    readonly notes: string | null;
+    readonly archived: boolean;
+    readonly usedByCount: number;
+  }>;
+};
+
 export type CreateCategoryMutationVariables = Exact<{
   name: string;
   slug: string;
@@ -580,6 +600,42 @@ export type CreateCategoryMutation = {
     readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
+  };
+};
+
+export type CreateContactBlockMutationVariables = Exact<{
+  block: Types.ContactBlockInput;
+}>;
+
+export type CreateContactBlockMutation = {
+  readonly createContactBlock: {
+    readonly id: string;
+    readonly label: string;
+    readonly name: string | null;
+    readonly role: string | null;
+    readonly department: string | null;
+    readonly email: string | null;
+    readonly phone: string | null;
+    readonly hours: string | null;
+    readonly notes: string | null;
+    readonly archived: boolean;
+    readonly usedByCount: number;
+  };
+};
+
+export type CreateDefinitionMutationVariables = Exact<{
+  input: Types.DefinitionEntryInput;
+}>;
+
+export type CreateDefinitionMutation = {
+  readonly createDefinition: {
+    readonly id: string;
+    readonly categoryId: string;
+    readonly term: string;
+    readonly definition: string;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
   };
 };
 
@@ -618,6 +674,24 @@ export type CreatePolicyMutation = {
       readonly canBreakGlass: boolean;
       readonly ack: boolean;
     };
+  };
+};
+
+export type CreateReferenceMutationVariables = Exact<{
+  input: Types.ReferenceInput;
+}>;
+
+export type CreateReferenceMutation = {
+  readonly createReference: {
+    readonly id: string;
+    readonly label: string;
+    readonly kind: Types.ReferenceKind;
+    readonly clause: string | null;
+    readonly body: string | null;
+    readonly url: string | null;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
   };
 };
 
@@ -694,6 +768,23 @@ export type CreateWorkflowDefMutation = {
   };
 };
 
+export type DefinitionsQueryVariables = Exact<{
+  categoryId?: string | number | null | undefined;
+  includeArchived?: boolean | null | undefined;
+}>;
+
+export type DefinitionsQuery = {
+  readonly definitions: ReadonlyArray<{
+    readonly id: string;
+    readonly categoryId: string;
+    readonly term: string;
+    readonly definition: string;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
+  }>;
+};
+
 export type DeleteAppendixMutationVariables = Exact<{
   id: string | number;
 }>;
@@ -706,6 +797,12 @@ export type DeleteCategoryMutationVariables = Exact<{
 
 export type DeleteCategoryMutation = { readonly deleteCategory: boolean };
 
+export type DeleteDefinitionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type DeleteDefinitionMutation = { readonly deleteDefinition: boolean };
+
 export type DeleteGroupMappingMutationVariables = Exact<{
   mappingId: string | number;
 }>;
@@ -717,6 +814,12 @@ export type DeleteOrganizationMutationVariables = Exact<{
 }>;
 
 export type DeleteOrganizationMutation = { readonly deleteOrganization: boolean };
+
+export type DeleteReferenceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type DeleteReferenceMutation = { readonly deleteReference: boolean };
 
 export type DeleteTemplateMutationVariables = Exact<{
   id: string | number;
@@ -1485,6 +1588,24 @@ export type RecordRiskAssessmentMutation = {
   };
 };
 
+export type ReferencesQueryVariables = Exact<{
+  includeArchived?: boolean | null | undefined;
+}>;
+
+export type ReferencesQuery = {
+  readonly references: ReadonlyArray<{
+    readonly id: string;
+    readonly label: string;
+    readonly kind: Types.ReferenceKind;
+    readonly clause: string | null;
+    readonly body: string | null;
+    readonly url: string | null;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
+  }>;
+};
+
 export type RemoveUserFromGroupMutationVariables = Exact<{
   userId: string | number;
   groupId: string | number;
@@ -2018,6 +2139,63 @@ export type SetCategoryGovernanceMutation = {
   };
 };
 
+export type SetContactBlockArchivedMutationVariables = Exact<{
+  id: string | number;
+  archived: boolean;
+}>;
+
+export type SetContactBlockArchivedMutation = {
+  readonly setContactBlockArchived: {
+    readonly id: string;
+    readonly label: string;
+    readonly name: string | null;
+    readonly role: string | null;
+    readonly department: string | null;
+    readonly email: string | null;
+    readonly phone: string | null;
+    readonly hours: string | null;
+    readonly notes: string | null;
+    readonly archived: boolean;
+    readonly usedByCount: number;
+  };
+};
+
+export type SetDefinitionArchivedMutationVariables = Exact<{
+  id: string | number;
+  archived: boolean;
+}>;
+
+export type SetDefinitionArchivedMutation = {
+  readonly setDefinitionArchived: {
+    readonly id: string;
+    readonly categoryId: string;
+    readonly term: string;
+    readonly definition: string;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
+  };
+};
+
+export type SetReferenceArchivedMutationVariables = Exact<{
+  id: string | number;
+  archived: boolean;
+}>;
+
+export type SetReferenceArchivedMutation = {
+  readonly setReferenceArchived: {
+    readonly id: string;
+    readonly label: string;
+    readonly kind: Types.ReferenceKind;
+    readonly clause: string | null;
+    readonly body: string | null;
+    readonly url: string | null;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
+  };
+};
+
 export type SignalWorkflowMutationVariables = Exact<{
   policyVersionId: string | number;
   runId: string | number;
@@ -2179,6 +2357,44 @@ export type UpdateCaseNoticeMutation = {
   };
 };
 
+export type UpdateContactBlockMutationVariables = Exact<{
+  id: string | number;
+  block: Types.ContactBlockInput;
+}>;
+
+export type UpdateContactBlockMutation = {
+  readonly updateContactBlock: {
+    readonly id: string;
+    readonly label: string;
+    readonly name: string | null;
+    readonly role: string | null;
+    readonly department: string | null;
+    readonly email: string | null;
+    readonly phone: string | null;
+    readonly hours: string | null;
+    readonly notes: string | null;
+    readonly archived: boolean;
+    readonly usedByCount: number;
+  };
+};
+
+export type UpdateDefinitionMutationVariables = Exact<{
+  id: string | number;
+  input: Types.DefinitionEntryInput;
+}>;
+
+export type UpdateDefinitionMutation = {
+  readonly updateDefinition: {
+    readonly id: string;
+    readonly categoryId: string;
+    readonly term: string;
+    readonly definition: string;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
+  };
+};
+
 export type UpdateIdPConnectionMutationVariables = Exact<{
   domain: string;
   jitEnabled?: boolean | null | undefined;
@@ -2217,6 +2433,25 @@ export type UpdateMyProfileMutation = {
     readonly roles: ReadonlyArray<string>;
     readonly permissions: ReadonlyArray<string>;
     readonly managedGroupIds: ReadonlyArray<string>;
+  };
+};
+
+export type UpdateReferenceMutationVariables = Exact<{
+  id: string | number;
+  input: Types.ReferenceInput;
+}>;
+
+export type UpdateReferenceMutation = {
+  readonly updateReference: {
+    readonly id: string;
+    readonly label: string;
+    readonly kind: Types.ReferenceKind;
+    readonly clause: string | null;
+    readonly body: string | null;
+    readonly url: string | null;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
   };
 };
 
@@ -4732,6 +4967,55 @@ export const CloseCaseDocument = {
     },
   ],
 } as unknown as DocumentNode<CloseCaseMutation, CloseCaseMutationVariables>;
+export const ContactBlocksDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ContactBlocks" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "includeArchived" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contactBlocks" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "includeArchived" },
+                value: { kind: "Variable", name: { kind: "Name", value: "includeArchived" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ContactBlocksQuery, ContactBlocksQueryVariables>;
 export const CreateCategoryDocument = {
   kind: "Document",
   definitions: [
@@ -4822,6 +5106,106 @@ export const CreateCategoryDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateCategoryMutation, CreateCategoryMutationVariables>;
+export const CreateContactBlockDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreateContactBlock" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "block" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ContactBlockInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createContactBlock" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "block" },
+                value: { kind: "Variable", name: { kind: "Name", value: "block" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateContactBlockMutation, CreateContactBlockMutationVariables>;
+export const CreateDefinitionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreateDefinition" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "DefinitionEntryInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createDefinition" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateDefinitionMutation, CreateDefinitionMutationVariables>;
 export const CreatePolicyDocument = {
   kind: "Document",
   definitions: [
@@ -4952,6 +5336,56 @@ export const CreatePolicyDocument = {
     },
   ],
 } as unknown as DocumentNode<CreatePolicyMutation, CreatePolicyMutationVariables>;
+export const CreateReferenceDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreateReference" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ReferenceInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createReference" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateReferenceMutation, CreateReferenceMutationVariables>;
 export const CreateTemplateDocument = {
   kind: "Document",
   definitions: [
@@ -5254,6 +5688,61 @@ export const CreateWorkflowDefDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateWorkflowDefMutation, CreateWorkflowDefMutationVariables>;
+export const DefinitionsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "Definitions" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "includeArchived" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "definitions" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "categoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "includeArchived" },
+                value: { kind: "Variable", name: { kind: "Name", value: "includeArchived" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DefinitionsQuery, DefinitionsQueryVariables>;
 export const DeleteAppendixDocument = {
   kind: "Document",
   definitions: [
@@ -5326,6 +5815,42 @@ export const DeleteCategoryDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteCategoryMutation, DeleteCategoryMutationVariables>;
+export const DeleteDefinitionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteDefinition" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteDefinition" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteDefinitionMutation, DeleteDefinitionMutationVariables>;
 export const DeleteGroupMappingDocument = {
   kind: "Document",
   definitions: [
@@ -5398,6 +5923,42 @@ export const DeleteOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteOrganizationMutation, DeleteOrganizationMutationVariables>;
+export const DeleteReferenceDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteReference" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteReference" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteReferenceMutation, DeleteReferenceMutationVariables>;
 export const DeleteTemplateDocument = {
   kind: "Document",
   definitions: [
@@ -7782,6 +8343,53 @@ export const RecordRiskAssessmentDocument = {
     },
   ],
 } as unknown as DocumentNode<RecordRiskAssessmentMutation, RecordRiskAssessmentMutationVariables>;
+export const ReferencesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "References" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "includeArchived" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "references" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "includeArchived" },
+                value: { kind: "Variable", name: { kind: "Name", value: "includeArchived" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReferencesQuery, ReferencesQueryVariables>;
 export const RemoveUserFromGroupDocument = {
   kind: "Document",
   definitions: [
@@ -9347,6 +9955,198 @@ export const SetCategoryGovernanceDocument = {
     },
   ],
 } as unknown as DocumentNode<SetCategoryGovernanceMutation, SetCategoryGovernanceMutationVariables>;
+export const SetContactBlockArchivedDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetContactBlockArchived" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "archived" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setContactBlockArchived" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "archived" },
+                value: { kind: "Variable", name: { kind: "Name", value: "archived" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SetContactBlockArchivedMutation,
+  SetContactBlockArchivedMutationVariables
+>;
+export const SetDefinitionArchivedDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetDefinitionArchived" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "archived" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setDefinitionArchived" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "archived" },
+                value: { kind: "Variable", name: { kind: "Name", value: "archived" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetDefinitionArchivedMutation, SetDefinitionArchivedMutationVariables>;
+export const SetReferenceArchivedDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetReferenceArchived" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "archived" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setReferenceArchived" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "archived" },
+                value: { kind: "Variable", name: { kind: "Name", value: "archived" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetReferenceArchivedMutation, SetReferenceArchivedMutationVariables>;
 export const SignalWorkflowDocument = {
   kind: "Document",
   definitions: [
@@ -9937,6 +10737,132 @@ export const UpdateCaseNoticeDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateCaseNoticeMutation, UpdateCaseNoticeMutationVariables>;
+export const UpdateContactBlockDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateContactBlock" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "block" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ContactBlockInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateContactBlock" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "block" },
+                value: { kind: "Variable", name: { kind: "Name", value: "block" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateContactBlockMutation, UpdateContactBlockMutationVariables>;
+export const UpdateDefinitionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateDefinition" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "DefinitionEntryInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateDefinition" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateDefinitionMutation, UpdateDefinitionMutationVariables>;
 export const UpdateIdPConnectionDocument = {
   kind: "Document",
   definitions: [
@@ -10083,6 +11009,69 @@ export const UpdateMyProfileDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateMyProfileMutation, UpdateMyProfileMutationVariables>;
+export const UpdateReferenceDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateReference" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ReferenceInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateReference" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateReferenceMutation, UpdateReferenceMutationVariables>;
 export const UpdateTemplateVersionSectionsDocument = {
   kind: "Document",
   definitions: [

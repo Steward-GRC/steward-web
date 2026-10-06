@@ -10,6 +10,7 @@ import {
   MessageAuthor,
   NoticeRecipient,
   NoticeStatus,
+  ReferenceKind,
   ReviewCadence,
   RiskMitigation,
   RiskRecipient,
@@ -1060,6 +1061,132 @@ describe("mockEdge audit log", () => {
       await expect(
         mockEdge.closeCase(caseId1, CaseOutcome.Substantiated, []),
       ).rejects.toMatchObject({ code: "FAILED_PRECONDITION" });
+    });
+  });
+
+  it("contactBlocks() defaults to active only; includeArchived adds the archived ones", async () => {
+    const active = await mockEdge.contactBlocks();
+    expect(active.every((b) => !b.archived)).toBe(true);
+    const all = await mockEdge.contactBlocks(true);
+    expect(all.length).toBeGreaterThan(active.length);
+  });
+
+  it("createContactBlock(), updateContactBlock() and setContactBlockArchived() round-trip", async () => {
+    const created = await mockEdge.createContactBlock({
+      email: "help@example.com",
+      label: "Help desk",
+    });
+    expect(created).toMatchObject({ archived: false, label: "Help desk", usedByCount: 0 });
+
+    const updated = await mockEdge.updateContactBlock(created.id, {
+      department: "Support",
+      email: "help@example.com",
+      label: "Help desk",
+    });
+    expect(updated.department).toBe("Support");
+
+    const archived = await mockEdge.setContactBlockArchived(created.id, true);
+    expect(archived.archived).toBe(true);
+    const active = await mockEdge.contactBlocks();
+    expect(active.map((b) => b.id)).not.toContain(created.id);
+
+    const restored = await mockEdge.setContactBlockArchived(created.id, false);
+    expect(restored.archived).toBe(false);
+  });
+
+  it("updateContactBlock() refuses an unknown id", async () => {
+    await expect(
+      mockEdge.updateContactBlock("no-such-block", { label: "x" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("definitions() scopes by categoryId and defaults to active only", async () => {
+    const group2 = mockId("group", 2);
+    const scoped = await mockEdge.definitions(group2);
+    expect(scoped.every((d) => d.categoryId === group2 && !d.archived)).toBe(true);
+    const all = await mockEdge.definitions(null, true);
+    expect(all.length).toBeGreaterThan(scoped.length);
+  });
+
+  it("createDefinition() refuses an unknown category", async () => {
+    await expect(
+      mockEdge.createDefinition({
+        categoryId: "no-such-group",
+        definition: "x",
+        term: "X",
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("createDefinition(), updateDefinition() and setDefinitionArchived() round-trip", async () => {
+    const group2 = mockId("group", 2);
+    const created = await mockEdge.createDefinition({
+      categoryId: group2,
+      definition: "A planned, temporary gap in service.",
+      term: "Maintenance window",
+    });
+    expect(created).toMatchObject({ archived: false, categoryId: group2, usedByCount: 0 });
+
+    const updated = await mockEdge.updateDefinition(created.id, {
+      categoryId: group2,
+      definition: "A planned, communicated, temporary gap in service.",
+      term: "Maintenance window",
+    });
+    expect(updated.definition).toBe("A planned, communicated, temporary gap in service.");
+
+    const archived = await mockEdge.setDefinitionArchived(created.id, true);
+    expect(archived.archived).toBe(true);
+    const restored = await mockEdge.setDefinitionArchived(created.id, false);
+    expect(restored.archived).toBe(false);
+  });
+
+  it("deleteDefinition() removes an unused entry but refuses one still in use", async () => {
+    const created = await mockEdge.createDefinition({
+      categoryId: mockId("group", 1),
+      definition: "x",
+      term: "Unused term",
+    });
+    expect(await mockEdge.deleteDefinition(created.id)).toBe(true);
+
+    await expect(mockEdge.deleteDefinition(mockId("definition", 1))).rejects.toMatchObject({
+      code: "FAILED_PRECONDITION",
+    });
+  });
+
+  it("references() defaults to active only; includeArchived adds the archived ones", async () => {
+    const active = await mockEdge.references();
+    expect(active.every((r) => !r.archived)).toBe(true);
+    const all = await mockEdge.references(true);
+    expect(all.length).toBeGreaterThan(active.length);
+  });
+
+  it("createReference(), updateReference() and setReferenceArchived() round-trip", async () => {
+    const created = await mockEdge.createReference({
+      kind: ReferenceKind.Link,
+      label: "Vendor portal",
+      url: "https://example.org/vendor",
+    });
+    expect(created).toMatchObject({ archived: false, kind: ReferenceKind.Link, usedByCount: 0 });
+
+    const updated = await mockEdge.updateReference(created.id, {
+      kind: ReferenceKind.Link,
+      label: "Vendor portal",
+      url: "https://example.org/vendor/v2",
+    });
+    expect(updated.url).toBe("https://example.org/vendor/v2");
+
+    const archived = await mockEdge.setReferenceArchived(created.id, true);
+    expect(archived.archived).toBe(true);
+    const restored = await mockEdge.setReferenceArchived(created.id, false);
+    expect(restored.archived).toBe(false);
+  });
+
+  it("deleteReference() removes an unused entry but refuses one still in use", async () => {
+    const created = await mockEdge.createReference({ kind: ReferenceKind.Text, label: "Unused" });
+    expect(await mockEdge.deleteReference(created.id)).toBe(true);
+
+    await expect(mockEdge.deleteReference(mockId("reference", 1))).rejects.toMatchObject({
+      code: "FAILED_PRECONDITION",
     });
   });
 });
