@@ -17,6 +17,7 @@ export const PERMISSIONS = {
   PolicyAuthor: "policy.author",
   PolicyRead: "policy.read",
   PolicyReadSensitive: "policy.read_sensitive",
+  ReportingManage: "reporting.manage",
   SessionManage: "session.manage",
   SettingsManage: "settings.manage",
   UserManage: "user.manage",
@@ -30,6 +31,7 @@ const ALL = Object.values(PERMISSIONS);
 const roleGrants: Record<string, readonly string[]> = {
   approver: [PERMISSIONS.PolicyRead, PERMISSIONS.PolicyApprove],
   author: [PERMISSIONS.PolicyRead, PERMISSIONS.PolicyAuthor],
+  "privacy-officer": [PERMISSIONS.PolicyRead, PERMISSIONS.ReportingManage],
   reader: [PERMISSIONS.PolicyRead],
   "site-admin": ALL,
 };

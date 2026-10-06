@@ -1034,3 +1034,175 @@ extend type Mutation {
     comment: String!
   ): Boolean!
 }
+
+# --- Reporting: the privacy officer's case work ---
+#
+# Unlike every slice above, reporting has no original to pin from: the compliance reporting
+# module is new to Steward (steward-reporting), ported straight from its own live gateway
+# schema (Steward-GRC/steward-gateway graphql/reporting.graphqls, commit eb8faea). Trimmed to
+# the officer-facing operations the staff reporting area sends: the case queue, case detail,
+# the two-way thread, notes, assignment, status, the risk assessment, the notification
+# tracker and close-out. The reporter-facing operations (submitAnonymousReport, checkReport,
+# replyToReport, the signed-in reporter's own named reports) and attachment downloads belong
+# to the public reporting front end, out of scope for this port; they, and the re-pin to a
+# live steward-gateway fetch, are follow-ups.
+
+enum CaseStatus { NEW IN_REVIEW NEEDS_REPORTER_REPLY RISK_ASSESSMENT NOTIFICATION_DUE CLOSED }
+enum ReportKind { ANONYMOUS NAMED }
+enum InformationKind { HEALTH CONTACT FINANCIAL NOT_SURE }
+enum ReportAnswer { YES NO NOT_SURE }
+enum MessageAuthor { REPORTER OFFICER }
+enum RiskRecipient { STAFF_ONLY UNKNOWN_PEOPLE ANOTHER_ORGANISATION }
+enum RiskViewed { YES PROBABLY NO }
+enum RiskMitigation { FULLY PARTLY NOT_AT_ALL }
+enum RiskSuggestion { NOTIFICATION_LIKELY_REQUIRED LOW_PROBABILITY_OF_COMPROMISE }
+enum BreachDecision { REPORTABLE NOT_REPORTABLE }
+enum NoticeRecipient { AFFECTED_PEOPLE REGULATOR MEDIA OTHER }
+enum NoticeStatus { NOT_SENT DRAFT SENT NOT_NEEDED }
+enum CaseOutcome { SUBSTANTIATED NOT_SUBSTANTIATED INCONCLUSIVE }
+
+"What the reporter told us. Nothing here asks who the reporter is."
+type ReportDetails {
+  whatHappened: String!
+  occurred: String!
+  location: String!
+  informationKinds: [InformationKind!]!
+  stillHappening: ReportAnswer
+}
+
+type ThreadMessage {
+  id: ID!
+  author: MessageAuthor!
+  officerUserId: ID
+  body: String!
+  createdAt: String!
+}
+
+"Attachment metadata only (reporting strips the file's own metadata server-side). Downloading the content is a follow-up (reportAttachmentContent, not vendored here)."
+type ReportAttachment {
+  id: ID!
+  filename: String!
+  contentType: String!
+  sizeBytes: Int!
+  metadataStripped: Boolean!
+}
+
+type CaseNote {
+  id: ID!
+  authorUserId: ID!
+  body: String!
+  createdAt: String!
+}
+
+type RiskFactors {
+  information: [InformationKind!]!
+  recipient: RiskRecipient
+  viewed: RiskViewed
+  mitigation: RiskMitigation
+}
+
+input RiskFactorsInput {
+  information: [InformationKind!]!
+  recipient: RiskRecipient!
+  viewed: RiskViewed!
+  mitigation: RiskMitigation!
+}
+
+type RiskAssessment {
+  factors: RiskFactors!
+  suggestion: RiskSuggestion
+  decision: BreachDecision
+  reason: String!
+  decidedByUserId: ID!
+  decidedAt: String!
+}
+
+type CaseNotice {
+  id: ID!
+  recipient: NoticeRecipient!
+  label: String!
+  method: String!
+  daysAllowed: Int!
+  dueOn: String!
+  status: NoticeStatus!
+  sentOn: String
+}
+
+type CorrectiveAction {
+  description: String!
+  policyId: ID
+}
+
+input CorrectiveActionInput {
+  description: String!
+  policyId: ID
+}
+
+type CaseSummary {
+  id: ID!
+  caseCode: String!
+  kind: ReportKind!
+  status: CaseStatus!
+  summary: String!
+  assigneeUserId: ID
+  receivedAt: String!
+  nextDeadline: String
+}
+
+type CaseStatusCount {
+  status: CaseStatus!
+  count: Int!
+}
+
+type CaseQueue {
+  cases: [CaseSummary!]!
+  counts: [CaseStatusCount!]!
+}
+
+type ReportCase {
+  id: ID!
+  caseCode: String!
+  kind: ReportKind!
+  status: CaseStatus!
+  details: ReportDetails!
+  reporterUserId: ID
+  assigneeUserId: ID
+  receivedAt: String!
+  discoveredOn: String
+  attachments: [ReportAttachment!]!
+  thread: [ThreadMessage!]!
+  notes: [CaseNote!]!
+  assessment: RiskAssessment
+  notices: [CaseNotice!]!
+  outcome: CaseOutcome
+  correctiveActions: [CorrectiveAction!]!
+  closedAt: String
+}
+
+extend type Query {
+  "Officers only: the case queue, optionally filtered by status and/or assignee."
+  reportCases(statuses: [CaseStatus!], assigneeUserId: ID): CaseQueue!
+  "Officers only: one case's full detail."
+  reportCase(caseId: ID!): ReportCase!
+}
+
+extend type Mutation {
+  "Officers only: posts a message the reporter can see in the two-way thread."
+  postCaseMessage(caseId: ID!, body: String!): ThreadMessage!
+  "Officers only: an internal note, never shown to the reporter."
+  addCaseNote(caseId: ID!, body: String!): CaseNote!
+  "Officers only. A null assigneeUserId clears the assignee."
+  assignCase(caseId: ID!, assigneeUserId: ID): ReportCase!
+  "Officers only. Any status but CLOSED; closing goes through closeCase."
+  setCaseStatus(caseId: ID!, status: CaseStatus!): ReportCase!
+  "Officers only: sets the discovery date every notification deadline counts from."
+  setCaseDiscoveryDate(caseId: ID!, discoveredOn: String!): ReportCase!
+  "Officers only: records the guided risk assessment and its reportable/not-reportable decision."
+  recordRiskAssessment(caseId: ID!, factors: RiskFactorsInput!, decision: BreachDecision!, reason: String!): RiskAssessment!
+  "Officers only: adds a notification-tracker entry; its deadline is set from the discovery date server-side."
+  addCaseNotice(caseId: ID!, recipient: NoticeRecipient!, label: String, method: String): CaseNotice!
+  "Officers only. sentOn (YYYY-MM-DD) is required with SENT."
+  updateCaseNotice(caseId: ID!, noticeId: ID!, status: NoticeStatus!, sentOn: String): CaseNotice!
+  "Officers only: the outcome, corrective actions and the optional closing message to the reporter."
+  closeCase(caseId: ID!, outcome: CaseOutcome!, correctiveActions: [CorrectiveActionInput!], closingMessage: String): ReportCase!
+}

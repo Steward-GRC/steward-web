@@ -22,6 +22,7 @@ import authoring from "./locales/en/authoring.json";
 import common from "./locales/en/common.json";
 import errors from "./locales/en/errors.json";
 import policy from "./locales/en/policy.json";
+import reporting from "./locales/en/reporting.json";
 import search from "./locales/en/search.json";
 import settings from "./locales/en/settings.json";
 import shell from "./locales/en/shell.json";
@@ -37,6 +38,7 @@ const en: Record<Namespace, object> = {
   common,
   errors,
   policy,
+  reporting,
   search,
   settings,
   shell,

@@ -11,8 +11,15 @@ import type {
   AuditChainVerification,
   AuditQueryPage,
   AuthoringAssistResult,
+  BreachDecision,
   BreakGlassGrant,
+  CaseNote,
+  CaseNotice,
+  CaseOutcome,
+  CaseQueue,
+  CaseStatus,
   Category,
+  CorrectiveActionInput,
   DeleteUserResult,
   Diagnostics,
   DomainVerification,
@@ -22,18 +29,24 @@ import type {
   IssueCollabTokenPayload,
   KeyValueInput,
   Me,
+  NoticeRecipient,
+  NoticeStatus,
   Organization,
   PendingTask,
   Policy,
   PolicyDetail,
   PolicyVersion,
+  ReportCase,
   ReviewCadence,
+  RiskAssessment,
+  RiskFactorsInput,
   Sensitivity,
   Session,
   SignalType,
   SpCertificate,
   Template,
   TemplateVersion,
+  ThreadMessage,
   UpcomingApproval,
   User,
   UserDeletionPreview,
@@ -55,7 +68,14 @@ export type {
   AuditRecord,
   AuthoringAssistResult,
   BreakGlassGrant,
+  CaseNote,
+  CaseNotice,
+  CaseQueue,
+  CaseStatusCount,
+  CaseSummary,
   Category,
+  CorrectiveAction,
+  CorrectiveActionInput,
   DeleteUserResult,
   Diagnostics,
   DomainVerification,
@@ -78,12 +98,19 @@ export type {
   PolicyVersion,
   PolicyVersionSummary,
   RelatedPolicy,
+  ReportAttachment,
+  ReportCase,
+  ReportDetails,
+  RiskAssessment,
+  RiskFactors,
+  RiskFactorsInput,
   Session,
   SpCertificate,
   StageAssignee,
   StageUnitProgress,
   Template,
   TemplateVersion,
+  ThreadMessage,
   UpcomingApproval,
   User,
   UserDeletionPreview,
@@ -95,10 +122,23 @@ export {
   AiJobPhase,
   ApprovalStatus,
   AssistOperation,
+  BreachDecision,
+  CaseOutcome,
+  CaseStatus,
   DocumentType,
+  InformationKind,
+  MessageAuthor,
+  NoticeRecipient,
+  NoticeStatus,
   PolicyStatus,
   ReferenceKind,
+  ReportAnswer,
+  ReportKind,
   ReviewCadence,
+  RiskMitigation,
+  RiskRecipient,
+  RiskSuggestion,
+  RiskViewed,
   Sensitivity,
   SignalType,
 } from "./generated/schema";
@@ -149,6 +189,16 @@ export interface Edge {
     contentJson: string,
     cookie?: string,
   ): Promise<Appendix>;
+  /** Adds an internal case note. Officers only; never shown to the reporter. */
+  addCaseNote(caseId: string, body: string, cookie?: string): Promise<CaseNote>;
+  /** Adds a notification-tracker entry; its deadline is set from the discovery date server-side. Officers only. */
+  addCaseNotice(
+    caseId: string,
+    recipient: NoticeRecipient,
+    label?: string,
+    method?: string,
+    cookie?: string,
+  ): Promise<CaseNotice>;
   /** Adds an IdP-group-claim-to-platform-group mapping for a connection. Site-admin only. */
   addGroupMapping(
     connectionId: string,
@@ -164,6 +214,8 @@ export interface Edge {
   aiJob(jobId: string, cookie?: string): Promise<AiJobStatus>;
   /** Fetches a completed async AI job's content by `AIJobStatus.resultRef`. */
   aiJobResultContent(resultRef: string, cookie?: string): Promise<AIJobResultContent>;
+  /** Sets or clears (null) a case's assignee. Officers only. */
+  assignCase(caseId: string, assigneeUserId: null | string, cookie?: string): Promise<ReportCase>;
   /** A page of audit records, newest first. Site-admin only. */
   auditLog(filters: AuditLogFilters, cookie?: string): Promise<AuditQueryPage>;
   /** The groups any signed-in author may create a policy under (not site-admin-gated). */
@@ -184,6 +236,14 @@ export interface Edge {
     secretRef?: string,
     cookie?: string,
   ): Promise<Organization>;
+  /** The outcome, corrective actions and the optional closing message to the reporter. A closed case takes no more changes. Officers only. */
+  closeCase(
+    caseId: string,
+    outcome: CaseOutcome,
+    correctiveActions?: readonly CorrectiveActionInput[],
+    closingMessage?: string,
+    cookie?: string,
+  ): Promise<ReportCase>;
   /** Creates a taxonomy group. Site-admin only. */
   createGroup(input: CreateGroupInput, cookie?: string): Promise<Group>;
   /** Creates a new policy/procedure with an empty working draft. The owner is the calling user. */
@@ -257,10 +317,20 @@ export interface Edge {
     number: string,
     cookie?: string,
   ): Promise<null | PolicyDetail>;
+  /** Posts a message the reporter can see in the two-way thread. Officers only. */
+  postCaseMessage(caseId: string, body: string, cookie?: string): Promise<ThreadMessage>;
   /** A read-only dry run of `deleteUser`. Site-admin only. */
   previewUserDeletion(userId: string, cookie?: string): Promise<UserDeletionPreview>;
   /** Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content. */
   publishDraft(policyId: string, cookie?: string): Promise<PolicyVersion>;
+  /** Records the guided risk assessment and its reportable/not-reportable decision. Officers only. */
+  recordRiskAssessment(
+    caseId: string,
+    factors: RiskFactorsInput,
+    decision: BreachDecision,
+    reason: string,
+    cookie?: string,
+  ): Promise<RiskAssessment>;
   /** Renames a group (name and slug). Site-admin only. */
   renameGroup(id: string, name: string, slug: string, cookie?: string): Promise<Group>;
   /** Reorders a policy version's appendices. */
@@ -269,6 +339,14 @@ export interface Edge {
     orderedIds: readonly string[],
     cookie?: string,
   ): Promise<readonly Appendix[]>;
+  /** One case's full detail. Officers only. */
+  reportCase(caseId: string, cookie?: string): Promise<ReportCase>;
+  /** The case queue, optionally filtered by status and/or assignee. Officers only. */
+  reportCases(
+    statuses?: readonly CaseStatus[],
+    assigneeUserId?: string,
+    cookie?: string,
+  ): Promise<CaseQueue>;
   /** Revokes a GLOBAL role (no category). Site-admin only. */
   revokeRole(userId: string, role: string, cookie?: string): Promise<User>;
   /** Revokes every active session for a user. Returns how many were revoked. */
@@ -280,6 +358,10 @@ export interface Edge {
     templateVersionId: null | string,
     cookie?: string,
   ): Promise<PolicyVersion>;
+  /** Sets the discovery date every notification deadline counts from. Officers only. */
+  setCaseDiscoveryDate(caseId: string, discoveredOn: string, cookie?: string): Promise<ReportCase>;
+  /** Any status but CLOSED; closing goes through `closeCase`. Officers only. */
+  setCaseStatus(caseId: string, status: CaseStatus, cookie?: string): Promise<ReportCase>;
   /**
    * Delivers the calling user's approve/reject decision to an active approval run. The actor
    * is bound server-side; runId/taskId are advisory (a stale cached inbox row refuses with
@@ -322,6 +404,14 @@ export interface Edge {
     contentJson: string,
     cookie?: string,
   ): Promise<Appendix>;
+  /** Updates a notification-tracker entry's status; sentOn (YYYY-MM-DD) is required with SENT. Officers only. */
+  updateCaseNotice(
+    caseId: string,
+    noticeId: string,
+    status: NoticeStatus,
+    sentOn?: string,
+    cookie?: string,
+  ): Promise<CaseNotice>;
   /** Sets a group's inherited defaults and governance. Site-admin only. */
   updateGroupSettings(input: UpdateGroupSettingsInput, cookie?: string): Promise<Group>;
   /** Updates an organisation's per-connection login toggles. Site-admin only. */

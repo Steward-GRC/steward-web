@@ -28,6 +28,12 @@ export default function Home() {
         <Link className="text-primary hover:underline" to="/approvals">
           Approvals
         </Link>
+        <Link className="text-primary hover:underline" to="/search">
+          Search
+        </Link>
+        <Link className="text-primary hover:underline" to="/reporting/cases">
+          Reporting cases
+        </Link>
       </nav>
     </div>
   );

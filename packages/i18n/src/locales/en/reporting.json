@@ -1,0 +1,186 @@
+{
+  "status": {
+    "new": "New",
+    "inReview": "In review",
+    "needsReporterReply": "Needs reporter reply",
+    "riskAssessment": "Risk assessment",
+    "notificationDue": "Notification due",
+    "closed": "Closed"
+  },
+  "kind": {
+    "anonymous": "Anonymous",
+    "named": "Named"
+  },
+  "informationKind": {
+    "contact": "Contact details",
+    "financial": "Financial",
+    "health": "Health",
+    "notSure": "Not sure"
+  },
+  "reportAnswer": {
+    "yes": "Yes",
+    "no": "No",
+    "notSure": "Not sure"
+  },
+  "riskRecipient": {
+    "staffOnly": "Staff only",
+    "unknownPeople": "Unknown people",
+    "anotherOrganisation": "Another organisation"
+  },
+  "riskViewed": {
+    "yes": "Yes",
+    "probably": "Probably",
+    "no": "No"
+  },
+  "riskMitigation": {
+    "fully": "Fully",
+    "partly": "Partly",
+    "notAtAll": "Not at all"
+  },
+  "riskSuggestion": {
+    "notificationLikelyRequired": "Notification likely required",
+    "lowProbabilityOfCompromise": "Low probability of compromise"
+  },
+  "breachDecision": {
+    "reportable": "Reportable",
+    "notReportable": "Not reportable"
+  },
+  "noticeRecipient": {
+    "affectedPeople": "Affected people",
+    "regulator": "Regulator",
+    "media": "Media",
+    "other": "Other"
+  },
+  "noticeStatus": {
+    "notSent": "Not sent",
+    "draft": "Draft",
+    "sent": "Sent",
+    "notNeeded": "Not needed"
+  },
+  "outcome": {
+    "substantiated": "Substantiated",
+    "notSubstantiated": "Not substantiated",
+    "inconclusive": "Inconclusive"
+  },
+  "queue": {
+    "title": "Reporting cases",
+    "subtitle": "The privacy case queue.",
+    "nav": "Reporting",
+    "filter": {
+      "label": "Filter",
+      "all": "All",
+      "open": "Open",
+      "mine": "Mine"
+    },
+    "empty": {
+      "title": "No cases",
+      "description": "Nothing matches the current filter."
+    },
+    "table": {
+      "case": "Case",
+      "kind": "Kind",
+      "status": "Status",
+      "assignee": "Assignee",
+      "received": "Received",
+      "deadline": "Next deadline"
+    },
+    "unassigned": "Unassigned",
+    "noDeadline": "—",
+    "open": "Open"
+  },
+  "detail": {
+    "back": "Back to the case queue",
+    "notFound": {
+      "title": "Case not found",
+      "description": "It may not exist, or you may not have access to it."
+    },
+    "details": {
+      "title": "What was reported",
+      "whatHappened": "What happened",
+      "occurred": "When it happened",
+      "location": "Location",
+      "informationKinds": "Information involved",
+      "stillHappening": "Still happening"
+    },
+    "assignment": {
+      "title": "Assignment and status",
+      "assignToMe": "Assign to me",
+      "unassign": "Unassign",
+      "status": "Status",
+      "setStatus": "Update status"
+    },
+    "discovery": {
+      "title": "Discovery date",
+      "hint": "Every notification deadline counts from this date.",
+      "set": "Set discovery date",
+      "notSet": "Not set yet"
+    },
+    "thread": {
+      "title": "Messages to the reporter",
+      "placeholder": "Write a message the reporter will see…",
+      "post": "Post message",
+      "empty": "No messages yet."
+    },
+    "notes": {
+      "title": "Internal notes",
+      "hint": "Never shown to the reporter.",
+      "placeholder": "Add an internal note…",
+      "add": "Add note",
+      "empty": "No notes yet."
+    },
+    "risk": {
+      "title": "Risk assessment",
+      "hint": "A guided assessment of whether this case is reportable.",
+      "information": "Information involved",
+      "recipient": "Who could see it",
+      "viewed": "Was it actually viewed",
+      "mitigation": "How fully was it contained",
+      "reason": "Reason",
+      "decision": "Decision",
+      "record": "Record assessment",
+      "suggestion": "Suggested",
+      "decidedBy": "Decided by {{userId}} on {{date}}",
+      "none": "No risk assessment recorded yet."
+    },
+    "notices": {
+      "title": "Notification tracker",
+      "empty": "No notices yet.",
+      "table": {
+        "recipient": "Recipient",
+        "label": "Label",
+        "method": "Method",
+        "due": "Due",
+        "status": "Status"
+      },
+      "add": {
+        "title": "Add a notice",
+        "recipient": "Recipient",
+        "label": "Label",
+        "labelOptional": "defaults by recipient",
+        "method": "Method",
+        "methodOptional": "defaults by recipient",
+        "submit": "Add notice"
+      },
+      "update": {
+        "status": "Status",
+        "sentOn": "Sent on",
+        "submit": "Update"
+      }
+    },
+    "close": {
+      "title": "Close the case",
+      "hint": "A closed case takes no more changes.",
+      "outcome": "Outcome",
+      "correctiveAction": "Corrective action",
+      "correctiveActionHint": "optional",
+      "message": "Closing message to the reporter",
+      "messageHint": "optional",
+      "submit": "Close case",
+      "confirmTitle": "Close this case?",
+      "confirmDescription": "The case moves to Closed and takes no further changes.",
+      "confirmSubmit": "Close case",
+      "cancel": "Cancel",
+      "closedOn": "Closed on {{date}}"
+    }
+  }
+}
