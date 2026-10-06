@@ -14,7 +14,8 @@ export type Scalars = {
    * diagnostics report, editing one's own display name, the policy/procedure library browse
    * (categories and the catalog), the admin user directory, the admin group directory, the
    * admin organisation/SSO directory, the staff authoring area (the editor and its AI
-   * drafting/review assist) and the admin audit log. It
+   * drafting/review assist), the admin audit log and the staff approvals inbox and decision
+   * (pendingTasks, upcomingApprovals, workflowStatus, signalWorkflow). It
    * gains more of the upstream schema as later ports add operations, and schema-generate.sh
    * switches from this vendored copy to a live fetch once steward-gateway publishes its own
    * schema on its main branch.
@@ -106,6 +107,19 @@ export type Appendix = {
   readonly policyVersionId: Scalars["ID"]["output"];
   readonly title: Scalars["String"]["output"];
 };
+
+export enum ApprovalStatus {
+  ApprovalStatusApproved = "APPROVAL_STATUS_APPROVED",
+  ApprovalStatusArchived = "APPROVAL_STATUS_ARCHIVED",
+  ApprovalStatusDraft = "APPROVAL_STATUS_DRAFT",
+  ApprovalStatusInReview = "APPROVAL_STATUS_IN_REVIEW",
+  ApprovalStatusPublished = "APPROVAL_STATUS_PUBLISHED",
+  ApprovalStatusRejected = "APPROVAL_STATUS_REJECTED",
+  ApprovalStatusScheduled = "APPROVAL_STATUS_SCHEDULED",
+  ApprovalStatusSuperseded = "APPROVAL_STATUS_SUPERSEDED",
+  ApprovalStatusUnspecified = "APPROVAL_STATUS_UNSPECIFIED",
+  ApprovalStatusWithdrawn = "APPROVAL_STATUS_WITHDRAWN",
+}
 
 export enum AssistOperation {
   AssistOperationClarify = "ASSIST_OPERATION_CLARIFY",
@@ -424,6 +438,16 @@ export type Mutation = {
   /** Saves the author's edits to the policy's working draft. templateVersionId pins the template version the content was scaffolded from; null for a freeform draft. */
   readonly saveDraft: PolicyVersion;
   /**
+   * Deliver an approver decision to an active run. The actor is bound server-side. The comment
+   * is required for APPROVE and REJECT signals (the workflow service rejects an empty one).
+   *
+   * policyVersionId is authoritative: the decision targets that version's CURRENT active
+   * approval. runId/taskId are advisory only (a cached inbox row may be stale); the server
+   * ignores them for resolution. A stale click on a no-longer-active approval returns a
+   * FailedPrecondition ("refresh your inbox"), never a raw NotFound.
+   */
+  readonly signalWorkflow: Scalars["Boolean"]["output"];
+  /**
    * Mints a DNS TXT domain-verification challenge. The token is stable by default; rotate:
    * true mints a fresh one, which also revokes the domain's prior verified proof. Site-admin
    * only.
@@ -583,6 +607,14 @@ export type MutationSaveDraftArgs = {
   templateVersionId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
+export type MutationSignalWorkflowArgs = {
+  comment: Scalars["String"]["input"];
+  policyVersionId: Scalars["ID"]["input"];
+  runId: Scalars["ID"]["input"];
+  signal: SignalType;
+  taskId: Scalars["ID"]["input"];
+};
+
 export type MutationStartDomainVerificationArgs = {
   domain: Scalars["String"]["input"];
   rotate?: InputMaybe<Scalars["Boolean"]["input"]>;
@@ -655,6 +687,16 @@ export type Organization = {
   readonly testPassed: Scalars["Boolean"]["output"];
   /** Domain-ownership gate (DNS TXT verification). */
   readonly verified: Scalars["Boolean"]["output"];
+};
+
+export type PendingTask = {
+  readonly __typename?: "PendingTask";
+  readonly dueAt?: Maybe<Scalars["String"]["output"]>;
+  readonly policyTitle: Scalars["String"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly runId: Scalars["String"]["output"];
+  readonly stageIndex: Scalars["Int"]["output"];
+  readonly taskId: Scalars["ID"]["output"];
 };
 
 /** One row of the policy/procedure library catalog. */
@@ -840,6 +882,8 @@ export type Query = {
   readonly myDraftPolicies: ReadonlyArray<Policy>;
   /** Every configured organisation SSO connection. Site-admin only. */
   readonly organizations: ReadonlyArray<Organization>;
+  /** Pending approval tasks awaiting the authenticated user. The approver id is bound server-side. */
+  readonly pendingTasks: ReadonlyArray<PendingTask>;
   /** The library catalog for one document type. Any signed-in user. */
   readonly policies: ReadonlyArray<Policy>;
   /** One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it. */
@@ -856,12 +900,23 @@ export type Query = {
   /** The templates selectable as a group's default. Site-admin only. */
   readonly templates: ReadonlyArray<Template>;
   /**
+   * Approvals where the authenticated user is an approver on a future (not-yet-reached) stage —
+   * visibility/heads-up, not yet actionable. The approver id is bound server-side.
+   */
+  readonly upcomingApprovals: ReadonlyArray<UpcomingApproval>;
+  /**
    * The platform's users, site-admin only. search filters by email substring; includeDeleted
    * also returns tombstoned accounts.
    */
   readonly users: UserPage;
   /** Recomputes the hash chain across [fromRecordId, toRecordId] and reports whether it still holds. Site-admin only. */
   readonly verifyAuditChain: AuditChainVerification;
+  /**
+   * Status of the approval saga for a policy version. Returns
+   * APPROVAL_STATUS_UNSPECIFIED when the workflow service has no record (the policy was
+   * published without going through an approval flow).
+   */
+  readonly workflowStatus: WorkflowStatus;
   /** The workflows selectable as a group's default. Site-admin only. */
   readonly workflows: ReadonlyArray<Workflow>;
 };
@@ -944,6 +999,10 @@ export type QueryVerifyAuditChainArgs = {
   toRecordId: Scalars["String"]["input"];
 };
 
+export type QueryWorkflowStatusArgs = {
+  policyVersionId: Scalars["ID"]["input"];
+};
+
 export enum ReferenceKind {
   Link = "LINK",
   Standard = "STANDARD",
@@ -992,6 +1051,15 @@ export type Session = {
   readonly userAgent: Scalars["String"]["output"];
 };
 
+export enum SignalType {
+  SignalTypeApprove = "SIGNAL_TYPE_APPROVE",
+  SignalTypeReject = "SIGNAL_TYPE_REJECT",
+  SignalTypeRequestChanges = "SIGNAL_TYPE_REQUEST_CHANGES",
+  SignalTypeRetire = "SIGNAL_TYPE_RETIRE",
+  SignalTypeUnspecified = "SIGNAL_TYPE_UNSPECIFIED",
+  SignalTypeWithdraw = "SIGNAL_TYPE_WITHDRAW",
+}
+
 /** One SP (service-provider) signing certificate. At most one is active at a time. */
 export type SpCertificate = {
   readonly __typename?: "SpCertificate";
@@ -1000,6 +1068,33 @@ export type SpCertificate = {
   readonly notAfter: Scalars["String"]["output"];
   readonly serial: Scalars["String"]["output"];
   readonly spMetadataXml: Scalars["String"]["output"];
+};
+
+/** One current assignee on a stage: who must approve, and their decision state/comment/time. */
+export type StageAssignee = {
+  readonly __typename?: "StageAssignee";
+  /** Decision comment, present once decided. */
+  readonly comment?: Maybe<Scalars["String"]["output"]>;
+  /** ISO-8601 decision timestamp, present once decided. */
+  readonly decidedAt?: Maybe<Scalars["String"]["output"]>;
+  /** Resolved display name; null when the directory can't resolve it. */
+  readonly name?: Maybe<Scalars["String"]["output"]>;
+  /** pending / approved / rejected. */
+  readonly state: Scalars["String"]["output"];
+  readonly userId: Scalars["String"]["output"];
+};
+
+/** One approve-as-group unit's live tally on a stage. groupName is resolved by the gateway from groupId. */
+export type StageUnitProgress = {
+  readonly __typename?: "StageUnitProgress";
+  readonly approvals: Scalars["Int"]["output"];
+  readonly groupId: Scalars["String"]["output"];
+  readonly groupName?: Maybe<Scalars["String"]["output"]>;
+  readonly pending: Scalars["Int"]["output"];
+  readonly quorum: Scalars["String"]["output"];
+  readonly required: Scalars["Int"]["output"];
+  readonly roster: Scalars["Int"]["output"];
+  readonly status: Scalars["String"]["output"];
 };
 
 export type SubmitDraftGenerationInput = {
@@ -1039,6 +1134,14 @@ export type TemplateVersion = {
   readonly sections: ReadonlyArray<Section>;
   readonly templateId: Scalars["ID"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
+};
+
+export type UpcomingApproval = {
+  readonly __typename?: "UpcomingApproval";
+  readonly policyTitle: Scalars["String"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly stageIndex: Scalars["Int"]["output"];
+  readonly stageName: Scalars["String"]["output"];
 };
 
 /** One platform user. */
@@ -1122,4 +1225,17 @@ export type Workflow = {
   readonly __typename?: "Workflow";
   readonly id: Scalars["ID"]["output"];
   readonly name: Scalars["String"]["output"];
+};
+
+export type WorkflowStatus = {
+  readonly __typename?: "WorkflowStatus";
+  readonly currentStageIdx: Scalars["Int"]["output"];
+  readonly runId: Scalars["String"]["output"];
+  /** Current assignees per stage, index-aligned with stageNames: the stepper's roster source. */
+  readonly stageAssignees: ReadonlyArray<ReadonlyArray<StageAssignee>>;
+  /** Resolved workflow-definition stage names, in order. */
+  readonly stageNames: ReadonlyArray<Scalars["String"]["output"]>;
+  /** Per-stage approve-as-group unit progress, index-aligned with stageNames; an empty inner list means the stage has no unit-mode groups. */
+  readonly stageUnitProgress: ReadonlyArray<ReadonlyArray<StageUnitProgress>>;
+  readonly status: ApprovalStatus;
 };

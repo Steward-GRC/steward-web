@@ -23,19 +23,23 @@ import type {
   KeyValueInput,
   Me,
   Organization,
+  PendingTask,
   Policy,
   PolicyDetail,
   PolicyVersion,
   ReviewCadence,
   Sensitivity,
   Session,
+  SignalType,
   SpCertificate,
   Template,
   TemplateVersion,
+  UpcomingApproval,
   User,
   UserDeletionPreview,
   UserPage,
   Workflow,
+  WorkflowStatus,
 } from "./generated/schema";
 
 import { DocumentType } from "./generated/schema";
@@ -63,6 +67,7 @@ export type {
   KeyValueInput,
   Me,
   Organization,
+  PendingTask,
   Policy,
   PolicyAppendix,
   PolicyContact,
@@ -75,21 +80,27 @@ export type {
   RelatedPolicy,
   Session,
   SpCertificate,
+  StageAssignee,
+  StageUnitProgress,
   Template,
   TemplateVersion,
+  UpcomingApproval,
   User,
   UserDeletionPreview,
   UserPage,
   Workflow,
+  WorkflowStatus,
 } from "./generated/schema";
 export {
   AiJobPhase,
+  ApprovalStatus,
   AssistOperation,
   DocumentType,
   PolicyStatus,
   ReferenceKind,
   ReviewCadence,
   Sensitivity,
+  SignalType,
 } from "./generated/schema";
 
 /** `AiJobResultContent` is renamed on export only to avoid colliding with the `Edge` method of the same name. */
@@ -234,6 +245,8 @@ export interface Edge {
    *  the same fields `importIdpMetadata` extracts. No network fetch, so no SSRF surface.
    *  Site-admin only. */
   parseIdpMetadata(metadata: string, cookie?: string): Promise<ImportedIdpMetadata>;
+  /** Pending approval tasks awaiting the calling user. The approver id is bound server-side. */
+  pendingTasks(cookie?: string): Promise<readonly PendingTask[]>;
   /** The library catalog for one document type. Rejects with `GatewayError` when signed out. */
   policies(documentType: DocumentType, cookie?: string): Promise<readonly Policy[]>;
   /** One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it. */
@@ -267,6 +280,19 @@ export interface Edge {
     templateVersionId: null | string,
     cookie?: string,
   ): Promise<PolicyVersion>;
+  /**
+   * Delivers the calling user's approve/reject decision to an active approval run. The actor
+   * is bound server-side; runId/taskId are advisory (a stale cached inbox row refuses with
+   * `GatewayError`, never a raw not-found).
+   */
+  signalWorkflow(
+    policyVersionId: string,
+    runId: string,
+    taskId: string,
+    signal: SignalType,
+    comment: string,
+    cookie?: string,
+  ): Promise<boolean>;
   /** The platform's active SP signing certificate. Site-admin only. */
   spCertificate(cookie?: string): Promise<SpCertificate>;
   /** Mints a DNS TXT domain-verification challenge. rotate revokes the prior verified proof. Site-admin only. */
@@ -284,6 +310,11 @@ export interface Edge {
   submitPolicyReview(input: SubmitPolicyReviewInput, cookie?: string): Promise<{ jobId: string }>;
   /** The templates selectable as a group's default. Site-admin only. */
   templates(cookie?: string): Promise<readonly Template[]>;
+  /**
+   * Approvals where the calling user is an approver on a future (not-yet-reached) stage —
+   * visibility/heads-up, not yet actionable. The approver id is bound server-side.
+   */
+  upcomingApprovals(cookie?: string): Promise<readonly UpcomingApproval[]>;
   /** Edits a library appendix. */
   updateAppendix(
     id: string,
@@ -315,6 +346,11 @@ export interface Edge {
   verifyDomain(domain: string, cookie?: string): Promise<Organization>;
   /** The workflows selectable as a group's default. Site-admin only. */
   workflows(cookie?: string): Promise<readonly Workflow[]>;
+  /**
+   * Status of the approval saga for a policy version. Resolves to an unspecified status when
+   * the workflow service has no record (the policy was published without an approval flow).
+   */
+  workflowStatus(policyVersionId: string, cookie?: string): Promise<WorkflowStatus>;
 }
 
 /** The fields a SAML IdP's metadata (fetched by URL or parsed from an uploaded file)

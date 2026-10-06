@@ -732,6 +732,19 @@ export type OrganizationsQuery = {
   }>;
 };
 
+export type PendingTasksQueryVariables = Exact<{ [key: string]: never }>;
+
+export type PendingTasksQuery = {
+  readonly pendingTasks: ReadonlyArray<{
+    readonly taskId: string;
+    readonly runId: string;
+    readonly policyVersionId: string;
+    readonly policyTitle: string;
+    readonly stageIndex: number;
+    readonly dueAt: string | null;
+  }>;
+};
+
 export type PoliciesQueryVariables = Exact<{
   documentType: Types.DocumentType;
 }>;
@@ -1044,6 +1057,16 @@ export type SaveDraftMutation = {
   };
 };
 
+export type SignalWorkflowMutationVariables = Exact<{
+  policyVersionId: string | number;
+  runId: string | number;
+  taskId: string | number;
+  signal: Types.SignalType;
+  comment: string;
+}>;
+
+export type SignalWorkflowMutation = { readonly signalWorkflow: boolean };
+
 export type SpCertificateQueryVariables = Exact<{ [key: string]: never }>;
 
 export type SpCertificateQuery = {
@@ -1090,6 +1113,17 @@ export type TemplatesQueryVariables = Exact<{ [key: string]: never }>;
 
 export type TemplatesQuery = {
   readonly templates: ReadonlyArray<{ readonly id: string; readonly name: string }>;
+};
+
+export type UpcomingApprovalsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type UpcomingApprovalsQuery = {
+  readonly upcomingApprovals: ReadonlyArray<{
+    readonly policyVersionId: string;
+    readonly policyTitle: string;
+    readonly stageIndex: number;
+    readonly stageName: string;
+  }>;
 };
 
 export type UpdateAppendixMutationVariables = Exact<{
@@ -1270,6 +1304,40 @@ export type VerifyDomainMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+  };
+};
+
+export type WorkflowStatusQueryVariables = Exact<{
+  policyVersionId: string | number;
+}>;
+
+export type WorkflowStatusQuery = {
+  readonly workflowStatus: {
+    readonly status: Types.ApprovalStatus;
+    readonly runId: string;
+    readonly currentStageIdx: number;
+    readonly stageNames: ReadonlyArray<string>;
+    readonly stageAssignees: ReadonlyArray<
+      ReadonlyArray<{
+        readonly userId: string;
+        readonly name: string | null;
+        readonly state: string;
+        readonly comment: string | null;
+        readonly decidedAt: string | null;
+      }>
+    >;
+    readonly stageUnitProgress: ReadonlyArray<
+      ReadonlyArray<{
+        readonly groupId: string;
+        readonly groupName: string | null;
+        readonly quorum: string;
+        readonly required: number;
+        readonly approvals: number;
+        readonly pending: number;
+        readonly roster: number;
+        readonly status: string;
+      }>
+    >;
   };
 };
 
@@ -3797,6 +3865,36 @@ export const OrganizationsDocument = {
     },
   ],
 } as unknown as DocumentNode<OrganizationsQuery, OrganizationsQueryVariables>;
+export const PendingTasksDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PendingTasks" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "pendingTasks" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "taskId" } },
+                { kind: "Field", name: { kind: "Name", value: "runId" } },
+                { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+                { kind: "Field", name: { kind: "Name", value: "policyTitle" } },
+                { kind: "Field", name: { kind: "Name", value: "stageIndex" } },
+                { kind: "Field", name: { kind: "Name", value: "dueAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PendingTasksQuery, PendingTasksQueryVariables>;
 export const PoliciesDocument = {
   kind: "Document",
   definitions: [
@@ -4718,6 +4816,94 @@ export const SaveDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<SaveDraftMutation, SaveDraftMutationVariables>;
+export const SignalWorkflowDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SignalWorkflow" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "runId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "taskId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "signal" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "SignalType" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "comment" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "signalWorkflow" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "runId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "runId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "taskId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "taskId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "signal" },
+                value: { kind: "Variable", name: { kind: "Name", value: "signal" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "comment" },
+                value: { kind: "Variable", name: { kind: "Name", value: "comment" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SignalWorkflowMutation, SignalWorkflowMutationVariables>;
 export const SpCertificateDocument = {
   kind: "Document",
   definitions: [
@@ -4914,6 +5100,34 @@ export const TemplatesDocument = {
     },
   ],
 } as unknown as DocumentNode<TemplatesQuery, TemplatesQueryVariables>;
+export const UpcomingApprovalsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "UpcomingApprovals" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "upcomingApprovals" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+                { kind: "Field", name: { kind: "Name", value: "policyTitle" } },
+                { kind: "Field", name: { kind: "Name", value: "stageIndex" } },
+                { kind: "Field", name: { kind: "Name", value: "stageName" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpcomingApprovalsQuery, UpcomingApprovalsQueryVariables>;
 export const UpdateAppendixDocument = {
   kind: "Document",
   definitions: [
@@ -5567,6 +5781,82 @@ export const VerifyDomainDocument = {
     },
   ],
 } as unknown as DocumentNode<VerifyDomainMutation, VerifyDomainMutationVariables>;
+export const WorkflowStatusDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "WorkflowStatus" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "workflowStatus" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "runId" } },
+                { kind: "Field", name: { kind: "Name", value: "currentStageIdx" } },
+                { kind: "Field", name: { kind: "Name", value: "stageNames" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "stageAssignees" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "name" } },
+                      { kind: "Field", name: { kind: "Name", value: "state" } },
+                      { kind: "Field", name: { kind: "Name", value: "comment" } },
+                      { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "stageUnitProgress" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                      { kind: "Field", name: { kind: "Name", value: "groupName" } },
+                      { kind: "Field", name: { kind: "Name", value: "quorum" } },
+                      { kind: "Field", name: { kind: "Name", value: "required" } },
+                      { kind: "Field", name: { kind: "Name", value: "approvals" } },
+                      { kind: "Field", name: { kind: "Name", value: "pending" } },
+                      { kind: "Field", name: { kind: "Name", value: "roster" } },
+                      { kind: "Field", name: { kind: "Name", value: "status" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<WorkflowStatusQuery, WorkflowStatusQueryVariables>;
 export const WorkflowsDocument = {
   kind: "Document",
   definitions: [

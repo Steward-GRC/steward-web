@@ -10,15 +10,18 @@ import type {
   PolicyVersion,
   User,
   UserDeletionPreview,
+  WorkflowStatus,
 } from "@steward-web/api-client";
 
 import {
   AiJobPhase,
+  ApprovalStatus,
   AssistOperation,
   DocumentType,
   GatewayError,
   PolicyStatus,
   ReviewCadence,
+  SignalType,
 } from "@steward-web/api-client";
 
 import {
@@ -31,6 +34,7 @@ import {
   mockGroups,
   mockMe,
   mockOrganizations,
+  mockPendingTasks,
   mockPolicies,
   mockPolicyDetails,
   mockPolicyVersions,
@@ -38,9 +42,11 @@ import {
   mockSpCertificate,
   mockTemplates,
   mockTemplateVersions,
+  mockUpcomingApprovals,
   mockUserDeletionPreviews,
   mockUsers,
   mockWorkflows,
+  mockWorkflowStatuses,
   nextMockAiJobId,
   nextMockAppendixId,
   nextMockCollabTokenId,
@@ -66,6 +72,8 @@ const groupMappings = structuredClone(mockGroupMappings);
 let nextGroupMappingSeq = Object.values(mockGroupMappings).flat().length + 1;
 let policies = [...mockPolicies];
 let policyVersions = [...mockPolicyVersions];
+let pendingTasks = [...mockPendingTasks];
+let workflowStatuses = structuredClone(mockWorkflowStatuses);
 
 /** How long a mock break-glass grant lasts, matching the real grant's order of magnitude. */
 const BREAK_GLASS_GRANT_MS = 5 * 60 * 1000;
@@ -242,6 +250,22 @@ const aiJobPhase = (job: MockAiJob): AiJobPhase => {
     ? AiJobPhase.AiJobPhaseRunning
     : AiJobPhase.AiJobPhaseSucceeded;
 };
+
+/** Matches the live gateway: no record for this version reads back as unspecified, not a refusal. */
+const NO_WORKFLOW_STATUS: WorkflowStatus = {
+  currentStageIdx: 0,
+  runId: "",
+  stageAssignees: [],
+  stageNames: [],
+  stageUnitProgress: [],
+  status: ApprovalStatus.ApprovalStatusUnspecified,
+};
+
+/** Signals that require a non-empty comment, mirroring the workflow service's own gate. */
+const SIGNALS_REQUIRING_COMMENT = new Set<SignalType>([
+  SignalType.SignalTypeApprove,
+  SignalType.SignalTypeReject,
+]);
 
 /**
  * The mock edge: every call answers from the fixtures, no network, no cookie check. Swapped
@@ -644,6 +668,7 @@ export const mockEdge: Edge = {
       signingCertificate: "-----BEGIN CERTIFICATE-----\nMOCK-IDP-CERT\n-----END CERTIFICATE-----",
       ssoUrl: "https://idp.mock.example/sso",
     }),
+  pendingTasks: () => Promise.resolve(pendingTasks),
   policies: (documentType) =>
     Promise.resolve(policies.filter((p) => p.documentType === documentType)),
   policy: (id) => Promise.resolve(policies.find((p) => p.id === id) ?? null),
@@ -748,6 +773,35 @@ export const mockEdge: Edge = {
     replacePolicy({ ...policy, currentDraftVersionId: created.id });
     return created;
   },
+  signalWorkflow: async (policyVersionId, runId, taskId, signal, comment) => {
+    if (SIGNALS_REQUIRING_COMMENT.has(signal) && comment.trim() === "") {
+      throw new GatewayError("SignalWorkflow", "a comment is required for this decision", {
+        code: "INVALID_ARGUMENT",
+      });
+    }
+    const status = workflowStatuses[policyVersionId];
+    if (!status) {
+      // Matches the live gateway: a stale cached inbox row refuses, it never 404s.
+      throw new GatewayError("SignalWorkflow", "refresh your inbox", {
+        code: "FAILED_PRECONDITION",
+      });
+    }
+    void runId; // advisory only; policyVersionId resolves the run, as the live gateway does
+    const decidedAt = new Date().toISOString();
+    const decidedState = signal === SignalType.SignalTypeApprove ? "approved" : "rejected";
+    const stageAssignees = status.stageAssignees.map((stage, index) =>
+      index === status.currentStageIdx
+        ? stage.map((assignee) =>
+            assignee.userId === mockMe.id
+              ? { ...assignee, comment, decidedAt, state: decidedState }
+              : assignee,
+          )
+        : stage,
+    );
+    workflowStatuses = { ...workflowStatuses, [policyVersionId]: { ...status, stageAssignees } };
+    pendingTasks = pendingTasks.filter((t) => t.taskId !== taskId);
+    return true;
+  },
   spCertificate: () => Promise.resolve(spCertificate),
   startDomainVerification: async (domain, rotate) => {
     const org = requireOrganization("StartDomainVerification", domain);
@@ -790,6 +844,7 @@ export const mockEdge: Edge = {
     return { jobId };
   },
   templates: () => Promise.resolve(mockTemplates),
+  upcomingApprovals: () => Promise.resolve(mockUpcomingApprovals),
   updateAppendix: async (id, title, contentJson) => {
     const { version } = requireAppendix("UpdateAppendix", id);
     const updated = { ...version.appendices.find((a) => a.id === id)!, contentJson, title };
@@ -873,6 +928,8 @@ export const mockEdge: Edge = {
     return replaceOrganization({ ...org, verified: true });
   },
   workflows: () => Promise.resolve(mockWorkflows),
+  workflowStatus: (policyVersionId) =>
+    Promise.resolve(workflowStatuses[policyVersionId] ?? NO_WORKFLOW_STATUS),
 };
 
 export default mockEdge;
