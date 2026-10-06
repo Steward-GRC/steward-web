@@ -38,11 +38,25 @@ describe("documentTypeBasePath", () => {
 
 describe("policyPath", () => {
   it("URL-encodes the policy number, never a backend id", () => {
-    expect(policyPath({ number: "POL-FINANCE-001" })).toBe("/policies/POL-FINANCE-001");
+    expect(policyPath({ documentType: DocumentType.Policy, number: "POL-FINANCE-001" })).toBe(
+      "/policies/POL-FINANCE-001",
+    );
   });
 
   it("encodes characters a number should never carry, defensively", () => {
-    expect(policyPath({ number: "POL/1" })).toBe("/policies/POL%2F1");
+    expect(policyPath({ documentType: DocumentType.Policy, number: "POL/1" })).toBe(
+      "/policies/POL%2F1",
+    );
+  });
+
+  it("routes a procedure to its own base path", () => {
+    expect(policyPath({ documentType: DocumentType.Procedure, number: "PRC-OPS-001" })).toBe(
+      "/procedures/PRC-OPS-001",
+    );
+  });
+
+  it("defaults to the policy base path when the caller has no document type on hand", () => {
+    expect(policyPath({ number: "POL-FINANCE-001" })).toBe("/policies/POL-FINANCE-001");
   });
 });
 

@@ -36,11 +36,13 @@ export const documentTypeBasePath = (documentType: DocumentType): string =>
 
 /**
  * A policy's canonical detail-page path: always the human-readable number, URL-encoded, never
- * a backend id. The reader route itself isn't ported yet; this is the stable link the library
- * table already points at.
+ * a backend id, under its document type's own base path. `documentType` is optional (defaults
+ * to POLICY) for a caller that only has a number on hand, such as a related-policy reference.
  */
-export const policyPath = (policy: Pick<Policy, "number">): string =>
-  `/policies/${encodeURIComponent(policy.number)}`;
+export const policyPath = (
+  policy: Partial<Pick<Policy, "documentType">> & Pick<Policy, "number">,
+): string =>
+  `${documentTypeBasePath(policy.documentType ?? DocumentType.Policy)}/${encodeURIComponent(policy.number)}`;
 
 const STATUS_TO_DOCUMENT_STATUS: Record<PolicyStatus, DocumentStatus> = {
   DRAFT: "draft",
