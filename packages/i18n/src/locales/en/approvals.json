@@ -1,0 +1,7 @@
+{
+  "approver": {
+    "approved": "Approved",
+    "pending": "Pending",
+    "rejected": "Rejected"
+  }
+}

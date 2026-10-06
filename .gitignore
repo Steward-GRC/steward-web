@@ -1,6 +1,10 @@
 node_modules/
 dist/
+build/
+build-mock/
 coverage/
+.react-router/
+.schemas/
 *.log
 
 # local design notes - never committed
