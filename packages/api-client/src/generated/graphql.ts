@@ -531,6 +531,20 @@ export type GroupMappingsQuery = {
   }>;
 };
 
+export type IssueCollabTokenMutationVariables = Exact<{
+  policyId: string | number;
+  draftId: string | number;
+  templateVersionId?: string | number | null | undefined;
+}>;
+
+export type IssueCollabTokenMutation = {
+  readonly issueCollabToken: {
+    readonly token: string;
+    readonly wsUrl: string;
+    readonly expiresAt: string;
+  };
+};
+
 export type LatestTemplateVersionQueryVariables = Exact<{
   templateId: string | number;
 }>;
@@ -3151,6 +3165,85 @@ export const GroupMappingsDocument = {
     },
   ],
 } as unknown as DocumentNode<GroupMappingsQuery, GroupMappingsQueryVariables>;
+export const IssueCollabTokenDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "IssueCollabToken" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "draftId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "templateVersionId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "issueCollabToken" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: {
+                  kind: "ObjectValue",
+                  fields: [
+                    {
+                      kind: "ObjectField",
+                      name: { kind: "Name", value: "policyId" },
+                      value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+                    },
+                    {
+                      kind: "ObjectField",
+                      name: { kind: "Name", value: "draftId" },
+                      value: { kind: "Variable", name: { kind: "Name", value: "draftId" } },
+                    },
+                    {
+                      kind: "ObjectField",
+                      name: { kind: "Name", value: "templateVersionId" },
+                      value: {
+                        kind: "Variable",
+                        name: { kind: "Name", value: "templateVersionId" },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "token" } },
+                { kind: "Field", name: { kind: "Name", value: "wsUrl" } },
+                { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<IssueCollabTokenMutation, IssueCollabTokenMutationVariables>;
 export const LatestTemplateVersionDocument = {
   kind: "Document",
   definitions: [

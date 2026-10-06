@@ -35,6 +35,7 @@ import {
   GrantRoleDocument,
   GroupChildrenDocument,
   GroupMappingsDocument,
+  IssueCollabTokenDocument,
   LatestTemplateVersionDocument,
   ListUserSessionsDocument,
   MeDocument,
@@ -272,6 +273,19 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.groupMappings;
+  },
+  async issueCollabToken(input, cookie) {
+    const data = await gatewayFetch(
+      IssueCollabTokenDocument,
+      {
+        draftId: input.draftId,
+        policyId: input.policyId,
+        templateVersionId: input.templateVersionId,
+      },
+      "IssueCollabToken",
+      { cookie },
+    );
+    return data.issueCollabToken;
   },
   async latestTemplateVersion(templateId, cookie) {
     const data = await gatewayFetch(

@@ -28,6 +28,7 @@
     },
     "backToDrafts": "Back to my drafts",
     "discarded": "Draft discarded.",
+    "presence": "{{count}} people editing",
     "published": "Published as version {{version}}.",
     "requiredMissing": "These required sections still need content: {{sections}}",
     "sections": {

@@ -2,7 +2,7 @@
   "name": "@steward-web/server",
   "version": "0.0.0",
   "private": true,
-  "description": "The Node server image: one build, picking its app from APP, with /livez, /readyz and the /query proxy.",
+  "description": "The Node server image: one build, picking its app from APP, with /livez, /readyz, the /query proxy and the /collab co-editing relay.",
   "type": "module",
   "license": "Apache-2.0",
   "scripts": {
@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "@react-router/node": "^8.4.0",
-    "react-router": "^8.4.0"
+    "react-router": "^8.4.0",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1"
   }
 }
