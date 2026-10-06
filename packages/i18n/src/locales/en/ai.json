@@ -1,0 +1,7 @@
+{
+  "finding": {
+    "blocker": "Blocker",
+    "note": "Note",
+    "warning": "Warning"
+  }
+}

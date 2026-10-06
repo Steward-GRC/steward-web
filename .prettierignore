@@ -1,5 +1,9 @@
-dist
-coverage
 node_modules
-.github
-package-lock.json
+dist
+build
+build-mock
+coverage
+.react-router
+pnpm-lock.yaml
+**/generated/**
+CLAUDE.md

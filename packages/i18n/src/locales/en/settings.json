@@ -1,0 +1,33 @@
+{
+  "language": {
+    "browserOption": "Match my browser",
+    "description": "Choose the language Steward uses for menus, labels, and messages. Documents themselves are always shown in the language they were authored in.",
+    "label": "Display language",
+    "saveError": "We couldn't save your language preference to your account. It still applies on this device.",
+    "saving": "Saving…",
+    "sourceBrowser": "Matching your browser's preferred language.",
+    "sourceDefault": "Using the default language.",
+    "sourceStored": "Saved on this device.",
+    "sourceUser": "Saved to your account.",
+    "title": "Language"
+  },
+  "profile": {
+    "name": {
+      "description": "This is how you appear across Steward — on approvals, the policies you author, and audit history.",
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "preview": "You’ll appear as <name>{{displayName}}</name>.",
+      "previewEmpty": "Enter your first and last name.",
+      "saveError": "We couldn't save your name. Please try again.",
+      "saveErrorToast": "We couldn't save your name.",
+      "saved": "Your name has been updated.",
+      "title": "Your name"
+    },
+    "tabs": {
+      "preferences": "Preferences",
+      "profile": "Profile",
+      "security": "Security"
+    },
+    "title": "Your profile"
+  }
+}
