@@ -7,7 +7,7 @@ import path from "node:path";
 import { type ServerBuild } from "react-router";
 
 import { attachCollabProxy } from "./collabProxy.ts";
-import { createReadinessChecker } from "./health.ts";
+import { createReadinessChecker, handleHealthRoute, resolveBuildInfo } from "./health.ts";
 import { proxyQuery } from "./queryProxy.ts";
 import { resolveStaticAsset } from "./static.ts";
 
@@ -18,14 +18,11 @@ if (APP !== "admin" && APP !== "staff") {
 
 const PORT = Number(process.env.PORT ?? 3000);
 const GATEWAY_URL = process.env.GATEWAY_URL ?? "http://localhost:8080/query";
-const VERSION = process.env.VERSION?.trim() || "dev";
-const COMMIT = process.env.COMMIT?.trim() || "unknown";
+const { commit: COMMIT, version: VERSION } = resolveBuildInfo(process.env);
 
 const appDirectory = path.resolve(import.meta.dirname, "../../apps", APP, "build");
 const clientDirectory = path.join(appDirectory, "client");
 const serverBuildPath = path.join(appDirectory, "server", "index.js");
-
-const healthHeaders = { "steward-commit": COMMIT, "steward-version": VERSION };
 
 const pingGateway = async (): Promise<boolean> => {
   const controller = new AbortController();
@@ -52,24 +49,11 @@ const ssrListener = createRequestListener({
 });
 
 const server = createServer((request, response) => {
+  if (handleHealthRoute(request, response, { checkReady, commit: COMMIT, version: VERSION })) {
+    return;
+  }
+
   const url = request.url ?? "/";
-
-  if (url === "/livez") {
-    response.writeHead(200, { ...healthHeaders, "content-type": "application/json" });
-    response.end(JSON.stringify({ status: "ok" }));
-    return;
-  }
-
-  if (url === "/readyz") {
-    void checkReady().then((gateway) => {
-      response.writeHead(gateway.state === "ok" ? 200 : 503, {
-        ...healthHeaders,
-        "content-type": "application/json",
-      });
-      response.end(JSON.stringify({ dependencies: { gateway }, status: gateway.state }));
-    });
-    return;
-  }
 
   if (url === "/query" && request.method === "POST") {
     void proxyQuery(request, response, GATEWAY_URL);

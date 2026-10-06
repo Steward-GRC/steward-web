@@ -8,8 +8,9 @@ import type { Route } from "./+types/home";
 
 /**
  * A placeholder landing page: the staff feature areas (gates, library, reader, authoring,
- * approvals, reporting, ethics) replace this as their own port PRs land. The library's own
- * nav entries come with the shell's left rail, a later port PR; these are a stopgap link in.
+ * approvals, reporting) replace this as their own port PRs land. The library's own nav
+ * entries come with the shell's left rail, a later port PR; these are a stopgap link in.
+ * Ethics is a v0.2.0 feature area; it has no link here yet.
  */
 export const loader = ({ request }: Route.LoaderArgs) => requireIdentityFromRequest(request);
 
