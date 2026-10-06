@@ -1,7 +1,0 @@
-mutation AcknowledgePolicy($policyVersionId: ID!) {
-  acknowledgePolicy(policyVersionId: $policyVersionId) {
-    acknowledged
-    ackedAt
-    required
-  }
-}

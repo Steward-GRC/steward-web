@@ -1,5 +1,0 @@
-query DraftVersion($policyId: ID!) {
-  draftVersion(policyId: $policyId) {
-    ...PolicyVersionFields
-  }
-}

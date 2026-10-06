@@ -1,7 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type {
-  AckStatus,
   AddOrganizationInput,
   AiHealth,
   AiJobResultContent as AiJobResultContentSchema,
@@ -12,29 +11,23 @@ import type {
   AuditQueryPage,
   AuthoringAssistResult,
   BreachDecision,
-  BreakGlassGrant,
   CaseNote,
   CaseNotice,
   CaseOutcome,
   CaseQueue,
   CaseStatus,
-  Category,
   CorrectiveActionInput,
   DeleteUserResult,
   Diagnostics,
   DomainVerification,
-  Group,
   GroupMapping,
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
-  Me,
   NoticeRecipient,
   NoticeStatus,
   Organization,
   PendingTask,
-  Policy,
-  PolicyDetail,
   PolicyVersion,
   ReportCase,
   ReviewCadence,
@@ -44,21 +37,29 @@ import type {
   Session,
   SignalType,
   SpCertificate,
-  Template,
-  TemplateVersion,
   ThreadMessage,
   UpcomingApproval,
-  User,
   UserDeletionPreview,
-  UserPage,
-  Workflow,
   WorkflowStatus,
 } from "./generated/schema";
+import type {
+  AckStatus,
+  BreakGlassGrant,
+  Category,
+  Group,
+  Me,
+  Policy,
+  PolicyDetail,
+  Template,
+  TemplateVersion,
+  User,
+  UserPage,
+  Workflow,
+} from "./views";
 
 import { DocumentType } from "./generated/schema";
 
 export type {
-  AckStatus,
   AddOrganizationInput,
   AiHealth,
   AiJobStatus,
@@ -67,36 +68,23 @@ export type {
   AuditQueryPage,
   AuditRecord,
   AuthoringAssistResult,
-  BreakGlassGrant,
   CaseNote,
   CaseNotice,
   CaseQueue,
   CaseStatusCount,
   CaseSummary,
-  Category,
   CorrectiveAction,
   CorrectiveActionInput,
   DeleteUserResult,
   Diagnostics,
   DomainVerification,
-  Group,
   GroupMapping,
-  HistoryEntry,
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
-  Me,
   Organization,
   PendingTask,
-  Policy,
-  PolicyAppendix,
-  PolicyContact,
-  PolicyDefinition,
-  PolicyDetail,
-  PolicyReference,
-  PolicySectionDiff,
   PolicyVersion,
-  PolicyVersionSummary,
   RelatedPolicy,
   ReportAttachment,
   ReportCase,
@@ -108,14 +96,9 @@ export type {
   SpCertificate,
   StageAssignee,
   StageUnitProgress,
-  Template,
-  TemplateVersion,
   ThreadMessage,
   UpcomingApproval,
-  User,
   UserDeletionPreview,
-  UserPage,
-  Workflow,
   WorkflowStatus,
 } from "./generated/schema";
 export {
@@ -130,7 +113,6 @@ export {
   MessageAuthor,
   NoticeRecipient,
   NoticeStatus,
-  PolicyStatus,
   ReferenceKind,
   ReportAnswer,
   ReportKind,
@@ -142,6 +124,28 @@ export {
   Sensitivity,
   SignalType,
 } from "./generated/schema";
+export type {
+  AckStatus,
+  BreakGlassGrant,
+  Category,
+  Group,
+  HistoryEntry,
+  Me,
+  Policy,
+  PolicyAppendix,
+  PolicyContact,
+  PolicyDefinition,
+  PolicyDetail,
+  PolicyReference,
+  PolicySectionDiff,
+  PolicyVersionSummary,
+  Template,
+  TemplateVersion,
+  User,
+  UserPage,
+  Workflow,
+} from "./views";
+export { PolicyStatus } from "./views";
 
 /** `AiJobResultContent` is renamed on export only to avoid colliding with the `Edge` method of the same name. */
 export type AIJobResultContent = AiJobResultContentSchema;
@@ -161,6 +165,8 @@ export interface AuthoringAssistInput {
   operation: AssistOperation;
   policyId: string;
   sectionKey: string;
+  /** The draft version being edited. */
+  versionId: string;
 }
 
 export interface CreateGroupInput {
@@ -218,9 +224,9 @@ export interface Edge {
   assignCase(caseId: string, assigneeUserId: null | string, cookie?: string): Promise<ReportCase>;
   /** A page of audit records, newest first. Site-admin only. */
   auditLog(filters: AuditLogFilters, cookie?: string): Promise<AuditQueryPage>;
-  /** The groups any signed-in author may create a policy under (not site-admin-gated). */
+  /** Every category, parents first, for the new-draft picker. The gateway has no "categories I may author in" read yet, so it refuses `createPolicy` where the caller can't author. */
   authorableGroups(cookie?: string): Promise<readonly Group[]>;
-  /** The templates selectable when creating a policy (not site-admin-gated). */
+  /** The templates selectable when creating a policy, optionally owned by one category. */
   authorableTemplates(ownerGroupId: null | string, cookie?: string): Promise<readonly Template[]>;
   /** One inline authoring suggestion for a section currently being edited. Never auto-applied. */
   authoringAssist(input: AuthoringAssistInput, cookie?: string): Promise<AuthoringAssistResult>;
@@ -297,7 +303,7 @@ export interface Edge {
   mintSsoTestLink(input: MintSsoTestLinkInput, cookie?: string): Promise<MintedSsoTestLink>;
   /** Re-parents a group (and its subtree). A null newParentId promotes it to a root. */
   moveGroup(groupId: string, newParentId: null | string, cookie?: string): Promise<Group>;
-  /** The CALLING user's own policies with a working draft, most-recently-updated first. */
+  /** The CALLING user's own policies with a working draft, found across both catalogs. */
   myDraftPolicies(cookie?: string): Promise<readonly Policy[]>;
   /** Every configured organisation SSO connection. Site-admin only. */
   organizations(cookie?: string): Promise<readonly Organization[]>;
@@ -485,6 +491,8 @@ export interface SubmitDraftGenerationInput {
 export interface SubmitPolicyReviewInput {
   policyId: string;
   sections: readonly { content: string; key: string; title: string }[];
+  /** The draft version under review. */
+  versionId: string;
 }
 
 export interface UpdateGroupSettingsInput {

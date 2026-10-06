@@ -66,11 +66,11 @@ export const mockMe: Me = {
  *  the Users area (enabled/disabled, local/federated, deleted, merged). */
 export const mockUsers: User[] = [
   {
-    adGroups: [],
     deletedAt: null,
     email: mockMe.email,
     enabled: true,
     firstName: mockMe.firstName,
+    idpGroups: [],
     isRoot: true,
     lastName: mockMe.lastName,
     localAccount: false,
@@ -81,11 +81,11 @@ export const mockUsers: User[] = [
     username: mockMe.username,
   },
   {
-    adGroups: ["platform-engineering"],
     deletedAt: null,
     email: "grace.hopper@example.com",
     enabled: true,
     firstName: "Grace",
+    idpGroups: ["platform-engineering"],
     isRoot: false,
     lastName: "Hopper",
     localAccount: false,
@@ -96,11 +96,11 @@ export const mockUsers: User[] = [
     username: "ghopper",
   },
   {
-    adGroups: [],
     deletedAt: null,
     email: "ada.lovelace@example.com",
     enabled: true,
     firstName: "Ada",
+    idpGroups: [],
     isRoot: false,
     lastName: "Lovelace",
     localAccount: true,
@@ -111,11 +111,11 @@ export const mockUsers: User[] = [
     username: "alovelace",
   },
   {
-    adGroups: ["contractors"],
     deletedAt: null,
     email: "margaret.hamilton@example.com",
     enabled: false,
     firstName: "Margaret",
+    idpGroups: ["contractors"],
     isRoot: false,
     lastName: "Hamilton",
     localAccount: false,
@@ -126,11 +126,11 @@ export const mockUsers: User[] = [
     username: "mhamilton",
   },
   {
-    adGroups: [],
     deletedAt: "2025-11-02T09:00:00Z",
     email: "katherine.johnson@example.com",
     enabled: false,
     firstName: "Katherine",
+    idpGroups: [],
     isRoot: false,
     lastName: "Johnson",
     localAccount: true,
@@ -141,11 +141,11 @@ export const mockUsers: User[] = [
     username: "kjohnson",
   },
   {
-    adGroups: [],
     deletedAt: "2025-10-20T14:00:00Z",
     email: "hedy.lamarr@example.com",
     enabled: false,
     firstName: "Hedy",
+    idpGroups: [],
     isRoot: false,
     lastName: "Lamarr",
     localAccount: true,
@@ -160,13 +160,13 @@ export const mockUsers: User[] = [
 export const mockSessions: Record<string, Session[]> = {
   [mockId("user", 3)]: [
     {
-      clientIp: "203.0.113.10",
+      active: true,
+      authenticatedAt: "2026-01-01T08:00:00Z",
       expiresAt: "2026-01-02T00:00:00Z",
       issuedAt: "2026-01-01T08:00:00Z",
-      lastSeenAt: "2026-01-01T09:30:00Z",
-      revokedAt: null,
       sessionId: mockId("session", 1),
       userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      userId: mockId("user", 3),
     },
   ],
 };
@@ -176,7 +176,18 @@ export const mockSessions: Record<string, Session[]> = {
 export const mockUserDeletionPreviews: Record<string, UserDeletionPreview> = {
   [mockId("user", 3)]: {
     blocksDelete: true,
-    counts: { accessRows: 1, ownedPolicies: 0, pendingApprovals: 1, raciGrants: 0, roles: 1 },
+    counts: {
+      breakGlassGrants: 0,
+      groupMemberships: 0,
+      idpGroups: 0,
+      managedGroups: 0,
+      ownedPolicies: 0,
+      pendingApprovals: 1,
+      permissions: 1,
+      policyOverrides: 0,
+      raciGrants: 0,
+      roles: 1,
+    },
     items: [
       {
         blocksDelete: true,
@@ -775,7 +786,7 @@ export const mockPolicyVersions: PolicyVersion[] = [
     id: mockId("policy-version", 2),
     policyId: mockId("policy", 2),
     status: "DRAFT",
-    templateVersionId: null,
+    templateVersionId: "",
     versionNo: 1,
   },
 ];

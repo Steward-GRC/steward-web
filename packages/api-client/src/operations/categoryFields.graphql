@@ -1,4 +1,4 @@
-fragment GroupFields on Group {
+fragment CategoryFields on Category {
   id
   name
   slug
@@ -7,6 +7,10 @@ fragment GroupFields on Group {
   defaultTemplateNone
   defaultWorkflowId
   owners
+  idpGroupIds
+  exclusionGroupIds
+  ackTriggers
+  ackEveryone
   reviewCadence
   reviewDate
 }

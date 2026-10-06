@@ -4,13 +4,9 @@ fragment AuthoringPolicyFields on Policy {
   title
   documentType
   sensitivity
-  category
-  subcategory
-  status
-  version
-  updated
   ownerUserId
-  homeGroupId
+  ownerName
+  homeCategoryId
   templateId
   templateNone
   currentDraftVersionId

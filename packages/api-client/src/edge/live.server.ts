@@ -1,11 +1,12 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type { Edge } from "../edge";
+import type { Me, Policy, PolicyDetail, PolicySectionDiff } from "../views";
 
-import { gatewayFetch } from "../gatewayFetch";
+import { GatewayError, gatewayFetch } from "../gatewayFetch";
 import { gatewayRestFetch } from "../gatewayRestFetch";
 import {
-  AcknowledgePolicyDocument,
+  AckStatusDocument,
   ActivateOrganizationDocument,
   AddAppendixDocument,
   AddCaseNoteDocument,
@@ -17,46 +18,49 @@ import {
   AiJobResultContentDocument,
   AssignCaseDocument,
   AuditLogDocument,
-  AuthorableGroupsDocument,
-  AuthorableTemplatesDocument,
   AuthoringAssistDocument,
+  type AuthoringPolicyFieldsFragment,
   BreakGlassRevealDocument,
-  CategoriesDocument,
+  CategoryChildrenDocument,
+  CategoryDocument,
+  type CategoryFieldsFragment,
   ChangeOrgProtocolDocument,
   CloseCaseDocument,
-  CreateGroupDocument,
+  CreateCategoryDocument,
   CreatePolicyDocument,
   DeleteAppendixDocument,
-  DeleteGroupDocument,
+  DeleteCategoryDocument,
   DeleteGroupMappingDocument,
   DeleteOrganizationDocument,
   DeleteUserDocument,
   DiagnosticsDocument,
+  DiffVersionsDocument,
   DisableOrganizationDocument,
   DisableUserDocument,
   DiscardDraftDocument,
-  DraftVersionDocument,
   EnableUserDocument,
   ForceRotateSpCertificateDocument,
   GrantRoleDocument,
-  GroupChildrenDocument,
   GroupMappingsDocument,
   IssueCollabTokenDocument,
   LatestTemplateVersionDocument,
   ListUserSessionsDocument,
   MeDocument,
-  MoveGroupDocument,
-  MyDraftPoliciesDocument,
+  MoveCategoryDocument,
   OrganizationsDocument,
   PendingTasksDocument,
   PoliciesDocument,
-  PolicyDetailDocument,
+  PolicyAttachmentsDocument,
   PolicyDocument,
+  PolicyVersionDocument,
+  PolicyVersionMetaDocument,
+  PolicyVersionsDocument,
   PostCaseMessageDocument,
   PreviewUserDeletionDocument,
   PublishDraftDocument,
+  RecordAckDocument,
   RecordRiskAssessmentDocument,
-  RenameGroupDocument,
+  RenameCategoryDocument,
   ReorderAppendicesDocument,
   ReportCaseDocument,
   ReportCasesDocument,
@@ -65,6 +69,8 @@ import {
   SaveDraftDocument,
   SetCaseDiscoveryDateDocument,
   SetCaseStatusDocument,
+  SetCategoryDefaultsDocument,
+  SetCategoryGovernanceDocument,
   SignalWorkflowDocument,
   SpCertificateDocument,
   StartDomainVerificationDocument,
@@ -74,27 +80,216 @@ import {
   UpcomingApprovalsDocument,
   UpdateAppendixDocument,
   UpdateCaseNoticeDocument,
-  UpdateGroupSettingsDocument,
   UpdateIdPConnectionDocument,
   UpdateMyProfileDocument,
   UpdateUserProfileDocument,
   UsersDocument,
   VerifyAuditChainDocument,
   VerifyDomainDocument,
-  WorkflowsDocument,
+  WorkflowDefsDocument,
   WorkflowStatusDocument,
 } from "../generated/graphql";
+import { DocumentType } from "../generated/schema";
+import {
+  appendixText,
+  bodyTextFromContent,
+  categoryNames,
+  type CategoryNode,
+  isUnauthenticated,
+  policyStatusOf,
+  toPolicyView,
+} from "./assemble";
+
+const categoryChildren = async (
+  parentId: null | string,
+  cookie?: string,
+): Promise<readonly CategoryFieldsFragment[]> => {
+  const data = await gatewayFetch(CategoryChildrenDocument, { parentId }, "CategoryChildren", {
+    cookie,
+  });
+  return data.categoryChildren;
+};
+
+/** Every category, parents before children. The gateway lists one level per call. */
+const categoryTree = async (cookie?: string): Promise<CategoryFieldsFragment[]> => {
+  const all: CategoryFieldsFragment[] = [];
+  let level = await categoryChildren(null, cookie);
+  while (level.length > 0) {
+    all.push(...level);
+    const next = await Promise.all(level.map((c) => categoryChildren(c.id, cookie)));
+    level = next.flat();
+  }
+  return all;
+};
+
+const categoryIndex = async (cookie?: string): Promise<Map<string, CategoryNode>> => {
+  const all = await categoryTree(cookie);
+  return new Map(all.map((c) => [c.id, c]));
+};
+
+/** One document type's policies across every root category, each listed once. */
+const catalogPolicies = async (
+  documentType: DocumentType,
+  index: ReadonlyMap<string, CategoryNode>,
+  cookie?: string,
+): Promise<AuthoringPolicyFieldsFragment[]> => {
+  const roots = [...index.values()].filter((c) => !c.parentId);
+  const lists = await Promise.all(
+    roots.map(async (root) => {
+      const data = await gatewayFetch(
+        PoliciesDocument,
+        { categoryId: root.id, documentType },
+        "Policies",
+        { cookie },
+      );
+      return data.policies;
+    }),
+  );
+  const byId = new Map(lists.flat().map((p) => [p.id, p]));
+  return [...byId.values()];
+};
+
+const currentVersionMeta = async (policy: AuthoringPolicyFieldsFragment, cookie?: string) => {
+  const id = policy.currentPublishedVersionId ?? policy.currentDraftVersionId;
+  if (!id) return null;
+  const data = await gatewayFetch(PolicyVersionMetaDocument, { id }, "PolicyVersionMeta", {
+    cookie,
+  });
+  return data.policyVersion ?? null;
+};
+
+const policyView = async (
+  policy: AuthoringPolicyFieldsFragment,
+  cookie?: string,
+  index?: ReadonlyMap<string, CategoryNode>,
+): Promise<Policy> => {
+  const [names, version] = await Promise.all([
+    index ?? categoryIndex(cookie),
+    currentVersionMeta(policy, cookie),
+  ]);
+  return toPolicyView(policy, version, categoryNames(names, policy.homeCategoryId));
+};
+
+const catalog = async (
+  documentType: DocumentType,
+  index: ReadonlyMap<string, CategoryNode>,
+  cookie?: string,
+): Promise<Policy[]> => {
+  const policies = await catalogPolicies(documentType, index, cookie);
+  return Promise.all(policies.map((p) => policyView(p, cookie, index)));
+};
+
+const toMe = (user: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  permissions: readonly string[];
+  roles: readonly string[];
+  userId: string;
+  username: string;
+}): Me => ({
+  email: user.email,
+  firstName: user.firstName,
+  id: user.userId,
+  lastName: user.lastName,
+  name: user.name,
+  permissions: user.permissions,
+  roles: user.roles,
+  username: user.username,
+});
+
+/**
+ * The reader's detail, assembled from the gateway's separate reads: the current version's
+ * content, the attachments, the version list and diff, and the caller's acknowledgement.
+ */
+const assembleDetail = async (
+  policy: AuthoringPolicyFieldsFragment,
+  index: ReadonlyMap<string, CategoryNode>,
+  cookie?: string,
+): Promise<PolicyDetail> => {
+  const publishedId = policy.currentPublishedVersionId ?? null;
+  const versionId = publishedId ?? policy.currentDraftVersionId ?? null;
+  const acks = policy.documentType === DocumentType.Policy && publishedId !== null;
+  const [version, attachments, versions, ack] = await Promise.all([
+    versionId
+      ? gatewayFetch(PolicyVersionDocument, { id: versionId }, "PolicyVersion", { cookie }).then(
+          (d) => d.policyVersion ?? null,
+        )
+      : null,
+    gatewayFetch(PolicyAttachmentsDocument, { policyId: policy.id }, "PolicyAttachments", {
+      cookie,
+    }),
+    gatewayFetch(PolicyVersionsDocument, { policyId: policy.id }, "PolicyVersions", {
+      cookie,
+    }).then((d) => d.policyVersions),
+    acks && policy.viewerCan.ack
+      ? gatewayFetch(AckStatusDocument, { policyVersionId: publishedId }, "AckStatus", {
+          cookie,
+        }).then((d) => d.ackStatus)
+      : null,
+  ]);
+
+  const at = publishedId ? versions.findIndex((v) => v.id === publishedId) : -1;
+  const prior = at > 0 ? versions[at - 1] : undefined;
+  let diff: readonly PolicySectionDiff[] = [];
+  if (prior && publishedId) {
+    const data = await gatewayFetch(
+      DiffVersionsDocument,
+      { fromVersionId: prior.id, toVersionId: publishedId },
+      "DiffVersions",
+      { cookie },
+    );
+    diff = data.diffVersions;
+  }
+  const names = categoryNames(index, policy.homeCategoryId);
+
+  return {
+    ack: acks
+      ? {
+          ackedAt: ack?.ackedAt ?? null,
+          acknowledged: ack?.acknowledged ?? false,
+          required: policy.viewerCan.ack,
+        }
+      : null,
+    appendices: (version?.appendices ?? []).map((a) => ({
+      id: a.id,
+      letter: a.letter,
+      text: appendixText(a.contentJson),
+      title: a.title,
+    })),
+    bodyText: version ? bodyTextFromContent(version.contentJson) : "",
+    canBreakGlass: policy.viewerCan.canBreakGlass,
+    category: names.category,
+    contacts: attachments.policyContactBlocks,
+    contentObfuscated: policy.viewerCan.contentObfuscated,
+    currentVersionId: publishedId,
+    definitions: attachments.policyDefinitionEntries,
+    documentType: policy.documentType,
+    history: [],
+    id: policy.id,
+    number: policy.number,
+    ownerName: policy.ownerName ?? null,
+    priorVersion: prior ? { diff, version: String(prior.versionNo) } : null,
+    published: null,
+    references: attachments.policyReferences,
+    related: attachments.relatedPolicies,
+    sensitivity: policy.sensitivity,
+    status: policyStatusOf(publishedId !== null, version?.status),
+    subcategory: names.subcategory,
+    title: policy.title,
+    updated: null,
+    version: version ? String(version.versionNo) : "",
+  };
+};
 
 /** The live edge: every call is a real POST to `GATEWAY_URL`, cookie forwarded. */
 export const liveEdge: Edge = {
   async acknowledgePolicy(policyVersionId, cookie) {
-    const data = await gatewayFetch(
-      AcknowledgePolicyDocument,
-      { policyVersionId },
-      "AcknowledgePolicy",
-      { cookie },
-    );
-    return data.acknowledgePolicy;
+    const data = await gatewayFetch(RecordAckDocument, { policyVersionId }, "RecordAck", {
+      cookie,
+    });
+    return { ackedAt: data.recordAck.ackedAt, acknowledged: true, required: true };
   },
   async activateOrganization(domain, cookie) {
     const data = await gatewayFetch(
@@ -172,17 +367,16 @@ export const liveEdge: Edge = {
     return data.auditLog;
   },
   async authorableGroups(cookie) {
-    const data = await gatewayFetch(AuthorableGroupsDocument, {}, "AuthorableGroups", { cookie });
-    return data.authorableGroups;
+    return categoryTree(cookie);
   },
   async authorableTemplates(ownerGroupId, cookie) {
     const data = await gatewayFetch(
-      AuthorableTemplatesDocument,
-      { ownerGroupId },
-      "AuthorableTemplates",
+      TemplatesDocument,
+      { ownerCategoryId: ownerGroupId },
+      "Templates",
       { cookie },
     );
-    return data.authorableTemplates;
+    return data.templates;
   },
   async authoringAssist(input, cookie) {
     const data = await gatewayFetch(AuthoringAssistDocument, { input }, "AuthoringAssist", {
@@ -200,8 +394,18 @@ export const liveEdge: Edge = {
     return data.breakGlassReveal;
   },
   async categories(cookie) {
-    const data = await gatewayFetch(CategoriesDocument, {}, "Categories", { cookie });
-    return data.categories;
+    const roots = await categoryChildren(null, cookie);
+    return Promise.all(
+      roots.map(async (root) => {
+        const children = await categoryChildren(root.id, cookie);
+        return {
+          id: root.id,
+          name: root.name,
+          slug: root.slug,
+          subcategories: children.map((c) => c.name),
+        };
+      }),
+    );
   },
   async changeOrgProtocol(domain, protocol, config, secretRef, cookie) {
     const data = await gatewayFetch(
@@ -222,15 +426,15 @@ export const liveEdge: Edge = {
     return data.closeCase;
   },
   async createGroup(input, cookie) {
-    const data = await gatewayFetch(CreateGroupDocument, input, "CreateGroup", { cookie });
-    return data.createGroup;
+    const data = await gatewayFetch(CreateCategoryDocument, input, "CreateCategory", { cookie });
+    return data.createCategory;
   },
   async createPolicy(input, cookie) {
     const data = await gatewayFetch(
       CreatePolicyDocument,
       {
         documentType: input.documentType,
-        homeGroupId: input.homeGroupId,
+        homeCategoryId: input.homeGroupId,
         sensitivity: input.sensitivity,
         templateId: input.templateId,
         title: input.title,
@@ -238,15 +442,15 @@ export const liveEdge: Edge = {
       "CreatePolicy",
       { cookie },
     );
-    return data.createPolicy;
+    return policyView(data.createPolicy, cookie);
   },
   async deleteAppendix(id, cookie) {
     const data = await gatewayFetch(DeleteAppendixDocument, { id }, "DeleteAppendix", { cookie });
     return data.deleteAppendix;
   },
   async deleteGroup(id, cookie) {
-    const data = await gatewayFetch(DeleteGroupDocument, { id }, "DeleteGroup", { cookie });
-    return data.deleteGroup;
+    const data = await gatewayFetch(DeleteCategoryDocument, { id }, "DeleteCategory", { cookie });
+    return data.deleteCategory;
   },
   async deleteGroupMapping(mappingId, cookie) {
     const data = await gatewayFetch(
@@ -291,10 +495,15 @@ export const liveEdge: Edge = {
     return data.discardDraft;
   },
   async draftVersion(policyId, cookie) {
-    const data = await gatewayFetch(DraftVersionDocument, { policyId }, "DraftVersion", {
-      cookie,
-    });
-    return data.draftVersion ?? null;
+    const { policy } = await gatewayFetch(PolicyDocument, { id: policyId }, "Policy", { cookie });
+    if (!policy?.currentDraftVersionId) return null;
+    const data = await gatewayFetch(
+      PolicyVersionDocument,
+      { id: policy.currentDraftVersionId },
+      "PolicyVersion",
+      { cookie },
+    );
+    return data.policyVersion ?? null;
   },
 
   async enableUser(userId, cookie) {
@@ -324,10 +533,7 @@ export const liveEdge: Edge = {
     return data.grantRole;
   },
   async groupChildren(parentId, cookie) {
-    const data = await gatewayFetch(GroupChildrenDocument, { parentId }, "GroupChildren", {
-      cookie,
-    });
-    return data.groupChildren;
+    return categoryChildren(parentId, cookie);
   },
   async groupMappings(connectionId, cookie) {
     const data = await gatewayFetch(GroupMappingsDocument, { connectionId }, "GroupMappings", {
@@ -367,8 +573,13 @@ export const liveEdge: Edge = {
     return data.listUserSessions;
   },
   async me(cookie) {
-    const data = await gatewayFetch(MeDocument, {}, "Me", { cookie });
-    return data.me ?? null; // scrub:allow=fqdn
+    try {
+      const { me } = await gatewayFetch(MeDocument, {}, "Me", { cookie });
+      return toMe(me);
+    } catch (error) {
+      if (isUnauthenticated(error)) return null;
+      throw error;
+    }
   },
   async mintSsoTestLink(input, cookie) {
     return gatewayRestFetch(
@@ -384,14 +595,25 @@ export const liveEdge: Edge = {
     );
   },
   async moveGroup(groupId, newParentId, cookie) {
-    const data = await gatewayFetch(MoveGroupDocument, { groupId, newParentId }, "MoveGroup", {
-      cookie,
-    });
-    return data.moveGroup;
+    const data = await gatewayFetch(
+      MoveCategoryDocument,
+      { categoryId: groupId, newParentId },
+      "MoveCategory",
+      { cookie },
+    );
+    return data.moveCategory;
   },
   async myDraftPolicies(cookie) {
-    const data = await gatewayFetch(MyDraftPoliciesDocument, {}, "MyDraftPolicies", { cookie });
-    return data.myDraftPolicies;
+    const [{ me }, index] = await Promise.all([
+      gatewayFetch(MeDocument, {}, "Me", { cookie }),
+      categoryIndex(cookie),
+    ]);
+    const all = await Promise.all(
+      [DocumentType.Policy, DocumentType.Procedure].map((documentType) =>
+        catalog(documentType, index, cookie),
+      ),
+    );
+    return all.flat().filter((p) => p.ownerUserId === me.userId && p.currentDraftVersionId);
   },
   async organizations(cookie) {
     const data = await gatewayFetch(OrganizationsDocument, {}, "Organizations", { cookie });
@@ -407,21 +629,17 @@ export const liveEdge: Edge = {
     return data.pendingTasks;
   },
   async policies(documentType, cookie) {
-    const data = await gatewayFetch(PoliciesDocument, { documentType }, "Policies", { cookie });
-    return data.policies;
+    return catalog(documentType, await categoryIndex(cookie), cookie);
   },
   async policy(id, cookie) {
     const data = await gatewayFetch(PolicyDocument, { id }, "Policy", { cookie });
-    return data.policy ?? null;
+    return data.policy ? policyView(data.policy, cookie) : null;
   },
   async policyDetail(documentType, number, cookie) {
-    const data = await gatewayFetch(
-      PolicyDetailDocument,
-      { documentType, number },
-      "PolicyDetail",
-      { cookie },
-    );
-    return data.policyDetail ?? null;
+    const index = await categoryIndex(cookie);
+    const policies = await catalogPolicies(documentType, index, cookie);
+    const found = policies.find((p) => p.number === number);
+    return found ? assembleDetail(found, index, cookie) : null;
   },
   async postCaseMessage(caseId, body, cookie) {
     const data = await gatewayFetch(PostCaseMessageDocument, { body, caseId }, "PostCaseMessage", {
@@ -454,10 +672,10 @@ export const liveEdge: Edge = {
     return data.recordRiskAssessment;
   },
   async renameGroup(id, name, slug, cookie) {
-    const data = await gatewayFetch(RenameGroupDocument, { id, name, slug }, "RenameGroup", {
+    const data = await gatewayFetch(RenameCategoryDocument, { id, name, slug }, "RenameCategory", {
       cookie,
     });
-    return data.renameGroup;
+    return data.renameCategory;
   },
   async reorderAppendices(policyVersionId, orderedIds, cookie) {
     const data = await gatewayFetch(
@@ -545,7 +763,14 @@ export const liveEdge: Edge = {
   async submitDraftGeneration(input, cookie) {
     const data = await gatewayFetch(
       SubmitDraftGenerationDocument,
-      { input },
+      {
+        input: {
+          brief: input.brief,
+          categoryId: input.homeGroupId,
+          sections: input.sections,
+          title: input.title,
+        },
+      },
       "SubmitDraftGeneration",
       { cookie },
     );
@@ -586,10 +811,57 @@ export const liveEdge: Edge = {
     return data.updateCaseNotice;
   },
   async updateGroupSettings(input, cookie) {
-    const data = await gatewayFetch(UpdateGroupSettingsDocument, input, "UpdateGroupSettings", {
+    const { category } = await gatewayFetch(CategoryDocument, { id: input.id }, "Category", {
       cookie,
     });
-    return data.updateGroupSettings;
+    if (!category) {
+      throw new GatewayError("UpdateGroupSettings", "category not found", { code: "NOT_FOUND" });
+    }
+    let current = category;
+    if (
+      input.defaultTemplateId !== undefined ||
+      input.defaultTemplateNone !== undefined ||
+      input.defaultWorkflowId !== undefined
+    ) {
+      const data = await gatewayFetch(
+        SetCategoryDefaultsDocument,
+        {
+          defaultTemplateId:
+            input.defaultTemplateId === undefined
+              ? current.defaultTemplateId
+              : input.defaultTemplateId,
+          defaultTemplateNone: input.defaultTemplateNone ?? current.defaultTemplateNone,
+          defaultWorkflowId:
+            input.defaultWorkflowId === undefined
+              ? current.defaultWorkflowId
+              : input.defaultWorkflowId,
+          id: input.id,
+        },
+        "SetCategoryDefaults",
+        { cookie },
+      );
+      current = data.setCategoryDefaults;
+    }
+    if (
+      input.owners !== undefined ||
+      input.reviewCadence !== undefined ||
+      input.reviewDate !== undefined
+    ) {
+      const data = await gatewayFetch(
+        SetCategoryGovernanceDocument,
+        {
+          ackTriggers: current.ackTriggers,
+          id: input.id,
+          owners: input.owners ?? current.owners,
+          reviewCadence: input.reviewCadence ?? current.reviewCadence,
+          reviewDate: input.reviewDate === undefined ? current.reviewDate : input.reviewDate,
+        },
+        "SetCategoryGovernance",
+        { cookie },
+      );
+      current = data.setCategoryGovernance;
+    }
+    return current;
   },
   async updateIdPConnection(domain, toggles, cookie) {
     const data = await gatewayFetch(
@@ -602,7 +874,7 @@ export const liveEdge: Edge = {
   },
   async updateMyProfile(input, cookie) {
     const data = await gatewayFetch(UpdateMyProfileDocument, input, "UpdateMyProfile", { cookie });
-    return data.updateMyProfile;
+    return toMe(data.updateMyProfile);
   },
   async updateUserProfile(userId, name, email, cookie) {
     const data = await gatewayFetch(
@@ -631,8 +903,8 @@ export const liveEdge: Edge = {
     return data.verifyDomain;
   },
   async workflows(cookie) {
-    const data = await gatewayFetch(WorkflowsDocument, {}, "Workflows", { cookie });
-    return data.workflows;
+    const data = await gatewayFetch(WorkflowDefsDocument, {}, "WorkflowDefs", { cookie });
+    return data.workflowDefs;
   },
   async workflowStatus(policyVersionId, cookie) {
     const data = await gatewayFetch(WorkflowStatusDocument, { policyVersionId }, "WorkflowStatus", {

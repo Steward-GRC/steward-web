@@ -34,11 +34,11 @@ const readerMe = {
 const jsonOnce = (data: unknown) => Response.json({ data });
 
 const testUser: User = {
-  adGroups: [],
   deletedAt: null,
   email: "ada@example.com",
   enabled: true,
   firstName: "Ada",
+  idpGroups: [],
   isRoot: false,
   lastName: "Lovelace",
   localAccount: true,

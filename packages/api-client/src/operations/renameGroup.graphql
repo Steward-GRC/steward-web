@@ -1,5 +1,0 @@
-mutation RenameGroup($id: ID!, $name: String!, $slug: String!) {
-  renameGroup(id: $id, name: $name, slug: $slug) {
-    ...GroupFields
-  }
-}

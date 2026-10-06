@@ -147,13 +147,13 @@ describe("mockEdge users directory", () => {
 
   it("listUserSessions() then revokeUserSessions() signs the user out everywhere", async () => {
     const before = await mockEdge.listUserSessions(mockId("user", 3));
-    expect(before.some((s) => !s.revokedAt)).toBe(true);
+    expect(before.some((s) => s.active)).toBe(true);
 
     const revokedCount = await mockEdge.revokeUserSessions(mockId("user", 3), "test");
     expect(revokedCount).toBe(before.length);
 
     const after = await mockEdge.listUserSessions(mockId("user", 3));
-    expect(after.every((s) => s.revokedAt)).toBe(true);
+    expect(after.every((s) => !s.active)).toBe(true);
   });
 
   it("previewUserDeletion() reports the canned, blocking preview for a fixture with one", async () => {
@@ -425,6 +425,7 @@ describe("mockEdge users directory", () => {
         operation: AssistOperation.AssistOperationExpand,
         policyId: mockId("policy", 1),
         sectionKey: "purpose",
+        versionId: mockId("policy-version", 1),
       });
       expect(result.suggestion.length).toBeGreaterThan(0);
     });
@@ -455,6 +456,7 @@ describe("mockEdge users directory", () => {
       const { jobId } = await mockEdge.submitPolicyReview({
         policyId: mockId("policy", 1),
         sections: [{ content: "", key: "scope", title: "Scope" }],
+        versionId: mockId("policy-version", 1),
       });
       await mockEdge.aiJob(jobId);
       const status = await mockEdge.aiJob(jobId);

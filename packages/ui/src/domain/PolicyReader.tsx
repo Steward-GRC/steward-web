@@ -218,7 +218,7 @@ export const PolicyReader = ({ detail }: PolicyReaderProps) => {
           <Detail label={t("reader.metadata.owner")} value={detail.ownerName ?? "—"} />
           <Detail label={t("reader.metadata.version")} value={detail.version} />
           <Detail label={t("reader.metadata.published")} value={detail.published ?? "—"} />
-          <Detail label={t("reader.metadata.updated")} value={detail.updated} />
+          <Detail label={t("reader.metadata.updated")} value={detail.updated ?? "—"} />
         </CardBody>
       </Card>
 

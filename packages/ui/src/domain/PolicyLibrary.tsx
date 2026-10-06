@@ -57,7 +57,7 @@ export const PolicyLibrary = ({ categories, documentType, policies }: PolicyLibr
       .filter((p) => (subcategory ? p.subcategory === subcategory : true))
       .filter((p) => (starredOnly ? isFavorite(p.number) : true))
       .filter((p) => (needle ? `${p.number} ${p.title}`.toLowerCase().includes(needle) : true))
-      .toSorted((a, b) => b.updated.localeCompare(a.updated));
+      .toSorted((a, b) => (b.updated ?? "").localeCompare(a.updated ?? ""));
   }, [category, isFavorite, policies, q, starredOnly, subcategory]);
 
   const subcategories = categories.find((c) => c.name === category)?.subcategories ?? [];
@@ -191,7 +191,7 @@ export const PolicyLibrary = ({ categories, documentType, policies }: PolicyLibr
                   <StatusPill status={documentStatusOf(policy.status)} />
                 </TD>
                 <TD className="font-mono text-sm">{policy.version}</TD>
-                <TD>{policy.updated}</TD>
+                <TD>{policy.updated ?? "—"}</TD>
               </tr>
             ))}
           </tbody>

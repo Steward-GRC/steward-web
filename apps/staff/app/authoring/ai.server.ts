@@ -24,6 +24,7 @@ export interface AssistInput {
   operation: AssistOperation;
   policyId: string;
   sectionKey: string;
+  versionId: string;
 }
 
 /** One inline authoring suggestion for a section currently being edited. */

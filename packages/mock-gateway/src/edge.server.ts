@@ -587,7 +587,7 @@ export const mockEdge: Edge = {
         id: draftId,
         policyId,
         status: "DRAFT",
-        templateVersionId: templateVersion?.id ?? null,
+        templateVersionId: templateVersion?.id ?? "",
         versionNo: 1,
       },
     ];
@@ -658,11 +658,8 @@ export const mockEdge: Edge = {
         code: "DELETE_BLOCKED",
       });
     }
-    const revokedSessions = (sessions[userId] ?? []).filter((s) => !s.revokedAt).length;
-    sessions[userId] = (sessions[userId] ?? []).map((s) => ({
-      ...s,
-      revokedAt: s.revokedAt ?? new Date().toISOString(),
-    }));
+    const revokedSessions = (sessions[userId] ?? []).filter((s) => s.active).length;
+    sessions[userId] = (sessions[userId] ?? []).map((s) => ({ ...s, active: false }));
     replaceUser({ ...user, deletedAt: new Date().toISOString() });
     return { revokedSessions, userId };
   },
@@ -790,7 +787,7 @@ export const mockEdge: Edge = {
     Promise.resolve(
       policies
         .filter((p) => p.ownerUserId === me.id && p.currentDraftVersionId)
-        .toSorted((a, b) => b.updated.localeCompare(a.updated)),
+        .toSorted((a, b) => (b.updated ?? "").localeCompare(a.updated ?? "")),
     ),
   organizations: () => Promise.resolve(organizations),
   parseIdpMetadata: () =>
@@ -824,7 +821,18 @@ export const mockEdge: Edge = {
     const user = requireUser("PreviewUserDeletion", userId);
     const fallback: UserDeletionPreview = {
       blocksDelete: false,
-      counts: { accessRows: 0, ownedPolicies: 0, pendingApprovals: 0, raciGrants: 0, roles: 0 },
+      counts: {
+        breakGlassGrants: 0,
+        groupMemberships: 0,
+        idpGroups: 0,
+        managedGroups: 0,
+        ownedPolicies: 0,
+        pendingApprovals: 0,
+        permissions: 0,
+        policyOverrides: 0,
+        raciGrants: 0,
+        roles: 0,
+      },
       items: [],
       locallyAuthenticable: user.localAccount,
       userId,
@@ -938,10 +946,9 @@ export const mockEdge: Edge = {
   },
   revokeUserSessions: async (userId, reason) => {
     const current = sessions[userId] ?? [];
-    const revokedAt = new Date().toISOString();
-    sessions[userId] = current.map((s) => (s.revokedAt ? s : { ...s, revokedAt }));
+    sessions[userId] = current.map((s) => ({ ...s, active: false }));
     void reason; // the mock audits nothing; the live gateway records it
-    return current.filter((s) => !s.revokedAt).length;
+    return current.filter((s) => s.active).length;
   },
   saveDraft: async (policyId, contentJson, templateVersionId) => {
     const policy = requirePolicy("SaveDraft", policyId);
@@ -952,7 +959,7 @@ export const mockEdge: Edge = {
       return replaceVersion({
         ...existing,
         contentJson,
-        templateVersionId: templateVersionId ?? null,
+        templateVersionId: templateVersionId ?? "",
       });
     }
     const created: PolicyVersion = {
@@ -961,7 +968,7 @@ export const mockEdge: Edge = {
       id: nextMockPolicyVersionId(),
       policyId,
       status: "DRAFT",
-      templateVersionId: templateVersionId ?? null,
+      templateVersionId: templateVersionId ?? "",
       versionNo: 1,
     };
     policyVersions = [...policyVersions, created];

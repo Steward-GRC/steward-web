@@ -26,19 +26,19 @@ import {
 
 const siteAdminMe = {
   email: "admin@example.com",
-  id: "u-admin",
   name: "Admin",
   permissions: ["group.manage"],
   roles: ["site-admin"],
+  userId: "u-admin",
   username: "admin",
 };
 
 const readerMe = {
   email: "reader@example.com",
-  id: "u-reader",
   name: "Reader",
   permissions: [],
   roles: ["reader"],
+  userId: "u-reader",
   username: "reader",
 };
 
@@ -75,8 +75,8 @@ describe("listGroups", () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ groupChildren: [root] }))
-      .mockResolvedValueOnce(jsonOnce({ groupChildren: [] }));
+      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [root] }))
+      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [] }));
     vi.stubGlobal("fetch", fetchSpy);
 
     const groups = await listGroups(request());
@@ -91,8 +91,8 @@ describe("findGroup", () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ groupChildren: [root] }))
-      .mockResolvedValueOnce(jsonOnce({ groupChildren: [] }));
+      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [root] }))
+      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [] }));
     vi.stubGlobal("fetch", fetchSpy);
 
     expect(await findGroup(request(), "g-root")).toEqual(root);
@@ -105,7 +105,7 @@ describe("createGroup", () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ createGroup: created }));
+      .mockResolvedValueOnce(jsonOnce({ createCategory: created }));
     vi.stubGlobal("fetch", fetchSpy);
 
     const result = await createGroup(request(), { name: "New", parentId: null, slug: "new" });
@@ -121,7 +121,7 @@ describe("renameGroup", () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ renameGroup: renamed }));
+      .mockResolvedValueOnce(jsonOnce({ renameCategory: renamed }));
     vi.stubGlobal("fetch", fetchSpy);
 
     const result = await renameGroup(request(), {
@@ -138,7 +138,7 @@ describe("deleteGroup", () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ deleteGroup: true }));
+      .mockResolvedValueOnce(jsonOnce({ deleteCategory: true }));
     vi.stubGlobal("fetch", fetchSpy);
 
     await expect(deleteGroup(request(), "g-1")).resolves.toBeUndefined();
@@ -151,7 +151,7 @@ describe("moveGroup", () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ moveGroup: moved }));
+      .mockResolvedValueOnce(jsonOnce({ moveCategory: moved }));
     vi.stubGlobal("fetch", fetchSpy);
 
     const result = await moveGroup(request(), "g-1", "g-2");
@@ -160,12 +160,18 @@ describe("moveGroup", () => {
 });
 
 describe("updateGroupSettings", () => {
-  it("posts defaults and governance together", async () => {
-    const updated = makeGroup({ id: "g-1", name: "G1", owners: ["u-1"] });
+  it("posts the defaults, then the governance, keeping the category's ack settings", async () => {
+    const current = { ...makeGroup({ id: "g-1", name: "G1" }), ackTriggers: "ON_PUBLISH" };
+    const updated = {
+      ...makeGroup({ id: "g-1", name: "G1", owners: ["u-1"] }),
+      ackTriggers: "ON_PUBLISH",
+    };
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ updateGroupSettings: updated }));
+      .mockResolvedValueOnce(jsonOnce({ category: current }))
+      .mockResolvedValueOnce(jsonOnce({ setCategoryDefaults: current }))
+      .mockResolvedValueOnce(jsonOnce({ setCategoryGovernance: updated }));
     vi.stubGlobal("fetch", fetchSpy);
 
     const result = await updateGroupSettings(request(), "g-1", {
@@ -177,8 +183,11 @@ describe("updateGroupSettings", () => {
       reviewDate: null,
     });
     expect(result).toEqual(updated);
-    const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
-    expect(JSON.parse(init.body as string).variables).toMatchObject({
+    const variablesOf = (call: number) =>
+      JSON.parse((fetchSpy.mock.calls[call] as [string, RequestInit])[1].body as string).variables;
+    expect(variablesOf(2)).toMatchObject({ defaultTemplateNone: true, id: "g-1" });
+    expect(variablesOf(3)).toMatchObject({
+      ackTriggers: "ON_PUBLISH",
       owners: ["u-1"],
       reviewCadence: "ANNUAL",
     });
