@@ -1067,6 +1067,7 @@ export type ListUserSessionsQuery = {
     readonly active: boolean;
     readonly userAgent: string;
     readonly clientIp: string | null;
+    readonly lastSeenAt: string | null;
   }>;
 };
 
@@ -6838,6 +6839,7 @@ export const ListUserSessionsDocument = {
                 { kind: "Field", name: { kind: "Name", value: "active" } },
                 { kind: "Field", name: { kind: "Name", value: "userAgent" } },
                 { kind: "Field", name: { kind: "Name", value: "clientIp" } },
+                { kind: "Field", name: { kind: "Name", value: "lastSeenAt" } },
               ],
             },
           },
