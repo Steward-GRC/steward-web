@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { ReviewCadence } from "@steward-web/api-client";
+import type { AckTrigger, ReviewCadence } from "@steward-web/api-client";
 
 import { refusalOf } from "@steward-web/shell";
 import {
@@ -28,6 +28,9 @@ import type { Route } from "./+types/groups.$groupId";
 
 import {
   deleteGroup,
+  effectiveAckEveryone,
+  effectiveExclusionGroupIds,
+  effectiveIdpGroupIds,
   effectiveOwners,
   isValidSlug,
   listGroups,
@@ -44,6 +47,15 @@ import { listUsers } from "../users/users.server";
 const TOP_LEVEL = "__top_level__";
 const NO_TEMPLATE = "__no_template__";
 const NO_WORKFLOW = "__no_workflow__";
+const EVERYONE = "everyone";
+const SPECIFIC_GROUPS = "specific";
+
+/** A comma-separated field into trimmed, non-empty entries. */
+const parseList = (value: string): string[] =>
+  value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const groups = await listGroups(request);
@@ -51,6 +63,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   if (!group) {
     return {
       candidates: [],
+      effectiveAckEveryoneValue: false,
+      effectiveExclusionGroupIdsValue: null,
+      effectiveIdpGroupIdsValue: null,
       group: null,
       owners: [],
       owns: true,
@@ -73,8 +88,22 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const candidates = moveCandidates(groups, group.id);
   const owns = ownsOwners(groups, group);
   const owners = owns ? group.owners : effectiveOwners(groups, group);
+  const effectiveAckEveryoneValue = effectiveAckEveryone(groups, group);
+  const effectiveIdpGroupIdsValue = effectiveIdpGroupIds(groups, group);
+  const effectiveExclusionGroupIdsValue = effectiveExclusionGroupIds(groups, group);
 
-  return { candidates, group, owners, owns, templates, userOptions, workflows };
+  return {
+    candidates,
+    effectiveAckEveryoneValue,
+    effectiveExclusionGroupIdsValue,
+    effectiveIdpGroupIdsValue,
+    group,
+    owners,
+    owns,
+    templates,
+    userOptions,
+    workflows,
+  };
 };
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
@@ -117,10 +146,15 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const reviewCadence = String(form.get("reviewCadence") ?? "NONE") as ReviewCadence;
         const reviewDate =
           reviewCadence === "ON_DATE" ? String(form.get("reviewDate") ?? "") : null;
+        const ackEveryone = String(form.get("ackAudience") ?? EVERYONE) === EVERYONE;
         await updateGroupSettings(request, groupId, {
+          ackEveryone,
+          ackTriggers: String(form.get("ackTriggers") ?? "NONE") as AckTrigger,
           defaultTemplateId: templateSel === NO_TEMPLATE ? null : templateSel,
           defaultTemplateNone: templateSel === NO_TEMPLATE,
           defaultWorkflowId: workflowSel === NO_WORKFLOW ? null : workflowSel,
+          exclusionGroupIds: parseList(String(form.get("exclusionGroupIds") ?? "")),
+          idpGroupIds: parseList(String(form.get("idpGroupIds") ?? "")),
           owners: form.getAll("owners").map(String),
           reviewCadence,
           reviewDate: reviewDate || null,
@@ -150,7 +184,18 @@ export default function GroupEdit({ actionData, loaderData }: Route.ComponentPro
     );
   }
 
-  const { candidates, group, owners, owns, templates, userOptions, workflows } = loaderData;
+  const {
+    candidates,
+    effectiveAckEveryoneValue,
+    effectiveExclusionGroupIdsValue,
+    effectiveIdpGroupIdsValue,
+    group,
+    owners,
+    owns,
+    templates,
+    userOptions,
+    workflows,
+  } = loaderData;
 
   const errorFor = (intent: string) =>
     actionData && !actionData.ok && actionData.intent === intent && "failure" in actionData
@@ -311,6 +356,62 @@ export default function GroupEdit({ actionData, loaderData }: Route.ComponentPro
                 </p>
               </div>
             )}
+
+            <fieldset className="flex flex-col gap-4 border-t border-border pt-6">
+              <legend className="text-sm font-semibold text-ink">
+                Acknowledgement &amp; access
+              </legend>
+
+              <Field label="Ack trigger">
+                <Select
+                  defaultValue={group.ackTriggers}
+                  name="ackTriggers"
+                  options={[
+                    { label: "Never", value: "NONE" },
+                    { label: "On publish", value: "ON_PUBLISH" },
+                    { label: "On every change", value: "ON_CHANGE" },
+                  ]}
+                />
+              </Field>
+
+              <Field
+                hint={
+                  group.ackEveryoneSet
+                    ? "This group sets its own ack audience."
+                    : `Inherited: ${effectiveAckEveryoneValue ? "everyone" : "the IdP groups below"}.`
+                }
+                label="Ack audience"
+              >
+                <Select
+                  defaultValue={effectiveAckEveryoneValue ? EVERYONE : SPECIFIC_GROUPS}
+                  name="ackAudience"
+                  options={[
+                    { label: "Everyone", value: EVERYONE },
+                    { label: "Specific IdP groups", value: SPECIFIC_GROUPS },
+                  ]}
+                />
+              </Field>
+
+              <Field
+                hint="Comma-separated IdP group claim values. Used when the audience above is 'Specific IdP groups'. Saving here always sets an explicit override — there's no way back to inherited from this form."
+                label="IdP groups (ack audience)"
+              >
+                <Input
+                  defaultValue={(effectiveIdpGroupIdsValue ?? []).join(", ")}
+                  name="idpGroupIds"
+                />
+              </Field>
+
+              <Field
+                hint="Comma-separated IdP group claim values excluded from this category's ack audience and visibility. Saving here always sets an explicit override."
+                label="Excluded IdP groups"
+              >
+                <Input
+                  defaultValue={(effectiveExclusionGroupIdsValue ?? []).join(", ")}
+                  name="exclusionGroupIds"
+                />
+              </Field>
+            </fieldset>
 
             {errorFor("save-settings") ? (
               <Banner

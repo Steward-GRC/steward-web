@@ -22,6 +22,7 @@ import type {
 } from "@steward-web/api-client";
 
 import {
+  AckTrigger,
   AiJobPhase,
   ApprovalStatus,
   AssistOperation,
@@ -623,10 +624,15 @@ export const mockEdge: Edge = {
       );
     }
     const created: Group = {
+      ackEveryone: false,
+      ackEveryoneSet: false,
+      ackTriggers: AckTrigger.None,
       defaultTemplateId: null,
       defaultTemplateNone: false,
       defaultWorkflowId: null,
+      exclusionGroupIds: null,
       id: mockId("group", nextGroupSeq++),
+      idpGroupIds: null,
       name,
       owners: [],
       parentId,
@@ -1285,23 +1291,35 @@ export const mockEdge: Edge = {
     return updated;
   },
   updateGroupSettings: async ({
-    defaultTemplateId = null,
-    defaultTemplateNone = false,
-    defaultWorkflowId = null,
+    ackEveryone,
+    ackTriggers,
+    defaultTemplateId,
+    defaultTemplateNone,
+    defaultWorkflowId,
+    exclusionGroupIds,
     id,
-    owners = [],
-    reviewCadence = ReviewCadence.None,
-    reviewDate = null,
+    idpGroupIds,
+    owners,
+    reviewCadence,
+    reviewDate,
   }) => {
     const group = requireGroup("UpdateGroupSettings", id);
     return replaceGroup({
       ...group,
-      defaultTemplateId,
-      defaultTemplateNone,
-      defaultWorkflowId,
-      owners: [...owners],
-      reviewCadence,
-      reviewDate,
+      ackEveryone: ackEveryone ?? group.ackEveryone,
+      ackEveryoneSet: ackEveryone === undefined ? group.ackEveryoneSet : true,
+      ackTriggers: ackTriggers ?? group.ackTriggers,
+      defaultTemplateId:
+        defaultTemplateId === undefined ? group.defaultTemplateId : defaultTemplateId,
+      defaultTemplateNone: defaultTemplateNone ?? group.defaultTemplateNone,
+      defaultWorkflowId:
+        defaultWorkflowId === undefined ? group.defaultWorkflowId : defaultWorkflowId,
+      exclusionGroupIds:
+        exclusionGroupIds === undefined ? group.exclusionGroupIds : exclusionGroupIds,
+      idpGroupIds: idpGroupIds === undefined ? group.idpGroupIds : idpGroupIds,
+      owners: owners === undefined ? group.owners : [...owners],
+      reviewCadence: reviewCadence ?? group.reviewCadence,
+      reviewDate: reviewDate === undefined ? group.reviewDate : reviewDate,
     });
   },
   updateIdPConnection: async (domain, toggles) => {
