@@ -12,8 +12,12 @@ import {
   changeOrgProtocol,
   deleteOrganization,
   disableOrganization,
+  fetchIdpCertFromUrl,
   findOrganization,
+  importIdpMetadataFromUrl,
   listOrganizations,
+  mintSsoTestLink,
+  parseIdpMetadataFile,
   startDomainVerification,
   updateIdPConnection,
   verifyDomain,
@@ -39,10 +43,15 @@ const readerMe = {
 
 const jsonOnce = (data: unknown) => Response.json({ data });
 
+/** The gateway's REST (non-GraphQL) IdP-import / SSO-test-link endpoints answer with the
+ *  flat body directly, unlike the GraphQL `{data: ...}` envelope `jsonOnce` builds. */
+const restJsonOnce = (body: unknown, status = 200) => Response.json(body, { status });
+
 const makeOrg = (
   overrides: Partial<Organization> & Pick<Organization, "domain">,
 ): Organization => ({
   allowLocal: false,
+  connectionAlias: `alias-${overrides.domain}`,
   connectionId: `conn-${overrides.domain}`,
   displayName: overrides.domain,
   enabled: false,
@@ -111,6 +120,90 @@ describe("addOrganization", () => {
     const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
     expect(JSON.parse(init.body as string).variables).toMatchObject({
       input: { domain: "acme.example.org", orgName: "Acme", protocol: "saml" },
+    });
+  });
+});
+
+describe("importIdpMetadataFromUrl / parseIdpMetadataFile / fetchIdpCertFromUrl", () => {
+  const imported = {
+    displayName: "Example IdP",
+    entityId: "https://idp.example.org/metadata",
+    signingCertificate: "-----BEGIN CERTIFICATE-----\nEXAMPLE\n-----END CERTIFICATE-----",
+    ssoUrl: "https://idp.example.org/sso",
+  };
+
+  it("imports metadata fetched by URL", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(restJsonOnce(imported));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    expect(await importIdpMetadataFromUrl(request(), "https://idp.example.org/metadata")).toEqual(
+      imported,
+    );
+    const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({ url: "https://idp.example.org/metadata" });
+  });
+
+  it("parses an uploaded metadata document", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(restJsonOnce(imported));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    expect(await parseIdpMetadataFile(request(), "<EntityDescriptor/>")).toEqual(imported);
+  });
+
+  it("surfaces the gateway's error message on a failed fetch", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(restJsonOnce({ error: "This URL points to a blocked address" }, 400));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await expect(
+      importIdpMetadataFromUrl(request(), "https://169.254.169.254/metadata"),
+    ).rejects.toMatchObject({ message: "This URL points to a blocked address", status: 400 });
+  });
+
+  it("fetches a signing certificate by URL", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(restJsonOnce({ certificatePem: imported.signingCertificate }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    expect(await fetchIdpCertFromUrl(request(), "https://idp.example.org/cert")).toBe(
+      imported.signingCertificate,
+    );
+  });
+});
+
+describe("mintSsoTestLink", () => {
+  it("mints a scoped, time-bound test link", async () => {
+    const link = {
+      expiresAt: "2026-10-06T12:30:00Z",
+      url: "https://gateway.steward.example/auth/sso/start?connection=acme-saml&mode=test&testToken=tok",
+    };
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(restJsonOnce(link));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const result = await mintSsoTestLink(request(), {
+      alias: "acme-saml",
+      connectionId: "conn-acme.example.org",
+    });
+    expect(result).toEqual(link);
+    const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({
+      alias: "acme-saml",
+      connectionId: "conn-acme.example.org",
+      returnPath: "",
+      tenant: "",
     });
   });
 });

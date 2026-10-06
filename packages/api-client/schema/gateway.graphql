@@ -564,6 +564,8 @@ extend type Mutation {
 type Organization {
   "Identity-service connection id; keys SP-cert-independent, per-connection calls."
   connectionId: ID!
+  "The connection alias; /auth/sso/start?connection=<alias> matches it against identity Discover."
+  connectionAlias: String!
   displayName: String!
   domain: String!
   "Currently live for sign-in. Both gates must have passed to activate."
