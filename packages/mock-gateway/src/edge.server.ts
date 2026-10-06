@@ -1,15 +1,20 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  AckExport,
+  AckRoster,
+  AckRosterEntry,
   Appendix,
   CaseNote,
   CaseNotice,
+  CompletionReport,
   ContactBlock,
   DefinitionEntry,
   Edge,
   Group,
   GroupMapping,
   Organization,
+  OverdueEntry,
   Policy,
   PolicyVersion,
   Reference,
@@ -59,6 +64,8 @@ import {
   mockContactBlocks,
   mockDefinitions,
   mockDiagnostics,
+  mockEmailServiceConfig,
+  mockGlobalSettings,
   mockGroupMappings,
   mockGroups,
   mockMe,
@@ -122,12 +129,51 @@ let definitions = [...mockDefinitions];
 let nextDefinitionSeq = mockDefinitions.length + 1;
 let references = [...mockReferences];
 let nextReferenceSeq = mockReferences.length + 1;
+let globalSettings = mockGlobalSettings;
+let emailServiceConfig = mockEmailServiceConfig;
 
 /** How long a mock break-glass grant lasts, matching the real grant's order of magnitude. */
 const BREAK_GLASS_GRANT_MS = 5 * 60 * 1000;
 
 /** How long a mock collab token is valid, matching the real token's order of magnitude. */
 const COLLAB_TOKEN_TTL_MS = 5 * 60 * 1000;
+
+/** A small, stable string hash (no crypto): same input always gives the same number, so the
+ *  acked/pending split below is deterministic per (policyVersionId, userId) pair without
+ *  persisting any mock ack state. */
+const HASH_MODULUS = 1_000_000_007;
+const stableHash = (s: string): number => {
+  let h = 0;
+  for (let index = 0; index < s.length; index++) {
+    h = (h * 31 + (s.codePointAt(index) ?? 0)) % HASH_MODULUS;
+  }
+  return h;
+};
+
+/**
+ * The acknowledgement roster for a policy version: every non-deleted user, split
+ * acked/pending by `stableHash`, four in five acked. `groupId` is accepted but not applied —
+ * the real gateway resolves ack-audience membership server-side; the mock has no group
+ * membership model to filter by, so it always returns the whole directory's roster.
+ */
+const rosterFor = (policyVersionId: string): AckRoster => {
+  const acked: AckRosterEntry[] = [];
+  const pending: AckRosterEntry[] = [];
+  for (const user of users.filter((u) => !u.deletedAt)) {
+    const entry: AckRosterEntry = {
+      ackedAt: null,
+      email: user.email,
+      userId: user.userId,
+      userName: user.name,
+    };
+    if (stableHash(`${policyVersionId}:${user.userId}`) % 5 === 0) {
+      pending.push(entry);
+    } else {
+      acked.push({ ...entry, ackedAt: "2026-09-15T00:00:00Z" });
+    }
+  }
+  return { acked, pending };
+};
 
 const requireUser = (operation: string, userId: string): User => {
   const user = users.find((u) => u.userId === userId);
@@ -487,6 +533,7 @@ export const mockEdge: Edge = {
     policyDetails = policyDetails.map((d) => (d === detail ? { ...d, ack } : d));
     return ack;
   },
+  ackRoster: (policyVersionId) => Promise.resolve(rosterFor(policyVersionId)),
   activateOrganization: async (domain) => {
     const org = requireOrganization("ActivateOrganization", domain);
     if (!org.verified || !org.testPassed) {
@@ -708,6 +755,25 @@ export const mockEdge: Edge = {
       status: CaseStatus.Closed,
       thread,
     });
+  },
+  completionReport: (policyVersionId) => {
+    const { acked, pending } = rosterFor(policyVersionId);
+    const totalAudience = acked.length + pending.length;
+    const totalAcked = acked.length;
+    const completionPct = totalAudience === 0 ? 0 : Math.round((totalAcked / totalAudience) * 100);
+    // A deterministic third of pending users are overdue; the rest are merely "not yet".
+    const overdue: OverdueEntry[] = pending
+      .slice(0, Math.floor(pending.length / 3))
+      .map(({ email, userId, userName }) => ({ email, userId, userName }));
+    const report: CompletionReport = {
+      avgDaysToAck: 3.2,
+      completionPct,
+      overdue,
+      totalAcked,
+      totalAudience,
+      viewedNotAckedCount: Math.floor(pending.length / 2),
+    };
+    return Promise.resolve(report);
   },
   contactBlocks: (includeArchived) =>
     Promise.resolve(includeArchived ? contactBlocks : contactBlocks.filter((b) => !b.archived)),
@@ -987,10 +1053,25 @@ export const mockEdge: Edge = {
       : undefined;
     return Promise.resolve(version ?? null);
   },
+  emailServiceConfig: () => Promise.resolve(emailServiceConfig),
 
   enableUser: async (userId) => {
     const user = requireUser("EnableUser", userId);
     return replaceUser({ ...user, enabled: true });
+  },
+  exportAcks: (policyVersionId, format) => {
+    const { acked, pending } = rosterFor(policyVersionId);
+    const rows = [
+      "userId,email,userName,ackedAt",
+      ...[...acked, ...pending].map(
+        (r) => `${r.userId},${r.email},${r.userName ?? ""},${r.ackedAt ?? ""}`,
+      ),
+    ];
+    const content: AckExport = {
+      contentType: format === "csv" ? "text/csv" : "application/octet-stream",
+      data: Buffer.from(rows.join("\n"), "utf8").toString("base64"),
+    };
+    return Promise.resolve(content);
   },
   fetchIdpCert: () =>
     Promise.resolve("-----BEGIN CERTIFICATE-----\nMOCK-IDP-CERT\n-----END CERTIFICATE-----"),
@@ -1004,6 +1085,7 @@ export const mockEdge: Edge = {
     };
     return Promise.resolve(spCertificate);
   },
+  globalSettings: () => Promise.resolve(globalSettings),
   // Every handler below that can refuse is `async`, even where nothing is awaited: inside an
   // async function a `throw` becomes the returned promise's rejection, matching the live edge
   // (and the `Edge` interface's own `Promise`-returning shape) instead of throwing synchronously
@@ -1373,6 +1455,21 @@ export const mockEdge: Edge = {
   setDefinitionArchived: async (id, archived) => {
     const entry = requireDefinition("SetDefinitionArchived", id);
     return replaceDefinition({ ...entry, archived });
+  },
+  setEmailServiceConfig: (input) => {
+    emailServiceConfig = {
+      apiKeySet: input.apiKey ? input.apiKey.length > 0 : emailServiceConfig.apiKeySet,
+      domain: input.domain,
+      enabled: input.enabled,
+      fromAddress: input.fromAddress,
+      provider: input.provider,
+      region: input.region,
+    };
+    return Promise.resolve(emailServiceConfig);
+  },
+  setGlobalSettings: (input) => {
+    globalSettings = { announcement: input.announcement, maintenance: input.maintenance };
+    return Promise.resolve(globalSettings);
   },
   setReferenceArchived: async (id, archived) => {
     const ref = requireReference("SetReferenceArchived", id);

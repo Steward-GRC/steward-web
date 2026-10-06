@@ -13,6 +13,8 @@ import {
   DeletionItemKind,
   type Diagnostics,
   DocumentType,
+  type EmailServiceConfigStatus,
+  type GlobalSettings,
   type Group,
   type GroupMapping,
   InformationKind,
@@ -239,6 +241,23 @@ export const mockDiagnostics: Diagnostics = {
   services: [],
   thirdParty: [],
   traceId: mockId("trace", 1),
+};
+
+/** The cross-app announcement and maintenance banners: both off by default so the mock app
+ *  starts quiet. */
+export const mockGlobalSettings: GlobalSettings = {
+  announcement: { enabled: false, level: "info", message: "" },
+  maintenance: { enabled: false, message: "" },
+};
+
+/** The platform email transport's non-secret configuration; no key stored by default. */
+export const mockEmailServiceConfig: EmailServiceConfigStatus = {
+  apiKeySet: false,
+  domain: "",
+  enabled: false,
+  fromAddress: "",
+  provider: "",
+  region: "",
 };
 
 /** The library's category tree: a few generic business categories, each with subcategories. */

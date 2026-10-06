@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import type {
   AccountMergePreview,
+  AckExport,
+  AckRoster,
   AckTrigger,
   AddOrganizationInput,
   AiHealth,
@@ -19,6 +21,7 @@ import type {
   CaseOutcome,
   CaseQueue,
   CaseStatus,
+  CompletionReport,
   ContactBlock,
   ContactBlockInput,
   CorrectiveActionInput,
@@ -27,6 +30,10 @@ import type {
   DeleteUserResult,
   Diagnostics,
   DomainVerification,
+  EmailServiceConfigInput,
+  EmailServiceConfigStatus,
+  GlobalSettings,
+  GlobalSettingsInput,
   GroupMapping,
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
@@ -73,6 +80,9 @@ import { DocumentType } from "./generated/schema";
 
 export type {
   AccountMergePreview,
+  AckExport,
+  AckRoster,
+  AckRosterEntry,
   AddOrganizationInput,
   AiHealth,
   AiJobResult,
@@ -87,6 +97,7 @@ export type {
   CaseQueue,
   CaseStatusCount,
   CaseSummary,
+  CompletionReport,
   ContactBlock,
   ContactBlockInput,
   CorrectiveAction,
@@ -96,6 +107,10 @@ export type {
   DeleteUserResult,
   Diagnostics,
   DomainVerification,
+  EmailServiceConfigInput,
+  EmailServiceConfigStatus,
+  GlobalSettings,
+  GlobalSettingsInput,
   GroupMapping,
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
@@ -106,6 +121,7 @@ export type {
   MergeStepResult,
   MergeWarning,
   Organization,
+  OverdueEntry,
   PendingTask,
   PolicyVersion,
   Reference,
@@ -231,6 +247,9 @@ export interface CreatePolicyInput {
 export interface Edge {
   /** Records the CALLING user's acknowledgement of a published policy version. Rejects with `GatewayError` when signed out or not in the ack audience. */
   acknowledgePolicy(policyVersionId: string, cookie?: string): Promise<AckStatus>;
+  /** The acknowledgement roster for a published policy version: who has acked and who is
+   *  still pending, optionally scoped to one group's subtree. */
+  ackRoster(policyVersionId: string, groupId?: null | string, cookie?: string): Promise<AckRoster>;
   /** Enables an organisation's SSO connection for sign-in. Site-admin only. */
   activateOrganization(domain: string, cookie?: string): Promise<Organization>;
   /** Adds an appendix to a policy version, for the editor. */
@@ -306,6 +325,13 @@ export interface Edge {
     closingMessage?: string,
     cookie?: string,
   ): Promise<ReportCase>;
+  /** Acknowledgement coverage for a published policy version, optionally scoped to one
+   *  group's subtree. */
+  completionReport(
+    policyVersionId: string,
+    groupId?: null | string,
+    cookie?: string,
+  ): Promise<CompletionReport>;
   /** The reusable contact-block library (admin), active only unless includeArchived. */
   contactBlocks(includeArchived?: boolean, cookie?: string): Promise<readonly ContactBlock[]>;
   /** Adds a reusable contact block to the library. */
@@ -370,12 +396,20 @@ export interface Edge {
   discardTemplateVersion(id: string, cookie?: string): Promise<boolean>;
   /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
   draftVersion(policyId: string, cookie?: string): Promise<null | PolicyVersion>;
+  /** The platform email transport's non-secret configuration and whether a sending key is
+   *  stored; never the key itself. Site-admin only. */
+  emailServiceConfig(cookie?: string): Promise<EmailServiceConfigStatus>;
 
   enableUser(userId: string, cookie?: string): Promise<User>;
+  /** The acknowledgement roster for a policy version, as a downloadable export (CSV today;
+   *  `format` is forwarded to the gateway as-is). */
+  exportAcks(policyVersionId: string, format: string, cookie?: string): Promise<AckExport>;
   /** Fetches an IdP signing certificate by URL (SSRF-guarded) and returns it as PEM. Site-admin only. */
   fetchIdpCert(url: string, cookie?: string): Promise<string>;
   /** Mints a new SP signing certificate and activates it, superseding the previous one. Site-admin only. */
   forceRotateSpCertificate(cookie?: string): Promise<SpCertificate>;
+  /** The cross-app announcement and maintenance banners. Readable by any signed-in user. */
+  globalSettings(cookie?: string): Promise<GlobalSettings>;
   /** Grants a GLOBAL role (no category). Site-admin only. */
   grantRole(userId: string, role: string, cookie?: string): Promise<User>;
   /** A group's direct children. A null parentId lists the root groups. Site-admin only. */
@@ -514,6 +548,14 @@ export interface Edge {
   setContactBlockArchived(id: string, archived: boolean, cookie?: string): Promise<ContactBlock>;
   /** Archive (true) or restore (false) a definitions-library entry. */
   setDefinitionArchived(id: string, archived: boolean, cookie?: string): Promise<DefinitionEntry>;
+  /** Stores the platform email transport's sending key (write-only) and its non-secret
+   *  configuration. Site-admin only. */
+  setEmailServiceConfig(
+    input: EmailServiceConfigInput,
+    cookie?: string,
+  ): Promise<EmailServiceConfigStatus>;
+  /** Sets the cross-app announcement and maintenance banners. Site-admin only. */
+  setGlobalSettings(input: GlobalSettingsInput, cookie?: string): Promise<GlobalSettings>;
   /** Archive (true) or restore (false) a references-library entry. */
   setReferenceArchived(id: string, archived: boolean, cookie?: string): Promise<Reference>;
   /**

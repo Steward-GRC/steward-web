@@ -6,6 +6,7 @@ import type { Me, Policy, PolicyDetail, PolicySectionDiff } from "../views";
 import { GatewayError, gatewayFetch } from "../gatewayFetch";
 import { gatewayRestFetch } from "../gatewayRestFetch";
 import {
+  AckRosterDocument,
   AckStatusDocument,
   ActivateOrganizationDocument,
   AddAppendixDocument,
@@ -29,6 +30,7 @@ import {
   CategoryTreeDocument,
   ChangeOrgProtocolDocument,
   CloseCaseDocument,
+  CompletionReportDocument,
   ContactBlocksDocument,
   CreateCategoryDocument,
   CreateContactBlockDocument,
@@ -53,8 +55,11 @@ import {
   DisableUserDocument,
   DiscardDraftDocument,
   DiscardTemplateVersionDocument,
+  EmailServiceConfigDocument,
   EnableUserDocument,
+  ExportAcksDocument,
   ForceRotateSpCertificateDocument,
+  GlobalSettingsDocument,
   GrantRoleDocument,
   GroupMappingsDocument,
   IssueCollabTokenDocument,
@@ -98,6 +103,8 @@ import {
   SetCategoryGovernanceDocument,
   SetContactBlockArchivedDocument,
   SetDefinitionArchivedDocument,
+  SetEmailServiceConfigDocument,
+  SetGlobalSettingsDocument,
   SetReferenceArchivedDocument,
   SignalWorkflowDocument,
   SpCertificateDocument,
@@ -319,6 +326,12 @@ export const liveEdge: Edge = {
     });
     return { ackedAt: data.recordAck.ackedAt, acknowledged: true, required: true };
   },
+  async ackRoster(policyVersionId, groupId, cookie) {
+    const data = await gatewayFetch(AckRosterDocument, { groupId, policyVersionId }, "AckRoster", {
+      cookie,
+    });
+    return data.ackRoster;
+  },
   async activateOrganization(domain, cookie) {
     const data = await gatewayFetch(
       ActivateOrganizationDocument,
@@ -468,6 +481,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.closeCase;
+  },
+  async completionReport(policyVersionId, groupId, cookie) {
+    const data = await gatewayFetch(
+      CompletionReportDocument,
+      { groupId, policyVersionId },
+      "CompletionReport",
+      { cookie },
+    );
+    return data.completionReport;
   },
   async contactBlocks(includeArchived, cookie) {
     const data = await gatewayFetch(ContactBlocksDocument, { includeArchived }, "ContactBlocks", {
@@ -634,10 +656,22 @@ export const liveEdge: Edge = {
     );
     return data.policyVersion ?? null;
   },
+  async emailServiceConfig(cookie) {
+    const data = await gatewayFetch(EmailServiceConfigDocument, {}, "EmailServiceConfig", {
+      cookie,
+    });
+    return data.emailServiceConfig;
+  },
 
   async enableUser(userId, cookie) {
     const data = await gatewayFetch(EnableUserDocument, { userId }, "EnableUser", { cookie });
     return data.enableUser;
+  },
+  async exportAcks(policyVersionId, format, cookie) {
+    const data = await gatewayFetch(ExportAcksDocument, { format, policyVersionId }, "ExportAcks", {
+      cookie,
+    });
+    return data.exportAcks;
   },
   async fetchIdpCert(url, cookie) {
     const body = await gatewayRestFetch<{ certificatePem: string }>(
@@ -656,6 +690,10 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.forceRotateSpCertificate;
+  },
+  async globalSettings(cookie) {
+    const data = await gatewayFetch(GlobalSettingsDocument, {}, "GlobalSettings", { cookie });
+    return data.globalSettings;
   },
   async grantRole(userId, role, cookie) {
     const data = await gatewayFetch(GrantRoleDocument, { role, userId }, "GrantRole", { cookie });
@@ -957,6 +995,21 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.setDefinitionArchived;
+  },
+  async setEmailServiceConfig(input, cookie) {
+    const data = await gatewayFetch(
+      SetEmailServiceConfigDocument,
+      { input },
+      "SetEmailServiceConfig",
+      { cookie },
+    );
+    return data.setEmailServiceConfig;
+  },
+  async setGlobalSettings(input, cookie) {
+    const data = await gatewayFetch(SetGlobalSettingsDocument, { input }, "SetGlobalSettings", {
+      cookie,
+    });
+    return data.setGlobalSettings;
   },
   async setReferenceArchived(id, archived, cookie) {
     const data = await gatewayFetch(

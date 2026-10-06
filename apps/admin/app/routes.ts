@@ -22,6 +22,8 @@ export default [
   route("users/:userId", "routes/users.$userId.tsx"),
   route("my-groups", "routes/my-groups.tsx"),
   route("magic-links", "routes/magic-links.tsx"),
+  route("completion", "routes/completion.tsx"),
+  route("completion/:number", "routes/completion.$number.tsx"),
   route("groups", "routes/groups.tsx"),
   route("groups/new", "routes/groups.new.tsx"),
   route("groups/:groupId", "routes/groups.$groupId.tsx"),
@@ -39,6 +41,7 @@ export default [
   route("workflows", "routes/workflows.tsx"),
   route("workflows/new", "routes/workflows.new.tsx"),
   route("workflows/:id", "routes/workflows.$id.tsx"),
+  route("settings", "routes/settings.tsx"),
   route("setup", "routes/setup.tsx"),
   route("audit", "routes/audit.tsx"),
 ] satisfies RouteConfig;

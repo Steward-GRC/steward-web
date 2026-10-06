@@ -78,6 +78,8 @@ export const toPolicyView = (
   policy: Omit<AuthoringPolicyFieldsFragment, "ownerName">,
   names: { category: string; subcategory: string },
 ): Policy => ({
+  ackAudienceOverride: policy.ackAudienceOverride,
+  ackTriggers: policy.ackTriggers,
   category: names.category,
   currentDraftVersionId: policy.currentDraftVersionId,
   currentPublishedVersionId: policy.currentPublishedVersionId,
