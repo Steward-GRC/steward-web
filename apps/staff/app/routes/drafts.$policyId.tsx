@@ -170,33 +170,29 @@ interface AiJobPoll {
   resultJson: null | string;
 }
 
-/** Polls `resources/ai-jobs/:jobId` every second until the job reaches a terminal phase. */
-const useAiJobPoll = (jobId: null | string): AiJobPoll | null => {
-  const fetcher = useFetcher<AiJobPoll>();
-  const timer = useRef<ReturnType<typeof globalThis.setInterval> | undefined>(undefined);
+/** Opens `resources/ai-jobs/:jobId` as a server-sent-events stream and resolves once its one
+ *  terminal message arrives — the gateway's `aiJobResult` subscription carries only the
+ *  job's completion, never an intermediate phase, so there is nothing to poll any more. */
+const useAiJobStream = (jobId: null | string): AiJobPoll | null => {
+  const [poll, setPoll] = useState<AiJobPoll | null>(null);
 
   useEffect(() => {
-    globalThis.clearInterval(timer.current);
     if (!jobId) return;
-    void fetcher.load(`/resources/ai-jobs/${jobId}`);
-    timer.current = globalThis.setInterval(() => {
-      void fetcher.load(`/resources/ai-jobs/${jobId}`);
-    }, 1000);
-    return () => globalThis.clearInterval(timer.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `fetcher` is stable per mount; `jobId` alone drives the poll
+    const source = new EventSource(`/resources/ai-jobs/${jobId}`);
+    const onMessage = (event: MessageEvent<string>) => {
+      setPoll(JSON.parse(event.data) as AiJobPoll);
+      source.close();
+    };
+    const onError = () => {
+      setPoll({ error: "ai job stream failed", phase: "AI_JOB_PHASE_FAILED", resultJson: null });
+      source.close();
+    };
+    source.addEventListener("message", onMessage);
+    source.addEventListener("error", onError);
+    return () => source.close();
   }, [jobId]);
 
-  useEffect(() => {
-    if (
-      fetcher.data &&
-      fetcher.data.phase !== "AI_JOB_PHASE_PENDING" &&
-      fetcher.data.phase !== "AI_JOB_PHASE_RUNNING"
-    ) {
-      globalThis.clearInterval(timer.current);
-    }
-  }, [fetcher.data]);
-
-  return fetcher.data ?? null;
+  return poll;
 };
 
 export default function DraftEditor({ loaderData }: Route.ComponentProps) {
@@ -235,8 +231,8 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const reviewJobId =
     reviewFetcher.data?.ok && "jobId" in reviewFetcher.data ? reviewFetcher.data.jobId : null;
 
-  const generateJob = useAiJobPoll(generateJobId);
-  const reviewJob = useAiJobPoll(reviewJobId);
+  const generateJob = useAiJobStream(generateJobId);
+  const reviewJob = useAiJobStream(reviewJobId);
 
   const collabFetcher = useFetcher<typeof action>();
   const collabResolvers = useRef<

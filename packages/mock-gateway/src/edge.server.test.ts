@@ -470,6 +470,27 @@ describe("mockEdge users directory", () => {
     it("aiJob() rejects an unknown job id", async () => {
       await expect(mockEdge.aiJob("no-such-job")).rejects.toMatchObject({ name: "GatewayError" });
     });
+
+    it("aiJobResult() resolves straight to the job's terminal outcome, with no polling", async () => {
+      const { jobId } = await mockEdge.submitDraftGeneration({
+        brief: "a brief for a new policy",
+        sections: [{ key: "purpose", order: 0, title: "Purpose" }],
+      });
+
+      const result = await mockEdge.aiJobResult(jobId);
+      expect(result.phase).toBe("AI_JOB_PHASE_SUCCEEDED");
+      expect(result.resultRef).toBe(jobId);
+
+      const content = await mockEdge.aiJobResultContent(result.resultRef!);
+      const parsed = JSON.parse(content.resultJson) as { sections: unknown[] };
+      expect(parsed.sections.length).toBeGreaterThan(0);
+    });
+
+    it("aiJobResult() rejects an unknown job id", async () => {
+      await expect(mockEdge.aiJobResult("no-such-job")).rejects.toMatchObject({
+        name: "GatewayError",
+      });
+    });
   });
 
   describe("collaboration", () => {
