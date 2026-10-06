@@ -379,6 +379,7 @@ export type CategoryQuery = {
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
     readonly ackTriggers: Types.AckTrigger;
     readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   } | null;
@@ -402,6 +403,7 @@ export type CategoryChildrenQuery = {
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
     readonly ackTriggers: Types.AckTrigger;
     readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   }>;
@@ -420,6 +422,7 @@ export type CategoryFieldsFragment = {
   readonly exclusionGroupIds: ReadonlyArray<string> | null;
   readonly ackTriggers: Types.AckTrigger;
   readonly ackEveryone: boolean;
+  readonly ackEveryoneSet: boolean;
   readonly reviewCadence: Types.ReviewCadence;
   readonly reviewDate: string | null;
 };
@@ -442,6 +445,7 @@ export type CategoryTreeQuery = {
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
     readonly ackTriggers: Types.AckTrigger;
     readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   }>;
@@ -567,6 +571,7 @@ export type CreateCategoryMutation = {
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
     readonly ackTriggers: Types.AckTrigger;
     readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   };
@@ -1010,6 +1015,7 @@ export type MoveCategoryMutation = {
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
     readonly ackTriggers: Types.AckTrigger;
     readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   };
@@ -1484,6 +1490,7 @@ export type RenameCategoryMutation = {
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
     readonly ackTriggers: Types.AckTrigger;
     readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   };
@@ -1935,6 +1942,7 @@ export type SetCategoryDefaultsMutation = {
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
     readonly ackTriggers: Types.AckTrigger;
     readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   };
@@ -1965,6 +1973,7 @@ export type SetCategoryGovernanceMutation = {
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
     readonly ackTriggers: Types.AckTrigger;
     readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   };
@@ -2437,6 +2446,7 @@ export const CategoryFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
@@ -3952,6 +3962,7 @@ export const CategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
@@ -4015,6 +4026,7 @@ export const CategoryChildrenDocument = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
@@ -4078,6 +4090,7 @@ export const CategoryTreeDocument = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
@@ -4480,6 +4493,7 @@ export const CreateCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
@@ -6103,6 +6117,7 @@ export const MoveCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
@@ -7483,6 +7498,7 @@ export const RenameCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
@@ -8703,6 +8719,7 @@ export const SetCategoryDefaultsDocument = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
@@ -8866,6 +8883,7 @@ export const SetCategoryGovernanceDocument = {
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
           { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
           { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
           { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],

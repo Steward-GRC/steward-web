@@ -967,6 +967,10 @@ export const liveEdge: Edge = {
       current = data.setCategoryDefaults;
     }
     if (
+      input.ackEveryone !== undefined ||
+      input.ackTriggers !== undefined ||
+      input.exclusionGroupIds !== undefined ||
+      input.idpGroupIds !== undefined ||
       input.owners !== undefined ||
       input.reviewCadence !== undefined ||
       input.reviewDate !== undefined
@@ -974,8 +978,14 @@ export const liveEdge: Edge = {
       const data = await gatewayFetch(
         SetCategoryGovernanceDocument,
         {
-          ackTriggers: current.ackTriggers,
+          ackEveryone: input.ackEveryone ?? current.ackEveryone,
+          ackTriggers: input.ackTriggers ?? current.ackTriggers,
+          exclusionGroupIds:
+            input.exclusionGroupIds === undefined
+              ? current.exclusionGroupIds
+              : input.exclusionGroupIds,
           id: input.id,
+          idpGroupIds: input.idpGroupIds === undefined ? current.idpGroupIds : input.idpGroupIds,
           owners: input.owners ?? current.owners,
           reviewCadence: input.reviewCadence ?? current.reviewCadence,
           reviewDate: input.reviewDate === undefined ? current.reviewDate : input.reviewDate,

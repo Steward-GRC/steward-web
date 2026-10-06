@@ -6,6 +6,7 @@ import type {
   UserFieldsFragment,
 } from "./generated/graphql";
 import type {
+  AckTrigger,
   DocumentType,
   PolicyViewerCan,
   ReferenceKind,
@@ -56,10 +57,21 @@ export interface Category {
  * it. The gateway calls these categories; the original UI called them groups.
  */
 export interface Group {
+  /** Ack-audience "Everyone" tri-state: true/false is this category's own value;
+   *  `ackEveryoneSet` says whether it's an explicit override (true) or inherited (false). */
+  readonly ackEveryone: boolean;
+  readonly ackEveryoneSet: boolean;
+  readonly ackTriggers: AckTrigger;
   readonly defaultTemplateId?: null | string;
   readonly defaultTemplateNone: boolean;
   readonly defaultWorkflowId?: null | string;
+  /** Per-category exclusion IdP group names. null = inherit from the ancestor chain; an
+   *  (possibly empty) array is this category's own explicit override. */
+  readonly exclusionGroupIds?: null | readonly string[];
   readonly id: string;
+  /** Per-category ack-audience IdP group names. Same inherit/override nullability as
+   *  `exclusionGroupIds`. */
+  readonly idpGroupIds?: null | readonly string[];
   readonly name: string;
   readonly owners: readonly string[];
   readonly parentId?: null | string;

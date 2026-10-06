@@ -299,6 +299,42 @@ describe("liveEdge.authorableGroups", () => {
   });
 });
 
+describe("liveEdge.updateGroupSettings", () => {
+  it("passes the governance fields through and preserves the rest", async () => {
+    const current = category("c-fin", "Finance");
+    const calls = routeGateway({
+      Category: () => ({ category: current }),
+      SetCategoryGovernance: (variables) => ({
+        setCategoryGovernance: { ...current, ...variables },
+      }),
+    });
+    await liveEdge.updateGroupSettings({
+      ackEveryone: true,
+      exclusionGroupIds: ["legal-hold"],
+      id: "c-fin",
+      idpGroupIds: null,
+    });
+    const call = calls.find((c) => c.operation === "SetCategoryGovernance");
+    expect(call?.variables).toMatchObject({
+      ackEveryone: true,
+      ackTriggers: current.ackTriggers,
+      exclusionGroupIds: ["legal-hold"],
+      idpGroupIds: null,
+      owners: current.owners,
+    });
+  });
+
+  it("skips the governance mutation entirely when only the template/workflow defaults change", async () => {
+    const current = category("c-fin", "Finance");
+    const calls = routeGateway({
+      Category: () => ({ category: current }),
+      SetCategoryDefaults: (variables) => ({ setCategoryDefaults: { ...current, ...variables } }),
+    });
+    await liveEdge.updateGroupSettings({ defaultTemplateNone: true, id: "c-fin" });
+    expect(calls.some((c) => c.operation === "SetCategoryGovernance")).toBe(false);
+  });
+});
+
 describe("liveEdge.listUserSessions", () => {
   it("carries the gateway's clientIp through to the admin sessions table", async () => {
     routeGateway({

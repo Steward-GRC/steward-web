@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { Category, Group, Policy, Template } from "@steward-web/api-client";
 
-import { DocumentType, PolicyStatus, ReviewCadence, Sensitivity } from "@steward-web/api-client";
+import {
+  AckTrigger,
+  DocumentType,
+  PolicyStatus,
+  ReviewCadence,
+  Sensitivity,
+} from "@steward-web/api-client";
 import { describe, expect, it } from "vitest";
 
 import { buildSearchIndex, searchHits } from "./searchIndex";
@@ -49,9 +55,14 @@ const template = (overrides: Partial<Template> & Pick<Template, "id" | "name">):
 });
 
 const group = (overrides: Partial<Group> & Pick<Group, "id" | "name" | "slug">): Group => ({
+  ackEveryone: false,
+  ackEveryoneSet: false,
+  ackTriggers: AckTrigger.None,
   defaultTemplateId: null,
   defaultTemplateNone: false,
   defaultWorkflowId: null,
+  exclusionGroupIds: null,
+  idpGroupIds: null,
   owners: [],
   parentId: null,
   reviewCadence: ReviewCadence.None,

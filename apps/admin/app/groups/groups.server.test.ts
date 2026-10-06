@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { Group } from "@steward-web/api-client";
 
-import { ReviewCadence } from "@steward-web/api-client";
+import { AckTrigger, ReviewCadence } from "@steward-web/api-client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -47,9 +47,14 @@ const readerMe = {
 const jsonOnce = (data: unknown) => Response.json({ data });
 
 const makeGroup = (overrides: Partial<Group> & Pick<Group, "id" | "name">): Group => ({
+  ackEveryone: false,
+  ackEveryoneSet: false,
+  ackTriggers: AckTrigger.None,
   defaultTemplateId: null,
   defaultTemplateNone: false,
   defaultWorkflowId: null,
+  exclusionGroupIds: null,
+  idpGroupIds: null,
   owners: [],
   parentId: null,
   reviewCadence: ReviewCadence.None,
@@ -162,12 +167,18 @@ describe("moveGroup", () => {
 });
 
 describe("updateGroupSettings", () => {
-  it("posts the defaults, then the governance, keeping the category's ack settings", async () => {
-    const current = { ...makeGroup({ id: "g-1", name: "G1" }), ackTriggers: "ON_PUBLISH" };
-    const updated = {
-      ...makeGroup({ id: "g-1", name: "G1", owners: ["u-1"] }),
-      ackTriggers: "ON_PUBLISH",
-    };
+  it("posts the defaults, then the governance (owners, ack settings and exclusions)", async () => {
+    const current = makeGroup({ id: "g-1", name: "G1" });
+    const updated = makeGroup({
+      ackEveryone: true,
+      ackEveryoneSet: true,
+      ackTriggers: AckTrigger.OnPublish,
+      exclusionGroupIds: ["legal-hold"],
+      id: "g-1",
+      idpGroupIds: ["finance-staff"],
+      name: "G1",
+      owners: ["u-1"],
+    });
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
@@ -177,9 +188,13 @@ describe("updateGroupSettings", () => {
     vi.stubGlobal("fetch", fetchSpy);
 
     const result = await updateGroupSettings(request(), "g-1", {
+      ackEveryone: true,
+      ackTriggers: AckTrigger.OnPublish,
       defaultTemplateId: null,
       defaultTemplateNone: true,
       defaultWorkflowId: null,
+      exclusionGroupIds: ["legal-hold"],
+      idpGroupIds: ["finance-staff"],
       owners: ["u-1"],
       reviewCadence: ReviewCadence.Annual,
       reviewDate: null,
@@ -189,7 +204,10 @@ describe("updateGroupSettings", () => {
       JSON.parse((fetchSpy.mock.calls[call] as [string, RequestInit])[1].body as string).variables;
     expect(variablesOf(2)).toMatchObject({ defaultTemplateNone: true, id: "g-1" });
     expect(variablesOf(3)).toMatchObject({
+      ackEveryone: true,
       ackTriggers: "ON_PUBLISH",
+      exclusionGroupIds: ["legal-hold"],
+      idpGroupIds: ["finance-staff"],
       owners: ["u-1"],
       reviewCadence: "ANNUAL",
     });

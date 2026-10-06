@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { Group, User } from "@steward-web/api-client";
 
-import { ReviewCadence } from "@steward-web/api-client";
+import { AckTrigger, ReviewCadence } from "@steward-web/api-client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -34,10 +34,15 @@ const nonManagerMe = {
 };
 
 const makeGroup = (overrides: Partial<Group>): Group => ({
+  ackEveryone: false,
+  ackEveryoneSet: false,
+  ackTriggers: AckTrigger.None,
   defaultTemplateId: null,
   defaultTemplateNone: false,
   defaultWorkflowId: null,
+  exclusionGroupIds: null,
   id: "g-1",
+  idpGroupIds: null,
   name: "Group",
   owners: [],
   parentId: null,

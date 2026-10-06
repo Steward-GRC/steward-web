@@ -85,6 +85,7 @@ export type {
   WorkflowStatus,
 } from "./edge";
 export {
+  AckTrigger,
   AiJobPhase,
   ApprovalStatus,
   AssistOperation,
