@@ -1,0 +1,12 @@
+fragment OrganizationFields on Organization {
+  connectionId
+  displayName
+  domain
+  enabled
+  jitEnabled
+  orgName
+  protocol
+  testPassed
+  verified
+  allowLocal
+}

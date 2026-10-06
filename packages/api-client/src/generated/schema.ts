@@ -50,6 +50,16 @@ export type AckStatus = {
   readonly required: Scalars["Boolean"]["output"];
 };
 
+/** A new organisation SSO connection. secretRef names the stored client secret (OIDC). */
+export type AddOrganizationInput = {
+  readonly config?: InputMaybe<ReadonlyArray<KeyValueInput>>;
+  readonly displayName?: InputMaybe<Scalars["String"]["input"]>;
+  readonly domain: Scalars["String"]["input"];
+  readonly orgName: Scalars["String"]["input"];
+  readonly protocol: Scalars["String"]["input"];
+  readonly secretRef?: InputMaybe<Scalars["String"]["input"]>;
+};
+
 export type BreakGlassGrant = {
   readonly __typename?: "BreakGlassGrant";
   readonly grantedUntil: Scalars["DateTime"]["output"];
@@ -134,6 +144,15 @@ export enum DocumentType {
   Procedure = "PROCEDURE",
 }
 
+/** DNS TXT domain-verification challenge. Publish dnsRecordValue at dnsRecordName, then verify. */
+export type DomainVerification = {
+  readonly __typename?: "DomainVerification";
+  readonly dnsRecordName: Scalars["String"]["output"];
+  readonly dnsRecordValue: Scalars["String"]["output"];
+  readonly instructions: Scalars["String"]["output"];
+  readonly token: Scalars["String"]["output"];
+};
+
 /** A taxonomy group: the policy/procedure library's org hierarchy. */
 export type Group = {
   readonly __typename?: "Group";
@@ -157,6 +176,18 @@ export type Group = {
   readonly slug: Scalars["String"]["output"];
 };
 
+/**
+ * Maps one asserted IdP group-claim value to a platform group by id. The target is a group
+ * id, not a name, so JIT provisioning never grants the wrong same-named group.
+ */
+export type GroupMapping = {
+  readonly __typename?: "GroupMapping";
+  readonly connectionId: Scalars["ID"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly idpGroupClaimValue: Scalars["String"]["output"];
+  readonly targetGroupId: Scalars["ID"]["output"];
+};
+
 /** One append-only event in a policy's combined publish-and-approval history (U18): submitted, a stage decision, published, changes requested, or withdrawn. */
 export type HistoryEntry = {
   readonly __typename?: "HistoryEntry";
@@ -166,6 +197,12 @@ export type HistoryEntry = {
   readonly kind: Scalars["String"]["output"];
   readonly stage?: Maybe<Scalars["String"]["output"]>;
   readonly versionLabel: Scalars["String"]["output"];
+};
+
+/** One IdP connection config entry (e.g. SAML entityId/ssoUrl/signingCertificate, or OIDC issuer/clientId). */
+export type KeyValueInput = {
+  readonly key: Scalars["String"]["input"];
+  readonly value: Scalars["String"]["input"];
 };
 
 /** The facts about the signed-in user that drive identity and permission checks. */
@@ -187,8 +224,23 @@ export type Mutation = {
   readonly __typename?: "Mutation";
   /** Records the CALLING user's acknowledgement of a published policy version. Refused when the caller isn't in the ack audience, or the version isn't published. */
   readonly acknowledgePolicy: AckStatus;
+  /** Enables an organisation's SSO connection for sign-in. Site-admin only. */
+  readonly activateOrganization: Organization;
+  /** Adds an IdP-group-claim-to-platform-group mapping for a connection. Site-admin only. */
+  readonly addGroupMapping: GroupMapping;
+  /**
+   * Registers a new organisation SSO connection: unverified, untested and disabled until the
+   * domain is verified and the IdP connection passes its test. Site-admin only.
+   */
+  readonly addOrganization: Organization;
   /** A site admin's time-boxed, audited reveal of a sensitive policy's real content. A non-empty reason is required; the grant is recorded for audit. */
   readonly breakGlassReveal: BreakGlassGrant;
+  /**
+   * Changes an organisation's IdP protocol (SAML <-> OIDC). DESTRUCTIVE: it resets the
+   * connection to the start, clearing both gates and disabling it, so the domain must be
+   * re-verified and re-tested before re-activation. Site-admin only.
+   */
+  readonly changeOrgProtocol: Organization;
   /** Creates a taxonomy group. Site-admin only. */
   readonly createGroup: Group;
   /**
@@ -196,14 +248,25 @@ export type Mutation = {
    * owns policies. Site-admin only.
    */
   readonly deleteGroup: Scalars["Boolean"]["output"];
+  /** Removes a group mapping by id. Site-admin only. */
+  readonly deleteGroupMapping: Scalars["Boolean"]["output"];
+  /** Removes an organisation's SSO connection. Irreversible. Site-admin only. */
+  readonly deleteOrganization: Scalars["Boolean"]["output"];
   /**
    * Soft-deletes a user: revokes their sessions and drops their access. Never deletes a policy
    * they own; deleteUser is refused while previewUserDeletion reports blocksDelete. Site-admin
    * only.
    */
   readonly deleteUser: DeleteUserResult;
+  /** Disables an organisation's SSO connection. Does not clear its gates. Site-admin only. */
+  readonly disableOrganization: Organization;
   readonly disableUser: User;
   readonly enableUser: User;
+  /**
+   * Mints a new SP signing certificate and activates it immediately, superseding the previous
+   * one. Site-admin only.
+   */
+  readonly forceRotateSpCertificate: SpCertificate;
   /** Grants a GLOBAL role (no category). Site-admin only. */
   readonly grantRole: User;
   /**
@@ -218,23 +281,57 @@ export type Mutation = {
   /** Revokes every active session for a user, signing them out everywhere. Site-admin only. */
   readonly revokeUserSessions: Scalars["Int"]["output"];
   /**
+   * Mints a DNS TXT domain-verification challenge. The token is stable by default; rotate:
+   * true mints a fresh one, which also revokes the domain's prior verified proof. Site-admin
+   * only.
+   */
+  readonly startDomainVerification: DomainVerification;
+  /**
    * Sets a group's inherited defaults (template, workflow) and governance (owners, review
    * cadence). Site-admin only.
    */
   readonly updateGroupSettings: Group;
+  /**
+   * Updates an organisation's per-connection login toggles. Each argument is optional; omit
+   * one to leave it unchanged. Site-admin only.
+   */
+  readonly updateIdPConnection: Organization;
   /** Edits the CALLING user's own name. Refused when signed out. */
   readonly updateMyProfile: Me;
   /** Edits another user's name and email. Local (non-federated) accounts only, site-admin only. */
   readonly updateUserProfile: User;
+  /** Checks the domain's DNS TXT record against its verification token. Site-admin only. */
+  readonly verifyDomain: Organization;
 };
 
 export type MutationAcknowledgePolicyArgs = {
   policyVersionId: Scalars["ID"]["input"];
 };
 
+export type MutationActivateOrganizationArgs = {
+  domain: Scalars["String"]["input"];
+};
+
+export type MutationAddGroupMappingArgs = {
+  connectionId: Scalars["ID"]["input"];
+  idpGroupClaimValue: Scalars["String"]["input"];
+  targetGroupId: Scalars["ID"]["input"];
+};
+
+export type MutationAddOrganizationArgs = {
+  input: AddOrganizationInput;
+};
+
 export type MutationBreakGlassRevealArgs = {
   policyId: Scalars["ID"]["input"];
   reason: Scalars["String"]["input"];
+};
+
+export type MutationChangeOrgProtocolArgs = {
+  config?: InputMaybe<ReadonlyArray<KeyValueInput>>;
+  domain: Scalars["String"]["input"];
+  protocol: Scalars["String"]["input"];
+  secretRef?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MutationCreateGroupArgs = {
@@ -247,8 +344,20 @@ export type MutationDeleteGroupArgs = {
   id: Scalars["ID"]["input"];
 };
 
+export type MutationDeleteGroupMappingArgs = {
+  mappingId: Scalars["ID"]["input"];
+};
+
+export type MutationDeleteOrganizationArgs = {
+  domain: Scalars["String"]["input"];
+};
+
 export type MutationDeleteUserArgs = {
   userId: Scalars["ID"]["input"];
+};
+
+export type MutationDisableOrganizationArgs = {
+  domain: Scalars["String"]["input"];
 };
 
 export type MutationDisableUserArgs = {
@@ -285,6 +394,11 @@ export type MutationRevokeUserSessionsArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationStartDomainVerificationArgs = {
+  domain: Scalars["String"]["input"];
+  rotate?: InputMaybe<Scalars["Boolean"]["input"]>;
+};
+
 export type MutationUpdateGroupSettingsArgs = {
   defaultTemplateId?: InputMaybe<Scalars["ID"]["input"]>;
   defaultTemplateNone?: InputMaybe<Scalars["Boolean"]["input"]>;
@@ -293,6 +407,12 @@ export type MutationUpdateGroupSettingsArgs = {
   owners?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
   reviewCadence?: InputMaybe<ReviewCadence>;
   reviewDate?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type MutationUpdateIdPConnectionArgs = {
+  allowLocal?: InputMaybe<Scalars["Boolean"]["input"]>;
+  domain: Scalars["String"]["input"];
+  jitEnabled?: InputMaybe<Scalars["Boolean"]["input"]>;
 };
 
 export type MutationUpdateMyProfileArgs = {
@@ -304,6 +424,32 @@ export type MutationUpdateUserProfileArgs = {
   email: Scalars["String"]["input"];
   name: Scalars["String"]["input"];
   userId: Scalars["ID"]["input"];
+};
+
+export type MutationVerifyDomainArgs = {
+  domain: Scalars["String"]["input"];
+};
+
+/** One organisation's SSO connection, keyed by email domain. */
+export type Organization = {
+  readonly __typename?: "Organization";
+  /** When true, this organisation's users may also sign in with a local password. */
+  readonly allowLocal: Scalars["Boolean"]["output"];
+  /** Identity-service connection id; keys SP-cert-independent, per-connection calls. */
+  readonly connectionId: Scalars["ID"]["output"];
+  readonly displayName: Scalars["String"]["output"];
+  readonly domain: Scalars["String"]["output"];
+  /** Currently live for sign-in. Both gates must have passed to activate. */
+  readonly enabled: Scalars["Boolean"]["output"];
+  /** When true, an unknown SSO email is auto-provisioned on first sign-in. */
+  readonly jitEnabled: Scalars["Boolean"]["output"];
+  readonly orgName: Scalars["String"]["output"];
+  /** 'saml' | 'oidc' */
+  readonly protocol: Scalars["String"]["output"];
+  /** End-to-end IdP login test gate. */
+  readonly testPassed: Scalars["Boolean"]["output"];
+  /** Domain-ownership gate (DNS TXT verification). */
+  readonly verified: Scalars["Boolean"]["output"];
 };
 
 /** One row of the policy/procedure library catalog. */
@@ -430,10 +576,14 @@ export type Query = {
   readonly diagnostics: Diagnostics;
   /** A group's direct children. A null parentId lists the root groups. Site-admin only. */
   readonly groupChildren: ReadonlyArray<Group>;
+  /** An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only. */
+  readonly groupMappings: ReadonlyArray<GroupMapping>;
   /** A user's sessions, site-admin only. */
   readonly listUserSessions: ReadonlyArray<Session>;
   /** The signed-in user, from the verified session. Null when signed out. */
   readonly me?: Maybe<Me>;
+  /** Every configured organisation SSO connection. Site-admin only. */
+  readonly organizations: ReadonlyArray<Organization>;
   /** The library catalog for one document type. Any signed-in user. */
   readonly policies: ReadonlyArray<Policy>;
   /** The reader's full detail for one policy/procedure, found by number. Null when there is no such document, or the caller cannot see it at all. */
@@ -443,6 +593,8 @@ export type Query = {
    * block on, orphan or drop. Site-admin only.
    */
   readonly previewUserDeletion: UserDeletionPreview;
+  /** The platform's active SP (service-provider) signing certificate. Site-admin only. */
+  readonly spCertificate: SpCertificate;
   /** The templates selectable as a group's default. Site-admin only. */
   readonly templates: ReadonlyArray<Template>;
   /**
@@ -456,6 +608,10 @@ export type Query = {
 
 export type QueryGroupChildrenArgs = {
   parentId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
+export type QueryGroupMappingsArgs = {
+  connectionId: Scalars["ID"]["input"];
 };
 
 export type QueryListUserSessionsArgs = {
@@ -522,6 +678,16 @@ export type Session = {
   readonly revokedAt?: Maybe<Scalars["String"]["output"]>;
   readonly sessionId: Scalars["ID"]["output"];
   readonly userAgent: Scalars["String"]["output"];
+};
+
+/** One SP (service-provider) signing certificate. At most one is active at a time. */
+export type SpCertificate = {
+  readonly __typename?: "SpCertificate";
+  readonly active: Scalars["Boolean"]["output"];
+  readonly certPem: Scalars["String"]["output"];
+  readonly notAfter: Scalars["String"]["output"];
+  readonly serial: Scalars["String"]["output"];
+  readonly spMetadataXml: Scalars["String"]["output"];
 };
 
 /** A template selectable as a group's default. */

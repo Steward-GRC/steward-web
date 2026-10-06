@@ -18,6 +18,59 @@ export type AcknowledgePolicyMutation = {
   };
 };
 
+export type ActivateOrganizationMutationVariables = Exact<{
+  domain: string;
+}>;
+
+export type ActivateOrganizationMutation = {
+  readonly activateOrganization: {
+    readonly connectionId: string;
+    readonly displayName: string;
+    readonly domain: string;
+    readonly enabled: boolean;
+    readonly jitEnabled: boolean;
+    readonly orgName: string;
+    readonly protocol: string;
+    readonly testPassed: boolean;
+    readonly verified: boolean;
+    readonly allowLocal: boolean;
+  };
+};
+
+export type AddGroupMappingMutationVariables = Exact<{
+  connectionId: string | number;
+  idpGroupClaimValue: string;
+  targetGroupId: string | number;
+}>;
+
+export type AddGroupMappingMutation = {
+  readonly addGroupMapping: {
+    readonly connectionId: string;
+    readonly id: string;
+    readonly idpGroupClaimValue: string;
+    readonly targetGroupId: string;
+  };
+};
+
+export type AddOrganizationMutationVariables = Exact<{
+  input: Types.AddOrganizationInput;
+}>;
+
+export type AddOrganizationMutation = {
+  readonly addOrganization: {
+    readonly connectionId: string;
+    readonly displayName: string;
+    readonly domain: string;
+    readonly enabled: boolean;
+    readonly jitEnabled: boolean;
+    readonly orgName: string;
+    readonly protocol: string;
+    readonly testPassed: boolean;
+    readonly verified: boolean;
+    readonly allowLocal: boolean;
+  };
+};
+
 export type BreakGlassRevealMutationVariables = Exact<{
   policyId: string | number;
   reason: string;
@@ -36,6 +89,28 @@ export type CategoriesQuery = {
     readonly slug: string;
     readonly subcategories: ReadonlyArray<string>;
   }>;
+};
+
+export type ChangeOrgProtocolMutationVariables = Exact<{
+  domain: string;
+  protocol: string;
+  config?: ReadonlyArray<Types.KeyValueInput> | Types.KeyValueInput | null | undefined;
+  secretRef?: string | null | undefined;
+}>;
+
+export type ChangeOrgProtocolMutation = {
+  readonly changeOrgProtocol: {
+    readonly connectionId: string;
+    readonly displayName: string;
+    readonly domain: string;
+    readonly enabled: boolean;
+    readonly jitEnabled: boolean;
+    readonly orgName: string;
+    readonly protocol: string;
+    readonly testPassed: boolean;
+    readonly verified: boolean;
+    readonly allowLocal: boolean;
+  };
 };
 
 export type CreateGroupMutationVariables = Exact<{
@@ -64,6 +139,18 @@ export type DeleteGroupMutationVariables = Exact<{
 }>;
 
 export type DeleteGroupMutation = { readonly deleteGroup: boolean };
+
+export type DeleteGroupMappingMutationVariables = Exact<{
+  mappingId: string | number;
+}>;
+
+export type DeleteGroupMappingMutation = { readonly deleteGroupMapping: boolean };
+
+export type DeleteOrganizationMutationVariables = Exact<{
+  domain: string;
+}>;
+
+export type DeleteOrganizationMutation = { readonly deleteOrganization: boolean };
 
 export type DeleteUserMutationVariables = Exact<{
   userId: string | number;
@@ -112,6 +199,25 @@ export type DiagnosticsQuery = {
   };
 };
 
+export type DisableOrganizationMutationVariables = Exact<{
+  domain: string;
+}>;
+
+export type DisableOrganizationMutation = {
+  readonly disableOrganization: {
+    readonly connectionId: string;
+    readonly displayName: string;
+    readonly domain: string;
+    readonly enabled: boolean;
+    readonly jitEnabled: boolean;
+    readonly orgName: string;
+    readonly protocol: string;
+    readonly testPassed: boolean;
+    readonly verified: boolean;
+    readonly allowLocal: boolean;
+  };
+};
+
 export type DisableUserMutationVariables = Exact<{
   userId: string | number;
 }>;
@@ -153,6 +259,18 @@ export type EnableUserMutation = {
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+  };
+};
+
+export type ForceRotateSpCertificateMutationVariables = Exact<{ [key: string]: never }>;
+
+export type ForceRotateSpCertificateMutation = {
+  readonly forceRotateSpCertificate: {
+    readonly active: boolean;
+    readonly certPem: string;
+    readonly notAfter: string;
+    readonly serial: string;
+    readonly spMetadataXml: string;
   };
 };
 
@@ -211,6 +329,19 @@ export type GroupFieldsFragment = {
   readonly reviewDate: string | null;
 };
 
+export type GroupMappingsQueryVariables = Exact<{
+  connectionId: string | number;
+}>;
+
+export type GroupMappingsQuery = {
+  readonly groupMappings: ReadonlyArray<{
+    readonly connectionId: string;
+    readonly id: string;
+    readonly idpGroupClaimValue: string;
+    readonly targetGroupId: string;
+  }>;
+};
+
 export type ListUserSessionsQueryVariables = Exact<{
   userId: string | number;
 }>;
@@ -260,6 +391,36 @@ export type MoveGroupMutation = {
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   };
+};
+
+export type OrganizationFieldsFragment = {
+  readonly connectionId: string;
+  readonly displayName: string;
+  readonly domain: string;
+  readonly enabled: boolean;
+  readonly jitEnabled: boolean;
+  readonly orgName: string;
+  readonly protocol: string;
+  readonly testPassed: boolean;
+  readonly verified: boolean;
+  readonly allowLocal: boolean;
+};
+
+export type OrganizationsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type OrganizationsQuery = {
+  readonly organizations: ReadonlyArray<{
+    readonly connectionId: string;
+    readonly displayName: string;
+    readonly domain: string;
+    readonly enabled: boolean;
+    readonly jitEnabled: boolean;
+    readonly orgName: string;
+    readonly protocol: string;
+    readonly testPassed: boolean;
+    readonly verified: boolean;
+    readonly allowLocal: boolean;
+  }>;
 };
 
 export type PoliciesQueryVariables = Exact<{
@@ -442,6 +603,32 @@ export type RevokeUserSessionsMutationVariables = Exact<{
 
 export type RevokeUserSessionsMutation = { readonly revokeUserSessions: number };
 
+export type SpCertificateQueryVariables = Exact<{ [key: string]: never }>;
+
+export type SpCertificateQuery = {
+  readonly spCertificate: {
+    readonly active: boolean;
+    readonly certPem: string;
+    readonly notAfter: string;
+    readonly serial: string;
+    readonly spMetadataXml: string;
+  };
+};
+
+export type StartDomainVerificationMutationVariables = Exact<{
+  domain: string;
+  rotate?: boolean | null | undefined;
+}>;
+
+export type StartDomainVerificationMutation = {
+  readonly startDomainVerification: {
+    readonly dnsRecordName: string;
+    readonly dnsRecordValue: string;
+    readonly instructions: string;
+    readonly token: string;
+  };
+};
+
 export type TemplatesQueryVariables = Exact<{ [key: string]: never }>;
 
 export type TemplatesQuery = {
@@ -470,6 +657,27 @@ export type UpdateGroupSettingsMutation = {
     readonly owners: ReadonlyArray<string>;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
+  };
+};
+
+export type UpdateIdPConnectionMutationVariables = Exact<{
+  domain: string;
+  jitEnabled?: boolean | null | undefined;
+  allowLocal?: boolean | null | undefined;
+}>;
+
+export type UpdateIdPConnectionMutation = {
+  readonly updateIdPConnection: {
+    readonly connectionId: string;
+    readonly displayName: string;
+    readonly domain: string;
+    readonly enabled: boolean;
+    readonly jitEnabled: boolean;
+    readonly orgName: string;
+    readonly protocol: string;
+    readonly testPassed: boolean;
+    readonly verified: boolean;
+    readonly allowLocal: boolean;
   };
 };
 
@@ -557,6 +765,25 @@ export type UsersQuery = {
   };
 };
 
+export type VerifyDomainMutationVariables = Exact<{
+  domain: string;
+}>;
+
+export type VerifyDomainMutation = {
+  readonly verifyDomain: {
+    readonly connectionId: string;
+    readonly displayName: string;
+    readonly domain: string;
+    readonly enabled: boolean;
+    readonly jitEnabled: boolean;
+    readonly orgName: string;
+    readonly protocol: string;
+    readonly testPassed: boolean;
+    readonly verified: boolean;
+    readonly allowLocal: boolean;
+  };
+};
+
 export type WorkflowsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type WorkflowsQuery = {
@@ -588,6 +815,31 @@ export const GroupFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<GroupFieldsFragment, unknown>;
+export const OrganizationFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "OrganizationFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Organization" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "displayName" } },
+          { kind: "Field", name: { kind: "Name", value: "domain" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "jitEnabled" } },
+          { kind: "Field", name: { kind: "Name", value: "orgName" } },
+          { kind: "Field", name: { kind: "Name", value: "protocol" } },
+          { kind: "Field", name: { kind: "Name", value: "testPassed" } },
+          { kind: "Field", name: { kind: "Name", value: "verified" } },
+          { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<OrganizationFieldsFragment, unknown>;
 export const UserFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -660,6 +912,201 @@ export const AcknowledgePolicyDocument = {
     },
   ],
 } as unknown as DocumentNode<AcknowledgePolicyMutation, AcknowledgePolicyMutationVariables>;
+export const ActivateOrganizationDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ActivateOrganization" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "activateOrganization" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "domain" },
+                value: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "OrganizationFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "OrganizationFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Organization" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "displayName" } },
+          { kind: "Field", name: { kind: "Name", value: "domain" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "jitEnabled" } },
+          { kind: "Field", name: { kind: "Name", value: "orgName" } },
+          { kind: "Field", name: { kind: "Name", value: "protocol" } },
+          { kind: "Field", name: { kind: "Name", value: "testPassed" } },
+          { kind: "Field", name: { kind: "Name", value: "verified" } },
+          { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ActivateOrganizationMutation, ActivateOrganizationMutationVariables>;
+export const AddGroupMappingDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "AddGroupMapping" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "connectionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "idpGroupClaimValue" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "targetGroupId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "addGroupMapping" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "connectionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "connectionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "idpGroupClaimValue" },
+                value: { kind: "Variable", name: { kind: "Name", value: "idpGroupClaimValue" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "targetGroupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "targetGroupId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "idpGroupClaimValue" } },
+                { kind: "Field", name: { kind: "Name", value: "targetGroupId" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddGroupMappingMutation, AddGroupMappingMutationVariables>;
+export const AddOrganizationDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "AddOrganization" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "AddOrganizationInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "addOrganization" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "OrganizationFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "OrganizationFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Organization" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "displayName" } },
+          { kind: "Field", name: { kind: "Name", value: "domain" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "jitEnabled" } },
+          { kind: "Field", name: { kind: "Name", value: "orgName" } },
+          { kind: "Field", name: { kind: "Name", value: "protocol" } },
+          { kind: "Field", name: { kind: "Name", value: "testPassed" } },
+          { kind: "Field", name: { kind: "Name", value: "verified" } },
+          { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddOrganizationMutation, AddOrganizationMutationVariables>;
 export const BreakGlassRevealDocument = {
   kind: "Document",
   definitions: [
@@ -741,6 +1188,107 @@ export const CategoriesDocument = {
     },
   ],
 } as unknown as DocumentNode<CategoriesQuery, CategoriesQueryVariables>;
+export const ChangeOrgProtocolDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ChangeOrgProtocol" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "protocol" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "config" } },
+          type: {
+            kind: "ListType",
+            type: {
+              kind: "NonNullType",
+              type: { kind: "NamedType", name: { kind: "Name", value: "KeyValueInput" } },
+            },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "secretRef" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "changeOrgProtocol" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "domain" },
+                value: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "protocol" },
+                value: { kind: "Variable", name: { kind: "Name", value: "protocol" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "config" },
+                value: { kind: "Variable", name: { kind: "Name", value: "config" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "secretRef" },
+                value: { kind: "Variable", name: { kind: "Name", value: "secretRef" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "OrganizationFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "OrganizationFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Organization" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "displayName" } },
+          { kind: "Field", name: { kind: "Name", value: "domain" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "jitEnabled" } },
+          { kind: "Field", name: { kind: "Name", value: "orgName" } },
+          { kind: "Field", name: { kind: "Name", value: "protocol" } },
+          { kind: "Field", name: { kind: "Name", value: "testPassed" } },
+          { kind: "Field", name: { kind: "Name", value: "verified" } },
+          { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ChangeOrgProtocolMutation, ChangeOrgProtocolMutationVariables>;
 export const CreateGroupDocument = {
   kind: "Document",
   definitions: [
@@ -862,6 +1410,78 @@ export const DeleteGroupDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteGroupMutation, DeleteGroupMutationVariables>;
+export const DeleteGroupMappingDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteGroupMapping" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "mappingId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteGroupMapping" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "mappingId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "mappingId" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteGroupMappingMutation, DeleteGroupMappingMutationVariables>;
+export const DeleteOrganizationDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteOrganization" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteOrganization" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "domain" },
+                value: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteOrganizationMutation, DeleteOrganizationMutationVariables>;
 export const DeleteUserDocument = {
   kind: "Document",
   definitions: [
@@ -996,6 +1616,68 @@ export const DiagnosticsDocument = {
     },
   ],
 } as unknown as DocumentNode<DiagnosticsQuery, DiagnosticsQueryVariables>;
+export const DisableOrganizationDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DisableOrganization" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "disableOrganization" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "domain" },
+                value: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "OrganizationFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "OrganizationFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Organization" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "displayName" } },
+          { kind: "Field", name: { kind: "Name", value: "domain" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "jitEnabled" } },
+          { kind: "Field", name: { kind: "Name", value: "orgName" } },
+          { kind: "Field", name: { kind: "Name", value: "protocol" } },
+          { kind: "Field", name: { kind: "Name", value: "testPassed" } },
+          { kind: "Field", name: { kind: "Name", value: "verified" } },
+          { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DisableOrganizationMutation, DisableOrganizationMutationVariables>;
 export const DisableUserDocument = {
   kind: "Document",
   definitions: [
@@ -1122,6 +1804,38 @@ export const EnableUserDocument = {
     },
   ],
 } as unknown as DocumentNode<EnableUserMutation, EnableUserMutationVariables>;
+export const ForceRotateSpCertificateDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ForceRotateSpCertificate" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "forceRotateSpCertificate" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "active" } },
+                { kind: "Field", name: { kind: "Name", value: "certPem" } },
+                { kind: "Field", name: { kind: "Name", value: "notAfter" } },
+                { kind: "Field", name: { kind: "Name", value: "serial" } },
+                { kind: "Field", name: { kind: "Name", value: "spMetadataXml" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ForceRotateSpCertificateMutation,
+  ForceRotateSpCertificateMutationVariables
+>;
 export const GrantRoleDocument = {
   kind: "Document",
   definitions: [
@@ -1257,6 +1971,51 @@ export const GroupChildrenDocument = {
     },
   ],
 } as unknown as DocumentNode<GroupChildrenQuery, GroupChildrenQueryVariables>;
+export const GroupMappingsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "GroupMappings" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "connectionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "groupMappings" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "connectionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "connectionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "idpGroupClaimValue" } },
+                { kind: "Field", name: { kind: "Name", value: "targetGroupId" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GroupMappingsQuery, GroupMappingsQueryVariables>;
 export const ListUserSessionsDocument = {
   kind: "Document",
   definitions: [
@@ -1409,6 +2168,51 @@ export const MoveGroupDocument = {
     },
   ],
 } as unknown as DocumentNode<MoveGroupMutation, MoveGroupMutationVariables>;
+export const OrganizationsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "Organizations" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "organizations" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "OrganizationFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "OrganizationFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Organization" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "displayName" } },
+          { kind: "Field", name: { kind: "Name", value: "domain" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "jitEnabled" } },
+          { kind: "Field", name: { kind: "Name", value: "orgName" } },
+          { kind: "Field", name: { kind: "Name", value: "protocol" } },
+          { kind: "Field", name: { kind: "Name", value: "testPassed" } },
+          { kind: "Field", name: { kind: "Name", value: "verified" } },
+          { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<OrganizationsQuery, OrganizationsQueryVariables>;
 export const PoliciesDocument = {
   kind: "Document",
   definitions: [
@@ -1943,6 +2747,93 @@ export const RevokeUserSessionsDocument = {
     },
   ],
 } as unknown as DocumentNode<RevokeUserSessionsMutation, RevokeUserSessionsMutationVariables>;
+export const SpCertificateDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "SpCertificate" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "spCertificate" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "active" } },
+                { kind: "Field", name: { kind: "Name", value: "certPem" } },
+                { kind: "Field", name: { kind: "Name", value: "notAfter" } },
+                { kind: "Field", name: { kind: "Name", value: "serial" } },
+                { kind: "Field", name: { kind: "Name", value: "spMetadataXml" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SpCertificateQuery, SpCertificateQueryVariables>;
+export const StartDomainVerificationDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "StartDomainVerification" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "rotate" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "startDomainVerification" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "domain" },
+                value: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "rotate" },
+                value: { kind: "Variable", name: { kind: "Name", value: "rotate" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "dnsRecordName" } },
+                { kind: "Field", name: { kind: "Name", value: "dnsRecordValue" } },
+                { kind: "Field", name: { kind: "Name", value: "instructions" } },
+                { kind: "Field", name: { kind: "Name", value: "token" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  StartDomainVerificationMutation,
+  StartDomainVerificationMutationVariables
+>;
 export const TemplatesDocument = {
   kind: "Document",
   definitions: [
@@ -2097,6 +2988,88 @@ export const UpdateGroupSettingsDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateGroupSettingsMutation, UpdateGroupSettingsMutationVariables>;
+export const UpdateIdPConnectionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateIdPConnection" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "jitEnabled" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "allowLocal" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateIdPConnection" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "domain" },
+                value: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "jitEnabled" },
+                value: { kind: "Variable", name: { kind: "Name", value: "jitEnabled" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "allowLocal" },
+                value: { kind: "Variable", name: { kind: "Name", value: "allowLocal" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "OrganizationFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "OrganizationFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Organization" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "displayName" } },
+          { kind: "Field", name: { kind: "Name", value: "domain" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "jitEnabled" } },
+          { kind: "Field", name: { kind: "Name", value: "orgName" } },
+          { kind: "Field", name: { kind: "Name", value: "protocol" } },
+          { kind: "Field", name: { kind: "Name", value: "testPassed" } },
+          { kind: "Field", name: { kind: "Name", value: "verified" } },
+          { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateIdPConnectionMutation, UpdateIdPConnectionMutationVariables>;
 export const UpdateMyProfileDocument = {
   kind: "Document",
   definitions: [
@@ -2335,6 +3308,68 @@ export const UsersDocument = {
     },
   ],
 } as unknown as DocumentNode<UsersQuery, UsersQueryVariables>;
+export const VerifyDomainDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "VerifyDomain" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "verifyDomain" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "domain" },
+                value: { kind: "Variable", name: { kind: "Name", value: "domain" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "OrganizationFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "OrganizationFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Organization" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "displayName" } },
+          { kind: "Field", name: { kind: "Name", value: "domain" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "jitEnabled" } },
+          { kind: "Field", name: { kind: "Name", value: "orgName" } },
+          { kind: "Field", name: { kind: "Name", value: "protocol" } },
+          { kind: "Field", name: { kind: "Name", value: "testPassed" } },
+          { kind: "Field", name: { kind: "Name", value: "verified" } },
+          { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<VerifyDomainMutation, VerifyDomainMutationVariables>;
 export const WorkflowsDocument = {
   kind: "Document",
   definitions: [
