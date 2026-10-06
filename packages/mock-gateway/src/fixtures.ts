@@ -337,8 +337,20 @@ export const mockGroupMappings: Record<string, GroupMapping[]> = {
 };
 
 export const mockTemplates: Template[] = [
-  { id: mockId("template", 1), name: "Standard policy" },
-  { id: mockId("template", 2), name: "Procedure runbook" },
+  {
+    code: "TPL-001",
+    id: mockId("template", 1),
+    name: "Standard policy",
+    ownerCategoryId: mockId("category", 1),
+    retiredAt: null,
+  },
+  {
+    code: "TPL-002",
+    id: mockId("template", 2),
+    name: "Procedure runbook",
+    ownerCategoryId: null,
+    retiredAt: null,
+  },
 ];
 
 export const mockWorkflows: Workflow[] = [
@@ -751,19 +763,28 @@ export const mockTemplateVersions: TemplateVersion[] = [
   {
     id: mockId("template-version", 1),
     sections: [
-      { key: "purpose", level: 1, order: 0, required: true, title: "Purpose" },
-      { key: "scope", level: 1, order: 1, required: true, title: "Scope" },
-      { key: "policy-statement", level: 1, order: 2, required: true, title: "Policy statement" },
+      { blocks: [], key: "purpose", level: 1, order: 0, required: true, title: "Purpose" },
+      { blocks: [], key: "scope", level: 1, order: 1, required: true, title: "Scope" },
+      {
+        blocks: [],
+        key: "policy-statement",
+        level: 1,
+        order: 2,
+        required: true,
+        title: "Policy statement",
+      },
     ],
+    status: "published",
     templateId: mockId("template", 1),
     versionNo: 1,
   },
   {
     id: mockId("template-version", 2),
     sections: [
-      { key: "steps", level: 1, order: 0, required: true, title: "Steps" },
-      { key: "rollback", level: 1, order: 1, required: false, title: "Rollback" },
+      { blocks: [], key: "steps", level: 1, order: 0, required: true, title: "Steps" },
+      { blocks: [], key: "rollback", level: 1, order: 1, required: false, title: "Rollback" },
     ],
+    status: "published",
     templateId: mockId("template", 2),
     versionNo: 1,
   },

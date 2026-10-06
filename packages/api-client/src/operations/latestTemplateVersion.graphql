@@ -1,14 +1,5 @@
 query LatestTemplateVersion($templateId: ID!) {
   latestTemplateVersion(templateId: $templateId) {
-    id
-    templateId
-    versionNo
-    sections {
-      key
-      title
-      order
-      level
-      required
-    }
+    ...TemplateVersionFields
   }
 }

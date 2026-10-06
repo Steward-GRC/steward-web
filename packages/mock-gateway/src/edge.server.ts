@@ -12,6 +12,9 @@ import type {
   PolicyVersion,
   ReportCase,
   RiskAssessment,
+  SectionInput,
+  Template,
+  TemplateVersion,
   ThreadMessage,
   User,
   UserDeletionPreview,
@@ -90,6 +93,10 @@ const groupMappings = structuredClone(mockGroupMappings);
 let nextGroupMappingSeq = Object.values(mockGroupMappings).flat().length + 1;
 let policies = [...mockPolicies];
 let policyVersions = [...mockPolicyVersions];
+let templates = [...mockTemplates];
+let nextTemplateSeq = mockTemplates.length + 1;
+let templateVersionList = [...mockTemplateVersions];
+let nextTemplateVersionSeq = mockTemplateVersions.length + 1;
 let pendingTasks = [...mockPendingTasks];
 let workflowStatuses = structuredClone(mockWorkflowStatuses);
 let reportCases = structuredClone(mockReportCases);
@@ -124,6 +131,54 @@ const replaceGroup = (updated: Group): Group => {
   groups = groups.map((g) => (g.id === updated.id ? updated : g));
   return updated;
 };
+
+const requireTemplate = (operation: string, id: string): Template => {
+  const template = templates.find((t) => t.id === id);
+  if (!template) {
+    throw new GatewayError(operation, `template ${id} not found`, { code: "NOT_FOUND" });
+  }
+  return template;
+};
+
+const replaceTemplate = (updated: Template): Template => {
+  templates = templates.map((t) => (t.id === updated.id ? updated : t));
+  return updated;
+};
+
+const requireTemplateVersion = (operation: string, id: string): TemplateVersion => {
+  const version = templateVersionList.find((t) => t.id === id);
+  if (!version) {
+    throw new GatewayError(operation, `template version ${id} not found`, { code: "NOT_FOUND" });
+  }
+  return version;
+};
+
+const replaceTemplateVersion = (updated: TemplateVersion): TemplateVersion => {
+  templateVersionList = templateVersionList.map((t) => (t.id === updated.id ? updated : t));
+  return updated;
+};
+
+/** Applies the schema's SectionInput defaults (level 1, not required) the same way the live
+ *  gateway would, so a mock-stored section always has every field a `TemplateVersion` carries. */
+const normalizeSections = (sections: readonly SectionInput[]): TemplateVersion["sections"] =>
+  sections.map((s) => ({
+    blocks: s.blocks.map((b) => ({ contentJson: b.contentJson ?? null, type: b.type })),
+    key: s.key,
+    level: s.level ?? 1,
+    order: s.order,
+    required: s.required ?? false,
+    title: s.title,
+  }));
+
+/** The newest version of a template by `versionNo`, optionally restricted to published ones
+ *  (the one offered when creating a new policy). */
+const latestTemplateVersionFor = (
+  templateId: string,
+  publishedOnly = false,
+): TemplateVersion | undefined =>
+  templateVersionList
+    .filter((v) => v.templateId === templateId && (!publishedOnly || v.status === "published"))
+    .toSorted((a, b) => b.versionNo - a.versionNo)[0];
 
 const requireOrganization = (operation: string, domain: string): Organization => {
   const org = organizations.find((o) => o.domain === domain);
@@ -280,7 +335,7 @@ const requireAppendix = (
  *  same check the gateway makes, read off the draft's Lexical tree. */
 const missingRequiredSections = (version: PolicyVersion): string[] => {
   if (!version.templateVersionId) return [];
-  const templateVersion = mockTemplateVersions.find((t) => t.id === version.templateVersionId);
+  const templateVersion = templateVersionList.find((t) => t.id === version.templateVersionId);
   if (!templateVersion) return [];
   return missingSectionsInDocument(parseDocument(version.contentJson), templateVersion.sections);
 };
@@ -486,7 +541,7 @@ export const mockEdge: Edge = {
   // The demo persona is a site admin whose author scope covers every category, so there is
   // nothing to filter here the way the live edge filters by `me.scopes.author`.
   authorableGroups: () => Promise.resolve(groups),
-  authorableTemplates: () => Promise.resolve(mockTemplates),
+  authorableTemplates: () => Promise.resolve(templates.filter((t) => !t.retiredAt)),
   authoringAssist: async ({ editableContent, operation }) => {
     const suggestion =
       operation === AssistOperation.AssistOperationExpand
@@ -574,9 +629,7 @@ export const mockEdge: Edge = {
   },
   createPolicy: async ({ documentType, homeGroupId, sensitivity, templateId, title }) => {
     requireGroup("CreatePolicy", homeGroupId);
-    const templateVersion = templateId
-      ? mockTemplateVersions.find((t) => t.templateId === templateId)
-      : undefined;
+    const templateVersion = templateId ? latestTemplateVersionFor(templateId, true) : undefined;
     const draftId = nextMockPolicyVersionId();
     const policyId = nextMockPolicyId();
     const scaffold = scaffoldFromTemplate(templateVersion?.sections ?? []);
@@ -623,6 +676,30 @@ export const mockEdge: Edge = {
     policies = [...policies, created];
     return created;
   },
+  createTemplate: async (name, ownerCategoryId) => {
+    const created: Template = {
+      code: `TPL-${String(nextTemplateSeq).padStart(3, "0")}`,
+      id: mockId("template", nextTemplateSeq++),
+      name,
+      ownerCategoryId: ownerCategoryId ?? null,
+      retiredAt: null,
+    };
+    templates = [...templates, created];
+    return created;
+  },
+  createTemplateVersion: async (templateId, sections) => {
+    requireTemplate("CreateTemplateVersion", templateId);
+    const versionNo = (latestTemplateVersionFor(templateId)?.versionNo ?? 0) + 1;
+    const created: TemplateVersion = {
+      id: mockId("template-version", nextTemplateVersionSeq++),
+      sections: normalizeSections(sections),
+      status: "draft",
+      templateId,
+      versionNo,
+    };
+    templateVersionList = [...templateVersionList, created];
+    return created;
+  },
   deleteAppendix: async (id) => {
     const { version } = requireAppendix("DeleteAppendix", id);
     replaceVersion({
@@ -649,6 +726,17 @@ export const mockEdge: Edge = {
   deleteOrganization: async (domain) => {
     requireOrganization("DeleteOrganization", domain);
     organizations = organizations.filter((o) => o.domain !== domain);
+    return true;
+  },
+  deleteTemplate: async (id) => {
+    requireTemplate("DeleteTemplate", id);
+    if (policies.some((p) => p.templateId === id)) {
+      throw new GatewayError("DeleteTemplate", "a policy still references this template", {
+        code: "FAILED_PRECONDITION",
+      });
+    }
+    templates = templates.filter((t) => t.id !== id);
+    templateVersionList = templateVersionList.filter((v) => v.templateId !== id);
     return true;
   },
   deleteUser: async (userId) => {
@@ -683,6 +771,16 @@ export const mockEdge: Edge = {
     if (!policy.currentDraftVersionId) return true;
     policyVersions = policyVersions.filter((v) => v.id !== policy.currentDraftVersionId);
     replacePolicy({ ...policy, currentDraftVersionId: null });
+    return true;
+  },
+  discardTemplateVersion: async (id) => {
+    const version = requireTemplateVersion("DiscardTemplateVersion", id);
+    if (version.status !== "draft") {
+      throw new GatewayError("DiscardTemplateVersion", "only a draft version can be discarded", {
+        code: "FAILED_PRECONDITION",
+      });
+    }
+    templateVersionList = templateVersionList.filter((v) => v.id !== id);
     return true;
   },
   draftVersion: (policyId) => {
@@ -746,7 +844,7 @@ export const mockEdge: Edge = {
     };
   },
   latestTemplateVersion: (templateId) =>
-    Promise.resolve(mockTemplateVersions.find((t) => t.templateId === templateId) ?? null),
+    Promise.resolve(latestTemplateVersionFor(templateId) ?? null),
   listUserSessions: (userId) => Promise.resolve(sessions[userId] ?? []),
   me: () => Promise.resolve(me),
   mintSsoTestLink: async (input) => {
@@ -862,6 +960,10 @@ export const mockEdge: Edge = {
     });
     return published;
   },
+  publishTemplateVersion: async (id) => {
+    const version = requireTemplateVersion("PublishTemplateVersion", id);
+    return replaceTemplateVersion({ ...version, status: "published" });
+  },
   recordRiskAssessment: async (caseId, factors, decision, reason) => {
     const reportCase = requireReportCase("RecordRiskAssessment", caseId);
     // The real suggestion weighs several factors; this mock approximates it from the
@@ -900,6 +1002,10 @@ export const mockEdge: Edge = {
       );
     }
     return replaceGroup({ ...group, name, slug });
+  },
+  renameTemplate: async (id, name) => {
+    const template = requireTemplate("RenameTemplate", id);
+    return replaceTemplate({ ...template, name });
   },
   reorderAppendices: async (policyVersionId, orderedIds) => {
     const version = requireVersion("ReorderAppendices", policyVersionId);
@@ -940,6 +1046,10 @@ export const mockEdge: Edge = {
       })),
       counts,
     });
+  },
+  retireTemplate: async (id) => {
+    const template = requireTemplate("RetireTemplate", id);
+    return replaceTemplate({ ...template, retiredAt: new Date().toISOString() });
   },
   revokeRole: async (userId, role) => {
     const user = requireUser("RevokeRole", userId);
@@ -1059,7 +1169,13 @@ export const mockEdge: Edge = {
     aiJobs.set(jobId, { error: null, polls: 0, resultJson: JSON.stringify({ findings }) });
     return { jobId };
   },
-  templates: () => Promise.resolve(mockTemplates),
+  templates: () => Promise.resolve(templates),
+  templateVersions: (templateId) =>
+    Promise.resolve(
+      templateVersionList
+        .filter((v) => v.templateId === templateId)
+        .toSorted((a, b) => b.versionNo - a.versionNo),
+    ),
   upcomingApprovals: () => Promise.resolve(mockUpcomingApprovals),
   updateAppendix: async (id, title, contentJson) => {
     const { version } = requireAppendix("UpdateAppendix", id);
@@ -1124,6 +1240,17 @@ export const mockEdge: Edge = {
       u.userId === me.id ? { ...u, firstName, lastName, name: me.name } : u,
     );
     return Promise.resolve(me);
+  },
+  updateTemplateVersionSections: async (id, sections) => {
+    const version = requireTemplateVersion("UpdateTemplateVersionSections", id);
+    if (version.status !== "draft") {
+      throw new GatewayError(
+        "UpdateTemplateVersionSections",
+        "only a draft version's sections can be changed",
+        { code: "FAILED_PRECONDITION" },
+      );
+    }
+    return replaceTemplateVersion({ ...version, sections: normalizeSections(sections) });
   },
   updateUserProfile: async (userId, name, email) => {
     const user = requireUser("UpdateUserProfile", userId);

@@ -15,6 +15,7 @@
   "dependencies": {
     "@steward-web/api-client": "workspace:*",
     "@steward-web/auth": "workspace:*",
+    "@steward-web/editor-steward": "workspace:*",
     "@steward-web/i18n": "workspace:*",
     "@steward-web/shell": "workspace:*",
     "@steward-web/ui": "workspace:*",

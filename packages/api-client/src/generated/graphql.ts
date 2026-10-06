@@ -586,6 +586,46 @@ export type CreatePolicyMutation = {
   };
 };
 
+export type CreateTemplateMutationVariables = Exact<{
+  name: string;
+  ownerCategoryId?: string | number | null | undefined;
+}>;
+
+export type CreateTemplateMutation = {
+  readonly createTemplate: {
+    readonly id: string;
+    readonly code: string;
+    readonly name: string;
+    readonly ownerCategoryId: string | null;
+    readonly retiredAt: string | null;
+  };
+};
+
+export type CreateTemplateVersionMutationVariables = Exact<{
+  templateId: string | number;
+  sections: ReadonlyArray<Types.SectionInput> | Types.SectionInput;
+}>;
+
+export type CreateTemplateVersionMutation = {
+  readonly createTemplateVersion: {
+    readonly id: string;
+    readonly templateId: string;
+    readonly versionNo: number;
+    readonly status: string;
+    readonly sections: ReadonlyArray<{
+      readonly key: string;
+      readonly title: string;
+      readonly order: number;
+      readonly level: number;
+      readonly required: boolean;
+      readonly blocks: ReadonlyArray<{
+        readonly type: string;
+        readonly contentJson: string | null;
+      }>;
+    }>;
+  };
+};
+
 export type DeleteAppendixMutationVariables = Exact<{
   id: string | number;
 }>;
@@ -609,6 +649,12 @@ export type DeleteOrganizationMutationVariables = Exact<{
 }>;
 
 export type DeleteOrganizationMutation = { readonly deleteOrganization: boolean };
+
+export type DeleteTemplateMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type DeleteTemplateMutation = { readonly deleteTemplate: boolean };
 
 export type DeleteUserMutationVariables = Exact<{
   userId: string | number;
@@ -719,6 +765,12 @@ export type DiscardDraftMutationVariables = Exact<{
 
 export type DiscardDraftMutation = { readonly discardDraft: boolean };
 
+export type DiscardTemplateVersionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type DiscardTemplateVersionMutation = { readonly discardTemplateVersion: boolean };
+
 export type EnableUserMutationVariables = Exact<{
   userId: string | number;
 }>;
@@ -812,12 +864,17 @@ export type LatestTemplateVersionQuery = {
     readonly id: string;
     readonly templateId: string;
     readonly versionNo: number;
+    readonly status: string;
     readonly sections: ReadonlyArray<{
       readonly key: string;
       readonly title: string;
       readonly order: number;
       readonly level: number;
       readonly required: boolean;
+      readonly blocks: ReadonlyArray<{
+        readonly type: string;
+        readonly contentJson: string | null;
+      }>;
     }>;
   } | null;
 };
@@ -1223,6 +1280,30 @@ export type PublishDraftMutation = {
   };
 };
 
+export type PublishTemplateVersionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type PublishTemplateVersionMutation = {
+  readonly publishTemplateVersion: {
+    readonly id: string;
+    readonly templateId: string;
+    readonly versionNo: number;
+    readonly status: string;
+    readonly sections: ReadonlyArray<{
+      readonly key: string;
+      readonly title: string;
+      readonly order: number;
+      readonly level: number;
+      readonly required: boolean;
+      readonly blocks: ReadonlyArray<{
+        readonly type: string;
+        readonly contentJson: string | null;
+      }>;
+    }>;
+  };
+};
+
 export type RecordAckMutationVariables = Exact<{
   policyVersionId: string | number;
 }>;
@@ -1274,6 +1355,21 @@ export type RenameCategoryMutation = {
     readonly ackEveryone: boolean;
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
+  };
+};
+
+export type RenameTemplateMutationVariables = Exact<{
+  id: string | number;
+  name: string;
+}>;
+
+export type RenameTemplateMutation = {
+  readonly renameTemplate: {
+    readonly id: string;
+    readonly code: string;
+    readonly name: string;
+    readonly ownerCategoryId: string | null;
+    readonly retiredAt: string | null;
   };
 };
 
@@ -1451,6 +1547,20 @@ export type ReportCasesQuery = {
       readonly nextDeadline: string | null;
     }>;
     readonly counts: ReadonlyArray<{ readonly status: Types.CaseStatus; readonly count: number }>;
+  };
+};
+
+export type RetireTemplateMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type RetireTemplateMutation = {
+  readonly retireTemplate: {
+    readonly id: string;
+    readonly code: string;
+    readonly name: string;
+    readonly ownerCategoryId: string | null;
+    readonly retiredAt: string | null;
   };
 };
 
@@ -1767,12 +1877,65 @@ export type SubmitPolicyReviewMutation = {
   readonly submitPolicyReview: { readonly jobId: string };
 };
 
+export type TemplateFieldsFragment = {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly ownerCategoryId: string | null;
+  readonly retiredAt: string | null;
+};
+
+export type TemplateVersionFieldsFragment = {
+  readonly id: string;
+  readonly templateId: string;
+  readonly versionNo: number;
+  readonly status: string;
+  readonly sections: ReadonlyArray<{
+    readonly key: string;
+    readonly title: string;
+    readonly order: number;
+    readonly level: number;
+    readonly required: boolean;
+    readonly blocks: ReadonlyArray<{ readonly type: string; readonly contentJson: string | null }>;
+  }>;
+};
+
+export type TemplateVersionsQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+export type TemplateVersionsQuery = {
+  readonly templateVersions: ReadonlyArray<{
+    readonly id: string;
+    readonly templateId: string;
+    readonly versionNo: number;
+    readonly status: string;
+    readonly sections: ReadonlyArray<{
+      readonly key: string;
+      readonly title: string;
+      readonly order: number;
+      readonly level: number;
+      readonly required: boolean;
+      readonly blocks: ReadonlyArray<{
+        readonly type: string;
+        readonly contentJson: string | null;
+      }>;
+    }>;
+  }>;
+};
+
 export type TemplatesQueryVariables = Exact<{
   ownerCategoryId?: string | number | null | undefined;
 }>;
 
 export type TemplatesQuery = {
-  readonly templates: ReadonlyArray<{ readonly id: string; readonly name: string }>;
+  readonly templates: ReadonlyArray<{
+    readonly id: string;
+    readonly code: string;
+    readonly name: string;
+    readonly ownerCategoryId: string | null;
+    readonly retiredAt: string | null;
+  }>;
 };
 
 export type UpcomingApprovalsQueryVariables = Exact<{ [key: string]: never }>;
@@ -1860,6 +2023,31 @@ export type UpdateMyProfileMutation = {
     readonly email: string;
     readonly roles: ReadonlyArray<string>;
     readonly permissions: ReadonlyArray<string>;
+  };
+};
+
+export type UpdateTemplateVersionSectionsMutationVariables = Exact<{
+  id: string | number;
+  sections: ReadonlyArray<Types.SectionInput> | Types.SectionInput;
+}>;
+
+export type UpdateTemplateVersionSectionsMutation = {
+  readonly updateTemplateVersionSections: {
+    readonly id: string;
+    readonly templateId: string;
+    readonly versionNo: number;
+    readonly status: string;
+    readonly sections: ReadonlyArray<{
+      readonly key: string;
+      readonly title: string;
+      readonly order: number;
+      readonly level: number;
+      readonly required: boolean;
+      readonly blocks: ReadonlyArray<{
+        readonly type: string;
+        readonly contentJson: string | null;
+      }>;
+    }>;
   };
 };
 
@@ -2338,6 +2526,70 @@ export const ReportCaseFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<ReportCaseFieldsFragment, unknown>;
+export const TemplateFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Template" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "code" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TemplateFieldsFragment, unknown>;
+export const TemplateVersionFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "TemplateVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "sections" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "key" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "order" } },
+                { kind: "Field", name: { kind: "Name", value: "level" } },
+                { kind: "Field", name: { kind: "Name", value: "required" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "blocks" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "type" } },
+                      { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TemplateVersionFieldsFragment, unknown>;
 export const UserFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -4118,6 +4370,173 @@ export const CreatePolicyDocument = {
     },
   ],
 } as unknown as DocumentNode<CreatePolicyMutation, CreatePolicyMutationVariables>;
+export const CreateTemplateDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreateTemplate" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "name" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "ownerCategoryId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createTemplate" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "name" },
+                value: { kind: "Variable", name: { kind: "Name", value: "name" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "ownerCategoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "ownerCategoryId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Template" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "code" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateTemplateMutation, CreateTemplateMutationVariables>;
+export const CreateTemplateVersionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreateTemplateVersion" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "sections" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "SectionInput" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createTemplateVersion" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "templateId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "sections" },
+                value: { kind: "Variable", name: { kind: "Name", value: "sections" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "TemplateVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "sections" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "key" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "order" } },
+                { kind: "Field", name: { kind: "Name", value: "level" } },
+                { kind: "Field", name: { kind: "Name", value: "required" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "blocks" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "type" } },
+                      { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateTemplateVersionMutation, CreateTemplateVersionMutationVariables>;
 export const DeleteAppendixDocument = {
   kind: "Document",
   definitions: [
@@ -4262,6 +4681,42 @@ export const DeleteOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteOrganizationMutation, DeleteOrganizationMutationVariables>;
+export const DeleteTemplateDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteTemplate" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteTemplate" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteTemplateMutation, DeleteTemplateMutationVariables>;
 export const DeleteUserDocument = {
   kind: "Document",
   definitions: [
@@ -4616,6 +5071,45 @@ export const DiscardDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<DiscardDraftMutation, DiscardDraftMutationVariables>;
+export const DiscardTemplateVersionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DiscardTemplateVersion" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "discardTemplateVersion" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  DiscardTemplateVersionMutation,
+  DiscardTemplateVersionMutationVariables
+>;
 export const EnableUserDocument = {
   kind: "Document",
   definitions: [
@@ -4944,20 +5438,43 @@ export const LatestTemplateVersionDocument = {
             selectionSet: {
               kind: "SelectionSet",
               selections: [
-                { kind: "Field", name: { kind: "Name", value: "id" } },
-                { kind: "Field", name: { kind: "Name", value: "templateId" } },
-                { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "TemplateVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "sections" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "key" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "order" } },
+                { kind: "Field", name: { kind: "Name", value: "level" } },
+                { kind: "Field", name: { kind: "Name", value: "required" } },
                 {
                   kind: "Field",
-                  name: { kind: "Name", value: "sections" },
+                  name: { kind: "Name", value: "blocks" },
                   selectionSet: {
                     kind: "SelectionSet",
                     selections: [
-                      { kind: "Field", name: { kind: "Name", value: "key" } },
-                      { kind: "Field", name: { kind: "Name", value: "title" } },
-                      { kind: "Field", name: { kind: "Name", value: "order" } },
-                      { kind: "Field", name: { kind: "Name", value: "level" } },
-                      { kind: "Field", name: { kind: "Name", value: "required" } },
+                      { kind: "Field", name: { kind: "Name", value: "type" } },
+                      { kind: "Field", name: { kind: "Name", value: "contentJson" } },
                     ],
                   },
                 },
@@ -6017,6 +6534,90 @@ export const PublishDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<PublishDraftMutation, PublishDraftMutationVariables>;
+export const PublishTemplateVersionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "PublishTemplateVersion" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishTemplateVersion" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "TemplateVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "sections" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "key" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "order" } },
+                { kind: "Field", name: { kind: "Name", value: "level" } },
+                { kind: "Field", name: { kind: "Name", value: "required" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "blocks" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "type" } },
+                      { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  PublishTemplateVersionMutation,
+  PublishTemplateVersionMutationVariables
+>;
 export const RecordAckDocument = {
   kind: "Document",
   definitions: [
@@ -6247,6 +6848,76 @@ export const RenameCategoryDocument = {
     },
   ],
 } as unknown as DocumentNode<RenameCategoryMutation, RenameCategoryMutationVariables>;
+export const RenameTemplateDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RenameTemplate" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "name" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "renameTemplate" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "name" },
+                value: { kind: "Variable", name: { kind: "Name", value: "name" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Template" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "code" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RenameTemplateMutation, RenameTemplateMutationVariables>;
 export const ReorderAppendicesDocument = {
   kind: "Document",
   definitions: [
@@ -6578,6 +7249,63 @@ export const ReportCasesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReportCasesQuery, ReportCasesQueryVariables>;
+export const RetireTemplateDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RetireTemplate" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "retireTemplate" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Template" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "code" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RetireTemplateMutation, RetireTemplateMutationVariables>;
 export const RevokeRoleDocument = {
   kind: "Document",
   definitions: [
@@ -7696,6 +8424,87 @@ export const SubmitPolicyReviewDocument = {
     },
   ],
 } as unknown as DocumentNode<SubmitPolicyReviewMutation, SubmitPolicyReviewMutationVariables>;
+export const TemplateVersionsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "TemplateVersions" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "templateVersions" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "templateId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "TemplateVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "sections" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "key" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "order" } },
+                { kind: "Field", name: { kind: "Name", value: "level" } },
+                { kind: "Field", name: { kind: "Name", value: "required" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "blocks" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "type" } },
+                      { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TemplateVersionsQuery, TemplateVersionsQueryVariables>;
 export const TemplatesDocument = {
   kind: "Document",
   definitions: [
@@ -7726,11 +8535,25 @@ export const TemplatesDocument = {
             selectionSet: {
               kind: "SelectionSet",
               selections: [
-                { kind: "Field", name: { kind: "Name", value: "id" } },
-                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateFields" } },
               ],
             },
           },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Template" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "code" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
         ],
       },
     },
@@ -8078,6 +8901,109 @@ export const UpdateMyProfileDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateMyProfileMutation, UpdateMyProfileMutationVariables>;
+export const UpdateTemplateVersionSectionsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateTemplateVersionSections" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "sections" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "SectionInput" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateTemplateVersionSections" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "sections" },
+                value: { kind: "Variable", name: { kind: "Name", value: "sections" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "TemplateVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "TemplateVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "TemplateVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "sections" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "key" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "order" } },
+                { kind: "Field", name: { kind: "Name", value: "level" } },
+                { kind: "Field", name: { kind: "Name", value: "required" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "blocks" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "type" } },
+                      { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UpdateTemplateVersionSectionsMutation,
+  UpdateTemplateVersionSectionsMutationVariables
+>;
 export const UpdateUserProfileDocument = {
   kind: "Document",
   definitions: [
