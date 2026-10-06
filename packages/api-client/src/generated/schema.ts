@@ -12,7 +12,9 @@ export type Scalars = {
    * file is hand-pinned from the original gateway's v3.0.0 SDL (see ../schema-refs.env),
    * trimmed to the operations steward-web actually sends: the signed-in user, the
    * diagnostics report, editing one's own display name, the policy/procedure library browse
-   * (categories and the catalog), the admin user directory and the admin group directory. It
+   * (categories and the catalog), the admin user directory, the admin group directory, the
+   * admin organisation directory, and the staff authoring area (the editor and its AI
+   * drafting/review assist). It
    * gains more of the upstream schema as later ports add operations, and schema-generate.sh
    * switches from this vendored copy to a live fetch once steward-gateway publishes its own
    * schema on its main branch.
@@ -41,6 +43,41 @@ export type Scalars = {
   DateTime: { input: string; output: string };
 };
 
+/** Best-effort: never errors on a downstream failure, so AI affordances can disable themselves without taking an unrelated flow down with them. */
+export type AiHealth = {
+  readonly __typename?: "AIHealth";
+  readonly available: Scalars["Boolean"]["output"];
+  readonly reason?: Maybe<Scalars["String"]["output"]>;
+};
+
+/** Returned by both async AI job submissions below; simplified from the original's two identically-shaped result types into one. */
+export type AiJobHandle = {
+  readonly __typename?: "AIJobHandle";
+  readonly jobId: Scalars["ID"]["output"];
+};
+
+export enum AiJobPhase {
+  AiJobPhaseFailed = "AI_JOB_PHASE_FAILED",
+  AiJobPhasePending = "AI_JOB_PHASE_PENDING",
+  AiJobPhaseRunning = "AI_JOB_PHASE_RUNNING",
+  AiJobPhaseSucceeded = "AI_JOB_PHASE_SUCCEEDED",
+}
+
+export type AiJobResultContent = {
+  readonly __typename?: "AIJobResultContent";
+  readonly operation: Scalars["String"]["output"];
+  readonly resultJson: Scalars["String"]["output"];
+};
+
+/** Poll aiJob(jobId) until phase reaches a terminal value; once SUCCEEDED, fetch the content by resultRef via aiJobResultContent. */
+export type AiJobStatus = {
+  readonly __typename?: "AIJobStatus";
+  readonly error?: Maybe<Scalars["String"]["output"]>;
+  readonly jobId: Scalars["ID"]["output"];
+  readonly phase: AiJobPhase;
+  readonly resultRef?: Maybe<Scalars["String"]["output"]>;
+};
+
 /** This caller's acknowledgement of one policy version. */
 export type AckStatus = {
   readonly __typename?: "AckStatus";
@@ -58,6 +95,39 @@ export type AddOrganizationInput = {
   readonly orgName: Scalars["String"]["input"];
   readonly protocol: Scalars["String"]["input"];
   readonly secretRef?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type Appendix = {
+  readonly __typename?: "Appendix";
+  readonly contentJson: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly letter: Scalars["String"]["output"];
+  readonly orderIndex: Scalars["Int"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly title: Scalars["String"]["output"];
+};
+
+export enum AssistOperation {
+  AssistOperationClarify = "ASSIST_OPERATION_CLARIFY",
+  AssistOperationDraft = "ASSIST_OPERATION_DRAFT",
+  AssistOperationExpand = "ASSIST_OPERATION_EXPAND",
+  AssistOperationRewrite = "ASSIST_OPERATION_REWRITE",
+  AssistOperationSummarize = "ASSIST_OPERATION_SUMMARIZE",
+  AssistOperationUnspecified = "ASSIST_OPERATION_UNSPECIFIED",
+}
+
+export type AuthoringAssistInput = {
+  readonly editableContent: Scalars["String"]["input"];
+  readonly instruction?: InputMaybe<Scalars["String"]["input"]>;
+  readonly operation: AssistOperation;
+  readonly policyId: Scalars["ID"]["input"];
+  readonly sectionKey: Scalars["String"]["input"];
+};
+
+export type AuthoringAssistResult = {
+  readonly __typename?: "AuthoringAssistResult";
+  readonly operationId: Scalars["String"]["output"];
+  readonly suggestion: Scalars["String"]["output"];
 };
 
 export type BreakGlassGrant = {
@@ -226,6 +296,7 @@ export type Mutation = {
   readonly acknowledgePolicy: AckStatus;
   /** Enables an organisation's SSO connection for sign-in. Site-admin only. */
   readonly activateOrganization: Organization;
+  readonly addAppendix: Appendix;
   /** Adds an IdP-group-claim-to-platform-group mapping for a connection. Site-admin only. */
   readonly addGroupMapping: GroupMapping;
   /**
@@ -243,6 +314,9 @@ export type Mutation = {
   readonly changeOrgProtocol: Organization;
   /** Creates a taxonomy group. Site-admin only. */
   readonly createGroup: Group;
+  /** Creates a new policy/procedure with an empty working draft. The owner is the calling user. */
+  readonly createPolicy: Policy;
+  readonly deleteAppendix: Scalars["Boolean"]["output"];
   /**
    * Deletes a group and its policy-free descendants. Refused when the group or any descendant
    * owns policies. Site-admin only.
@@ -261,6 +335,8 @@ export type Mutation = {
   /** Disables an organisation's SSO connection. Does not clear its gates. Site-admin only. */
   readonly disableOrganization: Organization;
   readonly disableUser: User;
+  /** Discards a policy's working draft, leaving any already-published version untouched. */
+  readonly discardDraft: Scalars["Boolean"]["output"];
   readonly enableUser: User;
   /**
    * Mints a new SP signing certificate and activates it immediately, superseding the previous
@@ -274,18 +350,28 @@ export type Mutation = {
    * root. Refused when the move would exceed the max depth or create a cycle. Site-admin only.
    */
   readonly moveGroup: Group;
+  /** Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content. */
+  readonly publishDraft: PolicyVersion;
   /** Renames a group (name and slug). Does not renumber existing policies. Site-admin only. */
   readonly renameGroup: Group;
+  readonly reorderAppendices: ReadonlyArray<Appendix>;
   /** Revokes a GLOBAL role (no category). Site-admin only. */
   readonly revokeRole: User;
   /** Revokes every active session for a user, signing them out everywhere. Site-admin only. */
   readonly revokeUserSessions: Scalars["Int"]["output"];
+  /** Saves the author's edits to the policy's working draft. templateVersionId pins the template version the content was scaffolded from; null for a freeform draft. */
+  readonly saveDraft: PolicyVersion;
   /**
    * Mints a DNS TXT domain-verification challenge. The token is stable by default; rotate:
    * true mints a fresh one, which also revokes the domain's prior verified proof. Site-admin
    * only.
    */
   readonly startDomainVerification: DomainVerification;
+  /** Submit whole-draft generation as an async job; poll aiJob(jobId) for the result. */
+  readonly submitDraftGeneration: AiJobHandle;
+  /** Submit review & gap-analysis of an existing draft as an async job; the result is a findings list, never an edit applied to the policy. */
+  readonly submitPolicyReview: AiJobHandle;
+  readonly updateAppendix: Appendix;
   /**
    * Sets a group's inherited defaults (template, workflow) and governance (owners, review
    * cadence). Site-admin only.
@@ -310,6 +396,12 @@ export type MutationAcknowledgePolicyArgs = {
 
 export type MutationActivateOrganizationArgs = {
   domain: Scalars["String"]["input"];
+};
+
+export type MutationAddAppendixArgs = {
+  contentJson: Scalars["String"]["input"];
+  policyVersionId: Scalars["ID"]["input"];
+  title: Scalars["String"]["input"];
 };
 
 export type MutationAddGroupMappingArgs = {
@@ -340,6 +432,18 @@ export type MutationCreateGroupArgs = {
   slug: Scalars["String"]["input"];
 };
 
+export type MutationCreatePolicyArgs = {
+  documentType?: InputMaybe<DocumentType>;
+  homeGroupId: Scalars["ID"]["input"];
+  sensitivity: Sensitivity;
+  templateId?: InputMaybe<Scalars["ID"]["input"]>;
+  title: Scalars["String"]["input"];
+};
+
+export type MutationDeleteAppendixArgs = {
+  id: Scalars["ID"]["input"];
+};
+
 export type MutationDeleteGroupArgs = {
   id: Scalars["ID"]["input"];
 };
@@ -364,6 +468,10 @@ export type MutationDisableUserArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationDiscardDraftArgs = {
+  policyId: Scalars["ID"]["input"];
+};
+
 export type MutationEnableUserArgs = {
   userId: Scalars["ID"]["input"];
 };
@@ -378,10 +486,19 @@ export type MutationMoveGroupArgs = {
   newParentId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
+export type MutationPublishDraftArgs = {
+  policyId: Scalars["ID"]["input"];
+};
+
 export type MutationRenameGroupArgs = {
   id: Scalars["ID"]["input"];
   name: Scalars["String"]["input"];
   slug: Scalars["String"]["input"];
+};
+
+export type MutationReorderAppendicesArgs = {
+  orderedIds: ReadonlyArray<Scalars["ID"]["input"]>;
+  policyVersionId: Scalars["ID"]["input"];
 };
 
 export type MutationRevokeRoleArgs = {
@@ -394,9 +511,29 @@ export type MutationRevokeUserSessionsArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationSaveDraftArgs = {
+  contentJson: Scalars["String"]["input"];
+  policyId: Scalars["ID"]["input"];
+  templateVersionId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
 export type MutationStartDomainVerificationArgs = {
   domain: Scalars["String"]["input"];
   rotate?: InputMaybe<Scalars["Boolean"]["input"]>;
+};
+
+export type MutationSubmitDraftGenerationArgs = {
+  input: SubmitDraftGenerationInput;
+};
+
+export type MutationSubmitPolicyReviewArgs = {
+  input: SubmitPolicyReviewInput;
+};
+
+export type MutationUpdateAppendixArgs = {
+  contentJson: Scalars["String"]["input"];
+  id: Scalars["ID"]["input"];
+  title: Scalars["String"]["input"];
 };
 
 export type MutationUpdateGroupSettingsArgs = {
@@ -456,16 +593,24 @@ export type Organization = {
 export type Policy = {
   readonly __typename?: "Policy";
   readonly category: Scalars["String"]["output"];
+  readonly currentDraftVersionId?: Maybe<Scalars["ID"]["output"]>;
+  readonly currentPublishedVersionId?: Maybe<Scalars["ID"]["output"]>;
   readonly documentType: DocumentType;
+  readonly homeGroupId: Scalars["ID"]["output"];
   readonly id: Scalars["ID"]["output"];
   readonly number: Scalars["String"]["output"];
+  readonly ownerUserId: Scalars["ID"]["output"];
+  readonly retiredAt?: Maybe<Scalars["String"]["output"]>;
   readonly sensitivity: Sensitivity;
   readonly status: PolicyStatus;
   readonly subcategory: Scalars["String"]["output"];
+  readonly templateId?: Maybe<Scalars["ID"]["output"]>;
+  readonly templateNone: Scalars["Boolean"]["output"];
   readonly title: Scalars["String"]["output"];
   /** When the current version was last updated. */
   readonly updated: Scalars["DateTime"]["output"];
   readonly version: Scalars["String"]["output"];
+  readonly viewerCan: PolicyViewerCan;
 };
 
 export type PolicyAppendix = {
@@ -561,6 +706,18 @@ export enum PolicyStatus {
   Withdrawn = "WITHDRAWN",
 }
 
+export type PolicyVersion = {
+  readonly __typename?: "PolicyVersion";
+  readonly appendices: ReadonlyArray<Appendix>;
+  /** Opaque to the gateway: a JSON-encoded array of `{ sectionKey, title, text }` authored sections. */
+  readonly contentJson: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly policyId: Scalars["ID"]["output"];
+  readonly status: Scalars["String"]["output"];
+  readonly templateVersionId?: Maybe<Scalars["ID"]["output"]>;
+  readonly versionNo: Scalars["Int"]["output"];
+};
+
 /** The diff between the current version and the one it superseded (U12/U19). */
 export type PolicyVersionSummary = {
   readonly __typename?: "PolicyVersionSummary";
@@ -568,24 +725,55 @@ export type PolicyVersionSummary = {
   readonly version: Scalars["String"]["output"];
 };
 
+/** Per-viewer authorization projection of a Policy, computed server-side. The UI mirrors these for UX only; the gateway is the real enforcement boundary. */
+export type PolicyViewerCan = {
+  readonly __typename?: "PolicyViewerCan";
+  readonly ack: Scalars["Boolean"]["output"];
+  readonly approve: Scalars["Boolean"]["output"];
+  readonly canBreakGlass: Scalars["Boolean"]["output"];
+  readonly contentObfuscated: Scalars["Boolean"]["output"];
+  readonly edit: Scalars["Boolean"]["output"];
+  readonly read: Scalars["Boolean"]["output"];
+  readonly submit: Scalars["Boolean"]["output"];
+};
+
 export type Query = {
   readonly __typename?: "Query";
+  /** Whether AI is usable right now for the calling user. */
+  readonly aiHealth: AiHealth;
+  readonly aiJob: AiJobStatus;
+  /** Fetch a completed async AI job's content by resultRef (AIJobStatus.resultRef once phase is SUCCEEDED). */
+  readonly aiJobResultContent: AiJobResultContent;
+  /** The groups any signed-in author may create a policy under (unlike groupChildren, not site-admin-gated). */
+  readonly authorableGroups: ReadonlyArray<Group>;
+  /** The templates selectable when creating a policy (unlike templates, not site-admin-gated). */
+  readonly authorableTemplates: ReadonlyArray<Template>;
+  /** One inline authoring suggestion for a section currently being edited. Never auto-applied. */
+  readonly authoringAssist: AuthoringAssistResult;
   /** The category tree for the policy/procedure library browse. Any signed-in user. */
   readonly categories: ReadonlyArray<Category>;
   /** Build and version facts for a bug report. Any signed-in user; refused when signed out. */
   readonly diagnostics: Diagnostics;
+  /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
+  readonly draftVersion?: Maybe<PolicyVersion>;
   /** A group's direct children. A null parentId lists the root groups. Site-admin only. */
   readonly groupChildren: ReadonlyArray<Group>;
   /** An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only. */
   readonly groupMappings: ReadonlyArray<GroupMapping>;
+  /** A template's current (newest) version, with its section outline. Null for a template with no version yet. */
+  readonly latestTemplateVersion?: Maybe<TemplateVersion>;
   /** A user's sessions, site-admin only. */
   readonly listUserSessions: ReadonlyArray<Session>;
   /** The signed-in user, from the verified session. Null when signed out. */
   readonly me?: Maybe<Me>;
+  /** The CALLING user's own policies with a working draft, most-recently-updated first. Any signed-in author. */
+  readonly myDraftPolicies: ReadonlyArray<Policy>;
   /** Every configured organisation SSO connection. Site-admin only. */
   readonly organizations: ReadonlyArray<Organization>;
   /** The library catalog for one document type. Any signed-in user. */
   readonly policies: ReadonlyArray<Policy>;
+  /** One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it. */
+  readonly policy?: Maybe<Policy>;
   /** The reader's full detail for one policy/procedure, found by number. Null when there is no such document, or the caller cannot see it at all. */
   readonly policyDetail?: Maybe<PolicyDetail>;
   /**
@@ -606,6 +794,26 @@ export type Query = {
   readonly workflows: ReadonlyArray<Workflow>;
 };
 
+export type QueryAiJobArgs = {
+  jobId: Scalars["ID"]["input"];
+};
+
+export type QueryAiJobResultContentArgs = {
+  resultRef: Scalars["String"]["input"];
+};
+
+export type QueryAuthorableTemplatesArgs = {
+  ownerGroupId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
+export type QueryAuthoringAssistArgs = {
+  input: AuthoringAssistInput;
+};
+
+export type QueryDraftVersionArgs = {
+  policyId: Scalars["ID"]["input"];
+};
+
 export type QueryGroupChildrenArgs = {
   parentId?: InputMaybe<Scalars["ID"]["input"]>;
 };
@@ -614,12 +822,20 @@ export type QueryGroupMappingsArgs = {
   connectionId: Scalars["ID"]["input"];
 };
 
+export type QueryLatestTemplateVersionArgs = {
+  templateId: Scalars["ID"]["input"];
+};
+
 export type QueryListUserSessionsArgs = {
   userId: Scalars["ID"]["input"];
 };
 
 export type QueryPoliciesArgs = {
   documentType: DocumentType;
+};
+
+export type QueryPolicyArgs = {
+  id: Scalars["ID"]["input"];
 };
 
 export type QueryPolicyDetailArgs = {
@@ -663,6 +879,16 @@ export enum ReviewCadence {
   OnDate = "ON_DATE",
 }
 
+/** One section of a template's outline; a draft scaffolded from a template keeps these keys. */
+export type Section = {
+  readonly __typename?: "Section";
+  readonly key: Scalars["String"]["output"];
+  readonly level: Scalars["Int"]["output"];
+  readonly order: Scalars["Int"]["output"];
+  readonly required: Scalars["Boolean"]["output"];
+  readonly title: Scalars["String"]["output"];
+};
+
 export enum Sensitivity {
   Sensitive = "SENSITIVE",
   Standard = "STANDARD",
@@ -690,11 +916,43 @@ export type SpCertificate = {
   readonly spMetadataXml: Scalars["String"]["output"];
 };
 
+export type SubmitDraftGenerationInput = {
+  readonly brief: Scalars["String"]["input"];
+  readonly homeGroupId?: InputMaybe<Scalars["ID"]["input"]>;
+  readonly sections: ReadonlyArray<SubmitDraftGenerationSectionInput>;
+  readonly title?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type SubmitDraftGenerationSectionInput = {
+  readonly key: Scalars["String"]["input"];
+  readonly order: Scalars["Int"]["input"];
+  readonly title: Scalars["String"]["input"];
+};
+
+export type SubmitPolicyReviewInput = {
+  readonly policyId: Scalars["ID"]["input"];
+  readonly sections: ReadonlyArray<SubmitPolicyReviewSectionInput>;
+};
+
+export type SubmitPolicyReviewSectionInput = {
+  readonly content: Scalars["String"]["input"];
+  readonly key: Scalars["String"]["input"];
+  readonly title: Scalars["String"]["input"];
+};
+
 /** A template selectable as a group's default. */
 export type Template = {
   readonly __typename?: "Template";
   readonly id: Scalars["ID"]["output"];
   readonly name: Scalars["String"]["output"];
+};
+
+export type TemplateVersion = {
+  readonly __typename?: "TemplateVersion";
+  readonly id: Scalars["ID"]["output"];
+  readonly sections: ReadonlyArray<Section>;
+  readonly templateId: Scalars["ID"]["output"];
+  readonly versionNo: Scalars["Int"]["output"];
 };
 
 /** One platform user. */

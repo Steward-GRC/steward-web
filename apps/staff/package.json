@@ -13,6 +13,7 @@
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {
+    "@steward-web/api-client": "workspace:*",
     "@steward-web/auth": "workspace:*",
     "@steward-web/i18n": "workspace:*",
     "@steward-web/shell": "workspace:*",

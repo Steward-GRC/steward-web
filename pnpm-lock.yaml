@@ -275,6 +275,9 @@ importers:
 
   apps/staff:
     dependencies:
+      '@steward-web/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@steward-web/auth':
         specifier: workspace:*
         version: link:../../packages/auth

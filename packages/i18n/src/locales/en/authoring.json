@@ -1,1 +1,51 @@
-{}
+{
+  "drafts": {
+    "empty": {
+      "description": "Start a new policy or procedure to see it here.",
+      "title": "No drafts yet"
+    },
+    "new": "New",
+    "search": "Search your drafts",
+    "showAll": "Show all ({{count}})",
+    "subtitle": "Policies and procedures you're currently writing.",
+    "table": {
+      "number": "Number",
+      "title": "Title",
+      "updated": "Updated"
+    },
+    "title": "My drafts"
+  },
+  "editor": {
+    "actions": {
+      "discard": "Discard draft",
+      "discardConfirm": "Discard this draft? This can't be undone.",
+      "publish": "Publish"
+    },
+    "appendices": {
+      "add": "Add appendix",
+      "empty": "No appendices.",
+      "title": "Appendices"
+    },
+    "backToDrafts": "Back to my drafts",
+    "discarded": "Draft discarded.",
+    "published": "Published as version {{version}}.",
+    "requiredMissing": "These required sections still need content: {{sections}}",
+    "sections": {
+      "title": "Section title",
+      "text": "Section text"
+    }
+  },
+  "new": {
+    "create": "Create draft",
+    "fields": {
+      "documentType": "Type",
+      "group": "Group",
+      "sensitivity": "Sensitivity",
+      "template": "Template",
+      "templateNone": "No template (freeform)",
+      "title": "Title"
+    },
+    "subtitle": "Choose where it lives and start from a template, or write freeform.",
+    "title": "New policy or procedure"
+  }
+}

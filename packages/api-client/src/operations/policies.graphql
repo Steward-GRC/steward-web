@@ -1,14 +1,5 @@
 query Policies($documentType: DocumentType!) {
   policies(documentType: $documentType) {
-    id
-    number
-    title
-    category
-    subcategory
-    sensitivity
-    status
-    version
-    updated
-    documentType
+    ...AuthoringPolicyFields
   }
 }

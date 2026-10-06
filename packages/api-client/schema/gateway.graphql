@@ -3,7 +3,9 @@ Vendored slice of the gateway schema. Steward's own gateway is not ported yet, s
 file is hand-pinned from the original gateway's v3.0.0 SDL (see ../schema-refs.env),
 trimmed to the operations steward-web actually sends: the signed-in user, the
 diagnostics report, editing one's own display name, the policy/procedure library browse
-(categories and the catalog), the admin user directory and the admin group directory. It
+(categories and the catalog), the admin user directory, the admin group directory, the
+admin organisation directory, and the staff authoring area (the editor and its AI
+drafting/review assist). It
 gains more of the upstream schema as later ports add operations, and schema-generate.sh
 switches from this vendored copy to a live fetch once steward-gateway publishes its own
 schema on its main branch.
@@ -621,4 +623,207 @@ input AddOrganizationInput {
   orgName: String!
   protocol: String!
   secretRef: String
+}
+
+# --- Authoring: the policy/procedure editor ---
+# Extends the existing library `Policy` (the reader/library's read-only row) with the
+# backend-id fields and per-viewer authorization projection only the editor needs - the
+# SAME row, not a parallel type. The display-only fields above (category/subcategory/
+# version/status) stay the library's own aggregated view.
+#
+# Document content is plain text here, same as the reader's bodyText, not the original's
+# rich Lexical JSON: no shared document renderer exists yet, so a draft is authored as
+# plain per-section text (PolicyVersion.contentJson, a JSON-encoded array of
+# `{ sectionKey, title, text }`) until one does.
+extend type Policy {
+  ownerUserId: ID!
+  homeGroupId: ID!
+  templateId: ID
+  templateNone: Boolean!
+  currentDraftVersionId: ID
+  currentPublishedVersionId: ID
+  retiredAt: String
+  viewerCan: PolicyViewerCan!
+}
+
+"Per-viewer authorization projection of a Policy, computed server-side. The UI mirrors these for UX only; the gateway is the real enforcement boundary."
+type PolicyViewerCan {
+  read: Boolean!
+  edit: Boolean!
+  submit: Boolean!
+  approve: Boolean!
+  contentObfuscated: Boolean!
+  canBreakGlass: Boolean!
+  ack: Boolean!
+}
+
+extend type Query {
+  "One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it."
+  policy(id: ID!): Policy
+  "The CALLING user's own policies with a working draft, most-recently-updated first. Any signed-in author."
+  myDraftPolicies: [Policy!]!
+  "The groups any signed-in author may create a policy under (unlike groupChildren, not site-admin-gated)."
+  authorableGroups: [Group!]!
+  "The templates selectable when creating a policy (unlike templates, not site-admin-gated)."
+  authorableTemplates(ownerGroupId: ID): [Template!]!
+  "A template's current (newest) version, with its section outline. Null for a template with no version yet."
+  latestTemplateVersion(templateId: ID!): TemplateVersion
+  "The working draft version of a policy's content, for the editor. Null when there is no draft."
+  draftVersion(policyId: ID!): PolicyVersion
+}
+
+extend type Mutation {
+  "Creates a new policy/procedure with an empty working draft. The owner is the calling user."
+  createPolicy(
+    homeGroupId: ID!
+    title: String!
+    sensitivity: Sensitivity!
+    templateId: ID
+    documentType: DocumentType
+  ): Policy!
+  "Saves the author's edits to the policy's working draft. templateVersionId pins the template version the content was scaffolded from; null for a freeform draft."
+  saveDraft(policyId: ID!, contentJson: String!, templateVersionId: ID): PolicyVersion!
+  "Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content."
+  publishDraft(policyId: ID!): PolicyVersion!
+  "Discards a policy's working draft, leaving any already-published version untouched."
+  discardDraft(policyId: ID!): Boolean!
+  addAppendix(policyVersionId: ID!, title: String!, contentJson: String!): Appendix!
+  updateAppendix(id: ID!, title: String!, contentJson: String!): Appendix!
+  deleteAppendix(id: ID!): Boolean!
+  reorderAppendices(policyVersionId: ID!, orderedIds: [ID!]!): [Appendix!]!
+}
+
+type TemplateVersion {
+  id: ID!
+  templateId: ID!
+  versionNo: Int!
+  sections: [Section!]!
+}
+
+"One section of a template's outline; a draft scaffolded from a template keeps these keys."
+type Section {
+  key: String!
+  title: String!
+  order: Int!
+  level: Int!
+  required: Boolean!
+}
+
+type PolicyVersion {
+  id: ID!
+  policyId: ID!
+  versionNo: Int!
+  status: String!
+  templateVersionId: ID
+  "Opaque to the gateway: a JSON-encoded array of `{ sectionKey, title, text }` authored sections."
+  contentJson: String!
+  appendices: [Appendix!]!
+}
+
+type Appendix {
+  id: ID!
+  policyVersionId: ID!
+  title: String!
+  contentJson: String!
+  orderIndex: Int!
+  letter: String!
+}
+
+# --- AI: authoring assist, drafting and review ---
+# Trimmed from the original's AI surface to what the editor calls: the inline per-section
+# assist, whole-draft generation, and review & gap-analysis. searchAndAnswer and the
+# site-admin provider settings aren't ported here; they belong to a future "Ask" area and
+# the admin settings area respectively.
+type AuthoringAssistResult {
+  suggestion: String!
+  operationId: String!
+}
+
+enum AssistOperation {
+  ASSIST_OPERATION_UNSPECIFIED
+  ASSIST_OPERATION_DRAFT
+  ASSIST_OPERATION_EXPAND
+  ASSIST_OPERATION_REWRITE
+  ASSIST_OPERATION_CLARIFY
+  ASSIST_OPERATION_SUMMARIZE
+}
+
+input AuthoringAssistInput {
+  policyId: ID!
+  sectionKey: String!
+  editableContent: String!
+  operation: AssistOperation!
+  instruction: String
+}
+
+enum AIJobPhase {
+  AI_JOB_PHASE_PENDING
+  AI_JOB_PHASE_RUNNING
+  AI_JOB_PHASE_SUCCEEDED
+  AI_JOB_PHASE_FAILED
+}
+
+"Poll aiJob(jobId) until phase reaches a terminal value; once SUCCEEDED, fetch the content by resultRef via aiJobResultContent."
+type AIJobStatus {
+  jobId: ID!
+  phase: AIJobPhase!
+  resultRef: String
+  error: String
+}
+
+type AIJobResultContent {
+  operation: String!
+  resultJson: String!
+}
+
+input SubmitDraftGenerationSectionInput {
+  key: String!
+  title: String!
+  order: Int!
+}
+
+input SubmitDraftGenerationInput {
+  homeGroupId: ID
+  title: String
+  brief: String!
+  sections: [SubmitDraftGenerationSectionInput!]!
+}
+
+input SubmitPolicyReviewSectionInput {
+  key: String!
+  title: String!
+  content: String!
+}
+
+input SubmitPolicyReviewInput {
+  policyId: ID!
+  sections: [SubmitPolicyReviewSectionInput!]!
+}
+
+"Returned by both async AI job submissions below; simplified from the original's two identically-shaped result types into one."
+type AIJobHandle {
+  jobId: ID!
+}
+
+"Best-effort: never errors on a downstream failure, so AI affordances can disable themselves without taking an unrelated flow down with them."
+type AIHealth {
+  available: Boolean!
+  reason: String
+}
+
+extend type Query {
+  "One inline authoring suggestion for a section currently being edited. Never auto-applied."
+  authoringAssist(input: AuthoringAssistInput!): AuthoringAssistResult!
+  aiJob(jobId: ID!): AIJobStatus!
+  "Fetch a completed async AI job's content by resultRef (AIJobStatus.resultRef once phase is SUCCEEDED)."
+  aiJobResultContent(resultRef: String!): AIJobResultContent!
+  "Whether AI is usable right now for the calling user."
+  aiHealth: AIHealth!
+}
+
+extend type Mutation {
+  "Submit whole-draft generation as an async job; poll aiJob(jobId) for the result."
+  submitDraftGeneration(input: SubmitDraftGenerationInput!): AIJobHandle!
+  "Submit review & gap-analysis of an existing draft as an async job; the result is a findings list, never an edit applied to the policy."
+  submitPolicyReview(input: SubmitPolicyReviewInput!): AIJobHandle!
 }

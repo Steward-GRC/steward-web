@@ -3,6 +3,12 @@
 import type {
   AckStatus,
   AddOrganizationInput,
+  AiHealth,
+  AiJobResultContent as AiJobResultContentSchema,
+  AiJobStatus,
+  Appendix,
+  AssistOperation,
+  AuthoringAssistResult,
   BreakGlassGrant,
   Category,
   DeleteUserResult,
@@ -15,10 +21,13 @@ import type {
   Organization,
   Policy,
   PolicyDetail,
+  PolicyVersion,
   ReviewCadence,
+  Sensitivity,
   Session,
   SpCertificate,
   Template,
+  TemplateVersion,
   User,
   UserDeletionPreview,
   UserPage,
@@ -30,6 +39,10 @@ import { DocumentType } from "./generated/schema";
 export type {
   AckStatus,
   AddOrganizationInput,
+  AiHealth,
+  AiJobStatus,
+  Appendix,
+  AuthoringAssistResult,
   BreakGlassGrant,
   Category,
   DeleteUserResult,
@@ -48,17 +61,21 @@ export type {
   PolicyDetail,
   PolicyReference,
   PolicySectionDiff,
+  PolicyVersion,
   PolicyVersionSummary,
   RelatedPolicy,
   Session,
   SpCertificate,
   Template,
+  TemplateVersion,
   User,
   UserDeletionPreview,
   UserPage,
   Workflow,
 } from "./generated/schema";
 export {
+  AiJobPhase,
+  AssistOperation,
   DocumentType,
   PolicyStatus,
   ReferenceKind,
@@ -66,10 +83,29 @@ export {
   Sensitivity,
 } from "./generated/schema";
 
+/** `AiJobResultContent` is renamed on export only to avoid colliding with the `Edge` method of the same name. */
+export type AIJobResultContent = AiJobResultContentSchema;
+
+export interface AuthoringAssistInput {
+  editableContent: string;
+  instruction?: null | string;
+  operation: AssistOperation;
+  policyId: string;
+  sectionKey: string;
+}
+
 export interface CreateGroupInput {
   name: string;
   parentId: null | string;
   slug: string;
+}
+
+export interface CreatePolicyInput {
+  documentType?: DocumentType;
+  homeGroupId: string;
+  sensitivity: Sensitivity;
+  templateId?: null | string;
+  title: string;
 }
 
 export interface Edge {
@@ -77,6 +113,13 @@ export interface Edge {
   acknowledgePolicy(policyVersionId: string, cookie?: string): Promise<AckStatus>;
   /** Enables an organisation's SSO connection for sign-in. Site-admin only. */
   activateOrganization(domain: string, cookie?: string): Promise<Organization>;
+  /** Adds an appendix to a policy version, for the editor. */
+  addAppendix(
+    policyVersionId: string,
+    title: string,
+    contentJson: string,
+    cookie?: string,
+  ): Promise<Appendix>;
   /** Adds an IdP-group-claim-to-platform-group mapping for a connection. Site-admin only. */
   addGroupMapping(
     connectionId: string,
@@ -86,6 +129,18 @@ export interface Edge {
   ): Promise<GroupMapping>;
   /** Registers a new organisation SSO connection, unverified and disabled. Site-admin only. */
   addOrganization(input: AddOrganizationInput, cookie?: string): Promise<Organization>;
+  /** Whether AI is usable right now for the calling user. Never rejects; see `AiHealth.reason`. */
+  aiHealth(cookie?: string): Promise<AiHealth>;
+  /** Polls an async AI job's status by id. */
+  aiJob(jobId: string, cookie?: string): Promise<AiJobStatus>;
+  /** Fetches a completed async AI job's content by `AIJobStatus.resultRef`. */
+  aiJobResultContent(resultRef: string, cookie?: string): Promise<AIJobResultContent>;
+  /** The groups any signed-in author may create a policy under (not site-admin-gated). */
+  authorableGroups(cookie?: string): Promise<readonly Group[]>;
+  /** The templates selectable when creating a policy (not site-admin-gated). */
+  authorableTemplates(ownerGroupId: null | string, cookie?: string): Promise<readonly Template[]>;
+  /** One inline authoring suggestion for a section currently being edited. Never auto-applied. */
+  authoringAssist(input: AuthoringAssistInput, cookie?: string): Promise<AuthoringAssistResult>;
   /** A site admin's time-boxed, audited reveal of a sensitive policy's real content. Rejects with `GatewayError` when signed out or refused. */
   breakGlassReveal(policyId: string, reason: string, cookie?: string): Promise<BreakGlassGrant>;
   /** The library's category tree. Rejects with `GatewayError` when signed out. */
@@ -100,6 +155,10 @@ export interface Edge {
   ): Promise<Organization>;
   /** Creates a taxonomy group. Site-admin only. */
   createGroup(input: CreateGroupInput, cookie?: string): Promise<Group>;
+  /** Creates a new policy/procedure with an empty working draft. The owner is the calling user. */
+  createPolicy(input: CreatePolicyInput, cookie?: string): Promise<Policy>;
+  /** Deletes a library appendix. */
+  deleteAppendix(id: string, cookie?: string): Promise<boolean>;
   /** Deletes a group and its policy-free descendants. Site-admin only. */
   deleteGroup(id: string, cookie?: string): Promise<boolean>;
   /** Removes a group mapping by id. Site-admin only. */
@@ -113,6 +172,10 @@ export interface Edge {
   /** Disables an organisation's SSO connection. Does not clear its gates. Site-admin only. */
   disableOrganization(domain: string, cookie?: string): Promise<Organization>;
   disableUser(userId: string, cookie?: string): Promise<User>;
+  /** Discards a policy's working draft, leaving any published version untouched. */
+  discardDraft(policyId: string, cookie?: string): Promise<boolean>;
+  /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
+  draftVersion(policyId: string, cookie?: string): Promise<null | PolicyVersion>;
 
   enableUser(userId: string, cookie?: string): Promise<User>;
   /** Mints a new SP signing certificate and activates it, superseding the previous one. Site-admin only. */
@@ -123,16 +186,22 @@ export interface Edge {
   groupChildren(parentId: null | string, cookie?: string): Promise<readonly Group[]>;
   /** An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only. */
   groupMappings(connectionId: string, cookie?: string): Promise<readonly GroupMapping[]>;
+  /** A template's current (newest) version, with its section outline. Null for a template with no version yet. */
+  latestTemplateVersion(templateId: string, cookie?: string): Promise<null | TemplateVersion>;
   /** A user's sessions, site-admin only. */
   listUserSessions(userId: string, cookie?: string): Promise<readonly Session[]>;
   /** The signed-in user, or `null` when the session cookie is missing or expired. */
   me(cookie?: string): Promise<Me | null>;
   /** Re-parents a group (and its subtree). A null newParentId promotes it to a root. */
   moveGroup(groupId: string, newParentId: null | string, cookie?: string): Promise<Group>;
+  /** The CALLING user's own policies with a working draft, most-recently-updated first. */
+  myDraftPolicies(cookie?: string): Promise<readonly Policy[]>;
   /** Every configured organisation SSO connection. Site-admin only. */
   organizations(cookie?: string): Promise<readonly Organization[]>;
   /** The library catalog for one document type. Rejects with `GatewayError` when signed out. */
   policies(documentType: DocumentType, cookie?: string): Promise<readonly Policy[]>;
+  /** One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it. */
+  policy(id: string, cookie?: string): Promise<null | Policy>;
   /** The reader's full detail for one policy/procedure, by number. Null when there is no such document, or the caller can't see it. Rejects with `GatewayError` when signed out. */
   policyDetail(
     documentType: DocumentType,
@@ -141,12 +210,27 @@ export interface Edge {
   ): Promise<null | PolicyDetail>;
   /** A read-only dry run of `deleteUser`. Site-admin only. */
   previewUserDeletion(userId: string, cookie?: string): Promise<UserDeletionPreview>;
+  /** Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content. */
+  publishDraft(policyId: string, cookie?: string): Promise<PolicyVersion>;
   /** Renames a group (name and slug). Site-admin only. */
   renameGroup(id: string, name: string, slug: string, cookie?: string): Promise<Group>;
+  /** Reorders a policy version's appendices. */
+  reorderAppendices(
+    policyVersionId: string,
+    orderedIds: readonly string[],
+    cookie?: string,
+  ): Promise<readonly Appendix[]>;
   /** Revokes a GLOBAL role (no category). Site-admin only. */
   revokeRole(userId: string, role: string, cookie?: string): Promise<User>;
   /** Revokes every active session for a user. Returns how many were revoked. */
   revokeUserSessions(userId: string, reason: string, cookie?: string): Promise<number>;
+  /** Saves the author's edits to a policy's working draft. */
+  saveDraft(
+    policyId: string,
+    contentJson: string,
+    templateVersionId: null | string,
+    cookie?: string,
+  ): Promise<PolicyVersion>;
   /** The platform's active SP signing certificate. Site-admin only. */
   spCertificate(cookie?: string): Promise<SpCertificate>;
   /** Mints a DNS TXT domain-verification challenge. rotate revokes the prior verified proof. Site-admin only. */
@@ -155,8 +239,22 @@ export interface Edge {
     rotate?: boolean,
     cookie?: string,
   ): Promise<DomainVerification>;
+  /** Submit whole-draft generation as an async job; poll `aiJob(jobId)` for the result. */
+  submitDraftGeneration(
+    input: SubmitDraftGenerationInput,
+    cookie?: string,
+  ): Promise<{ jobId: string }>;
+  /** Submit review & gap-analysis of an existing draft as an async job; the result is a findings list, never an edit applied to the policy. */
+  submitPolicyReview(input: SubmitPolicyReviewInput, cookie?: string): Promise<{ jobId: string }>;
   /** The templates selectable as a group's default. Site-admin only. */
   templates(cookie?: string): Promise<readonly Template[]>;
+  /** Edits a library appendix. */
+  updateAppendix(
+    id: string,
+    title: string,
+    contentJson: string,
+    cookie?: string,
+  ): Promise<Appendix>;
   /** Sets a group's inherited defaults and governance. Site-admin only. */
   updateGroupSettings(input: UpdateGroupSettingsInput, cookie?: string): Promise<Group>;
   /** Updates an organisation's per-connection login toggles. Site-admin only. */
@@ -180,6 +278,18 @@ export interface Edge {
 export interface ListUsersInput {
   includeDeleted?: boolean;
   search?: string;
+}
+
+export interface SubmitDraftGenerationInput {
+  brief: string;
+  homeGroupId?: null | string;
+  sections: readonly { key: string; order: number; title: string }[];
+  title?: null | string;
+}
+
+export interface SubmitPolicyReviewInput {
+  policyId: string;
+  sections: readonly { content: string; key: string; title: string }[];
 }
 
 export interface UpdateGroupSettingsInput {

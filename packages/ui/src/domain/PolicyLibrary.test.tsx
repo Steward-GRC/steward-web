@@ -15,8 +15,30 @@ const categories: Category[] = [
   { id: "cat-2", name: "IT Security", slug: "it-security", subcategories: ["Usage", "Operations"] },
 ];
 
+/** Every authoring-only field (added once the editor extended `Policy`) shares this
+ *  fully-permitted default; the library screen under test never reads them. */
+const authoringDefaults = {
+  currentDraftVersionId: null,
+  currentPublishedVersionId: null,
+  homeGroupId: "group-1",
+  ownerUserId: "user-1",
+  retiredAt: null,
+  templateId: null,
+  templateNone: true,
+  viewerCan: {
+    ack: true,
+    approve: true,
+    canBreakGlass: false,
+    contentObfuscated: false,
+    edit: true,
+    read: true,
+    submit: true,
+  },
+} satisfies Partial<Policy>;
+
 const policies: Policy[] = [
   {
+    ...authoringDefaults,
     category: "Finance",
     documentType: DocumentType.Policy,
     id: "pol-1",
@@ -29,6 +51,7 @@ const policies: Policy[] = [
     version: "2.0.0",
   },
   {
+    ...authoringDefaults,
     category: "IT Security",
     documentType: DocumentType.Policy,
     id: "pol-2",

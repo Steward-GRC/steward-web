@@ -37,6 +37,23 @@ export type ActivateOrganizationMutation = {
   };
 };
 
+export type AddAppendixMutationVariables = Exact<{
+  policyVersionId: string | number;
+  title: string;
+  contentJson: string;
+}>;
+
+export type AddAppendixMutation = {
+  readonly addAppendix: {
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly title: string;
+    readonly contentJson: string;
+    readonly orderIndex: number;
+    readonly letter: string;
+  };
+};
+
 export type AddGroupMappingMutationVariables = Exact<{
   connectionId: string | number;
   idpGroupClaimValue: string;
@@ -68,6 +85,104 @@ export type AddOrganizationMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+  };
+};
+
+export type AiHealthQueryVariables = Exact<{ [key: string]: never }>;
+
+export type AiHealthQuery = {
+  readonly aiHealth: { readonly available: boolean; readonly reason: string | null };
+};
+
+export type AiJobQueryVariables = Exact<{
+  jobId: string | number;
+}>;
+
+export type AiJobQuery = {
+  readonly aiJob: {
+    readonly jobId: string;
+    readonly phase: Types.AiJobPhase;
+    readonly resultRef: string | null;
+    readonly error: string | null;
+  };
+};
+
+export type AiJobResultContentQueryVariables = Exact<{
+  resultRef: string;
+}>;
+
+export type AiJobResultContentQuery = {
+  readonly aiJobResultContent: { readonly operation: string; readonly resultJson: string };
+};
+
+export type AppendixFieldsFragment = {
+  readonly id: string;
+  readonly policyVersionId: string;
+  readonly title: string;
+  readonly contentJson: string;
+  readonly orderIndex: number;
+  readonly letter: string;
+};
+
+export type AuthorableGroupsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type AuthorableGroupsQuery = {
+  readonly authorableGroups: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly slug: string;
+    readonly parentId: string | null;
+    readonly defaultTemplateId: string | null;
+    readonly defaultTemplateNone: boolean;
+    readonly defaultWorkflowId: string | null;
+    readonly owners: ReadonlyArray<string>;
+    readonly reviewCadence: Types.ReviewCadence;
+    readonly reviewDate: string | null;
+  }>;
+};
+
+export type AuthorableTemplatesQueryVariables = Exact<{
+  ownerGroupId?: string | number | null | undefined;
+}>;
+
+export type AuthorableTemplatesQuery = {
+  readonly authorableTemplates: ReadonlyArray<{ readonly id: string; readonly name: string }>;
+};
+
+export type AuthoringAssistQueryVariables = Exact<{
+  input: Types.AuthoringAssistInput;
+}>;
+
+export type AuthoringAssistQuery = {
+  readonly authoringAssist: { readonly suggestion: string; readonly operationId: string };
+};
+
+export type AuthoringPolicyFieldsFragment = {
+  readonly id: string;
+  readonly number: string;
+  readonly title: string;
+  readonly documentType: Types.DocumentType;
+  readonly sensitivity: Types.Sensitivity;
+  readonly category: string;
+  readonly subcategory: string;
+  readonly status: Types.PolicyStatus;
+  readonly version: string;
+  readonly updated: string;
+  readonly ownerUserId: string;
+  readonly homeGroupId: string;
+  readonly templateId: string | null;
+  readonly templateNone: boolean;
+  readonly currentDraftVersionId: string | null;
+  readonly currentPublishedVersionId: string | null;
+  readonly retiredAt: string | null;
+  readonly viewerCan: {
+    readonly read: boolean;
+    readonly edit: boolean;
+    readonly submit: boolean;
+    readonly approve: boolean;
+    readonly contentObfuscated: boolean;
+    readonly canBreakGlass: boolean;
+    readonly ack: boolean;
   };
 };
 
@@ -133,6 +248,51 @@ export type CreateGroupMutation = {
     readonly reviewDate: string | null;
   };
 };
+
+export type CreatePolicyMutationVariables = Exact<{
+  homeGroupId: string | number;
+  title: string;
+  sensitivity: Types.Sensitivity;
+  templateId?: string | number | null | undefined;
+  documentType?: Types.DocumentType | null | undefined;
+}>;
+
+export type CreatePolicyMutation = {
+  readonly createPolicy: {
+    readonly id: string;
+    readonly number: string;
+    readonly title: string;
+    readonly documentType: Types.DocumentType;
+    readonly sensitivity: Types.Sensitivity;
+    readonly category: string;
+    readonly subcategory: string;
+    readonly status: Types.PolicyStatus;
+    readonly version: string;
+    readonly updated: string;
+    readonly ownerUserId: string;
+    readonly homeGroupId: string;
+    readonly templateId: string | null;
+    readonly templateNone: boolean;
+    readonly currentDraftVersionId: string | null;
+    readonly currentPublishedVersionId: string | null;
+    readonly retiredAt: string | null;
+    readonly viewerCan: {
+      readonly read: boolean;
+      readonly edit: boolean;
+      readonly submit: boolean;
+      readonly approve: boolean;
+      readonly contentObfuscated: boolean;
+      readonly canBreakGlass: boolean;
+      readonly ack: boolean;
+    };
+  };
+};
+
+export type DeleteAppendixMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type DeleteAppendixMutation = { readonly deleteAppendix: boolean };
 
 export type DeleteGroupMutationVariables = Exact<{
   id: string | number;
@@ -240,6 +400,35 @@ export type DisableUserMutation = {
   };
 };
 
+export type DiscardDraftMutationVariables = Exact<{
+  policyId: string | number;
+}>;
+
+export type DiscardDraftMutation = { readonly discardDraft: boolean };
+
+export type DraftVersionQueryVariables = Exact<{
+  policyId: string | number;
+}>;
+
+export type DraftVersionQuery = {
+  readonly draftVersion: {
+    readonly id: string;
+    readonly policyId: string;
+    readonly versionNo: number;
+    readonly status: string;
+    readonly templateVersionId: string | null;
+    readonly contentJson: string;
+    readonly appendices: ReadonlyArray<{
+      readonly id: string;
+      readonly policyVersionId: string;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly orderIndex: number;
+      readonly letter: string;
+    }>;
+  } | null;
+};
+
 export type EnableUserMutationVariables = Exact<{
   userId: string | number;
 }>;
@@ -342,6 +531,25 @@ export type GroupMappingsQuery = {
   }>;
 };
 
+export type LatestTemplateVersionQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+export type LatestTemplateVersionQuery = {
+  readonly latestTemplateVersion: {
+    readonly id: string;
+    readonly templateId: string;
+    readonly versionNo: number;
+    readonly sections: ReadonlyArray<{
+      readonly key: string;
+      readonly title: string;
+      readonly order: number;
+      readonly level: number;
+      readonly required: boolean;
+    }>;
+  } | null;
+};
+
 export type ListUserSessionsQueryVariables = Exact<{
   userId: string | number;
 }>;
@@ -393,6 +601,39 @@ export type MoveGroupMutation = {
   };
 };
 
+export type MyDraftPoliciesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type MyDraftPoliciesQuery = {
+  readonly myDraftPolicies: ReadonlyArray<{
+    readonly id: string;
+    readonly number: string;
+    readonly title: string;
+    readonly documentType: Types.DocumentType;
+    readonly sensitivity: Types.Sensitivity;
+    readonly category: string;
+    readonly subcategory: string;
+    readonly status: Types.PolicyStatus;
+    readonly version: string;
+    readonly updated: string;
+    readonly ownerUserId: string;
+    readonly homeGroupId: string;
+    readonly templateId: string | null;
+    readonly templateNone: boolean;
+    readonly currentDraftVersionId: string | null;
+    readonly currentPublishedVersionId: string | null;
+    readonly retiredAt: string | null;
+    readonly viewerCan: {
+      readonly read: boolean;
+      readonly edit: boolean;
+      readonly submit: boolean;
+      readonly approve: boolean;
+      readonly contentObfuscated: boolean;
+      readonly canBreakGlass: boolean;
+      readonly ack: boolean;
+    };
+  }>;
+};
+
 export type OrganizationFieldsFragment = {
   readonly connectionId: string;
   readonly displayName: string;
@@ -432,14 +673,65 @@ export type PoliciesQuery = {
     readonly id: string;
     readonly number: string;
     readonly title: string;
+    readonly documentType: Types.DocumentType;
+    readonly sensitivity: Types.Sensitivity;
     readonly category: string;
     readonly subcategory: string;
-    readonly sensitivity: Types.Sensitivity;
     readonly status: Types.PolicyStatus;
     readonly version: string;
     readonly updated: string;
-    readonly documentType: Types.DocumentType;
+    readonly ownerUserId: string;
+    readonly homeGroupId: string;
+    readonly templateId: string | null;
+    readonly templateNone: boolean;
+    readonly currentDraftVersionId: string | null;
+    readonly currentPublishedVersionId: string | null;
+    readonly retiredAt: string | null;
+    readonly viewerCan: {
+      readonly read: boolean;
+      readonly edit: boolean;
+      readonly submit: boolean;
+      readonly approve: boolean;
+      readonly contentObfuscated: boolean;
+      readonly canBreakGlass: boolean;
+      readonly ack: boolean;
+    };
   }>;
+};
+
+export type PolicyQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+export type PolicyQuery = {
+  readonly policy: {
+    readonly id: string;
+    readonly number: string;
+    readonly title: string;
+    readonly documentType: Types.DocumentType;
+    readonly sensitivity: Types.Sensitivity;
+    readonly category: string;
+    readonly subcategory: string;
+    readonly status: Types.PolicyStatus;
+    readonly version: string;
+    readonly updated: string;
+    readonly ownerUserId: string;
+    readonly homeGroupId: string;
+    readonly templateId: string | null;
+    readonly templateNone: boolean;
+    readonly currentDraftVersionId: string | null;
+    readonly currentPublishedVersionId: string | null;
+    readonly retiredAt: string | null;
+    readonly viewerCan: {
+      readonly read: boolean;
+      readonly edit: boolean;
+      readonly submit: boolean;
+      readonly approve: boolean;
+      readonly contentObfuscated: boolean;
+      readonly canBreakGlass: boolean;
+      readonly ack: boolean;
+    };
+  } | null;
 };
 
 export type PolicyDetailQueryVariables = Exact<{
@@ -525,6 +817,23 @@ export type PolicyDetailQuery = {
   } | null;
 };
 
+export type PolicyVersionFieldsFragment = {
+  readonly id: string;
+  readonly policyId: string;
+  readonly versionNo: number;
+  readonly status: string;
+  readonly templateVersionId: string | null;
+  readonly contentJson: string;
+  readonly appendices: ReadonlyArray<{
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly title: string;
+    readonly contentJson: string;
+    readonly orderIndex: number;
+    readonly letter: string;
+  }>;
+};
+
 export type PreviewUserDeletionQueryVariables = Exact<{
   userId: string | number;
 }>;
@@ -552,6 +861,29 @@ export type PreviewUserDeletionQuery = {
   };
 };
 
+export type PublishDraftMutationVariables = Exact<{
+  policyId: string | number;
+}>;
+
+export type PublishDraftMutation = {
+  readonly publishDraft: {
+    readonly id: string;
+    readonly policyId: string;
+    readonly versionNo: number;
+    readonly status: string;
+    readonly templateVersionId: string | null;
+    readonly contentJson: string;
+    readonly appendices: ReadonlyArray<{
+      readonly id: string;
+      readonly policyVersionId: string;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly orderIndex: number;
+      readonly letter: string;
+    }>;
+  };
+};
+
 export type RenameGroupMutationVariables = Exact<{
   id: string | number;
   name: string;
@@ -571,6 +903,22 @@ export type RenameGroupMutation = {
     readonly reviewCadence: Types.ReviewCadence;
     readonly reviewDate: string | null;
   };
+};
+
+export type ReorderAppendicesMutationVariables = Exact<{
+  policyVersionId: string | number;
+  orderedIds: ReadonlyArray<string | number> | string | number;
+}>;
+
+export type ReorderAppendicesMutation = {
+  readonly reorderAppendices: ReadonlyArray<{
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly title: string;
+    readonly contentJson: string;
+    readonly orderIndex: number;
+    readonly letter: string;
+  }>;
 };
 
 export type RevokeRoleMutationVariables = Exact<{
@@ -603,6 +951,31 @@ export type RevokeUserSessionsMutationVariables = Exact<{
 
 export type RevokeUserSessionsMutation = { readonly revokeUserSessions: number };
 
+export type SaveDraftMutationVariables = Exact<{
+  policyId: string | number;
+  contentJson: string;
+  templateVersionId?: string | number | null | undefined;
+}>;
+
+export type SaveDraftMutation = {
+  readonly saveDraft: {
+    readonly id: string;
+    readonly policyId: string;
+    readonly versionNo: number;
+    readonly status: string;
+    readonly templateVersionId: string | null;
+    readonly contentJson: string;
+    readonly appendices: ReadonlyArray<{
+      readonly id: string;
+      readonly policyVersionId: string;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly orderIndex: number;
+      readonly letter: string;
+    }>;
+  };
+};
+
 export type SpCertificateQueryVariables = Exact<{ [key: string]: never }>;
 
 export type SpCertificateQuery = {
@@ -629,10 +1002,43 @@ export type StartDomainVerificationMutation = {
   };
 };
 
+export type SubmitDraftGenerationMutationVariables = Exact<{
+  input: Types.SubmitDraftGenerationInput;
+}>;
+
+export type SubmitDraftGenerationMutation = {
+  readonly submitDraftGeneration: { readonly jobId: string };
+};
+
+export type SubmitPolicyReviewMutationVariables = Exact<{
+  input: Types.SubmitPolicyReviewInput;
+}>;
+
+export type SubmitPolicyReviewMutation = {
+  readonly submitPolicyReview: { readonly jobId: string };
+};
+
 export type TemplatesQueryVariables = Exact<{ [key: string]: never }>;
 
 export type TemplatesQuery = {
   readonly templates: ReadonlyArray<{ readonly id: string; readonly name: string }>;
+};
+
+export type UpdateAppendixMutationVariables = Exact<{
+  id: string | number;
+  title: string;
+  contentJson: string;
+}>;
+
+export type UpdateAppendixMutation = {
+  readonly updateAppendix: {
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly title: string;
+    readonly contentJson: string;
+    readonly orderIndex: number;
+    readonly letter: string;
+  };
 };
 
 export type UpdateGroupSettingsMutationVariables = Exact<{
@@ -790,6 +1196,54 @@ export type WorkflowsQuery = {
   readonly workflows: ReadonlyArray<{ readonly id: string; readonly name: string }>;
 };
 
+export const AuthoringPolicyFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuthoringPolicyFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Policy" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "number" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "documentType" } },
+          { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
+          { kind: "Field", name: { kind: "Name", value: "category" } },
+          { kind: "Field", name: { kind: "Name", value: "subcategory" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          { kind: "Field", name: { kind: "Name", value: "updated" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "homeGroupId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "viewerCan" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "read" } },
+                { kind: "Field", name: { kind: "Name", value: "edit" } },
+                { kind: "Field", name: { kind: "Name", value: "submit" } },
+                { kind: "Field", name: { kind: "Name", value: "approve" } },
+                { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
+                { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
+                { kind: "Field", name: { kind: "Name", value: "ack" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AuthoringPolicyFieldsFragment, unknown>;
 export const GroupFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -840,6 +1294,74 @@ export const OrganizationFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<OrganizationFieldsFragment, unknown>;
+export const AppendixFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Appendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AppendixFieldsFragment, unknown>;
+export const PolicyVersionFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "templateVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "appendices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Appendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PolicyVersionFieldsFragment, unknown>;
 export const UserFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -974,6 +1496,90 @@ export const ActivateOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<ActivateOrganizationMutation, ActivateOrganizationMutationVariables>;
+export const AddAppendixDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "AddAppendix" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "title" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "addAppendix" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "title" },
+                value: { kind: "Variable", name: { kind: "Name", value: "title" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "contentJson" },
+                value: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Appendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddAppendixMutation, AddAppendixMutationVariables>;
 export const AddGroupMappingDocument = {
   kind: "Document",
   definitions: [
@@ -1107,6 +1713,248 @@ export const AddOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<AddOrganizationMutation, AddOrganizationMutationVariables>;
+export const AiHealthDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AiHealth" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "aiHealth" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "available" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AiHealthQuery, AiHealthQueryVariables>;
+export const AiJobDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AiJob" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "jobId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "aiJob" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "jobId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "jobId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "jobId" } },
+                { kind: "Field", name: { kind: "Name", value: "phase" } },
+                { kind: "Field", name: { kind: "Name", value: "resultRef" } },
+                { kind: "Field", name: { kind: "Name", value: "error" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AiJobQuery, AiJobQueryVariables>;
+export const AiJobResultContentDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AiJobResultContent" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "resultRef" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "aiJobResultContent" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "resultRef" },
+                value: { kind: "Variable", name: { kind: "Name", value: "resultRef" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "operation" } },
+                { kind: "Field", name: { kind: "Name", value: "resultJson" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AiJobResultContentQuery, AiJobResultContentQueryVariables>;
+export const AuthorableGroupsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AuthorableGroups" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "authorableGroups" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "GroupFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "GroupFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Group" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "parentId" } },
+          { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
+          { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
+          { kind: "Field", name: { kind: "Name", value: "owners" } },
+          { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
+          { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AuthorableGroupsQuery, AuthorableGroupsQueryVariables>;
+export const AuthorableTemplatesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AuthorableTemplates" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "ownerGroupId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "authorableTemplates" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "ownerGroupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "ownerGroupId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AuthorableTemplatesQuery, AuthorableTemplatesQueryVariables>;
+export const AuthoringAssistDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AuthoringAssist" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "AuthoringAssistInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "authoringAssist" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "suggestion" } },
+                { kind: "Field", name: { kind: "Name", value: "operationId" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AuthoringAssistQuery, AuthoringAssistQueryVariables>;
 export const BreakGlassRevealDocument = {
   kind: "Document",
   definitions: [
@@ -1374,6 +2222,173 @@ export const CreateGroupDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateGroupMutation, CreateGroupMutationVariables>;
+export const CreatePolicyDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreatePolicy" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "homeGroupId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "title" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "sensitivity" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Sensitivity" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "documentType" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "DocumentType" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createPolicy" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "homeGroupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "homeGroupId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "title" },
+                value: { kind: "Variable", name: { kind: "Name", value: "title" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "sensitivity" },
+                value: { kind: "Variable", name: { kind: "Name", value: "sensitivity" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "templateId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "documentType" },
+                value: { kind: "Variable", name: { kind: "Name", value: "documentType" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AuthoringPolicyFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuthoringPolicyFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Policy" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "number" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "documentType" } },
+          { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
+          { kind: "Field", name: { kind: "Name", value: "category" } },
+          { kind: "Field", name: { kind: "Name", value: "subcategory" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          { kind: "Field", name: { kind: "Name", value: "updated" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "homeGroupId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "viewerCan" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "read" } },
+                { kind: "Field", name: { kind: "Name", value: "edit" } },
+                { kind: "Field", name: { kind: "Name", value: "submit" } },
+                { kind: "Field", name: { kind: "Name", value: "approve" } },
+                { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
+                { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
+                { kind: "Field", name: { kind: "Name", value: "ack" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreatePolicyMutation, CreatePolicyMutationVariables>;
+export const DeleteAppendixDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteAppendix" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteAppendix" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteAppendixMutation, DeleteAppendixMutationVariables>;
 export const DeleteGroupDocument = {
   kind: "Document",
   definitions: [
@@ -1741,6 +2756,126 @@ export const DisableUserDocument = {
     },
   ],
 } as unknown as DocumentNode<DisableUserMutation, DisableUserMutationVariables>;
+export const DiscardDraftDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DiscardDraft" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "discardDraft" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DiscardDraftMutation, DiscardDraftMutationVariables>;
+export const DraftVersionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "DraftVersion" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draftVersion" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Appendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "templateVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "appendices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DraftVersionQuery, DraftVersionQueryVariables>;
 export const EnableUserDocument = {
   kind: "Document",
   definitions: [
@@ -2016,6 +3151,64 @@ export const GroupMappingsDocument = {
     },
   ],
 } as unknown as DocumentNode<GroupMappingsQuery, GroupMappingsQueryVariables>;
+export const LatestTemplateVersionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "LatestTemplateVersion" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "latestTemplateVersion" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "templateId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "templateId" } },
+                { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "sections" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "key" } },
+                      { kind: "Field", name: { kind: "Name", value: "title" } },
+                      { kind: "Field", name: { kind: "Name", value: "order" } },
+                      { kind: "Field", name: { kind: "Name", value: "level" } },
+                      { kind: "Field", name: { kind: "Name", value: "required" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<LatestTemplateVersionQuery, LatestTemplateVersionQueryVariables>;
 export const ListUserSessionsDocument = {
   kind: "Document",
   definitions: [
@@ -2168,6 +3361,74 @@ export const MoveGroupDocument = {
     },
   ],
 } as unknown as DocumentNode<MoveGroupMutation, MoveGroupMutationVariables>;
+export const MyDraftPoliciesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "MyDraftPolicies" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "myDraftPolicies" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AuthoringPolicyFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuthoringPolicyFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Policy" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "number" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "documentType" } },
+          { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
+          { kind: "Field", name: { kind: "Name", value: "category" } },
+          { kind: "Field", name: { kind: "Name", value: "subcategory" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          { kind: "Field", name: { kind: "Name", value: "updated" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "homeGroupId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "viewerCan" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "read" } },
+                { kind: "Field", name: { kind: "Name", value: "edit" } },
+                { kind: "Field", name: { kind: "Name", value: "submit" } },
+                { kind: "Field", name: { kind: "Name", value: "approve" } },
+                { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
+                { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
+                { kind: "Field", name: { kind: "Name", value: "ack" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MyDraftPoliciesQuery, MyDraftPoliciesQueryVariables>;
 export const OrganizationsDocument = {
   kind: "Document",
   definitions: [
@@ -2246,16 +3507,50 @@ export const PoliciesDocument = {
             selectionSet: {
               kind: "SelectionSet",
               selections: [
-                { kind: "Field", name: { kind: "Name", value: "id" } },
-                { kind: "Field", name: { kind: "Name", value: "number" } },
-                { kind: "Field", name: { kind: "Name", value: "title" } },
-                { kind: "Field", name: { kind: "Name", value: "category" } },
-                { kind: "Field", name: { kind: "Name", value: "subcategory" } },
-                { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
-                { kind: "Field", name: { kind: "Name", value: "status" } },
-                { kind: "Field", name: { kind: "Name", value: "version" } },
-                { kind: "Field", name: { kind: "Name", value: "updated" } },
-                { kind: "Field", name: { kind: "Name", value: "documentType" } },
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AuthoringPolicyFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuthoringPolicyFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Policy" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "number" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "documentType" } },
+          { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
+          { kind: "Field", name: { kind: "Name", value: "category" } },
+          { kind: "Field", name: { kind: "Name", value: "subcategory" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          { kind: "Field", name: { kind: "Name", value: "updated" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "homeGroupId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "viewerCan" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "read" } },
+                { kind: "Field", name: { kind: "Name", value: "edit" } },
+                { kind: "Field", name: { kind: "Name", value: "submit" } },
+                { kind: "Field", name: { kind: "Name", value: "approve" } },
+                { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
+                { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
+                { kind: "Field", name: { kind: "Name", value: "ack" } },
               ],
             },
           },
@@ -2264,6 +3559,91 @@ export const PoliciesDocument = {
     },
   ],
 } as unknown as DocumentNode<PoliciesQuery, PoliciesQueryVariables>;
+export const PolicyDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "Policy" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policy" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AuthoringPolicyFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuthoringPolicyFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Policy" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "number" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "documentType" } },
+          { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
+          { kind: "Field", name: { kind: "Name", value: "category" } },
+          { kind: "Field", name: { kind: "Name", value: "subcategory" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "version" } },
+          { kind: "Field", name: { kind: "Name", value: "updated" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "homeGroupId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "viewerCan" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "read" } },
+                { kind: "Field", name: { kind: "Name", value: "edit" } },
+                { kind: "Field", name: { kind: "Name", value: "submit" } },
+                { kind: "Field", name: { kind: "Name", value: "approve" } },
+                { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
+                { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
+                { kind: "Field", name: { kind: "Name", value: "ack" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PolicyQuery, PolicyQueryVariables>;
 export const PolicyDetailDocument = {
   kind: "Document",
   definitions: [
@@ -2537,6 +3917,90 @@ export const PreviewUserDeletionDocument = {
     },
   ],
 } as unknown as DocumentNode<PreviewUserDeletionQuery, PreviewUserDeletionQueryVariables>;
+export const PublishDraftDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "PublishDraft" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishDraft" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Appendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "templateVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "appendices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PublishDraftMutation, PublishDraftMutationVariables>;
 export const RenameGroupDocument = {
   kind: "Document",
   definitions: [
@@ -2625,6 +4089,83 @@ export const RenameGroupDocument = {
     },
   ],
 } as unknown as DocumentNode<RenameGroupMutation, RenameGroupMutationVariables>;
+export const ReorderAppendicesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ReorderAppendices" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "orderedIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "reorderAppendices" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "orderedIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "orderedIds" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Appendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReorderAppendicesMutation, ReorderAppendicesMutationVariables>;
 export const RevokeRoleDocument = {
   kind: "Document",
   definitions: [
@@ -2747,6 +4288,113 @@ export const RevokeUserSessionsDocument = {
     },
   ],
 } as unknown as DocumentNode<RevokeUserSessionsMutation, RevokeUserSessionsMutationVariables>;
+export const SaveDraftDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SaveDraft" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "templateVersionId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "saveDraft" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "contentJson" },
+                value: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "templateVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "templateVersionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Appendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          { kind: "Field", name: { kind: "Name", value: "templateVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "appendices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SaveDraftMutation, SaveDraftMutationVariables>;
 export const SpCertificateDocument = {
   kind: "Document",
   definitions: [
@@ -2834,6 +4482,89 @@ export const StartDomainVerificationDocument = {
   StartDomainVerificationMutation,
   StartDomainVerificationMutationVariables
 >;
+export const SubmitDraftGenerationDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SubmitDraftGeneration" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "NamedType",
+              name: { kind: "Name", value: "SubmitDraftGenerationInput" },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "submitDraftGeneration" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "jobId" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SubmitDraftGenerationMutation, SubmitDraftGenerationMutationVariables>;
+export const SubmitPolicyReviewDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SubmitPolicyReview" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "SubmitPolicyReviewInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "submitPolicyReview" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "jobId" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SubmitPolicyReviewMutation, SubmitPolicyReviewMutationVariables>;
 export const TemplatesDocument = {
   kind: "Document",
   definitions: [
@@ -2860,6 +4591,90 @@ export const TemplatesDocument = {
     },
   ],
 } as unknown as DocumentNode<TemplatesQuery, TemplatesQueryVariables>;
+export const UpdateAppendixDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateAppendix" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "title" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateAppendix" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "title" },
+                value: { kind: "Variable", name: { kind: "Name", value: "title" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "contentJson" },
+                value: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Appendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateAppendixMutation, UpdateAppendixMutationVariables>;
 export const UpdateGroupSettingsDocument = {
   kind: "Document",
   definitions: [

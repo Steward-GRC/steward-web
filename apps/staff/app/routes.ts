@@ -4,9 +4,9 @@ import { index, route, type RouteConfig } from "@react-router/dev/routes";
 
 /**
  * The staff feature areas (gates, library, reader, authoring, approvals, reporting, ethics)
- * each add their own `route()` call here as their own port PR lands; this PR adds the
- * reader (U7-U10, U12-U19, D1, D2) `policies/:number` and `procedures/:number` link to from
- * the library's catalog. Authoring (the editor, U11, and its wizards) is still its own
+ * each add their own `route()` call here as their own port PR lands. This PR adds authoring
+ * (U11 and its wizards): the "My drafts" list, the new-policy form and the editor, plus the
+ * AI drafting/review resource routes it polls. Real-time collaborative editing is a
  * follow-up port PR.
  */
 export default [
@@ -17,4 +17,9 @@ export default [
   route("policies/:number", "routes/policy.tsx"),
   route("procedures", "routes/procedures.tsx"),
   route("procedures/:number", "routes/procedure.tsx"),
+  route("drafts", "routes/drafts.tsx"),
+  route("drafts/new", "routes/drafts.new.tsx"),
+  route("drafts/:policyId", "routes/drafts.$policyId.tsx"),
+  route("resources/ai-health", "routes/resources.ai-health.tsx"),
+  route("resources/ai-jobs/:jobId", "routes/resources.ai-jobs.$jobId.tsx"),
 ] satisfies RouteConfig;
