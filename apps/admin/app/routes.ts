@@ -22,6 +22,9 @@ export default [
   route("organisations/:domain", "routes/organisations.$domain.tsx"),
   route("resources/idp-metadata", "routes/resources.idp-metadata.tsx"),
   route("resources/sso-test-link", "routes/resources.sso-test-link.tsx"),
+  route("templates", "routes/templates.tsx"),
+  route("templates/new", "routes/templates.new.tsx"),
+  route("templates/:code", "routes/templates.$code.tsx"),
   route("setup", "routes/setup.tsx"),
   route("audit", "routes/audit.tsx"),
 ] satisfies RouteConfig;

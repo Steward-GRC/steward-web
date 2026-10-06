@@ -192,8 +192,11 @@ export interface PolicyVersionSummary {
 
 /** A template selectable as a default or for a new draft. */
 export interface Template {
+  readonly code: string;
   readonly id: string;
   readonly name: string;
+  readonly ownerCategoryId: null | string;
+  readonly retiredAt: null | string;
 }
 
 /** A template's newest version with its section outline, as the editor scaffolds from it. */

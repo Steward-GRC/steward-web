@@ -244,6 +244,9 @@ importers:
       '@steward-web/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@steward-web/editor-steward':
+        specifier: workspace:*
+        version: link:../../packages/editor-steward
       '@steward-web/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n

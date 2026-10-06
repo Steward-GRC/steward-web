@@ -309,6 +309,127 @@ describe("mockEdge users directory", () => {
     expect(workflows.length).toBeGreaterThan(0);
   });
 
+  describe("templates", () => {
+    // Every test below creates its own template so mutations (new versions, renames, retirement)
+    // never leak into another test — the mock store is one shared module, not reset per test.
+
+    it("createTemplate() adds a template, visible from templates() and authorableTemplates()", async () => {
+      const created = await mockEdge.createTemplate("Vendor policy", null);
+      expect(created).toMatchObject({
+        name: "Vendor policy",
+        ownerCategoryId: null,
+        retiredAt: null,
+      });
+      const templates = await mockEdge.templates();
+      expect(templates.some((t) => t.id === created.id)).toBe(true);
+      const authorable = await mockEdge.authorableTemplates(null);
+      expect(authorable.some((t) => t.id === created.id)).toBe(true);
+    });
+
+    it("renameTemplate() changes the name without touching its versions", async () => {
+      const template = await mockEdge.createTemplate("Before rename", null);
+      const before = await mockEdge.templateVersions(template.id);
+      const renamed = await mockEdge.renameTemplate(template.id, "After rename");
+      expect(renamed.name).toBe("After rename");
+      expect(await mockEdge.templateVersions(template.id)).toEqual(before);
+    });
+
+    it("createTemplateVersion() starts version 1 as a draft for a template with no versions yet", async () => {
+      const template = await mockEdge.createTemplate("Fresh template", null);
+      const draft = await mockEdge.createTemplateVersion(template.id, [
+        { blocks: [], key: "intro", order: 0, required: true, title: "Intro" },
+      ]);
+      expect(draft).toMatchObject({ status: "draft", templateId: template.id, versionNo: 1 });
+    });
+
+    it("createTemplateVersion() numbers the next draft above the current newest version", async () => {
+      const template = await mockEdge.createTemplate("Versioned template", null);
+      const first = await mockEdge.createTemplateVersion(template.id, []);
+      await mockEdge.publishTemplateVersion(first.id);
+      const second = await mockEdge.createTemplateVersion(template.id, first.sections);
+      expect(second.versionNo).toBe(first.versionNo + 1);
+      expect(second.status).toBe("draft");
+    });
+
+    it("updateTemplateVersionSections() saves edits to a draft but refuses a published version", async () => {
+      const template = await mockEdge.createTemplate("Editable template", null);
+      const baseVersion = await mockEdge.createTemplateVersion(template.id, []);
+      const published = await mockEdge.publishTemplateVersion(baseVersion.id);
+      const draft = await mockEdge.createTemplateVersion(template.id, []);
+
+      const updated = await mockEdge.updateTemplateVersionSections(draft.id, [
+        { blocks: [], key: "new-section", order: 0, required: true, title: "New section" },
+      ]);
+      expect(updated.sections).toEqual([
+        {
+          blocks: [],
+          key: "new-section",
+          level: 1,
+          order: 0,
+          required: true,
+          title: "New section",
+        },
+      ]);
+
+      await expect(
+        mockEdge.updateTemplateVersionSections(published.id, published.sections),
+      ).rejects.toMatchObject({ name: "GatewayError" });
+    });
+
+    it("publishTemplateVersion() marks a draft published", async () => {
+      const template = await mockEdge.createTemplate("Publishable template", null);
+      const draft = await mockEdge.createTemplateVersion(template.id, []);
+      const published = await mockEdge.publishTemplateVersion(draft.id);
+      expect(published.status).toBe("published");
+    });
+
+    it("discardTemplateVersion() deletes a draft but refuses a published version", async () => {
+      const template = await mockEdge.createTemplate("Discardable template", null);
+      const baseVersion = await mockEdge.createTemplateVersion(template.id, []);
+      const published = await mockEdge.publishTemplateVersion(baseVersion.id);
+      const draft = await mockEdge.createTemplateVersion(template.id, []);
+
+      expect(await mockEdge.discardTemplateVersion(draft.id)).toBe(true);
+      const remaining = await mockEdge.templateVersions(template.id);
+      expect(remaining.some((v) => v.id === draft.id)).toBe(false);
+
+      await expect(mockEdge.discardTemplateVersion(published.id)).rejects.toMatchObject({
+        name: "GatewayError",
+      });
+    });
+
+    it("retireTemplate() hides it from authorableTemplates() but keeps it in templates()", async () => {
+      const created = await mockEdge.createTemplate("Soon retired", null);
+      const retired = await mockEdge.retireTemplate(created.id);
+      expect(retired.retiredAt).not.toBeNull();
+      const authorable = await mockEdge.authorableTemplates(null);
+      expect(authorable.some((t) => t.id === created.id)).toBe(false);
+      const templates = await mockEdge.templates();
+      expect(templates.some((t) => t.id === created.id)).toBe(true);
+    });
+
+    it("deleteTemplate() removes an unreferenced template but refuses one a policy uses", async () => {
+      const unreferenced = await mockEdge.createTemplate("Unreferenced", null);
+      expect(await mockEdge.deleteTemplate(unreferenced.id)).toBe(true);
+      const templates = await mockEdge.templates();
+      expect(templates.some((t) => t.id === unreferenced.id)).toBe(false);
+
+      const referenced = await mockEdge.createTemplate("Referenced", null);
+      const referencedVersion = await mockEdge.createTemplateVersion(referenced.id, []);
+      await mockEdge.publishTemplateVersion(referencedVersion.id);
+      const [group] = await mockEdge.authorableGroups();
+      await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        templateId: referenced.id,
+        title: "Uses the template",
+      });
+      await expect(mockEdge.deleteTemplate(referenced.id)).rejects.toMatchObject({
+        name: "GatewayError",
+      });
+    });
+  });
+
   describe("authoring", () => {
     it("createPolicy() scaffolds an empty working draft from the chosen template", async () => {
       const [group] = await mockEdge.authorableGroups();

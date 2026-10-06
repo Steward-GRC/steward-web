@@ -29,16 +29,20 @@ import {
   CloseCaseDocument,
   CreateCategoryDocument,
   CreatePolicyDocument,
+  CreateTemplateDocument,
+  CreateTemplateVersionDocument,
   DeleteAppendixDocument,
   DeleteCategoryDocument,
   DeleteGroupMappingDocument,
   DeleteOrganizationDocument,
+  DeleteTemplateDocument,
   DeleteUserDocument,
   DiagnosticsDocument,
   DiffVersionsDocument,
   DisableOrganizationDocument,
   DisableUserDocument,
   DiscardDraftDocument,
+  DiscardTemplateVersionDocument,
   EnableUserDocument,
   ForceRotateSpCertificateDocument,
   GrantRoleDocument,
@@ -60,12 +64,15 @@ import {
   PostCaseMessageDocument,
   PreviewUserDeletionDocument,
   PublishDraftDocument,
+  PublishTemplateVersionDocument,
   RecordAckDocument,
   RecordRiskAssessmentDocument,
   RenameCategoryDocument,
+  RenameTemplateDocument,
   ReorderAppendicesDocument,
   ReportCaseDocument,
   ReportCasesDocument,
+  RetireTemplateDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
   SaveDraftDocument,
@@ -79,11 +86,13 @@ import {
   SubmitDraftGenerationDocument,
   SubmitPolicyReviewDocument,
   TemplatesDocument,
+  TemplateVersionsDocument,
   UpcomingApprovalsDocument,
   UpdateAppendixDocument,
   UpdateCaseNoticeDocument,
   UpdateIdPConnectionDocument,
   UpdateMyProfileDocument,
+  UpdateTemplateVersionSectionsDocument,
   UpdateUserProfileDocument,
   UsersDocument,
   VerifyAuditChainDocument,
@@ -441,6 +450,24 @@ export const liveEdge: Edge = {
     );
     return policyView(data.createPolicy, cookie);
   },
+  async createTemplate(name, ownerCategoryId, cookie) {
+    const data = await gatewayFetch(
+      CreateTemplateDocument,
+      { name, ownerCategoryId },
+      "CreateTemplate",
+      { cookie },
+    );
+    return data.createTemplate;
+  },
+  async createTemplateVersion(templateId, sections, cookie) {
+    const data = await gatewayFetch(
+      CreateTemplateVersionDocument,
+      { sections, templateId },
+      "CreateTemplateVersion",
+      { cookie },
+    );
+    return data.createTemplateVersion;
+  },
   async deleteAppendix(id, cookie) {
     const data = await gatewayFetch(DeleteAppendixDocument, { id }, "DeleteAppendix", { cookie });
     return data.deleteAppendix;
@@ -463,6 +490,10 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.deleteOrganization;
+  },
+  async deleteTemplate(id, cookie) {
+    const data = await gatewayFetch(DeleteTemplateDocument, { id }, "DeleteTemplate", { cookie });
+    return data.deleteTemplate;
   },
   async deleteUser(userId, cookie) {
     const data = await gatewayFetch(DeleteUserDocument, { userId }, "DeleteUser", { cookie });
@@ -490,6 +521,15 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.discardDraft;
+  },
+  async discardTemplateVersion(id, cookie) {
+    const data = await gatewayFetch(
+      DiscardTemplateVersionDocument,
+      { id },
+      "DiscardTemplateVersion",
+      { cookie },
+    );
+    return data.discardTemplateVersion;
   },
   async draftVersion(policyId, cookie) {
     const { policy } = await gatewayFetch(PolicyDocument, { id: policyId }, "Policy", { cookie });
@@ -657,6 +697,15 @@ export const liveEdge: Edge = {
     });
     return data.publishDraft;
   },
+  async publishTemplateVersion(id, cookie) {
+    const data = await gatewayFetch(
+      PublishTemplateVersionDocument,
+      { id },
+      "PublishTemplateVersion",
+      { cookie },
+    );
+    return data.publishTemplateVersion;
+  },
   async recordRiskAssessment(caseId, factors, decision, reason, cookie) {
     const data = await gatewayFetch(
       RecordRiskAssessmentDocument,
@@ -671,6 +720,12 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.renameCategory;
+  },
+  async renameTemplate(id, name, cookie) {
+    const data = await gatewayFetch(RenameTemplateDocument, { id, name }, "RenameTemplate", {
+      cookie,
+    });
+    return data.renameTemplate;
   },
   async reorderAppendices(policyVersionId, orderedIds, cookie) {
     const data = await gatewayFetch(
@@ -693,6 +748,10 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.reportCases;
+  },
+  async retireTemplate(id, cookie) {
+    const data = await gatewayFetch(RetireTemplateDocument, { id }, "RetireTemplate", { cookie });
+    return data.retireTemplate;
   },
   async revokeRole(userId, role, cookie) {
     const data = await gatewayFetch(RevokeRoleDocument, { role, userId }, "RevokeRole", {
@@ -780,6 +839,12 @@ export const liveEdge: Edge = {
   async templates(cookie) {
     const data = await gatewayFetch(TemplatesDocument, {}, "Templates", { cookie });
     return data.templates;
+  },
+  async templateVersions(templateId, cookie) {
+    const data = await gatewayFetch(TemplateVersionsDocument, { templateId }, "TemplateVersions", {
+      cookie,
+    });
+    return data.templateVersions;
   },
   async upcomingApprovals(cookie) {
     const data = await gatewayFetch(UpcomingApprovalsDocument, {}, "UpcomingApprovals", {
@@ -870,6 +935,15 @@ export const liveEdge: Edge = {
   async updateMyProfile(input, cookie) {
     const data = await gatewayFetch(UpdateMyProfileDocument, input, "UpdateMyProfile", { cookie });
     return toMe(data.updateMyProfile);
+  },
+  async updateTemplateVersionSections(id, sections, cookie) {
+    const data = await gatewayFetch(
+      UpdateTemplateVersionSectionsDocument,
+      { id, sections },
+      "UpdateTemplateVersionSections",
+      { cookie },
+    );
+    return data.updateTemplateVersionSections;
   },
   async updateUserProfile(userId, name, email, cookie) {
     const data = await gatewayFetch(
