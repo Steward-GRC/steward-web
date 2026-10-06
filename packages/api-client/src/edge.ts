@@ -60,6 +60,7 @@ import type {
   UserLabel,
   UserPage,
   Workflow,
+  WorkflowDef,
 } from "./views";
 
 import { DocumentType } from "./generated/schema";
@@ -161,6 +162,8 @@ export type {
   User,
   UserPage,
   Workflow,
+  WorkflowDef,
+  WorkflowStageDef,
 } from "./views";
 export { PolicyStatus } from "./views";
 
@@ -190,6 +193,13 @@ export interface AuthoringAssistInput {
 export interface BlockInput {
   contentJson?: null | string;
   type: string;
+}
+
+/** A category-level approver override within a workflow stage: that category uses
+ *  `approverIds` for this stage instead of the stage's default `approvers`. */
+export interface CategoryApproversInput {
+  approverIds: readonly string[];
+  categoryId: string;
 }
 
 export interface CreateGroupInput {
@@ -252,6 +262,8 @@ export interface Edge {
   aiJobResult(jobId: string, cookie?: string, signal?: AbortSignal): Promise<AiJobResult>;
   /** Fetches a completed async AI job's content by `AIJobStatus.resultRef`. */
   aiJobResultContent(resultRef: string, cookie?: string): Promise<AIJobResultContent>;
+  /** Archives a workflow definition. Site-admin only. */
+  archiveWorkflowDef(id: string, cookie?: string): Promise<boolean>;
   /** Sets or clears (null) a case's assignee. Officers only. */
   assignCase(caseId: string, assigneeUserId: null | string, cookie?: string): Promise<ReportCase>;
   /** A page of audit records, newest first. Site-admin only. */
@@ -294,6 +306,13 @@ export interface Edge {
     sections: readonly SectionInput[],
     cookie?: string,
   ): Promise<TemplateVersion>;
+  /** Creates a workflow definition. Site-admin only. */
+  createWorkflowDef(
+    name: string,
+    description: null | string,
+    stages: readonly WorkflowStageInput[],
+    cookie?: string,
+  ): Promise<WorkflowDef>;
   /** Deletes a library appendix. */
   deleteAppendix(id: string, cookie?: string): Promise<boolean>;
   /** Deletes a group and its policy-free descendants. Site-admin only. */
@@ -527,6 +546,14 @@ export interface Edge {
   ): Promise<TemplateVersion>;
   /** Edits another user's name and email. Local accounts only, site-admin only. */
   updateUserProfile(userId: string, name: string, email: string, cookie?: string): Promise<User>;
+  /** Replaces a workflow definition's name, description and stages. Site-admin only. */
+  updateWorkflowDef(
+    id: string,
+    name: string,
+    description: null | string,
+    stages: readonly WorkflowStageInput[],
+    cookie?: string,
+  ): Promise<WorkflowDef>;
   /** The platform's users, site-admin only. */
   users(input: ListUsersInput, cookie?: string): Promise<UserPage>;
   /** Recomputes the hash chain across a record range and reports whether it still holds. Site-admin only. */
@@ -537,6 +564,11 @@ export interface Edge {
   ): Promise<AuditChainVerification>;
   /** Checks the domain's DNS TXT record against its verification token. Site-admin only. */
   verifyDomain(domain: string, cookie?: string): Promise<Organization>;
+  /** One workflow definition's full detail (its approval stages), for admin management. Null
+   *  when it doesn't exist (or was archived). Site-admin only. */
+  workflowDef(id: string, cookie?: string): Promise<null | WorkflowDef>;
+  /** Every workflow definition's full detail, for the admin directory. Site-admin only. */
+  workflowDefs(cookie?: string): Promise<readonly WorkflowDef[]>;
   /** The workflows selectable as a group's default. Site-admin only. */
   workflows(cookie?: string): Promise<readonly Workflow[]>;
   /**
@@ -544,6 +576,15 @@ export interface Edge {
    * the workflow service has no record (the policy was published without an approval flow).
    */
   workflowStatus(policyVersionId: string, cookie?: string): Promise<WorkflowStatus>;
+}
+
+/** A group that approves a workflow stage as a whole: its members hold seats, the group is
+ *  satisfied once `internalQuorum` of them approve, and it counts as one vote in the stage's
+ *  own quorum. */
+export interface GroupUnitInput {
+  groupId: string;
+  internalQuorum: string;
+  memberUserIds: readonly string[];
 }
 
 /** The fields a SAML IdP's metadata (fetched by URL or parsed from an uploaded file)
@@ -632,4 +673,22 @@ export interface UpdateGroupSettingsInput {
 export interface UpdateMyProfileInput {
   firstName: string;
   lastName: string;
+}
+
+/** One stage of a workflow definition's approval chain. `approversByCategory` and
+ *  `groupUnits` are advanced per-category/group-vote overrides this port doesn't build an
+ *  editor for; a caller that isn't changing them should resend the stage's current values
+ *  unchanged rather than drop them. */
+export interface WorkflowStageInput {
+  approvers: readonly string[];
+  approversByCategory?: readonly CategoryApproversInput[];
+  groupUnits?: readonly GroupUnitInput[];
+  id?: string;
+  name: string;
+  /** Nullable (not just optional) so a `WorkflowStageDef` read straight off the gateway can be
+   *  resent unchanged as input — the query side allows null, this carries that through. */
+  pinnedLast?: boolean | null;
+  quorum: string;
+  rejectOnSlaBreach?: boolean | null;
+  slaDays?: null | number;
 }
