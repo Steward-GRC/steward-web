@@ -25,8 +25,34 @@ export type Scalars = {
    * policy's display category, status and version by walking its home group's ancestor chain
    * and its version history. steward-gateway is pinned to return that same aggregated shape
    * once it ports the query; `Sensitivity` and `DocumentType` are the original enums unchanged.
+   *
+   * `PolicyDetail` is the reader's own aggregated view, for the same reason: steward-gateway's
+   * real schema answers a policy's content, appendices, related/reference/contact/definition
+   * attachments, acknowledgement state and history through several separate reads (`policy`,
+   * `policyVersion`, `relatedPolicies`, `policyReferences`, `policyContactBlocks`,
+   * `policyDefinitionEntries`, `ackStatus`, `assignmentHistory`, `workflowStatus`) keyed by
+   * backend id, with no "find by number" lookup yet. `policyDetail` is this port's own
+   * BFF-shaped aggregation (found by the number the library already links to), pending a
+   * steward-gateway query that does the same. Document body and appendix content are plain
+   * text here, not the original's rich Lexical JSON: no shared document renderer exists yet
+   * (it lands with the authoring/editor area), so the reader shows a plain-text rendering
+   * until one does.
    */
   DateTime: { input: string; output: string };
+};
+
+/** This caller's acknowledgement of one policy version. */
+export type AckStatus = {
+  readonly __typename?: "AckStatus";
+  readonly ackedAt?: Maybe<Scalars["DateTime"]["output"]>;
+  readonly acknowledged: Scalars["Boolean"]["output"];
+  /** True when this caller is in the ack audience at all; false means no banner is shown. */
+  readonly required: Scalars["Boolean"]["output"];
+};
+
+export type BreakGlassGrant = {
+  readonly __typename?: "BreakGlassGrant";
+  readonly grantedUntil: Scalars["DateTime"]["output"];
 };
 
 /** A category (and its subcategories) in the policy/procedure taxonomy. */
@@ -108,6 +134,17 @@ export enum DocumentType {
   Procedure = "PROCEDURE",
 }
 
+/** One append-only event in a policy's combined publish-and-approval history (U18): submitted, a stage decision, published, changes requested, or withdrawn. */
+export type HistoryEntry = {
+  readonly __typename?: "HistoryEntry";
+  readonly actorName?: Maybe<Scalars["String"]["output"]>;
+  readonly at: Scalars["DateTime"]["output"];
+  readonly comment?: Maybe<Scalars["String"]["output"]>;
+  readonly kind: Scalars["String"]["output"];
+  readonly stage?: Maybe<Scalars["String"]["output"]>;
+  readonly versionLabel: Scalars["String"]["output"];
+};
+
 /** The facts about the signed-in user that drive identity and permission checks. */
 export type Me = {
   readonly __typename?: "Me";
@@ -125,6 +162,10 @@ export type Me = {
 
 export type Mutation = {
   readonly __typename?: "Mutation";
+  /** Records the CALLING user's acknowledgement of a published policy version. Refused when the caller isn't in the ack audience, or the version isn't published. */
+  readonly acknowledgePolicy: AckStatus;
+  /** A site admin's time-boxed, audited reveal of a sensitive policy's real content. A non-empty reason is required; the grant is recorded for audit. */
+  readonly breakGlassReveal: BreakGlassGrant;
   /**
    * Soft-deletes a user: revokes their sessions and drops their access. Never deletes a policy
    * they own; deleteUser is refused while previewUserDeletion reports blocksDelete. Site-admin
@@ -143,6 +184,15 @@ export type Mutation = {
   readonly updateMyProfile: Me;
   /** Edits another user's name and email. Local (non-federated) accounts only, site-admin only. */
   readonly updateUserProfile: User;
+};
+
+export type MutationAcknowledgePolicyArgs = {
+  policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationBreakGlassRevealArgs = {
+  policyId: Scalars["ID"]["input"];
+  reason: Scalars["String"]["input"];
 };
 
 export type MutationDeleteUserArgs = {
@@ -199,6 +249,90 @@ export type Policy = {
   readonly version: Scalars["String"]["output"];
 };
 
+export type PolicyAppendix = {
+  readonly __typename?: "PolicyAppendix";
+  readonly id: Scalars["ID"]["output"];
+  readonly letter: Scalars["String"]["output"];
+  readonly text: Scalars["String"]["output"];
+  readonly title: Scalars["String"]["output"];
+};
+
+/** A reusable contact block attached to this policy (U16). */
+export type PolicyContact = {
+  readonly __typename?: "PolicyContact";
+  readonly department?: Maybe<Scalars["String"]["output"]>;
+  readonly email?: Maybe<Scalars["String"]["output"]>;
+  readonly hours?: Maybe<Scalars["String"]["output"]>;
+  readonly id: Scalars["ID"]["output"];
+  readonly label: Scalars["String"]["output"];
+  readonly name?: Maybe<Scalars["String"]["output"]>;
+  readonly notes?: Maybe<Scalars["String"]["output"]>;
+  readonly phone?: Maybe<Scalars["String"]["output"]>;
+  readonly role?: Maybe<Scalars["String"]["output"]>;
+};
+
+/** A reusable glossary entry attached to this policy (the original's PolicyDefinitions, U13). */
+export type PolicyDefinition = {
+  readonly __typename?: "PolicyDefinition";
+  readonly definition: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly term: Scalars["String"]["output"];
+};
+
+/** The reader's full view of one policy or procedure (U7 in the original design). */
+export type PolicyDetail = {
+  readonly __typename?: "PolicyDetail";
+  /** This caller's acknowledgement of the current published version, when the document carries acknowledgement at all. */
+  readonly ack?: Maybe<AckStatus>;
+  /** The appendix list of the current version (published, or the working draft when there is no published version yet). */
+  readonly appendices: ReadonlyArray<PolicyAppendix>;
+  readonly bodyText: Scalars["String"]["output"];
+  readonly canBreakGlass: Scalars["Boolean"]["output"];
+  readonly category: Scalars["String"]["output"];
+  readonly contacts: ReadonlyArray<PolicyContact>;
+  /** True while this caller sees the body and panels below obfuscated, because they are outside the policy's sensitive read audience. */
+  readonly contentObfuscated: Scalars["Boolean"]["output"];
+  /** The current version's id, for `acknowledgePolicy`. Null when there is no published version yet. */
+  readonly currentVersionId?: Maybe<Scalars["ID"]["output"]>;
+  readonly definitions: ReadonlyArray<PolicyDefinition>;
+  readonly documentType: DocumentType;
+  readonly history: ReadonlyArray<HistoryEntry>;
+  readonly id: Scalars["ID"]["output"];
+  readonly number: Scalars["String"]["output"];
+  /** Resolved from the owning user; null when the lookup is unavailable. */
+  readonly ownerName?: Maybe<Scalars["String"]["output"]>;
+  /** A summary of the current version against the one it superseded. Null for a first version. */
+  readonly priorVersion?: Maybe<PolicyVersionSummary>;
+  readonly published?: Maybe<Scalars["DateTime"]["output"]>;
+  readonly references: ReadonlyArray<PolicyReference>;
+  readonly related: ReadonlyArray<RelatedPolicy>;
+  readonly sensitivity: Sensitivity;
+  readonly status: PolicyStatus;
+  readonly subcategory: Scalars["String"]["output"];
+  readonly title: Scalars["String"]["output"];
+  readonly updated: Scalars["DateTime"]["output"];
+  readonly version: Scalars["String"]["output"];
+};
+
+/** A references/standards entry attached to this policy (U15). */
+export type PolicyReference = {
+  readonly __typename?: "PolicyReference";
+  readonly body?: Maybe<Scalars["String"]["output"]>;
+  readonly clause?: Maybe<Scalars["String"]["output"]>;
+  readonly id: Scalars["ID"]["output"];
+  readonly kind: ReferenceKind;
+  readonly label: Scalars["String"]["output"];
+  readonly url?: Maybe<Scalars["String"]["output"]>;
+};
+
+export type PolicySectionDiff = {
+  readonly __typename?: "PolicySectionDiff";
+  readonly changeType: Scalars["String"]["output"];
+  readonly sectionKey: Scalars["String"]["output"];
+  readonly sectionTitle: Scalars["String"]["output"];
+  readonly wordDiffHtml?: Maybe<Scalars["String"]["output"]>;
+};
+
 export enum PolicyStatus {
   Draft = "DRAFT",
   InReview = "IN_REVIEW",
@@ -207,6 +341,13 @@ export enum PolicyStatus {
   Superseded = "SUPERSEDED",
   Withdrawn = "WITHDRAWN",
 }
+
+/** The diff between the current version and the one it superseded (U12/U19). */
+export type PolicyVersionSummary = {
+  readonly __typename?: "PolicyVersionSummary";
+  readonly diff: ReadonlyArray<PolicySectionDiff>;
+  readonly version: Scalars["String"]["output"];
+};
 
 export type Query = {
   readonly __typename?: "Query";
@@ -220,6 +361,8 @@ export type Query = {
   readonly me?: Maybe<Me>;
   /** The library catalog for one document type. Any signed-in user. */
   readonly policies: ReadonlyArray<Policy>;
+  /** The reader's full detail for one policy/procedure, found by number. Null when there is no such document, or the caller cannot see it at all. */
+  readonly policyDetail?: Maybe<PolicyDetail>;
   /**
    * A read-only dry run of deleteUser for the delete confirmation screen: what the delete would
    * block on, orphan or drop. Site-admin only.
@@ -240,6 +383,11 @@ export type QueryPoliciesArgs = {
   documentType: DocumentType;
 };
 
+export type QueryPolicyDetailArgs = {
+  documentType: DocumentType;
+  number: Scalars["String"]["input"];
+};
+
 export type QueryPreviewUserDeletionArgs = {
   userId: Scalars["ID"]["input"];
 };
@@ -249,6 +397,20 @@ export type QueryUsersArgs = {
   pageSize?: InputMaybe<Scalars["Int"]["input"]>;
   pageToken?: InputMaybe<Scalars["String"]["input"]>;
   search?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export enum ReferenceKind {
+  Link = "LINK",
+  Standard = "STANDARD",
+  Text = "TEXT",
+}
+
+/** A structured link to another policy (U14). One-way; the link target's own number and title are resolved live. */
+export type RelatedPolicy = {
+  readonly __typename?: "RelatedPolicy";
+  readonly number: Scalars["String"]["output"];
+  readonly policyId: Scalars["ID"]["output"];
+  readonly title: Scalars["String"]["output"];
 };
 
 export enum Sensitivity {

@@ -4,6 +4,8 @@ import type { Edge } from "../edge";
 
 import { gatewayFetch } from "../gatewayFetch";
 import {
+  AcknowledgePolicyDocument,
+  BreakGlassRevealDocument,
   CategoriesDocument,
   DeleteUserDocument,
   DiagnosticsDocument,
@@ -13,6 +15,7 @@ import {
   ListUserSessionsDocument,
   MeDocument,
   PoliciesDocument,
+  PolicyDetailDocument,
   PreviewUserDeletionDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
@@ -23,6 +26,24 @@ import {
 
 /** The live edge: every call is a real POST to `GATEWAY_URL`, cookie forwarded. */
 export const liveEdge: Edge = {
+  async acknowledgePolicy(policyVersionId, cookie) {
+    const data = await gatewayFetch(
+      AcknowledgePolicyDocument,
+      { policyVersionId },
+      "AcknowledgePolicy",
+      { cookie },
+    );
+    return data.acknowledgePolicy;
+  },
+  async breakGlassReveal(policyId, reason, cookie) {
+    const data = await gatewayFetch(
+      BreakGlassRevealDocument,
+      { policyId, reason },
+      "BreakGlassReveal",
+      { cookie },
+    );
+    return data.breakGlassReveal;
+  },
   async categories(cookie) {
     const data = await gatewayFetch(CategoriesDocument, {}, "Categories", { cookie });
     return data.categories;
@@ -61,6 +82,15 @@ export const liveEdge: Edge = {
   async policies(documentType, cookie) {
     const data = await gatewayFetch(PoliciesDocument, { documentType }, "Policies", { cookie });
     return data.policies;
+  },
+  async policyDetail(documentType, number, cookie) {
+    const data = await gatewayFetch(
+      PolicyDetailDocument,
+      { documentType, number },
+      "PolicyDetail",
+      { cookie },
+    );
+    return data.policyDetail ?? null;
   },
   async previewUserDeletion(userId, cookie) {
     const data = await gatewayFetch(
