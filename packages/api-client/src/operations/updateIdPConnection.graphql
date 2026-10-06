@@ -1,0 +1,5 @@
+mutation UpdateIdPConnection($domain: String!, $jitEnabled: Boolean, $allowLocal: Boolean) {
+  updateIdPConnection(domain: $domain, jitEnabled: $jitEnabled, allowLocal: $allowLocal) {
+    ...OrganizationFields
+  }
+}

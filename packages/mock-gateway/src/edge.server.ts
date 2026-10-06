@@ -1,17 +1,27 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Edge, Group, User, UserDeletionPreview } from "@steward-web/api-client";
+import type {
+  Edge,
+  Group,
+  GroupMapping,
+  Organization,
+  User,
+  UserDeletionPreview,
+} from "@steward-web/api-client";
 
 import { GatewayError, ReviewCadence } from "@steward-web/api-client";
 
 import {
   mockCategories,
   mockDiagnostics,
+  mockGroupMappings,
   mockGroups,
   mockMe,
+  mockOrganizations,
   mockPolicies,
   mockPolicyDetails,
   mockSessions,
+  mockSpCertificate,
   mockTemplates,
   mockUserDeletionPreviews,
   mockUsers,
@@ -28,6 +38,12 @@ let groups = [...mockGroups];
 let nextGroupSeq = mockGroups.length + 1;
 const sessions = structuredClone(mockSessions);
 let policyDetails = mockPolicyDetails;
+let organizations = [...mockOrganizations];
+let nextConnectionSeq = mockOrganizations.length + 1;
+let spCertificate = mockSpCertificate;
+let nextSpCertSeq = 2;
+const groupMappings = structuredClone(mockGroupMappings);
+let nextGroupMappingSeq = Object.values(mockGroupMappings).flat().length + 1;
 
 /** How long a mock break-glass grant lasts, matching the real grant's order of magnitude. */
 const BREAK_GLASS_GRANT_MS = 5 * 60 * 1000;
@@ -51,6 +67,19 @@ const requireGroup = (operation: string, id: string): Group => {
 
 const replaceGroup = (updated: Group): Group => {
   groups = groups.map((g) => (g.id === updated.id ? updated : g));
+  return updated;
+};
+
+const requireOrganization = (operation: string, domain: string): Organization => {
+  const org = organizations.find((o) => o.domain === domain);
+  if (!org) {
+    throw new GatewayError(operation, `organization ${domain} not found`, { code: "NOT_FOUND" });
+  }
+  return org;
+};
+
+const replaceOrganization = (updated: Organization): Organization => {
+  organizations = organizations.map((o) => (o.domain === updated.domain ? updated : o));
   return updated;
 };
 
@@ -106,6 +135,48 @@ export const mockEdge: Edge = {
     policyDetails = policyDetails.map((d) => (d === detail ? { ...d, ack } : d));
     return ack;
   },
+  activateOrganization: async (domain) => {
+    const org = requireOrganization("ActivateOrganization", domain);
+    if (!org.verified || !org.testPassed) {
+      throw new GatewayError(
+        "ActivateOrganization",
+        "both the domain and the IdP test must pass before activation",
+        { code: "FAILED_PRECONDITION" },
+      );
+    }
+    return replaceOrganization({ ...org, enabled: true });
+  },
+  addGroupMapping: async (connectionId, idpGroupClaimValue, targetGroupId) => {
+    const mapping: GroupMapping = {
+      connectionId,
+      id: mockId("group-mapping", nextGroupMappingSeq++),
+      idpGroupClaimValue,
+      targetGroupId,
+    };
+    groupMappings[connectionId] = [...(groupMappings[connectionId] ?? []), mapping];
+    return mapping;
+  },
+  addOrganization: async ({ displayName, domain, orgName, protocol }) => {
+    if (organizations.some((o) => o.domain === domain)) {
+      throw new GatewayError("AddOrganization", `an organization for ${domain} already exists`, {
+        code: "ALREADY_EXISTS",
+      });
+    }
+    const created: Organization = {
+      allowLocal: false,
+      connectionId: mockId("connection", nextConnectionSeq++),
+      displayName: displayName ?? orgName,
+      domain,
+      enabled: false,
+      jitEnabled: true,
+      orgName,
+      protocol,
+      testPassed: false,
+      verified: false,
+    };
+    organizations = [...organizations, created];
+    return created;
+  },
   breakGlassReveal: async (policyId, reason) => {
     if (!reason.trim()) {
       throw new GatewayError("BreakGlassReveal", "A reason is required.", {
@@ -118,6 +189,17 @@ export const mockEdge: Edge = {
     return { grantedUntil: new Date(Date.now() + BREAK_GLASS_GRANT_MS).toISOString() };
   },
   categories: () => Promise.resolve(mockCategories),
+  changeOrgProtocol: async (domain, protocol, config) => {
+    const org = requireOrganization("ChangeOrgProtocol", domain);
+    void config; // the mock stores no connection config; only the gate-reset matters here
+    return replaceOrganization({
+      ...org,
+      enabled: false,
+      protocol,
+      testPassed: false,
+      verified: false,
+    });
+  },
   createGroup: async ({ name, parentId, slug }) => {
     if (groups.some((g) => g.parentId === parentId && g.slug === slug)) {
       throw new GatewayError(
@@ -148,6 +230,19 @@ export const mockEdge: Edge = {
     groups = groups.filter((g) => !subtreeIds(id).has(g.id));
     return true;
   },
+  deleteGroupMapping: async (mappingId) => {
+    for (const connectionId of Object.keys(groupMappings)) {
+      groupMappings[connectionId] = (groupMappings[connectionId] ?? []).filter(
+        (m) => m.id !== mappingId,
+      );
+    }
+    return true;
+  },
+  deleteOrganization: async (domain) => {
+    requireOrganization("DeleteOrganization", domain);
+    organizations = organizations.filter((o) => o.domain !== domain);
+    return true;
+  },
   deleteUser: async (userId) => {
     const user = requireUser("DeleteUser", userId);
     const preview = mockUserDeletionPreviews[userId];
@@ -165,6 +260,10 @@ export const mockEdge: Edge = {
     return { revokedSessions, userId };
   },
   diagnostics: () => Promise.resolve(mockDiagnostics),
+  disableOrganization: async (domain) => {
+    const org = requireOrganization("DisableOrganization", domain);
+    return replaceOrganization({ ...org, enabled: false });
+  },
   disableUser: async (userId) => {
     const user = requireUser("DisableUser", userId);
     if (user.isRoot) {
@@ -179,6 +278,16 @@ export const mockEdge: Edge = {
     const user = requireUser("EnableUser", userId);
     return replaceUser({ ...user, enabled: true });
   },
+  forceRotateSpCertificate: () => {
+    spCertificate = {
+      active: true,
+      certPem: "-----BEGIN CERTIFICATE-----\nMOCK-ROTATED\n-----END CERTIFICATE-----",
+      notAfter: "2028-01-01T00:00:00Z",
+      serial: mockId("sp-cert", nextSpCertSeq++),
+      spMetadataXml: spCertificate.spMetadataXml,
+    };
+    return Promise.resolve(spCertificate);
+  },
   // Every handler below that can refuse is `async`, even where nothing is awaited: inside an
   // async function a `throw` becomes the returned promise's rejection, matching the live edge
   // (and the `Edge` interface's own `Promise`-returning shape) instead of throwing synchronously
@@ -189,6 +298,7 @@ export const mockEdge: Edge = {
     return replaceUser({ ...user, roles });
   },
   groupChildren: (parentId) => Promise.resolve(groups.filter((g) => g.parentId === parentId)),
+  groupMappings: (connectionId) => Promise.resolve(groupMappings[connectionId] ?? []),
   listUserSessions: (userId) => Promise.resolve(sessions[userId] ?? []),
   me: () => Promise.resolve(me),
   moveGroup: async (groupId, newParentId) => {
@@ -213,6 +323,7 @@ export const mockEdge: Edge = {
     }
     return replaceGroup({ ...group, parentId: newParentId });
   },
+  organizations: () => Promise.resolve(organizations),
   policies: (documentType) =>
     Promise.resolve(mockPolicies.filter((p) => p.documentType === documentType)),
   policyDetail: (documentType, number) =>
@@ -255,6 +366,18 @@ export const mockEdge: Edge = {
     void reason; // the mock audits nothing; the live gateway records it
     return current.filter((s) => !s.revokedAt).length;
   },
+  spCertificate: () => Promise.resolve(spCertificate),
+  startDomainVerification: async (domain, rotate) => {
+    const org = requireOrganization("StartDomainVerification", domain);
+    const token = rotate ? mockId("verify-token", Date.now()) : mockId("verify-token", 1);
+    if (rotate) replaceOrganization({ ...org, verified: false });
+    return {
+      dnsRecordName: `_steward-verify.${domain}`,
+      dnsRecordValue: `steward-verify=${token}`,
+      instructions: `Add a TXT record named _steward-verify.${domain} with value steward-verify=${token}, then verify.`,
+      token,
+    };
+  },
   templates: () => Promise.resolve(mockTemplates),
   updateGroupSettings: async ({
     defaultTemplateId = null,
@@ -274,6 +397,14 @@ export const mockEdge: Edge = {
       owners: [...owners],
       reviewCadence,
       reviewDate,
+    });
+  },
+  updateIdPConnection: async (domain, toggles) => {
+    const org = requireOrganization("UpdateIdPConnection", domain);
+    return replaceOrganization({
+      ...org,
+      allowLocal: toggles.allowLocal ?? org.allowLocal,
+      jitEnabled: toggles.jitEnabled ?? org.jitEnabled,
     });
   },
   updateMyProfile: ({ firstName, lastName }) => {
@@ -300,6 +431,10 @@ export const mockEdge: Edge = {
       .filter((u) => includeDeleted || !u.deletedAt)
       .filter((u) => !needle || u.email.toLowerCase().includes(needle));
     return Promise.resolve({ nextPageToken: "", users: filtered });
+  },
+  verifyDomain: async (domain) => {
+    const org = requireOrganization("VerifyDomain", domain);
+    return replaceOrganization({ ...org, verified: true });
   },
   workflows: () => Promise.resolve(mockWorkflows),
 };
