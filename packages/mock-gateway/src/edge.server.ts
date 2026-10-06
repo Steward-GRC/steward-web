@@ -562,17 +562,22 @@ export const mockEdge: Edge = {
   },
   groupChildren: (parentId) => Promise.resolve(groups.filter((g) => g.parentId === parentId)),
   groupMappings: (connectionId) => Promise.resolve(groupMappings[connectionId] ?? []),
-  issueCollabToken: async ({ policyId }) => {
+  issueCollabToken: async ({ draftId, policyId }) => {
     const policy = requirePolicy("IssueCollabToken", policyId);
     if (!policy.viewerCan.edit) {
       throw new GatewayError("IssueCollabToken", "edit access to this draft is required", {
         code: "PERMISSION_DENIED",
       });
     }
+    // Matches the real gateway's wsUrl shape (steward-collab's WsPathPrefix), so the
+    // provider's url-resolution code exercises the same path in mock mode as in a live
+    // deployment. No relay actually answers at this path in mock mode: the session degrades
+    // to `unavailable` on the failed connect, and authoring continues through the normal
+    // save path.
     return {
       expiresAt: new Date(Date.now() + COLLAB_TOKEN_TTL_MS).toISOString(),
       token: nextMockCollabTokenId(),
-      wsUrl: "/collab",
+      wsUrl: `/collab/ws/${encodeURIComponent(draftId)}`,
     };
   },
   latestTemplateVersion: (templateId) =>

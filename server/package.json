@@ -2,7 +2,7 @@
   "name": "@steward-web/server",
   "version": "0.0.0",
   "private": true,
-  "description": "The Node server image: one build, picking its app from APP, with /livez, /readyz, the /query proxy and the /collab co-editing relay.",
+  "description": "The Node server image: one build, picking its app from APP, with /livez, /readyz, the /query proxy and the same-origin /collab/ws websocket proxy to the gateway.",
   "type": "module",
   "license": "Apache-2.0",
   "scripts": {
