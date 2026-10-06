@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { Edge } from "@steward-web/api-client";
 
-import { mockDiagnostics, mockMe } from "./fixtures";
+import { mockCategories, mockDiagnostics, mockMe, mockPolicies } from "./fixtures";
 
 // Mutable so `updateMyProfile` below can persist its edit across calls in the same
 // process, the way the live gateway would. `fixtures.ts` still exports the starting values.
@@ -14,8 +14,11 @@ let me = mockMe;
  * `chooseEdge`); a live build never imports this module.
  */
 export const mockEdge: Edge = {
+  categories: () => Promise.resolve(mockCategories),
   diagnostics: () => Promise.resolve(mockDiagnostics),
   me: () => Promise.resolve(me),
+  policies: (documentType) =>
+    Promise.resolve(mockPolicies.filter((p) => p.documentType === documentType)),
   updateMyProfile: ({ firstName, lastName }) => {
     me = { ...me, firstName, lastName, name: `${firstName} ${lastName}`.trim() };
     return Promise.resolve(me);

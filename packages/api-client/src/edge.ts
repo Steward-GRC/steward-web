@@ -1,14 +1,21 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Diagnostics, Me } from "./generated/schema";
+import type { Category, Diagnostics, Me, Policy } from "./generated/schema";
 
-export type { Diagnostics, Me } from "./generated/schema";
+import { DocumentType } from "./generated/schema";
+
+export type { Category, Diagnostics, Me, Policy } from "./generated/schema";
+export { DocumentType, PolicyStatus, Sensitivity } from "./generated/schema";
 
 export interface Edge {
+  /** The library's category tree. Rejects with `GatewayError` when signed out. */
+  categories(cookie?: string): Promise<readonly Category[]>;
   /** The gateway's own diagnostics read. Rejects with `GatewayError` when signed out. */
   diagnostics(cookie?: string): Promise<Diagnostics>;
   /** The signed-in user, or `null` when the session cookie is missing or expired. */
   me(cookie?: string): Promise<Me | null>;
+  /** The library catalog for one document type. Rejects with `GatewayError` when signed out. */
+  policies(documentType: DocumentType, cookie?: string): Promise<readonly Policy[]>;
   /** Edits the CALLING user's own name. Rejects with `GatewayError` when signed out. */
   updateMyProfile(input: UpdateMyProfileInput, cookie?: string): Promise<Me>;
 }
