@@ -3,11 +3,11 @@
 import { index, route, type RouteConfig } from "@react-router/dev/routes";
 
 /**
- * The staff feature areas (gates, library, reader, authoring, approvals, reporting, ethics)
- * each add their own `route()` call here as their own port PR lands. This PR adds reporting
- * (the privacy-officer case queue and case detail, backed by the new compliance reporting
- * service) and the global library search page. Approvals landed in a separate, parallel port
- * PR.
+ * The staff feature areas (gates, library, reader, authoring, approvals, reporting) each add
+ * their own `route()` call here as their own port PR lands. This PR adds reporting (the
+ * privacy-officer case queue and case detail, backed by the new compliance reporting service)
+ * and the global library search page. Approvals landed in a separate, parallel port PR.
+ * Ethics is a v0.2.0 feature area; it has no routes here yet.
  */
 export default [
   index("routes/home.tsx"),
