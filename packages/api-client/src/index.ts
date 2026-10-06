@@ -24,11 +24,14 @@ export type {
   Group,
   GroupMapping,
   HistoryEntry,
+  ImportedIdpMetadata,
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
   ListUsersInput,
   Me,
+  MintedSsoTestLink,
+  MintSsoTestLinkInput,
   Organization,
   Policy,
   PolicyAppendix,
@@ -62,6 +65,7 @@ export {
   Sensitivity,
 } from "./edge";
 export { GatewayError, gatewayFetch, type GatewayRequest } from "./gatewayFetch";
+export { gatewayRestFetch } from "./gatewayRestFetch";
 export {
   AcknowledgePolicyDocument,
   type AcknowledgePolicyMutation,

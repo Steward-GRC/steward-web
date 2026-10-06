@@ -4,7 +4,10 @@ import type {
   AddOrganizationInput,
   DomainVerification,
   GroupMapping,
+  ImportedIdpMetadata,
   KeyValueInput,
+  MintedSsoTestLink,
+  MintSsoTestLinkInput,
   Organization,
   SpCertificate,
 } from "@steward-web/api-client";
@@ -44,6 +47,32 @@ export const addOrganization = async (
   return edge.addOrganization(input, cookieOf(request));
 };
 
+/** Fetches a SAML IdP's metadata document by URL and extracts the fields needed to
+ *  prefill the connection form. */
+export const importIdpMetadataFromUrl = async (
+  request: Request,
+  url: string,
+): Promise<ImportedIdpMetadata> => {
+  await requireSettingsManage(request);
+  return edge.importIdpMetadata(url, cookieOf(request));
+};
+
+/** Parses a SAML IdP metadata XML document — e.g. a file downloaded from the IdP — into
+ *  the same fields `importIdpMetadataFromUrl` extracts from a URL. */
+export const parseIdpMetadataFile = async (
+  request: Request,
+  metadata: string,
+): Promise<ImportedIdpMetadata> => {
+  await requireSettingsManage(request);
+  return edge.parseIdpMetadata(metadata, cookieOf(request));
+};
+
+/** Fetches an IdP signing certificate by URL (PEM). */
+export const fetchIdpCertFromUrl = async (request: Request, url: string): Promise<string> => {
+  await requireSettingsManage(request);
+  return edge.fetchIdpCert(url, cookieOf(request));
+};
+
 /** Mints a DNS TXT domain-verification challenge. The token is stable by default; rotate
  *  mints a fresh one, which also revokes the domain's prior verified proof. */
 export const startDomainVerification = async (
@@ -59,6 +88,19 @@ export const startDomainVerification = async (
 export const verifyDomain = async (request: Request, domain: string): Promise<Organization> => {
   await requireSettingsManage(request);
   return edge.verifyDomain(domain, cookieOf(request));
+};
+
+/** Mints a scoped, time-bound Test-IdP link: a site admin opens it themselves (in a popup)
+ *  to run the end-to-end IdP login test, or hands it to a user AT the organisation being
+ *  onboarded when the admin isn't a user of that org's IdP. The gateway stashes the minting
+ *  admin's authority server-side, so the result records back under the connection as the
+ *  admin's test either way. */
+export const mintSsoTestLink = async (
+  request: Request,
+  input: MintSsoTestLinkInput,
+): Promise<MintedSsoTestLink> => {
+  await requireSettingsManage(request);
+  return edge.mintSsoTestLink(input, cookieOf(request));
 };
 
 /** Enables an organisation's SSO connection for sign-in. Refused server-side unless both

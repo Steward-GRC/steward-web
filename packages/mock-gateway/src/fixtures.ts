@@ -266,6 +266,7 @@ export const mockGroups: Group[] = [
 export const mockOrganizations: Organization[] = [
   {
     allowLocal: false,
+    connectionAlias: mockId("connection-alias", 1),
     connectionId: mockId("connection", 1),
     displayName: "Partner",
     domain: "partner.example.net",

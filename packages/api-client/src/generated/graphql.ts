@@ -25,6 +25,7 @@ export type ActivateOrganizationMutationVariables = Exact<{
 export type ActivateOrganizationMutation = {
   readonly activateOrganization: {
     readonly connectionId: string;
+    readonly connectionAlias: string;
     readonly displayName: string;
     readonly domain: string;
     readonly enabled: boolean;
@@ -76,6 +77,7 @@ export type AddOrganizationMutationVariables = Exact<{
 export type AddOrganizationMutation = {
   readonly addOrganization: {
     readonly connectionId: string;
+    readonly connectionAlias: string;
     readonly displayName: string;
     readonly domain: string;
     readonly enabled: boolean;
@@ -264,6 +266,7 @@ export type ChangeOrgProtocolMutationVariables = Exact<{
 export type ChangeOrgProtocolMutation = {
   readonly changeOrgProtocol: {
     readonly connectionId: string;
+    readonly connectionAlias: string;
     readonly displayName: string;
     readonly domain: string;
     readonly enabled: boolean;
@@ -414,6 +417,7 @@ export type DisableOrganizationMutationVariables = Exact<{
 export type DisableOrganizationMutation = {
   readonly disableOrganization: {
     readonly connectionId: string;
+    readonly connectionAlias: string;
     readonly displayName: string;
     readonly domain: string;
     readonly enabled: boolean;
@@ -698,6 +702,7 @@ export type MyDraftPoliciesQuery = {
 
 export type OrganizationFieldsFragment = {
   readonly connectionId: string;
+  readonly connectionAlias: string;
   readonly displayName: string;
   readonly domain: string;
   readonly enabled: boolean;
@@ -714,6 +719,7 @@ export type OrganizationsQueryVariables = Exact<{ [key: string]: never }>;
 export type OrganizationsQuery = {
   readonly organizations: ReadonlyArray<{
     readonly connectionId: string;
+    readonly connectionAlias: string;
     readonly displayName: string;
     readonly domain: string;
     readonly enabled: boolean;
@@ -1137,6 +1143,7 @@ export type UpdateIdPConnectionMutationVariables = Exact<{
 export type UpdateIdPConnectionMutation = {
   readonly updateIdPConnection: {
     readonly connectionId: string;
+    readonly connectionAlias: string;
     readonly displayName: string;
     readonly domain: string;
     readonly enabled: boolean;
@@ -1253,6 +1260,7 @@ export type VerifyDomainMutationVariables = Exact<{
 export type VerifyDomainMutation = {
   readonly verifyDomain: {
     readonly connectionId: string;
+    readonly connectionAlias: string;
     readonly displayName: string;
     readonly domain: string;
     readonly enabled: boolean;
@@ -1384,6 +1392,7 @@ export const OrganizationFieldsFragmentDoc = {
         kind: "SelectionSet",
         selections: [
           { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "connectionAlias" } },
           { kind: "Field", name: { kind: "Name", value: "displayName" } },
           { kind: "Field", name: { kind: "Name", value: "domain" } },
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
@@ -1586,6 +1595,7 @@ export const ActivateOrganizationDocument = {
         kind: "SelectionSet",
         selections: [
           { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "connectionAlias" } },
           { kind: "Field", name: { kind: "Name", value: "displayName" } },
           { kind: "Field", name: { kind: "Name", value: "domain" } },
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
@@ -1803,6 +1813,7 @@ export const AddOrganizationDocument = {
         kind: "SelectionSet",
         selections: [
           { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "connectionAlias" } },
           { kind: "Field", name: { kind: "Name", value: "displayName" } },
           { kind: "Field", name: { kind: "Name", value: "domain" } },
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
@@ -2353,6 +2364,7 @@ export const ChangeOrgProtocolDocument = {
         kind: "SelectionSet",
         selections: [
           { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "connectionAlias" } },
           { kind: "Field", name: { kind: "Name", value: "displayName" } },
           { kind: "Field", name: { kind: "Name", value: "domain" } },
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
@@ -2909,6 +2921,7 @@ export const DisableOrganizationDocument = {
         kind: "SelectionSet",
         selections: [
           { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "connectionAlias" } },
           { kind: "Field", name: { kind: "Name", value: "displayName" } },
           { kind: "Field", name: { kind: "Name", value: "domain" } },
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
@@ -3769,6 +3782,7 @@ export const OrganizationsDocument = {
         kind: "SelectionSet",
         selections: [
           { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "connectionAlias" } },
           { kind: "Field", name: { kind: "Name", value: "displayName" } },
           { kind: "Field", name: { kind: "Name", value: "domain" } },
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
@@ -5180,6 +5194,7 @@ export const UpdateIdPConnectionDocument = {
         kind: "SelectionSet",
         selections: [
           { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "connectionAlias" } },
           { kind: "Field", name: { kind: "Name", value: "displayName" } },
           { kind: "Field", name: { kind: "Name", value: "domain" } },
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
@@ -5537,6 +5552,7 @@ export const VerifyDomainDocument = {
         kind: "SelectionSet",
         selections: [
           { kind: "Field", name: { kind: "Name", value: "connectionId" } },
+          { kind: "Field", name: { kind: "Name", value: "connectionAlias" } },
           { kind: "Field", name: { kind: "Name", value: "displayName" } },
           { kind: "Field", name: { kind: "Name", value: "domain" } },
           { kind: "Field", name: { kind: "Name", value: "enabled" } },

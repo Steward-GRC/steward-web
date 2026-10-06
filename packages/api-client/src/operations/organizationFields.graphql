@@ -1,5 +1,6 @@
 fragment OrganizationFields on Organization {
   connectionId
+  connectionAlias
   displayName
   domain
   enabled

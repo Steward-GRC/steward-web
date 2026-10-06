@@ -24,7 +24,8 @@ import {
   TH,
   THead,
 } from "@steward-web/ui";
-import { data, Form, Link, redirect } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { data, Form, Link, redirect, useFetcher, useRevalidator } from "react-router";
 
 import type { Route } from "./+types/organisations.$domain";
 
@@ -40,6 +41,7 @@ import {
   disableOrganization,
   findOrganization,
   listGroupMappings,
+  mintSsoTestLink,
   startDomainVerification,
   updateIdPConnection,
   verifyDomain,
@@ -122,6 +124,17 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         await disableOrganization(request, domain);
         return data({ intent, ok: true } as const);
       }
+      case "mint-test-link": {
+        const org = await findOrganization(request, domain);
+        if (!org) throw data("organisation not found", { status: 404 });
+        const link = await mintSsoTestLink(request, {
+          alias: org.connectionAlias,
+          connectionId: org.connectionId,
+          returnPath: new URL(request.url).pathname,
+          tenant: org.domain,
+        });
+        return data({ intent, link, ok: true } as const);
+      }
       case "rotate-verification": {
         const verification = await startDomainVerification(request, domain, true);
         return data({ intent, ok: true, verification } as const);
@@ -153,6 +166,70 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
 };
 
 export default function OrganisationManage({ actionData, loaderData }: Route.ComponentProps) {
+  const revalidator = useRevalidator();
+
+  // "Copy test link" mints the link through this route's own action (a server-side call,
+  // same as every other mutation here) and copies the result once it lands. Applying it
+  // during render (mirroring the fetcher's data into pendingCopyUrl) rather than in an
+  // effect body keeps the clipboard write itself — a real external side effect — as the
+  // only thing the effect below does.
+  const copyLinkFetcher = useFetcher<typeof action>();
+  const [appliedCopyLink, setAppliedCopyLink] = useState(copyLinkFetcher.data);
+  const [pendingCopyUrl, setPendingCopyUrl] = useState<null | string>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  if (copyLinkFetcher.data !== appliedCopyLink) {
+    setAppliedCopyLink(copyLinkFetcher.data);
+    if (copyLinkFetcher.data?.ok && "link" in copyLinkFetcher.data) {
+      setPendingCopyUrl(copyLinkFetcher.data.link.url);
+    }
+  }
+  useEffect(() => {
+    if (!pendingCopyUrl) return;
+    void navigator.clipboard.writeText(pendingCopyUrl).then(() => {
+      setPendingCopyUrl(null);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  }, [pendingCopyUrl]);
+
+  // "Run IdP test" opens a popup pointed at /resources/sso-test-link (see that route): the
+  // mint happens server-side, behind a same-origin redirect the popup blocker already
+  // allowed, landing the popup on the gateway's own test-start URL. The gateway's callback
+  // page posts the result back to window.opener and closes the popup; the closed-poll
+  // here covers a popup closed without a message (dismissed, or blocked outright, in
+  // which case the click handler falls back to a same-tab redirect instead).
+  const [testPending, setTestPending] = useState(false);
+  const testPopupRef = useRef<null | Window>(null);
+  useEffect(() => {
+    if (!testPending) return;
+    const popup = testPopupRef.current;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== globalThis.location.origin) return;
+      const message = event.data as { success?: boolean; type?: string } | null;
+      if (message?.type !== "idp-test-result") return;
+      try {
+        popup?.close();
+      } catch {
+        /* popup already closed, or cross-origin by the time it fires */
+      }
+      setTestPending(false);
+      void revalidator.revalidate();
+    };
+    window.addEventListener("message", onMessage);
+    const closedPoll = globalThis.setInterval(() => {
+      if (popup && popup.closed) {
+        setTestPending(false);
+        void revalidator.revalidate();
+      }
+    }, 500);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      globalThis.clearInterval(closedPoll);
+    };
+    // revalidator is stable; testPopupRef is read once per pending window, not a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testPending]);
+
   if (!loaderData.organisation) {
     return (
       <div className="flex w-full flex-col gap-6 p-6">
@@ -169,6 +246,13 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
   }
 
   const { canActivateNow, canDeleteNow, groupOptions, mappings, organisation: org } = loaderData;
+
+  const ssoTestUrl = `/resources/sso-test-link?${new URLSearchParams({
+    alias: org.connectionAlias,
+    connectionId: org.connectionId,
+    returnPath: `/organisations/${encodeURIComponent(org.domain)}`,
+    tenant: org.domain,
+  }).toString()}`;
 
   const errorFor = (intent: string) =>
     actionData && !actionData.ok && actionData.intent === intent && "failure" in actionData
@@ -255,10 +339,64 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
 
           <div className="flex flex-col gap-3 border-t border-border pt-6">
             <p className="text-sm font-semibold text-ink">IdP test</p>
-            <p className="text-sm text-muted">
-              The end-to-end sign-in test runs through the sign-in SSO flow, which isn&apos;t wired
-              up yet in this port; the testPassed gate below stays clear until it is.
-            </p>
+            {org.verified ? (
+              <>
+                <p className="text-sm text-muted">
+                  Runs a full sign-in against the connected IdP in a new window. Complete the
+                  sign-in there — the result returns here automatically.
+                </p>
+                {copyLinkFetcher.data &&
+                !copyLinkFetcher.data.ok &&
+                "failure" in copyLinkFetcher.data ? (
+                  <Banner
+                    failure={copyLinkFetcher.data.failure}
+                    title="Couldn't create a test link"
+                    tone="danger"
+                  />
+                ) : null}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    disabled={testPending}
+                    onClick={() => {
+                      const popup = window.open(ssoTestUrl, "idp-test", "width=520,height=680");
+                      if (!popup) {
+                        globalThis.location.assign(ssoTestUrl);
+                        return;
+                      }
+                      testPopupRef.current = popup;
+                      setTestPending(true);
+                    }}
+                    type="button"
+                  >
+                    {testPending ? "Testing…" : org.testPassed ? "Run test again" : "Run IdP test"}
+                  </Button>
+                  <Button
+                    disabled={copyLinkFetcher.state !== "idle"}
+                    onClick={() => {
+                      const form = new FormData();
+                      form.set("intent", "mint-test-link");
+                      void copyLinkFetcher.submit(form, { method: "post" });
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {linkCopied
+                      ? "Copied"
+                      : copyLinkFetcher.state === "idle"
+                        ? "Copy test link"
+                        : "Creating…"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted">
+                  Onboarding another organisation&apos;s domain? Copy a scoped, time-bound link and
+                  hand it to a user at that organisation to run the test instead — the result still
+                  records back here.
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted">Verify the domain first.</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 border-t border-border pt-6">

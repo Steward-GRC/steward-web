@@ -638,6 +638,8 @@ export type Organization = {
   readonly __typename?: "Organization";
   /** When true, this organisation's users may also sign in with a local password. */
   readonly allowLocal: Scalars["Boolean"]["output"];
+  /** The connection alias; /auth/sso/start?connection=<alias> matches it against identity Discover. */
+  readonly connectionAlias: Scalars["String"]["output"];
   /** Identity-service connection id; keys SP-cert-independent, per-connection calls. */
   readonly connectionId: Scalars["ID"]["output"];
   readonly displayName: Scalars["String"]["output"];
