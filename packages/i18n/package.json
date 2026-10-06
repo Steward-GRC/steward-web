@@ -1,0 +1,27 @@
+{
+  "name": "@steward-web/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The one i18n runtime for steward-web: one i18next instance, the English catalog, locale resolution and persistence, and locale-aware formatters.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./eslint-guard": "./eslint-guard.js"
+  },
+  "sideEffects": [
+    "./src/i18n.ts"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "i18next": "^26.4.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-i18next": "^17.0.15"
+  },
+  "devDependencies": {
+    "@steward-web/vite-config": "workspace:*"
+  }
+}

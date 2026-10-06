@@ -1,0 +1,20 @@
+{
+  "change": {
+    "fix": "Fix",
+    "major": "Major",
+    "minor": "Minor"
+  },
+  "sensitivity": {
+    "sensitive": "Sensitive"
+  },
+  "status": {
+    "approved": "Approved",
+    "draft": "Draft",
+    "in-review": "In review",
+    "published": "Published",
+    "rejected": "Rejected",
+    "retired": "Retired",
+    "superseded": "Superseded",
+    "withdrawn": "Withdrawn"
+  }
+}

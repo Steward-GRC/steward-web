@@ -1,0 +1,9 @@
+{
+  "reach": {
+    "description": "Something went wrong on our end. Try again in a moment — if it keeps happening, contact support.",
+    "reference": "Reference: {{reference}}",
+    "retry": "Try again",
+    "retrying": "Retrying…",
+    "title": "Couldn't {{action}}"
+  }
+}

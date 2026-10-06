@@ -5,23 +5,23 @@
 import { execFileSync } from "node:child_process";
 
 export const allowed = new Set([
-  "MIT",
-  "ISC",
+  "0BSD",
   "Apache-2.0",
+  "BlueOak-1.0.0",
   "BSD-2-Clause",
   "BSD-3-Clause",
-  "0BSD",
-  "CC0-1.0",
-  "Unlicense",
-  "BlueOak-1.0.0",
-  "Python-2.0",
-  "MPL-2.0",
   "CC-BY-4.0",
+  "CC0-1.0",
+  "ISC",
+  "MIT",
+  "MPL-2.0",
   "OFL-1.1",
+  "Python-2.0",
+  "Unlicense",
 ]);
 
-export function licenceAllowed(expression) {
-  const cleaned = expression.replace(/[()]/g, " ").trim();
+export const licenceAllowed = (expression) => {
+  const cleaned = expression.replaceAll(/[()]/g, " ").trim();
   if (/\bOR\b/.test(cleaned)) {
     return cleaned.split(/\bOR\b/).some((part) => licenceAllowed(part));
   }
@@ -29,9 +29,9 @@ export function licenceAllowed(expression) {
     .split(/\bAND\b/)
     .map((part) => part.trim())
     .every((part) => allowed.has(part));
-}
+};
 
-function main() {
+const main = () => {
   const out = execFileSync("pnpm", ["licenses", "list", "--prod", "--json"], {
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
@@ -40,14 +40,16 @@ function main() {
   const refused = [];
   for (const [licence, packages] of Object.entries(byLicence)) {
     if (licenceAllowed(licence)) continue;
-    for (const pkg of packages) refused.push(`${pkg.name}@${pkg.versions.join(",")}: ${licence}`);
+    for (const package_ of packages)
+      refused.push(`${package_.name}@${package_.versions.join(",")}: ${licence}`);
   }
   if (refused.length > 0) {
     console.error("dependency licences outside the allow-list:");
     for (const line of refused) console.error(`  ${line}`);
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
   console.log("dependency licences ok");
-}
+};
 
 if (import.meta.url === `file://${process.argv[1]}`) main();

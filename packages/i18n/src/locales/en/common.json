@@ -1,0 +1,14 @@
+{
+  "actions": {
+    "close": "Close",
+    "dismiss": "Dismiss",
+    "save": "Save"
+  },
+  "breadcrumb": {
+    "aria": "Breadcrumb"
+  },
+  "status": {
+    "loading": "Loading…",
+    "saving": "Saving…"
+  }
+}
