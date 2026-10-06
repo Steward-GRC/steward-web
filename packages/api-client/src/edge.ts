@@ -232,7 +232,7 @@ export interface Edge {
   assignCase(caseId: string, assigneeUserId: null | string, cookie?: string): Promise<ReportCase>;
   /** A page of audit records, newest first. Site-admin only. */
   auditLog(filters: AuditLogFilters, cookie?: string): Promise<AuditQueryPage>;
-  /** Every category, parents first, for the new-draft picker. The gateway has no "categories I may author in" read yet, so it refuses `createPolicy` where the caller can't author. */
+  /** The categories the calling author may create a policy under, for the new-draft picker. `createPolicy` also refuses the ones the caller can't author in, so this is a UI convenience, not the real gate. */
   authorableGroups(cookie?: string): Promise<readonly Group[]>;
   /** The templates selectable when creating a policy, optionally owned by one category. */
   authorableTemplates(ownerGroupId: null | string, cookie?: string): Promise<readonly Template[]>;
@@ -311,7 +311,7 @@ export interface Edge {
   mintSsoTestLink(input: MintSsoTestLinkInput, cookie?: string): Promise<MintedSsoTestLink>;
   /** Re-parents a group (and its subtree). A null newParentId promotes it to a root. */
   moveGroup(groupId: string, newParentId: null | string, cookie?: string): Promise<Group>;
-  /** The CALLING user's own policies with a working draft, found across both catalogs. */
+  /** The CALLING user's own policies with a working draft. */
   myDraftPolicies(cookie?: string): Promise<readonly Policy[]>;
   /** Every configured organisation SSO connection. Site-admin only. */
   organizations(cookie?: string): Promise<readonly Organization[]>;

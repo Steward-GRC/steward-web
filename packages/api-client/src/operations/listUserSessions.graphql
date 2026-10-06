@@ -7,5 +7,6 @@ query ListUserSessions($userId: ID!) {
     expiresAt
     active
     userAgent
+    clientIp
   }
 }

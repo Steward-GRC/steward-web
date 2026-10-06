@@ -162,6 +162,7 @@ export const mockSessions: Record<string, Session[]> = {
     {
       active: true,
       authenticatedAt: "2026-01-01T08:00:00Z",
+      clientIp: "203.0.113.42",
       expiresAt: "2026-01-02T00:00:00Z",
       issuedAt: "2026-01-01T08:00:00Z",
       sessionId: mockId("session", 1),
