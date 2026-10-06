@@ -463,11 +463,11 @@ describe("mockEdge users directory", () => {
         sensitivity: Sensitivity.Standard,
         title: "Collab Fixture",
       });
-      const payload = await mockEdge.issueCollabToken({
-        draftId: created.currentDraftVersionId!,
-        policyId: created.id,
-      });
-      expect(payload.wsUrl).toBe("/collab");
+      const draftId = created.currentDraftVersionId!;
+      const payload = await mockEdge.issueCollabToken({ draftId, policyId: created.id });
+      // Matches steward-collab's own wsUrl shape (WsPathPrefix + the draft id), so the
+      // provider's url-resolution code is exercised the same way in mock mode as live.
+      expect(payload.wsUrl).toBe(`/collab/ws/${draftId}`);
       expect(payload.token.length).toBeGreaterThan(0);
       expect(new Date(payload.expiresAt).getTime()).toBeGreaterThan(Date.now());
     });
