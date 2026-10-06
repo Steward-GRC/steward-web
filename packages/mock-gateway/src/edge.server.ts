@@ -42,6 +42,7 @@ import {
   mockWorkflows,
   nextMockAiJobId,
   nextMockAppendixId,
+  nextMockCollabTokenId,
   nextMockPolicyId,
   nextMockPolicyVersionId,
 } from "./fixtures";
@@ -67,6 +68,9 @@ let policyVersions = [...mockPolicyVersions];
 
 /** How long a mock break-glass grant lasts, matching the real grant's order of magnitude. */
 const BREAK_GLASS_GRANT_MS = 5 * 60 * 1000;
+
+/** How long a mock collab token is valid, matching the real token's order of magnitude. */
+const COLLAB_TOKEN_TTL_MS = 5 * 60 * 1000;
 
 const requireUser = (operation: string, userId: string): User => {
   const user = users.find((u) => u.userId === userId);
@@ -548,6 +552,19 @@ export const mockEdge: Edge = {
   },
   groupChildren: (parentId) => Promise.resolve(groups.filter((g) => g.parentId === parentId)),
   groupMappings: (connectionId) => Promise.resolve(groupMappings[connectionId] ?? []),
+  issueCollabToken: async ({ policyId }) => {
+    const policy = requirePolicy("IssueCollabToken", policyId);
+    if (!policy.viewerCan.edit) {
+      throw new GatewayError("IssueCollabToken", "edit access to this draft is required", {
+        code: "PERMISSION_DENIED",
+      });
+    }
+    return {
+      expiresAt: new Date(Date.now() + COLLAB_TOKEN_TTL_MS).toISOString(),
+      token: nextMockCollabTokenId(),
+      wsUrl: "/collab",
+    };
+  },
   latestTemplateVersion: (templateId) =>
     Promise.resolve(mockTemplateVersions.find((t) => t.templateId === templateId) ?? null),
   listUserSessions: (userId) => Promise.resolve(sessions[userId] ?? []),

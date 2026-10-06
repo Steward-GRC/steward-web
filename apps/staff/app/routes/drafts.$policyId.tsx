@@ -21,7 +21,7 @@ import {
   Select,
   Textarea,
 } from "@steward-web/ui";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { data, Form, Link, useFetcher } from "react-router";
 
 import type { Route } from "./+types/drafts.$policyId";
@@ -43,6 +43,8 @@ import {
   saveDraft,
   updateAppendix,
 } from "../authoring/authoring.server";
+import { issueCollabToken } from "../authoring/collab/collab.server";
+import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import {
   type DraftSection,
   ensureTemplateSections,
@@ -99,6 +101,12 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
           sectionKey,
         });
         return data({ intent, ok: true, sectionKey, suggestion: result.suggestion } as const);
+      }
+      case "collab-token": {
+        const draftId = String(form.get("draftId") ?? "");
+        const templateVersionId = String(form.get("templateVersionId") ?? "") || null;
+        const payload = await issueCollabToken(request, policyId, draftId, templateVersionId);
+        return data({ intent, ok: true, ...payload } as const);
       }
       case "delete-appendix": {
         await deleteAppendix(request, String(form.get("appendixId") ?? ""));
@@ -228,6 +236,49 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const generateJob = useAiJobPoll(generateJobId);
   const reviewJob = useAiJobPoll(reviewJobId);
 
+  const collabFetcher = useFetcher<typeof action>();
+  const collabResolvers = useRef<
+    { reject: (error: unknown) => void; resolve: (token: CollabToken) => void }[]
+  >([]);
+
+  useEffect(() => {
+    if (collabFetcher.state !== "idle" || !collabFetcher.data) return;
+    const resolver = collabResolvers.current.shift();
+    if (!resolver) return;
+    if (collabFetcher.data.ok && "token" in collabFetcher.data) {
+      resolver.resolve({ token: collabFetcher.data.token, wsUrl: collabFetcher.data.wsUrl });
+    } else {
+      resolver.reject(new Error("the collab token request was refused"));
+    }
+  }, [collabFetcher.data, collabFetcher.state]);
+
+  const getCollabToken = useCallback((): Promise<CollabToken> => {
+    return new Promise((resolve, reject) => {
+      if (!draft) {
+        reject(new Error("no working draft"));
+        return;
+      }
+      collabResolvers.current.push({ reject, resolve });
+      collabFetcher.submit(
+        {
+          draftId: draft.id,
+          intent: "collab-token",
+          templateVersionId: draft.templateVersionId ?? "",
+        },
+        { method: "post" },
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `collabFetcher` is stable per mount
+  }, [draft?.id, draft?.templateVersionId]);
+
+  const onRemoteSectionUpdate = useCallback((sectionKey: string, text: string) => {
+    setSections((current) =>
+      current.map((s) => (s.sectionKey === sectionKey ? { ...s, text } : s)),
+    );
+  }, []);
+
+  const collabSession = useCollabSession(draft?.id ?? null, getCollabToken, onRemoteSectionUpdate);
+
   if (!draft) {
     return (
       <div className="p-6">
@@ -236,10 +287,12 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  const setSectionText = (sectionKey: string, text: string) =>
+  const setSectionText = (sectionKey: string, text: string) => {
     setSections((current) =>
       current.map((s) => (s.sectionKey === sectionKey ? { ...s, text } : s)),
     );
+    collabSession.sendUpdate(sectionKey, text);
+  };
 
   const missing = missingRequiredSections(sections, outline);
   const sectionsJson = stringifyDraftSections(sections);
@@ -271,7 +324,14 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-ink">{policy.title}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold text-ink">{policy.title}</h1>
+          {collabSession.presenceCount > 1 ? (
+            <span className="rounded-full bg-sunken px-2 py-0.5 text-xs text-muted">
+              {t("editor.presence", { count: collabSession.presenceCount })}
+            </span>
+          ) : null}
+        </div>
         <div className="flex gap-2">
           {aiHealth.available ? (
             <>

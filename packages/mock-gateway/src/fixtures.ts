@@ -765,6 +765,7 @@ let nextAppendixSeq = 3;
 let nextPolicyVersionSeq = 100;
 let nextPolicySeq = 100;
 let nextAiJobSeq = 1;
+let nextCollabTokenSeq = 1;
 
 /** Mutable fixture-state helpers: kept here (not in `edge.server.ts`) so a test can seed or
  *  reset them directly, the same way `mockPolicies`/`mockPolicyDetails` are consumed. */
@@ -773,6 +774,7 @@ export const nextMockPolicyVersionId = (): string =>
   mockId("policy-version", nextPolicyVersionSeq++);
 export const nextMockPolicyId = (): string => mockId("policy", nextPolicySeq++);
 export const nextMockAiJobId = (): string => mockId("ai-job", nextAiJobSeq++);
+export const nextMockCollabTokenId = (): string => mockId("collab-token", nextCollabTokenSeq++);
 
 export const mockAppendixLetter = (orderIndex: number): string =>
   String.fromCodePoint(65 + orderIndex);
