@@ -9,9 +9,7 @@
     ".": "./src/index.ts",
     "./eslint-guard": "./eslint-guard.js"
   },
-  "sideEffects": [
-    "./src/i18n.ts"
-  ],
+  "sideEffects": true,
   "scripts": {
     "typecheck": "tsc --noEmit -p ."
   },

@@ -1,1 +1,18 @@
-{}
+{
+  "about": {
+    "menuEntry": "About and diagnostics",
+    "title": "About Steward",
+    "version": "Version {{version}} ({{commit}})"
+  },
+  "copyDiagnostics": {
+    "action": "Copy diagnostics",
+    "announced": "Diagnostics copied",
+    "copied": "Copied",
+    "fallbackHint": "Your browser didn't allow the copy. Select the text below and copy it by hand.",
+    "fallbackTitle": "Diagnostics"
+  },
+  "mockBanner": {
+    "title": "Mock data"
+  }
+}
+

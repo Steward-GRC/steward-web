@@ -1,0 +1,23 @@
+{
+  "name": "@steward-web/mock-gateway",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The build-time-only fake gateway: the --mode mock network edge, its fixtures and the persistent MOCK DATA banner.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@steward-web/api-client": "workspace:*",
+    "@steward-web/auth": "workspace:*",
+    "@steward-web/i18n": "workspace:*",
+    "@steward-web/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@steward-web/vite-config": "workspace:*"
+  }
+}

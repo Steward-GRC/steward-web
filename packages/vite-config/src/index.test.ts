@@ -17,6 +17,11 @@ describe("chooseEdge", () => {
     expect(edge.module).toMatch(/mock-gateway/);
   });
 
+  it("picks the mock banner alongside the mock edge, and the no-op banner otherwise", () => {
+    expect(chooseEdge(MOCK_MODE, {}).banner).toMatch(/mock-gateway.*MockBanner/);
+    expect(chooseEdge("production", {}).banner).toMatch(/shell.*NoMockBanner/);
+  });
+
   it("refuses STEWARD_MOCK on a live build, so a variable can't turn mock on", () => {
     expect(() => chooseEdge("production", { STEWARD_MOCK: "true" })).toThrow(/--mode mock/);
     expect(() => chooseEdge("production", { STEWARD_MOCK: "1" })).toThrow(/--mode mock/);
