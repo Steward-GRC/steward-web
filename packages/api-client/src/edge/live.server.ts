@@ -12,6 +12,7 @@ import {
   AiHealthDocument,
   AiJobDocument,
   AiJobResultContentDocument,
+  AuditLogDocument,
   AuthorableGroupsDocument,
   AuthorableTemplatesDocument,
   AuthoringAssistDocument,
@@ -63,6 +64,7 @@ import {
   UpdateMyProfileDocument,
   UpdateUserProfileDocument,
   UsersDocument,
+  VerifyAuditChainDocument,
   VerifyDomainDocument,
   WorkflowsDocument,
 } from "../generated/graphql";
@@ -127,6 +129,10 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.aiJobResultContent;
+  },
+  async auditLog(filters, cookie) {
+    const data = await gatewayFetch(AuditLogDocument, { ...filters }, "AuditLog", { cookie });
+    return data.auditLog;
   },
   async authorableGroups(cookie) {
     const data = await gatewayFetch(AuthorableGroupsDocument, {}, "AuthorableGroups", { cookie });
@@ -463,6 +469,15 @@ export const liveEdge: Edge = {
   async users(input, cookie) {
     const data = await gatewayFetch(UsersDocument, input, "Users", { cookie });
     return data.users;
+  },
+  async verifyAuditChain(fromRecordId, toRecordId, cookie) {
+    const data = await gatewayFetch(
+      VerifyAuditChainDocument,
+      { fromRecordId, toRecordId },
+      "VerifyAuditChain",
+      { cookie },
+    );
+    return data.verifyAuditChain;
   },
   async verifyDomain(domain, cookie) {
     const data = await gatewayFetch(VerifyDomainDocument, { domain }, "VerifyDomain", { cookie });

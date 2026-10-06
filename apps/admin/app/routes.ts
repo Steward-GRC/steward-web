@@ -21,4 +21,5 @@ export default [
   route("organisations/new", "routes/organisations.new.tsx"),
   route("organisations/:domain", "routes/organisations.$domain.tsx"),
   route("setup", "routes/setup.tsx"),
+  route("audit", "routes/audit.tsx"),
 ] satisfies RouteConfig;

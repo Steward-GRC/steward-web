@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
+  type AuditRecord,
   type Category,
   ComponentStatus,
   DeletionItemKind,
@@ -785,3 +786,122 @@ export interface MockAiConfig {
 }
 
 export const mockAiConfig: MockAiConfig = { enabled: true };
+
+/** A record's hash: not cryptographic, just enough that a broken link in the chain (if a
+ *  record were edited in place) would visibly fail to match. */
+const AUDIT_HASH_MULTIPLIER = 2_654_435_769; // 0x9e3779b9, the golden-ratio hash constant
+const auditHash = (seed: number): string =>
+  (seed * AUDIT_HASH_MULTIPLIER).toString(16).padStart(16, "0");
+
+type AuditSeed = Omit<AuditRecord, "id" | "prevHash" | "recordHash" | "recordUuid">;
+
+// Oldest first; ids/hashes are assigned below in this order, then the array is reversed so
+// queryAudit-style callers see newest first, matching the real gateway's ordering.
+const AUDIT_SEEDS: AuditSeed[] = [
+  {
+    action: "group.created",
+    actorName: mockMe.name,
+    actorUserId: mockMe.id,
+    groupId: mockId("group", 1),
+    groupName: "Meridian Holdings",
+    legalBasisExempt: false,
+    occurredAt: "2026-01-05T09:00:00Z",
+    subject: `group:${mockId("group", 1)}`,
+    subjectLabel: "Meridian Holdings",
+    tier: "audit",
+  },
+  {
+    action: "group.created",
+    actorName: mockMe.name,
+    actorUserId: mockMe.id,
+    groupId: mockId("group", 2),
+    groupName: "IT Security",
+    legalBasisExempt: false,
+    occurredAt: "2026-01-06T10:30:00Z",
+    subject: `group:${mockId("group", 2)}`,
+    subjectLabel: "IT Security",
+    tier: "audit",
+  },
+  {
+    action: "role.granted",
+    actorName: mockMe.name,
+    actorUserId: mockMe.id,
+    groupId: mockId("group", 1),
+    groupName: "Meridian Holdings",
+    legalBasisExempt: false,
+    occurredAt: "2026-01-10T14:05:00Z",
+    subject: `user:${mockId("user", 3)}`,
+    // Unresolved on purpose: exercises the UI's fallback to the raw id when the server
+    // can't (or hasn't yet) enriched a label.
+    subjectLabel: null,
+    tier: "audit",
+  },
+  {
+    action: "session.login",
+    actorName: "Ada Lovelace",
+    actorUserId: mockId("user", 3),
+    groupId: mockId("group", 1),
+    groupName: "Meridian Holdings",
+    legalBasisExempt: false,
+    occurredAt: "2026-01-11T08:00:00Z",
+    subject: `user:${mockId("user", 3)}`,
+    subjectLabel: "Ada Lovelace",
+    tier: "activity",
+  },
+  {
+    action: "user.disabled",
+    actorName: "Ada Lovelace",
+    actorUserId: mockId("user", 3),
+    groupId: mockId("group", 2),
+    groupName: "IT Security",
+    legalBasisExempt: false,
+    occurredAt: "2026-02-01T16:45:00Z",
+    subject: `user:${mockId("user", 4)}`,
+    subjectLabel: "Margaret Hamilton",
+    tier: "audit",
+  },
+  {
+    action: "session.revoked",
+    actorName: "Ada Lovelace",
+    actorUserId: mockId("user", 3),
+    groupId: mockId("group", 2),
+    groupName: "IT Security",
+    legalBasisExempt: false,
+    occurredAt: "2026-02-01T16:46:00Z",
+    subject: `user:${mockId("user", 4)}`,
+    subjectLabel: "Margaret Hamilton",
+    tier: "audit",
+  },
+  {
+    action: "policy.published",
+    actorName: mockMe.name,
+    actorUserId: mockMe.id,
+    groupId: mockId("group", 2),
+    groupName: "IT Security",
+    legalBasisExempt: false,
+    occurredAt: "2026-03-15T11:20:00Z",
+    subject: mockPolicies[2]?.id ?? "policy:unknown",
+    subjectLabel: mockPolicies[2]?.title ?? null,
+    tier: "audit",
+  },
+  {
+    action: "organization.activated",
+    actorName: mockMe.name,
+    actorUserId: mockMe.id,
+    groupId: mockId("group", 1),
+    groupName: "Meridian Holdings",
+    legalBasisExempt: false,
+    occurredAt: "2026-04-02T13:00:00Z",
+    subject: "organization:partner.example.net",
+    subjectLabel: "Partner Example",
+    tier: "audit",
+  },
+];
+
+export const mockAuditRecords: AuditRecord[] = AUDIT_SEEDS.map((seed, index) => ({
+  ...seed,
+  id: String(index + 1),
+  prevHash: index === 0 ? "0".repeat(16) : auditHash(index - 1),
+  recordHash: auditHash(index),
+  recordUuid: mockId("audit-record", index + 1),
+})).toReversed();

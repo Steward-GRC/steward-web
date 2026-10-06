@@ -124,6 +124,54 @@ export type AppendixFieldsFragment = {
   readonly letter: string;
 };
 
+export type AuditLogQueryVariables = Exact<{
+  tier?: string | null | undefined;
+  groupId?: string | number | null | undefined;
+  actorUserId?: string | number | null | undefined;
+  subject?: string | null | undefined;
+  pageSize?: number | null | undefined;
+  pageToken?: string | null | undefined;
+}>;
+
+export type AuditLogQuery = {
+  readonly auditLog: {
+    readonly nextPageToken: string;
+    readonly records: ReadonlyArray<{
+      readonly id: string;
+      readonly recordUuid: string;
+      readonly tier: string;
+      readonly action: string;
+      readonly actorUserId: string;
+      readonly subject: string;
+      readonly groupId: string;
+      readonly occurredAt: string;
+      readonly prevHash: string;
+      readonly recordHash: string;
+      readonly legalBasisExempt: boolean;
+      readonly actorName: string | null;
+      readonly groupName: string | null;
+      readonly subjectLabel: string | null;
+    }>;
+  };
+};
+
+export type AuditRecordFieldsFragment = {
+  readonly id: string;
+  readonly recordUuid: string;
+  readonly tier: string;
+  readonly action: string;
+  readonly actorUserId: string;
+  readonly subject: string;
+  readonly groupId: string;
+  readonly occurredAt: string;
+  readonly prevHash: string;
+  readonly recordHash: string;
+  readonly legalBasisExempt: boolean;
+  readonly actorName: string | null;
+  readonly groupName: string | null;
+  readonly subjectLabel: string | null;
+};
+
 export type AuthorableGroupsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AuthorableGroupsQuery = {
@@ -1185,6 +1233,19 @@ export type UsersQuery = {
   };
 };
 
+export type VerifyAuditChainQueryVariables = Exact<{
+  fromRecordId: string;
+  toRecordId: string;
+}>;
+
+export type VerifyAuditChainQuery = {
+  readonly verifyAuditChain: {
+    readonly valid: boolean;
+    readonly recordsChecked: number;
+    readonly errors: ReadonlyArray<string>;
+  };
+};
+
 export type VerifyDomainMutationVariables = Exact<{
   domain: string;
 }>;
@@ -1210,6 +1271,35 @@ export type WorkflowsQuery = {
   readonly workflows: ReadonlyArray<{ readonly id: string; readonly name: string }>;
 };
 
+export const AuditRecordFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuditRecordFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AuditRecord" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "recordUuid" } },
+          { kind: "Field", name: { kind: "Name", value: "tier" } },
+          { kind: "Field", name: { kind: "Name", value: "action" } },
+          { kind: "Field", name: { kind: "Name", value: "actorUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "subject" } },
+          { kind: "Field", name: { kind: "Name", value: "groupId" } },
+          { kind: "Field", name: { kind: "Name", value: "occurredAt" } },
+          { kind: "Field", name: { kind: "Name", value: "prevHash" } },
+          { kind: "Field", name: { kind: "Name", value: "recordHash" } },
+          { kind: "Field", name: { kind: "Name", value: "legalBasisExempt" } },
+          { kind: "Field", name: { kind: "Name", value: "actorName" } },
+          { kind: "Field", name: { kind: "Name", value: "groupName" } },
+          { kind: "Field", name: { kind: "Name", value: "subjectLabel" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AuditRecordFieldsFragment, unknown>;
 export const AuthoringPolicyFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -1841,6 +1931,132 @@ export const AiJobResultContentDocument = {
     },
   ],
 } as unknown as DocumentNode<AiJobResultContentQuery, AiJobResultContentQueryVariables>;
+export const AuditLogDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AuditLog" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "tier" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "actorUserId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "subject" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "pageSize" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "pageToken" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "auditLog" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "tier" },
+                value: { kind: "Variable", name: { kind: "Name", value: "tier" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "groupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "actorUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "actorUserId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "subject" },
+                value: { kind: "Variable", name: { kind: "Name", value: "subject" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "pageSize" },
+                value: { kind: "Variable", name: { kind: "Name", value: "pageSize" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "pageToken" },
+                value: { kind: "Variable", name: { kind: "Name", value: "pageToken" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "nextPageToken" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "records" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      {
+                        kind: "FragmentSpread",
+                        name: { kind: "Name", value: "AuditRecordFields" },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuditRecordFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AuditRecord" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "recordUuid" } },
+          { kind: "Field", name: { kind: "Name", value: "tier" } },
+          { kind: "Field", name: { kind: "Name", value: "action" } },
+          { kind: "Field", name: { kind: "Name", value: "actorUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "subject" } },
+          { kind: "Field", name: { kind: "Name", value: "groupId" } },
+          { kind: "Field", name: { kind: "Name", value: "occurredAt" } },
+          { kind: "Field", name: { kind: "Name", value: "prevHash" } },
+          { kind: "Field", name: { kind: "Name", value: "recordHash" } },
+          { kind: "Field", name: { kind: "Name", value: "legalBasisExempt" } },
+          { kind: "Field", name: { kind: "Name", value: "actorName" } },
+          { kind: "Field", name: { kind: "Name", value: "groupName" } },
+          { kind: "Field", name: { kind: "Name", value: "subjectLabel" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AuditLogQuery, AuditLogQueryVariables>;
 export const AuthorableGroupsDocument = {
   kind: "Document",
   definitions: [
@@ -5216,6 +5432,63 @@ export const UsersDocument = {
     },
   ],
 } as unknown as DocumentNode<UsersQuery, UsersQueryVariables>;
+export const VerifyAuditChainDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "VerifyAuditChain" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "fromRecordId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "toRecordId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "verifyAuditChain" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "fromRecordId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "fromRecordId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "toRecordId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "toRecordId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "valid" } },
+                { kind: "Field", name: { kind: "Name", value: "recordsChecked" } },
+                { kind: "Field", name: { kind: "Name", value: "errors" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<VerifyAuditChainQuery, VerifyAuditChainQueryVariables>;
 export const VerifyDomainDocument = {
   kind: "Document",
   definitions: [
