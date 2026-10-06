@@ -1,0 +1,26 @@
+{
+  "name": "@steward-web/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The gateway's GraphQL schema, pinned and codegen'd, and the live network edge that calls it.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "codegen": "graphql-codegen --config codegen.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "graphql": "^17.0.2"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^7.4.4",
+    "@graphql-codegen/typed-document-node": "^7.1.1",
+    "@graphql-codegen/typescript": "^6.1.1",
+    "@graphql-codegen/typescript-operations": "^6.1.10",
+    "@steward-web/vite-config": "workspace:*"
+  }
+}

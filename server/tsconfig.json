@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // The server runs straight from src/*.ts (Node's own type-stripping, no build step), so
+    // its relative imports carry the real .ts extension Node's loader needs.
+    "allowImportingTsExtensions": true,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src"]
+}

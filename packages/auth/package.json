@@ -1,0 +1,24 @@
+{
+  "name": "@steward-web/auth",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Identity, permission checks and the Kratos sign-in flow both apps share.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/index.server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@steward-web/i18n": "workspace:*",
+    "@steward-web/ui": "workspace:*",
+    "react": "^19.3.0",
+    "react-router": "^8.4.0"
+  },
+  "devDependencies": {
+    "@steward-web/vite-config": "workspace:*"
+  }
+}
