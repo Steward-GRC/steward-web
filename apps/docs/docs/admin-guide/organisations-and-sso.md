@@ -43,5 +43,5 @@ Each organisation has a **JIT provisioning** switch:
 
 ## ➡️ What comes next
 
-With your organisations connected, read the [audit log](/admin-guide/audit-log) to see who did
-what.
+With your organisations connected, see [Completion](/admin-guide/completion) for acknowledgement
+coverage, or read the [audit log](/admin-guide/audit-log) to see who did what.

@@ -28,5 +28,6 @@ Run an integrity check before an external audit or review, so you can show the h
 
 ## ➡️ What comes next
 
-That covers the Admin Guide. For quick definitions of the terms used across this guide, see the
+See [Settings](/admin-guide/settings) for the cross-app banners and outbound email
+configuration. For quick definitions of the terms used across this guide, see the
 [Reference](/reference) section.

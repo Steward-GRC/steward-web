@@ -113,6 +113,11 @@ export interface Me {
  * unavailable.
  */
 export interface Policy {
+  /** Non-empty overrides the owning group's descendants as the ack audience; empty/undefined
+   *  inherits it. See `ackTriggers` for whether the policy requires ack at all. */
+  readonly ackAudienceOverride?: null | readonly string[];
+  /** The policy's own ack trigger; undefined/null inherits the owning group's. */
+  readonly ackTriggers?: AckTrigger | null;
   readonly category: string;
   readonly currentDraftVersionId?: null | string;
   readonly currentPublishedVersionId?: null | string;

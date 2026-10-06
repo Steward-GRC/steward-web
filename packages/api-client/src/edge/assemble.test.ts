@@ -86,6 +86,8 @@ describe("toPolicyView", () => {
   it("assembles the library row from the gateway policy and its names, with no extra version read", () => {
     const view = toPolicyView(
       {
+        ackAudienceOverride: null,
+        ackTriggers: null,
         currentDraftVersionId: null,
         currentPublishedVersionId: "v2",
         currentVersionNo: 3,
@@ -126,6 +128,8 @@ describe("toPolicyView", () => {
   it("shows an empty version before the first version exists", () => {
     const view = toPolicyView(
       {
+        ackAudienceOverride: null,
+        ackTriggers: null,
         currentDraftVersionId: "d1",
         currentPublishedVersionId: null,
         currentVersionNo: null,
