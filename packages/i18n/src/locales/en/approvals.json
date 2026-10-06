@@ -3,5 +3,50 @@
     "approved": "Approved",
     "pending": "Pending",
     "rejected": "Rejected"
+  },
+  "inbox": {
+    "empty": {
+      "description": "When a draft is submitted for approval, it will appear here.",
+      "title": "No pending approvals"
+    },
+    "nav": "Approvals",
+    "review": "Review",
+    "subtitle": "Drafts awaiting your decision.",
+    "table": {
+      "category": "Category",
+      "due": "Due",
+      "number": "Number",
+      "stage": "Stage",
+      "title": "Policy"
+    },
+    "title": "Approvals",
+    "untitled": "(untitled policy)",
+    "upcoming": {
+      "description": "You're an approver on a later stage. You'll be notified when it's your turn to decide.",
+      "table": {
+        "stage": "Your stage"
+      },
+      "title": "Coming to you",
+      "upcomingBadge": "Upcoming"
+    }
+  },
+  "review": {
+    "back": "Back to approvals",
+    "viewFull": "View the full document",
+    "decision": {
+      "approve": "Approve",
+      "comment": "Comment",
+      "commentRequired": "A comment is required for this decision.",
+      "reject": "Reject",
+      "title": "Your decision"
+    },
+    "notFound": {
+      "description": "It may have been withdrawn, or you may not have access to it.",
+      "title": "Approval not found"
+    },
+    "stepper": {
+      "awaiting": "Awaiting a decision",
+      "title": "Approval stages"
+    }
   }
 }

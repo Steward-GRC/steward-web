@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
+  ApprovalStatus,
   type AuditRecord,
   type Category,
   ComponentStatus,
@@ -11,6 +12,7 @@ import {
   type GroupMapping,
   type Me,
   type Organization,
+  type PendingTask,
   type Policy,
   type PolicyDetail,
   PolicyStatus,
@@ -22,9 +24,11 @@ import {
   type SpCertificate,
   type Template,
   type TemplateVersion,
+  type UpcomingApproval,
   type User,
   type UserDeletionPreview,
   type Workflow,
+  type WorkflowStatus,
 } from "@steward-web/api-client";
 import { permissionsForRoles } from "@steward-web/auth";
 
@@ -906,3 +910,39 @@ export const mockAuditRecords: AuditRecord[] = AUDIT_SEEDS.map((seed, index) => 
   recordHash: auditHash(index),
   recordUuid: mockId("audit-record", index + 1),
 })).toReversed();
+
+/**
+ * The approval run backing `mockPolicies[2]` (POL-ITSEC-011, status IN_REVIEW): a single
+ * stage awaiting the signed-in persona's decision, matching that policy's own
+ * `mockPolicyDetails` history entry ("Data Governance review").
+ */
+const MOCK_APPROVAL_RUN_ID = mockId("workflow-run", 1);
+const MOCK_APPROVAL_STAGE_NAME = "Data Governance review";
+const MOCK_APPROVAL_POLICY_VERSION_ID = mockId("policy-version", 3);
+
+export const mockWorkflowStatuses: Record<string, WorkflowStatus> = {
+  [MOCK_APPROVAL_POLICY_VERSION_ID]: {
+    currentStageIdx: 0,
+    runId: MOCK_APPROVAL_RUN_ID,
+    stageAssignees: [
+      [{ comment: null, decidedAt: null, name: mockMe.name, state: "pending", userId: mockMe.id }],
+    ],
+    stageNames: [MOCK_APPROVAL_STAGE_NAME],
+    stageUnitProgress: [[]],
+    status: ApprovalStatus.ApprovalStatusInReview,
+  },
+};
+
+export const mockPendingTasks: PendingTask[] = [
+  {
+    dueAt: null,
+    policyTitle: "Data Classification",
+    policyVersionId: MOCK_APPROVAL_POLICY_VERSION_ID,
+    runId: MOCK_APPROVAL_RUN_ID,
+    stageIndex: 0,
+    taskId: mockId("approval-task", 1),
+  },
+];
+
+/** No future-stage approvals in the fixture set: the "coming to you" section stays empty. */
+export const mockUpcomingApprovals: UpcomingApproval[] = [];
