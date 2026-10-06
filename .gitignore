@@ -4,6 +4,7 @@ build/
 build-mock/
 coverage/
 .react-router/
+.docusaurus/
 .schemas/
 *.log
 

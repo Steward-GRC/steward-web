@@ -1,0 +1,78 @@
+/* 
+Copyright 2026 The Steward Authors
+SPDX-License-Identifier: Apache-2.0
+ */
+/* A lightweight Infima mapping of the Steward palette and type scale from
+   packages/ui/src/styles/steward.css. The fonts are OFL and self-hosted from the
+   @fontsource packages already used elsewhere in the workspace, never fetched from a
+   font service. */
+@import "@fontsource-variable/public-sans";
+@import "@fontsource-variable/source-serif-4";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+#__docusaurus {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.main-wrapper {
+  flex: 1 0 auto;
+}
+
+:root {
+  --ifm-font-family-base: "Public Sans Variable", "Public Sans", system-ui, sans-serif;
+  --ifm-heading-font-family: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
+  --ifm-font-family-monospace: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --ifm-code-font-size: 90%;
+  --ifm-global-radius: 6px;
+
+  --ifm-color-primary: #5d2a5b;
+  --ifm-color-primary-dark: #542650;
+  --ifm-color-primary-darker: #4d2149;
+  --ifm-color-primary-darkest: #3e1a3b;
+  --ifm-color-primary-light: #693267;
+  --ifm-color-primary-lighter: #70376e;
+  --ifm-color-primary-lightest: #8a4987;
+
+  --ifm-background-color: #ece4d8;
+  --ifm-background-surface-color: #ffffff;
+  --ifm-font-color-base: #261b25;
+  --ifm-heading-color: #261b25;
+  --ifm-color-content-secondary: #665967;
+  --ifm-link-color: #5d2a5b;
+
+  --ifm-navbar-background-color: #ffffff;
+  --ifm-navbar-shadow: 0 1px 2px rgb(38 27 37 / 0.06);
+  --ifm-footer-background-color: #ffffff;
+  --ifm-table-border-color: #dcd0c1;
+  --ifm-toc-border-color: #dcd0c1;
+  --ifm-hr-border-color: #dcd0c1;
+
+  --docusaurus-highlighted-code-line-bg: #f1e6ef;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #d9a6d2;
+  --ifm-color-primary-dark: #cc90c4;
+  --ifm-color-primary-darker: #c586bd;
+  --ifm-color-primary-darkest: #b56fac;
+  --ifm-color-primary-light: #e5bcdf;
+  --ifm-color-primary-lighter: #e9c6e4;
+  --ifm-color-primary-lightest: #f1daed;
+
+  --ifm-background-color: #170f19;
+  --ifm-background-surface-color: #2a1f2e;
+  --ifm-font-color-base: #f3ecf2;
+  --ifm-heading-color: #f3ecf2;
+  --ifm-color-content-secondary: #b9a7b8;
+  --ifm-link-color: #e9b8e2;
+
+  --ifm-navbar-background-color: #2a1f2e;
+  --ifm-footer-background-color: #170f19;
+  --ifm-table-border-color: #43354a;
+  --ifm-toc-border-color: #43354a;
+  --ifm-hr-border-color: #43354a;
+
+  --docusaurus-highlighted-code-line-bg: #3b2840;
+}

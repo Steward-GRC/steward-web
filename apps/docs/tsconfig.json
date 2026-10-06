@@ -1,0 +1,9 @@
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    // The workspace's pinned TypeScript makes @docusaurus/tsconfig's own baseUrl an error
+    // (TS5101); this is the fix TypeScript itself suggests, not a repo-wide relaxation.
+    "ignoreDeprecations": "6.0"
+  },
+  "exclude": [".docusaurus", "build", "node_modules"]
+}

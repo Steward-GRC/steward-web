@@ -1,0 +1,28 @@
+{
+  "name": "@steward-web/docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Steward guide: a plain-language Docusaurus site for staff, administrators and reporting officers.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "docusaurus build",
+    "clear": "docusaurus clear",
+    "dev": "docusaurus start",
+    "serve": "docusaurus serve",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@fontsource-variable/public-sans": "^5.3.0",
+    "@fontsource-variable/source-serif-4": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "clsx": "^2.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@docusaurus/types": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2"
+  }
+}

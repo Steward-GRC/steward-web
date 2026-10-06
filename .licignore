@@ -17,6 +17,7 @@ dist/
 build/
 coverage/
 .react-router/
+.docusaurus/
 **/generated/
 **/generated/**
 
