@@ -44,6 +44,7 @@ import {
   MoveGroupDocument,
   MyDraftPoliciesDocument,
   OrganizationsDocument,
+  PendingTasksDocument,
   PoliciesDocument,
   PolicyDetailDocument,
   PolicyDocument,
@@ -54,11 +55,13 @@ import {
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
   SaveDraftDocument,
+  SignalWorkflowDocument,
   SpCertificateDocument,
   StartDomainVerificationDocument,
   SubmitDraftGenerationDocument,
   SubmitPolicyReviewDocument,
   TemplatesDocument,
+  UpcomingApprovalsDocument,
   UpdateAppendixDocument,
   UpdateGroupSettingsDocument,
   UpdateIdPConnectionDocument,
@@ -68,6 +71,7 @@ import {
   VerifyAuditChainDocument,
   VerifyDomainDocument,
   WorkflowsDocument,
+  WorkflowStatusDocument,
 } from "../generated/graphql";
 
 /** The live edge: every call is a real POST to `GATEWAY_URL`, cookie forwarded. */
@@ -357,6 +361,10 @@ export const liveEdge: Edge = {
       cookie,
     });
   },
+  async pendingTasks(cookie) {
+    const data = await gatewayFetch(PendingTasksDocument, {}, "PendingTasks", { cookie });
+    return data.pendingTasks;
+  },
   async policies(documentType, cookie) {
     const data = await gatewayFetch(PoliciesDocument, { documentType }, "Policies", { cookie });
     return data.policies;
@@ -428,6 +436,15 @@ export const liveEdge: Edge = {
     );
     return data.saveDraft;
   },
+  async signalWorkflow(policyVersionId, runId, taskId, signal, comment, cookie) {
+    const data = await gatewayFetch(
+      SignalWorkflowDocument,
+      { comment, policyVersionId, runId, signal, taskId },
+      "SignalWorkflow",
+      { cookie },
+    );
+    return data.signalWorkflow;
+  },
   async spCertificate(cookie) {
     const data = await gatewayFetch(SpCertificateDocument, {}, "SpCertificate", { cookie });
     return data.spCertificate;
@@ -459,6 +476,12 @@ export const liveEdge: Edge = {
   async templates(cookie) {
     const data = await gatewayFetch(TemplatesDocument, {}, "Templates", { cookie });
     return data.templates;
+  },
+  async upcomingApprovals(cookie) {
+    const data = await gatewayFetch(UpcomingApprovalsDocument, {}, "UpcomingApprovals", {
+      cookie,
+    });
+    return data.upcomingApprovals;
   },
   async updateAppendix(id, title, contentJson, cookie) {
     const data = await gatewayFetch(
@@ -517,6 +540,12 @@ export const liveEdge: Edge = {
   async workflows(cookie) {
     const data = await gatewayFetch(WorkflowsDocument, {}, "Workflows", { cookie });
     return data.workflows;
+  },
+  async workflowStatus(policyVersionId, cookie) {
+    const data = await gatewayFetch(WorkflowStatusDocument, { policyVersionId }, "WorkflowStatus", {
+      cookie,
+    });
+    return data.workflowStatus;
   },
 };
 

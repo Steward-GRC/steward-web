@@ -5,7 +5,8 @@ trimmed to the operations steward-web actually sends: the signed-in user, the
 diagnostics report, editing one's own display name, the policy/procedure library browse
 (categories and the catalog), the admin user directory, the admin group directory, the
 admin organisation/SSO directory, the staff authoring area (the editor and its AI
-drafting/review assist) and the admin audit log. It
+drafting/review assist), the admin audit log and the staff approvals inbox and decision
+(pendingTasks, upcomingApprovals, workflowStatus, signalWorkflow). It
 gains more of the upstream schema as later ports add operations, and schema-generate.sh
 switches from this vendored copy to a live fetch once steward-gateway publishes its own
 schema on its main branch.
@@ -914,4 +915,122 @@ type AuditChainVerification {
   valid: Boolean!
   recordsChecked: Int!
   errors: [String!]!
+}
+
+# --- Workflow: the approvals inbox and an approver's decision ---
+# Backed by the workflow service. Caller identity is bound server-side from the signed-in
+# session: signalWorkflow's actor and pendingTasks'/upcomingApprovals' approver filter are
+# never taken from input. Reassigning a stranded approval (swapAssignee) is not vendored yet;
+# it stays a GitHub issue on the approvals area.
+
+enum ApprovalStatus {
+  APPROVAL_STATUS_UNSPECIFIED
+  APPROVAL_STATUS_DRAFT
+  APPROVAL_STATUS_IN_REVIEW
+  APPROVAL_STATUS_APPROVED
+  APPROVAL_STATUS_SCHEDULED
+  APPROVAL_STATUS_PUBLISHED
+  APPROVAL_STATUS_SUPERSEDED
+  APPROVAL_STATUS_REJECTED
+  APPROVAL_STATUS_WITHDRAWN
+  APPROVAL_STATUS_ARCHIVED
+}
+
+enum SignalType {
+  SIGNAL_TYPE_UNSPECIFIED
+  SIGNAL_TYPE_APPROVE
+  SIGNAL_TYPE_REJECT
+  SIGNAL_TYPE_REQUEST_CHANGES
+  SIGNAL_TYPE_WITHDRAW
+  SIGNAL_TYPE_RETIRE
+}
+
+"One current assignee on a stage: who must approve, and their decision state/comment/time."
+type StageAssignee {
+  userId: String!
+  "Resolved display name; null when the directory can't resolve it."
+  name: String
+  "pending / approved / rejected."
+  state: String!
+  "Decision comment, present once decided."
+  comment: String
+  "ISO-8601 decision timestamp, present once decided."
+  decidedAt: String
+}
+
+"One approve-as-group unit's live tally on a stage. groupName is resolved by the gateway from groupId."
+type StageUnitProgress {
+  groupId: String!
+  groupName: String
+  quorum: String! # one | majority | all
+  required: Int! # approvals needed to satisfy the internal quorum
+  approvals: Int!
+  pending: Int! # members still able to approve
+  roster: Int! # total member roster size
+  status: String! # SATISFIED | PENDING | REJECTED
+}
+
+type WorkflowStatus {
+  status: ApprovalStatus!
+  runId: String!
+  currentStageIdx: Int!
+  "Resolved workflow-definition stage names, in order."
+  stageNames: [String!]!
+  "Current assignees per stage, index-aligned with stageNames: the stepper's roster source."
+  stageAssignees: [[StageAssignee!]!]!
+  "Per-stage approve-as-group unit progress, index-aligned with stageNames; an empty inner list means the stage has no unit-mode groups."
+  stageUnitProgress: [[StageUnitProgress!]!]!
+}
+
+type PendingTask {
+  taskId: ID!
+  runId: String!
+  policyVersionId: ID!
+  policyTitle: String!
+  stageIndex: Int!
+  dueAt: String # ISO-8601; null when the engine has not set a due time
+}
+
+type UpcomingApproval {
+  policyVersionId: ID!
+  policyTitle: String!
+  stageIndex: Int!
+  stageName: String!
+}
+
+extend type Query {
+  """
+  Status of the approval saga for a policy version. Returns
+  APPROVAL_STATUS_UNSPECIFIED when the workflow service has no record (the policy was
+  published without going through an approval flow).
+  """
+  workflowStatus(policyVersionId: ID!): WorkflowStatus!
+
+  "Pending approval tasks awaiting the authenticated user. The approver id is bound server-side."
+  pendingTasks: [PendingTask!]!
+
+  """
+  Approvals where the authenticated user is an approver on a future (not-yet-reached) stage —
+  visibility/heads-up, not yet actionable. The approver id is bound server-side.
+  """
+  upcomingApprovals: [UpcomingApproval!]!
+}
+
+extend type Mutation {
+  """
+  Deliver an approver decision to an active run. The actor is bound server-side. The comment
+  is required for APPROVE and REJECT signals (the workflow service rejects an empty one).
+
+  policyVersionId is authoritative: the decision targets that version's CURRENT active
+  approval. runId/taskId are advisory only (a cached inbox row may be stale); the server
+  ignores them for resolution. A stale click on a no-longer-active approval returns a
+  FailedPrecondition ("refresh your inbox"), never a raw NotFound.
+  """
+  signalWorkflow(
+    policyVersionId: ID!
+    runId: ID!
+    taskId: ID!
+    signal: SignalType!
+    comment: String!
+  ): Boolean!
 }
