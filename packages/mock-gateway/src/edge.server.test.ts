@@ -1194,4 +1194,27 @@ describe("mockEdge audit log", () => {
       code: "FAILED_PRECONDITION",
     });
   });
+
+  it("ackRoster() and completionReport() agree on the same policy version's split", async () => {
+    const roster = await mockEdge.ackRoster("pv-1");
+    const report = await mockEdge.completionReport("pv-1");
+    expect(roster.acked.length).toBe(report.totalAcked);
+    expect(roster.acked.length + roster.pending.length).toBe(report.totalAudience);
+    expect(report.completionPct).toBe(Math.round((report.totalAcked / report.totalAudience) * 100));
+  });
+
+  it("ackRoster() is deterministic for the same policy version", async () => {
+    const first = await mockEdge.ackRoster("pv-1");
+    const again = await mockEdge.ackRoster("pv-1");
+    expect(again.acked.map((r) => r.userId)).toEqual(first.acked.map((r) => r.userId));
+    expect(again.pending.map((r) => r.userId)).toEqual(first.pending.map((r) => r.userId));
+  });
+
+  it("exportAcks() base64-encodes a CSV covering the whole roster", async () => {
+    const { acked, pending } = await mockEdge.ackRoster("pv-1");
+    const result = await mockEdge.exportAcks("pv-1", "csv");
+    expect(result.contentType).toBe("text/csv");
+    const csv = Buffer.from(result.data, "base64").toString("utf8");
+    expect(csv.split("\n")).toHaveLength(acked.length + pending.length + 1);
+  });
 });

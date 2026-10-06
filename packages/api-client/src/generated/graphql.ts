@@ -6,6 +6,28 @@ export type Incremental<T> =
 import type * as Types from "./schema";
 
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
+export type AckRosterQueryVariables = Exact<{
+  policyVersionId: string | number;
+  groupId?: string | number | null | undefined;
+}>;
+
+export type AckRosterQuery = {
+  readonly ackRoster: {
+    readonly acked: ReadonlyArray<{
+      readonly userId: string;
+      readonly email: string;
+      readonly userName: string | null;
+      readonly ackedAt: string | null;
+    }>;
+    readonly pending: ReadonlyArray<{
+      readonly userId: string;
+      readonly email: string;
+      readonly userName: string | null;
+      readonly ackedAt: string | null;
+    }>;
+  };
+};
+
 export type AckStatusQueryVariables = Exact<{
   policyVersionId: string | number;
 }>;
@@ -339,6 +361,8 @@ export type AuthoringPolicyFieldsFragment = {
   readonly ownerUserId: string;
   readonly ownerName: string | null;
   readonly homeCategoryId: string;
+  readonly ackTriggers: Types.AckTrigger | null;
+  readonly ackAudienceOverride: ReadonlyArray<string> | null;
   readonly templateId: string | null;
   readonly templateNone: boolean;
   readonly currentDraftVersionId: string | null;
@@ -557,6 +581,26 @@ export type CloseCaseMutation = {
   };
 };
 
+export type CompletionReportQueryVariables = Exact<{
+  policyVersionId: string | number;
+  groupId?: string | number | null | undefined;
+}>;
+
+export type CompletionReportQuery = {
+  readonly completionReport: {
+    readonly totalAudience: number;
+    readonly totalAcked: number;
+    readonly completionPct: number;
+    readonly avgDaysToAck: number;
+    readonly viewedNotAckedCount: number;
+    readonly overdue: ReadonlyArray<{
+      readonly userId: string;
+      readonly email: string;
+      readonly userName: string | null;
+    }>;
+  };
+};
+
 export type ContactBlocksQueryVariables = Exact<{
   includeArchived?: boolean | null | undefined;
 }>;
@@ -657,6 +701,8 @@ export type CreatePolicyMutation = {
     readonly ownerUserId: string;
     readonly ownerName: string | null;
     readonly homeCategoryId: string;
+    readonly ackTriggers: Types.AckTrigger | null;
+    readonly ackAudienceOverride: ReadonlyArray<string> | null;
     readonly templateId: string | null;
     readonly templateNone: boolean;
     readonly currentDraftVersionId: string | null;
@@ -943,6 +989,19 @@ export type DiscardTemplateVersionMutationVariables = Exact<{
 
 export type DiscardTemplateVersionMutation = { readonly discardTemplateVersion: boolean };
 
+export type EmailServiceConfigQueryVariables = Exact<{ [key: string]: never }>;
+
+export type EmailServiceConfigQuery = {
+  readonly emailServiceConfig: {
+    readonly apiKeySet: boolean;
+    readonly provider: string;
+    readonly domain: string;
+    readonly region: string;
+    readonly fromAddress: string;
+    readonly enabled: boolean;
+  };
+};
+
 export type EnableUserMutationVariables = Exact<{
   userId: string | number;
 }>;
@@ -966,6 +1025,15 @@ export type EnableUserMutation = {
   };
 };
 
+export type ExportAcksQueryVariables = Exact<{
+  policyVersionId: string | number;
+  format: string;
+}>;
+
+export type ExportAcksQuery = {
+  readonly exportAcks: { readonly data: string; readonly contentType: string };
+};
+
 export type ForceRotateSpCertificateMutationVariables = Exact<{ [key: string]: never }>;
 
 export type ForceRotateSpCertificateMutation = {
@@ -975,6 +1043,19 @@ export type ForceRotateSpCertificateMutation = {
     readonly notAfter: string;
     readonly serial: string;
     readonly spMetadataXml: string;
+  };
+};
+
+export type GlobalSettingsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GlobalSettingsQuery = {
+  readonly globalSettings: {
+    readonly announcement: {
+      readonly enabled: boolean;
+      readonly level: string;
+      readonly message: string;
+    };
+    readonly maintenance: { readonly enabled: boolean; readonly message: string };
   };
 };
 
@@ -1176,6 +1257,8 @@ export type MyDraftsQuery = {
     readonly ownerUserId: string;
     readonly ownerName: string | null;
     readonly homeCategoryId: string;
+    readonly ackTriggers: Types.AckTrigger | null;
+    readonly ackAudienceOverride: ReadonlyArray<string> | null;
     readonly templateId: string | null;
     readonly templateNone: boolean;
     readonly currentDraftVersionId: string | null;
@@ -1256,6 +1339,8 @@ export type PoliciesQuery = {
     readonly ownerUserId: string;
     readonly ownerName: string | null;
     readonly homeCategoryId: string;
+    readonly ackTriggers: Types.AckTrigger | null;
+    readonly ackAudienceOverride: ReadonlyArray<string> | null;
     readonly templateId: string | null;
     readonly templateNone: boolean;
     readonly currentDraftVersionId: string | null;
@@ -1290,6 +1375,8 @@ export type PolicyQuery = {
     readonly ownerUserId: string;
     readonly ownerName: string | null;
     readonly homeCategoryId: string;
+    readonly ackTriggers: Types.AckTrigger | null;
+    readonly ackAudienceOverride: ReadonlyArray<string> | null;
     readonly templateId: string | null;
     readonly templateNone: boolean;
     readonly currentDraftVersionId: string | null;
@@ -1360,6 +1447,8 @@ export type PolicyByNumberQuery = {
     readonly ownerUserId: string;
     readonly ownerName: string | null;
     readonly homeCategoryId: string;
+    readonly ackTriggers: Types.AckTrigger | null;
+    readonly ackAudienceOverride: ReadonlyArray<string> | null;
     readonly templateId: string | null;
     readonly templateNone: boolean;
     readonly currentDraftVersionId: string | null;
@@ -2178,6 +2267,36 @@ export type SetDefinitionArchivedMutation = {
   };
 };
 
+export type SetEmailServiceConfigMutationVariables = Exact<{
+  input: Types.EmailServiceConfigInput;
+}>;
+
+export type SetEmailServiceConfigMutation = {
+  readonly setEmailServiceConfig: {
+    readonly apiKeySet: boolean;
+    readonly provider: string;
+    readonly domain: string;
+    readonly region: string;
+    readonly fromAddress: string;
+    readonly enabled: boolean;
+  };
+};
+
+export type SetGlobalSettingsMutationVariables = Exact<{
+  input: Types.GlobalSettingsInput;
+}>;
+
+export type SetGlobalSettingsMutation = {
+  readonly setGlobalSettings: {
+    readonly announcement: {
+      readonly enabled: boolean;
+      readonly level: string;
+      readonly message: string;
+    };
+    readonly maintenance: { readonly enabled: boolean; readonly message: string };
+  };
+};
+
 export type SetReferenceArchivedMutationVariables = Exact<{
   id: string | number;
   archived: boolean;
@@ -2802,6 +2921,8 @@ export const AuthoringPolicyFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
           { kind: "Field", name: { kind: "Name", value: "ownerName" } },
           { kind: "Field", name: { kind: "Name", value: "homeCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackAudienceOverride" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "templateNone" } },
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
@@ -3309,6 +3430,83 @@ export const WorkflowDefFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<WorkflowDefFieldsFragment, unknown>;
+export const AckRosterDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AckRoster" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "ackRoster" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "groupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "acked" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "email" } },
+                      { kind: "Field", name: { kind: "Name", value: "userName" } },
+                      { kind: "Field", name: { kind: "Name", value: "ackedAt" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "pending" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "email" } },
+                      { kind: "Field", name: { kind: "Name", value: "userName" } },
+                      { kind: "Field", name: { kind: "Name", value: "ackedAt" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AckRosterQuery, AckRosterQueryVariables>;
 export const AckStatusDocument = {
   kind: "Document",
   definitions: [
@@ -4968,6 +5166,74 @@ export const CloseCaseDocument = {
     },
   ],
 } as unknown as DocumentNode<CloseCaseMutation, CloseCaseMutationVariables>;
+export const CompletionReportDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "CompletionReport" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "completionReport" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "groupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "totalAudience" } },
+                { kind: "Field", name: { kind: "Name", value: "totalAcked" } },
+                { kind: "Field", name: { kind: "Name", value: "completionPct" } },
+                { kind: "Field", name: { kind: "Name", value: "avgDaysToAck" } },
+                { kind: "Field", name: { kind: "Name", value: "viewedNotAckedCount" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "overdue" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "email" } },
+                      { kind: "Field", name: { kind: "Name", value: "userName" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CompletionReportQuery, CompletionReportQueryVariables>;
 export const ContactBlocksDocument = {
   kind: "Document",
   definitions: [
@@ -5308,6 +5574,8 @@ export const CreatePolicyDocument = {
           { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
           { kind: "Field", name: { kind: "Name", value: "ownerName" } },
           { kind: "Field", name: { kind: "Name", value: "homeCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackAudienceOverride" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "templateNone" } },
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
@@ -6400,6 +6668,36 @@ export const DiscardTemplateVersionDocument = {
   DiscardTemplateVersionMutation,
   DiscardTemplateVersionMutationVariables
 >;
+export const EmailServiceConfigDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "EmailServiceConfig" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "emailServiceConfig" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "apiKeySet" } },
+                { kind: "Field", name: { kind: "Name", value: "provider" } },
+                { kind: "Field", name: { kind: "Name", value: "domain" } },
+                { kind: "Field", name: { kind: "Name", value: "region" } },
+                { kind: "Field", name: { kind: "Name", value: "fromAddress" } },
+                { kind: "Field", name: { kind: "Name", value: "enabled" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EmailServiceConfigQuery, EmailServiceConfigQueryVariables>;
 export const EnableUserDocument = {
   kind: "Document",
   definitions: [
@@ -6474,6 +6772,62 @@ export const EnableUserDocument = {
     },
   ],
 } as unknown as DocumentNode<EnableUserMutation, EnableUserMutationVariables>;
+export const ExportAcksDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ExportAcks" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "format" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "exportAcks" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "format" },
+                value: { kind: "Variable", name: { kind: "Name", value: "format" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "data" } },
+                { kind: "Field", name: { kind: "Name", value: "contentType" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ExportAcksQuery, ExportAcksQueryVariables>;
 export const ForceRotateSpCertificateDocument = {
   kind: "Document",
   definitions: [
@@ -6506,6 +6860,53 @@ export const ForceRotateSpCertificateDocument = {
   ForceRotateSpCertificateMutation,
   ForceRotateSpCertificateMutationVariables
 >;
+export const GlobalSettingsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "GlobalSettings" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "globalSettings" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "announcement" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "enabled" } },
+                      { kind: "Field", name: { kind: "Name", value: "level" } },
+                      { kind: "Field", name: { kind: "Name", value: "message" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "maintenance" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "enabled" } },
+                      { kind: "Field", name: { kind: "Name", value: "message" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GlobalSettingsQuery, GlobalSettingsQueryVariables>;
 export const GrantRoleDocument = {
   kind: "Document",
   definitions: [
@@ -7182,6 +7583,8 @@ export const MyDraftsDocument = {
           { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
           { kind: "Field", name: { kind: "Name", value: "ownerName" } },
           { kind: "Field", name: { kind: "Name", value: "homeCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackAudienceOverride" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "templateNone" } },
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
@@ -7357,6 +7760,8 @@ export const PoliciesDocument = {
           { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
           { kind: "Field", name: { kind: "Name", value: "ownerName" } },
           { kind: "Field", name: { kind: "Name", value: "homeCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackAudienceOverride" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "templateNone" } },
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
@@ -7441,6 +7846,8 @@ export const PolicyDocument = {
           { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
           { kind: "Field", name: { kind: "Name", value: "ownerName" } },
           { kind: "Field", name: { kind: "Name", value: "homeCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackAudienceOverride" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "templateNone" } },
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
@@ -7635,6 +8042,8 @@ export const PolicyByNumberDocument = {
           { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
           { kind: "Field", name: { kind: "Name", value: "ownerName" } },
           { kind: "Field", name: { kind: "Name", value: "homeCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackAudienceOverride" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "templateNone" } },
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
@@ -10086,6 +10495,117 @@ export const SetDefinitionArchivedDocument = {
     },
   ],
 } as unknown as DocumentNode<SetDefinitionArchivedMutation, SetDefinitionArchivedMutationVariables>;
+export const SetEmailServiceConfigDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetEmailServiceConfig" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "EmailServiceConfigInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setEmailServiceConfig" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "apiKeySet" } },
+                { kind: "Field", name: { kind: "Name", value: "provider" } },
+                { kind: "Field", name: { kind: "Name", value: "domain" } },
+                { kind: "Field", name: { kind: "Name", value: "region" } },
+                { kind: "Field", name: { kind: "Name", value: "fromAddress" } },
+                { kind: "Field", name: { kind: "Name", value: "enabled" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetEmailServiceConfigMutation, SetEmailServiceConfigMutationVariables>;
+export const SetGlobalSettingsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetGlobalSettings" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "GlobalSettingsInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setGlobalSettings" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "announcement" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "enabled" } },
+                      { kind: "Field", name: { kind: "Name", value: "level" } },
+                      { kind: "Field", name: { kind: "Name", value: "message" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "maintenance" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "enabled" } },
+                      { kind: "Field", name: { kind: "Name", value: "message" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetGlobalSettingsMutation, SetGlobalSettingsMutationVariables>;
 export const SetReferenceArchivedDocument = {
   kind: "Document",
   definitions: [

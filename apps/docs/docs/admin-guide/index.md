@@ -25,8 +25,12 @@ do this work under the `/admin` part of the site.
   approvers must sign off.
 - **[Organisations and single sign-on](/admin-guide/organisations-and-sso)** — how to connect an
   identity provider and control who is provisioned automatically.
+- **[Completion](/admin-guide/completion)** — acknowledgement coverage: who has acknowledged a
+  policy, who hasn't, and who is overdue.
 - **[Audit log](/admin-guide/audit-log)** — how to read and verify the tamper-evident record of
   administrative actions.
+- **[Settings](/admin-guide/settings)** — the cross-app announcement and maintenance banners,
+  and the outbound email configuration.
 
 :::note
 Some tasks in this section change what other people can see and do. Take your time and check your
