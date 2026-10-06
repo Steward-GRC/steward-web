@@ -625,6 +625,9 @@ importers:
       '@steward-web/api-client':
         specifier: workspace:*
         version: link:../api-client
+      '@steward-web/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@steward-web/i18n':
         specifier: workspace:*
         version: link:../i18n

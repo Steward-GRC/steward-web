@@ -14,6 +14,13 @@
     "fallbackHint": "Your browser didn't allow the copy. Select the text below and copy it by hand.",
     "fallbackTitle": "Diagnostics"
   },
+  "devUiIssue": {
+    "action": "Copy for UI issue",
+    "announced": "UI issue bundle copied",
+    "copied": "Copied",
+    "fallbackHint": "Your browser didn't allow the copy. Select the text below and copy it by hand.",
+    "fallbackTitle": "UI issue bundle"
+  },
   "mockBanner": {
     "title": "Mock data"
   }

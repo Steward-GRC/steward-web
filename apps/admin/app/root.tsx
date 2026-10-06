@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { IdentityProvider } from "@steward-web/auth";
 import { identityFromRequest } from "@steward-web/auth/server";
+import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
 import { DEFAULT_LOCALE } from "@steward-web/i18n";
 import { MockBanner } from "@steward-web/mock-banner";
 import { AppShell, DiagnosticsProvider } from "@steward-web/shell";
@@ -15,6 +16,7 @@ import type { Route } from "./+types/root";
 export const links: Route.LinksFunction = () => [{ href: stewardCss, rel: "stylesheet" }];
 
 export const loader = async ({ request }: Route.LoaderArgs) => ({
+  devUiIssueCopy: process.env.STEWARD_DEV_UI_ISSUE_COPY === "true",
   identity: await identityFromRequest(request),
 });
 
@@ -50,6 +52,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     <IdentityProvider identity={loaderData.identity}>
       <AppShell>
         <MockBanner />
+        <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
         <Outlet />
       </AppShell>
     </IdentityProvider>

@@ -56,6 +56,30 @@ export const chooseEdge = (
   };
 };
 
+export interface DevelopmentUiIssueChoice {
+  enabled: boolean;
+  /** The client component every app imports as `@steward-web/dev-ui-issue-button`. */
+  module: string;
+}
+
+/**
+ * Pick the dev UI-issue button's module at build time, from the `STEWARD_DEV_UI_ISSUE_COPY_BUILD`
+ * variable (the `DEV_UI_ISSUE_COPY` Dockerfile build argument) alone: unset or anything but
+ * `"true"` aliases in the no-op, so the real button's code never reaches a build made without
+ * that argument.
+ */
+export const chooseDevelopmentUiIssueButton = (
+  environment: NodeJS.ProcessEnv = process.env,
+): DevelopmentUiIssueChoice => {
+  const enabled = environment.STEWARD_DEV_UI_ISSUE_COPY_BUILD === "true";
+  return {
+    enabled,
+    module: enabled
+      ? path.join(source("shell"), "DevelopmentUiIssueButton.tsx")
+      : path.join(source("shell"), "NoDevelopmentUiIssueButton.tsx"),
+  };
+};
+
 export interface BuildInfo {
   commit: string;
   version: string;
@@ -82,7 +106,11 @@ export const buildInfoDefines = (
 };
 
 /** Aliases shared by every app and package: the package-internal prefixes, the edge and its banner. */
-export const sharedAliases = (edge: EdgeChoice): Record<string, string> => ({
+export const sharedAliases = (
+  edge: EdgeChoice,
+  developmentUiIssue: DevelopmentUiIssueChoice = chooseDevelopmentUiIssueButton({}),
+): Record<string, string> => ({
+  "@steward-web/dev-ui-issue-button": developmentUiIssue.module,
   "@steward-web/edge.server": edge.module,
   "@steward-web/mock-banner": edge.banner,
   "#api": source("api-client"),
