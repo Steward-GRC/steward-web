@@ -73,7 +73,7 @@ export default function Drafts({ loaderData }: Route.ComponentProps) {
                       {draft.title}
                     </Link>
                   </TD>
-                  <TD>{draft.updated}</TD>
+                  <TD>{draft.updated ?? "—"}</TD>
                 </tr>
               ))}
             </tbody>

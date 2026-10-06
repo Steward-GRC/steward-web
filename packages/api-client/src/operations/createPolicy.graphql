@@ -1,12 +1,12 @@
 mutation CreatePolicy(
-  $homeGroupId: ID!
+  $homeCategoryId: ID!
   $title: String!
   $sensitivity: Sensitivity!
   $templateId: ID
   $documentType: DocumentType
 ) {
   createPolicy(
-    homeGroupId: $homeGroupId
+    homeCategoryId: $homeCategoryId
     title: $title
     sensitivity: $sensitivity
     templateId: $templateId

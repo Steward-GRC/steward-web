@@ -1,5 +1,0 @@
-mutation CreateGroup($name: String!, $slug: String!, $parentId: ID) {
-  createGroup(name: $name, slug: $slug, parentId: $parentId) {
-    ...GroupFields
-  }
-}

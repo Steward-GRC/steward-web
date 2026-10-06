@@ -1,6 +1,6 @@
 mutation UpdateMyProfile($firstName: String!, $lastName: String!) {
   updateMyProfile(firstName: $firstName, lastName: $lastName) {
-    id
+    userId
     username
     name
     firstName

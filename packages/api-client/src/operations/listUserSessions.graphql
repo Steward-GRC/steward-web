@@ -1,11 +1,11 @@
 query ListUserSessions($userId: ID!) {
   listUserSessions(userId: $userId) {
     sessionId
+    userId
     issuedAt
-    lastSeenAt
+    authenticatedAt
     expiresAt
-    revokedAt
-    clientIp
+    active
     userAgent
   }
 }

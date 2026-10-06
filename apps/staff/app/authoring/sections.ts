@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 // Content plumbing for the editor: a draft's `contentJson` is a JSON-encoded array of plain
-// per-section text (see the schema's own note on `PolicyVersion.contentJson`), not the
+// per-section text (the gateway stores `PolicyVersion.contentJson` opaquely), not the
 // original's rich Lexical document — no shared document renderer exists yet. Pure helpers
 // here so the scaffold/gate logic is unit-tested directly, the same way the original's
 // authoring.ts was.

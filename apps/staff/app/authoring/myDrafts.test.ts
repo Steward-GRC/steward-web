@@ -19,6 +19,19 @@ describe("sortDraftsByRecent", () => {
     ]);
   });
 
+  it("puts drafts with no recorded update time last, still ordered by number", () => {
+    const rows = [
+      { number: "POL-009", title: "Untimed B", updated: null },
+      { number: "POL-004", title: "Timed", updated: "2026-09-01T00:00:00Z" },
+      { number: "POL-008", title: "Untimed A", updated: null },
+    ];
+    expect(sortDraftsByRecent(rows).map((d) => d.number)).toEqual([
+      "POL-004",
+      "POL-008",
+      "POL-009",
+    ]);
+  });
+
   it("never mutates the input array", () => {
     const copy = [...drafts];
     sortDraftsByRecent(drafts);

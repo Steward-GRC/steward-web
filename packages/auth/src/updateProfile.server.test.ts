@@ -16,11 +16,11 @@ describe("updateMyProfile", () => {
           updateMyProfile: {
             email: "a@example.com",
             firstName: "Ada",
-            id: "u-1",
             lastName: "Lovelace",
             name: "Ada Lovelace",
             permissions: ["policy.read"],
             roles: ["reader"],
+            userId: "u-1",
             username: "ada",
           },
         },

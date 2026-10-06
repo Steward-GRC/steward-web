@@ -234,7 +234,7 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-ink">Sessions</h2>
-              {sessions.some((s) => !s.revokedAt) ? (
+              {sessions.some((s) => s.active) ? (
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="danger">
@@ -275,27 +275,29 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
                   <tr>
                     <TH>Status</TH>
                     <TH>Issued</TH>
-                    <TH>Last seen</TH>
-                    <TH>Client IP</TH>
+                    <TH>Signed in</TH>
+                    <TH>Expires</TH>
                   </tr>
                 </THead>
                 <tbody>
                   {sessions.map((session) => {
-                    const active = !session.revokedAt && new Date(session.expiresAt) > new Date();
+                    const expired = new Date(session.expiresAt) <= new Date();
                     return (
                       <tr key={session.sessionId}>
                         <TD>
-                          <Badge tone={active ? "ok" : "neutral"}>
-                            {active ? "Active" : session.revokedAt ? "Revoked" : "Expired"}
+                          <Badge tone={session.active ? "ok" : "neutral"}>
+                            {session.active ? "Active" : expired ? "Expired" : "Revoked"}
                           </Badge>
                         </TD>
                         <TD className="text-muted">
                           {new Date(session.issuedAt).toLocaleString()}
                         </TD>
                         <TD className="text-muted">
-                          {new Date(session.lastSeenAt).toLocaleString()}
+                          {new Date(session.authenticatedAt).toLocaleString()}
                         </TD>
-                        <TD className="font-mono text-sm">{session.clientIp}</TD>
+                        <TD className="text-muted">
+                          {new Date(session.expiresAt).toLocaleString()}
+                        </TD>
                       </tr>
                     );
                   })}

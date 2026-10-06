@@ -1,5 +1,5 @@
-query Templates {
-  templates {
+query Templates($ownerCategoryId: ID) {
+  templates(ownerCategoryId: $ownerCategoryId) {
     id
     name
   }
