@@ -1,6 +1,21 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { AssistOperation, DocumentType, ReviewCadence, Sensitivity } from "@steward-web/api-client";
+import {
+  AssistOperation,
+  BreachDecision,
+  CaseOutcome,
+  CaseStatus,
+  DocumentType,
+  InformationKind,
+  MessageAuthor,
+  NoticeRecipient,
+  NoticeStatus,
+  ReviewCadence,
+  RiskMitigation,
+  RiskRecipient,
+  RiskViewed,
+  Sensitivity,
+} from "@steward-web/api-client";
 import { describe, expect, it } from "vitest";
 
 import { mockEdge } from "./edge.server";
@@ -627,6 +642,151 @@ describe("mockEdge audit log", () => {
   it("verifyAuditChain() rejects an unknown record id", async () => {
     await expect(mockEdge.verifyAuditChain("1", "no-such-id")).rejects.toMatchObject({
       code: "NOT_FOUND",
+    });
+  });
+
+  describe("reporting", () => {
+    const caseId1 = mockId("case", 1);
+    const caseId3 = mockId("case", 3);
+
+    it("reportCase() rejects an unknown case id", async () => {
+      await expect(mockEdge.reportCase("no-such-case")).rejects.toMatchObject({
+        code: "NOT_FOUND",
+      });
+    });
+
+    it("reportCases() filters by status and by assignee", async () => {
+      const closedOnly = await mockEdge.reportCases([CaseStatus.Closed]);
+      expect(closedOnly.cases).toHaveLength(0);
+
+      const mine = await mockEdge.reportCases(undefined, mockId("user", 1));
+      expect(mine.cases.every((c) => c.assigneeUserId === mockId("user", 1))).toBe(true);
+      expect(mine.cases.length).toBeGreaterThan(0);
+    });
+
+    it("reportCases() counts every status, including zero-count ones", async () => {
+      const queue = await mockEdge.reportCases();
+      const statuses = queue.counts.map((c) => c.status);
+      expect(new Set(statuses).size).toBe(Object.values(CaseStatus).length);
+    });
+
+    it("addCaseNote() appends a note visible on the next reportCase() read", async () => {
+      await mockEdge.addCaseNote(caseId1, "Reached out to Finance for more detail.");
+      const reportCase = await mockEdge.reportCase(caseId1);
+      expect(reportCase.notes.at(-1)?.body).toBe("Reached out to Finance for more detail.");
+    });
+
+    it("postCaseMessage() appends a reporter-visible thread entry", async () => {
+      await mockEdge.postCaseMessage(caseId1, "Thank you, we are looking into this.");
+      const reportCase = await mockEdge.reportCase(caseId1);
+      expect(reportCase.thread.at(-1)).toMatchObject({
+        author: MessageAuthor.Officer,
+        body: "Thank you, we are looking into this.",
+      });
+    });
+
+    it("assignCase() sets and clears (null) the assignee", async () => {
+      const assigned = await mockEdge.assignCase(caseId1, mockId("user", 1));
+      expect(assigned.assigneeUserId).toBe(mockId("user", 1));
+
+      const cleared = await mockEdge.assignCase(caseId1, null);
+      expect(cleared.assigneeUserId).toBeNull();
+    });
+
+    it("setCaseStatus() moves the case to the requested status", async () => {
+      const updated = await mockEdge.setCaseStatus(caseId1, CaseStatus.NeedsReporterReply);
+      expect(updated.status).toBe(CaseStatus.NeedsReporterReply);
+    });
+
+    it("setCaseStatus() refuses CLOSED; closing goes through closeCase", async () => {
+      await expect(mockEdge.setCaseStatus(caseId1, CaseStatus.Closed)).rejects.toMatchObject({
+        code: "INVALID_ARGUMENT",
+      });
+    });
+
+    it("setCaseDiscoveryDate() sets the date every notification deadline counts from", async () => {
+      const updated = await mockEdge.setCaseDiscoveryDate(caseId1, "2026-04-02");
+      expect(updated.discoveredOn).toBe("2026-04-02");
+    });
+
+    it("recordRiskAssessment() moves a REPORTABLE decision to NOTIFICATION_DUE", async () => {
+      const assessment = await mockEdge.recordRiskAssessment(
+        caseId1,
+        {
+          information: [InformationKind.Contact],
+          mitigation: RiskMitigation.NotAtAll,
+          recipient: RiskRecipient.UnknownPeople,
+          viewed: RiskViewed.Yes,
+        },
+        BreachDecision.Reportable,
+        "Shared drive was open to the whole organisation.",
+      );
+      expect(assessment.decision).toBe(BreachDecision.Reportable);
+
+      const reportCase = await mockEdge.reportCase(caseId1);
+      expect(reportCase.status).toBe(CaseStatus.NotificationDue);
+    });
+
+    it("recordRiskAssessment() moves a NOT_REPORTABLE decision back to IN_REVIEW", async () => {
+      await mockEdge.recordRiskAssessment(
+        caseId1,
+        {
+          information: [InformationKind.Contact],
+          mitigation: RiskMitigation.Fully,
+          recipient: RiskRecipient.StaffOnly,
+          viewed: RiskViewed.No,
+        },
+        BreachDecision.NotReportable,
+        "Caught and fixed before anyone outside the team saw it.",
+      );
+      const reportCase = await mockEdge.reportCase(caseId1);
+      expect(reportCase.status).toBe(CaseStatus.InReview);
+    });
+
+    it("addCaseNotice() sets the due date from the case's discovery date", async () => {
+      await mockEdge.setCaseDiscoveryDate(caseId1, "2026-04-02");
+      const notice = await mockEdge.addCaseNotice(caseId1, NoticeRecipient.Regulator);
+      expect(notice.dueOn).toBe("2026-06-01");
+      expect(notice.status).toBe(NoticeStatus.NotSent);
+    });
+
+    it("updateCaseNotice() rejects an unknown notice id", async () => {
+      await expect(
+        mockEdge.updateCaseNotice(caseId3, "no-such-notice", NoticeStatus.Sent, "2026-05-01"),
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("updateCaseNotice() requires sentOn with SENT", async () => {
+      const reportCase = await mockEdge.reportCase(caseId3);
+      const noticeId = reportCase.notices[0]!.id;
+      await expect(
+        mockEdge.updateCaseNotice(caseId3, noticeId, NoticeStatus.Sent),
+      ).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    });
+
+    it("updateCaseNotice() records sentOn when sending", async () => {
+      const reportCase = await mockEdge.reportCase(caseId3);
+      const noticeId = reportCase.notices[0]!.id;
+      const updated = await mockEdge.updateCaseNotice(
+        caseId3,
+        noticeId,
+        NoticeStatus.Sent,
+        "2026-05-01",
+      );
+      expect(updated).toMatchObject({ sentOn: "2026-05-01", status: NoticeStatus.Sent });
+    });
+
+    it("closeCase() records the outcome and refuses a second close", async () => {
+      const closed = await mockEdge.closeCase(caseId1, CaseOutcome.Substantiated, [
+        { description: "Restricted the shared drive to the Finance group.", policyId: null },
+      ]);
+      expect(closed.status).toBe(CaseStatus.Closed);
+      expect(closed.outcome).toBe(CaseOutcome.Substantiated);
+      expect(closed.closedAt).not.toBeNull();
+
+      await expect(
+        mockEdge.closeCase(caseId1, CaseOutcome.Substantiated, []),
+      ).rejects.toMatchObject({ code: "FAILED_PRECONDITION" });
     });
   });
 });

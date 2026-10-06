@@ -8,11 +8,14 @@ import {
   AcknowledgePolicyDocument,
   ActivateOrganizationDocument,
   AddAppendixDocument,
+  AddCaseNoteDocument,
+  AddCaseNoticeDocument,
   AddGroupMappingDocument,
   AddOrganizationDocument,
   AiHealthDocument,
   AiJobDocument,
   AiJobResultContentDocument,
+  AssignCaseDocument,
   AuditLogDocument,
   AuthorableGroupsDocument,
   AuthorableTemplatesDocument,
@@ -20,6 +23,7 @@ import {
   BreakGlassRevealDocument,
   CategoriesDocument,
   ChangeOrgProtocolDocument,
+  CloseCaseDocument,
   CreateGroupDocument,
   CreatePolicyDocument,
   DeleteAppendixDocument,
@@ -48,13 +52,19 @@ import {
   PoliciesDocument,
   PolicyDetailDocument,
   PolicyDocument,
+  PostCaseMessageDocument,
   PreviewUserDeletionDocument,
   PublishDraftDocument,
+  RecordRiskAssessmentDocument,
   RenameGroupDocument,
   ReorderAppendicesDocument,
+  ReportCaseDocument,
+  ReportCasesDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
   SaveDraftDocument,
+  SetCaseDiscoveryDateDocument,
+  SetCaseStatusDocument,
   SignalWorkflowDocument,
   SpCertificateDocument,
   StartDomainVerificationDocument,
@@ -63,6 +73,7 @@ import {
   TemplatesDocument,
   UpcomingApprovalsDocument,
   UpdateAppendixDocument,
+  UpdateCaseNoticeDocument,
   UpdateGroupSettingsDocument,
   UpdateIdPConnectionDocument,
   UpdateMyProfileDocument,
@@ -103,6 +114,21 @@ export const liveEdge: Edge = {
     );
     return data.addAppendix;
   },
+  async addCaseNote(caseId, body, cookie) {
+    const data = await gatewayFetch(AddCaseNoteDocument, { body, caseId }, "AddCaseNote", {
+      cookie,
+    });
+    return data.addCaseNote;
+  },
+  async addCaseNotice(caseId, recipient, label, method, cookie) {
+    const data = await gatewayFetch(
+      AddCaseNoticeDocument,
+      { caseId, label, method, recipient },
+      "AddCaseNotice",
+      { cookie },
+    );
+    return data.addCaseNotice;
+  },
   async addGroupMapping(connectionId, idpGroupClaimValue, targetGroupId, cookie) {
     const data = await gatewayFetch(
       AddGroupMappingDocument,
@@ -134,6 +160,12 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.aiJobResultContent;
+  },
+  async assignCase(caseId, assigneeUserId, cookie) {
+    const data = await gatewayFetch(AssignCaseDocument, { assigneeUserId, caseId }, "AssignCase", {
+      cookie,
+    });
+    return data.assignCase;
   },
   async auditLog(filters, cookie) {
     const data = await gatewayFetch(AuditLogDocument, { ...filters }, "AuditLog", { cookie });
@@ -179,6 +211,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.changeOrgProtocol;
+  },
+  async closeCase(caseId, outcome, correctiveActions, closingMessage, cookie) {
+    const data = await gatewayFetch(
+      CloseCaseDocument,
+      { caseId, closingMessage, correctiveActions, outcome },
+      "CloseCase",
+      { cookie },
+    );
+    return data.closeCase;
   },
   async createGroup(input, cookie) {
     const data = await gatewayFetch(CreateGroupDocument, input, "CreateGroup", { cookie });
@@ -382,6 +423,12 @@ export const liveEdge: Edge = {
     );
     return data.policyDetail ?? null;
   },
+  async postCaseMessage(caseId, body, cookie) {
+    const data = await gatewayFetch(PostCaseMessageDocument, { body, caseId }, "PostCaseMessage", {
+      cookie,
+    });
+    return data.postCaseMessage;
+  },
   async previewUserDeletion(userId, cookie) {
     const data = await gatewayFetch(
       PreviewUserDeletionDocument,
@@ -397,6 +444,15 @@ export const liveEdge: Edge = {
     });
     return data.publishDraft;
   },
+  async recordRiskAssessment(caseId, factors, decision, reason, cookie) {
+    const data = await gatewayFetch(
+      RecordRiskAssessmentDocument,
+      { caseId, decision, factors, reason },
+      "RecordRiskAssessment",
+      { cookie },
+    );
+    return data.recordRiskAssessment;
+  },
   async renameGroup(id, name, slug, cookie) {
     const data = await gatewayFetch(RenameGroupDocument, { id, name, slug }, "RenameGroup", {
       cookie,
@@ -411,6 +467,19 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.reorderAppendices;
+  },
+  async reportCase(caseId, cookie) {
+    const data = await gatewayFetch(ReportCaseDocument, { caseId }, "ReportCase", { cookie });
+    return data.reportCase;
+  },
+  async reportCases(statuses, assigneeUserId, cookie) {
+    const data = await gatewayFetch(
+      ReportCasesDocument,
+      { assigneeUserId, statuses },
+      "ReportCases",
+      { cookie },
+    );
+    return data.reportCases;
   },
   async revokeRole(userId, role, cookie) {
     const data = await gatewayFetch(RevokeRoleDocument, { role, userId }, "RevokeRole", {
@@ -435,6 +504,21 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.saveDraft;
+  },
+  async setCaseDiscoveryDate(caseId, discoveredOn, cookie) {
+    const data = await gatewayFetch(
+      SetCaseDiscoveryDateDocument,
+      { caseId, discoveredOn },
+      "SetCaseDiscoveryDate",
+      { cookie },
+    );
+    return data.setCaseDiscoveryDate;
+  },
+  async setCaseStatus(caseId, status, cookie) {
+    const data = await gatewayFetch(SetCaseStatusDocument, { caseId, status }, "SetCaseStatus", {
+      cookie,
+    });
+    return data.setCaseStatus;
   },
   async signalWorkflow(policyVersionId, runId, taskId, signal, comment, cookie) {
     const data = await gatewayFetch(
@@ -491,6 +575,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.updateAppendix;
+  },
+  async updateCaseNotice(caseId, noticeId, status, sentOn, cookie) {
+    const data = await gatewayFetch(
+      UpdateCaseNoticeDocument,
+      { caseId, noticeId, sentOn, status },
+      "UpdateCaseNotice",
+      { cookie },
+    );
+    return data.updateCaseNotice;
   },
   async updateGroupSettings(input, cookie) {
     const data = await gatewayFetch(UpdateGroupSettingsDocument, input, "UpdateGroupSettings", {

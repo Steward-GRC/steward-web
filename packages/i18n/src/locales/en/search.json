@@ -1,1 +1,16 @@
-{}
+{
+  "eyebrow": "Library",
+  "title": "Search",
+  "subtitleEmpty": "Search across policies, procedures, and categories.",
+  "subtitleResults": "{{count}} results for \"{{query}}\"",
+  "placeholder": "Search policies, procedures…",
+  "operatorsHint": "Operators: quoted \"exact phrase\", -exclude, OR, and field:value (e.g. category:\"IT Security\" status:draft).",
+  "start": {
+    "title": "Start typing to search",
+    "description": "Results span policies, procedures, and categories."
+  },
+  "noResults": {
+    "title": "No results",
+    "description": "Nothing matches \"{{query}}\". Try a different term or operator."
+  }
+}

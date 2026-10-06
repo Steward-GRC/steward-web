@@ -55,6 +55,40 @@ export type AddAppendixMutation = {
   };
 };
 
+export type AddCaseNoteMutationVariables = Exact<{
+  caseId: string | number;
+  body: string;
+}>;
+
+export type AddCaseNoteMutation = {
+  readonly addCaseNote: {
+    readonly id: string;
+    readonly authorUserId: string;
+    readonly body: string;
+    readonly createdAt: string;
+  };
+};
+
+export type AddCaseNoticeMutationVariables = Exact<{
+  caseId: string | number;
+  recipient: Types.NoticeRecipient;
+  label?: string | null | undefined;
+  method?: string | null | undefined;
+}>;
+
+export type AddCaseNoticeMutation = {
+  readonly addCaseNotice: {
+    readonly id: string;
+    readonly recipient: Types.NoticeRecipient;
+    readonly label: string;
+    readonly method: string;
+    readonly daysAllowed: number;
+    readonly dueOn: string;
+    readonly status: Types.NoticeStatus;
+    readonly sentOn: string | null;
+  };
+};
+
 export type AddGroupMappingMutationVariables = Exact<{
   connectionId: string | number;
   idpGroupClaimValue: string;
@@ -124,6 +158,80 @@ export type AppendixFieldsFragment = {
   readonly contentJson: string;
   readonly orderIndex: number;
   readonly letter: string;
+};
+
+export type AssignCaseMutationVariables = Exact<{
+  caseId: string | number;
+  assigneeUserId?: string | number | null | undefined;
+}>;
+
+export type AssignCaseMutation = {
+  readonly assignCase: {
+    readonly id: string;
+    readonly caseCode: string;
+    readonly kind: Types.ReportKind;
+    readonly status: Types.CaseStatus;
+    readonly reporterUserId: string | null;
+    readonly assigneeUserId: string | null;
+    readonly receivedAt: string;
+    readonly discoveredOn: string | null;
+    readonly outcome: Types.CaseOutcome | null;
+    readonly closedAt: string | null;
+    readonly details: {
+      readonly whatHappened: string;
+      readonly occurred: string;
+      readonly location: string;
+      readonly informationKinds: ReadonlyArray<Types.InformationKind>;
+      readonly stillHappening: Types.ReportAnswer | null;
+    };
+    readonly attachments: ReadonlyArray<{
+      readonly id: string;
+      readonly filename: string;
+      readonly contentType: string;
+      readonly sizeBytes: number;
+      readonly metadataStripped: boolean;
+    }>;
+    readonly thread: ReadonlyArray<{
+      readonly id: string;
+      readonly author: Types.MessageAuthor;
+      readonly officerUserId: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly notes: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly assessment: {
+      readonly suggestion: Types.RiskSuggestion | null;
+      readonly decision: Types.BreachDecision | null;
+      readonly reason: string;
+      readonly decidedByUserId: string;
+      readonly decidedAt: string;
+      readonly factors: {
+        readonly information: ReadonlyArray<Types.InformationKind>;
+        readonly recipient: Types.RiskRecipient | null;
+        readonly viewed: Types.RiskViewed | null;
+        readonly mitigation: Types.RiskMitigation | null;
+      };
+    } | null;
+    readonly notices: ReadonlyArray<{
+      readonly id: string;
+      readonly recipient: Types.NoticeRecipient;
+      readonly label: string;
+      readonly method: string;
+      readonly daysAllowed: number;
+      readonly dueOn: string;
+      readonly status: Types.NoticeStatus;
+      readonly sentOn: string | null;
+    }>;
+    readonly correctiveActions: ReadonlyArray<{
+      readonly description: string;
+      readonly policyId: string | null;
+    }>;
+  };
 };
 
 export type AuditLogQueryVariables = Exact<{
@@ -276,6 +384,83 @@ export type ChangeOrgProtocolMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+  };
+};
+
+export type CloseCaseMutationVariables = Exact<{
+  caseId: string | number;
+  outcome: Types.CaseOutcome;
+  correctiveActions?:
+    ReadonlyArray<Types.CorrectiveActionInput> | Types.CorrectiveActionInput | null | undefined;
+  closingMessage?: string | null | undefined;
+}>;
+
+export type CloseCaseMutation = {
+  readonly closeCase: {
+    readonly id: string;
+    readonly caseCode: string;
+    readonly kind: Types.ReportKind;
+    readonly status: Types.CaseStatus;
+    readonly reporterUserId: string | null;
+    readonly assigneeUserId: string | null;
+    readonly receivedAt: string;
+    readonly discoveredOn: string | null;
+    readonly outcome: Types.CaseOutcome | null;
+    readonly closedAt: string | null;
+    readonly details: {
+      readonly whatHappened: string;
+      readonly occurred: string;
+      readonly location: string;
+      readonly informationKinds: ReadonlyArray<Types.InformationKind>;
+      readonly stillHappening: Types.ReportAnswer | null;
+    };
+    readonly attachments: ReadonlyArray<{
+      readonly id: string;
+      readonly filename: string;
+      readonly contentType: string;
+      readonly sizeBytes: number;
+      readonly metadataStripped: boolean;
+    }>;
+    readonly thread: ReadonlyArray<{
+      readonly id: string;
+      readonly author: Types.MessageAuthor;
+      readonly officerUserId: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly notes: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly assessment: {
+      readonly suggestion: Types.RiskSuggestion | null;
+      readonly decision: Types.BreachDecision | null;
+      readonly reason: string;
+      readonly decidedByUserId: string;
+      readonly decidedAt: string;
+      readonly factors: {
+        readonly information: ReadonlyArray<Types.InformationKind>;
+        readonly recipient: Types.RiskRecipient | null;
+        readonly viewed: Types.RiskViewed | null;
+        readonly mitigation: Types.RiskMitigation | null;
+      };
+    } | null;
+    readonly notices: ReadonlyArray<{
+      readonly id: string;
+      readonly recipient: Types.NoticeRecipient;
+      readonly label: string;
+      readonly method: string;
+      readonly daysAllowed: number;
+      readonly dueOn: string;
+      readonly status: Types.NoticeStatus;
+      readonly sentOn: string | null;
+    }>;
+    readonly correctiveActions: ReadonlyArray<{
+      readonly description: string;
+      readonly policyId: string | null;
+    }>;
   };
 };
 
@@ -915,6 +1100,21 @@ export type PolicyVersionFieldsFragment = {
   }>;
 };
 
+export type PostCaseMessageMutationVariables = Exact<{
+  caseId: string | number;
+  body: string;
+}>;
+
+export type PostCaseMessageMutation = {
+  readonly postCaseMessage: {
+    readonly id: string;
+    readonly author: Types.MessageAuthor;
+    readonly officerUserId: string | null;
+    readonly body: string;
+    readonly createdAt: string;
+  };
+};
+
 export type PreviewUserDeletionQueryVariables = Exact<{
   userId: string | number;
 }>;
@@ -965,6 +1165,29 @@ export type PublishDraftMutation = {
   };
 };
 
+export type RecordRiskAssessmentMutationVariables = Exact<{
+  caseId: string | number;
+  factors: Types.RiskFactorsInput;
+  decision: Types.BreachDecision;
+  reason: string;
+}>;
+
+export type RecordRiskAssessmentMutation = {
+  readonly recordRiskAssessment: {
+    readonly suggestion: Types.RiskSuggestion | null;
+    readonly decision: Types.BreachDecision | null;
+    readonly reason: string;
+    readonly decidedByUserId: string;
+    readonly decidedAt: string;
+    readonly factors: {
+      readonly information: ReadonlyArray<Types.InformationKind>;
+      readonly recipient: Types.RiskRecipient | null;
+      readonly viewed: Types.RiskViewed | null;
+      readonly mitigation: Types.RiskMitigation | null;
+    };
+  };
+};
+
 export type RenameGroupMutationVariables = Exact<{
   id: string | number;
   name: string;
@@ -1000,6 +1223,167 @@ export type ReorderAppendicesMutation = {
     readonly orderIndex: number;
     readonly letter: string;
   }>;
+};
+
+export type ReportCaseQueryVariables = Exact<{
+  caseId: string | number;
+}>;
+
+export type ReportCaseQuery = {
+  readonly reportCase: {
+    readonly id: string;
+    readonly caseCode: string;
+    readonly kind: Types.ReportKind;
+    readonly status: Types.CaseStatus;
+    readonly reporterUserId: string | null;
+    readonly assigneeUserId: string | null;
+    readonly receivedAt: string;
+    readonly discoveredOn: string | null;
+    readonly outcome: Types.CaseOutcome | null;
+    readonly closedAt: string | null;
+    readonly details: {
+      readonly whatHappened: string;
+      readonly occurred: string;
+      readonly location: string;
+      readonly informationKinds: ReadonlyArray<Types.InformationKind>;
+      readonly stillHappening: Types.ReportAnswer | null;
+    };
+    readonly attachments: ReadonlyArray<{
+      readonly id: string;
+      readonly filename: string;
+      readonly contentType: string;
+      readonly sizeBytes: number;
+      readonly metadataStripped: boolean;
+    }>;
+    readonly thread: ReadonlyArray<{
+      readonly id: string;
+      readonly author: Types.MessageAuthor;
+      readonly officerUserId: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly notes: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly assessment: {
+      readonly suggestion: Types.RiskSuggestion | null;
+      readonly decision: Types.BreachDecision | null;
+      readonly reason: string;
+      readonly decidedByUserId: string;
+      readonly decidedAt: string;
+      readonly factors: {
+        readonly information: ReadonlyArray<Types.InformationKind>;
+        readonly recipient: Types.RiskRecipient | null;
+        readonly viewed: Types.RiskViewed | null;
+        readonly mitigation: Types.RiskMitigation | null;
+      };
+    } | null;
+    readonly notices: ReadonlyArray<{
+      readonly id: string;
+      readonly recipient: Types.NoticeRecipient;
+      readonly label: string;
+      readonly method: string;
+      readonly daysAllowed: number;
+      readonly dueOn: string;
+      readonly status: Types.NoticeStatus;
+      readonly sentOn: string | null;
+    }>;
+    readonly correctiveActions: ReadonlyArray<{
+      readonly description: string;
+      readonly policyId: string | null;
+    }>;
+  };
+};
+
+export type ReportCaseFieldsFragment = {
+  readonly id: string;
+  readonly caseCode: string;
+  readonly kind: Types.ReportKind;
+  readonly status: Types.CaseStatus;
+  readonly reporterUserId: string | null;
+  readonly assigneeUserId: string | null;
+  readonly receivedAt: string;
+  readonly discoveredOn: string | null;
+  readonly outcome: Types.CaseOutcome | null;
+  readonly closedAt: string | null;
+  readonly details: {
+    readonly whatHappened: string;
+    readonly occurred: string;
+    readonly location: string;
+    readonly informationKinds: ReadonlyArray<Types.InformationKind>;
+    readonly stillHappening: Types.ReportAnswer | null;
+  };
+  readonly attachments: ReadonlyArray<{
+    readonly id: string;
+    readonly filename: string;
+    readonly contentType: string;
+    readonly sizeBytes: number;
+    readonly metadataStripped: boolean;
+  }>;
+  readonly thread: ReadonlyArray<{
+    readonly id: string;
+    readonly author: Types.MessageAuthor;
+    readonly officerUserId: string | null;
+    readonly body: string;
+    readonly createdAt: string;
+  }>;
+  readonly notes: ReadonlyArray<{
+    readonly id: string;
+    readonly authorUserId: string;
+    readonly body: string;
+    readonly createdAt: string;
+  }>;
+  readonly assessment: {
+    readonly suggestion: Types.RiskSuggestion | null;
+    readonly decision: Types.BreachDecision | null;
+    readonly reason: string;
+    readonly decidedByUserId: string;
+    readonly decidedAt: string;
+    readonly factors: {
+      readonly information: ReadonlyArray<Types.InformationKind>;
+      readonly recipient: Types.RiskRecipient | null;
+      readonly viewed: Types.RiskViewed | null;
+      readonly mitigation: Types.RiskMitigation | null;
+    };
+  } | null;
+  readonly notices: ReadonlyArray<{
+    readonly id: string;
+    readonly recipient: Types.NoticeRecipient;
+    readonly label: string;
+    readonly method: string;
+    readonly daysAllowed: number;
+    readonly dueOn: string;
+    readonly status: Types.NoticeStatus;
+    readonly sentOn: string | null;
+  }>;
+  readonly correctiveActions: ReadonlyArray<{
+    readonly description: string;
+    readonly policyId: string | null;
+  }>;
+};
+
+export type ReportCasesQueryVariables = Exact<{
+  statuses?: ReadonlyArray<Types.CaseStatus> | Types.CaseStatus | null | undefined;
+  assigneeUserId?: string | number | null | undefined;
+}>;
+
+export type ReportCasesQuery = {
+  readonly reportCases: {
+    readonly cases: ReadonlyArray<{
+      readonly id: string;
+      readonly caseCode: string;
+      readonly kind: Types.ReportKind;
+      readonly status: Types.CaseStatus;
+      readonly summary: string;
+      readonly assigneeUserId: string | null;
+      readonly receivedAt: string;
+      readonly nextDeadline: string | null;
+    }>;
+    readonly counts: ReadonlyArray<{ readonly status: Types.CaseStatus; readonly count: number }>;
+  };
 };
 
 export type RevokeRoleMutationVariables = Exact<{
@@ -1053,6 +1437,154 @@ export type SaveDraftMutation = {
       readonly contentJson: string;
       readonly orderIndex: number;
       readonly letter: string;
+    }>;
+  };
+};
+
+export type SetCaseDiscoveryDateMutationVariables = Exact<{
+  caseId: string | number;
+  discoveredOn: string;
+}>;
+
+export type SetCaseDiscoveryDateMutation = {
+  readonly setCaseDiscoveryDate: {
+    readonly id: string;
+    readonly caseCode: string;
+    readonly kind: Types.ReportKind;
+    readonly status: Types.CaseStatus;
+    readonly reporterUserId: string | null;
+    readonly assigneeUserId: string | null;
+    readonly receivedAt: string;
+    readonly discoveredOn: string | null;
+    readonly outcome: Types.CaseOutcome | null;
+    readonly closedAt: string | null;
+    readonly details: {
+      readonly whatHappened: string;
+      readonly occurred: string;
+      readonly location: string;
+      readonly informationKinds: ReadonlyArray<Types.InformationKind>;
+      readonly stillHappening: Types.ReportAnswer | null;
+    };
+    readonly attachments: ReadonlyArray<{
+      readonly id: string;
+      readonly filename: string;
+      readonly contentType: string;
+      readonly sizeBytes: number;
+      readonly metadataStripped: boolean;
+    }>;
+    readonly thread: ReadonlyArray<{
+      readonly id: string;
+      readonly author: Types.MessageAuthor;
+      readonly officerUserId: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly notes: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly assessment: {
+      readonly suggestion: Types.RiskSuggestion | null;
+      readonly decision: Types.BreachDecision | null;
+      readonly reason: string;
+      readonly decidedByUserId: string;
+      readonly decidedAt: string;
+      readonly factors: {
+        readonly information: ReadonlyArray<Types.InformationKind>;
+        readonly recipient: Types.RiskRecipient | null;
+        readonly viewed: Types.RiskViewed | null;
+        readonly mitigation: Types.RiskMitigation | null;
+      };
+    } | null;
+    readonly notices: ReadonlyArray<{
+      readonly id: string;
+      readonly recipient: Types.NoticeRecipient;
+      readonly label: string;
+      readonly method: string;
+      readonly daysAllowed: number;
+      readonly dueOn: string;
+      readonly status: Types.NoticeStatus;
+      readonly sentOn: string | null;
+    }>;
+    readonly correctiveActions: ReadonlyArray<{
+      readonly description: string;
+      readonly policyId: string | null;
+    }>;
+  };
+};
+
+export type SetCaseStatusMutationVariables = Exact<{
+  caseId: string | number;
+  status: Types.CaseStatus;
+}>;
+
+export type SetCaseStatusMutation = {
+  readonly setCaseStatus: {
+    readonly id: string;
+    readonly caseCode: string;
+    readonly kind: Types.ReportKind;
+    readonly status: Types.CaseStatus;
+    readonly reporterUserId: string | null;
+    readonly assigneeUserId: string | null;
+    readonly receivedAt: string;
+    readonly discoveredOn: string | null;
+    readonly outcome: Types.CaseOutcome | null;
+    readonly closedAt: string | null;
+    readonly details: {
+      readonly whatHappened: string;
+      readonly occurred: string;
+      readonly location: string;
+      readonly informationKinds: ReadonlyArray<Types.InformationKind>;
+      readonly stillHappening: Types.ReportAnswer | null;
+    };
+    readonly attachments: ReadonlyArray<{
+      readonly id: string;
+      readonly filename: string;
+      readonly contentType: string;
+      readonly sizeBytes: number;
+      readonly metadataStripped: boolean;
+    }>;
+    readonly thread: ReadonlyArray<{
+      readonly id: string;
+      readonly author: Types.MessageAuthor;
+      readonly officerUserId: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly notes: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly assessment: {
+      readonly suggestion: Types.RiskSuggestion | null;
+      readonly decision: Types.BreachDecision | null;
+      readonly reason: string;
+      readonly decidedByUserId: string;
+      readonly decidedAt: string;
+      readonly factors: {
+        readonly information: ReadonlyArray<Types.InformationKind>;
+        readonly recipient: Types.RiskRecipient | null;
+        readonly viewed: Types.RiskViewed | null;
+        readonly mitigation: Types.RiskMitigation | null;
+      };
+    } | null;
+    readonly notices: ReadonlyArray<{
+      readonly id: string;
+      readonly recipient: Types.NoticeRecipient;
+      readonly label: string;
+      readonly method: string;
+      readonly daysAllowed: number;
+      readonly dueOn: string;
+      readonly status: Types.NoticeStatus;
+      readonly sentOn: string | null;
+    }>;
+    readonly correctiveActions: ReadonlyArray<{
+      readonly description: string;
+      readonly policyId: string | null;
     }>;
   };
 };
@@ -1140,6 +1672,26 @@ export type UpdateAppendixMutation = {
     readonly contentJson: string;
     readonly orderIndex: number;
     readonly letter: string;
+  };
+};
+
+export type UpdateCaseNoticeMutationVariables = Exact<{
+  caseId: string | number;
+  noticeId: string | number;
+  status: Types.NoticeStatus;
+  sentOn?: string | null | undefined;
+}>;
+
+export type UpdateCaseNoticeMutation = {
+  readonly updateCaseNotice: {
+    readonly id: string;
+    readonly recipient: Types.NoticeRecipient;
+    readonly label: string;
+    readonly method: string;
+    readonly daysAllowed: number;
+    readonly dueOn: string;
+    readonly status: Types.NoticeStatus;
+    readonly sentOn: string | null;
   };
 };
 
@@ -1543,6 +2095,141 @@ export const PolicyVersionFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<PolicyVersionFieldsFragment, unknown>;
+export const ReportCaseFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReportCaseFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReportCase" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "caseCode" } },
+          { kind: "Field", name: { kind: "Name", value: "kind" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "details" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "whatHappened" } },
+                { kind: "Field", name: { kind: "Name", value: "occurred" } },
+                { kind: "Field", name: { kind: "Name", value: "location" } },
+                { kind: "Field", name: { kind: "Name", value: "informationKinds" } },
+                { kind: "Field", name: { kind: "Name", value: "stillHappening" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "reporterUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "assigneeUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "receivedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "discoveredOn" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "attachments" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "filename" } },
+                { kind: "Field", name: { kind: "Name", value: "contentType" } },
+                { kind: "Field", name: { kind: "Name", value: "sizeBytes" } },
+                { kind: "Field", name: { kind: "Name", value: "metadataStripped" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "thread" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "author" } },
+                { kind: "Field", name: { kind: "Name", value: "officerUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notes" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "assessment" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "factors" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "information" } },
+                      { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                      { kind: "Field", name: { kind: "Name", value: "viewed" } },
+                      { kind: "Field", name: { kind: "Name", value: "mitigation" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "suggestion" } },
+                { kind: "Field", name: { kind: "Name", value: "decision" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "method" } },
+                { kind: "Field", name: { kind: "Name", value: "daysAllowed" } },
+                { kind: "Field", name: { kind: "Name", value: "dueOn" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "sentOn" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "outcome" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "correctiveActions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "description" } },
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "closedAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReportCaseFieldsFragment, unknown>;
 export const UserFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -1762,6 +2449,146 @@ export const AddAppendixDocument = {
     },
   ],
 } as unknown as DocumentNode<AddAppendixMutation, AddAppendixMutationVariables>;
+export const AddCaseNoteDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "AddCaseNote" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "body" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "addCaseNote" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "body" },
+                value: { kind: "Variable", name: { kind: "Name", value: "body" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddCaseNoteMutation, AddCaseNoteMutationVariables>;
+export const AddCaseNoticeDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "AddCaseNotice" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "recipient" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "NoticeRecipient" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "label" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "method" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "addCaseNotice" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "recipient" },
+                value: { kind: "Variable", name: { kind: "Name", value: "recipient" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "label" },
+                value: { kind: "Variable", name: { kind: "Name", value: "label" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "method" },
+                value: { kind: "Variable", name: { kind: "Name", value: "method" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "method" } },
+                { kind: "Field", name: { kind: "Name", value: "daysAllowed" } },
+                { kind: "Field", name: { kind: "Name", value: "dueOn" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "sentOn" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddCaseNoticeMutation, AddCaseNoticeMutationVariables>;
 export const AddGroupMappingDocument = {
   kind: "Document",
   definitions: [
@@ -2010,6 +2837,188 @@ export const AiJobResultContentDocument = {
     },
   ],
 } as unknown as DocumentNode<AiJobResultContentQuery, AiJobResultContentQueryVariables>;
+export const AssignCaseDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "AssignCase" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "assigneeUserId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "assignCase" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "assigneeUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "assigneeUserId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReportCaseFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReportCaseFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReportCase" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "caseCode" } },
+          { kind: "Field", name: { kind: "Name", value: "kind" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "details" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "whatHappened" } },
+                { kind: "Field", name: { kind: "Name", value: "occurred" } },
+                { kind: "Field", name: { kind: "Name", value: "location" } },
+                { kind: "Field", name: { kind: "Name", value: "informationKinds" } },
+                { kind: "Field", name: { kind: "Name", value: "stillHappening" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "reporterUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "assigneeUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "receivedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "discoveredOn" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "attachments" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "filename" } },
+                { kind: "Field", name: { kind: "Name", value: "contentType" } },
+                { kind: "Field", name: { kind: "Name", value: "sizeBytes" } },
+                { kind: "Field", name: { kind: "Name", value: "metadataStripped" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "thread" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "author" } },
+                { kind: "Field", name: { kind: "Name", value: "officerUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notes" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "assessment" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "factors" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "information" } },
+                      { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                      { kind: "Field", name: { kind: "Name", value: "viewed" } },
+                      { kind: "Field", name: { kind: "Name", value: "mitigation" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "suggestion" } },
+                { kind: "Field", name: { kind: "Name", value: "decision" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "method" } },
+                { kind: "Field", name: { kind: "Name", value: "daysAllowed" } },
+                { kind: "Field", name: { kind: "Name", value: "dueOn" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "sentOn" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "outcome" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "correctiveActions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "description" } },
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "closedAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AssignCaseMutation, AssignCaseMutationVariables>;
 export const AuditLogDocument = {
   kind: "Document",
   definitions: [
@@ -2447,6 +3456,217 @@ export const ChangeOrgProtocolDocument = {
     },
   ],
 } as unknown as DocumentNode<ChangeOrgProtocolMutation, ChangeOrgProtocolMutationVariables>;
+export const CloseCaseDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CloseCase" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "outcome" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "CaseOutcome" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "correctiveActions" } },
+          type: {
+            kind: "ListType",
+            type: {
+              kind: "NonNullType",
+              type: { kind: "NamedType", name: { kind: "Name", value: "CorrectiveActionInput" } },
+            },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "closingMessage" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "closeCase" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "outcome" },
+                value: { kind: "Variable", name: { kind: "Name", value: "outcome" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "correctiveActions" },
+                value: { kind: "Variable", name: { kind: "Name", value: "correctiveActions" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "closingMessage" },
+                value: { kind: "Variable", name: { kind: "Name", value: "closingMessage" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReportCaseFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReportCaseFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReportCase" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "caseCode" } },
+          { kind: "Field", name: { kind: "Name", value: "kind" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "details" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "whatHappened" } },
+                { kind: "Field", name: { kind: "Name", value: "occurred" } },
+                { kind: "Field", name: { kind: "Name", value: "location" } },
+                { kind: "Field", name: { kind: "Name", value: "informationKinds" } },
+                { kind: "Field", name: { kind: "Name", value: "stillHappening" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "reporterUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "assigneeUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "receivedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "discoveredOn" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "attachments" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "filename" } },
+                { kind: "Field", name: { kind: "Name", value: "contentType" } },
+                { kind: "Field", name: { kind: "Name", value: "sizeBytes" } },
+                { kind: "Field", name: { kind: "Name", value: "metadataStripped" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "thread" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "author" } },
+                { kind: "Field", name: { kind: "Name", value: "officerUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notes" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "assessment" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "factors" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "information" } },
+                      { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                      { kind: "Field", name: { kind: "Name", value: "viewed" } },
+                      { kind: "Field", name: { kind: "Name", value: "mitigation" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "suggestion" } },
+                { kind: "Field", name: { kind: "Name", value: "decision" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "method" } },
+                { kind: "Field", name: { kind: "Name", value: "daysAllowed" } },
+                { kind: "Field", name: { kind: "Name", value: "dueOn" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "sentOn" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "outcome" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "correctiveActions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "description" } },
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "closedAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CloseCaseMutation, CloseCaseMutationVariables>;
 export const CreateGroupDocument = {
   kind: "Document",
   definitions: [
@@ -4255,6 +5475,65 @@ export const PolicyDetailDocument = {
     },
   ],
 } as unknown as DocumentNode<PolicyDetailQuery, PolicyDetailQueryVariables>;
+export const PostCaseMessageDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "PostCaseMessage" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "body" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "postCaseMessage" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "body" },
+                value: { kind: "Variable", name: { kind: "Name", value: "body" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "author" } },
+                { kind: "Field", name: { kind: "Name", value: "officerUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PostCaseMessageMutation, PostCaseMessageMutationVariables>;
 export const PreviewUserDeletionDocument = {
   kind: "Document",
   definitions: [
@@ -4422,6 +5701,104 @@ export const PublishDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<PublishDraftMutation, PublishDraftMutationVariables>;
+export const RecordRiskAssessmentDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RecordRiskAssessment" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "factors" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "RiskFactorsInput" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "decision" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "BreachDecision" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "recordRiskAssessment" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "factors" },
+                value: { kind: "Variable", name: { kind: "Name", value: "factors" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "decision" },
+                value: { kind: "Variable", name: { kind: "Name", value: "decision" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "reason" },
+                value: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "factors" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "information" } },
+                      { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                      { kind: "Field", name: { kind: "Name", value: "viewed" } },
+                      { kind: "Field", name: { kind: "Name", value: "mitigation" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "suggestion" } },
+                { kind: "Field", name: { kind: "Name", value: "decision" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RecordRiskAssessmentMutation, RecordRiskAssessmentMutationVariables>;
 export const RenameGroupDocument = {
   kind: "Document",
   definitions: [
@@ -4587,6 +5964,260 @@ export const ReorderAppendicesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReorderAppendicesMutation, ReorderAppendicesMutationVariables>;
+export const ReportCaseDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ReportCase" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "reportCase" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReportCaseFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReportCaseFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReportCase" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "caseCode" } },
+          { kind: "Field", name: { kind: "Name", value: "kind" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "details" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "whatHappened" } },
+                { kind: "Field", name: { kind: "Name", value: "occurred" } },
+                { kind: "Field", name: { kind: "Name", value: "location" } },
+                { kind: "Field", name: { kind: "Name", value: "informationKinds" } },
+                { kind: "Field", name: { kind: "Name", value: "stillHappening" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "reporterUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "assigneeUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "receivedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "discoveredOn" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "attachments" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "filename" } },
+                { kind: "Field", name: { kind: "Name", value: "contentType" } },
+                { kind: "Field", name: { kind: "Name", value: "sizeBytes" } },
+                { kind: "Field", name: { kind: "Name", value: "metadataStripped" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "thread" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "author" } },
+                { kind: "Field", name: { kind: "Name", value: "officerUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notes" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "assessment" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "factors" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "information" } },
+                      { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                      { kind: "Field", name: { kind: "Name", value: "viewed" } },
+                      { kind: "Field", name: { kind: "Name", value: "mitigation" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "suggestion" } },
+                { kind: "Field", name: { kind: "Name", value: "decision" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "method" } },
+                { kind: "Field", name: { kind: "Name", value: "daysAllowed" } },
+                { kind: "Field", name: { kind: "Name", value: "dueOn" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "sentOn" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "outcome" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "correctiveActions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "description" } },
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "closedAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReportCaseQuery, ReportCaseQueryVariables>;
+export const ReportCasesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ReportCases" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "statuses" } },
+          type: {
+            kind: "ListType",
+            type: {
+              kind: "NonNullType",
+              type: { kind: "NamedType", name: { kind: "Name", value: "CaseStatus" } },
+            },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "assigneeUserId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "reportCases" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "statuses" },
+                value: { kind: "Variable", name: { kind: "Name", value: "statuses" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "assigneeUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "assigneeUserId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "cases" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "id" } },
+                      { kind: "Field", name: { kind: "Name", value: "caseCode" } },
+                      { kind: "Field", name: { kind: "Name", value: "kind" } },
+                      { kind: "Field", name: { kind: "Name", value: "status" } },
+                      { kind: "Field", name: { kind: "Name", value: "summary" } },
+                      { kind: "Field", name: { kind: "Name", value: "assigneeUserId" } },
+                      { kind: "Field", name: { kind: "Name", value: "receivedAt" } },
+                      { kind: "Field", name: { kind: "Name", value: "nextDeadline" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "counts" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "status" } },
+                      { kind: "Field", name: { kind: "Name", value: "count" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReportCasesQuery, ReportCasesQueryVariables>;
 export const RevokeRoleDocument = {
   kind: "Document",
   definitions: [
@@ -4816,6 +6447,376 @@ export const SaveDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<SaveDraftMutation, SaveDraftMutationVariables>;
+export const SetCaseDiscoveryDateDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetCaseDiscoveryDate" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "discoveredOn" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setCaseDiscoveryDate" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "discoveredOn" },
+                value: { kind: "Variable", name: { kind: "Name", value: "discoveredOn" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReportCaseFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReportCaseFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReportCase" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "caseCode" } },
+          { kind: "Field", name: { kind: "Name", value: "kind" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "details" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "whatHappened" } },
+                { kind: "Field", name: { kind: "Name", value: "occurred" } },
+                { kind: "Field", name: { kind: "Name", value: "location" } },
+                { kind: "Field", name: { kind: "Name", value: "informationKinds" } },
+                { kind: "Field", name: { kind: "Name", value: "stillHappening" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "reporterUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "assigneeUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "receivedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "discoveredOn" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "attachments" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "filename" } },
+                { kind: "Field", name: { kind: "Name", value: "contentType" } },
+                { kind: "Field", name: { kind: "Name", value: "sizeBytes" } },
+                { kind: "Field", name: { kind: "Name", value: "metadataStripped" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "thread" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "author" } },
+                { kind: "Field", name: { kind: "Name", value: "officerUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notes" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "assessment" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "factors" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "information" } },
+                      { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                      { kind: "Field", name: { kind: "Name", value: "viewed" } },
+                      { kind: "Field", name: { kind: "Name", value: "mitigation" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "suggestion" } },
+                { kind: "Field", name: { kind: "Name", value: "decision" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "method" } },
+                { kind: "Field", name: { kind: "Name", value: "daysAllowed" } },
+                { kind: "Field", name: { kind: "Name", value: "dueOn" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "sentOn" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "outcome" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "correctiveActions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "description" } },
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "closedAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetCaseDiscoveryDateMutation, SetCaseDiscoveryDateMutationVariables>;
+export const SetCaseStatusDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetCaseStatus" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "status" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "CaseStatus" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setCaseStatus" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "status" },
+                value: { kind: "Variable", name: { kind: "Name", value: "status" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReportCaseFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReportCaseFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReportCase" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "caseCode" } },
+          { kind: "Field", name: { kind: "Name", value: "kind" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "details" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "whatHappened" } },
+                { kind: "Field", name: { kind: "Name", value: "occurred" } },
+                { kind: "Field", name: { kind: "Name", value: "location" } },
+                { kind: "Field", name: { kind: "Name", value: "informationKinds" } },
+                { kind: "Field", name: { kind: "Name", value: "stillHappening" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "reporterUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "assigneeUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "receivedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "discoveredOn" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "attachments" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "filename" } },
+                { kind: "Field", name: { kind: "Name", value: "contentType" } },
+                { kind: "Field", name: { kind: "Name", value: "sizeBytes" } },
+                { kind: "Field", name: { kind: "Name", value: "metadataStripped" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "thread" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "author" } },
+                { kind: "Field", name: { kind: "Name", value: "officerUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notes" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "assessment" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "factors" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "information" } },
+                      { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                      { kind: "Field", name: { kind: "Name", value: "viewed" } },
+                      { kind: "Field", name: { kind: "Name", value: "mitigation" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "suggestion" } },
+                { kind: "Field", name: { kind: "Name", value: "decision" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notices" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "method" } },
+                { kind: "Field", name: { kind: "Name", value: "daysAllowed" } },
+                { kind: "Field", name: { kind: "Name", value: "dueOn" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "sentOn" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "outcome" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "correctiveActions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "description" } },
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "closedAt" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetCaseStatusMutation, SetCaseStatusMutationVariables>;
 export const SignalWorkflowDocument = {
   kind: "Document",
   definitions: [
@@ -5212,6 +7213,91 @@ export const UpdateAppendixDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateAppendixMutation, UpdateAppendixMutationVariables>;
+export const UpdateCaseNoticeDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "UpdateCaseNotice" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "noticeId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "status" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "NoticeStatus" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "sentOn" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "updateCaseNotice" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "caseId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "caseId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "noticeId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "noticeId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "status" },
+                value: { kind: "Variable", name: { kind: "Name", value: "status" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "sentOn" },
+                value: { kind: "Variable", name: { kind: "Name", value: "sentOn" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "recipient" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "method" } },
+                { kind: "Field", name: { kind: "Name", value: "daysAllowed" } },
+                { kind: "Field", name: { kind: "Name", value: "dueOn" } },
+                { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "sentOn" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateCaseNoticeMutation, UpdateCaseNoticeMutationVariables>;
 export const UpdateGroupSettingsDocument = {
   kind: "Document",
   definitions: [

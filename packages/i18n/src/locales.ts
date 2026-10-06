@@ -56,6 +56,7 @@ export const NAMESPACES = [
   "authoring", // new policy, wizard, drafts, revise, templates
   "ai", // AI assist / draft / review / summary / ask
   "approvals", // approvals, acknowledgements, my work, workflow
+  "reporting", // privacy officer case queue, case detail, risk assessment, notices
   "search", // search page, spotlight, results
   "admin", // admin console: users, groups, orgs, SSO, setup, audit
   "errors", // user-facing error titles/details/actions
