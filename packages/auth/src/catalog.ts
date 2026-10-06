@@ -12,6 +12,7 @@
 export const PERMISSIONS = {
   AdminManage: "admin.manage",
   AuditRead: "audit.read",
+  ComplianceManage: "compliance.manage",
   GroupManage: "group.manage",
   PolicyApprove: "policy.approve",
   PolicyAuthor: "policy.author",
@@ -20,6 +21,7 @@ export const PERMISSIONS = {
   ReportingManage: "reporting.manage",
   SessionManage: "session.manage",
   SettingsManage: "settings.manage",
+  TemplateManage: "template.manage",
   UserManage: "user.manage",
 } as const;
 
@@ -31,9 +33,11 @@ const ALL = Object.values(PERMISSIONS);
 const roleGrants: Record<string, readonly string[]> = {
   approver: [PERMISSIONS.PolicyRead, PERMISSIONS.PolicyApprove],
   author: [PERMISSIONS.PolicyRead, PERMISSIONS.PolicyAuthor],
+  "compliance-admin": [PERMISSIONS.PolicyRead, PERMISSIONS.ComplianceManage, PERMISSIONS.AuditRead],
   "privacy-officer": [PERMISSIONS.PolicyRead, PERMISSIONS.ReportingManage],
   reader: [PERMISSIONS.PolicyRead],
   "site-admin": ALL,
+  "template-admin": [PERMISSIONS.PolicyRead, PERMISSIONS.TemplateManage],
 };
 
 /** Resolves a set of roles to the permissions they grant. An unrecognized role grants nothing. */

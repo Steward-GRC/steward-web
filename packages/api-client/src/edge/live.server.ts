@@ -29,15 +29,22 @@ import {
   CategoryTreeDocument,
   ChangeOrgProtocolDocument,
   CloseCaseDocument,
+  ContactBlocksDocument,
   CreateCategoryDocument,
+  CreateContactBlockDocument,
+  CreateDefinitionDocument,
   CreatePolicyDocument,
+  CreateReferenceDocument,
   CreateTemplateDocument,
   CreateTemplateVersionDocument,
   CreateWorkflowDefDocument,
+  DefinitionsDocument,
   DeleteAppendixDocument,
   DeleteCategoryDocument,
+  DeleteDefinitionDocument,
   DeleteGroupMappingDocument,
   DeleteOrganizationDocument,
+  DeleteReferenceDocument,
   DeleteTemplateDocument,
   DeleteUserDocument,
   DiagnosticsDocument,
@@ -73,6 +80,7 @@ import {
   PublishTemplateVersionDocument,
   RecordAckDocument,
   RecordRiskAssessmentDocument,
+  ReferencesDocument,
   RemoveUserFromGroupDocument,
   RenameCategoryDocument,
   RenameTemplateDocument,
@@ -88,6 +96,9 @@ import {
   SetCaseStatusDocument,
   SetCategoryDefaultsDocument,
   SetCategoryGovernanceDocument,
+  SetContactBlockArchivedDocument,
+  SetDefinitionArchivedDocument,
+  SetReferenceArchivedDocument,
   SignalWorkflowDocument,
   SpCertificateDocument,
   StartDomainVerificationDocument,
@@ -98,8 +109,11 @@ import {
   UpcomingApprovalsDocument,
   UpdateAppendixDocument,
   UpdateCaseNoticeDocument,
+  UpdateContactBlockDocument,
+  UpdateDefinitionDocument,
   UpdateIdPConnectionDocument,
   UpdateMyProfileDocument,
+  UpdateReferenceDocument,
   UpdateTemplateVersionSectionsDocument,
   UpdateUserProfileDocument,
   UpdateWorkflowDefDocument,
@@ -455,6 +469,24 @@ export const liveEdge: Edge = {
     );
     return data.closeCase;
   },
+  async contactBlocks(includeArchived, cookie) {
+    const data = await gatewayFetch(ContactBlocksDocument, { includeArchived }, "ContactBlocks", {
+      cookie,
+    });
+    return data.contactBlocks;
+  },
+  async createContactBlock(block, cookie) {
+    const data = await gatewayFetch(CreateContactBlockDocument, { block }, "CreateContactBlock", {
+      cookie,
+    });
+    return data.createContactBlock;
+  },
+  async createDefinition(input, cookie) {
+    const data = await gatewayFetch(CreateDefinitionDocument, { input }, "CreateDefinition", {
+      cookie,
+    });
+    return data.createDefinition;
+  },
   async createGroup(input, cookie) {
     const data = await gatewayFetch(CreateCategoryDocument, input, "CreateCategory", { cookie });
     return data.createCategory;
@@ -473,6 +505,12 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return policyView(data.createPolicy, cookie);
+  },
+  async createReference(input, cookie) {
+    const data = await gatewayFetch(CreateReferenceDocument, { input }, "CreateReference", {
+      cookie,
+    });
+    return data.createReference;
   },
   async createTemplate(name, ownerCategoryId, cookie) {
     const data = await gatewayFetch(
@@ -501,9 +539,24 @@ export const liveEdge: Edge = {
     );
     return data.createWorkflowDef;
   },
+  async definitions(categoryId, includeArchived, cookie) {
+    const data = await gatewayFetch(
+      DefinitionsDocument,
+      { categoryId, includeArchived },
+      "Definitions",
+      { cookie },
+    );
+    return data.definitions;
+  },
   async deleteAppendix(id, cookie) {
     const data = await gatewayFetch(DeleteAppendixDocument, { id }, "DeleteAppendix", { cookie });
     return data.deleteAppendix;
+  },
+  async deleteDefinition(id, cookie) {
+    const data = await gatewayFetch(DeleteDefinitionDocument, { id }, "DeleteDefinition", {
+      cookie,
+    });
+    return data.deleteDefinition;
   },
   async deleteGroup(id, cookie) {
     const data = await gatewayFetch(DeleteCategoryDocument, { id }, "DeleteCategory", { cookie });
@@ -523,6 +576,12 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.deleteOrganization;
+  },
+  async deleteReference(id, cookie) {
+    const data = await gatewayFetch(DeleteReferenceDocument, { id }, "DeleteReference", {
+      cookie,
+    });
+    return data.deleteReference;
   },
   async deleteTemplate(id, cookie) {
     const data = await gatewayFetch(DeleteTemplateDocument, { id }, "DeleteTemplate", { cookie });
@@ -780,6 +839,12 @@ export const liveEdge: Edge = {
     );
     return data.recordRiskAssessment;
   },
+  async references(includeArchived, cookie) {
+    const data = await gatewayFetch(ReferencesDocument, { includeArchived }, "References", {
+      cookie,
+    });
+    return data.references;
+  },
   async removeUserFromGroup(userId, groupId, cookie) {
     const data = await gatewayFetch(
       RemoveUserFromGroupDocument,
@@ -875,6 +940,33 @@ export const liveEdge: Edge = {
     });
     return data.setCaseStatus;
   },
+  async setContactBlockArchived(id, archived, cookie) {
+    const data = await gatewayFetch(
+      SetContactBlockArchivedDocument,
+      { archived, id },
+      "SetContactBlockArchived",
+      { cookie },
+    );
+    return data.setContactBlockArchived;
+  },
+  async setDefinitionArchived(id, archived, cookie) {
+    const data = await gatewayFetch(
+      SetDefinitionArchivedDocument,
+      { archived, id },
+      "SetDefinitionArchived",
+      { cookie },
+    );
+    return data.setDefinitionArchived;
+  },
+  async setReferenceArchived(id, archived, cookie) {
+    const data = await gatewayFetch(
+      SetReferenceArchivedDocument,
+      { archived, id },
+      "SetReferenceArchived",
+      { cookie },
+    );
+    return data.setReferenceArchived;
+  },
   async signalWorkflow(policyVersionId, runId, taskId, signal, comment, cookie) {
     const data = await gatewayFetch(
       SignalWorkflowDocument,
@@ -953,6 +1045,21 @@ export const liveEdge: Edge = {
     );
     return data.updateCaseNotice;
   },
+  async updateContactBlock(id, block, cookie) {
+    const data = await gatewayFetch(
+      UpdateContactBlockDocument,
+      { block, id },
+      "UpdateContactBlock",
+      { cookie },
+    );
+    return data.updateContactBlock;
+  },
+  async updateDefinition(id, input, cookie) {
+    const data = await gatewayFetch(UpdateDefinitionDocument, { id, input }, "UpdateDefinition", {
+      cookie,
+    });
+    return data.updateDefinition;
+  },
   async updateGroupSettings(input, cookie) {
     const { category } = await gatewayFetch(CategoryDocument, { id: input.id }, "Category", {
       cookie,
@@ -1028,6 +1135,12 @@ export const liveEdge: Edge = {
   async updateMyProfile(input, cookie) {
     const data = await gatewayFetch(UpdateMyProfileDocument, input, "UpdateMyProfile", { cookie });
     return toMe(data.updateMyProfile);
+  },
+  async updateReference(id, input, cookie) {
+    const data = await gatewayFetch(UpdateReferenceDocument, { id, input }, "UpdateReference", {
+      cookie,
+    });
+    return data.updateReference;
   },
   async updateTemplateVersionSections(id, sections, cookie) {
     const data = await gatewayFetch(

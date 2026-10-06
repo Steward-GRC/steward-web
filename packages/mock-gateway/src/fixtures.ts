@@ -8,6 +8,8 @@ import {
   CaseStatus,
   type Category,
   ComponentStatus,
+  type ContactBlock,
+  type DefinitionEntry,
   DeletionItemKind,
   type Diagnostics,
   DocumentType,
@@ -24,6 +26,7 @@ import {
   type PolicyDetail,
   PolicyStatus,
   type PolicyVersion,
+  type Reference,
   ReferenceKind,
   ReportAnswer,
   type ReportCase,
@@ -427,6 +430,107 @@ export const mockWorkflows: WorkflowDef[] = [
       },
     ],
     version: 1,
+  },
+];
+
+/** The reusable contact-block library: one active, one archived (still shown to prove a
+ *  restore path exists), for exercising the admin libraries area. */
+export const mockContactBlocks: ContactBlock[] = [
+  {
+    archived: false,
+    department: "IT",
+    email: "it-service-desk@example.com",
+    hours: "Mon-Fri 9-5",
+    id: mockId("contact-block", 1),
+    label: "IT Service Desk",
+    name: null,
+    notes: null,
+    phone: "+1 555-0100",
+    role: null,
+    usedByCount: 2,
+  },
+  {
+    archived: true,
+    department: null,
+    email: "security@example.com",
+    hours: null,
+    id: mockId("contact-block", 2),
+    label: "Security Team",
+    name: null,
+    notes: null,
+    phone: null,
+    role: null,
+    usedByCount: 0,
+  },
+];
+
+/** The reusable references/standards library: one of each kind, mirroring the contact
+ *  library's active/archived split. */
+export const mockReferences: Reference[] = [
+  {
+    archived: false,
+    body: null,
+    clause: "Requirement levels (MUST / SHOULD / MAY)",
+    createdByUserId: mockMe.id,
+    id: mockId("reference", 1),
+    kind: ReferenceKind.Standard,
+    label: "RFC 2119",
+    url: "https://www.rfc-editor.org/rfc/rfc2119",
+    usedByCount: 1,
+  },
+  {
+    archived: false,
+    body: "Retain records for the period set by the applicable regulator, whichever is longest.",
+    clause: null,
+    createdByUserId: mockMe.id,
+    id: mockId("reference", 2),
+    kind: ReferenceKind.Text,
+    label: "Retention baseline",
+    url: null,
+    usedByCount: 0,
+  },
+  {
+    archived: true,
+    body: null,
+    clause: null,
+    createdByUserId: mockMe.id,
+    id: mockId("reference", 3),
+    kind: ReferenceKind.Link,
+    label: "Superseded vendor policy",
+    url: "https://example.org/legacy-policy",
+    usedByCount: 0,
+  },
+];
+
+/** The reusable, category-scoped definitions library: two terms under "IT Security"
+ *  (`mockGroups[1]`), one archived, so the category filter has more than one row to filter. */
+export const mockDefinitions: DefinitionEntry[] = [
+  {
+    archived: false,
+    categoryId: mockId("group", 2),
+    createdByUserId: mockMe.id,
+    definition: "The maximum tolerable time to restore a system after an incident.",
+    id: mockId("definition", 1),
+    term: "RTO",
+    usedByCount: 1,
+  },
+  {
+    archived: false,
+    categoryId: mockId("group", 2),
+    createdByUserId: mockMe.id,
+    definition: "The maximum tolerable amount of data loss, measured in time.",
+    id: mockId("definition", 2),
+    term: "RPO",
+    usedByCount: 0,
+  },
+  {
+    archived: true,
+    categoryId: mockId("group", 1),
+    createdByUserId: mockMe.id,
+    definition: 'Superseded by "RTO".',
+    id: mockId("definition", 3),
+    term: "Recovery window",
+    usedByCount: 0,
   },
 ];
 

@@ -4,12 +4,15 @@ import type {
   Appendix,
   CaseNote,
   CaseNotice,
+  ContactBlock,
+  DefinitionEntry,
   Edge,
   Group,
   GroupMapping,
   Organization,
   Policy,
   PolicyVersion,
+  Reference,
   ReportCase,
   RiskAssessment,
   SectionInput,
@@ -53,6 +56,8 @@ import {
   mockAppendixLetter,
   mockAuditRecords,
   mockCategories,
+  mockContactBlocks,
+  mockDefinitions,
   mockDiagnostics,
   mockGroupMappings,
   mockGroups,
@@ -62,6 +67,7 @@ import {
   mockPolicies,
   mockPolicyDetails,
   mockPolicyVersions,
+  mockReferences,
   mockReportCases,
   mockSessions,
   mockSpCertificate,
@@ -110,6 +116,12 @@ let reportCases = structuredClone(mockReportCases);
 let nextCaseNoteSeq = 2;
 let nextCaseMessageSeq = 2;
 let nextCaseNoticeSeq = 3;
+let contactBlocks = [...mockContactBlocks];
+let nextContactBlockSeq = mockContactBlocks.length + 1;
+let definitions = [...mockDefinitions];
+let nextDefinitionSeq = mockDefinitions.length + 1;
+let references = [...mockReferences];
+let nextReferenceSeq = mockReferences.length + 1;
 
 /** How long a mock break-glass grant lasts, matching the real grant's order of magnitude. */
 const BREAK_GLASS_GRANT_MS = 5 * 60 * 1000;
@@ -162,6 +174,45 @@ const requireTemplateVersion = (operation: string, id: string): TemplateVersion 
 
 const replaceTemplateVersion = (updated: TemplateVersion): TemplateVersion => {
   templateVersionList = templateVersionList.map((t) => (t.id === updated.id ? updated : t));
+  return updated;
+};
+
+const requireContactBlock = (operation: string, id: string): ContactBlock => {
+  const block = contactBlocks.find((b) => b.id === id);
+  if (!block) {
+    throw new GatewayError(operation, `contact block ${id} not found`, { code: "NOT_FOUND" });
+  }
+  return block;
+};
+
+const replaceContactBlock = (updated: ContactBlock): ContactBlock => {
+  contactBlocks = contactBlocks.map((b) => (b.id === updated.id ? updated : b));
+  return updated;
+};
+
+const requireDefinition = (operation: string, id: string): DefinitionEntry => {
+  const entry = definitions.find((d) => d.id === id);
+  if (!entry) {
+    throw new GatewayError(operation, `definition ${id} not found`, { code: "NOT_FOUND" });
+  }
+  return entry;
+};
+
+const replaceDefinition = (updated: DefinitionEntry): DefinitionEntry => {
+  definitions = definitions.map((d) => (d.id === updated.id ? updated : d));
+  return updated;
+};
+
+const requireReference = (operation: string, id: string): Reference => {
+  const ref = references.find((r) => r.id === id);
+  if (!ref) {
+    throw new GatewayError(operation, `reference ${id} not found`, { code: "NOT_FOUND" });
+  }
+  return ref;
+};
+
+const replaceReference = (updated: Reference): Reference => {
+  references = references.map((r) => (r.id === updated.id ? updated : r));
   return updated;
 };
 
@@ -658,6 +709,39 @@ export const mockEdge: Edge = {
       thread,
     });
   },
+  contactBlocks: (includeArchived) =>
+    Promise.resolve(includeArchived ? contactBlocks : contactBlocks.filter((b) => !b.archived)),
+  createContactBlock: async (block) => {
+    const created: ContactBlock = {
+      archived: false,
+      department: block.department ?? null,
+      email: block.email ?? null,
+      hours: block.hours ?? null,
+      id: mockId("contact-block", nextContactBlockSeq++),
+      label: block.label,
+      name: block.name ?? null,
+      notes: block.notes ?? null,
+      phone: block.phone ?? null,
+      role: block.role ?? null,
+      usedByCount: 0,
+    };
+    contactBlocks = [...contactBlocks, created];
+    return created;
+  },
+  createDefinition: async (input) => {
+    requireGroup("CreateDefinition", input.categoryId);
+    const created: DefinitionEntry = {
+      archived: false,
+      categoryId: input.categoryId,
+      createdByUserId: me.id,
+      definition: input.definition,
+      id: mockId("definition", nextDefinitionSeq++),
+      term: input.term,
+      usedByCount: 0,
+    };
+    definitions = [...definitions, created];
+    return created;
+  },
   createGroup: async ({ name, parentId, slug }) => {
     if (groups.some((g) => g.parentId === parentId && g.slug === slug)) {
       throw new GatewayError(
@@ -737,6 +821,21 @@ export const mockEdge: Edge = {
     policies = [...policies, created];
     return created;
   },
+  createReference: async (input) => {
+    const created: Reference = {
+      archived: false,
+      body: input.body ?? null,
+      clause: input.clause ?? null,
+      createdByUserId: me.id,
+      id: mockId("reference", nextReferenceSeq++),
+      kind: input.kind,
+      label: input.label,
+      url: input.url ?? null,
+      usedByCount: 0,
+    };
+    references = [...references, created];
+    return created;
+  },
   createTemplate: async (name, ownerCategoryId) => {
     const created: Template = {
       code: `TPL-${String(nextTemplateSeq).padStart(3, "0")}`,
@@ -772,6 +871,12 @@ export const mockEdge: Edge = {
     workflowDefs = [...workflowDefs, created];
     return created;
   },
+  definitions: (categoryId, includeArchived) => {
+    const scoped = categoryId
+      ? definitions.filter((d) => d.categoryId === categoryId)
+      : definitions;
+    return Promise.resolve(includeArchived ? scoped : scoped.filter((d) => !d.archived));
+  },
   deleteAppendix: async (id) => {
     const { version } = requireAppendix("DeleteAppendix", id);
     replaceVersion({
@@ -780,6 +885,16 @@ export const mockEdge: Edge = {
         .filter((a) => a.id !== id)
         .map((a, index) => ({ ...a, letter: mockAppendixLetter(index), orderIndex: index })),
     });
+    return true;
+  },
+  deleteDefinition: async (id) => {
+    const entry = requireDefinition("DeleteDefinition", id);
+    if (entry.usedByCount > 0) {
+      throw new GatewayError("DeleteDefinition", "in use — archive instead of deleting", {
+        code: "FAILED_PRECONDITION",
+      });
+    }
+    definitions = definitions.filter((d) => d.id !== id);
     return true;
   },
   deleteGroup: async (id) => {
@@ -798,6 +913,16 @@ export const mockEdge: Edge = {
   deleteOrganization: async (domain) => {
     requireOrganization("DeleteOrganization", domain);
     organizations = organizations.filter((o) => o.domain !== domain);
+    return true;
+  },
+  deleteReference: async (id) => {
+    const ref = requireReference("DeleteReference", id);
+    if (ref.usedByCount > 0) {
+      throw new GatewayError("DeleteReference", "in use — archive instead of deleting", {
+        code: "FAILED_PRECONDITION",
+      });
+    }
+    references = references.filter((r) => r.id !== id);
     return true;
   },
   deleteTemplate: async (id) => {
@@ -1108,6 +1233,8 @@ export const mockEdge: Edge = {
     });
     return assessment;
   },
+  references: (includeArchived) =>
+    Promise.resolve(includeArchived ? references : references.filter((r) => !r.archived)),
   removeUserFromGroup: async (userId, groupId) => {
     const user = requireUser("RemoveUserFromGroup", userId);
     const membership = user.memberships.find((m) => m.groupId === groupId);
@@ -1239,6 +1366,18 @@ export const mockEdge: Edge = {
     }
     return replaceReportCase({ ...reportCase, status });
   },
+  setContactBlockArchived: async (id, archived) => {
+    const block = requireContactBlock("SetContactBlockArchived", id);
+    return replaceContactBlock({ ...block, archived });
+  },
+  setDefinitionArchived: async (id, archived) => {
+    const entry = requireDefinition("SetDefinitionArchived", id);
+    return replaceDefinition({ ...entry, archived });
+  },
+  setReferenceArchived: async (id, archived) => {
+    const ref = requireReference("SetReferenceArchived", id);
+    return replaceReference({ ...ref, archived });
+  },
   signalWorkflow: async (policyVersionId, runId, taskId, signal, comment) => {
     if (SIGNALS_REQUIRING_COMMENT.has(signal) && comment.trim() === "") {
       throw new GatewayError("SignalWorkflow", "a comment is required for this decision", {
@@ -1346,6 +1485,28 @@ export const mockEdge: Edge = {
     });
     return updated;
   },
+  updateContactBlock: async (id, block) => {
+    const existing = requireContactBlock("UpdateContactBlock", id);
+    return replaceContactBlock({
+      ...existing,
+      department: block.department ?? null,
+      email: block.email ?? null,
+      hours: block.hours ?? null,
+      label: block.label,
+      name: block.name ?? null,
+      notes: block.notes ?? null,
+      phone: block.phone ?? null,
+      role: block.role ?? null,
+    });
+  },
+  updateDefinition: async (id, input) => {
+    const existing = requireDefinition("UpdateDefinition", id);
+    return replaceDefinition({
+      ...existing,
+      definition: input.definition,
+      term: input.term,
+    });
+  },
   updateGroupSettings: async ({
     ackEveryone,
     ackTriggers,
@@ -1392,6 +1553,17 @@ export const mockEdge: Edge = {
       u.userId === me.id ? { ...u, firstName, lastName, name: me.name } : u,
     );
     return Promise.resolve(me);
+  },
+  updateReference: async (id, input) => {
+    const existing = requireReference("UpdateReference", id);
+    return replaceReference({
+      ...existing,
+      body: input.body ?? null,
+      clause: input.clause ?? null,
+      kind: input.kind,
+      label: input.label,
+      url: input.url ?? null,
+    });
   },
   updateTemplateVersionSections: async (id, sections) => {
     const version = requireTemplateVersion("UpdateTemplateVersionSections", id);

@@ -51,5 +51,4 @@ it — see [Who can do what](/concepts/access-model).
 ## ➡️ What comes next
 
 With groups and their defaults in place, see [Who can do what](/concepts/access-model) for how
-access is decided within a group, or move on to
-[Organisations and single sign-on](/admin-guide/organisations-and-sso).
+access is decided within a group, or move on to [Libraries](/admin-guide/libraries).
