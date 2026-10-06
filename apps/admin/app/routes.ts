@@ -12,4 +12,6 @@ export default [
   index("routes/home.tsx"),
   route("sign-in", "routes/sign-in.tsx"),
   route("profile", "routes/profile.tsx"),
+  route("users", "routes/users.tsx"),
+  route("users/:userId", "routes/users.$userId.tsx"),
 ] satisfies RouteConfig;
