@@ -3,6 +3,8 @@
 import {
   ApprovalStatus,
   type AuditRecord,
+  BreachDecision,
+  CaseStatus,
   type Category,
   ComponentStatus,
   DeletionItemKind,
@@ -10,7 +12,11 @@ import {
   DocumentType,
   type Group,
   type GroupMapping,
+  InformationKind,
   type Me,
+  MessageAuthor,
+  NoticeRecipient,
+  NoticeStatus,
   type Organization,
   type PendingTask,
   type Policy,
@@ -18,7 +24,14 @@ import {
   PolicyStatus,
   type PolicyVersion,
   ReferenceKind,
+  ReportAnswer,
+  type ReportCase,
+  ReportKind,
   ReviewCadence,
+  RiskMitigation,
+  RiskRecipient,
+  RiskSuggestion,
+  RiskViewed,
   Sensitivity,
   type Session,
   type SpCertificate,
@@ -946,3 +959,136 @@ export const mockPendingTasks: PendingTask[] = [
 
 /** No future-stage approvals in the fixture set: the "coming to you" section stays empty. */
 export const mockUpcomingApprovals: UpcomingApproval[] = [];
+
+/**
+ * Three cases spanning the queue's statuses: a fresh anonymous report with nothing recorded
+ * yet, a named report an officer is actively working (thread, note, assignee), and a case
+ * that has been through the risk assessment with notices now tracking the notification
+ * deadlines. Officer actions (post message, add note, assign, change status, record the
+ * assessment, add/update a notice, close) mutate these in place for the lifetime of the mock
+ * process, the way the live gateway would.
+ */
+export const mockReportCases: ReportCase[] = [
+  {
+    assigneeUserId: null,
+    attachments: [],
+    caseCode: mockId("case-code", 1),
+    closedAt: null,
+    correctiveActions: [],
+    details: {
+      informationKinds: [InformationKind.Contact],
+      location: "Finance, 3rd floor",
+      occurred: "yesterday afternoon",
+      stillHappening: ReportAnswer.NotSure,
+      whatHappened: "A shared drive folder with client contact lists looked open to everyone.",
+    },
+    discoveredOn: null,
+    id: mockId("case", 1),
+    kind: ReportKind.Anonymous,
+    notes: [],
+    notices: [],
+    outcome: null,
+    receivedAt: "2026-04-01T09:00:00Z",
+    reporterUserId: null,
+    status: CaseStatus.New,
+    thread: [],
+  },
+  {
+    assigneeUserId: mockMe.id,
+    attachments: [],
+    caseCode: mockId("case-code", 2),
+    closedAt: null,
+    correctiveActions: [],
+    details: {
+      informationKinds: [InformationKind.Health],
+      location: "HR office",
+      occurred: "this morning",
+      stillHappening: ReportAnswer.No,
+      whatHappened:
+        "An email with an employee's medical leave details was sent to the whole team by mistake.",
+    },
+    discoveredOn: "2026-04-05",
+    id: mockId("case", 2),
+    kind: ReportKind.Named,
+    notes: [
+      {
+        authorUserId: mockMe.id,
+        body: "Confirmed the email reached 14 people; asking IT whether it can still be recalled.",
+        createdAt: "2026-04-05T10:05:00Z",
+        id: mockId("case-note", 1),
+      },
+    ],
+    notices: [],
+    outcome: null,
+    receivedAt: "2026-04-05T09:40:00Z",
+    reporterUserId: mockUsers[1]?.id ?? mockId("user", 2),
+    status: CaseStatus.InReview,
+    thread: [
+      {
+        author: MessageAuthor.Officer,
+        body: "Thank you for the report. Could you tell us roughly how many people received the email?",
+        createdAt: "2026-04-05T10:00:00Z",
+        id: mockId("case-message", 1),
+        officerUserId: mockMe.id,
+      },
+    ],
+  },
+  {
+    assigneeUserId: mockMe.id,
+    attachments: [],
+    caseCode: mockId("case-code", 3),
+    closedAt: null,
+    correctiveActions: [],
+    details: {
+      informationKinds: [InformationKind.Financial, InformationKind.Contact],
+      location: "Remote — a lost laptop",
+      occurred: "last week",
+      stillHappening: ReportAnswer.No,
+      whatHappened: "An unencrypted laptop holding a vendor payment list was lost in transit.",
+    },
+    discoveredOn: "2026-03-20",
+    id: mockId("case", 3),
+    kind: ReportKind.Anonymous,
+    notes: [],
+    notices: [
+      {
+        daysAllowed: 60,
+        dueOn: "2026-05-19",
+        id: mockId("case-notice", 1),
+        label: "Affected people",
+        method: "Email",
+        recipient: NoticeRecipient.AffectedPeople,
+        sentOn: null,
+        status: NoticeStatus.NotSent,
+      },
+      {
+        daysAllowed: 60,
+        dueOn: "2026-05-19",
+        id: mockId("case-notice", 2),
+        label: "Regulator",
+        method: "Letter",
+        recipient: NoticeRecipient.Regulator,
+        sentOn: null,
+        status: NoticeStatus.Draft,
+      },
+    ],
+    outcome: null,
+    receivedAt: "2026-03-20T14:00:00Z",
+    reporterUserId: null,
+    status: CaseStatus.NotificationDue,
+    thread: [],
+    assessment: {
+      decidedAt: "2026-03-21T11:00:00Z",
+      decidedByUserId: mockMe.id,
+      decision: BreachDecision.Reportable,
+      factors: {
+        information: [InformationKind.Financial, InformationKind.Contact],
+        mitigation: RiskMitigation.NotAtAll,
+        recipient: RiskRecipient.UnknownPeople,
+        viewed: RiskViewed.Probably,
+      },
+      reason: "The laptop was unencrypted and not recovered; a vendor payment list is sensitive.",
+      suggestion: RiskSuggestion.NotificationLikelyRequired,
+    },
+  },
+];

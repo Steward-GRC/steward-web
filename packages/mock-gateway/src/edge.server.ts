@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 import type {
   Appendix,
+  CaseNote,
+  CaseNotice,
   Edge,
   Group,
   GroupMapping,
   Organization,
   Policy,
   PolicyVersion,
+  ReportCase,
+  RiskAssessment,
+  ThreadMessage,
   User,
   UserDeletionPreview,
   WorkflowStatus,
@@ -17,10 +22,16 @@ import {
   AiJobPhase,
   ApprovalStatus,
   AssistOperation,
+  BreachDecision,
+  CaseStatus,
   DocumentType,
   GatewayError,
+  MessageAuthor,
+  NoticeRecipient,
+  NoticeStatus,
   PolicyStatus,
   ReviewCadence,
+  RiskSuggestion,
   SignalType,
 } from "@steward-web/api-client";
 
@@ -38,6 +49,7 @@ import {
   mockPolicies,
   mockPolicyDetails,
   mockPolicyVersions,
+  mockReportCases,
   mockSessions,
   mockSpCertificate,
   mockTemplates,
@@ -74,6 +86,10 @@ let policies = [...mockPolicies];
 let policyVersions = [...mockPolicyVersions];
 let pendingTasks = [...mockPendingTasks];
 let workflowStatuses = structuredClone(mockWorkflowStatuses);
+let reportCases = structuredClone(mockReportCases);
+let nextCaseNoteSeq = 2;
+let nextCaseMessageSeq = 2;
+let nextCaseNoticeSeq = 3;
 
 /** How long a mock break-glass grant lasts, matching the real grant's order of magnitude. */
 const BREAK_GLASS_GRANT_MS = 5 * 60 * 1000;
@@ -165,6 +181,60 @@ const replaceVersion = (updated: PolicyVersion): PolicyVersion => {
   policyVersions = policyVersions.map((v) => (v.id === updated.id ? updated : v));
   return updated;
 };
+
+const requireReportCase = (operation: string, caseId: string): ReportCase => {
+  const found = reportCases.find((c) => c.id === caseId);
+  if (!found) throw new GatewayError(operation, `case ${caseId} not found`, { code: "NOT_FOUND" });
+  return found;
+};
+
+const replaceReportCase = (updated: ReportCase): ReportCase => {
+  reportCases = reportCases.map((c) => (c.id === updated.id ? updated : c));
+  return updated;
+};
+
+/** Adds `days` to an ISO `YYYY-MM-DD` date, as the real service would when a notice's
+ *  deadline is set (or moved) from the case's discovery date. */
+const addDaysISO = (dateIso: string, days: number): string => {
+  const d = new Date(`${dateIso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+/** The next unmet deadline across a case's notices, or null once every notice is sent or
+ *  not needed — same shape as `CaseQueue.cases[].nextDeadline`. */
+const nextDeadlineOf = (reportCase: ReportCase): null | string => {
+  const open = reportCase.notices.filter(
+    (n) => n.status !== NoticeStatus.Sent && n.status !== NoticeStatus.NotNeeded,
+  );
+  if (open.length === 0) return null;
+  return open.map((n) => n.dueOn).sort()[0]!;
+};
+
+/** A one-line summary for the case queue: the reporter's own words, trimmed to a readable
+ *  length — the mock's stand-in for whatever summarising the real service does. */
+const caseSummaryOf = (reportCase: ReportCase): string => {
+  const text = reportCase.details.whatHappened;
+  return text.length > 96 ? `${text.slice(0, 95)}…` : text;
+};
+
+const DEFAULT_NOTICE_LABEL: Record<NoticeRecipient, string> = {
+  AFFECTED_PEOPLE: "Affected people",
+  MEDIA: "Media",
+  OTHER: "Other",
+  REGULATOR: "Regulator",
+};
+
+const DEFAULT_NOTICE_METHOD: Record<NoticeRecipient, string> = {
+  AFFECTED_PEOPLE: "Email",
+  MEDIA: "Press release",
+  OTHER: "Letter",
+  REGULATOR: "Letter",
+};
+
+/** Notice deadlines are counted from the discovery date; 60 days when none is set (the
+ *  configured default — see the reporting service's notification tracker). */
+const NOTICE_DAYS_ALLOWED = 60;
 
 const requireDraftVersion = (operation: string, policyId: string): PolicyVersion => {
   const policy = requirePolicy(operation, policyId);
@@ -310,6 +380,36 @@ export const mockEdge: Edge = {
     replaceVersion({ ...version, appendices: [...version.appendices, appendix] });
     return appendix;
   },
+  addCaseNote: async (caseId, body) => {
+    const reportCase = requireReportCase("AddCaseNote", caseId);
+    const note: CaseNote = {
+      authorUserId: me.id,
+      body,
+      createdAt: new Date().toISOString(),
+      id: mockId("case-note", nextCaseNoteSeq++),
+    };
+    replaceReportCase({ ...reportCase, notes: [...reportCase.notes, note] });
+    return note;
+  },
+  addCaseNotice: async (caseId, recipient, label, method) => {
+    const reportCase = requireReportCase("AddCaseNotice", caseId);
+    const dueOn = addDaysISO(
+      reportCase.discoveredOn ?? new Date().toISOString().slice(0, 10),
+      NOTICE_DAYS_ALLOWED,
+    );
+    const notice: CaseNotice = {
+      daysAllowed: NOTICE_DAYS_ALLOWED,
+      dueOn,
+      id: mockId("case-notice", nextCaseNoticeSeq++),
+      label: label || DEFAULT_NOTICE_LABEL[recipient],
+      method: method || DEFAULT_NOTICE_METHOD[recipient],
+      recipient,
+      sentOn: null,
+      status: NoticeStatus.NotSent,
+    };
+    replaceReportCase({ ...reportCase, notices: [...reportCase.notices, notice] });
+    return notice;
+  },
   addGroupMapping: async (connectionId, idpGroupClaimValue, targetGroupId) => {
     const mapping: GroupMapping = {
       connectionId,
@@ -369,6 +469,10 @@ export const mockEdge: Edge = {
     }
     return { operation: "DRAFT", resultJson: job.resultJson };
   },
+  assignCase: async (caseId, assigneeUserId) => {
+    const reportCase = requireReportCase("AssignCase", caseId);
+    return replaceReportCase({ ...reportCase, assigneeUserId: assigneeUserId ?? null });
+  },
   auditLog: ({ actorUserId, groupId, pageSize, subject, tier } = {}) => {
     const filtered = mockAuditRecords
       .filter((r) => !tier || r.tier === tier)
@@ -410,6 +514,34 @@ export const mockEdge: Edge = {
       protocol,
       testPassed: false,
       verified: false,
+    });
+  },
+  closeCase: async (caseId, outcome, correctiveActions, closingMessage) => {
+    const reportCase = requireReportCase("CloseCase", caseId);
+    if (reportCase.status === CaseStatus.Closed) {
+      throw new GatewayError("CloseCase", "this case is already closed", {
+        code: "FAILED_PRECONDITION",
+      });
+    }
+    const thread = closingMessage
+      ? [
+          ...reportCase.thread,
+          {
+            author: MessageAuthor.Officer,
+            body: closingMessage,
+            createdAt: new Date().toISOString(),
+            id: mockId("case-message", nextCaseMessageSeq++),
+            officerUserId: me.id,
+          } satisfies ThreadMessage,
+        ]
+      : reportCase.thread;
+    return replaceReportCase({
+      ...reportCase,
+      closedAt: new Date().toISOString(),
+      correctiveActions: correctiveActions ? [...correctiveActions] : [],
+      outcome,
+      status: CaseStatus.Closed,
+      thread,
     });
   },
   createGroup: async ({ name, parentId, slug }) => {
@@ -676,6 +808,18 @@ export const mockEdge: Edge = {
     Promise.resolve(
       policyDetails.find((d) => d.documentType === documentType && d.number === number) ?? null,
     ),
+  postCaseMessage: async (caseId, body) => {
+    const reportCase = requireReportCase("PostCaseMessage", caseId);
+    const message: ThreadMessage = {
+      author: MessageAuthor.Officer,
+      body,
+      createdAt: new Date().toISOString(),
+      id: mockId("case-message", nextCaseMessageSeq++),
+      officerUserId: me.id,
+    };
+    replaceReportCase({ ...reportCase, thread: [...reportCase.thread, message] });
+    return message;
+  },
   previewUserDeletion: async (userId) => {
     const user = requireUser("PreviewUserDeletion", userId);
     const fallback: UserDeletionPreview = {
@@ -709,6 +853,32 @@ export const mockEdge: Edge = {
     });
     return published;
   },
+  recordRiskAssessment: async (caseId, factors, decision, reason) => {
+    const reportCase = requireReportCase("RecordRiskAssessment", caseId);
+    // The real suggestion weighs several factors; this mock approximates it from the
+    // officer's own decision so the UI has something to render, not a faithful rule engine.
+    const suggestion =
+      decision === BreachDecision.Reportable
+        ? RiskSuggestion.NotificationLikelyRequired
+        : RiskSuggestion.LowProbabilityOfCompromise;
+    const assessment: RiskAssessment = {
+      decidedAt: new Date().toISOString(),
+      decidedByUserId: me.id,
+      decision,
+      factors: { ...factors },
+      reason,
+      suggestion,
+    };
+    // Design rule: a reportable decision moves the case to "Notification due"; not
+    // reportable moves it back to "In review".
+    replaceReportCase({
+      ...reportCase,
+      assessment,
+      status:
+        decision === BreachDecision.Reportable ? CaseStatus.NotificationDue : CaseStatus.InReview,
+    });
+    return assessment;
+  },
   renameGroup: async (id, name, slug) => {
     const group = requireGroup("RenameGroup", id);
     if (groups.some((g) => g.id !== id && g.parentId === group.parentId && g.slug === slug)) {
@@ -736,6 +906,31 @@ export const mockEdge: Edge = {
     });
     replaceVersion({ ...version, appendices: reordered });
     return reordered;
+  },
+  reportCase: (caseId) => Promise.resolve(requireReportCase("ReportCase", caseId)),
+  reportCases: (statuses, assigneeUserId) => {
+    const filtered = reportCases.filter(
+      (c) =>
+        (!statuses || statuses.includes(c.status)) &&
+        (!assigneeUserId || c.assigneeUserId === assigneeUserId),
+    );
+    const counts = Object.values(CaseStatus).map((status) => ({
+      count: reportCases.filter((c) => c.status === status).length,
+      status,
+    }));
+    return Promise.resolve({
+      cases: filtered.map((c) => ({
+        assigneeUserId: c.assigneeUserId,
+        caseCode: c.caseCode,
+        id: c.id,
+        kind: c.kind,
+        nextDeadline: nextDeadlineOf(c),
+        receivedAt: c.receivedAt,
+        status: c.status,
+        summary: caseSummaryOf(c),
+      })),
+      counts,
+    });
   },
   revokeRole: async (userId, role) => {
     const user = requireUser("RevokeRole", userId);
