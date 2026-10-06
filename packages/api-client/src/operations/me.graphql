@@ -1,6 +1,6 @@
 query Me {
   me {
-    id
+    userId
     username
     name
     firstName

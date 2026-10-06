@@ -119,7 +119,7 @@ export default function Users({ loaderData }: Route.ComponentProps) {
                   )}
                 </TD>
                 <TD className="text-muted">
-                  {user.adGroups.length === 0 ? "—" : user.adGroups.join(", ")}
+                  {user.idpGroups.length === 0 ? "—" : user.idpGroups.join(", ")}
                 </TD>
               </tr>
             ))}

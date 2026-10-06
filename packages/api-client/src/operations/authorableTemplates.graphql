@@ -1,6 +1,0 @@
-query AuthorableTemplates($ownerGroupId: ID) {
-  authorableTemplates(ownerGroupId: $ownerGroupId) {
-    id
-    name
-  }
-}

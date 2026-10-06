@@ -1,5 +1,5 @@
-query Policies($documentType: DocumentType!) {
-  policies(documentType: $documentType) {
+query Policies($categoryId: ID!, $documentType: DocumentType) {
+  policies(categoryId: $categoryId, includeDescendants: true, documentType: $documentType) {
     ...AuthoringPolicyFields
   }
 }

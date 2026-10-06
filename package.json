@@ -30,7 +30,8 @@
     "format:check": "prettier --check .",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:no-mock-leak": "node scripts/check-no-mock-leak.mjs",
-    "check": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:no-mock-leak"
+    "check:schema": "bash packages/api-client/scripts/schema-check.sh",
+    "check": "pnpm run check:schema && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:no-mock-leak"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

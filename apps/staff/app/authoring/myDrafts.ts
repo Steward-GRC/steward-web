@@ -7,13 +7,14 @@
 /** How many drafts the list shows before "Show all (N)" is offered. */
 export const DRAFTS_COLLAPSED_CAP = 5;
 
-type DraftRow = { number: string; title: string; updated: string };
+type DraftRow = { number: string; title: string; updated: null | string };
 
 /** Most-recent first (an ISO timestamp string compares correctly lexically); ties break on
- *  number for a stable order. Returns a new array — never mutates the caller's list. */
+ *  number for a stable order, and a draft with no recorded update time sorts last. Returns a
+ *  new array — never mutates the caller's list. */
 export const sortDraftsByRecent = <T extends DraftRow>(drafts: readonly T[]): T[] =>
   [...drafts].toSorted(
-    (a, b) => b.updated.localeCompare(a.updated) || a.number.localeCompare(b.number),
+    (a, b) => (b.updated ?? "").localeCompare(a.updated ?? "") || a.number.localeCompare(b.number),
   );
 
 /** Case-insensitive filter by title or number. A blank/whitespace query returns the list

@@ -99,6 +99,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
           ) as AssistOperation,
           policyId,
           sectionKey,
+          versionId: String(form.get("versionId") ?? ""),
         });
         return data({ intent, ok: true, sectionKey, suggestion: result.suggestion } as const);
       }
@@ -137,6 +138,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const { jobId } = await submitPolicyReview(request, {
           policyId,
           sections: sections.map((s) => ({ content: s.text, key: s.sectionKey, title: s.title })),
+          versionId: String(form.get("versionId") ?? ""),
         });
         return data({ intent, jobId, ok: true } as const);
       }
@@ -420,6 +422,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
                 <DialogContent title={tAi("review.title")}>
                   <reviewFetcher.Form method="post">
                     <input name="intent" type="hidden" value="review" />
+                    <input name="versionId" type="hidden" value={draft?.id ?? ""} />
                     <input name="sectionsJson" type="hidden" value={sectionsJson} />
                     <DialogFooter>
                       <Button disabled={reviewFetcher.state !== "idle"} type="submit">
@@ -539,6 +542,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
                 method="post"
               >
                 <input name="intent" type="hidden" value="assist" />
+                <input name="versionId" type="hidden" value={draft?.id ?? ""} />
                 <input name="sectionKey" type="hidden" value={section.sectionKey} />
                 <input name="editableContent" type="hidden" value={section.text} />
                 <Field label={tAi("assist.operationLabel")}>

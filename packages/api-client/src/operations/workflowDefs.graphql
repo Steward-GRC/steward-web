@@ -1,0 +1,6 @@
+query WorkflowDefs {
+  workflowDefs {
+    id
+    name
+  }
+}

@@ -8,7 +8,12 @@ query PreviewUserDeletion($userId: ID!) {
       ownedPolicies
       raciGrants
       roles
-      accessRows
+      permissions
+      groupMemberships
+      idpGroups
+      policyOverrides
+      breakGlassGrants
+      managedGroups
     }
     items {
       kind
