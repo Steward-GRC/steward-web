@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  AccountMergePreview,
   AddOrganizationInput,
   AiHealth,
   AiJobResult,
@@ -25,6 +26,7 @@ import type {
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
+  MergeAccountsResult,
   NoticeRecipient,
   NoticeStatus,
   Organization,
@@ -54,6 +56,7 @@ import type {
   Template,
   TemplateVersion,
   User,
+  UserLabel,
   UserPage,
   Workflow,
 } from "./views";
@@ -61,6 +64,7 @@ import type {
 import { DocumentType } from "./generated/schema";
 
 export type {
+  AccountMergePreview,
   AddOrganizationInput,
   AiHealth,
   AiJobResult,
@@ -84,6 +88,11 @@ export type {
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
+  MergeAccountsResult,
+  MergeCounts,
+  MergePreviewItem,
+  MergeStepResult,
+  MergeWarning,
   Organization,
   PendingTask,
   PolicyVersion,
@@ -112,6 +121,9 @@ export {
   CaseStatus,
   DocumentType,
   InformationKind,
+  MergeItemKind,
+  MergeStatus,
+  MergeStepStatus,
   MessageAuthor,
   NoticeRecipient,
   NoticeStatus,
@@ -126,6 +138,7 @@ export {
   Sensitivity,
   SignalType,
 } from "./generated/schema";
+export type { UserLabel } from "./views";
 export type {
   AckStatus,
   BreakGlassGrant,
@@ -222,6 +235,9 @@ export interface Edge {
   ): Promise<GroupMapping>;
   /** Registers a new organisation SSO connection, unverified and disabled. Site-admin only. */
   addOrganization(input: AddOrganizationInput, cookie?: string): Promise<Organization>;
+  /** Adds a MANUAL membership to a platform group. Authorized for site-admins and for a LOCAL
+   *  group-manager of groupId; refuses an IdP-synced membership. */
+  addUserToGroup(userId: string, groupId: string, cookie?: string): Promise<User>;
   /** Whether AI is usable right now for the calling user. Never rejects; see `AiHealth.reason`. */
   aiHealth(cookie?: string): Promise<AiHealth>;
   /** Polls an async AI job's status by id. */
@@ -321,8 +337,27 @@ export interface Edge {
   latestTemplateVersion(templateId: string, cookie?: string): Promise<null | TemplateVersion>;
   /** A user's sessions, site-admin only. */
   listUserSessions(userId: string, cookie?: string): Promise<readonly Session[]>;
+  /** The DIRECT members of a platform group, for the group-manager "My groups" editor.
+   *  Authorized for site-admins AND for a LOCAL group-manager of groupId (unlike the
+   *  site-admin-only `users` query). Each `User` carries `memberships` so the caller can mark
+   *  IdP-synced memberships read-only. */
+  managedGroupMembers(groupId: string, cookie?: string): Promise<readonly User[]>;
   /** The signed-in user, or `null` when the session cookie is missing or expired. */
   me(cookie?: string): Promise<Me | null>;
+  /**
+   * Merges sourceUserId INTO targetUserId: owned policies re-pointed, RACI grants rewritten,
+   * acknowledgments moved/deduped, workflow items reassigned, preferences moved, in one
+   * auditable admin op. `confirmPrivileged` must be true when the preview's
+   * `requiresPrivilegedConfirm` is set; `idempotencyKey` makes the call safe to retry.
+   * Site-admin only.
+   */
+  mergeAccounts(
+    sourceUserId: string,
+    targetUserId: string,
+    confirmPrivileged?: boolean,
+    idempotencyKey?: string,
+    cookie?: string,
+  ): Promise<MergeAccountsResult>;
   /** Mints a scoped, time-bound Test-IdP link someone else can open to test a connection
    *  (e.g. a user at the organisation being onboarded, who the admin isn't a user of the
    *  IdP of). The result records back under the connection as the minting admin's test.
@@ -352,6 +387,17 @@ export interface Edge {
   ): Promise<null | PolicyDetail>;
   /** Posts a message the reporter can see in the two-way thread. Officers only. */
   postCaseMessage(caseId: string, body: string, cookie?: string): Promise<ThreadMessage>;
+  /**
+   * A read-only, side-effect-free projection of what merging sourceUserId INTO targetUserId
+   * would move/dedupe, plus any warnings and whether the merge requires a privileged
+   * confirmation. Surfaced before `mergeAccounts` so the operation can be reviewed. Site-admin
+   * only.
+   */
+  previewAccountMerge(
+    sourceUserId: string,
+    targetUserId: string,
+    cookie?: string,
+  ): Promise<AccountMergePreview>;
   /** A read-only dry run of `deleteUser`. Site-admin only. */
   previewUserDeletion(userId: string, cookie?: string): Promise<UserDeletionPreview>;
   /** Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content. */
@@ -366,6 +412,9 @@ export interface Edge {
     reason: string,
     cookie?: string,
   ): Promise<RiskAssessment>;
+  /** Removes a MANUAL membership from a platform group. Authorized for site-admins and for a
+   *  LOCAL group-manager of groupId; refuses an IdP-synced membership (it is read-only here). */
+  removeUserFromGroup(userId: string, groupId: string, cookie?: string): Promise<User>;
   /** Renames a group (name and slug). Site-admin only. */
   renameGroup(id: string, name: string, slug: string, cookie?: string): Promise<Group>;
   /** Renames a template. Template-level, non-versioned: does not create a new template version. Site-admin only. */
@@ -398,6 +447,9 @@ export interface Edge {
     templateVersionId: null | string,
     cookie?: string,
   ): Promise<PolicyVersion>;
+  /** A lightweight typeahead: any authenticated caller, id+name(+email) pairs for users whose
+   *  email contains `query`. Never enumerates the full directory. */
+  searchUsers(query: string, limit?: number, cookie?: string): Promise<readonly UserLabel[]>;
   /** Sets the discovery date every notification deadline counts from. Officers only. */
   setCaseDiscoveryDate(caseId: string, discoveredOn: string, cookie?: string): Promise<ReportCase>;
   /** Any status but CLOSED; closing goes through `closeCase`. Officers only. */

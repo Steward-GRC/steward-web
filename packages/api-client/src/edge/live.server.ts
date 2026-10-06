@@ -13,6 +13,7 @@ import {
   AddCaseNoticeDocument,
   AddGroupMappingDocument,
   AddOrganizationDocument,
+  AddUserToGroupDocument,
   AiHealthDocument,
   AiJobDocument,
   AiJobResultContentDocument,
@@ -50,7 +51,9 @@ import {
   IssueCollabTokenDocument,
   LatestTemplateVersionDocument,
   ListUserSessionsDocument,
+  ManagedGroupMembersDocument,
   MeDocument,
+  MergeAccountsDocument,
   MoveCategoryDocument,
   MyDraftsDocument,
   OrganizationsDocument,
@@ -62,11 +65,13 @@ import {
   PolicyVersionDocument,
   PolicyVersionsDocument,
   PostCaseMessageDocument,
+  PreviewAccountMergeDocument,
   PreviewUserDeletionDocument,
   PublishDraftDocument,
   PublishTemplateVersionDocument,
   RecordAckDocument,
   RecordRiskAssessmentDocument,
+  RemoveUserFromGroupDocument,
   RenameCategoryDocument,
   RenameTemplateDocument,
   ReorderAppendicesDocument,
@@ -76,6 +81,7 @@ import {
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
   SaveDraftDocument,
+  SearchUsersDocument,
   SetCaseDiscoveryDateDocument,
   SetCaseStatusDocument,
   SetCategoryDefaultsDocument,
@@ -180,6 +186,7 @@ const toMe = (user: {
   email: string;
   firstName: string;
   lastName: string;
+  managedGroupIds: readonly string[];
   name: string;
   permissions: readonly string[];
   roles: readonly string[];
@@ -190,6 +197,7 @@ const toMe = (user: {
   firstName: user.firstName,
   id: user.userId,
   lastName: user.lastName,
+  managedGroupIds: user.managedGroupIds,
   name: user.name,
   permissions: user.permissions,
   roles: user.roles,
@@ -340,6 +348,12 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.addOrganization;
+  },
+  async addUserToGroup(userId, groupId, cookie) {
+    const data = await gatewayFetch(AddUserToGroupDocument, { groupId, userId }, "AddUserToGroup", {
+      cookie,
+    });
+    return data.addUserToGroup;
   },
   async aiHealth(cookie) {
     const data = await gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie });
@@ -609,6 +623,15 @@ export const liveEdge: Edge = {
     });
     return data.listUserSessions;
   },
+  async managedGroupMembers(groupId, cookie) {
+    const data = await gatewayFetch(
+      ManagedGroupMembersDocument,
+      { groupId },
+      "ManagedGroupMembers",
+      { cookie },
+    );
+    return data.managedGroupMembers;
+  },
   async me(cookie) {
     try {
       const { me } = await gatewayFetch(MeDocument, {}, "Me", { cookie });
@@ -617,6 +640,20 @@ export const liveEdge: Edge = {
       if (isUnauthenticated(error)) return null;
       throw error;
     }
+  },
+  async mergeAccounts(sourceUserId, targetUserId, confirmPrivileged, idempotencyKey, cookie) {
+    const data = await gatewayFetch(
+      MergeAccountsDocument,
+      {
+        confirmPrivileged: confirmPrivileged ?? null,
+        idempotencyKey: idempotencyKey ?? null,
+        sourceUserId,
+        targetUserId,
+      },
+      "MergeAccounts",
+      { cookie },
+    );
+    return data.mergeAccounts;
   },
   async mintSsoTestLink(input, cookie) {
     return gatewayRestFetch(
@@ -682,6 +719,15 @@ export const liveEdge: Edge = {
     });
     return data.postCaseMessage;
   },
+  async previewAccountMerge(sourceUserId, targetUserId, cookie) {
+    const data = await gatewayFetch(
+      PreviewAccountMergeDocument,
+      { sourceUserId, targetUserId },
+      "PreviewAccountMerge",
+      { cookie },
+    );
+    return data.previewAccountMerge;
+  },
   async previewUserDeletion(userId, cookie) {
     const data = await gatewayFetch(
       PreviewUserDeletionDocument,
@@ -714,6 +760,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.recordRiskAssessment;
+  },
+  async removeUserFromGroup(userId, groupId, cookie) {
+    const data = await gatewayFetch(
+      RemoveUserFromGroupDocument,
+      { groupId, userId },
+      "RemoveUserFromGroup",
+      { cookie },
+    );
+    return data.removeUserFromGroup;
   },
   async renameGroup(id, name, slug, cookie) {
     const data = await gatewayFetch(RenameCategoryDocument, { id, name, slug }, "RenameCategory", {
@@ -776,6 +831,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.saveDraft;
+  },
+  async searchUsers(query, limit, cookie) {
+    const data = await gatewayFetch(
+      SearchUsersDocument,
+      { limit: limit ?? null, query },
+      "SearchUsers",
+      { cookie },
+    );
+    return data.searchUsers;
   },
   async setCaseDiscoveryDate(caseId, discoveredOn, cookie) {
     const data = await gatewayFetch(

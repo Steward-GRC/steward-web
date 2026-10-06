@@ -16,6 +16,7 @@ describe("identityFromRequest", () => {
     const fetchSpy = vi.fn().mockResolvedValue(
       meResponse({
         email: "a@example.com",
+        managedGroupIds: [],
         name: "Ada",
         permissions: ["policy.read"],
         roles: ["reader"],
@@ -76,6 +77,7 @@ describe("requirePermissionFromRequest", () => {
       vi.fn().mockResolvedValue(
         meResponse({
           email: "a@example.com",
+          managedGroupIds: [],
           name: "Ada",
           permissions: [],
           roles: ["reader"],
@@ -100,6 +102,7 @@ describe("requirePermissionFromRequest", () => {
       vi.fn().mockResolvedValue(
         meResponse({
           email: "a@example.com",
+          managedGroupIds: [],
           name: "Ada",
           permissions: ["admin.manage"],
           roles: ["site-admin"],

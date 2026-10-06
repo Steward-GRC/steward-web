@@ -29,6 +29,7 @@ import {
   CaseStatus,
   DocumentType,
   GatewayError,
+  MergeStatus,
   MessageAuthor,
   NoticeRecipient,
   NoticeStatus,
@@ -482,6 +483,15 @@ export const mockEdge: Edge = {
     organizations = [...organizations, created];
     return created;
   },
+  addUserToGroup: async (userId, groupId) => {
+    const user = requireUser("AddUserToGroup", userId);
+    requireGroup("AddUserToGroup", groupId);
+    if (user.memberships.some((m) => m.groupId === groupId)) return user;
+    return replaceUser({
+      ...user,
+      memberships: [...user.memberships, { groupId, source: "manual" }],
+    });
+  },
   aiHealth: () =>
     Promise.resolve(
       mockAiConfig.enabled
@@ -846,7 +856,34 @@ export const mockEdge: Edge = {
   latestTemplateVersion: (templateId) =>
     Promise.resolve(latestTemplateVersionFor(templateId) ?? null),
   listUserSessions: (userId) => Promise.resolve(sessions[userId] ?? []),
+  managedGroupMembers: (groupId) => {
+    requireGroup("ManagedGroupMembers", groupId);
+    return Promise.resolve(users.filter((u) => u.memberships.some((m) => m.groupId === groupId)));
+  },
   me: () => Promise.resolve(me),
+  mergeAccounts: async (sourceUserId, targetUserId) => {
+    const source = requireUser("MergeAccounts", sourceUserId);
+    requireUser("MergeAccounts", targetUserId);
+    replaceUser({
+      ...source,
+      deletedAt: new Date().toISOString(),
+      enabled: false,
+      mergedIntoUserId: targetUserId,
+    });
+    return {
+      counts: {
+        acknowledgmentsDeduped: 0,
+        acknowledgmentsMoved: 0,
+        policiesOwned: 0,
+        preferences: 0,
+        raciGrants: 0,
+        workflowItems: 0,
+      },
+      mergeOperationId: mockId("merge-operation", 1),
+      status: MergeStatus.Completed,
+      steps: [],
+    };
+  },
   mintSsoTestLink: async (input) => {
     if (!organizations.some((o) => o.connectionId === input.connectionId)) {
       throw new GatewayError("MintSsoTestLink", `connection ${input.connectionId} not found`, {
@@ -915,6 +952,25 @@ export const mockEdge: Edge = {
     };
     replaceReportCase({ ...reportCase, thread: [...reportCase.thread, message] });
     return message;
+  },
+  previewAccountMerge: (sourceUserId, targetUserId) => {
+    requireUser("PreviewAccountMerge", sourceUserId);
+    requireUser("PreviewAccountMerge", targetUserId);
+    return Promise.resolve({
+      counts: {
+        acknowledgmentsDeduped: 0,
+        acknowledgmentsMoved: 0,
+        policiesOwned: 0,
+        preferences: 0,
+        raciGrants: 0,
+        workflowItems: 0,
+      },
+      items: [],
+      requiresPrivilegedConfirm: false,
+      sourceUserId,
+      targetUserId,
+      warnings: [],
+    });
   },
   previewUserDeletion: async (userId) => {
     const user = requireUser("PreviewUserDeletion", userId);
@@ -989,6 +1045,21 @@ export const mockEdge: Edge = {
         decision === BreachDecision.Reportable ? CaseStatus.NotificationDue : CaseStatus.InReview,
     });
     return assessment;
+  },
+  removeUserFromGroup: async (userId, groupId) => {
+    const user = requireUser("RemoveUserFromGroup", userId);
+    const membership = user.memberships.find((m) => m.groupId === groupId);
+    if (membership?.source === "idp-sync") {
+      throw new GatewayError(
+        "RemoveUserFromGroup",
+        "a membership synced from the identity provider can't be removed here",
+        { code: "FAILED_PRECONDITION" },
+      );
+    }
+    return replaceUser({
+      ...user,
+      memberships: user.memberships.filter((m) => m.groupId !== groupId),
+    });
   },
   renameGroup: async (id, name, slug) => {
     const group = requireGroup("RenameGroup", id);
@@ -1085,6 +1156,13 @@ export const mockEdge: Edge = {
     policyVersions = [...policyVersions, created];
     replacePolicy({ ...policy, currentDraftVersionId: created.id });
     return created;
+  },
+  searchUsers: (query, limit) => {
+    const needle = query.trim().toLowerCase();
+    const matches = users.filter((u) => u.email.toLowerCase().includes(needle));
+    return Promise.resolve(
+      matches.slice(0, limit ?? 20).map((u) => ({ email: u.email, id: u.userId, name: u.name })),
+    );
   },
   setCaseDiscoveryDate: async (caseId, discoveredOn) => {
     const reportCase = requireReportCase("SetCaseDiscoveryDate", caseId);

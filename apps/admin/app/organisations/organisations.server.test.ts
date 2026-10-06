@@ -26,6 +26,7 @@ import {
 const siteAdminMe = {
   email: "admin@example.com",
   id: "u-admin",
+  managedGroupIds: [],
   name: "Admin",
   permissions: ["settings.manage"],
   roles: ["site-admin"],
@@ -35,6 +36,7 @@ const siteAdminMe = {
 const readerMe = {
   email: "reader@example.com",
   id: "u-reader",
+  managedGroupIds: [],
   name: "Reader",
   permissions: [],
   roles: ["reader"],
