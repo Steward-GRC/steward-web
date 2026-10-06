@@ -1,0 +1,28 @@
+fragment AuthoringPolicyFields on Policy {
+  id
+  number
+  title
+  documentType
+  sensitivity
+  category
+  subcategory
+  status
+  version
+  updated
+  ownerUserId
+  homeGroupId
+  templateId
+  templateNone
+  currentDraftVersionId
+  currentPublishedVersionId
+  retiredAt
+  viewerCan {
+    read
+    edit
+    submit
+    approve
+    contentObfuscated
+    canBreakGlass
+    ack
+  }
+}

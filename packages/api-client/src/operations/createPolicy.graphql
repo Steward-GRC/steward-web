@@ -1,0 +1,17 @@
+mutation CreatePolicy(
+  $homeGroupId: ID!
+  $title: String!
+  $sensitivity: Sensitivity!
+  $templateId: ID
+  $documentType: DocumentType
+) {
+  createPolicy(
+    homeGroupId: $homeGroupId
+    title: $title
+    sensitivity: $sensitivity
+    templateId: $templateId
+    documentType: $documentType
+  ) {
+    ...AuthoringPolicyFields
+  }
+}

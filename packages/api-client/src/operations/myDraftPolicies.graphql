@@ -1,0 +1,5 @@
+query MyDraftPolicies {
+  myDraftPolicies {
+    ...AuthoringPolicyFields
+  }
+}

@@ -1,17 +1,29 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  Appendix,
   Edge,
   Group,
   GroupMapping,
   Organization,
+  Policy,
+  PolicyVersion,
   User,
   UserDeletionPreview,
 } from "@steward-web/api-client";
 
-import { GatewayError, ReviewCadence } from "@steward-web/api-client";
+import {
+  AiJobPhase,
+  AssistOperation,
+  DocumentType,
+  GatewayError,
+  PolicyStatus,
+  ReviewCadence,
+} from "@steward-web/api-client";
 
 import {
+  mockAiConfig,
+  mockAppendixLetter,
   mockCategories,
   mockDiagnostics,
   mockGroupMappings,
@@ -20,12 +32,18 @@ import {
   mockOrganizations,
   mockPolicies,
   mockPolicyDetails,
+  mockPolicyVersions,
   mockSessions,
   mockSpCertificate,
   mockTemplates,
+  mockTemplateVersions,
   mockUserDeletionPreviews,
   mockUsers,
   mockWorkflows,
+  nextMockAiJobId,
+  nextMockAppendixId,
+  nextMockPolicyId,
+  nextMockPolicyVersionId,
 } from "./fixtures";
 import { mockId } from "./marker";
 
@@ -44,6 +62,8 @@ let spCertificate = mockSpCertificate;
 let nextSpCertSeq = 2;
 const groupMappings = structuredClone(mockGroupMappings);
 let nextGroupMappingSeq = Object.values(mockGroupMappings).flat().length + 1;
+let policies = [...mockPolicies];
+let policyVersions = [...mockPolicyVersions];
 
 /** How long a mock break-glass grant lasts, matching the real grant's order of magnitude. */
 const BREAK_GLASS_GRANT_MS = 5 * 60 * 1000;
@@ -117,6 +137,107 @@ const subtreeIds = (groupId: string): Set<string> => {
   return ids;
 };
 
+const requirePolicy = (operation: string, id: string): Policy => {
+  const policy = policies.find((p) => p.id === id);
+  if (!policy) throw new GatewayError(operation, `policy ${id} not found`, { code: "NOT_FOUND" });
+  return policy;
+};
+
+const replacePolicy = (updated: Policy): Policy => {
+  policies = policies.map((p) => (p.id === updated.id ? updated : p));
+  return updated;
+};
+
+const replaceVersion = (updated: PolicyVersion): PolicyVersion => {
+  policyVersions = policyVersions.map((v) => (v.id === updated.id ? updated : v));
+  return updated;
+};
+
+const requireDraftVersion = (operation: string, policyId: string): PolicyVersion => {
+  const policy = requirePolicy(operation, policyId);
+  const version = policy.currentDraftVersionId
+    ? policyVersions.find((v) => v.id === policy.currentDraftVersionId)
+    : undefined;
+  if (!version) {
+    throw new GatewayError(operation, `policy ${policyId} has no working draft`, {
+      code: "NOT_FOUND",
+    });
+  }
+  return version;
+};
+
+const requireVersion = (operation: string, policyVersionId: string): PolicyVersion => {
+  const version = policyVersions.find((v) => v.id === policyVersionId);
+  if (!version) {
+    throw new GatewayError(operation, `policy version ${policyVersionId} not found`, {
+      code: "NOT_FOUND",
+    });
+  }
+  return version;
+};
+
+const requireAppendix = (
+  operation: string,
+  id: string,
+): { appendix: Appendix; version: PolicyVersion } => {
+  for (const version of policyVersions) {
+    const appendix = version.appendices.find((a) => a.id === id);
+    if (appendix) return { appendix, version };
+  }
+  throw new GatewayError(operation, `appendix ${id} not found`, { code: "NOT_FOUND" });
+};
+
+/** Parses a draft's `contentJson` (a JSON array of `{ sectionKey, title, text }`); an
+ *  unparseable or absent value is treated as no sections, the safer outcome for the
+ *  required-section gate below. */
+const draftSections = (
+  contentJson: string,
+): { sectionKey: string; text: string; title: string }[] => {
+  try {
+    const parsed = JSON.parse(contentJson) as unknown;
+    return Array.isArray(parsed)
+      ? (parsed as { sectionKey: string; text: string; title: string }[])
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+/** Titles of required template sections with no non-blank text yet, for `publishDraft`'s gate. */
+const missingRequiredSections = (version: PolicyVersion): string[] => {
+  if (!version.templateVersionId) return [];
+  const templateVersion = mockTemplateVersions.find((t) => t.id === version.templateVersionId);
+  if (!templateVersion) return [];
+  const filled = new Set(
+    draftSections(version.contentJson)
+      .filter((s) => s.text.trim() !== "")
+      .map((s) => s.sectionKey),
+  );
+  return templateVersion.sections
+    .filter((s) => s.required && !filled.has(s.key))
+    .map((s) => s.title);
+};
+
+interface MockAiJob {
+  error: null | string;
+  polls: number;
+  resultJson: null | string;
+}
+
+// Every AI mutation below simulates the same async job framework: submit returns a jobId
+// immediately, and the job "completes" after a couple of polls, so the editor's progress UI
+// (queued -> running -> succeeded) has something real to show in mock mode.
+const aiJobs = new Map<string, MockAiJob>();
+const AI_JOB_POLLS_TO_SUCCEED = 2;
+
+const aiJobPhase = (job: MockAiJob): AiJobPhase => {
+  if (job.error) return AiJobPhase.AiJobPhaseFailed;
+  if (job.polls === 0) return AiJobPhase.AiJobPhasePending;
+  return job.polls < AI_JOB_POLLS_TO_SUCCEED
+    ? AiJobPhase.AiJobPhaseRunning
+    : AiJobPhase.AiJobPhaseSucceeded;
+};
+
 /**
  * The mock edge: every call answers from the fixtures, no network, no cookie check. Swapped
  * in for `edge/live.server.ts` only on a `--mode mock` build (`@steward-web/vite-config`'s
@@ -145,6 +266,20 @@ export const mockEdge: Edge = {
       );
     }
     return replaceOrganization({ ...org, enabled: true });
+  },
+  addAppendix: async (policyVersionId, title, contentJson) => {
+    const version = requireVersion("AddAppendix", policyVersionId);
+    const orderIndex = version.appendices.length;
+    const appendix: Appendix = {
+      contentJson,
+      id: nextMockAppendixId(),
+      letter: mockAppendixLetter(orderIndex),
+      orderIndex,
+      policyVersionId,
+      title,
+    };
+    replaceVersion({ ...version, appendices: [...version.appendices, appendix] });
+    return appendix;
   },
   addGroupMapping: async (connectionId, idpGroupClaimValue, targetGroupId) => {
     const mapping: GroupMapping = {
@@ -176,6 +311,43 @@ export const mockEdge: Edge = {
     };
     organizations = [...organizations, created];
     return created;
+  },
+  aiHealth: () =>
+    Promise.resolve(
+      mockAiConfig.enabled
+        ? { available: true, reason: null }
+        : { available: false, reason: "disabled_by_admin" },
+    ),
+  aiJob: async (jobId) => {
+    const job = aiJobs.get(jobId);
+    if (!job) throw new GatewayError("AiJob", `AI job ${jobId} not found`, { code: "NOT_FOUND" });
+    job.polls += 1;
+    return {
+      error: job.error,
+      jobId,
+      phase: aiJobPhase(job),
+      resultRef: aiJobPhase(job) === AiJobPhase.AiJobPhaseSucceeded ? jobId : null,
+    };
+  },
+  aiJobResultContent: async (resultRef) => {
+    const job = aiJobs.get(resultRef);
+    if (!job?.resultJson) {
+      throw new GatewayError("AiJobResultContent", `no result for ${resultRef}`, {
+        code: "NOT_FOUND",
+      });
+    }
+    return { operation: "DRAFT", resultJson: job.resultJson };
+  },
+  authorableGroups: () => Promise.resolve(groups),
+  authorableTemplates: () => Promise.resolve(mockTemplates),
+  authoringAssist: async ({ editableContent, operation }) => {
+    const suggestion =
+      operation === AssistOperation.AssistOperationExpand
+        ? `${editableContent} Expanded with additional context an author would review before keeping.`
+        : operation === AssistOperation.AssistOperationSummarize
+          ? `Summary: ${editableContent.slice(0, 120)}`
+          : `Suggested text for this section, based on: ${editableContent || "(empty)"}`;
+    return { operationId: nextMockAiJobId(), suggestion };
   },
   breakGlassReveal: async (policyId, reason) => {
     if (!reason.trim()) {
@@ -225,6 +397,69 @@ export const mockEdge: Edge = {
     groups = [...groups, created];
     return created;
   },
+  createPolicy: async ({ documentType, homeGroupId, sensitivity, templateId, title }) => {
+    requireGroup("CreatePolicy", homeGroupId);
+    const templateVersion = templateId
+      ? mockTemplateVersions.find((t) => t.templateId === templateId)
+      : undefined;
+    const draftId = nextMockPolicyVersionId();
+    const policyId = nextMockPolicyId();
+    const sections = (templateVersion?.sections ?? [])
+      .toSorted((a, b) => a.order - b.order)
+      .map((s) => ({ sectionKey: s.key, text: "", title: s.title }));
+    policyVersions = [
+      ...policyVersions,
+      {
+        appendices: [],
+        contentJson: JSON.stringify(sections),
+        id: draftId,
+        policyId,
+        status: "DRAFT",
+        templateVersionId: templateVersion?.id ?? null,
+        versionNo: 1,
+      },
+    ];
+    const created: Policy = {
+      category: groups.find((g) => g.id === homeGroupId)?.name ?? "",
+      currentDraftVersionId: draftId,
+      currentPublishedVersionId: null,
+      documentType: documentType ?? DocumentType.Policy,
+      homeGroupId,
+      id: policyId,
+      number: `${documentType === DocumentType.Procedure ? "PRC" : "POL"}-NEW-${policyId.slice(-4)}`,
+      ownerUserId: me.id,
+      retiredAt: null,
+      sensitivity,
+      status: PolicyStatus.Draft,
+      subcategory: "",
+      templateId: templateId ?? null,
+      templateNone: !templateId,
+      title,
+      updated: new Date().toISOString(),
+      version: "0.0.0",
+      viewerCan: {
+        ack: false,
+        approve: true,
+        canBreakGlass: false,
+        contentObfuscated: false,
+        edit: true,
+        read: true,
+        submit: true,
+      },
+    };
+    policies = [...policies, created];
+    return created;
+  },
+  deleteAppendix: async (id) => {
+    const { version } = requireAppendix("DeleteAppendix", id);
+    replaceVersion({
+      ...version,
+      appendices: version.appendices
+        .filter((a) => a.id !== id)
+        .map((a, index) => ({ ...a, letter: mockAppendixLetter(index), orderIndex: index })),
+    });
+    return true;
+  },
   deleteGroup: async (id) => {
     requireGroup("DeleteGroup", id);
     groups = groups.filter((g) => !subtreeIds(id).has(g.id));
@@ -273,6 +508,20 @@ export const mockEdge: Edge = {
     }
     return replaceUser({ ...user, enabled: false });
   },
+  discardDraft: async (policyId) => {
+    const policy = requirePolicy("DiscardDraft", policyId);
+    if (!policy.currentDraftVersionId) return true;
+    policyVersions = policyVersions.filter((v) => v.id !== policy.currentDraftVersionId);
+    replacePolicy({ ...policy, currentDraftVersionId: null });
+    return true;
+  },
+  draftVersion: (policyId) => {
+    const policy = policies.find((p) => p.id === policyId);
+    const version = policy?.currentDraftVersionId
+      ? policyVersions.find((v) => v.id === policy.currentDraftVersionId)
+      : undefined;
+    return Promise.resolve(version ?? null);
+  },
 
   enableUser: async (userId) => {
     const user = requireUser("EnableUser", userId);
@@ -299,6 +548,8 @@ export const mockEdge: Edge = {
   },
   groupChildren: (parentId) => Promise.resolve(groups.filter((g) => g.parentId === parentId)),
   groupMappings: (connectionId) => Promise.resolve(groupMappings[connectionId] ?? []),
+  latestTemplateVersion: (templateId) =>
+    Promise.resolve(mockTemplateVersions.find((t) => t.templateId === templateId) ?? null),
   listUserSessions: (userId) => Promise.resolve(sessions[userId] ?? []),
   me: () => Promise.resolve(me),
   moveGroup: async (groupId, newParentId) => {
@@ -323,9 +574,16 @@ export const mockEdge: Edge = {
     }
     return replaceGroup({ ...group, parentId: newParentId });
   },
+  myDraftPolicies: () =>
+    Promise.resolve(
+      policies
+        .filter((p) => p.ownerUserId === me.id && p.currentDraftVersionId)
+        .toSorted((a, b) => b.updated.localeCompare(a.updated)),
+    ),
   organizations: () => Promise.resolve(organizations),
   policies: (documentType) =>
-    Promise.resolve(mockPolicies.filter((p) => p.documentType === documentType)),
+    Promise.resolve(policies.filter((p) => p.documentType === documentType)),
+  policy: (id) => Promise.resolve(policies.find((p) => p.id === id) ?? null),
   policyDetail: (documentType, number) =>
     Promise.resolve(
       policyDetails.find((d) => d.documentType === documentType && d.number === number) ?? null,
@@ -342,6 +600,27 @@ export const mockEdge: Edge = {
     };
     return mockUserDeletionPreviews[userId] ?? fallback;
   },
+  publishDraft: async (policyId) => {
+    const policy = requirePolicy("PublishDraft", policyId);
+    const draft = requireDraftVersion("PublishDraft", policyId);
+    const missing = missingRequiredSections(draft);
+    if (missing.length > 0) {
+      throw new GatewayError(
+        "PublishDraft",
+        `required sections are still empty: ${missing.join(", ")}`,
+        { code: "FAILED_PRECONDITION" },
+      );
+    }
+    const published = replaceVersion({ ...draft, status: "PUBLISHED" });
+    replacePolicy({
+      ...policy,
+      currentDraftVersionId: null,
+      currentPublishedVersionId: published.id,
+      status: PolicyStatus.Published,
+      updated: new Date().toISOString(),
+    });
+    return published;
+  },
   renameGroup: async (id, name, slug) => {
     const group = requireGroup("RenameGroup", id);
     if (groups.some((g) => g.id !== id && g.parentId === group.parentId && g.slug === slug)) {
@@ -355,6 +634,21 @@ export const mockEdge: Edge = {
     }
     return replaceGroup({ ...group, name, slug });
   },
+  reorderAppendices: async (policyVersionId, orderedIds) => {
+    const version = requireVersion("ReorderAppendices", policyVersionId);
+    const byId = new Map(version.appendices.map((a) => [a.id, a]));
+    const reordered = orderedIds.map((id, index) => {
+      const appendix = byId.get(id);
+      if (!appendix) {
+        throw new GatewayError("ReorderAppendices", `appendix ${id} not found`, {
+          code: "NOT_FOUND",
+        });
+      }
+      return { ...appendix, letter: mockAppendixLetter(index), orderIndex: index };
+    });
+    replaceVersion({ ...version, appendices: reordered });
+    return reordered;
+  },
   revokeRole: async (userId, role) => {
     const user = requireUser("RevokeRole", userId);
     return replaceUser({ ...user, roles: user.roles.filter((r) => r !== role) });
@@ -365,6 +659,31 @@ export const mockEdge: Edge = {
     sessions[userId] = current.map((s) => (s.revokedAt ? s : { ...s, revokedAt }));
     void reason; // the mock audits nothing; the live gateway records it
     return current.filter((s) => !s.revokedAt).length;
+  },
+  saveDraft: async (policyId, contentJson, templateVersionId) => {
+    const policy = requirePolicy("SaveDraft", policyId);
+    const existing = policy.currentDraftVersionId
+      ? policyVersions.find((v) => v.id === policy.currentDraftVersionId)
+      : undefined;
+    if (existing) {
+      return replaceVersion({
+        ...existing,
+        contentJson,
+        templateVersionId: templateVersionId ?? null,
+      });
+    }
+    const created: PolicyVersion = {
+      appendices: [],
+      contentJson,
+      id: nextMockPolicyVersionId(),
+      policyId,
+      status: "DRAFT",
+      templateVersionId: templateVersionId ?? null,
+      versionNo: 1,
+    };
+    policyVersions = [...policyVersions, created];
+    replacePolicy({ ...policy, currentDraftVersionId: created.id });
+    return created;
   },
   spCertificate: () => Promise.resolve(spCertificate),
   startDomainVerification: async (domain, rotate) => {
@@ -378,7 +697,45 @@ export const mockEdge: Edge = {
       token,
     };
   },
+  submitDraftGeneration: async ({ brief, sections }) => {
+    const jobId = nextMockAiJobId();
+    const content = sections
+      .toSorted((a, b) => a.order - b.order)
+      .map((s) => ({
+        sectionKey: s.key,
+        text: `Drafted from the brief: ${brief}`,
+      }));
+    aiJobs.set(jobId, {
+      error: null,
+      polls: 0,
+      resultJson: JSON.stringify({ sections: content }),
+    });
+    return { jobId };
+  },
+  submitPolicyReview: async ({ sections }) => {
+    const jobId = nextMockAiJobId();
+    const findings = sections.map((s) => ({
+      finding:
+        s.content.trim() === ""
+          ? "This section has no content yet."
+          : "Looks consistent with the rest of the draft.",
+      sectionKey: s.key,
+      severity: s.content.trim() === "" ? "warning" : "note",
+      suggestion: s.content.trim() === "" ? `Add content for ${s.title}.` : "",
+    }));
+    aiJobs.set(jobId, { error: null, polls: 0, resultJson: JSON.stringify({ findings }) });
+    return { jobId };
+  },
   templates: () => Promise.resolve(mockTemplates),
+  updateAppendix: async (id, title, contentJson) => {
+    const { version } = requireAppendix("UpdateAppendix", id);
+    const updated = { ...version.appendices.find((a) => a.id === id)!, contentJson, title };
+    replaceVersion({
+      ...version,
+      appendices: version.appendices.map((a) => (a.id === id ? updated : a)),
+    });
+    return updated;
+  },
   updateGroupSettings: async ({
     defaultTemplateId = null,
     defaultTemplateNone = false,

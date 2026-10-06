@@ -1,7 +1,41 @@
 {
+  "assist": {
+    "apply": "Use this suggestion",
+    "ask": "Suggest",
+    "instruction": "Instruction (optional)",
+    "operation": {
+      "ASSIST_OPERATION_CLARIFY": "Clarify",
+      "ASSIST_OPERATION_DRAFT": "Draft",
+      "ASSIST_OPERATION_EXPAND": "Expand",
+      "ASSIST_OPERATION_REWRITE": "Rewrite",
+      "ASSIST_OPERATION_SUMMARIZE": "Summarize"
+    },
+    "operationLabel": "Operation",
+    "title": "AI assist",
+    "unavailable": "AI assist isn't available right now."
+  },
   "finding": {
     "blocker": "Blocker",
     "note": "Note",
     "warning": "Warning"
+  },
+  "generate": {
+    "brief": "Describe what this policy should cover",
+    "stage": {
+      "done": "Done",
+      "failed": "Failed",
+      "finalizing": "Finalizing",
+      "generating": "Generating",
+      "queued": "Queued",
+      "retrieving": "Retrieving context"
+    },
+    "start": "Generate",
+    "title": "Generate with AI"
+  },
+  "review": {
+    "empty": "No findings.",
+    "start": "Review draft",
+    "suggestion": "Suggestion: {{suggestion}}",
+    "title": "Review with AI"
   }
 }

@@ -13,12 +13,14 @@ import {
   type Policy,
   type PolicyDetail,
   PolicyStatus,
+  type PolicyVersion,
   ReferenceKind,
   ReviewCadence,
   Sensitivity,
   type Session,
   type SpCertificate,
   type Template,
+  type TemplateVersion,
   type User,
   type UserDeletionPreview,
   type Workflow,
@@ -307,7 +309,56 @@ export const mockWorkflows: Workflow[] = [
 ];
 
 /** The library catalog: policies and procedures across every category, status and sensitivity. */
-export const mockPolicies: Policy[] = [
+/** The fields every library fixture shares once authoring (viewerCan, the backend-id fields)
+ *  extended `Policy`; `rawPolicies` below only states what actually varies row to row.
+ *  `homeGroupId` points at the root group — this fixture set predates the admin group
+ *  directory and doesn't attempt to line up categories with groups 1:1. */
+const authoringDefaultsFor = (
+  policy: { canBreakGlass?: boolean; contentObfuscated?: boolean } & Pick<Policy, "id" | "status">,
+  n: number,
+): Pick<
+  Policy,
+  | "currentDraftVersionId"
+  | "currentPublishedVersionId"
+  | "homeGroupId"
+  | "ownerUserId"
+  | "retiredAt"
+  | "templateId"
+  | "templateNone"
+  | "viewerCan"
+> => ({
+  currentDraftVersionId: policy.status === PolicyStatus.Draft ? mockId("policy-version", n) : null,
+  currentPublishedVersionId:
+    policy.status === PolicyStatus.Draft ? null : mockId("policy-version", n),
+  homeGroupId: mockGroups[0]!.id,
+  ownerUserId: mockMe.id,
+  retiredAt: null,
+  templateId: null,
+  templateNone: true,
+  viewerCan: {
+    ack: true,
+    approve: true,
+    canBreakGlass: policy.canBreakGlass ?? false,
+    contentObfuscated: policy.contentObfuscated ?? false,
+    edit: true,
+    read: true,
+    submit: true,
+  },
+});
+
+type RawPolicy = Omit<
+  Policy,
+  | "currentDraftVersionId"
+  | "currentPublishedVersionId"
+  | "homeGroupId"
+  | "ownerUserId"
+  | "retiredAt"
+  | "templateId"
+  | "templateNone"
+  | "viewerCan"
+>;
+
+const rawPolicies: RawPolicy[] = [
   {
     category: "Finance",
     documentType: DocumentType.Policy,
@@ -393,6 +444,23 @@ export const mockPolicies: Policy[] = [
     version: "1.0.0",
   },
 ];
+
+/** Index among `rawPolicies` (1-based, matching `mockId("policy", n)`) that is sensitive and
+ *  currently redacted, exercising the break-glass path the reader fixtures already cover. */
+const REDACTED_POLICY_SEQ = 2;
+
+export const mockPolicies: Policy[] = rawPolicies.map((p, index) => ({
+  ...p,
+  ...authoringDefaultsFor(
+    {
+      canBreakGlass: index + 1 === REDACTED_POLICY_SEQ,
+      contentObfuscated: index + 1 === REDACTED_POLICY_SEQ,
+      id: p.id,
+      status: p.status,
+    },
+    index + 1,
+  ),
+}));
 
 /** The shared defaults every reader fixture starts from, before its own overrides. */
 const readerDefaultsFor = (policy: Policy, n: number): PolicyDetail => ({
@@ -638,3 +706,80 @@ export const mockPolicyDetails: PolicyDetail[] = [
     ],
   },
 ];
+
+/** Each template's current (newest) version outline, for the "new policy" scaffold and the
+ *  editor's required-section gate. */
+export const mockTemplateVersions: TemplateVersion[] = [
+  {
+    id: mockId("template-version", 1),
+    sections: [
+      { key: "purpose", level: 1, order: 0, required: true, title: "Purpose" },
+      { key: "scope", level: 1, order: 1, required: true, title: "Scope" },
+      { key: "policy-statement", level: 1, order: 2, required: true, title: "Policy statement" },
+    ],
+    templateId: mockId("template", 1),
+    versionNo: 1,
+  },
+  {
+    id: mockId("template-version", 2),
+    sections: [
+      { key: "steps", level: 1, order: 0, required: true, title: "Steps" },
+      { key: "rollback", level: 1, order: 1, required: false, title: "Rollback" },
+    ],
+    templateId: mockId("template", 2),
+    versionNo: 1,
+  },
+];
+
+/** The working draft for POL-ITSEC-004 (`mockPolicies[1]`, the one DRAFT-status fixture row):
+ *  a freeform draft with one section filled and an appendix, for the editor to open. */
+export const mockPolicyVersions: PolicyVersion[] = [
+  {
+    appendices: [
+      {
+        contentJson: JSON.stringify({ text: "Reviewed annually by IT Security." }),
+        id: mockId("appendix", 2),
+        letter: "A",
+        orderIndex: 0,
+        policyVersionId: mockId("policy-version", 2),
+        title: "Review notes",
+      },
+    ],
+    contentJson: JSON.stringify([
+      {
+        sectionKey: "purpose",
+        text: "This policy sets out how organisation-owned systems may be used.",
+        title: "Purpose",
+      },
+      { sectionKey: "scope", text: "", title: "Scope" },
+    ]),
+    id: mockId("policy-version", 2),
+    policyId: mockId("policy", 2),
+    status: "DRAFT",
+    templateVersionId: null,
+    versionNo: 1,
+  },
+];
+
+let nextAppendixSeq = 3;
+let nextPolicyVersionSeq = 100;
+let nextPolicySeq = 100;
+let nextAiJobSeq = 1;
+
+/** Mutable fixture-state helpers: kept here (not in `edge.server.ts`) so a test can seed or
+ *  reset them directly, the same way `mockPolicies`/`mockPolicyDetails` are consumed. */
+export const nextMockAppendixId = (): string => mockId("appendix", nextAppendixSeq++);
+export const nextMockPolicyVersionId = (): string =>
+  mockId("policy-version", nextPolicyVersionSeq++);
+export const nextMockPolicyId = (): string => mockId("policy", nextPolicySeq++);
+export const nextMockAiJobId = (): string => mockId("ai-job", nextAiJobSeq++);
+
+export const mockAppendixLetter = (orderIndex: number): string =>
+  String.fromCodePoint(65 + orderIndex);
+
+/** Starting config for the mock AI module: on, no admin kill switch engaged. */
+export interface MockAiConfig {
+  enabled: boolean;
+}
+
+export const mockAiConfig: MockAiConfig = { enabled: true };

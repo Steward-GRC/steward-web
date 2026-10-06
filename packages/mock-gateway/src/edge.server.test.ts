@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { DocumentType, ReviewCadence } from "@steward-web/api-client";
+import { AssistOperation, DocumentType, ReviewCadence, Sensitivity } from "@steward-web/api-client";
 import { describe, expect, it } from "vitest";
 
 import { mockEdge } from "./edge.server";
@@ -282,6 +282,177 @@ describe("mockEdge users directory", () => {
     const workflows = await mockEdge.workflows();
     expect(templates.length).toBeGreaterThan(0);
     expect(workflows.length).toBeGreaterThan(0);
+  });
+
+  describe("authoring", () => {
+    it("createPolicy() scaffolds an empty working draft from the chosen template", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      const [template] = await mockEdge.authorableTemplates(null);
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        templateId: template!.id,
+        title: "New Draft Policy",
+      });
+      expect(created.currentDraftVersionId).not.toBeNull();
+      expect(created.currentPublishedVersionId).toBeNull();
+
+      const draft = await mockEdge.draftVersion(created.id);
+      const sections = JSON.parse(draft!.contentJson) as { sectionKey: string }[];
+      expect(sections.length).toBeGreaterThan(0);
+    });
+
+    it("saveDraft() persists edits, visible on the next draftVersion() read", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        title: "Freeform Draft",
+      });
+      const content = JSON.stringify([{ sectionKey: "body", text: "hello", title: "Body" }]);
+      await mockEdge.saveDraft(created.id, content, null);
+
+      const draft = await mockEdge.draftVersion(created.id);
+      expect(draft?.contentJson).toBe(content);
+    });
+
+    it("publishDraft() refuses when a required template section is still empty", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      const [template] = await mockEdge.authorableTemplates(null);
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        templateId: template!.id,
+        title: "Incomplete Draft",
+      });
+      await expect(mockEdge.publishDraft(created.id)).rejects.toMatchObject({
+        name: "GatewayError",
+      });
+    });
+
+    it("publishDraft() cuts a published version once every required section is filled", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        title: "Complete Freeform Draft",
+      });
+      await mockEdge.saveDraft(
+        created.id,
+        JSON.stringify([{ sectionKey: "body", text: "content", title: "Body" }]),
+        null,
+      );
+      const published = await mockEdge.publishDraft(created.id);
+      expect(published.status).toBe("PUBLISHED");
+
+      const policy = await mockEdge.policy(created.id);
+      expect(policy?.currentDraftVersionId).toBeNull();
+      expect(policy?.currentPublishedVersionId).toBe(published.id);
+    });
+
+    it("discardDraft() drops the working draft without erroring on a policy with none", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        title: "Discard Me",
+      });
+      expect(await mockEdge.discardDraft(created.id)).toBe(true);
+      expect(await mockEdge.draftVersion(created.id)).toBeNull();
+      expect(await mockEdge.discardDraft(created.id)).toBe(true);
+    });
+
+    it("myDraftPolicies() lists only the calling user's policies with a working draft", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        title: "Mine, in progress",
+      });
+      const drafts = await mockEdge.myDraftPolicies();
+      expect(drafts.length).toBeGreaterThan(0);
+      for (const draft of drafts) expect(draft.currentDraftVersionId).not.toBeNull();
+    });
+
+    it("appendix CRUD: add, update, reorder and delete, re-lettering as it goes", async () => {
+      const [group] = await mockEdge.authorableGroups();
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group!.id,
+        sensitivity: Sensitivity.Standard,
+        title: "Appendix Fixture",
+      });
+      const versionId = created.currentDraftVersionId!;
+
+      const first = await mockEdge.addAppendix(versionId, "First", "{}");
+      const second = await mockEdge.addAppendix(versionId, "Second", "{}");
+      expect(first.letter).toBe("A");
+      expect(second.letter).toBe("B");
+
+      const updated = await mockEdge.updateAppendix(first.id, "First (edited)", "{}");
+      expect(updated.title).toBe("First (edited)");
+
+      const reordered = await mockEdge.reorderAppendices(versionId, [second.id, first.id]);
+      expect(reordered.map((a) => a.id)).toEqual([second.id, first.id]);
+      expect(reordered[0]!.letter).toBe("A");
+      expect(reordered[1]!.letter).toBe("B");
+
+      expect(await mockEdge.deleteAppendix(first.id)).toBe(true);
+      const draft = await mockEdge.draftVersion(created.id);
+      expect(draft?.appendices).toHaveLength(1);
+      expect(draft?.appendices[0]!.letter).toBe("A");
+    });
+  });
+
+  describe("AI assist and jobs", () => {
+    it("authoringAssist() answers a suggestion for the requested section", async () => {
+      const result = await mockEdge.authoringAssist({
+        editableContent: "draft text",
+        operation: AssistOperation.AssistOperationExpand,
+        policyId: mockId("policy", 1),
+        sectionKey: "purpose",
+      });
+      expect(result.suggestion.length).toBeGreaterThan(0);
+    });
+
+    it("aiHealth() answers available while the module is on", async () => {
+      expect(await mockEdge.aiHealth()).toMatchObject({ available: true });
+    });
+
+    it("submitDraftGeneration() and aiJob() progress from pending to succeeded over a few polls", async () => {
+      const { jobId } = await mockEdge.submitDraftGeneration({
+        brief: "a brief for a new policy",
+        sections: [{ key: "purpose", order: 0, title: "Purpose" }],
+      });
+
+      const first = await mockEdge.aiJob(jobId);
+      expect(first.phase).toBe("AI_JOB_PHASE_RUNNING");
+
+      const second = await mockEdge.aiJob(jobId);
+      expect(second.phase).toBe("AI_JOB_PHASE_SUCCEEDED");
+      expect(second.resultRef).toBe(jobId);
+
+      const content = await mockEdge.aiJobResultContent(second.resultRef!);
+      const parsed = JSON.parse(content.resultJson) as { sections: unknown[] };
+      expect(parsed.sections.length).toBeGreaterThan(0);
+    });
+
+    it("submitPolicyReview() flags an empty section as a high-severity finding", async () => {
+      const { jobId } = await mockEdge.submitPolicyReview({
+        policyId: mockId("policy", 1),
+        sections: [{ content: "", key: "scope", title: "Scope" }],
+      });
+      await mockEdge.aiJob(jobId);
+      const status = await mockEdge.aiJob(jobId);
+      const content = await mockEdge.aiJobResultContent(status.resultRef!);
+      const parsed = JSON.parse(content.resultJson) as {
+        findings: { severity: string }[];
+      };
+      expect(parsed.findings[0]!.severity).toBe("warning");
+    });
+
+    it("aiJob() rejects an unknown job id", async () => {
+      await expect(mockEdge.aiJob("no-such-job")).rejects.toMatchObject({ name: "GatewayError" });
+    });
   });
 });
 
