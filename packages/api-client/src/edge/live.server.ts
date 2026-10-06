@@ -24,6 +24,7 @@ import {
   CategoryChildrenDocument,
   CategoryDocument,
   type CategoryFieldsFragment,
+  CategoryTreeDocument,
   ChangeOrgProtocolDocument,
   CloseCaseDocument,
   CreateCategoryDocument,
@@ -47,13 +48,14 @@ import {
   ListUserSessionsDocument,
   MeDocument,
   MoveCategoryDocument,
+  MyDraftsDocument,
   OrganizationsDocument,
   PendingTasksDocument,
   PoliciesDocument,
   PolicyAttachmentsDocument,
+  PolicyByNumberDocument,
   PolicyDocument,
   PolicyVersionDocument,
-  PolicyVersionMetaDocument,
   PolicyVersionsDocument,
   PostCaseMessageDocument,
   PreviewUserDeletionDocument,
@@ -96,6 +98,7 @@ import {
   bodyTextFromContent,
   categoryNames,
   type CategoryNode,
+  historyFromAuditLog,
   isUnauthenticated,
   policyStatusOf,
   toPolicyView,
@@ -111,16 +114,12 @@ const categoryChildren = async (
   return data.categoryChildren;
 };
 
-/** Every category, parents before children. The gateway lists one level per call. */
-const categoryTree = async (cookie?: string): Promise<CategoryFieldsFragment[]> => {
-  const all: CategoryFieldsFragment[] = [];
-  let level = await categoryChildren(null, cookie);
-  while (level.length > 0) {
-    all.push(...level);
-    const next = await Promise.all(level.map((c) => categoryChildren(c.id, cookie)));
-    level = next.flat();
-  }
-  return all;
+/** Every category, parents before children, in one call. */
+const categoryTree = async (cookie?: string): Promise<readonly CategoryFieldsFragment[]> => {
+  const data = await gatewayFetch(CategoryTreeDocument, { rootId: null }, "CategoryTree", {
+    cookie,
+  });
+  return data.categoryTree;
 };
 
 const categoryIndex = async (cookie?: string): Promise<Map<string, CategoryNode>> => {
@@ -150,25 +149,13 @@ const catalogPolicies = async (
   return [...byId.values()];
 };
 
-const currentVersionMeta = async (policy: AuthoringPolicyFieldsFragment, cookie?: string) => {
-  const id = policy.currentPublishedVersionId ?? policy.currentDraftVersionId;
-  if (!id) return null;
-  const data = await gatewayFetch(PolicyVersionMetaDocument, { id }, "PolicyVersionMeta", {
-    cookie,
-  });
-  return data.policyVersion ?? null;
-};
-
 const policyView = async (
   policy: AuthoringPolicyFieldsFragment,
   cookie?: string,
   index?: ReadonlyMap<string, CategoryNode>,
 ): Promise<Policy> => {
-  const [names, version] = await Promise.all([
-    index ?? categoryIndex(cookie),
-    currentVersionMeta(policy, cookie),
-  ]);
-  return toPolicyView(policy, version, categoryNames(names, policy.homeCategoryId));
+  const names = await (index ?? categoryIndex(cookie));
+  return toPolicyView(policy, categoryNames(names, policy.homeCategoryId));
 };
 
 const catalog = async (
@@ -212,7 +199,7 @@ const assembleDetail = async (
   const publishedId = policy.currentPublishedVersionId ?? null;
   const versionId = publishedId ?? policy.currentDraftVersionId ?? null;
   const acks = policy.documentType === DocumentType.Policy && publishedId !== null;
-  const [version, attachments, versions, ack] = await Promise.all([
+  const [version, attachments, versions, ack, auditPage] = await Promise.all([
     versionId
       ? gatewayFetch(PolicyVersionDocument, { id: versionId }, "PolicyVersion", { cookie }).then(
           (d) => d.policyVersion ?? null,
@@ -229,7 +216,12 @@ const assembleDetail = async (
           cookie,
         }).then((d) => d.ackStatus)
       : null,
+    gatewayFetch(AuditLogDocument, { subject: `policy:${policy.id}` }, "AuditLog", { cookie }),
   ]);
+  const history = historyFromAuditLog(
+    auditPage.auditLog.records,
+    version ? String(version.versionNo) : "",
+  );
 
   const at = publishedId ? versions.findIndex((v) => v.id === publishedId) : -1;
   const prior = at > 0 ? versions[at - 1] : undefined;
@@ -267,19 +259,19 @@ const assembleDetail = async (
     currentVersionId: publishedId,
     definitions: attachments.policyDefinitionEntries,
     documentType: policy.documentType,
-    history: [],
+    history,
     id: policy.id,
     number: policy.number,
     ownerName: policy.ownerName ?? null,
     priorVersion: prior ? { diff, version: String(prior.versionNo) } : null,
-    published: null,
+    published: publishedId ? (version?.publishedAt ?? null) : null,
     references: attachments.policyReferences,
     related: attachments.relatedPolicies,
     sensitivity: policy.sensitivity,
     status: policyStatusOf(publishedId !== null, version?.status),
     subcategory: names.subcategory,
     title: policy.title,
-    updated: null,
+    updated: policy.updatedAt,
     version: version ? String(version.versionNo) : "",
   };
 };
@@ -371,7 +363,12 @@ export const liveEdge: Edge = {
     return data.auditLog;
   },
   async authorableGroups(cookie) {
-    return categoryTree(cookie);
+    const [{ me: rawMe }, all] = await Promise.all([
+      gatewayFetch(MeDocument, {}, "Me", { cookie }),
+      categoryTree(cookie),
+    ]);
+    const authorable = new Set(rawMe.scopes.author);
+    return all.filter((c) => authorable.has(c.name));
   },
   async authorableTemplates(ownerGroupId, cookie) {
     const data = await gatewayFetch(
@@ -398,18 +395,14 @@ export const liveEdge: Edge = {
     return data.breakGlassReveal;
   },
   async categories(cookie) {
-    const roots = await categoryChildren(null, cookie);
-    return Promise.all(
-      roots.map(async (root) => {
-        const children = await categoryChildren(root.id, cookie);
-        return {
-          id: root.id,
-          name: root.name,
-          slug: root.slug,
-          subcategories: children.map((c) => c.name),
-        };
-      }),
-    );
+    const all = await categoryTree(cookie);
+    const roots = all.filter((c) => !c.parentId);
+    return roots.map((root) => ({
+      id: root.id,
+      name: root.name,
+      slug: root.slug,
+      subcategories: all.filter((c) => c.parentId === root.id).map((c) => c.name),
+    }));
   },
   async changeOrgProtocol(domain, protocol, config, secretRef, cookie) {
     const data = await gatewayFetch(
@@ -608,16 +601,11 @@ export const liveEdge: Edge = {
     return data.moveCategory;
   },
   async myDraftPolicies(cookie) {
-    const [{ me }, index] = await Promise.all([
-      gatewayFetch(MeDocument, {}, "Me", { cookie }),
+    const [{ myDrafts }, index] = await Promise.all([
+      gatewayFetch(MyDraftsDocument, {}, "MyDrafts", { cookie }),
       categoryIndex(cookie),
     ]);
-    const all = await Promise.all(
-      [DocumentType.Policy, DocumentType.Procedure].map((documentType) =>
-        catalog(documentType, index, cookie),
-      ),
-    );
-    return all.flat().filter((p) => p.ownerUserId === me.userId && p.currentDraftVersionId);
+    return Promise.all(myDrafts.map((p) => policyView(p, cookie, index)));
   },
   async organizations(cookie) {
     const data = await gatewayFetch(OrganizationsDocument, {}, "Organizations", { cookie });
@@ -640,10 +628,13 @@ export const liveEdge: Edge = {
     return data.policy ? policyView(data.policy, cookie) : null;
   },
   async policyDetail(documentType, number, cookie) {
-    const index = await categoryIndex(cookie);
-    const policies = await catalogPolicies(documentType, index, cookie);
-    const found = policies.find((p) => p.number === number);
-    return found ? assembleDetail(found, index, cookie) : null;
+    const [index, { policyByNumber: found }] = await Promise.all([
+      categoryIndex(cookie),
+      gatewayFetch(PolicyByNumberDocument, { number }, "PolicyByNumber", { cookie }),
+    ]);
+    return found && found.documentType === documentType
+      ? assembleDetail(found, index, cookie)
+      : null;
   },
   async postCaseMessage(caseId, body, cookie) {
     const data = await gatewayFetch(PostCaseMessageDocument, { body, caseId }, "PostCaseMessage", {

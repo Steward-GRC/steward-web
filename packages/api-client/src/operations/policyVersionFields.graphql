@@ -5,6 +5,8 @@ fragment PolicyVersionFields on PolicyVersion {
   status
   templateVersionId
   contentJson
+  createdAt
+  publishedAt
   appendices {
     ...AppendixFields
   }

@@ -499,6 +499,8 @@ export const mockEdge: Edge = {
     const records = pageSize == undefined ? filtered : filtered.slice(0, pageSize);
     return Promise.resolve({ nextPageToken: "", records });
   },
+  // The demo persona is a site admin whose author scope covers every category, so there is
+  // nothing to filter here the way the live edge filters by `me.scopes.author`.
   authorableGroups: () => Promise.resolve(groups),
   authorableTemplates: () => Promise.resolve(mockTemplates),
   authoringAssist: async ({ editableContent, operation }) => {

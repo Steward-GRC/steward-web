@@ -90,7 +90,8 @@ export interface Me {
  * One library row, also the editor's policy. `category` is the home category's root
  * ancestor and `subcategory` the level below it ("" when the home category is a root).
  * `version` and `status` come from the current version (published, else the working
- * draft). `updated` is null: the gateway records no per-version timestamp yet.
+ * draft). `updated` is the gateway's last-write time for the policy row, null when
+ * unavailable.
  */
 export interface Policy {
   readonly category: string;

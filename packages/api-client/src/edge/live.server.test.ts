@@ -57,6 +57,8 @@ const category = (id: string, name: string, parentId: null | string = null) => (
 const policy = (overrides: Record<string, unknown>) => ({
   currentDraftVersionId: null,
   currentPublishedVersionId: "v-2",
+  currentVersionNo: 2,
+  currentVersionStatus: "published",
   documentType: DocumentType.Policy,
   homeCategoryId: "c-travel",
   id: "p-1",
@@ -68,18 +70,15 @@ const policy = (overrides: Record<string, unknown>) => ({
   templateId: null,
   templateNone: true,
   title: "Travel",
+  updatedAt: "2026-09-02T00:00:00Z",
   viewerCan,
   ...overrides,
 });
 
-const tree: Record<string, unknown[]> = {
-  "": [category("c-fin", "Finance")],
-  "c-fin": [category("c-travel", "Travel", "c-fin")],
-  "c-travel": [],
-};
+const allCategories = [category("c-fin", "Finance"), category("c-travel", "Travel", "c-fin")];
 
 const treeHandlers: Record<string, Handler> = {
-  CategoryChildren: (v) => ({ categoryChildren: tree[String(v.parentId ?? "")] ?? [] }),
+  CategoryTree: () => ({ categoryTree: allCategories }),
 };
 
 const me = {
@@ -89,6 +88,7 @@ const me = {
   name: "Ada Lovelace",
   permissions: ["policy.read"],
   roles: ["reader"],
+  scopes: { author: ["Finance"] },
   userId: "u-1",
   username: "ada",
 };
@@ -116,22 +116,20 @@ describe("liveEdge: me", () => {
 });
 
 describe("liveEdge.categories", () => {
-  it("lists the root categories with their direct children's names", async () => {
-    routeGateway(treeHandlers);
+  it("lists the root categories with their direct children's names, in one call", async () => {
+    const calls = routeGateway(treeHandlers);
     expect(await liveEdge.categories()).toEqual([
       { id: "c-fin", name: "Finance", slug: "finance", subcategories: ["Travel"] },
     ]);
+    expect(calls.map((c) => c.operation)).toEqual(["CategoryTree"]);
   });
 });
 
 describe("liveEdge.policies", () => {
-  it("reads each root's policies, then names and versions each row", async () => {
+  it("reads each root's policies, names each row, and takes its version off the policy row", async () => {
     const calls = routeGateway({
       ...treeHandlers,
       Policies: () => ({ policies: [policy({})] }),
-      PolicyVersionMeta: () => ({
-        policyVersion: { id: "v-2", status: "published", versionNo: 2 },
-      }),
     });
 
     const rows = await liveEdge.policies(DocumentType.Policy);
@@ -142,6 +140,7 @@ describe("liveEdge.policies", () => {
         homeGroupId: "c-travel",
         status: PolicyStatus.Published,
         subcategory: "Travel",
+        updated: "2026-09-02T00:00:00Z",
         version: "2",
       }),
     ]);
@@ -149,14 +148,32 @@ describe("liveEdge.policies", () => {
       categoryId: "c-fin",
       documentType: "POLICY",
     });
+    expect(calls.map((c) => c.operation)).not.toContain("PolicyVersionMeta");
   });
 });
 
 describe("liveEdge.policyDetail", () => {
-  it("finds the policy by number and assembles the reader's view", async () => {
-    routeGateway({
+  it("looks the policy up by number and assembles the reader's view, including its history", async () => {
+    const calls = routeGateway({
       ...treeHandlers,
       AckStatus: () => ({ ackStatus: { ackedAt: "2026-10-01T00:00:00Z", acknowledged: true } }),
+      AuditLog: () => ({
+        auditLog: {
+          nextPageToken: "",
+          records: [
+            {
+              action: "policy.published",
+              actorName: "Ada Lovelace",
+              occurredAt: "2026-08-12T00:00:00Z",
+            },
+            {
+              action: "policy.submitted",
+              actorName: "Ada Lovelace",
+              occurredAt: "2026-07-29T09:15:00Z",
+            },
+          ],
+        },
+      }),
       DiffVersions: (v) => ({
         diffVersions: [
           {
@@ -167,13 +184,13 @@ describe("liveEdge.policyDetail", () => {
           },
         ],
       }),
-      Policies: () => ({ policies: [policy({}), policy({ id: "p-2", number: "FIN-002" })] }),
       PolicyAttachments: () => ({
         policyContactBlocks: [],
         policyDefinitionEntries: [{ definition: "A trip.", id: "d-1", term: "Travel" }],
         policyReferences: [],
         relatedPolicies: [],
       }),
+      PolicyByNumber: () => ({ policyByNumber: policy({}) }),
       PolicyVersion: () => ({
         policyVersion: {
           appendices: [
@@ -187,8 +204,10 @@ describe("liveEdge.policyDetail", () => {
             },
           ],
           contentJson: JSON.stringify([{ sectionKey: "purpose", text: "Why.", title: "Purpose" }]),
+          createdAt: "2026-08-05T00:00:00Z",
           id: "v-2",
           policyId: "p-1",
+          publishedAt: "2026-08-12T00:00:00Z",
           status: "published",
           templateVersionId: "",
           versionNo: 2,
@@ -211,17 +230,35 @@ describe("liveEdge.policyDetail", () => {
       category: "Finance",
       currentVersionId: "v-2",
       definitions: [{ term: "Travel" }],
-      history: [],
+      history: [
+        { at: "2026-07-29T09:15:00Z", kind: "submitted", versionLabel: "2" },
+        { at: "2026-08-12T00:00:00Z", kind: "published", versionLabel: "2" },
+      ],
       id: "p-1",
       priorVersion: { diff: [{ changeType: "MODIFIED" }], version: "1" },
+      published: "2026-08-12T00:00:00Z",
       status: PolicyStatus.Published,
       subcategory: "Travel",
       version: "2",
     });
+    expect(calls.find((c) => c.operation === "PolicyByNumber")?.variables).toEqual({
+      number: "FIN-001",
+    });
+    expect(calls.find((c) => c.operation === "AuditLog")?.variables).toEqual({
+      subject: "policy:p-1",
+    });
   });
 
-  it("answers null when no policy of that type carries the number", async () => {
-    routeGateway({ ...treeHandlers, Policies: () => ({ policies: [policy({})] }) });
+  it("answers null when the number carries a different document type", async () => {
+    routeGateway({
+      ...treeHandlers,
+      PolicyByNumber: () => ({ policyByNumber: policy({ documentType: DocumentType.Procedure }) }),
+    });
+    expect(await liveEdge.policyDetail(DocumentType.Policy, "FIN-001")).toBeNull();
+  });
+
+  it("answers null when there is no such number", async () => {
+    routeGateway({ ...treeHandlers, PolicyByNumber: () => ({ policyByNumber: null }) });
     expect(await liveEdge.policyDetail(DocumentType.Policy, "NOPE-1")).toBeNull();
   });
 });
@@ -241,26 +278,47 @@ describe("liveEdge.acknowledgePolicy", () => {
 });
 
 describe("liveEdge.myDraftPolicies", () => {
-  it("keeps only the caller's own policies with a working draft", async () => {
-    routeGateway({
+  it("assembles the caller's own drafts from the gateway's self-service read", async () => {
+    const calls = routeGateway({
       ...treeHandlers,
-      Me: () => ({ me }),
-      Policies: (v) => ({
-        policies:
-          v.documentType === "POLICY"
-            ? [
-                policy({ currentDraftVersionId: "v-9", id: "mine" }),
-                policy({ currentDraftVersionId: "v-8", id: "theirs", ownerUserId: "u-2" }),
-                policy({ id: "no-draft" }),
-              ]
-            : [],
-      }),
-      PolicyVersionMeta: (v) => ({
-        policyVersion: { id: v.id, status: "published", versionNo: 1 },
+      MyDrafts: () => ({
+        myDrafts: [policy({ currentDraftVersionId: "v-9", id: "mine" })],
       }),
     });
     const drafts = await liveEdge.myDraftPolicies();
     expect(drafts.map((p) => p.id)).toEqual(["mine"]);
+    expect(calls.map((c) => c.operation)).not.toContain("Me");
+  });
+});
+
+describe("liveEdge.authorableGroups", () => {
+  it("keeps only the categories the caller's scopes list as authorable", async () => {
+    routeGateway({ ...treeHandlers, Me: () => ({ me }) });
+    const groups = await liveEdge.authorableGroups();
+    expect(groups.map((g) => g.name)).toEqual(["Finance"]);
+  });
+});
+
+describe("liveEdge.listUserSessions", () => {
+  it("carries the gateway's clientIp through to the admin sessions table", async () => {
+    routeGateway({
+      ListUserSessions: () => ({
+        listUserSessions: [
+          {
+            active: true,
+            authenticatedAt: "2026-01-01T08:00:00Z",
+            clientIp: "203.0.113.5",
+            expiresAt: "2026-01-02T00:00:00Z",
+            issuedAt: "2026-01-01T08:00:00Z",
+            sessionId: "s-1",
+            userAgent: "Mozilla/5.0",
+            userId: "u-3",
+          },
+        ],
+      }),
+    });
+    const [session] = await liveEdge.listUserSessions("u-3");
+    expect(session?.clientIp).toBe("203.0.113.5");
   });
 });
 

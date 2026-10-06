@@ -11,6 +11,9 @@ fragment AuthoringPolicyFields on Policy {
   templateNone
   currentDraftVersionId
   currentPublishedVersionId
+  currentVersionNo
+  currentVersionStatus
+  updatedAt
   retiredAt
   viewerCan {
     read

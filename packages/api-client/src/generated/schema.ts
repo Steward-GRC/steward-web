@@ -1982,6 +1982,8 @@ export type Policy = {
   readonly createdAt?: Maybe<Scalars["String"]["output"]>;
   readonly currentDraftVersionId?: Maybe<Scalars["ID"]["output"]>;
   readonly currentPublishedVersionId?: Maybe<Scalars["ID"]["output"]>;
+  readonly currentVersionNo?: Maybe<Scalars["Int"]["output"]>;
+  readonly currentVersionStatus?: Maybe<Scalars["String"]["output"]>;
   readonly documentType: DocumentType;
   readonly homeCategoryId: Scalars["ID"]["output"];
   readonly id: Scalars["ID"]["output"];
@@ -1994,6 +1996,7 @@ export type Policy = {
   readonly templateNone: Scalars["Boolean"]["output"];
   readonly templateUpdateAvailable: Scalars["Boolean"]["output"];
   readonly title: Scalars["String"]["output"];
+  readonly updatedAt?: Maybe<Scalars["String"]["output"]>;
   readonly viewerCan: PolicyViewerCan;
 };
 
@@ -2025,8 +2028,10 @@ export type PolicyVersion = {
   readonly __typename?: "PolicyVersion";
   readonly appendices: ReadonlyArray<Appendix>;
   readonly contentJson: Scalars["String"]["output"];
+  readonly createdAt?: Maybe<Scalars["String"]["output"]>;
   readonly id: Scalars["ID"]["output"];
   readonly policyId: Scalars["ID"]["output"];
+  readonly publishedAt?: Maybe<Scalars["String"]["output"]>;
   readonly status: Scalars["String"]["output"];
   readonly templateVersionId: Scalars["ID"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
@@ -2099,6 +2104,7 @@ export type Query = {
   readonly categoryApprovers: ReadonlyArray<User>;
   readonly categoryChildren: ReadonlyArray<Category>;
   readonly categoryRuleset: CategoryRuleset;
+  readonly categoryTree: ReadonlyArray<Category>;
   readonly completionReport: CompletionReport;
   readonly contactBlocks: ReadonlyArray<ContactBlock>;
   readonly definitions: ReadonlyArray<DefinitionEntry>;
@@ -2132,6 +2138,7 @@ export type Query = {
   readonly managedGroupMembers: ReadonlyArray<User>;
   readonly me: User;
   readonly myAckSummary: AckSummary;
+  readonly myDrafts: ReadonlyArray<Policy>;
   readonly myFactors: ReadonlyArray<UserFactor>;
   readonly myObligations: ReadonlyArray<Obligation>;
   readonly myReport: ReporterView;
@@ -2153,6 +2160,7 @@ export type Query = {
   readonly policies: ReadonlyArray<Policy>;
   readonly policiesByOwner: ReadonlyArray<Policy>;
   readonly policy?: Maybe<Policy>;
+  readonly policyByNumber?: Maybe<Policy>;
   readonly policyContactBlocks: ReadonlyArray<ContactBlock>;
   readonly policyDefinitionCandidates: ReadonlyArray<DefinitionEntry>;
   readonly policyDefinitionEntries: ReadonlyArray<DefinitionEntry>;
@@ -2315,6 +2323,10 @@ export type QueryCategoryRulesetArgs = {
   categoryId: Scalars["ID"]["input"];
 };
 
+export type QueryCategoryTreeArgs = {
+  rootId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
 export type QueryCompletionReportArgs = {
   groupId?: InputMaybe<Scalars["ID"]["input"]>;
   policyVersionId: Scalars["ID"]["input"];
@@ -2396,6 +2408,10 @@ export type QueryPoliciesByOwnerArgs = {
 
 export type QueryPolicyArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type QueryPolicyByNumberArgs = {
+  number: Scalars["String"]["input"];
 };
 
 export type QueryPolicyContactBlocksArgs = {
@@ -2850,6 +2866,7 @@ export type Session = {
   readonly __typename?: "Session";
   readonly active: Scalars["Boolean"]["output"];
   readonly authenticatedAt: Scalars["String"]["output"];
+  readonly clientIp?: Maybe<Scalars["String"]["output"]>;
   readonly expiresAt: Scalars["String"]["output"];
   readonly issuedAt: Scalars["String"]["output"];
   readonly sessionId: Scalars["ID"]["output"];

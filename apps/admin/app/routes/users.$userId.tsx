@@ -277,6 +277,7 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
                     <TH>Issued</TH>
                     <TH>Signed in</TH>
                     <TH>Expires</TH>
+                    <TH>Client IP</TH>
                   </tr>
                 </THead>
                 <tbody>
@@ -298,6 +299,7 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
                         <TD className="text-muted">
                           {new Date(session.expiresAt).toLocaleString()}
                         </TD>
+                        <TD className="text-muted">{session.clientIp ?? "—"}</TD>
                       </tr>
                     );
                   })}
