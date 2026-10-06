@@ -3,7 +3,7 @@
 import type { Edge } from "../edge";
 
 import { gatewayFetch } from "../gatewayFetch";
-import { DiagnosticsDocument, MeDocument } from "../generated/graphql";
+import { DiagnosticsDocument, MeDocument, UpdateMyProfileDocument } from "../generated/graphql";
 
 /** The live edge: every call is a real POST to `GATEWAY_URL`, cookie forwarded. */
 export const liveEdge: Edge = {
@@ -14,6 +14,10 @@ export const liveEdge: Edge = {
   async me(cookie) {
     const data = await gatewayFetch(MeDocument, {}, "Me", { cookie });
     return data.me ?? null; // scrub:allow=fqdn
+  },
+  async updateMyProfile(input, cookie) {
+    const data = await gatewayFetch(UpdateMyProfileDocument, input, "UpdateMyProfile", { cookie });
+    return data.updateMyProfile;
   },
 };
 

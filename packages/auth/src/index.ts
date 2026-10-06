@@ -14,4 +14,5 @@ export {
   type KratosLoginFlow,
   type KratosUiNode,
 } from "./kratos";
+export { ProfileName, type ProfileNameProps } from "./ProfileName";
 export { SignIn, type SignInProps } from "./SignIn";
