@@ -6,12 +6,21 @@ import { gatewayFetch } from "../gatewayFetch";
 import {
   AcknowledgePolicyDocument,
   ActivateOrganizationDocument,
+  AddAppendixDocument,
   AddGroupMappingDocument,
   AddOrganizationDocument,
+  AiHealthDocument,
+  AiJobDocument,
+  AiJobResultContentDocument,
+  AuthorableGroupsDocument,
+  AuthorableTemplatesDocument,
+  AuthoringAssistDocument,
   BreakGlassRevealDocument,
   CategoriesDocument,
   ChangeOrgProtocolDocument,
   CreateGroupDocument,
+  CreatePolicyDocument,
+  DeleteAppendixDocument,
   DeleteGroupDocument,
   DeleteGroupMappingDocument,
   DeleteOrganizationDocument,
@@ -19,24 +28,35 @@ import {
   DiagnosticsDocument,
   DisableOrganizationDocument,
   DisableUserDocument,
+  DiscardDraftDocument,
+  DraftVersionDocument,
   EnableUserDocument,
   ForceRotateSpCertificateDocument,
   GrantRoleDocument,
   GroupChildrenDocument,
   GroupMappingsDocument,
+  LatestTemplateVersionDocument,
   ListUserSessionsDocument,
   MeDocument,
   MoveGroupDocument,
+  MyDraftPoliciesDocument,
   OrganizationsDocument,
   PoliciesDocument,
   PolicyDetailDocument,
+  PolicyDocument,
   PreviewUserDeletionDocument,
+  PublishDraftDocument,
   RenameGroupDocument,
+  ReorderAppendicesDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
+  SaveDraftDocument,
   SpCertificateDocument,
   StartDomainVerificationDocument,
+  SubmitDraftGenerationDocument,
+  SubmitPolicyReviewDocument,
   TemplatesDocument,
+  UpdateAppendixDocument,
   UpdateGroupSettingsDocument,
   UpdateIdPConnectionDocument,
   UpdateMyProfileDocument,
@@ -66,6 +86,15 @@ export const liveEdge: Edge = {
     );
     return data.activateOrganization;
   },
+  async addAppendix(policyVersionId, title, contentJson, cookie) {
+    const data = await gatewayFetch(
+      AddAppendixDocument,
+      { contentJson, policyVersionId, title },
+      "AddAppendix",
+      { cookie },
+    );
+    return data.addAppendix;
+  },
   async addGroupMapping(connectionId, idpGroupClaimValue, targetGroupId, cookie) {
     const data = await gatewayFetch(
       AddGroupMappingDocument,
@@ -80,6 +109,42 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.addOrganization;
+  },
+  async aiHealth(cookie) {
+    const data = await gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie });
+    return data.aiHealth;
+  },
+  async aiJob(jobId, cookie) {
+    const data = await gatewayFetch(AiJobDocument, { jobId }, "AiJob", { cookie });
+    return data.aiJob;
+  },
+  async aiJobResultContent(resultRef, cookie) {
+    const data = await gatewayFetch(
+      AiJobResultContentDocument,
+      { resultRef },
+      "AiJobResultContent",
+      { cookie },
+    );
+    return data.aiJobResultContent;
+  },
+  async authorableGroups(cookie) {
+    const data = await gatewayFetch(AuthorableGroupsDocument, {}, "AuthorableGroups", { cookie });
+    return data.authorableGroups;
+  },
+  async authorableTemplates(ownerGroupId, cookie) {
+    const data = await gatewayFetch(
+      AuthorableTemplatesDocument,
+      { ownerGroupId },
+      "AuthorableTemplates",
+      { cookie },
+    );
+    return data.authorableTemplates;
+  },
+  async authoringAssist(input, cookie) {
+    const data = await gatewayFetch(AuthoringAssistDocument, { input }, "AuthoringAssist", {
+      cookie,
+    });
+    return data.authoringAssist;
   },
   async breakGlassReveal(policyId, reason, cookie) {
     const data = await gatewayFetch(
@@ -106,6 +171,25 @@ export const liveEdge: Edge = {
   async createGroup(input, cookie) {
     const data = await gatewayFetch(CreateGroupDocument, input, "CreateGroup", { cookie });
     return data.createGroup;
+  },
+  async createPolicy(input, cookie) {
+    const data = await gatewayFetch(
+      CreatePolicyDocument,
+      {
+        documentType: input.documentType,
+        homeGroupId: input.homeGroupId,
+        sensitivity: input.sensitivity,
+        templateId: input.templateId,
+        title: input.title,
+      },
+      "CreatePolicy",
+      { cookie },
+    );
+    return data.createPolicy;
+  },
+  async deleteAppendix(id, cookie) {
+    const data = await gatewayFetch(DeleteAppendixDocument, { id }, "DeleteAppendix", { cookie });
+    return data.deleteAppendix;
   },
   async deleteGroup(id, cookie) {
     const data = await gatewayFetch(DeleteGroupDocument, { id }, "DeleteGroup", { cookie });
@@ -147,6 +231,18 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(DisableUserDocument, { userId }, "DisableUser", { cookie });
     return data.disableUser;
   },
+  async discardDraft(policyId, cookie) {
+    const data = await gatewayFetch(DiscardDraftDocument, { policyId }, "DiscardDraft", {
+      cookie,
+    });
+    return data.discardDraft;
+  },
+  async draftVersion(policyId, cookie) {
+    const data = await gatewayFetch(DraftVersionDocument, { policyId }, "DraftVersion", {
+      cookie,
+    });
+    return data.draftVersion ?? null;
+  },
 
   async enableUser(userId, cookie) {
     const data = await gatewayFetch(EnableUserDocument, { userId }, "EnableUser", { cookie });
@@ -177,6 +273,15 @@ export const liveEdge: Edge = {
     });
     return data.groupMappings;
   },
+  async latestTemplateVersion(templateId, cookie) {
+    const data = await gatewayFetch(
+      LatestTemplateVersionDocument,
+      { templateId },
+      "LatestTemplateVersion",
+      { cookie },
+    );
+    return data.latestTemplateVersion ?? null;
+  },
   async listUserSessions(userId, cookie) {
     const data = await gatewayFetch(ListUserSessionsDocument, { userId }, "ListUserSessions", {
       cookie,
@@ -193,6 +298,10 @@ export const liveEdge: Edge = {
     });
     return data.moveGroup;
   },
+  async myDraftPolicies(cookie) {
+    const data = await gatewayFetch(MyDraftPoliciesDocument, {}, "MyDraftPolicies", { cookie });
+    return data.myDraftPolicies;
+  },
   async organizations(cookie) {
     const data = await gatewayFetch(OrganizationsDocument, {}, "Organizations", { cookie });
     return data.organizations;
@@ -200,6 +309,10 @@ export const liveEdge: Edge = {
   async policies(documentType, cookie) {
     const data = await gatewayFetch(PoliciesDocument, { documentType }, "Policies", { cookie });
     return data.policies;
+  },
+  async policy(id, cookie) {
+    const data = await gatewayFetch(PolicyDocument, { id }, "Policy", { cookie });
+    return data.policy ?? null;
   },
   async policyDetail(documentType, number, cookie) {
     const data = await gatewayFetch(
@@ -219,11 +332,26 @@ export const liveEdge: Edge = {
     );
     return data.previewUserDeletion;
   },
+  async publishDraft(policyId, cookie) {
+    const data = await gatewayFetch(PublishDraftDocument, { policyId }, "PublishDraft", {
+      cookie,
+    });
+    return data.publishDraft;
+  },
   async renameGroup(id, name, slug, cookie) {
     const data = await gatewayFetch(RenameGroupDocument, { id, name, slug }, "RenameGroup", {
       cookie,
     });
     return data.renameGroup;
+  },
+  async reorderAppendices(policyVersionId, orderedIds, cookie) {
+    const data = await gatewayFetch(
+      ReorderAppendicesDocument,
+      { orderedIds, policyVersionId },
+      "ReorderAppendices",
+      { cookie },
+    );
+    return data.reorderAppendices;
   },
   async revokeRole(userId, role, cookie) {
     const data = await gatewayFetch(RevokeRoleDocument, { role, userId }, "RevokeRole", {
@@ -240,6 +368,15 @@ export const liveEdge: Edge = {
     );
     return data.revokeUserSessions;
   },
+  async saveDraft(policyId, contentJson, templateVersionId, cookie) {
+    const data = await gatewayFetch(
+      SaveDraftDocument,
+      { contentJson, policyId, templateVersionId },
+      "SaveDraft",
+      { cookie },
+    );
+    return data.saveDraft;
+  },
   async spCertificate(cookie) {
     const data = await gatewayFetch(SpCertificateDocument, {}, "SpCertificate", { cookie });
     return data.spCertificate;
@@ -253,9 +390,33 @@ export const liveEdge: Edge = {
     );
     return data.startDomainVerification;
   },
+  async submitDraftGeneration(input, cookie) {
+    const data = await gatewayFetch(
+      SubmitDraftGenerationDocument,
+      { input },
+      "SubmitDraftGeneration",
+      { cookie },
+    );
+    return data.submitDraftGeneration;
+  },
+  async submitPolicyReview(input, cookie) {
+    const data = await gatewayFetch(SubmitPolicyReviewDocument, { input }, "SubmitPolicyReview", {
+      cookie,
+    });
+    return data.submitPolicyReview;
+  },
   async templates(cookie) {
     const data = await gatewayFetch(TemplatesDocument, {}, "Templates", { cookie });
     return data.templates;
+  },
+  async updateAppendix(id, title, contentJson, cookie) {
+    const data = await gatewayFetch(
+      UpdateAppendixDocument,
+      { contentJson, id, title },
+      "UpdateAppendix",
+      { cookie },
+    );
+    return data.updateAppendix;
   },
   async updateGroupSettings(input, cookie) {
     const data = await gatewayFetch(UpdateGroupSettingsDocument, input, "UpdateGroupSettings", {
