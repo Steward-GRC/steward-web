@@ -1292,6 +1292,16 @@ export type MyDraftsQuery = {
   }>;
 };
 
+export type MyManagedGroupsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type MyManagedGroupsQuery = {
+  readonly myManagedGroups: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly parentId: string | null;
+  }>;
+};
+
 export type OrganizationFieldsFragment = {
   readonly connectionId: string;
   readonly connectionAlias: string;
@@ -7693,6 +7703,33 @@ export const MyDraftsDocument = {
     },
   ],
 } as unknown as DocumentNode<MyDraftsQuery, MyDraftsQueryVariables>;
+export const MyManagedGroupsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "MyManagedGroups" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "myManagedGroups" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "parentId" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MyManagedGroupsQuery, MyManagedGroupsQueryVariables>;
 export const OrganizationsDocument = {
   kind: "Document",
   definitions: [
