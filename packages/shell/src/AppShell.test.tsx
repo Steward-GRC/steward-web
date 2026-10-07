@@ -34,4 +34,22 @@ describe("AppShell", () => {
 
     expect(await screen.findByRole("heading", { name: "About Steward" })).toBeInTheDocument();
   });
+
+  it("signs out with a POST to the app's own sign-out action", async () => {
+    render(
+      <MemoryRouter basename="/admin" initialEntries={["/admin"]}>
+        <AppShell>
+          <p>page content</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "About and diagnostics" }));
+    const item = await screen.findByRole("menuitem", { name: "Sign out" });
+
+    expect(item).toHaveAttribute("type", "submit");
+    const form = screen.getByRole("form", { name: "Sign out" });
+    expect(form).toHaveAttribute("method", "post");
+    expect(form).toHaveAttribute("action", "/admin/sign-out");
+  });
 });

@@ -18,16 +18,10 @@ build.
 |---|---|---|
 | `APP` | none (required) | `staff` or `admin`; selects which app's build output and routes the server serves. Set by the Dockerfile; a direct run (outside the image) must set it too. |
 | `PORT` | `3000` | The port the Node server listens on. |
-| `GATEWAY_URL` | `http://localhost:8080/query` | The steward-gateway GraphQL endpoint for every loader, action, the `/query` proxy and the `/collab/ws` proxy, and the `/readyz` ping. |
+| `GATEWAY_URL` | `http://localhost:8080/query` | The steward-gateway GraphQL endpoint for every loader, action, the `/query` proxy and the `/collab/ws` proxy, and the `/readyz` ping. Sign-in, sign-out and the session's CSRF token use the gateway's `/auth/*` routes on the same origin (the URL with `/query` stripped). |
 | `VERSION` | `dev` | Read back into the `Steward-Version` health header (see `docs/runbook.md`). |
 | `COMMIT` | `unknown` | Read back into the `Steward-Commit` health header. |
 | `STEWARD_DEV_UI_ISSUE_COPY` | unset | The root loader's gate for the dev UI-issue button: `true` renders it, anything else doesn't. Only takes effect on a build also made with `DEV_UI_ISSUE_COPY=true`; see "The dev UI-issue button" in `docs/development.md`. |
-
-## Other runtime variables (read by individual packages)
-
-| Variable | Default | Used for |
-|---|---|---|
-| `KRATOS_PUBLIC_URL` | `http://localhost:4433` | `packages/auth`'s server-side session check. Kratos's public API only; the admin API carries no session cookie and is never used here. |
 
 ## Build-time only (never set on a live build)
 
