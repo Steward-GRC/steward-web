@@ -1224,6 +1224,13 @@ export const mockEdge: Edge = {
         .filter((p) => p.ownerUserId === me.id && p.currentDraftVersionId)
         .toSorted((a, b) => (b.updated ?? "").localeCompare(a.updated ?? "")),
     ),
+  myManagedGroups: () =>
+    Promise.resolve(
+      groups
+        .filter((g) => me.managedGroupIds.includes(g.id))
+        .map((g) => ({ id: g.id, name: g.name, parentId: g.parentId }))
+        .toSorted((a, b) => a.name.localeCompare(b.name)),
+    ),
   organizations: () => Promise.resolve(organizations),
   parseIdpMetadata: () =>
     Promise.resolve({

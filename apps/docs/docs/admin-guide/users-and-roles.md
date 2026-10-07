@@ -49,9 +49,10 @@ is irreversible.
 
 ## 👪 My groups, for group-managers
 
-A user can be made a **local group-manager** of one or more groups without holding the
-site-admin role. A group-manager sees **My groups**, scoped to only the groups they manage, and
-can add or remove manual members there. Memberships synced from your identity provider stay
+A user can be made a **local group-manager** of one or more
+[platform groups](/admin-guide/groups#-platform-groups-are-something-else) without holding the
+site-admin role. A group-manager sees **My groups**, scoped to only the platform groups they
+manage (not categories), and can add or remove manual members there. Memberships synced from your identity provider stay
 read-only, the same as on the Users page.
 
 :::note

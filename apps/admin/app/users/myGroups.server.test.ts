@@ -1,8 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Group, User } from "@steward-web/api-client";
+import type { User } from "@steward-web/api-client";
 
-import { AckTrigger, ReviewCadence } from "@steward-web/api-client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -32,25 +31,6 @@ const nonManagerMe = {
   roles: ["reader"],
   username: "reader",
 };
-
-const makeGroup = (overrides: Partial<Group>): Group => ({
-  ackEveryone: false,
-  ackEveryoneSet: false,
-  ackTriggers: AckTrigger.None,
-  defaultTemplateId: null,
-  defaultTemplateNone: false,
-  defaultWorkflowId: null,
-  exclusionGroupIds: null,
-  id: "g-1",
-  idpGroupIds: null,
-  name: "Group",
-  owners: [],
-  parentId: null,
-  reviewCadence: ReviewCadence.None,
-  reviewDate: null,
-  slug: "group",
-  ...overrides,
-});
 
 const makeUser = (overrides: Partial<User>): User => ({
   deletedAt: null,
@@ -84,16 +64,20 @@ describe("listManagedGroups", () => {
     expect(await listManagedGroups(request())).toEqual([]);
   });
 
-  it("resolves the manager's own groups by name, alphabetically", async () => {
-    const itSecurity = makeGroup({ id: "g-2", name: "IT Security" });
+  it("resolves the manager's own platform groups through myManagedGroups", async () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: managerMe }))
-      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [itSecurity] }))
-      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [] }));
+      .mockResolvedValueOnce(
+        jsonOnce({ myManagedGroups: [{ id: "g-2", name: "IT Security", parentId: null }] }),
+      );
     vi.stubGlobal("fetch", fetchSpy);
 
     expect(await listManagedGroups(request())).toEqual([{ id: "g-2", name: "IT Security" }]);
+    const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as { query: string };
+    expect(body.query).toContain("myManagedGroups");
+    expect(body.query).not.toContain("categoryChildren");
   });
 
   it("redirects a signed-out caller", async () => {

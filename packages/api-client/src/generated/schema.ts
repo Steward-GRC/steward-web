@@ -2153,6 +2153,7 @@ export type Query = {
   readonly myAckSummary: AckSummary;
   readonly myDrafts: ReadonlyArray<Policy>;
   readonly myFactors: ReadonlyArray<UserFactor>;
+  readonly myManagedGroups: ReadonlyArray<PlatformGroup>;
   readonly myObligations: ReadonlyArray<Obligation>;
   readonly myReport: ReporterView;
   readonly myReports: ReadonlyArray<MyReport>;

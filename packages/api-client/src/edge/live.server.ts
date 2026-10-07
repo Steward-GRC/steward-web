@@ -71,6 +71,7 @@ import {
   MergeAccountsDocument,
   MoveCategoryDocument,
   MyDraftsDocument,
+  MyManagedGroupsDocument,
   OrganizationsDocument,
   PendingTasksDocument,
   PlatformGroupsDocument,
@@ -810,6 +811,10 @@ export const liveEdge: Edge = {
       categoryIndex(cookie),
     ]);
     return Promise.all(myDrafts.map((p) => policyView(p, cookie, index)));
+  },
+  async myManagedGroups(cookie) {
+    const data = await gatewayFetch(MyManagedGroupsDocument, {}, "MyManagedGroups", { cookie });
+    return data.myManagedGroups;
   },
   async organizations(cookie) {
     const data = await gatewayFetch(OrganizationsDocument, {}, "Organizations", { cookie });
