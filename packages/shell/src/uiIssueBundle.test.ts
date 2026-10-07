@@ -226,6 +226,19 @@ describe("redactMessage", () => {
     ["a long identifier", "useMemoizedCallbackWithDependencies is not a function"],
     ["a module path", "Cannot find module /srv/app/node_modules/some-package/dist/index.js"],
     ["a C# or element-id hash", "C# style selector div#main failed"],
+    ["a code name ending in a file extension", "Loading chunk main.js failed at a.b"],
+    ["a dotted file name", "in uiIssueBundle.test.ts and config.local.js"],
+    [
+      "a property path",
+      [
+        ["window", "app", "init"],
+        ["import", "meta", "env", "DEV"],
+        ["console", "info"],
+      ]
+        .map((parts) => parts.join("."))
+        .concat(["user", "home"].join("."))
+        .join(", "),
+    ],
   ])("leaves %s readable", (_name, raw) => {
     expect(redactMessage(raw)).toBe(raw);
   });
@@ -234,6 +247,30 @@ describe("redactMessage", () => {
     const started = performance.now();
     redactMessage(`${"a.".repeat(25_000)}@`.repeat(2));
     expect(performance.now() - started).toBeLessThan(250);
+  });
+
+  it("masks a JSON-style secret's string value, any key case and colon spacing", () => {
+    const value = ["s3", "cr3t", "-value"].join("");
+    for (const key of ["password", "Token", "SECRET", "api_key"]) {
+      for (const colon of [":", " : ", ":  "]) {
+        const redacted = redactMessage(`body {"${key}"${colon}"${value}","id":"x1"} rejected`);
+        expect(redacted).toBe(`body {"${key}"${colon}"[redacted]","id":"x1"} rejected`);
+      }
+    }
+  });
+
+  it("masks a JSON-style secret that is unterminated or itself escaped inside a string", () => {
+    const value = ["s3", "cr3t", "-value"].join("");
+    expect(redactMessage(`body {"password":"${value}`)).toBe('body {"password":"[redacted]"');
+    expect(redactMessage(String.raw`body "{\"token\": \"${value}\"}"`)).toBe(
+      String.raw`body "{\"token\": \"[redacted]\"}"`,
+    );
+  });
+
+  it("masks a two-label hostname ending in a network TLD", () => {
+    expect(redactMessage(["lookup wiki", "example failed"].join("."))).toBe("lookup [host] failed");
+    expect(redactMessage(["lookup acme", "corp failed"].join("."))).toBe("lookup [host] failed");
+    expect(redactMessage(["reach wiki", "example."].join("."))).toBe("reach [host].");
   });
 
   it("leaves a clock time alone", () => {

@@ -5,7 +5,8 @@
 # VERSION and COMMIT are stamped into both the client bundle (packages/vite-config's
 # buildInfoDefines, read at build time) and the server's Steward-Version / Steward-Commit
 # health headers (read from the environment at runtime). Unstamped, they fall back to "dev"
-# and "unknown".
+# and "unknown". GITHUB_SHA (pass --build-arg GITHUB_SHA="$GITHUB_SHA" from a CI build) is the
+# client bundle's commit when COMMIT is unset.
 #
 # DEV_UI_ISSUE_COPY defaults to false: it only ever flips to true for a local dev image, never
 # for a release build. packages/vite-config's chooseDevUiIssueButton reads it (as
@@ -21,10 +22,12 @@ FROM node:24-bookworm-slim AS build
 ARG APP
 ARG VERSION
 ARG COMMIT
+ARG GITHUB_SHA
 ARG DEV_UI_ISSUE_COPY=false
 ARG DEV_QUICK_LOGIN=false
 ENV VERSION=${VERSION}
 ENV COMMIT=${COMMIT}
+ENV GITHUB_SHA=${GITHUB_SHA}
 ENV STEWARD_DEV_UI_ISSUE_COPY_BUILD=${DEV_UI_ISSUE_COPY}
 ENV STEWARD_DEV_QUICK_LOGIN_BUILD=${DEV_QUICK_LOGIN}
 WORKDIR /repo
