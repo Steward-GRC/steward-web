@@ -26,6 +26,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { mockEdge } from "./edge.server";
+import { mockMe } from "./fixtures";
 import { MOCK_MARKER, mockId } from "./marker";
 
 /** A freeform draft's stored content: a Lexical editor state with one paragraph of text. */
@@ -631,6 +632,12 @@ describe("mockEdge users directory", () => {
       expect(await mockEdge.discardDraft(created.id)).toBe(true);
       expect(await mockEdge.draftVersion(created.id)).toBeNull();
       expect(await mockEdge.discardDraft(created.id)).toBe(true);
+    });
+
+    it("myManagedGroups() lists the persona's managed groups and nothing else", async () => {
+      const managed = await mockEdge.myManagedGroups();
+      expect(managed.map((g) => g.id)).toEqual([...mockMe.managedGroupIds]);
+      expect(managed.every((g) => g.name.length > 0)).toBe(true);
     });
 
     it("myDraftPolicies() lists only the calling user's policies with a working draft", async () => {

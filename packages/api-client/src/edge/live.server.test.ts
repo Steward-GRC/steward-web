@@ -291,6 +291,19 @@ describe("liveEdge.myDraftPolicies", () => {
   });
 });
 
+describe("liveEdge.myManagedGroups", () => {
+  it("reads the caller's managed platform groups, not the category tree", async () => {
+    const calls = routeGateway({
+      MyManagedGroups: () => ({
+        myManagedGroups: [{ id: "g-2", name: "IT Security", parentId: null }],
+      }),
+    });
+    const groups = await liveEdge.myManagedGroups();
+    expect(groups).toEqual([{ id: "g-2", name: "IT Security", parentId: null }]);
+    expect(calls.map((c) => c.operation)).toEqual(["MyManagedGroups"]);
+  });
+});
+
 describe("liveEdge.authorableGroups", () => {
   it("keeps only the categories the caller's scopes list as authorable", async () => {
     routeGateway({ ...treeHandlers, Me: () => ({ me }) });

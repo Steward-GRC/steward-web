@@ -1,57 +1,24 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Group, User, UserLabel } from "@steward-web/api-client";
+import type { User, UserLabel } from "@steward-web/api-client";
 
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
 
 const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
 
-/**
- * Every taxonomy group, depth-first. Walks `groupChildren` directly rather than going
- * through `groups.server`'s `listGroups` (which gates on `group.manage`): a LOCAL
- * group-manager may hold no such permission and must still resolve the names of the groups
- * they themselves manage.
- */
-const allGroups = async (request: Request): Promise<Group[]> => {
-  const cookie = cookieOf(request);
-  const all: Group[] = [];
-  const seen = new Set<string>();
-  let frontier: (null | string)[] = [null];
-  while (frontier.length > 0) {
-    const batches = await Promise.all(
-      frontier.map((parentId) => edge.groupChildren(parentId, cookie)),
-    );
-    const next: string[] = [];
-    for (const kids of batches) {
-      for (const g of kids) {
-        if (seen.has(g.id)) continue;
-        seen.add(g.id);
-        all.push(g);
-        next.push(g.id);
-      }
-    }
-    frontier = next;
-  }
-  return all;
-};
-
 export interface ManagedGroup {
   id: string;
   name: string;
 }
 
-/** The groups the signed-in caller is a LOCAL group-manager of, by name, alphabetical. Empty
- *  for anyone who manages none. */
+/** The platform groups the signed-in caller is a LOCAL group-manager of, by name, from the
+ *  gateway's `myManagedGroups`. Empty for anyone who manages none. */
 export const listManagedGroups = async (request: Request): Promise<ManagedGroup[]> => {
   const identity = await requireIdentityFromRequest(request);
   if (identity.managedGroupIds.length === 0) return [];
-  const managed = new Set(identity.managedGroupIds);
-  const groups = await allGroups(request);
-  return groups
-    .filter((g) => managed.has(g.id))
-    .map((g) => ({ id: g.id, name: g.name }))
-    .toSorted((a, b) => a.name.localeCompare(b.name));
+  const groups = await edge.myManagedGroups(cookieOf(request));
+  return groups.map((g) => ({ id: g.id, name: g.name }));
 };
 
 export interface GroupMember {

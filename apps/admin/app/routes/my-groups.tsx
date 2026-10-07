@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { refusalOf } from "@steward-web/shell";
 import {
-  Badge,
   Banner,
   Button,
   Card,
@@ -13,19 +12,15 @@ import {
   Field,
   Input,
   PageHeader,
-  Table,
-  TD,
-  TH,
-  THead,
 } from "@steward-web/ui";
 import { data, Form } from "react-router";
 
 import type { Route } from "./+types/my-groups";
 
+import { GroupMemberTable } from "../users/GroupMemberTable";
 import {
   addUserToGroup,
   findUserByEmail,
-  type GroupMember,
   listManagedGroupMembers,
   listManagedGroups,
   removeUserFromGroup,
@@ -82,42 +77,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 };
 
-const MemberTable = ({ members }: { members: readonly GroupMember[] }) =>
-  members.length === 0 ? (
-    <p className="text-sm text-muted">No members yet. Add one below.</p>
-  ) : (
-    <Table>
-      <THead>
-        <tr>
-          <TH>Name</TH>
-          <TH>Email</TH>
-          <TH />
-        </tr>
-      </THead>
-      <tbody>
-        {members.map((m) => (
-          <tr key={m.userId}>
-            <TD>{m.name}</TD>
-            <TD className="text-muted">{m.email}</TD>
-            <TD className="text-right">
-              {m.source === "idp-sync" ? (
-                <Badge tone="neutral">Synced</Badge>
-              ) : (
-                <Form method="post">
-                  <input name="intent" type="hidden" value="remove-member" />
-                  <input name="userId" type="hidden" value={m.userId} />
-                  <Button size="sm" type="submit" variant="ghost">
-                    Remove
-                  </Button>
-                </Form>
-              )}
-            </TD>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
-  );
-
 export default function MyGroups({ actionData, loaderData }: Route.ComponentProps) {
   const { groups } = loaderData;
 
@@ -156,7 +115,7 @@ export default function MyGroups({ actionData, loaderData }: Route.ComponentProp
             <CardTitle>{group.name}</CardTitle>
           </CardHeader>
           <CardBody className="flex flex-col gap-4">
-            <MemberTable members={group.members} />
+            <GroupMemberTable groupId={group.id} members={group.members} />
 
             <Form className="flex flex-wrap items-end gap-3" method="post">
               <input name="intent" type="hidden" value="add-member" />
