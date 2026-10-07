@@ -118,13 +118,21 @@ hold:
   diagnostics, the AI-health poll, the AI-job stream); a loader's or action's gateway call
   fails on the server and reaches the page as its error or refusal instead.
 - Every message passes one redaction, `redactMessage` in `uiIssueBundle.ts`, before the
-  200-character cap (and only its first 4096 characters are looked at): emails, `Bearer` and
+  200-character cap (and only its first 4096 characters are looked at): a JSON-style string
+  value under a `password`, `token`, `secret` or `api_key` key (any case, any spacing around
+  the colon, cut off or itself escaped inside a string) becomes `"[redacted]"`; emails, `Bearer` and
   `Basic` values, JWTs, cookie-style `key=value` values of 8+ characters and token-shaped runs
   of 24+ characters holding both digits and letters (ULIDs and UUIDs excepted) become
   `[redacted]`; URL userinfo collapses to `scheme://[host]`; URL fragments carrying `=`, `&` or
   `/` (such as `#access_token=...`) are stripped; a PEM block, even an unterminated one,
-  becomes `[pem]`; hostnames of three or more labels become `[host]`; IPv4/IPv6 addresses
-  become `[ip]`.
+  becomes `[pem]`; hostnames of two or more labels ending in a network or reserved TLD
+  (`.com`, `.org`, `.example`, `.corp`, `.internal` and the like) become `[host]`, while code
+  stays readable: `a.b`, file names such as `main.js` or `config.local.js`, and property paths
+  such as `console.info` (TLDs that double as common property names, like `.app`, `.dev` and
+  `.info`, are not treated as hosts); IPv4/IPv6 addresses become `[ip]`.
+- Known limits: errors a route's error boundary renders are not recorded (`src: "render"` is
+  never set), and loader or action failures happen on the server, so neither reaches the
+  bundle.
 
 Nothing it copies ever includes secrets, tokens, cookies, query strings or form data.
 
