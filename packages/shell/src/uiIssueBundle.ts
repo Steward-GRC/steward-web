@@ -59,7 +59,29 @@ const EMAIL_PATTERN = /[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,63}/g;
 const LONG_TOKEN_PATTERN = /[\w+-]{24,}={0,2}/g;
 const IPV4_PATTERN = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
 const IPV6_PATTERN = /(?<![\w:])(?:[\da-f]{0,4}:){2,7}[\da-f]{0,4}(?![\w:])/gi;
-const FQDN_PATTERN = /\b(?:[\da-z](?:[\da-z-]{0,61}[\da-z])?\.){2,}[a-z]{2,63}\b/gi;
+const SECRET_KEYS = "api_key|password|secret|token";
+// The value may be cut off (no closing quote), and the JSON may itself sit escaped inside a
+// string (`\"password\": \"...\"`); each form gets its own pattern.
+const JSON_SECRET_PATTERN = new RegExp(
+  String.raw`("(?:${SECRET_KEYS})"\s*:\s*)"(?:[^\n"\\]|\\.)*(?:"|$)`,
+  "gi",
+);
+const ESCAPED_JSON_SECRET_PATTERN = new RegExp(
+  String.raw`(\\"(?:${SECRET_KEYS})\\"\s*:\s*)\\"(?:[^\n"\\]|\\(?!")[^\n])*(?:\\"|$)`,
+  "gi",
+);
+// A hostname is two or more labels ending in a TLD that names a network or a reserved name,
+// so code such as `a.b` or `main.js` is never mistaken for one. TLDs that are also common
+// property names (app, dev, info, home, int, co) are left out, and a dotted name that carries
+// on past the TLD (a file name, a property path) never matches.
+const HOST_TLDS = [
+  "com|net|org|io|cloud|ai|edu|gov|mil|biz|us|uk|ca|de|eu|fr|nl|au|jp|nyc",
+  "example|test|invalid|local|localdomain|localhost|lan|corp|internal|intranet|priv|private",
+].join("|");
+const HOST_PATTERN = new RegExp(
+  String.raw`(?<![\w.-])(?:[\da-z](?:[\da-z-]{0,61}[\da-z])?\.)+(?:${HOST_TLDS})(?!\.?[\w-])`,
+  "gi",
+);
 
 const ULID_OR_UUID_PATTERN =
   /^(?:[\dA-HJKMNP-TV-Z]{26}|[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})$/i;
@@ -88,6 +110,8 @@ export const redactMessage = (raw: string): string => {
   const redacted = raw
     .slice(0, MAX_REDACTED_INPUT_LENGTH)
     .replaceAll(PEM_PATTERN, "[pem]")
+    .replaceAll(JSON_SECRET_PATTERN, '$1"[redacted]"')
+    .replaceAll(ESCAPED_JSON_SECRET_PATTERN, String.raw`$1\"[redacted]\"`)
     .replaceAll(URL_USERINFO_PATTERN, "$1[host]")
     .replaceAll(FRAGMENT_PATTERN, "")
     .replaceAll(AUTHORIZATION_BASIC_PATTERN, "Authorization: Basic [redacted]")
@@ -99,7 +123,7 @@ export const redactMessage = (raw: string): string => {
     .replaceAll(LONG_TOKEN_PATTERN, longTokenOrKeep)
     .replaceAll(IPV4_PATTERN, "[ip]")
     .replaceAll(IPV6_PATTERN, ipv6OrKeep)
-    .replaceAll(FQDN_PATTERN, "[host]");
+    .replaceAll(HOST_PATTERN, "[host]");
   return redacted.slice(0, MAX_ERROR_MESSAGE_LENGTH);
 };
 
