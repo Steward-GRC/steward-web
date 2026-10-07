@@ -6,7 +6,7 @@ import { data, Form, redirect } from "react-router";
 
 import type { Route } from "./+types/setup";
 
-import { buildIdpConfig, idpConfigToRecord } from "../organisations/idpConfig";
+import { buildIdpConfig, clientSecretInput, idpConfigToRecord } from "../organisations/idpConfig";
 import { findProvider, IDP_PROVIDERS, type IdpProtocol } from "../organisations/idpProviders";
 import {
   bootstrapRoot,
@@ -99,7 +99,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       domain,
       orgName,
       protocol,
-      secretRef: protocol === "oidc" ? clientSecret || undefined : undefined,
+      ...clientSecretInput(protocol, clientSecret),
     };
   }
 

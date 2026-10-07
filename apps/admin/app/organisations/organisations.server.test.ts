@@ -60,6 +60,7 @@ const makeOrg = (
   jitEnabled: true,
   orgName: overrides.domain,
   protocol: "saml",
+  secretReentryRequired: false,
   testPassed: false,
   verified: false,
   ...overrides,
@@ -281,7 +282,41 @@ describe("updateIdPConnection", () => {
   });
 });
 
+describe("updateIdPConnection client secret", () => {
+  it("posts a re-entered client secret write-only", async () => {
+    const updated = makeOrg({ domain: "acme.example.org" });
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(jsonOnce({ updateIdPConnection: updated }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await updateIdPConnection(request(), "acme.example.org", { clientSecret: "s3cr3t" });
+    const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
+    const variables = JSON.parse(init.body as string).variables;
+    expect(variables.clientSecret).toBe("s3cr3t");
+    expect("secretRef" in variables).toBe(false);
+  });
+});
+
 describe("changeOrgProtocol", () => {
+  it("posts an OIDC client secret as clientSecret", async () => {
+    const changed = makeOrg({ domain: "acme.example.org", protocol: "oidc" });
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(jsonOnce({ changeOrgProtocol: changed }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await changeOrgProtocol(request(), "acme.example.org", "oidc", undefined, {
+      clientSecret: "s3cr3t",
+    });
+    const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
+    const variables = JSON.parse(init.body as string).variables;
+    expect(variables.clientSecret).toBe("s3cr3t");
+    expect("secretRef" in variables).toBe(false);
+  });
+
   it("posts the protocol change", async () => {
     const changed = makeOrg({ domain: "acme.example.org", protocol: "oidc" });
     const fetchSpy = vi

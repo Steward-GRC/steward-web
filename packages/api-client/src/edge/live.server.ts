@@ -467,10 +467,16 @@ export const liveEdge: Edge = {
       subcategories: all.filter((c) => c.parentId === root.id).map((c) => c.name),
     }));
   },
-  async changeOrgProtocol(domain, protocol, config, secretRef, cookie) {
+  async changeOrgProtocol(domain, protocol, config, secret, cookie) {
     const data = await gatewayFetch(
       ChangeOrgProtocolDocument,
-      { config, domain, protocol, secretRef },
+      {
+        clientSecret: secret?.clientSecret,
+        config,
+        domain,
+        protocol,
+        secretRef: secret?.secretRef,
+      },
       "ChangeOrgProtocol",
       { cookie },
     );
@@ -1201,7 +1207,13 @@ export const liveEdge: Edge = {
   async updateIdPConnection(domain, toggles, cookie) {
     const data = await gatewayFetch(
       UpdateIdPConnectionDocument,
-      { allowLocal: toggles.allowLocal, domain, jitEnabled: toggles.jitEnabled },
+      {
+        allowLocal: toggles.allowLocal,
+        clientSecret: toggles.clientSecret,
+        domain,
+        jitEnabled: toggles.jitEnabled,
+        secretRef: toggles.secretRef,
+      },
       "UpdateIdPConnection",
       { cookie },
     );

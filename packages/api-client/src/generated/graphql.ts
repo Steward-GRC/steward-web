@@ -53,6 +53,7 @@ export type ActivateOrganizationMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+    readonly secretReentryRequired: boolean;
   };
 };
 
@@ -139,6 +140,7 @@ export type AddOrganizationMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+    readonly secretReentryRequired: boolean;
   };
 };
 
@@ -486,6 +488,7 @@ export type ChangeOrgProtocolMutationVariables = Exact<{
   protocol: string;
   config?: ReadonlyArray<Types.KeyValueInput> | Types.KeyValueInput | null | undefined;
   secretRef?: string | null | undefined;
+  clientSecret?: string | null | undefined;
 }>;
 
 export type ChangeOrgProtocolMutation = {
@@ -501,6 +504,7 @@ export type ChangeOrgProtocolMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+    readonly secretReentryRequired: boolean;
   };
 };
 
@@ -964,6 +968,7 @@ export type DisableOrganizationMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+    readonly secretReentryRequired: boolean;
   };
 };
 
@@ -1314,6 +1319,7 @@ export type OrganizationFieldsFragment = {
   readonly testPassed: boolean;
   readonly verified: boolean;
   readonly allowLocal: boolean;
+  readonly secretReentryRequired: boolean;
 };
 
 export type OrganizationsQueryVariables = Exact<{ [key: string]: never }>;
@@ -1331,6 +1337,7 @@ export type OrganizationsQuery = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+    readonly secretReentryRequired: boolean;
   }>;
 };
 
@@ -2554,6 +2561,8 @@ export type UpdateIdPConnectionMutationVariables = Exact<{
   domain: string;
   jitEnabled?: boolean | null | undefined;
   allowLocal?: boolean | null | undefined;
+  secretRef?: string | null | undefined;
+  clientSecret?: string | null | undefined;
 }>;
 
 export type UpdateIdPConnectionMutation = {
@@ -2569,6 +2578,7 @@ export type UpdateIdPConnectionMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+    readonly secretReentryRequired: boolean;
   };
 };
 
@@ -2768,6 +2778,7 @@ export type VerifyDomainMutation = {
     readonly testPassed: boolean;
     readonly verified: boolean;
     readonly allowLocal: boolean;
+    readonly secretReentryRequired: boolean;
   };
 };
 
@@ -3038,6 +3049,7 @@ export const OrganizationFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "testPassed" } },
           { kind: "Field", name: { kind: "Name", value: "verified" } },
           { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+          { kind: "Field", name: { kind: "Name", value: "secretReentryRequired" } },
         ],
       },
     },
@@ -3643,6 +3655,7 @@ export const ActivateOrganizationDocument = {
           { kind: "Field", name: { kind: "Name", value: "testPassed" } },
           { kind: "Field", name: { kind: "Name", value: "verified" } },
           { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+          { kind: "Field", name: { kind: "Name", value: "secretReentryRequired" } },
         ],
       },
     },
@@ -4001,6 +4014,7 @@ export const AddOrganizationDocument = {
           { kind: "Field", name: { kind: "Name", value: "testPassed" } },
           { kind: "Field", name: { kind: "Name", value: "verified" } },
           { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+          { kind: "Field", name: { kind: "Name", value: "secretReentryRequired" } },
         ],
       },
     },
@@ -4928,6 +4942,11 @@ export const ChangeOrgProtocolDocument = {
           variable: { kind: "Variable", name: { kind: "Name", value: "secretRef" } },
           type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
         },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "clientSecret" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
       ],
       selectionSet: {
         kind: "SelectionSet",
@@ -4955,6 +4974,11 @@ export const ChangeOrgProtocolDocument = {
                 kind: "Argument",
                 name: { kind: "Name", value: "secretRef" },
                 value: { kind: "Variable", name: { kind: "Name", value: "secretRef" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "clientSecret" },
+                value: { kind: "Variable", name: { kind: "Name", value: "clientSecret" } },
               },
             ],
             selectionSet: {
@@ -4985,6 +5009,7 @@ export const ChangeOrgProtocolDocument = {
           { kind: "Field", name: { kind: "Name", value: "testPassed" } },
           { kind: "Field", name: { kind: "Name", value: "verified" } },
           { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+          { kind: "Field", name: { kind: "Name", value: "secretReentryRequired" } },
         ],
       },
     },
@@ -6603,6 +6628,7 @@ export const DisableOrganizationDocument = {
           { kind: "Field", name: { kind: "Name", value: "testPassed" } },
           { kind: "Field", name: { kind: "Name", value: "verified" } },
           { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+          { kind: "Field", name: { kind: "Name", value: "secretReentryRequired" } },
         ],
       },
     },
@@ -7771,6 +7797,7 @@ export const OrganizationsDocument = {
           { kind: "Field", name: { kind: "Name", value: "testPassed" } },
           { kind: "Field", name: { kind: "Name", value: "verified" } },
           { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+          { kind: "Field", name: { kind: "Name", value: "secretReentryRequired" } },
         ],
       },
     },
@@ -11568,6 +11595,16 @@ export const UpdateIdPConnectionDocument = {
           variable: { kind: "Variable", name: { kind: "Name", value: "allowLocal" } },
           type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
         },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "secretRef" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "clientSecret" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
       ],
       selectionSet: {
         kind: "SelectionSet",
@@ -11590,6 +11627,16 @@ export const UpdateIdPConnectionDocument = {
                 kind: "Argument",
                 name: { kind: "Name", value: "allowLocal" },
                 value: { kind: "Variable", name: { kind: "Name", value: "allowLocal" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "secretRef" },
+                value: { kind: "Variable", name: { kind: "Name", value: "secretRef" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "clientSecret" },
+                value: { kind: "Variable", name: { kind: "Name", value: "clientSecret" } },
               },
             ],
             selectionSet: {
@@ -11620,6 +11667,7 @@ export const UpdateIdPConnectionDocument = {
           { kind: "Field", name: { kind: "Name", value: "testPassed" } },
           { kind: "Field", name: { kind: "Name", value: "verified" } },
           { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+          { kind: "Field", name: { kind: "Name", value: "secretReentryRequired" } },
         ],
       },
     },
@@ -12315,6 +12363,7 @@ export const VerifyDomainDocument = {
           { kind: "Field", name: { kind: "Name", value: "testPassed" } },
           { kind: "Field", name: { kind: "Name", value: "verified" } },
           { kind: "Field", name: { kind: "Name", value: "allowLocal" } },
+          { kind: "Field", name: { kind: "Name", value: "secretReentryRequired" } },
         ],
       },
     },

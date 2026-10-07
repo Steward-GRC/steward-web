@@ -46,12 +46,14 @@ export type SetupState = { needsSetup: boolean };
 
 /** OPTIONAL Day-0 SSO block sent with the bootstrap request. */
 export interface SsoBootstrapInput {
+  /** The OIDC client secret, write-only: the gateway passes it to identity, which keeps it out
+   *  of its database and never returns it. */
+  clientSecret?: string;
   config: Record<string, string>;
   displayName?: string;
   domain: string;
   orgName: string;
   protocol: "oidc" | "saml";
-  secretRef?: string;
 }
 
 /** The `sso` sub-object echoed back on a successful bootstrap. */

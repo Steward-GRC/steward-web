@@ -311,12 +311,14 @@ export interface Edge {
   breakGlassReveal(policyId: string, reason: string, cookie?: string): Promise<BreakGlassGrant>;
   /** The library's category tree. Rejects with `GatewayError` when signed out. */
   categories(cookie?: string): Promise<readonly Category[]>;
-  /** Changes an organisation's IdP protocol. Resets both gates and disables the connection. Site-admin only. */
+  /** Changes an organisation's IdP protocol. Resets both gates and disables the connection.
+   *  An OIDC target takes its client secret write-only (`clientSecret`) or as a pre-created
+   *  key (`secretRef`). Site-admin only. */
   changeOrgProtocol(
     domain: string,
     protocol: string,
     config?: readonly KeyValueInput[],
-    secretRef?: string,
+    secret?: OrgClientSecret,
     cookie?: string,
   ): Promise<Organization>;
   /** The outcome, corrective actions and the optional closing message to the reporter. A closed case takes no more changes. Officers only. */
@@ -636,10 +638,11 @@ export interface Edge {
   ): Promise<DefinitionEntry>;
   /** Sets a group's inherited defaults and governance. Site-admin only. */
   updateGroupSettings(input: UpdateGroupSettingsInput, cookie?: string): Promise<Group>;
-  /** Updates an organisation's per-connection login toggles. Site-admin only. */
+  /** Updates an organisation's per-connection login toggles, or replaces an OIDC connection's
+   *  client secret (write-only `clientSecret`, or a pre-created `secretRef`). Site-admin only. */
   updateIdPConnection(
     domain: string,
-    toggles: { allowLocal?: boolean; jitEnabled?: boolean },
+    toggles: { allowLocal?: boolean; jitEnabled?: boolean } & OrgClientSecret,
     cookie?: string,
   ): Promise<Organization>;
   /** Edits the CALLING user's own name. Rejects with `GatewayError` when signed out. */
@@ -726,6 +729,14 @@ export interface MintSsoTestLinkInput {
   connectionId: string;
   returnPath?: string;
   tenant?: string;
+}
+
+/** An OIDC client secret for an organisation: the secret itself, write-only (never stored by
+ *  the gateway or identity's database, never returned), or the name of a key an operator
+ *  created in identity's Polis secrets Secret. Send one or the other. */
+export interface OrgClientSecret {
+  clientSecret?: string;
+  secretRef?: string;
 }
 
 /** One section of a template version's outline: `key` is the stable identifier the authoring

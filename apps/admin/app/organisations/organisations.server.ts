@@ -9,6 +9,7 @@ import type {
   MintedSsoTestLink,
   MintSsoTestLinkInput,
   Organization,
+  OrgClientSecret,
   SpCertificate,
 } from "@steward-web/api-client";
 
@@ -127,7 +128,7 @@ export const disableOrganization = async (
 export const updateIdPConnection = async (
   request: Request,
   domain: string,
-  toggles: { allowLocal?: boolean; jitEnabled?: boolean },
+  toggles: { allowLocal?: boolean; jitEnabled?: boolean } & OrgClientSecret,
 ): Promise<Organization> => {
   await requireSettingsManage(request);
   return edge.updateIdPConnection(domain, toggles, cookieOf(request));
@@ -140,10 +141,10 @@ export const changeOrgProtocol = async (
   domain: string,
   protocol: string,
   config?: readonly KeyValueInput[],
-  secretRef?: string,
+  secret?: OrgClientSecret,
 ): Promise<Organization> => {
   await requireSettingsManage(request);
-  return edge.changeOrgProtocol(domain, protocol, config, secretRef, cookieOf(request));
+  return edge.changeOrgProtocol(domain, protocol, config, secret, cookieOf(request));
 };
 
 /** Permanently removes an organisation's SSO connection. */
