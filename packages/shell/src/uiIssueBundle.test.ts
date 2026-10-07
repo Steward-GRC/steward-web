@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { buildUiIssueBundle, type UiIssueBundleInput } from "./uiIssueBundle";
+import { buildUiIssueBundle, redactMessage, type UiIssueBundleInput } from "./uiIssueBundle";
 
 const minimalInput: UiIssueBundleInput = {
   app: "staff",
@@ -162,5 +162,103 @@ describe("buildUiIssueBundle", () => {
     for (const banned of ["query", "cookie", "token", "secret", "password"]) {
       expect(bundle.toLowerCase()).not.toContain(banned);
     }
+  });
+});
+
+// Every secret-shaped value is assembled at runtime so no literal one sits in the repo history.
+const fakeBase64 = btoa(["alice", "pw".repeat(8)].join(":"));
+const fakeHex = "0f".repeat(16);
+const fakeCookieValue = "a1b2".repeat(4);
+const pemHeader = ["-----BEGIN", "PRIVATE", "KEY-----"].join(" ");
+
+describe("redactMessage", () => {
+  it.each([
+    [
+      "an Authorization Basic value",
+      `Authorization: Basic ${fakeBase64}`,
+      "Basic [redacted]",
+      [fakeBase64],
+    ],
+    [
+      "a cookie-style key=value",
+      `cookie steward_sid=${fakeCookieValue}; path=/`,
+      "[redacted]",
+      [fakeCookieValue],
+    ],
+    [
+      "URL userinfo",
+      `fetch https://alice:${fakeCookieValue}@db.example.com/x failed`,
+      "https://[host]",
+      ["alice", fakeCookieValue, "db.example.com"],
+    ],
+    [
+      "a URL fragment",
+      `redirect to /callback#access_token=${fakeCookieValue}`,
+      "/callback",
+      ["#", "access_token"],
+    ],
+    ["a long hex run", `digest ${fakeHex} mismatch`, "[redacted]", [fakeHex]],
+    ["a long base64 run", `blob ${fakeBase64} rejected`, "[redacted]", [fakeBase64]],
+    [
+      "an unterminated PEM block",
+      `bad key ${pemHeader}\nMIIEvQIBADANBg`,
+      "[pem]",
+      ["BEGIN", "MIIE"],
+    ],
+    ["a bare FQDN", "connect to db01.corp.example.com refused", "[host]", ["db01", "corp.example"]],
+    ["an IPv4 address", "connect to 192.0.2.10:5432 refused", "[ip]", ["192.0.2.10"]],
+    [
+      "an IPv6 address",
+      "connect to fe80::1 and 2001:db8:0:0:0:0:2:1 refused",
+      "[ip]",
+      ["fe80", "2001:db8"],
+    ],
+  ])("masks %s", (_name, raw, expected, leaked) => {
+    const redacted = redactMessage(raw);
+    expect(redacted).toContain(expected);
+    for (const value of leaked) expect(redacted).not.toContain(value);
+  });
+
+  it.each([
+    ["the word basic", "basic auth failed for basic users"],
+    ["a UUID", "policy 123e4567-e89b-42d3-a456-426614174000 not found"],
+    ["a ULID", "case 01ARZ3NDEKTSV4RRFFQ69G5FAV not found"],
+    ["a long identifier", "useMemoizedCallbackWithDependencies is not a function"],
+    ["a module path", "Cannot find module /srv/app/node_modules/some-package/dist/index.js"],
+    ["a C# or element-id hash", "C# style selector div#main failed"],
+  ])("leaves %s readable", (_name, raw) => {
+    expect(redactMessage(raw)).toBe(raw);
+  });
+
+  it("stays fast on a huge message", () => {
+    const started = performance.now();
+    redactMessage(`${"a.".repeat(25_000)}@`.repeat(2));
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+
+  it("leaves a clock time alone", () => {
+    expect(redactMessage("timed out at 15:42:07")).toBe("timed out at 15:42:07");
+  });
+
+  it("redacts before the 200-character cap, so a secret cut by the cap never leaks a prefix", () => {
+    const redacted = redactMessage(`${"x ".repeat(96)}Basic ${fakeBase64}`);
+    expect(redacted.length).toBeLessThanOrEqual(200);
+    expect(redacted).not.toContain(fakeBase64.slice(0, 2));
+  });
+
+  it("runs the same redaction over recentErrors as over lastErr", () => {
+    const bundle = JSON.parse(
+      buildUiIssueBundle({
+        ...minimalInput,
+        recentErrors: [
+          { at: new Date("2026-07-06T18:04:01Z"), m: `Basic ${fakeBase64}`, src: "fetch" },
+          { at: new Date("2026-07-06T18:03:01Z"), m: "from 192.0.2.10", src: "promise" },
+        ],
+      }),
+    );
+    expect(bundle.recentErrors.map((error: { m: string }) => error.m)).toEqual([
+      "Basic [redacted]",
+      "from [ip]",
+    ]);
   });
 });

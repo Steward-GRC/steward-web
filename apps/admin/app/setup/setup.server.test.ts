@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { onApiError } from "@steward-web/api-client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { bootstrapRoot, fetchSetupState } from "./setup.server";
@@ -141,5 +142,26 @@ describe("bootstrapRoot", () => {
 
     expect(result.ok).toBe(false);
     expect(result.status).toBe(0);
+  });
+});
+
+describe("setup API error reporting", () => {
+  it("reports a failed bootstrap and setup-state call to the API error reporter", async () => {
+    const seen = vi.fn();
+    const stop = onApiError(seen);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({}, { status: 503 })));
+
+    await bootstrapRoot(
+      { email: "root@example.com", name: "", password: "pw", setupToken: "t", username: "admin" },
+      config,
+    );
+    await fetchSetupState(config);
+    stop();
+
+    expect(seen).toHaveBeenCalledWith({
+      message: "setup returned 503",
+      operation: "SetupBootstrap",
+    });
+    expect(seen).toHaveBeenCalledWith({ message: "setup returned 503", operation: "SetupState" });
   });
 });

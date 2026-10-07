@@ -86,4 +86,14 @@ describe("installUiIssueClickTracker", () => {
     click(document.querySelector("#second")!);
     expect(getLastClicked()).toBe("button#first");
   });
+
+  it("ignores every click while the button's own fallback dialog is open, its overlay included", () => {
+    document.body.innerHTML =
+      '<button id="save-button">Save</button><div id="overlay"></div>' +
+      '<div role="dialog" data-steward-dev-ui-issue="steward-dev-ui-issue-copy"></div>';
+    const stop = installUiIssueClickTracker(document);
+    click(document.querySelector("#overlay")!);
+    expect(getLastClicked()).toBeUndefined();
+    stop();
+  });
 });

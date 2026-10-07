@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { apiErrorMessage, reportApiError } from "./apiErrorReporter";
 
 /** The gateway's own BFF session cookie (steward-gateway `internal/bff`, `CookieName`). */
 export const SESSION_COOKIE = "steward_sid";
@@ -46,10 +47,14 @@ const lookUp = async (sid: string, queryUrl: string): Promise<string | undefined
     response = await fetch(`${gatewayOrigin(queryUrl)}/auth/session`, {
       headers: { accept: "application/json", cookie: `${SESSION_COOKIE}=${sid}` },
     });
-  } catch {
+  } catch (error) {
+    reportApiError("Session", apiErrorMessage(error));
     return undefined;
   }
-  if (!response.ok) return undefined;
+  if (!response.ok) {
+    reportApiError("Session", `session returned ${response.status}`);
+    return undefined;
+  }
   const session = (await response.json().catch(() => ({}))) as {
     authenticated?: boolean;
     csrfToken?: string;

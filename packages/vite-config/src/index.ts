@@ -123,9 +123,12 @@ export interface BuildInfo {
 const stamped = (value: string | undefined, fallback: string): string =>
   value && value.trim() !== "" ? value.trim() : fallback;
 
-/** The app's own version and commit, from the image's VERSION and COMMIT build arguments. */
+/**
+ * The app's own version and commit, from the image's VERSION and COMMIT build arguments. A
+ * build with no COMMIT (a CI build outside the image) falls back to GitHub's `GITHUB_SHA`.
+ */
 export const buildInfo = (environment: NodeJS.ProcessEnv = process.env): BuildInfo => ({
-  commit: stamped(environment.COMMIT, "unknown"),
+  commit: stamped(environment.COMMIT, stamped(environment.GITHUB_SHA, "unknown")),
   version: stamped(environment.VERSION, "dev"),
 });
 

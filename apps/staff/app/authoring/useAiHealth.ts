@@ -3,6 +3,7 @@
 // Shared AI-health store: every AI affordance on a page calls `useAiHealth()` and shares ONE
 // poll against `resources/ai-health` rather than each polling independently, mirroring the
 // original's own aiHealth.ts.
+import { apiErrorMessage, reportApiError } from "@steward-web/api-client";
 import { useEffect, useState } from "react";
 
 export interface AiHealthState {
@@ -23,10 +24,12 @@ const notify = () => {
 const refresh = async (): Promise<void> => {
   try {
     const response = await fetch("/resources/ai-health");
+    if (!response.ok) reportApiError("AiHealth", `ai-health returned ${response.status}`);
     state = response.ok
       ? ((await response.json()) as AiHealthState)
       : { available: false, reason: null };
-  } catch {
+  } catch (error) {
+    reportApiError("AiHealth", apiErrorMessage(error));
     state = { available: false, reason: null };
   }
   notify();

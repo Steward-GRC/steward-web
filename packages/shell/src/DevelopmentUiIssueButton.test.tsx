@@ -7,6 +7,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DevelopmentUiIssueButton } from "./DevelopmentUiIssueButton";
+import { getLastClicked, resetLastClickedForTests } from "./uiIssueClickTracker";
 import { recordUiIssueError, resetUiIssueErrorsForTests } from "./uiIssueErrorStore";
 
 afterEach(() => {
@@ -48,7 +49,6 @@ describe("DevelopmentUiIssueButton", () => {
     const bundle = JSON.parse(copiedText);
     expect(bundle).toMatchObject({
       app: "staff",
-      params: { number: "42" },
       path: "/policies/:number",
       product: "steward",
       route: "routes/policy",
@@ -56,6 +56,8 @@ describe("DevelopmentUiIssueButton", () => {
       v: 1,
     });
     expect(bundle).not.toHaveProperty("role");
+    // "42" is a policy number, not a ULID or UUID, so it never reaches params.
+    expect(bundle).not.toHaveProperty("params");
   });
 
   it("includes the last clicked element's data-testid, never its text", async () => {
@@ -111,5 +113,27 @@ describe("DevelopmentUiIssueButton", () => {
 
     const textarea = await screen.findByRole<HTMLTextAreaElement>("textbox");
     expect(JSON.parse(textarea.value)).toMatchObject({ product: "steward" });
+  });
+
+  it("never records a click inside its own fallback dialog, which renders outside its container", async () => {
+    resetLastClickedForTests();
+    const writeText = vi.fn().mockRejectedValue(new Error("clipboard refused"));
+    vi.stubGlobal("navigator", { clipboard: { writeText }, userAgent: "test-agent" });
+
+    document.body.innerHTML = '<button data-testid="page-action">Save</button>';
+    renderButton();
+    await userEvent.click(screen.getByTestId("page-action"));
+    await userEvent.click(screen.getByRole("button", { name: "Copy for UI issue" }));
+    await userEvent.click(await screen.findByRole("textbox"));
+
+    expect(getLastClicked()).toBe("[data-testid=page-action]");
+  });
+
+  it("mounts the marker the release-bundle check looks for, so a dev build is its positive control", () => {
+    vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn() }, userAgent: "test-agent" });
+    renderButton();
+    expect(document.body.innerHTML).toContain(
+      'data-steward-dev-ui-issue="steward-dev-ui-issue-copy"',
+    );
   });
 });

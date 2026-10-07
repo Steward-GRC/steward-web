@@ -4,6 +4,7 @@ import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 
 import { print } from "graphql";
 
+import { apiErrorMessage, reportApiError } from "./apiErrorReporter";
 import { sessionHeaders } from "./gatewaySession";
 
 export interface GatewayRequest {
@@ -73,6 +74,20 @@ export const gatewayFetch = async <TResult, TVariables extends Record<string, un
   variables: TVariables,
   operation: string,
   request: GatewayRequest = {},
+): Promise<TResult> => {
+  try {
+    return await callGateway(document, variables, operation, request);
+  } catch (error) {
+    reportApiError(operation, apiErrorMessage(error));
+    throw error;
+  }
+};
+
+const callGateway = async <TResult, TVariables extends Record<string, unknown>>(
+  document: TypedDocumentNode<TResult, TVariables>,
+  variables: TVariables,
+  operation: string,
+  request: GatewayRequest,
 ): Promise<TResult> => {
   const url = request.url ?? defaultUrl();
   const response = await fetch(url, {

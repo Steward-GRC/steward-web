@@ -6,12 +6,12 @@
 |---|---|---|
 | `APP` | none (required) | Which app's build (`staff` or `admin`) ships in the image. Becomes the runtime `APP` variable below. |
 | `VERSION` | `dev` | Stamped into the server's health headers and, via `packages/vite-config`'s `buildInfoDefines`, into the client bundle as `__STEWARD_VERSION__`. |
-| `COMMIT` | `unknown` | Same as `VERSION`, as `__STEWARD_COMMIT__`. |
+| `COMMIT` | `unknown` | Same as `VERSION`, as `__STEWARD_COMMIT__`. A client build with no `COMMIT` takes GitHub's `GITHUB_SHA` instead. |
 | `DEV_UI_ISSUE_COPY` | `false` | Becomes the build-time `STEWARD_DEV_UI_ISSUE_COPY_BUILD` variable below; `true` only for a local dev image. See "The dev UI-issue button" in `docs/development.md`. |
 | `DEV_QUICK_LOGIN` | `false` | Becomes the build-time `STEWARD_DEV_QUICK_LOGIN_BUILD` variable below; `true` only for a local dev image. `pnpm run check` fails if this default changes. See "The dev quick login" in `docs/development.md`. |
 
-An unstamped or blank `VERSION`/`COMMIT` falls back to `dev`/`unknown`; nothing fails the
-build.
+An unstamped or blank `VERSION`/`COMMIT` falls back to `dev`/`unknown` (`COMMIT` first tries
+`GITHUB_SHA`); nothing fails the build.
 
 ## Runtime environment variables (`server/`)
 

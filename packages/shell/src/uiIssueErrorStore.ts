@@ -1,5 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { onApiError } from "@steward-web/api-client";
+
 import type { UiIssueErrorInput, UiIssueErrorSource } from "./uiIssueBundle";
 
 const MAX_ERRORS = 5;
@@ -37,14 +39,19 @@ const onUnhandledRejection = (event: Event): void => {
 };
 
 /**
- * Captures window errors and unhandled promise rejections automatically. `render` and
- * `fetch` entries come from `recordUiIssueError` called where those are caught.
+ * Captures window errors, unhandled promise rejections and every API client's failures
+ * (`fetch`, through `@steward-web/api-client`'s `onApiError`) automatically. `render` entries
+ * come from `recordUiIssueError` called where those are caught.
  */
 export const installUiIssueErrorListeners = (target: EventTarget = globalThis): (() => void) => {
   target.addEventListener("error", onWindowError);
   target.addEventListener("unhandledrejection", onUnhandledRejection);
+  const stopApiErrors = onApiError(({ message, operation }) =>
+    recordUiIssueError("fetch", `${operation}: ${message}`),
+  );
   return () => {
     target.removeEventListener("error", onWindowError);
     target.removeEventListener("unhandledrejection", onUnhandledRejection);
+    stopApiErrors();
   };
 };
