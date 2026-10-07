@@ -4,6 +4,8 @@ import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 
 import { print } from "graphql";
 
+import { sessionHeaders } from "./gatewaySession";
+
 export interface GatewayRequest {
   /** The incoming request's `Cookie` header, forwarded as-is; the browser never sees this call. */
   cookie?: string;
@@ -60,7 +62,8 @@ const defaultUrl = () => process.env.GATEWAY_URL ?? "http://localhost:8080/query
 /**
  * POST one GraphQL operation to the gateway and return its data, or throw a `GatewayError`
  * built from the first error's extensions. Called from a loader or action, this carries the
- * incoming request's cookie over a server-to-server hop the browser never sees. The Copy
+ * incoming request's cookie over a server-to-server hop the browser never sees, with the
+ * session's CSRF token in `X-CSRF-Token` (see `gatewaySession.ts`). The Copy
  * diagnostics button is the one caller that runs in the browser: it always passes
  * `url: "/query"` (same-origin, proxied by `server/`), so the session cookie travels as an
  * ordinary same-origin cookie, never as a value this code reads or holds.
@@ -71,11 +74,12 @@ export const gatewayFetch = async <TResult, TVariables extends Record<string, un
   operation: string,
   request: GatewayRequest = {},
 ): Promise<TResult> => {
-  const response = await fetch(request.url ?? defaultUrl(), {
+  const url = request.url ?? defaultUrl();
+  const response = await fetch(url, {
     body: JSON.stringify({ query: print(document), variables }),
     headers: {
       "content-type": "application/json",
-      ...(request.cookie ? { cookie: request.cookie } : {}),
+      ...(await sessionHeaders(request.cookie, url)),
     },
     method: "POST",
     signal: request.signal,

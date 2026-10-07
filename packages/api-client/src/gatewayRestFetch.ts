@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { GatewayError, type GatewayRequest } from "./gatewayFetch";
+import { sessionHeaders } from "./gatewaySession";
 
 const defaultUrl = () => process.env.GATEWAY_URL ?? "http://localhost:8080/query";
 
@@ -26,7 +27,7 @@ export const gatewayRestFetch = async <TResult>(
     body: JSON.stringify(body),
     headers: {
       "content-type": "application/json",
-      ...(request.cookie ? { cookie: request.cookie } : {}),
+      ...(await sessionHeaders(request.cookie, defaultUrl())),
     },
     method: "POST",
     signal: request.signal,

@@ -3,6 +3,7 @@
 import { reactRouter } from "@react-router/dev/vite";
 import {
   buildInfoDefines,
+  chooseDevelopmentQuickLogin,
   chooseDevelopmentUiIssueButton,
   chooseEdge,
   editorPlugins,
@@ -12,9 +13,15 @@ import {
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ command, mode }) => ({
   define: buildInfoDefines(),
   plugins: [tailwindcss(), reactRouter(), ...editorPlugins()],
-  resolve: { alias: sharedAliases(chooseEdge(mode), chooseDevelopmentUiIssueButton()) },
+  resolve: {
+    alias: sharedAliases(
+      chooseEdge(mode),
+      chooseDevelopmentUiIssueButton(),
+      chooseDevelopmentQuickLogin(mode, command),
+    ),
+  },
   test: testConfig(import.meta.dirname),
 }));

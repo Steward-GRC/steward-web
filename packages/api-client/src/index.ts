@@ -64,6 +64,7 @@ export type {
   Organization,
   OverdueEntry,
   PendingTask,
+  PlatformGroup,
   Policy,
   PolicyAppendix,
   PolicyContact,
@@ -134,6 +135,15 @@ export {
 } from "./edge";
 export { GatewayError, gatewayFetch, type GatewayRequest } from "./gatewayFetch";
 export { gatewayRestFetch } from "./gatewayRestFetch";
+export {
+  csrfTokenFor,
+  forgetCsrfToken,
+  gatewayOrigin,
+  readCookie,
+  rememberCsrfToken,
+  SESSION_COOKIE,
+  sessionIdFromSetCookie,
+} from "./gatewaySession";
 export {
   AckStatusDocument,
   type AckStatusQuery,

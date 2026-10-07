@@ -48,6 +48,25 @@ owners, shown read-only on their own **Defaults & governance** tab. An owner rev
 documents on its review cadence, and has full read, acknowledge, approve and author access across
 it — see [Who can do what](/concepts/access-model).
 
+## 👥 Platform groups are something else
+
+**Platform groups** are the groups *people* belong to, kept by Steward's identity service. They
+are not categories: a category holds documents, a platform group holds members. Reporting's
+officer setting, SSO group mappings and group managers all name a platform group.
+
+Open **Groups**, then **Platform groups** (`/admin/platform-groups`, site administrators only)
+to:
+
+1. **Create** one: give it a name and, if it sits under another, a parent.
+2. **Copy its id** from its card. Settings that name a platform group take this id, not the name.
+3. **Add members** by email, or remove them. Memberships synced from your identity provider show
+   as **Synced** and can only change there.
+
+To let people work compliance cases, create a group such as "Privacy Officers", add the
+officers to it, and give the group's id to whoever runs the install: the reporting service reads
+it from its `REPORTING_OFFICER_GROUPS` setting (several ids separated by commas). A group your
+identity provider sends at sign-in can be named there instead, by its name.
+
 ## ➡️ What comes next
 
 With groups and their defaults in place, see [Who can do what](/concepts/access-model) for how

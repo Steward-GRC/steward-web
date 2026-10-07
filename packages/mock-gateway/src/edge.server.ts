@@ -838,6 +838,36 @@ export const mockEdge: Edge = {
     groups = [...groups, created];
     return created;
   },
+  // The mock keeps one group list for both categories and platform groups (memberships in
+  // fixtures.ts name it), so a platform group made here also shows as a category.
+  createPlatformGroup: async (name, parentId) => {
+    if (parentId) requireGroup("CreatePlatformGroup", parentId);
+    const trimmed = name.trim();
+    if (trimmed === "") {
+      throw new GatewayError("CreatePlatformGroup", "a platform group needs a name", {
+        code: "INVALID_ARGUMENT",
+      });
+    }
+    const created: Group = {
+      ackEveryone: false,
+      ackEveryoneSet: false,
+      ackTriggers: AckTrigger.None,
+      defaultTemplateId: null,
+      defaultTemplateNone: false,
+      defaultWorkflowId: null,
+      exclusionGroupIds: null,
+      id: mockId("group", nextGroupSeq++),
+      idpGroupIds: null,
+      name: trimmed,
+      owners: [],
+      parentId,
+      reviewCadence: ReviewCadence.None,
+      reviewDate: null,
+      slug: trimmed.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"),
+    };
+    groups = [...groups, created];
+    return { id: created.id, name: created.name, parentId: created.parentId };
+  },
   createPolicy: async ({ documentType, homeGroupId, sensitivity, templateId, title }) => {
     requireGroup("CreatePolicy", homeGroupId);
     const templateVersion = templateId ? latestTemplateVersionFor(templateId, true) : undefined;
@@ -1203,6 +1233,12 @@ export const mockEdge: Edge = {
       ssoUrl: "https://idp.mock.example/sso",
     }),
   pendingTasks: () => Promise.resolve(pendingTasks),
+  platformGroups: (parentId) =>
+    Promise.resolve(
+      groups
+        .filter((g) => g.parentId === parentId)
+        .map((g) => ({ id: g.id, name: g.name, parentId: g.parentId })),
+    ),
   policies: (documentType) =>
     Promise.resolve(policies.filter((p) => p.documentType === documentType)),
   policy: (id) => Promise.resolve(policies.find((p) => p.id === id) ?? null),
