@@ -1,9 +1,11 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
+  apiErrorMessage,
   forgetCsrfToken,
   gatewayOrigin,
   rememberCsrfToken,
+  reportApiError,
   sessionIdFromSetCookie,
 } from "@steward-web/api-client";
 
@@ -71,17 +73,24 @@ const post = async (
   body: Record<string, unknown>,
   options: { cookie?: string } & AuthCallOptions = {},
 ): Promise<Answer> => {
-  const response = await fetch(`${gatewayOrigin(options.queryUrl)}${path}`, {
-    body: JSON.stringify(body),
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      ...forwarded(options.incoming),
-      ...(options.cookie ? { cookie: options.cookie } : {}),
-    },
-    method: "POST",
-    redirect: "manual",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${gatewayOrigin(options.queryUrl)}${path}`, {
+      body: JSON.stringify(body),
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        ...forwarded(options.incoming),
+        ...(options.cookie ? { cookie: options.cookie } : {}),
+      },
+      method: "POST",
+      redirect: "manual",
+    });
+  } catch (error) {
+    reportApiError(`Auth ${path}`, apiErrorMessage(error));
+    throw error;
+  }
+  if (response.status >= 500) reportApiError(`Auth ${path}`, `auth returned ${response.status}`);
   const json = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   return { body: json, setCookie: response.headers.getSetCookie(), status: response.status };
 };

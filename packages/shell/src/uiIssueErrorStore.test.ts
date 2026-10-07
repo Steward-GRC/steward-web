@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { reportApiError } from "@steward-web/api-client";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -69,5 +70,17 @@ describe("installUiIssueErrorListeners", () => {
     stop();
     target.dispatchEvent(Object.assign(new Event("error"), { message: "after uninstall" }));
     expect(getLastUiIssueError()).toBeUndefined();
+  });
+});
+
+describe("installUiIssueErrorListeners and API errors", () => {
+  it("records a reported API failure as a fetch error, and stops once uninstalled", () => {
+    const stop = installUiIssueErrorListeners(new EventTarget());
+    reportApiError("Ping", "gateway returned 502");
+    expect(getLastUiIssueError()).toMatchObject({ m: "Ping: gateway returned 502", src: "fetch" });
+
+    stop();
+    reportApiError("Ping", "gateway returned 503");
+    expect(getRecentUiIssueErrors()).toHaveLength(1);
   });
 });

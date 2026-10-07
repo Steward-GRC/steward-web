@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { AssistOperation } from "@steward-web/api-client";
+import { AssistOperation, reportApiError } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import {
@@ -197,6 +197,7 @@ const useAiJobStream = (jobId: null | string): AiJobPoll | null => {
       source.close();
     };
     const onError = () => {
+      reportApiError("AiJobStream", "ai job stream failed");
       setPoll({ error: "ai job stream failed", phase: "AI_JOB_PHASE_FAILED", resultJson: null });
       source.close();
     };

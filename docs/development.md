@@ -96,12 +96,37 @@ What it copies (schema v1, shared with every product's web repos — see
 `packages/shell/src/uiIssueBundle.ts`): one line of minified JSON with fixed keys in a fixed
 order (`v`, `product`, `app`, `sha`, `route`, `path`, `params`, `role`, `vw`, `vh`, `dpr`, `ua`,
 `t`, `theme`, `locale`, `clicked`, `lastErr`, `recentErrors`); a key with no value is omitted,
-never set to null. `path` is the route pattern, not the concrete URL; `params` carries only the
-matched route's own params; `role` is the signed-in user's role, never a username, display name
-or email; `clicked` is the last clicked element's `data-testid` or a short CSS selector, never
-its text; `lastErr`/`recentErrors` hold redacted, 200-character-capped error messages, up to 5
-of them, newest first. Nothing it copies ever includes secrets, tokens, cookies, query strings
-or form data.
+never set to null. It stays on schema v1; the rules below only narrow what the values may
+hold:
+
+- `sha` is the build's `COMMIT`, else `GITHUB_SHA`, else `unknown`.
+- `route` is the deepest matched route's id and `path` its pattern, built segment by segment
+  so a param value never survives in it, URL-encoded or not. A location no route matched is
+  reported as `*` for both, never as its pathname.
+- `params` keeps a matched param only when its value is a ULID or a UUID; anything else
+  (numbers, slugs, usernames, serials) is dropped.
+- `role` is the signed-in user's role, never a username, display name or email.
+- `clicked` is the last clicked element's `data-testid`, else a short CSS selector, never its
+  text. Clicks inside the button's own UI are never recorded: its container and its portaled
+  fallback dialog both carry `data-steward-dev-ui-issue`, and no click counts while that
+  dialog is open (so its overlay doesn't either).
+- `lastErr`/`recentErrors` hold up to 5 errors, newest first, from window errors, unhandled
+  rejections and API failures (`src: "fetch"`). Every API client, server and browser alike,
+  reports its failures through `@steward-web/api-client`'s `reportApiError`; a listener that
+  throws can never replace the caller's error. The button listens (`onApiError`) only in the
+  browser, so the bundle holds the failures of calls the browser made itself (Copy
+  diagnostics, the AI-health poll, the AI-job stream); a loader's or action's gateway call
+  fails on the server and reaches the page as its error or refusal instead.
+- Every message passes one redaction, `redactMessage` in `uiIssueBundle.ts`, before the
+  200-character cap (and only its first 4096 characters are looked at): emails, `Bearer` and
+  `Basic` values, JWTs, cookie-style `key=value` values of 8+ characters and token-shaped runs
+  of 24+ characters holding both digits and letters (ULIDs and UUIDs excepted) become
+  `[redacted]`; URL userinfo collapses to `scheme://[host]`; URL fragments carrying `=`, `&` or
+  `/` (such as `#access_token=...`) are stripped; a PEM block, even an unterminated one,
+  becomes `[pem]`; hostnames of three or more labels become `[host]`; IPv4/IPv6 addresses
+  become `[ip]`.
+
+Nothing it copies ever includes secrets, tokens, cookies, query strings or form data.
 
 ## The dev quick login
 

@@ -25,6 +25,10 @@ const onClick = (event: Event): void => {
   // The button's own chrome (marked with data-steward-dev-ui-issue) never overwrites the
   // last click: clicking "Copy for UI issue" itself would otherwise always be the report.
   if (event.target.closest("[data-steward-dev-ui-issue]")) return;
+  // While its fallback dialog is open, any click (its portaled overlay included) is about it.
+  if (event.target.ownerDocument.querySelector('[role="dialog"][data-steward-dev-ui-issue]')) {
+    return;
+  }
   lastClicked = selectorFor(event.target);
 };
 

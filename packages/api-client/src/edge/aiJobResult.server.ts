@@ -11,6 +11,7 @@ import WS from "ws";
 
 import type { AiJobResult } from "../generated/schema";
 
+import { apiErrorMessage, reportApiError } from "../apiErrorReporter";
 import { GatewayError } from "../gatewayFetch";
 import { AiJobResultDocument } from "../generated/graphql";
 
@@ -85,47 +86,52 @@ export const awaitAiJobResult = (
   queryUrl: string = defaultQueryUrl(),
   socketBase: typeof WS = WS,
 ): Promise<AiJobResult> =>
-  fetchCsrfToken(cookie, queryUrl).then(
-    (csrfToken) =>
-      new Promise<AiJobResult>((resolve, reject) => {
-        const client = createClient({
-          connectionParams: { csrfToken },
-          retryAttempts: 0,
-          url: wsUrlOf(queryUrl),
-          webSocketImpl: cookieSocket(cookie, socketBase),
-        });
-        let settled = false;
-        const finish = (run: () => void) => {
-          if (settled) return;
-          settled = true;
-          run();
-          client.dispose();
-        };
-        signal?.addEventListener(
-          "abort",
-          () => finish(() => reject(new GatewayError("AiJobResult", "aborted"))),
-          { once: true },
-        );
-        client.subscribe<{ aiJobResult: AiJobResult }>(
-          { query: print(AiJobResultDocument), variables: { jobId } },
-          {
-            complete: () =>
-              finish(() =>
-                reject(new GatewayError("AiJobResult", "subscription closed with no result")),
-              ),
-            error: (error) =>
-              finish(() =>
-                reject(
-                  error instanceof Error
-                    ? new GatewayError("AiJobResult", error.message)
-                    : new GatewayError("AiJobResult", "subscription failed"),
+  fetchCsrfToken(cookie, queryUrl)
+    .then(
+      (csrfToken) =>
+        new Promise<AiJobResult>((resolve, reject) => {
+          const client = createClient({
+            connectionParams: { csrfToken },
+            retryAttempts: 0,
+            url: wsUrlOf(queryUrl),
+            webSocketImpl: cookieSocket(cookie, socketBase),
+          });
+          let settled = false;
+          const finish = (run: () => void) => {
+            if (settled) return;
+            settled = true;
+            run();
+            client.dispose();
+          };
+          signal?.addEventListener(
+            "abort",
+            () => finish(() => reject(new GatewayError("AiJobResult", "aborted"))),
+            { once: true },
+          );
+          client.subscribe<{ aiJobResult: AiJobResult }>(
+            { query: print(AiJobResultDocument), variables: { jobId } },
+            {
+              complete: () =>
+                finish(() =>
+                  reject(new GatewayError("AiJobResult", "subscription closed with no result")),
                 ),
-              ),
-            next: (message) => {
-              const result = message.data?.aiJobResult;
-              if (result) finish(() => resolve(result));
+              error: (error) =>
+                finish(() =>
+                  reject(
+                    error instanceof Error
+                      ? new GatewayError("AiJobResult", error.message)
+                      : new GatewayError("AiJobResult", "subscription failed"),
+                  ),
+                ),
+              next: (message) => {
+                const result = message.data?.aiJobResult;
+                if (result) finish(() => resolve(result));
+              },
             },
-          },
-        );
-      }),
-  );
+          );
+        }),
+    )
+    .catch((error: unknown) => {
+      reportApiError("AiJobResult", apiErrorMessage(error));
+      throw error;
+    });
