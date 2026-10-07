@@ -25,8 +25,8 @@ pnpm run check     # lint, typecheck, unit tests and builds
 
 ## 🤝 Contributing
 
-Read the org's [CONTRIBUTING](https://github.com/Steward-GRC/.github/blob/main/CONTRIBUTING.md) and
-[SECURITY](https://github.com/Steward-GRC/.github/blob/main/SECURITY.md) guides. Every commit is
+Read the org's [CONTRIBUTING](https://github.com/Steward-GRC/.github/blob/main/.github/CONTRIBUTING.md) and
+[SECURITY](https://github.com/Steward-GRC/.github/blob/main/.github/SECURITY.md) guides. Every commit is
 signed off (DCO).
 
 ## 🙏 Acknowledgements
