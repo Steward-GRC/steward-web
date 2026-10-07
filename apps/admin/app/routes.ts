@@ -28,6 +28,7 @@ export default [
   route("groups", "routes/groups.tsx"),
   route("groups/new", "routes/groups.new.tsx"),
   route("groups/:groupId", "routes/groups.$groupId.tsx"),
+  route("platform-groups", "routes/platform-groups.tsx"),
   route("contact-library", "routes/contact-library.tsx"),
   route("references-library", "routes/references-library.tsx"),
   route("definitions-library", "routes/definitions-library.tsx"),

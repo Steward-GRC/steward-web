@@ -64,6 +64,7 @@ export type {
   Organization,
   OverdueEntry,
   PendingTask,
+  PlatformGroup,
   Policy,
   PolicyAppendix,
   PolicyContact,

@@ -931,6 +931,7 @@ export type Mutation = {
   readonly createDefinition: DefinitionEntry;
   readonly createLocalUser: User;
   readonly createMagicLink: MagicLink;
+  readonly createPlatformGroup: PlatformGroup;
   readonly createPolicy: Policy;
   readonly createReference: Reference;
   readonly createTemplate: Template;
@@ -1284,6 +1285,11 @@ export type MutationCreateLocalUserArgs = {
 export type MutationCreateMagicLinkArgs = {
   policyVersionId: Scalars["ID"]["input"];
   sensitive: Scalars["Boolean"]["input"];
+};
+
+export type MutationCreatePlatformGroupArgs = {
+  name: Scalars["String"]["input"];
+  parentId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type MutationCreatePolicyArgs = {
@@ -1975,6 +1981,13 @@ export type PendingTask = {
   readonly taskId: Scalars["ID"]["output"];
 };
 
+export type PlatformGroup = {
+  readonly __typename?: "PlatformGroup";
+  readonly id: Scalars["ID"]["output"];
+  readonly name: Scalars["String"]["output"];
+  readonly parentId?: Maybe<Scalars["ID"]["output"]>;
+};
+
 export type Policy = {
   readonly __typename?: "Policy";
   readonly ackAudienceOverride?: Maybe<ReadonlyArray<Scalars["ID"]["output"]>>;
@@ -2157,6 +2170,7 @@ export type Query = {
    * bound from the signed-in user and is never client-supplied.
    */
   readonly pendingTasks: ReadonlyArray<PendingTask>;
+  readonly platformGroups: ReadonlyArray<PlatformGroup>;
   readonly policies: ReadonlyArray<Policy>;
   readonly policiesByOwner: ReadonlyArray<Policy>;
   readonly policy?: Maybe<Policy>;
@@ -2393,6 +2407,10 @@ export type QueryOrganizationArgs = {
 
 export type QueryPdfDownloadLinkArgs = {
   jobId: Scalars["ID"]["input"];
+};
+
+export type QueryPlatformGroupsArgs = {
+  parentId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type QueryPoliciesArgs = {
