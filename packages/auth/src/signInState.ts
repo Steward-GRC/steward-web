@@ -1,11 +1,20 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 
+/** One dev quick-login account as the page sees it: never a password. */
+export interface QuickLoginUser {
+  label: string;
+  note?: string;
+  username: string;
+}
+
 /** A second factor the gateway can offer for a parked sign-in. */
 export type SignInFactor = "email" | "passkey" | "totp";
 
 export interface SignInLoaderData {
   next: string;
+  /** The dev quick login's accounts; always empty outside a local build that allows it. */
+  quickLoginUsers: QuickLoginUser[];
   state: SignInState;
 }
 

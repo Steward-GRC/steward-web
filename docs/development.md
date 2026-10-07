@@ -103,6 +103,47 @@ its text; `lastErr`/`recentErrors` hold redacted, 200-character-capped error mes
 of them, newest first. Nothing it copies ever includes secrets, tokens, cookies, query strings
 or form data.
 
+## The dev quick login
+
+A "Dev quick login" picker under the sign-in form, for local testing against a real gateway
+with a few seeded local accounts. Picking an account signs it in with its password through
+the same gateway `POST /auth/login` as the form, so a second factor is still asked for.
+
+It needs both switches, the same pattern as the dev UI-issue button:
+
+- **Build allowance:** always on for the dev server (`pnpm --filter @steward-web/staff run
+  dev`); a production build only with `STEWARD_DEV_QUICK_LOGIN_BUILD=true`, which the image
+  sets from the `DEV_QUICK_LOGIN` build argument (default `false`). Never in a `--mode mock`
+  build. Without the allowance, `packages/vite-config`'s `chooseDevelopmentQuickLogin` aliases
+  `@steward-web/dev-quick-login` and `@steward-web/dev-quick-login.server` to no-ops, so the
+  picker and the users-file reader are not in the bundle and the `dev-quick-login` intent
+  answers 404.
+- **Server switch:** `STEWARD_DEV_QUICK_LOGIN=true`, with `STEWARD_DEV_QUICK_LOGIN_USERS`
+  naming a local JSON file of accounts:
+
+```json
+[
+  { "username": "staff.sample@example.org", "password": "...", "label": "Staff (sample)" },
+  { "username": "approver.sample@example.org", "password": "...", "note": "approver" }
+]
+```
+
+`label` and `note` are optional. The file is read on the server
+(`packages/auth/src/developmentQuickLogin.server.ts`); the page only gets each username,
+label and note. A missing or malformed file turns the picker off. Keep the file out of the
+repository: it holds local test passwords.
+
+```bash
+docker build --build-arg APP=staff --build-arg DEV_QUICK_LOGIN=true -t steward-web:dev .
+docker run -e STEWARD_DEV_QUICK_LOGIN=true -e STEWARD_DEV_QUICK_LOGIN_USERS=/users.json \
+  -v "$PWD/users.json:/users.json:ro" ... steward-web:dev
+```
+
+`pnpm run check:no-dev-quick-login-leak` (part of `pnpm run check`, so CI runs it on every pull
+request) fails if a release build under `apps/*/build` carries the picker's marker or the
+users-file variable name, or if the Dockerfile's `DEV_QUICK_LOGIN` defaults to anything but
+`false`.
+
 ## Tests
 
 Vitest, colocated `*.test.ts`/`*.test.tsx` files, Testing Library for components. No

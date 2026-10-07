@@ -11,15 +11,22 @@
 # for a release build. packages/vite-config's chooseDevUiIssueButton reads it (as
 # STEWARD_DEV_UI_ISSUE_COPY_BUILD) at build time and aliases the dev UI-issue button's real
 # code in only when it is "true", so a release build never carries that code at all.
+#
+# DEV_QUICK_LOGIN defaults to false the same way: only a local dev image sets it to true.
+# packages/vite-config's chooseDevelopmentQuickLogin reads it (as STEWARD_DEV_QUICK_LOGIN_BUILD)
+# and aliases the dev quick login's users-file reader and picker in only then.
+# scripts/check-no-development-quick-login-leak.mjs fails CI if this default ever changes.
 
 FROM node:24-bookworm-slim AS build
 ARG APP
 ARG VERSION
 ARG COMMIT
 ARG DEV_UI_ISSUE_COPY=false
+ARG DEV_QUICK_LOGIN=false
 ENV VERSION=${VERSION}
 ENV COMMIT=${COMMIT}
 ENV STEWARD_DEV_UI_ISSUE_COPY_BUILD=${DEV_UI_ISSUE_COPY}
+ENV STEWARD_DEV_QUICK_LOGIN_BUILD=${DEV_QUICK_LOGIN}
 WORKDIR /repo
 
 RUN corepack enable

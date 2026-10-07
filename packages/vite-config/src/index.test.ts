@@ -2,7 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { buildInfo, buildInfoDefines, chooseEdge, isMockRun, MOCK_MODE } from "./index";
+import {
+  buildInfo,
+  buildInfoDefines,
+  chooseDevelopmentQuickLogin,
+  chooseEdge,
+  isMockRun,
+  MOCK_MODE,
+} from "./index";
 
 describe("chooseEdge", () => {
   it("picks the live edge for every mode but mock", () => {
@@ -59,5 +66,37 @@ describe("buildInfo", () => {
       __STEWARD_COMMIT__: JSON.stringify("abc"),
       __STEWARD_VERSION__: JSON.stringify("v1.2.3"),
     });
+  });
+});
+
+describe("chooseDevelopmentQuickLogin", () => {
+  it("allows the quick login for the dev server", () => {
+    const choice = chooseDevelopmentQuickLogin("development", "serve", {});
+    expect(choice.enabled).toBe(true);
+    expect(choice.module).toMatch(/auth.*developmentQuickLogin\.server\.ts$/);
+    expect(choice.component).toMatch(/auth.*QuickLogin\.tsx$/);
+  });
+
+  it("leaves it out of a production build unless the build asks for it", () => {
+    const release = chooseDevelopmentQuickLogin("production", "build", {});
+    expect(release.enabled).toBe(false);
+    expect(release.module).toMatch(/NoDevelopmentQuickLogin\.server\.ts$/);
+    expect(release.component).toMatch(/NoQuickLogin\.tsx$/);
+    expect(
+      chooseDevelopmentQuickLogin("production", "build", { STEWARD_DEV_QUICK_LOGIN_BUILD: "true" })
+        .enabled,
+    ).toBe(true);
+    expect(
+      chooseDevelopmentQuickLogin("production", "build", { STEWARD_DEV_QUICK_LOGIN_BUILD: "1" })
+        .enabled,
+    ).toBe(false);
+  });
+
+  it("never allows it for a mock build", () => {
+    expect(chooseDevelopmentQuickLogin(MOCK_MODE, "serve", {}).enabled).toBe(false);
+    expect(
+      chooseDevelopmentQuickLogin(MOCK_MODE, "build", { STEWARD_DEV_QUICK_LOGIN_BUILD: "true" })
+        .enabled,
+    ).toBe(false);
   });
 });

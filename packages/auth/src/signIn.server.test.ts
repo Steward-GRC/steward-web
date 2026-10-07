@@ -215,3 +215,13 @@ describe("safeNext", () => {
     expect(safeNext(null)).toBe("/");
   });
 });
+
+describe("dev quick login in a release build", () => {
+  it("lists no accounts and refuses the intent", async () => {
+    const page = await signInLoader(new Request(`${ORIGIN}/sign-in`));
+    expect(page.quickLoginUsers).toEqual([]);
+    await expect(
+      signInAction(post({ intent: "dev-quick-login", username: "plain.sample" })),
+    ).rejects.toMatchObject({ status: 404 });
+  });
+});

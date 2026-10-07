@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { quickLoginAccount, quickLoginUsers } from "@steward-web/dev-quick-login.server";
 import { data, redirect } from "react-router";
 
 import type { SignInLoaderData, SignInState } from "./signInState";
@@ -69,7 +70,7 @@ export const signInLoader = async (request: Request): Promise<SignInLoaderData> 
   const next = safeNext(new URL(request.url).searchParams.get("next"));
   const identity = await identityFromRequest(request);
   if (identity.id !== "") throw redirect(next);
-  return { next, state: { view: "password" } };
+  return { next, quickLoginUsers: quickLoginUsers(), state: { view: "password" } };
 };
 
 /**
@@ -89,6 +90,18 @@ export const signInAction = async (request: Request, form?: FormData) => {
     if (!identifier || !password)
       return state({ identifier, problem: "missing", view: "password" }, 400);
     return afterPassword(await login(identifier, password, options), identifier, next, request);
+  }
+
+  // A release build's alias answers no account here, so this intent is a 404 there.
+  if (intent === "dev-quick-login") {
+    const account = quickLoginAccount(field(body, "username"));
+    if (!account) throw new Response("Not found", { status: 404 });
+    return afterPassword(
+      await login(account.username, account.password, options),
+      account.username,
+      next,
+      request,
+    );
   }
 
   const pendingId = field(body, "pendingId");

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
@@ -11,6 +13,8 @@ export interface SignInProps {
   cardTitle: string;
   /** Where to go once signed in; carried through every step. */
   next: string;
+  /** Rendered under the password form: the dev quick login, where the build allows it. */
+  quickLogin?: ReactNode;
   state: SignInState;
 }
 
@@ -29,7 +33,7 @@ const Problem = ({ text }: { text: string | undefined }) => {
  * action, which talks to the gateway server-side; the browser never calls the gateway's
  * `/auth` routes or Kratos directly and only ever holds the gateway's HttpOnly session cookie.
  */
-export const SignIn = ({ cardTitle, next, state }: SignInProps) => {
+export const SignIn = ({ cardTitle, next, quickLogin, state }: SignInProps) => {
   const { t } = useTranslation("auth");
 
   return (
@@ -56,6 +60,7 @@ export const SignIn = ({ cardTitle, next, state }: SignInProps) => {
             </Field>
             <Button type="submit">{t("signIn.continue")}</Button>
           </Form>
+          {quickLogin}
         </>
       ) : null}
 
