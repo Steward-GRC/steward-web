@@ -63,6 +63,19 @@ The only other service this repo's servers and apps call directly is steward-gat
 pinned to a specific steward-gateway commit, not fetched live: see "The codegen step" in
 `docs/development.md` for how the pin works and how to move it forward.
 
-`packages/auth`'s server-side session check calls Kratos's public API directly
-(`KRATOS_PUBLIC_URL`); everything else — policies, cases, approvals, search, diagnostics —
-goes through the gateway.
+Sign-in goes through the gateway too. `packages/auth`'s sign-in action posts the credentials
+to the gateway's `POST /auth/login` (and `POST /auth/mfa/verify` or the enrolment routes when it
+asks for a second factor) and relays the gateway's own HttpOnly session cookie, `steward_sid`,
+to the browser. The apps never talk to Kratos. Every gateway call made for a signed-in user
+carries that cookie and the session's CSRF token in `X-CSRF-Token`, which the server reads from
+`GET /auth/session` (`packages/api-client/src/gatewaySession.ts`, cached for 30 seconds per
+session); the browser never holds the token. Sign-out (`POST /sign-out`, from the account menu)
+calls the gateway's `POST /auth/logout` and clears the cookie.
+
+The public edge must set `X-Steward-Edge: public` on requests it forwards: the sign-in action
+passes that header on to `/auth/login`, where the gateway's `MFA_ENFORCE=edge` rule reads it.
+
+Symptom: every page sends you back to sign-in right after a successful sign-in. Check that the
+browser holds a `steward_sid` cookie for the app's origin (a `Secure` cookie needs HTTPS, so set
+the gateway's `COOKIE_INSECURE` only for a plain-HTTP local run) and that `GATEWAY_URL` reaches
+the same gateway that issued it.

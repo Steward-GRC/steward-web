@@ -13,9 +13,13 @@ lives.
 
 1. Open Steward at your organisation's address. You land on the **sign-in screen**.
 2. Enter your **username** and **password**.
-3. Select **Sign in**.
+3. Select **Continue**.
+4. If your organisation asks for a second factor, enter the 6-digit code from your authenticator
+   app, or choose **Email me a code instead** and enter the code you receive. The first time,
+   you may be asked to add Steward to an authenticator app before you can continue.
 
-Once you are in, you land on your [home dashboard](/user-guide/your-dashboard).
+Once you are in, you land on your [home dashboard](/user-guide/your-dashboard). To sign out, open
+the account menu at the top right and choose **Sign out**.
 
 If sign-in fails, it almost always means the username or password is wrong. Try again carefully,
 watching for **Caps Lock** and stray spaces. If it still fails, tell your administrator — they can

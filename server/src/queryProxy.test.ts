@@ -54,6 +54,35 @@ describe("proxyQuery", () => {
     expect(received?.body).toContain("Diagnostics");
   });
 
+  it("adds the session's CSRF token from the gateway's own session check", async () => {
+    let csrf: string | undefined;
+    upstream = createServer((request, response_) => {
+      response_.writeHead(200, { "content-type": "application/json" });
+      if (request.method === "GET" && request.url === "/auth/session") {
+        const live = request.headers.cookie === "steward_sid=sid-1";
+        response_.end(JSON.stringify({ authenticated: live, csrfToken: live ? "csrf-1" : "" }));
+        return;
+      }
+      csrf = request.headers["x-csrf-token"] as string | undefined;
+      response_.end(JSON.stringify({ data: { diagnostics: { traceId: "t-2" } } }));
+    });
+    const upstreamUrl = await listen(upstream);
+
+    proxy = createServer((request, response_) => {
+      void proxyQuery(request, response_, `${upstreamUrl}/query`);
+    });
+    const proxyUrl = await listen(proxy);
+
+    const response = await fetch(proxyUrl, {
+      body: JSON.stringify({ query: "query Diagnostics { diagnostics { traceId } }" }),
+      headers: { "content-type": "application/json", cookie: "steward_sid=sid-1" },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(200);
+    expect(csrf).toBe("csrf-1");
+  });
+
   it("answers 502 rather than hanging or crashing when the gateway is unreachable", async () => {
     proxy = createServer((request, response_) => {
       void proxyQuery(request, response_, "http://127.0.0.1:1");

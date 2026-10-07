@@ -19,9 +19,14 @@ export default function Groups({ loaderData }: Route.ComponentProps) {
     <div className="flex w-full flex-col gap-6 p-6">
       <PageHeader
         actions={
-          <Button asChild size="sm">
-            <Link to="/groups/new">New group</Link>
-          </Button>
+          <>
+            <Button asChild size="sm" variant="secondary">
+              <Link to="/platform-groups">Platform groups</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link to="/groups/new">New group</Link>
+            </Button>
+          </>
         }
         eyebrow="Access"
         subtitle="The org hierarchy: review cadence, owners and inherited defaults."

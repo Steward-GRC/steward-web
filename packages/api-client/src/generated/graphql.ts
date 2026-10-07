@@ -683,6 +683,19 @@ export type CreateDefinitionMutation = {
   };
 };
 
+export type CreatePlatformGroupMutationVariables = Exact<{
+  name: string;
+  parentId?: string | number | null | undefined;
+}>;
+
+export type CreatePlatformGroupMutation = {
+  readonly createPlatformGroup: {
+    readonly id: string;
+    readonly name: string;
+    readonly parentId: string | null;
+  };
+};
+
 export type CreatePolicyMutationVariables = Exact<{
   homeCategoryId: string | number;
   title: string;
@@ -1321,6 +1334,18 @@ export type PendingTasksQuery = {
     readonly policyTitle: string;
     readonly stageIndex: number;
     readonly dueAt: string | null;
+  }>;
+};
+
+export type PlatformGroupsQueryVariables = Exact<{
+  parentId?: string | number | null | undefined;
+}>;
+
+export type PlatformGroupsQuery = {
+  readonly platformGroups: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly parentId: string | null;
   }>;
 };
 
@@ -5473,6 +5498,60 @@ export const CreateDefinitionDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateDefinitionMutation, CreateDefinitionMutationVariables>;
+export const CreatePlatformGroupDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreatePlatformGroup" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "name" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "parentId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createPlatformGroup" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "name" },
+                value: { kind: "Variable", name: { kind: "Name", value: "name" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "parentId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "parentId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "parentId" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreatePlatformGroupMutation, CreatePlatformGroupMutationVariables>;
 export const CreatePolicyDocument = {
   kind: "Document",
   definitions: [
@@ -7690,6 +7769,47 @@ export const PendingTasksDocument = {
     },
   ],
 } as unknown as DocumentNode<PendingTasksQuery, PendingTasksQueryVariables>;
+export const PlatformGroupsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PlatformGroups" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "parentId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "platformGroups" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "parentId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "parentId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "parentId" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PlatformGroupsQuery, PlatformGroupsQueryVariables>;
 export const PoliciesDocument = {
   kind: "Document",
   definitions: [

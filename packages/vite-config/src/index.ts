@@ -80,6 +80,41 @@ export const chooseDevelopmentUiIssueButton = (
   };
 };
 
+export interface DevelopmentQuickLoginChoice {
+  /** The client picker every sign-in route imports as `@steward-web/dev-quick-login`. */
+  component: string;
+  enabled: boolean;
+  /** The server accounts reader imported as `@steward-web/dev-quick-login.server`. */
+  module: string;
+}
+
+/**
+ * Pick the dev quick login's modules at build time. It is allowed for the dev server
+ * (`command === "serve"`) and for a build with `STEWARD_DEV_QUICK_LOGIN_BUILD=true` (the
+ * `DEV_QUICK_LOGIN` Dockerfile build argument), never for a mock build, which has no real
+ * accounts. Anything else aliases in the no-ops, so the users-file reader and the picker never
+ * reach a release build. The server still has to turn it on at runtime
+ * (`STEWARD_DEV_QUICK_LOGIN=true`).
+ */
+export const chooseDevelopmentQuickLogin = (
+  mode: string,
+  command: "build" | "serve",
+  environment: NodeJS.ProcessEnv = process.env,
+): DevelopmentQuickLoginChoice => {
+  const enabled =
+    mode !== MOCK_MODE &&
+    (command === "serve" || environment.STEWARD_DEV_QUICK_LOGIN_BUILD === "true");
+  return {
+    component: enabled
+      ? path.join(source("auth"), "QuickLogin.tsx")
+      : path.join(source("auth"), "NoQuickLogin.tsx"),
+    enabled,
+    module: enabled
+      ? path.join(source("auth"), "developmentQuickLogin.server.ts")
+      : path.join(source("auth"), "NoDevelopmentQuickLogin.server.ts"),
+  };
+};
+
 export interface BuildInfo {
   commit: string;
   version: string;
@@ -109,7 +144,14 @@ export const buildInfoDefines = (
 export const sharedAliases = (
   edge: EdgeChoice,
   developmentUiIssue: DevelopmentUiIssueChoice = chooseDevelopmentUiIssueButton({}),
+  developmentQuickLogin: DevelopmentQuickLoginChoice = chooseDevelopmentQuickLogin(
+    "production",
+    "build",
+    {},
+  ),
 ): Record<string, string> => ({
+  "@steward-web/dev-quick-login": developmentQuickLogin.component,
+  "@steward-web/dev-quick-login.server": developmentQuickLogin.module,
   "@steward-web/dev-ui-issue-button": developmentUiIssue.module,
   "@steward-web/edge.server": edge.module,
   "@steward-web/mock-banner": edge.banner,

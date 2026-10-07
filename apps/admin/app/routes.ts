@@ -11,6 +11,7 @@ import { index, route, type RouteConfig } from "@react-router/dev/routes";
 export default [
   index("routes/home.tsx"),
   route("sign-in", "routes/sign-in.tsx"),
+  route("sign-out", "routes/sign-out.tsx"),
   route("profile", "routes/profile.tsx"),
   route("search", "routes/search.tsx"),
   route("policies", "routes/policies.tsx"),
@@ -27,6 +28,7 @@ export default [
   route("groups", "routes/groups.tsx"),
   route("groups/new", "routes/groups.new.tsx"),
   route("groups/:groupId", "routes/groups.$groupId.tsx"),
+  route("platform-groups", "routes/platform-groups.tsx"),
   route("contact-library", "routes/contact-library.tsx"),
   route("references-library", "routes/references-library.tsx"),
   route("definitions-library", "routes/definitions-library.tsx"),

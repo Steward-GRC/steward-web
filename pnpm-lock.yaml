@@ -407,6 +407,9 @@ importers:
 
   packages/auth:
     dependencies:
+      '@steward-web/api-client':
+        specifier: workspace:*
+        version: link:../api-client
       '@steward-web/i18n':
         specifier: workspace:*
         version: link:../i18n

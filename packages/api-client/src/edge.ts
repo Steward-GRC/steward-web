@@ -43,6 +43,7 @@ import type {
   NoticeStatus,
   Organization,
   PendingTask,
+  PlatformGroup,
   PolicyVersion,
   Reference,
   ReferenceInput,
@@ -123,6 +124,7 @@ export type {
   Organization,
   OverdueEntry,
   PendingTask,
+  PlatformGroup,
   PolicyVersion,
   Reference,
   ReferenceInput,
@@ -340,6 +342,14 @@ export interface Edge {
   createDefinition(input: DefinitionEntryInput, cookie?: string): Promise<DefinitionEntry>;
   /** Creates a taxonomy group. Site-admin only. */
   createGroup(input: CreateGroupInput, cookie?: string): Promise<Group>;
+  /** Creates an identity platform group under parentId (a root group when null): the
+   *  groups memberships, group managers, SSO mappings and reporting's officer setting name by
+   *  id, not a category. Site-admin only. */
+  createPlatformGroup(
+    name: string,
+    parentId: null | string,
+    cookie?: string,
+  ): Promise<PlatformGroup>;
   /** Creates a new policy/procedure with an empty working draft. The owner is the calling user. */
   createPolicy(input: CreatePolicyInput, cookie?: string): Promise<Policy>;
   /** Adds a reusable reference/standard entry to the library. */
@@ -463,6 +473,9 @@ export interface Edge {
   parseIdpMetadata(metadata: string, cookie?: string): Promise<ImportedIdpMetadata>;
   /** Pending approval tasks awaiting the calling user. The approver id is bound server-side. */
   pendingTasks(cookie?: string): Promise<readonly PendingTask[]>;
+  /** The identity platform groups directly under parentId (the roots when null). Site-admin
+   *  only. */
+  platformGroups(parentId: null | string, cookie?: string): Promise<readonly PlatformGroup[]>;
   /** The library catalog for one document type. Rejects with `GatewayError` when signed out. */
   policies(documentType: DocumentType, cookie?: string): Promise<readonly Policy[]>;
   /** One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it. */

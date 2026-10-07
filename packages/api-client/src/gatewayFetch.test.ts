@@ -6,6 +6,7 @@ import { parse } from "graphql";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GatewayError, gatewayFetch } from "./gatewayFetch";
+import { rememberCsrfToken } from "./gatewaySession";
 
 const PingDocument = parse("query Ping { ping }") as TypedDocumentNode<
   { ping: string },
@@ -32,6 +33,20 @@ describe("gatewayFetch", () => {
     const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://gateway.example/query");
     expect((init.headers as Record<string, string>).cookie).toBe("steward_session=abc");
+  });
+
+  it("carries the session's CSRF token beside the gateway session cookie", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(jsonResponse(200, { data: { ping: "pong" } }));
+    vi.stubGlobal("fetch", fetchSpy);
+    rememberCsrfToken("fetch-sid", "fetch-csrf");
+
+    await gatewayFetch(PingDocument, {}, "Ping", {
+      cookie: "steward_sid=fetch-sid",
+      url: "https://gateway.example/query",
+    });
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Record<string, string>)["x-csrf-token"]).toBe("fetch-csrf");
   });
 
   it("omits the cookie header when none is given", async () => {

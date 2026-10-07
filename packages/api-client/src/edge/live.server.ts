@@ -35,6 +35,7 @@ import {
   CreateCategoryDocument,
   CreateContactBlockDocument,
   CreateDefinitionDocument,
+  CreatePlatformGroupDocument,
   CreatePolicyDocument,
   CreateReferenceDocument,
   CreateTemplateDocument,
@@ -72,6 +73,7 @@ import {
   MyDraftsDocument,
   OrganizationsDocument,
   PendingTasksDocument,
+  PlatformGroupsDocument,
   PoliciesDocument,
   PolicyAttachmentsDocument,
   PolicyByNumberDocument,
@@ -513,6 +515,15 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(CreateCategoryDocument, input, "CreateCategory", { cookie });
     return data.createCategory;
   },
+  async createPlatformGroup(name, parentId, cookie) {
+    const data = await gatewayFetch(
+      CreatePlatformGroupDocument,
+      { name, parentId },
+      "CreatePlatformGroup",
+      { cookie },
+    );
+    return data.createPlatformGroup;
+  },
   async createPolicy(input, cookie) {
     const data = await gatewayFetch(
       CreatePolicyDocument,
@@ -656,13 +667,13 @@ export const liveEdge: Edge = {
     );
     return data.policyVersion ?? null;
   },
+
   async emailServiceConfig(cookie) {
     const data = await gatewayFetch(EmailServiceConfigDocument, {}, "EmailServiceConfig", {
       cookie,
     });
     return data.emailServiceConfig;
   },
-
   async enableUser(userId, cookie) {
     const data = await gatewayFetch(EnableUserDocument, { userId }, "EnableUser", { cookie });
     return data.enableUser;
@@ -812,6 +823,12 @@ export const liveEdge: Edge = {
   async pendingTasks(cookie) {
     const data = await gatewayFetch(PendingTasksDocument, {}, "PendingTasks", { cookie });
     return data.pendingTasks;
+  },
+  async platformGroups(parentId, cookie) {
+    const data = await gatewayFetch(PlatformGroupsDocument, { parentId }, "PlatformGroups", {
+      cookie,
+    });
+    return data.platformGroups;
   },
   async policies(documentType, cookie) {
     return catalog(documentType, await categoryIndex(cookie), cookie);
