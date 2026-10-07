@@ -100,3 +100,12 @@ describe("chooseDevelopmentQuickLogin", () => {
     ).toBe(false);
   });
 });
+
+describe("buildInfo commit fallback", () => {
+  it("falls back to GITHUB_SHA when the COMMIT build argument is unset", () => {
+    expect(buildInfo({ GITHUB_SHA: "fedcba9876543210" }).commit).toBe("fedcba9876543210");
+    expect(buildInfo({ COMMIT: "0123456789abcdef", GITHUB_SHA: "fedcba9876543210" }).commit).toBe(
+      "0123456789abcdef",
+    );
+  });
+});

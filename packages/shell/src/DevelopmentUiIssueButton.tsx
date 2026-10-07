@@ -11,7 +11,7 @@ import {
   Textarea,
 } from "@steward-web/ui";
 import { useEffect, useRef, useState } from "react";
-import { useMatches } from "react-router";
+import { useLocation, useMatches } from "react-router";
 
 import { buildUiIssueBundle } from "./uiIssueBundle";
 import { getLastClicked, installUiIssueClickTracker } from "./uiIssueClickTracker";
@@ -21,7 +21,7 @@ import {
   installUiIssueErrorListeners,
 } from "./uiIssueErrorStore";
 import { DEV_UI_ISSUE_MARKER } from "./uiIssueMarker";
-import { pathPattern, stringParameters } from "./uiIssueRoute";
+import { resolveUiIssueRoute } from "./uiIssueRoute";
 
 export interface DevelopmentUiIssueButtonProps {
   app: "admin" | "staff";
@@ -45,6 +45,7 @@ export const DevelopmentUiIssueButton = ({ app, enabled }: DevelopmentUiIssueBut
   const identity = useIdentity();
   const { locale } = useLocale();
   const matches = useMatches();
+  const { pathname } = useLocation();
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [fallbackText, setFallbackText] = useState<string>();
@@ -66,23 +67,22 @@ export const DevelopmentUiIssueButton = ({ app, enabled }: DevelopmentUiIssueBut
 
   if (!enabled) return null;
 
-  const lastMatch = matches.at(-1);
-
   const onClick = async () => {
     setBusy(true);
     setCopied(false);
     try {
+      const resolved = resolveUiIssueRoute(matches, pathname);
       const bundle = buildUiIssueBundle({
         app,
         clicked: getLastClicked(),
         dpr: globalThis.devicePixelRatio,
         lastErr: getLastUiIssueError(),
         locale,
-        params: lastMatch ? stringParameters(lastMatch.params) : {},
-        path: lastMatch ? pathPattern(lastMatch.pathname, lastMatch.params) : "",
+        params: resolved.params,
+        path: resolved.path,
         recentErrors: getRecentUiIssueErrors(),
         role: identity.roles.length > 0 ? identity.roles.join(",") : undefined,
-        route: lastMatch?.id ?? "",
+        route: resolved.route,
         sha: sha(),
         t: new Date(),
         theme: readTheme(),
@@ -113,7 +113,10 @@ export const DevelopmentUiIssueButton = ({ app, enabled }: DevelopmentUiIssueBut
         onOpenChange={(open) => !open && setFallbackText(undefined)}
         open={fallbackText != undefined}
       >
-        <DialogContent title={t("devUiIssue.fallbackTitle")}>
+        <DialogContent
+          data-steward-dev-ui-issue={DEV_UI_ISSUE_MARKER}
+          title={t("devUiIssue.fallbackTitle")}
+        >
           <p className="text-base text-muted">{t("devUiIssue.fallbackHint")}</p>
           <Textarea defaultValue={fallbackText} readOnly ref={fallbackRef} rows={6} />
         </DialogContent>

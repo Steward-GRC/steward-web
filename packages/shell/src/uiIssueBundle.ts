@@ -47,16 +47,59 @@ export interface UiIssueErrorInput {
 
 export type UiIssueErrorSource = "fetch" | "promise" | "render" | "window";
 
-const EMAIL_PATTERN = /[^\s@]+@[^\s@]+\.[^\s@]+/g;
-const JWT_PATTERN = /\beyJ[\w-]+\.[\w-]+\.[\w-]+\b/g;
+const PEM_PATTERN = /-----BEGIN [^-\n]*-----[\s\S]*?(?:-----END [^-\n]*-----|$)/g;
+const URL_USERINFO_PATTERN = /\b([a-z][\d+.a-z-]*:\/\/)[^\s/?#@]+@[^\s/?#]+/gi;
+const FRAGMENT_PATTERN = /(?<=[\w./-])#(?=\S*[&/=])\S*/g;
+const AUTHORIZATION_BASIC_PATTERN = /\bAuthorization:\s*Basic\s+\S+/gi;
+const BASIC_PATTERN = /\bBasic\s+(?=[\w+/]*[\d+/=])[\w+/-]{8,}={0,2}/g;
 const BEARER_PATTERN = /\bBearer\s+\S+/gi;
+const JWT_PATTERN = /\beyJ[\w-]+\.[\w-]+\.[\w-]+\b/g;
+const COOKIE_PAIR_PATTERN = /\b([\w.-]+)=[^\s&;,]{8,}/g;
+const EMAIL_PATTERN = /[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,63}/g;
+const LONG_TOKEN_PATTERN = /[\w+-]{24,}={0,2}/g;
+const IPV4_PATTERN = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+const IPV6_PATTERN = /(?<![\w:])(?:[\da-f]{0,4}:){2,7}[\da-f]{0,4}(?![\w:])/gi;
+const FQDN_PATTERN = /\b(?:[\da-z](?:[\da-z-]{0,61}[\da-z])?\.){2,}[a-z]{2,63}\b/gi;
 
-/** The same redaction a logged error message gets: emails and bearer-like tokens masked. */
+const ULID_OR_UUID_PATTERN =
+  /^(?:[\dA-HJKMNP-TV-Z]{26}|[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})$/i;
+/** Redaction never needs more of a message than this; it also bounds the patterns' work. */
+const MAX_REDACTED_INPUT_LENGTH = 4096;
+
+/**
+ * A long token-shaped run, unless it is an opaque id (a ULID or UUID) or plain text: only a
+ * run holding both a digit and a letter is masked, so long identifiers and words survive.
+ */
+const longTokenOrKeep = (match: string): string =>
+  ULID_OR_UUID_PATTERN.test(match) || !/\d/.test(match) || !/[a-z]/i.test(match)
+    ? match
+    : "[redacted]";
+
+/** An IPv6 candidate, not a clock time: it has a `::` run or at least three colons. */
+const ipv6OrKeep = (match: string): string =>
+  match.includes("::") || match.split(":").length > 3 ? "[ip]" : match;
+
+/**
+ * The one redaction every recorded error passes through (window, promise, API and render
+ * alike), always before the 200-character cap so a cut can never leave a secret's prefix.
+ * Order matters: whole blocks and URLs first, so the narrower patterns never see half of one.
+ */
 export const redactMessage = (raw: string): string => {
   const redacted = raw
-    .replaceAll(JWT_PATTERN, "[redacted]")
+    .slice(0, MAX_REDACTED_INPUT_LENGTH)
+    .replaceAll(PEM_PATTERN, "[pem]")
+    .replaceAll(URL_USERINFO_PATTERN, "$1[host]")
+    .replaceAll(FRAGMENT_PATTERN, "")
+    .replaceAll(AUTHORIZATION_BASIC_PATTERN, "Authorization: Basic [redacted]")
+    .replaceAll(BASIC_PATTERN, "Basic [redacted]")
     .replaceAll(BEARER_PATTERN, "Bearer [redacted]")
-    .replaceAll(EMAIL_PATTERN, "[redacted]");
+    .replaceAll(JWT_PATTERN, "[redacted]")
+    .replaceAll(COOKIE_PAIR_PATTERN, "$1=[redacted]")
+    .replaceAll(EMAIL_PATTERN, "[redacted]")
+    .replaceAll(LONG_TOKEN_PATTERN, longTokenOrKeep)
+    .replaceAll(IPV4_PATTERN, "[ip]")
+    .replaceAll(IPV6_PATTERN, ipv6OrKeep)
+    .replaceAll(FQDN_PATTERN, "[host]");
   return redacted.slice(0, MAX_ERROR_MESSAGE_LENGTH);
 };
 

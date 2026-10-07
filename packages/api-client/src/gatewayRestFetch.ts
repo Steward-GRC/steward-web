@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { apiErrorMessage, reportApiError } from "./apiErrorReporter";
 import { GatewayError, type GatewayRequest } from "./gatewayFetch";
 import { sessionHeaders } from "./gatewaySession";
 
@@ -22,6 +23,20 @@ export const gatewayRestFetch = async <TResult>(
   body: Record<string, unknown>,
   operation: string,
   request: GatewayRequest = {},
+): Promise<TResult> => {
+  try {
+    return await callRest<TResult>(path, body, operation, request);
+  } catch (error) {
+    reportApiError(operation, apiErrorMessage(error));
+    throw error;
+  }
+};
+
+const callRest = async <TResult>(
+  path: string,
+  body: Record<string, unknown>,
+  operation: string,
+  request: GatewayRequest,
 ): Promise<TResult> => {
   const response = await fetch(request.url ?? restUrl(path), {
     body: JSON.stringify(body),

@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { apiErrorMessage, reportApiError } from "@steward-web/api-client";
 
 /**
  * The first-run bootstrap endpoints. The gateway exposes two unauthenticated REST
@@ -81,10 +82,14 @@ export const fetchSetupState = async (
   let response: Response;
   try {
     response = await fetch(`${config.baseUrl}/setup/state`);
-  } catch {
+  } catch (error) {
+    reportApiError("SetupState", apiErrorMessage(error));
     return { needsSetup: false };
   }
-  if (!response.ok) return { needsSetup: false };
+  if (!response.ok) {
+    reportApiError("SetupState", `setup returned ${response.status}`);
+    return { needsSetup: false };
+  }
   return (await response.json()) as SetupState;
 };
 
@@ -108,7 +113,8 @@ export const bootstrapRoot = async (
       headers: { "content-type": "application/json" },
       method: "POST",
     });
-  } catch {
+  } catch (error) {
+    reportApiError("SetupBootstrap", apiErrorMessage(error));
     return { error: "Can't reach the gateway.", ok: false, status: 0 };
   }
 
@@ -127,6 +133,7 @@ export const bootstrapRoot = async (
     return { ok: true, sso, status: response.status, userId };
   }
 
+  reportApiError("SetupBootstrap", `setup returned ${response.status}`);
   const message = STATUS_MESSAGES[response.status] ?? `Unexpected error (HTTP ${response.status}).`;
   return { error: message, ok: false, status: response.status };
 };

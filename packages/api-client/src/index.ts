@@ -1,5 +1,11 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+export {
+  apiErrorMessage,
+  type ApiErrorReport,
+  onApiError,
+  reportApiError,
+} from "./apiErrorReporter";
 export type {
   AccountMergePreview,
   AckExport,
