@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { buildIdpConfig, idpConfigToRecord } from "./idpConfig";
+import { buildIdpConfig, clientSecretInput, idpConfigToRecord } from "./idpConfig";
 
 describe("buildIdpConfig", () => {
   it("builds the OIDC key/value pair for an OIDC draft", () => {
@@ -59,5 +59,16 @@ describe("idpConfigToRecord", () => {
 
   it("returns an empty record for an empty list", () => {
     expect(idpConfigToRecord([])).toEqual({});
+  });
+});
+
+describe("clientSecretInput", () => {
+  it("sends an OIDC client secret as the write-only clientSecret, never as secretRef", () => {
+    expect(clientSecretInput("oidc", "s3cr3t")).toEqual({ clientSecret: "s3cr3t" });
+  });
+
+  it("sends nothing when the secret is blank or the protocol is SAML", () => {
+    expect(clientSecretInput("oidc", "  ")).toEqual({});
+    expect(clientSecretInput("saml", "s3cr3t")).toEqual({});
   });
 });

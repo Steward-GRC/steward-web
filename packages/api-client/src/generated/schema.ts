@@ -211,6 +211,7 @@ export type Acknowledgment = {
 };
 
 export type AddOrganizationInput = {
+  readonly clientSecret?: InputMaybe<Scalars["String"]["input"]>;
   readonly config?: InputMaybe<ReadonlyArray<KeyValueInput>>;
   readonly displayName?: InputMaybe<Scalars["String"]["input"]>;
   readonly domain: Scalars["String"]["input"];
@@ -310,6 +311,17 @@ export type AuditCheckpoint = {
   readonly tsaToken: Scalars["String"]["output"];
 };
 
+export type AuditLegalHold = {
+  readonly __typename?: "AuditLegalHold";
+  readonly createdAt: Scalars["String"]["output"];
+  readonly groupFilter: Scalars["String"]["output"];
+  readonly heldBy: Scalars["ID"]["output"];
+  readonly holdUuid: Scalars["ID"]["output"];
+  readonly reason: Scalars["String"]["output"];
+  readonly releasedAt?: Maybe<Scalars["String"]["output"]>;
+  readonly subjectFilter: Scalars["String"]["output"];
+};
+
 export type AuditQueryPage = {
   readonly __typename?: "AuditQueryPage";
   readonly nextPageToken: Scalars["String"]["output"];
@@ -338,6 +350,12 @@ export type AuditSegment = {
   readonly __typename?: "AuditSegment";
   readonly checkpoints: ReadonlyArray<AuditCheckpoint>;
   readonly records: ReadonlyArray<AuditRecord>;
+};
+
+export type AuditShredResult = {
+  readonly __typename?: "AuditShredResult";
+  readonly recordId: Scalars["String"]["output"];
+  readonly recordsTombstoned: Scalars["Int"]["output"];
 };
 
 export type AuthoringAssistInput = {
@@ -926,6 +944,7 @@ export type Mutation = {
   readonly checkReport: ReporterView;
   readonly closeCase: ReportCase;
   readonly completeOnboarding: User;
+  readonly createAuditLegalHold: AuditLegalHold;
   readonly createCategory: Category;
   readonly createContactBlock: ContactBlock;
   readonly createDefinition: DefinitionEntry;
@@ -975,6 +994,7 @@ export type Mutation = {
   readonly recordView: Scalars["Boolean"]["output"];
   readonly reindexPolicy: ReindexResult;
   readonly reindexPolicyVersion: ReindexResult;
+  readonly releaseAuditLegalHold: AuditLegalHold;
   readonly removeFactor: Scalars["Boolean"]["output"];
   readonly removeUserFromGroup: User;
   readonly removeUserMfaFactor: Scalars["Boolean"]["output"];
@@ -1072,6 +1092,7 @@ export type Mutation = {
    */
   readonly setUserAiQueryLimit: AiUserQueryLimit;
   readonly setUserPolicyOverride: User;
+  readonly shredAuditSubject: AuditShredResult;
   /**
    * Deliver an approver decision to an active run. The actor is bound from
    * the signed-in user. The comment is required for APPROVE and REJECT signals
@@ -1235,6 +1256,7 @@ export type MutationBulkDecideArgs = {
 };
 
 export type MutationChangeOrgProtocolArgs = {
+  clientSecret?: InputMaybe<Scalars["String"]["input"]>;
   config?: InputMaybe<ReadonlyArray<KeyValueInput>>;
   domain: Scalars["String"]["input"];
   protocol: Scalars["String"]["input"];
@@ -1259,6 +1281,12 @@ export type MutationCompleteOnboardingArgs = {
   firstName?: InputMaybe<Scalars["String"]["input"]>;
   lastName?: InputMaybe<Scalars["String"]["input"]>;
   username?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type MutationCreateAuditLegalHoldArgs = {
+  groupFilter?: InputMaybe<Scalars["String"]["input"]>;
+  reason: Scalars["String"]["input"];
+  subjectFilter?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MutationCreateCategoryArgs = {
@@ -1455,6 +1483,10 @@ export type MutationReindexPolicyArgs = {
 
 export type MutationReindexPolicyVersionArgs = {
   policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationReleaseAuditLegalHoldArgs = {
+  holdUuid: Scalars["ID"]["input"];
 };
 
 export type MutationRemoveFactorArgs = {
@@ -1709,6 +1741,11 @@ export type MutationSetUserPolicyOverrideArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationShredAuditSubjectArgs = {
+  reason: Scalars["String"]["input"];
+  subjectKey: Scalars["String"]["input"];
+};
+
 export type MutationSignalWorkflowArgs = {
   comment: Scalars["String"]["input"];
   policyVersionId: Scalars["ID"]["input"];
@@ -1795,8 +1832,10 @@ export type MutationUpdateDefinitionArgs = {
 
 export type MutationUpdateIdPConnectionArgs = {
   allowLocal?: InputMaybe<Scalars["Boolean"]["input"]>;
+  clientSecret?: InputMaybe<Scalars["String"]["input"]>;
   domain: Scalars["String"]["input"];
   jitEnabled?: InputMaybe<Scalars["Boolean"]["input"]>;
+  secretRef?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MutationUpdateMyProfileArgs = {
@@ -1944,6 +1983,7 @@ export type Organization = {
   readonly jitEnabled: Scalars["Boolean"]["output"];
   readonly orgName: Scalars["String"]["output"];
   readonly protocol: Scalars["String"]["output"];
+  readonly secretReentryRequired: Scalars["Boolean"]["output"];
   readonly testPassed: Scalars["Boolean"]["output"];
   readonly verified: Scalars["Boolean"]["output"];
 };
@@ -2110,6 +2150,7 @@ export type Query = {
    * or past assignee on the stage).
    */
   readonly assignmentHistory: ReadonlyArray<AssignmentHistoryEntry>;
+  readonly auditLegalHolds: ReadonlyArray<AuditLegalHold>;
   readonly auditLog: AuditQueryPage;
   readonly auditSegment: AuditSegment;
   readonly authoringAssist: AuthoringAssistResult;
@@ -2302,6 +2343,10 @@ export type QueryAiJobResultContentArgs = {
 export type QueryAssignmentHistoryArgs = {
   policyVersionId: Scalars["ID"]["input"];
   stageIndex: Scalars["Int"]["input"];
+};
+
+export type QueryAuditLegalHoldsArgs = {
+  includeReleased?: InputMaybe<Scalars["Boolean"]["input"]>;
 };
 
 export type QueryAuditLogArgs = {

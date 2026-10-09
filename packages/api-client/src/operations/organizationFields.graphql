@@ -10,4 +10,5 @@ fragment OrganizationFields on Organization {
   testPassed
   verified
   allowLocal
+  secretReentryRequired
 }
