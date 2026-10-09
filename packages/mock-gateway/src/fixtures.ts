@@ -358,6 +358,7 @@ export const mockOrganizations: Organization[] = [
     jitEnabled: true,
     orgName: "Partner Example",
     protocol: "saml",
+    secretReentryRequired: false,
     testPassed: false,
     verified: true,
   },

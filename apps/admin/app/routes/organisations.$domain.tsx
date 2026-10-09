@@ -139,6 +139,16 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const verification = await startDomainVerification(request, domain, true);
         return data({ intent, ok: true, verification } as const);
       }
+      case "set-client-secret": {
+        const clientSecret = String(form.get("clientSecret") ?? "");
+        if (!clientSecret.trim()) {
+          return data({ intent, ok: false, validationError: "Enter the client secret." } as const, {
+            status: 400,
+          });
+        }
+        await updateIdPConnection(request, domain, { clientSecret });
+        return data({ intent, ok: true } as const);
+      }
       case "start-verification": {
         const verification = await startDomainVerification(request, domain);
         return data({ intent, ok: true, verification } as const);
@@ -452,6 +462,42 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
             </Button>
             {savedIntent === "update-toggles" ? <p className="text-sm text-ok">Saved.</p> : null}
           </Form>
+
+          {org.protocol === "oidc" ? (
+            <Form className="flex flex-col gap-3 border-t border-border pt-6" method="post">
+              <input name="intent" type="hidden" value="set-client-secret" />
+              {org.secretReentryRequired ? (
+                <Banner title="Enter the client secret again" tone="warn">
+                  The stored client secret reference was cleared because it wasn&apos;t a key
+                  reference. Sign-in still works; enter the secret again to keep it on record.
+                </Banner>
+              ) : null}
+              <Field
+                hint="Write-only: it's stored outside the database and never shown again."
+                label="Client secret"
+              >
+                <Input autoComplete="off" name="clientSecret" type="password" />
+              </Field>
+              {validationErrorFor("set-client-secret") ? (
+                <Banner title="Couldn't replace the client secret" tone="danger">
+                  {validationErrorFor("set-client-secret")}
+                </Banner>
+              ) : null}
+              {errorFor("set-client-secret") ? (
+                <Banner
+                  failure={errorFor("set-client-secret")}
+                  title="Couldn't replace the client secret"
+                  tone="danger"
+                />
+              ) : null}
+              <Button className="self-start" type="submit" variant="secondary">
+                Replace client secret
+              </Button>
+              {savedIntent === "set-client-secret" ? (
+                <p className="text-sm text-ok">Client secret replaced.</p>
+              ) : null}
+            </Form>
+          ) : null}
 
           <Form className="flex flex-col gap-3 border-t border-border pt-6" method="post">
             <input name="intent" type="hidden" value="change-protocol" />

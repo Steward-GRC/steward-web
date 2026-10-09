@@ -8,7 +8,7 @@ import { data, Form, Link, redirect, useFetcher } from "react-router";
 import type { Route } from "./+types/organisations.new";
 import type { action as idpMetadataAction } from "./resources.idp-metadata";
 
-import { buildIdpConfig } from "../organisations/idpConfig";
+import { buildIdpConfig, clientSecretInput } from "../organisations/idpConfig";
 import { findProvider, IDP_PROVIDERS, type IdpProtocol } from "../organisations/idpProviders";
 import { addOrganization } from "../organisations/organisations.server";
 
@@ -44,7 +44,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       domain,
       orgName,
       protocol,
-      secretRef: String(form.get("clientSecret") ?? "") || undefined,
+      ...clientSecretInput(protocol, String(form.get("clientSecret") ?? "")),
     });
     return redirect(`/organisations/${encodeURIComponent(created.domain)}`);
   } catch (error) {

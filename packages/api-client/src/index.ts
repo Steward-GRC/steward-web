@@ -68,6 +68,7 @@ export type {
   MintedSsoTestLink,
   MintSsoTestLinkInput,
   Organization,
+  OrgClientSecret,
   OverdueEntry,
   PendingTask,
   PlatformGroup,

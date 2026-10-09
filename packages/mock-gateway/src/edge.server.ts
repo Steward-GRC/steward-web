@@ -616,6 +616,7 @@ export const mockEdge: Edge = {
       jitEnabled: true,
       orgName,
       protocol,
+      secretReentryRequired: false,
       testPassed: false,
       verified: false,
     };
@@ -724,6 +725,7 @@ export const mockEdge: Edge = {
       ...org,
       enabled: false,
       protocol,
+      secretReentryRequired: false,
       testPassed: false,
       verified: false,
     });
@@ -1681,10 +1683,13 @@ export const mockEdge: Edge = {
   },
   updateIdPConnection: async (domain, toggles) => {
     const org = requireOrganization("UpdateIdPConnection", domain);
+    // The mock keeps no secret; a new one only clears the re-entry flag, as identity does.
+    const secretSet = Boolean(toggles.clientSecret || toggles.secretRef);
     return replaceOrganization({
       ...org,
       allowLocal: toggles.allowLocal ?? org.allowLocal,
       jitEnabled: toggles.jitEnabled ?? org.jitEnabled,
+      secretReentryRequired: secretSet ? false : org.secretReentryRequired,
     });
   },
   updateMyProfile: ({ firstName, lastName }) => {

@@ -22,7 +22,7 @@ const trimmed = (v: string | undefined): string => (v ?? "").trim();
 /**
  * Builds the connection config key/value list the gateway's `AddOrganizationInput.config`
  * and `changeOrgProtocol` read: OIDC -> issuer/clientId (the secret is carried separately
- * as `secretRef`); SAML -> entityId/singleSignOnServiceUrl/signingCertificate, plus an
+ * as the write-only `clientSecret`, see `clientSecretInput`); SAML -> entityId/singleSignOnServiceUrl/signingCertificate, plus an
  * optional idpInitiatedSsoUrl for a tile-only IdP's launch URL.
  */
 export const buildIdpConfig = (draft: IdpConfigDraft): KeyValueInput[] => {
@@ -42,6 +42,17 @@ export const buildIdpConfig = (draft: IdpConfigDraft): KeyValueInput[] => {
   }
   return saml;
 };
+
+/**
+ * The client-secret part of an add or protocol-change request: an OIDC secret goes as the
+ * write-only `clientSecret` (identity keeps it out of its database and never returns it);
+ * SAML takes none.
+ */
+export const clientSecretInput = (
+  protocol: IdpProtocol,
+  clientSecret: string,
+): { clientSecret?: string } =>
+  protocol === "oidc" && clientSecret.trim() ? { clientSecret } : {};
 
 /** Flattens a `buildIdpConfig` list into the plain record the setup bootstrap's `sso.config`
  *  carries (the gateway's Day-0 SSO provisioning input isn't key/value-shaped). */
