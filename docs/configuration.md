@@ -24,7 +24,8 @@ An unstamped or blank `VERSION`/`COMMIT` falls back to `dev`/`unknown` (`COMMIT`
 | `VERSION` | `dev` | Read back into the `Steward-Version` health header (see `docs/runbook.md`). |
 | `COMMIT` | `unknown` | Read back into the `Steward-Commit` health header. |
 | `STEWARD_DEV_UI_ISSUE_COPY` | unset | The root loader's gate for the dev UI-issue button: `true` renders it, anything else doesn't. Only takes effect on a build also made with `DEV_UI_ISSUE_COPY=true`; see "The dev UI-issue button" in `docs/development.md`. |
-| `STEWARD_DEV_QUICK_LOGIN` | unset | The server switch for the dev quick login on the sign-in page: `true` turns it on. Only takes effect on the dev server or a build made with `DEV_QUICK_LOGIN=true`; a release image ignores it. |
+| `STEWARD_DEV_QUICK_LOGIN` | unset | The server switch for the dev quick login on the sign-in page and the thin "Dev login, test users only" bar on every other page: `true` turns both on. Only takes effect on the dev server or a build made with `DEV_QUICK_LOGIN=true`; a release image ignores it. |
+| `STEWARD_DEV_QUICK_LOGIN_USERS_DIR` | unset | Path to a directory with one JSON-object account per file (the shape a Kubernetes Secret volume mounts, one key per account). Takes priority over `STEWARD_DEV_QUICK_LOGIN_USERS` when both are set. See `docs/development.md`. |
 | `STEWARD_DEV_QUICK_LOGIN_USERS` | unset | Path to the dev quick login's local JSON users file (see `docs/development.md`). Read on the server only; the page never sees a password. |
 
 ## Build-time only (never set on a live build)

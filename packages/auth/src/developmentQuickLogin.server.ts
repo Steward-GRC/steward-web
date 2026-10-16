@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 
 import type { QuickLoginUser } from "./signInState";
 
@@ -11,9 +12,15 @@ import type { QuickLoginUser } from "./signInState";
  * `NoDevelopmentQuickLogin.server.ts`, so this code never ships in a release image.
  *
  * At runtime it is on only with `STEWARD_DEV_QUICK_LOGIN=true`, and reads the accounts from
- * the JSON file `STEWARD_DEV_QUICK_LOGIN_USERS` names: an array of `{ username, password,
- * label?, note? }`. The passwords stay on the server; the page only ever gets the username,
- * label and note.
+ * either source below (the directory wins when both are set). The passwords stay on the
+ * server; the page only ever gets the username, label and note.
+ *
+ * - `STEWARD_DEV_QUICK_LOGIN_USERS_DIR`: a directory with one JSON-object account per file
+ *   (`{ username, password, label?, note? }`), the shape a Kubernetes Secret volume mounts —
+ *   one key per account, each key its own file, plus `..data` and a dated subdirectory kubelet
+ *   manages; both are skipped by their leading `..`.
+ * - `STEWARD_DEV_QUICK_LOGIN_USERS`: one JSON file holding an array of the same account shape,
+ *   for a local run outside a cluster.
  */
 
 export interface QuickLoginAccount {
@@ -35,19 +42,43 @@ const isAccount = (value: unknown): value is QuickLoginAccount => {
   );
 };
 
-/** Every valid account in the users file; none when the switch is off or the file is unusable. */
-export const quickLoginAccounts = (
-  environment: NodeJS.ProcessEnv = process.env,
-): QuickLoginAccount[] => {
-  if (environment.STEWARD_DEV_QUICK_LOGIN !== "true") return [];
-  const file = environment.STEWARD_DEV_QUICK_LOGIN_USERS;
-  if (!file) return [];
+/** One account per file in a Secret-volume-shaped directory; a bad or missing directory is empty. */
+const accountsFromDirectory = (directory: string): QuickLoginAccount[] => {
+  try {
+    return readdirSync(directory)
+      .filter((name) => !name.startsWith(".."))
+      .map((name): unknown => {
+        try {
+          return JSON.parse(readFileSync(path.join(directory, name), "utf8"));
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((entry): entry is QuickLoginAccount => isAccount(entry));
+  } catch {
+    return [];
+  }
+};
+
+/** One array's worth of accounts from a single JSON file; a bad or missing file is empty. */
+const accountsFromFile = (file: string): QuickLoginAccount[] => {
   try {
     const parsed: unknown = JSON.parse(readFileSync(file, "utf8"));
     return Array.isArray(parsed) ? parsed.filter((entry) => isAccount(entry)) : [];
   } catch {
     return [];
   }
+};
+
+/** Every valid account, from whichever source is configured; none when the switch is off. */
+export const quickLoginAccounts = (
+  environment: NodeJS.ProcessEnv = process.env,
+): QuickLoginAccount[] => {
+  if (environment.STEWARD_DEV_QUICK_LOGIN !== "true") return [];
+  const directory = environment.STEWARD_DEV_QUICK_LOGIN_USERS_DIR;
+  if (directory) return accountsFromDirectory(directory);
+  const file = environment.STEWARD_DEV_QUICK_LOGIN_USERS;
+  return file ? accountsFromFile(file) : [];
 };
 
 /** What the sign-in page may show: never a password. */
