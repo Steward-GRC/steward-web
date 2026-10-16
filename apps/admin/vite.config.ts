@@ -14,6 +14,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig(({ command, mode }) => ({
+  // Matches react-router.config.ts's `basename: "/admin"`, so the built HTML references
+  // /admin/assets/... (the ingress and the server both route and resolve assets on that prefix).
+  base: "/admin/",
   define: buildInfoDefines(),
   plugins: [tailwindcss(), reactRouter(), ...editorPlugins()],
   resolve: {

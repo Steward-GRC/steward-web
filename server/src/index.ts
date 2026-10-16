@@ -23,6 +23,10 @@ const { commit: COMMIT, version: VERSION } = resolveBuildInfo(process.env);
 const appDirectory = path.resolve(import.meta.dirname, "../../apps", APP, "build");
 const clientDirectory = path.join(appDirectory, "client");
 const serverBuildPath = path.join(appDirectory, "server", "index.js");
+// The admin app is served under /admin (apps/admin/react-router.config.ts's `basename`, matched
+// by its Vite `base`), so its built HTML references assets at /admin/assets/...; strip that
+// prefix to find them under the client build. The staff app has no prefix.
+const ASSET_BASENAME = APP === "admin" ? "/admin" : "";
 
 const pingGateway = async (): Promise<boolean> => {
   const controller = new AbortController();
@@ -61,7 +65,7 @@ const server = createServer((request, response) => {
   }
 
   if (request.method === "GET" || request.method === "HEAD") {
-    const asset = resolveStaticAsset(clientDirectory, url);
+    const asset = resolveStaticAsset(clientDirectory, url, ASSET_BASENAME);
     if (asset) {
       response.writeHead(200, {
         "cache-control": asset.immutable

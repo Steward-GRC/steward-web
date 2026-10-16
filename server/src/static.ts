@@ -26,15 +26,33 @@ export interface StaticAsset {
 }
 
 /**
+ * Strips `basename` from `pathname`, matching only on a full path element (so `/admin` never
+ * matches a path like `/adminfoo`). Returns `undefined` when `pathname` isn't under `basename`.
+ */
+const stripBasename = (pathname: string, basename: string): string | undefined => {
+  if (basename === "") return pathname;
+  if (pathname === basename) return "/";
+  if (pathname.startsWith(`${basename}/`)) return pathname.slice(basename.length);
+  return undefined;
+};
+
+/**
  * Resolves a request path to a file under the client build, or `undefined` when there is
  * none (including a `../` escape attempt, which resolves outside `clientDirectory` and is
- * refused the same way a missing file is).
+ * refused the same way a missing file is). `basename` is the app's own URL prefix (the admin
+ * app is served under `/admin`, by `apps/admin/react-router.config.ts`'s `basename` and the
+ * matching Vite `base`); a request outside it is left for the SSR route to handle.
  */
 export const resolveStaticAsset = (
   clientDirectory: string,
   requestPath: string,
+  basename = "",
 ): StaticAsset | undefined => {
-  const relative = decodeURIComponent(requestPath.split("?", 1)[0] ?? "").replace(/^\/+/, "");
+  const pathname = decodeURIComponent(requestPath.split("?", 1)[0] ?? "");
+  const withoutBasename = stripBasename(pathname, basename);
+  if (withoutBasename === undefined) return undefined;
+
+  const relative = withoutBasename.replace(/^\/+/, "");
   if (relative === "") return undefined;
 
   const resolved = path.join(clientDirectory, relative);
