@@ -1,0 +1,226 @@
+/* 
+Copyright 2026 The Steward Authors
+SPDX-License-Identifier: Apache-2.0
+ */
+/* The guide's home page: a split hero over a grid backdrop with a corner
+   glow, plus a quick-links grid to the guide's four areas. Built on the
+   Infima colour and type tokens from custom.css (the Steward palette); only
+   --home-accent is new, for the hero's accent colour (packages/ui's
+   --accent, #e2a336). */
+
+:root {
+  --home-accent: #e2a336;
+}
+
+.home-hero {
+  position: relative;
+  overflow: hidden;
+  padding-block: 4rem 3rem;
+}
+
+.home-hero__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--ifm-table-border-color) 65%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--ifm-table-border-color) 65%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.home-hero__backdrop::after {
+  content: "";
+  position: absolute;
+  top: -10rem;
+  right: -8rem;
+  width: 30rem;
+  height: 30rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ifm-color-primary) 45%, transparent) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
+.home-hero__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+  grid-template-columns: 1.1fr 0.9fr;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+.home-hero__eyebrow {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
+  margin-bottom: 1rem;
+}
+
+.home-hero__headline {
+  font-family: var(--ifm-heading-font-family);
+  font-size: 2.75rem;
+  line-height: 1.15;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.25rem;
+  color: var(--ifm-heading-color);
+}
+
+.home-hero__headline-accent {
+  color: var(--home-accent);
+}
+
+.home-hero__lede {
+  font-size: 1.0625rem;
+  color: var(--ifm-color-content-secondary);
+  max-width: 34rem;
+  margin-bottom: 1.75rem;
+}
+
+.home-hero__lede mark {
+  background: none;
+  color: var(--ifm-font-color-base);
+  font-weight: 600;
+  padding: 0;
+}
+
+.home-hero__actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.home-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--ifm-global-radius);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.home-hero__btn--primary {
+  background: var(--ifm-color-primary);
+  color: #fff;
+}
+
+.home-hero__btn--primary:hover {
+  background: var(--ifm-color-primary-dark);
+  color: #fff;
+  text-decoration: none;
+}
+
+.home-hero__btn--secondary {
+  border: 1px solid var(--ifm-table-border-color);
+  color: var(--ifm-font-color-base);
+}
+
+.home-hero__btn--secondary:hover {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+@media (max-width: 860px) {
+  .home-hero__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero__headline {
+    font-size: 2.1rem;
+  }
+}
+
+/* Terminal card */
+.home-terminal {
+  position: relative;
+  z-index: 1;
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-table-border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--ifm-navbar-shadow);
+}
+
+.home-terminal__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--ifm-table-border-color);
+}
+
+.home-terminal__dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--ifm-table-border-color);
+}
+
+.home-terminal__title {
+  margin-inline-start: 0.5rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.75rem;
+  color: var(--ifm-color-content-secondary);
+}
+
+.home-terminal__body {
+  margin: 0;
+  padding: 1.25rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ifm-font-color-base);
+  white-space: pre-wrap;
+}
+
+/* Quick links */
+.home-links {
+  max-width: 64rem;
+  margin-inline: auto;
+  padding: 0 1.5rem 3rem;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.home-links__card {
+  display: block;
+  padding: 1.25rem;
+  border: 1px solid var(--ifm-table-border-color);
+  border-radius: var(--ifm-global-radius);
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-links__card:hover {
+  border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-links__title {
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  color: var(--ifm-heading-color);
+}
+
+.home-links__body {
+  font-size: 0.875rem;
+  color: var(--ifm-color-content-secondary);
+}
