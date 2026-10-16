@@ -49,4 +49,28 @@ describe("resolveStaticAsset", () => {
     const asset = resolveStaticAsset(clientDirectory, "/favicon.ico?v=2");
     expect(asset?.path.endsWith("favicon.ico")).toBe(true);
   });
+
+  describe("basename", () => {
+    it("resolves an asset under the given basename", () => {
+      const asset = resolveStaticAsset(clientDirectory, "/admin/assets/root-abc123.js", "/admin");
+      expect(asset?.immutable).toBe(true);
+      expect(asset?.path.endsWith("root-abc123.js")).toBe(true);
+    });
+
+    it("returns undefined for a path missing the basename", () => {
+      expect(
+        resolveStaticAsset(clientDirectory, "/assets/root-abc123.js", "/admin"),
+      ).toBeUndefined();
+    });
+
+    it("returns undefined for a path that only shares the basename's prefix", () => {
+      expect(
+        resolveStaticAsset(clientDirectory, "/adminfoo/assets/root-abc123.js", "/admin"),
+      ).toBeUndefined();
+    });
+
+    it("returns undefined for the bare basename (the SSR route handles it)", () => {
+      expect(resolveStaticAsset(clientDirectory, "/admin", "/admin")).toBeUndefined();
+    });
+  });
 });
