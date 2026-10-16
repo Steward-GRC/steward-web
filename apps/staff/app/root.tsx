@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { IdentityProvider } from "@steward-web/auth";
 import { identityFromRequest } from "@steward-web/auth/server";
+import { QuickLoginBar } from "@steward-web/dev-quick-login";
+import { quickLoginUsers } from "@steward-web/dev-quick-login.server";
 import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
 import { DEFAULT_LOCALE } from "@steward-web/i18n";
 import { MockBanner } from "@steward-web/mock-banner";
@@ -18,6 +20,9 @@ export const links: Route.LinksFunction = () => [{ href: stewardCss, rel: "style
 export const loader = async ({ request }: Route.LoaderArgs) => ({
   devUiIssueCopy: process.env.STEWARD_DEV_UI_ISSUE_COPY === "true",
   identity: await identityFromRequest(request),
+  // Reused, not re-checked: quickLoginUsers() is already both build- and runtime-gated (empty
+  // in any build or deployment that doesn't allow the dev quick login).
+  quickLoginOn: quickLoginUsers().length > 0,
 });
 
 // The identity never changes within one request/response cycle; re-running the root
@@ -52,6 +57,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     <IdentityProvider identity={loaderData.identity}>
       <AppShell>
         <MockBanner />
+        <QuickLoginBar enabled={loaderData.quickLoginOn} />
         <DevelopmentUiIssueButton app="staff" enabled={loaderData.devUiIssueCopy} />
         <Outlet />
       </AppShell>

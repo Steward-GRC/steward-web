@@ -138,9 +138,12 @@ Nothing it copies ever includes secrets, tokens, cookies, query strings or form 
 
 ## The dev quick login
 
-A "Dev quick login" picker under the sign-in form, for local testing against a real gateway
-with a few seeded local accounts. Picking an account signs it in with its password through
-the same gateway `POST /auth/login` as the form, so a second factor is still asked for.
+One button per seeded local account under the sign-in form, for local testing against a real
+gateway: one click signs in with that account's password through the same gateway
+`POST /auth/login` as the form, so a second factor is still asked for. A "Dev login, test users
+only" banner sits above the buttons, and the same banner shows as a thin bar at the top of
+every other page while the switch is on, so a build or deployment carrying it is never mistaken
+for production.
 
 It needs both switches, the same pattern as the dev UI-issue button:
 
@@ -151,8 +154,15 @@ It needs both switches, the same pattern as the dev UI-issue button:
   `@steward-web/dev-quick-login` and `@steward-web/dev-quick-login.server` to no-ops, so the
   picker and the users-file reader are not in the bundle and the `dev-quick-login` intent
   answers 404.
-- **Server switch:** `STEWARD_DEV_QUICK_LOGIN=true`, with `STEWARD_DEV_QUICK_LOGIN_USERS`
-  naming a local JSON file of accounts:
+- **Server switch:** `STEWARD_DEV_QUICK_LOGIN=true`, with the accounts named one of two ways
+  (the directory wins when both are set):
+  - `STEWARD_DEV_QUICK_LOGIN_USERS_DIR` naming a directory with one JSON-object account per
+    file, `{ "username": "...", "password": "...", "label": "...", "note": "..." }` — the shape
+    a Kubernetes Secret volume mounts, one Secret key per account. This is the form a cluster
+    deployment uses: mount a Secret (holding only the seeded test accounts, on the web pods
+    only) and point this variable at the mount path.
+  - `STEWARD_DEV_QUICK_LOGIN_USERS` naming a single local JSON file, an array of the same
+    account shape:
 
 ```json
 [
@@ -161,10 +171,10 @@ It needs both switches, the same pattern as the dev UI-issue button:
 ]
 ```
 
-`label` and `note` are optional. The file is read on the server
+`label` and `note` are optional. Either source is read on the server
 (`packages/auth/src/developmentQuickLogin.server.ts`); the page only gets each username,
-label and note. A missing or malformed file turns the picker off. Keep the file out of the
-repository: it holds local test passwords.
+label and note. A missing or malformed source turns the picker (and the banner) off. Keep any
+local file out of the repository: it holds local test passwords.
 
 ```bash
 docker build --build-arg APP=staff --build-arg DEV_QUICK_LOGIN=true -t steward-web:dev .

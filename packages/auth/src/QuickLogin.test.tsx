@@ -14,24 +14,25 @@ const renderPicker = (users: Parameters<typeof QuickLogin>[0]["users"]) => {
 };
 
 describe("QuickLogin", () => {
-  it("lists the accounts the server sent and posts the dev quick-login intent", async () => {
+  it("shows the dev-login banner and one button per seeded account, each a single-click sign-in", async () => {
     renderPicker([
       { label: "Staff (sample)", note: "no second factor", username: "staff.sample" },
       { label: "approver.sample", username: "approver.sample" },
     ]);
 
-    expect(
-      await screen.findByRole("option", { name: "Staff (sample) (no second factor)" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "approver.sample" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign in as this account" })).toBeInTheDocument();
+    expect(await screen.findByText("Dev login, test users only")).toBeInTheDocument();
+    const staffButton = screen.getByRole("button", { name: "Staff (sample)" });
+    expect(staffButton).toHaveAttribute("name", "username");
+    expect(staffButton).toHaveAttribute("value", "staff.sample");
+    expect(screen.getByRole("button", { name: "approver.sample" })).toHaveAttribute(
+      "value",
+      "approver.sample",
+    );
     expect(screen.getByDisplayValue("dev-quick-login")).toHaveAttribute("name", "intent");
   });
 
   it("renders nothing until the server lists accounts", () => {
     renderPicker([]);
-    expect(
-      screen.queryByRole("button", { name: "Sign in as this account" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Dev login, test users only")).not.toBeInTheDocument();
   });
 });

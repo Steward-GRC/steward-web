@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { QuickLoginProps } from "./QuickLogin";
+import type { QuickLoginBarProps, QuickLoginProps } from "./QuickLogin";
 
 /**
  * The release build's half of the dev quick-login swap: nothing.
@@ -9,3 +9,5 @@ import type { QuickLoginProps } from "./QuickLogin";
  * picker's code (and its marker string) is never bundled into a release build.
  */
 export const QuickLogin: (props: QuickLoginProps) => null = () => null;
+
+export const QuickLoginBar: (props: QuickLoginBarProps) => null = () => null;
