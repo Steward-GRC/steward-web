@@ -126,9 +126,9 @@ describe("password sign-in through the gateway session", () => {
     expect(login?.headers["x-steward-edge"]).toBe("public");
   });
 
-  it("refuses a page with no session, sending it to sign-in", async () => {
+  it("refuses a page with no session, sending it to sign-in with a relative next", async () => {
     expect(await reach("steward_sid=not-a-session")).toEqual({
-      redirect: "/sign-in?next=https%3A%2F%2Fsteward.example%2Fpolicies",
+      redirect: "/sign-in?next=%2Fpolicies",
     });
   });
 });

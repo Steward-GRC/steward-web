@@ -55,7 +55,7 @@ describe("identityFromRequest", () => {
 });
 
 describe("requireIdentityFromRequest", () => {
-  it("redirects a signed-out request to sign-in with the original URL", async () => {
+  it("redirects a signed-out request to sign-in with a relative next, no scheme or host", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(meResponse(null)));
     const request = new Request("https://staff.steward.example/policies/42");
 
@@ -64,9 +64,7 @@ describe("requireIdentityFromRequest", () => {
     );
 
     expect(thrown).toBeInstanceOf(Response);
-    expect((thrown as Response).headers.get("location")).toBe(
-      "/sign-in?next=https%3A%2F%2Fstaff.steward.example%2Fpolicies%2F42",
-    );
+    expect((thrown as Response).headers.get("location")).toBe("/sign-in?next=%2Fpolicies%2F42");
   });
 });
 

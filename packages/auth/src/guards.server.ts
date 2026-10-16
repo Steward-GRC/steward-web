@@ -14,10 +14,29 @@ import { identityFromRequest } from "./requestIdentity.server";
  * protected screen flash before the redirect, because it is never rendered.
  */
 
+/**
+ * Reduces a request URL to the plain page it points at: relative (no scheme or host, so it is
+ * always safe to carry in a redirect's own query string), with a single-fetch `.data` request's
+ * implementation details removed (the `.data`/`_.data` suffix and the `_routes` parameter),
+ * matching react-router's own `getNormalizedPath`. Without this, a signed-out `.data` request
+ * (React Router's client-side revalidation fetch) would send `next=` to the data endpoint itself
+ * rather than the page, as an absolute URL.
+ */
+const pageNext = (currentUrl: string): string => {
+  const url = new URL(currentUrl);
+  const pathname = url.pathname.endsWith("/_.data")
+    ? url.pathname.replace(/_\.data$/, "")
+    : url.pathname.replace(/\.data$/, "");
+  const search = new URLSearchParams(url.search);
+  search.delete("_routes");
+  const query = search.toString();
+  return query ? `${pathname}?${query}` : pathname;
+};
+
 /** Sends a signed-out visitor to sign in, carrying where they were headed. */
 export const requireIdentity = (identity: Identity, currentUrl: string): Identity => {
   if (identity.id === "") {
-    const next = encodeURIComponent(currentUrl);
+    const next = encodeURIComponent(pageNext(currentUrl));
     throw redirect(`/sign-in?next=${next}`);
   }
   return identity;
