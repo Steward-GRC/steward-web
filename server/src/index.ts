@@ -1,15 +1,16 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { createRequestListener } from "@react-router/node";
+import { createRequestListener } from "@remix-run/node-fetch-server";
 import { createReadStream } from "node:fs";
 import { createServer } from "node:http";
 import path from "node:path";
-import { type ServerBuild } from "react-router";
+import { createRequestHandler, type ServerBuild } from "react-router";
 
 import { attachCollabProxy } from "./collabProxy.ts";
 import { createReadinessChecker, handleHealthRoute, resolveBuildInfo } from "./health.ts";
 import { proxyQuery } from "./queryProxy.ts";
 import { resolveStaticAsset } from "./static.ts";
+import { isTrustProxyEnabled } from "./trustProxy.ts";
 
 const APP = process.env.APP; // scrub:allow=fqdn
 if (APP !== "admin" && APP !== "staff") {
@@ -44,8 +45,17 @@ const pingGateway = async (): Promise<boolean> => {
 
 const checkReady = createReadinessChecker({ ping: pingGateway });
 
-const ssrListener = createRequestListener({
-  build: () => import(serverBuildPath) as Promise<ServerBuild>,
+// @react-router/node's own createRequestListener hardcodes its call into
+// @remix-run/node-fetch-server with no `trustProxy`, so behind a TLS-terminating proxy
+// (ingress-nginx) the request URL always comes out `http:` from the raw socket. Building the
+// listener directly from the same two pieces @react-router/node composes (react-router's
+// createRequestHandler, @remix-run/node-fetch-server's createRequestListener) lets TRUST_PROXY
+// turn on `X-Forwarded-Proto`/`X-Forwarded-Host`, which this server needs to match the protocol
+// a browser's own Origin header reports and pass React Router's same-origin action check.
+const handleRequest = createRequestHandler(() => import(serverBuildPath) as Promise<ServerBuild>);
+
+const ssrListener = createRequestListener((request: Request) => handleRequest(request), {
+  trustProxy: isTrustProxyEnabled(process.env),
 });
 
 const server = createServer((request, response) => {
