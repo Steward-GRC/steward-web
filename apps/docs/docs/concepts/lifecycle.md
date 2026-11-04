@@ -26,14 +26,14 @@ review and publishing again, so the document stays current.
 
 ## 🏷️ All the statuses
 
-| Status | What it means |
-| --- | --- |
-| Draft | Being written. Not yet submitted. Most people cannot see it. |
-| In review | Submitted and moving through the approval workflow. |
-| Published | Approved and official. Readers can see it. |
-| Rejected | An approver turned the draft down. It did not publish. |
-| Withdrawn | A published document was pulled back and is no longer in force. |
-| Superseded | A newer version has taken this one's place. |
+| Status     | What it means                                                   |
+| ---------- | --------------------------------------------------------------- |
+| Draft      | Being written. Not yet submitted. Most people cannot see it.    |
+| In review  | Submitted and moving through the approval workflow.             |
+| Published  | Approved and official. Readers can see it.                      |
+| Rejected   | An approver turned the draft down. It did not publish.          |
+| Withdrawn  | A published document was pulled back and is no longer in force. |
+| Superseded | A newer version has taken this one's place.                     |
 
 ## 📐 Templates
 

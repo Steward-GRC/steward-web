@@ -50,7 +50,7 @@ it — see [Who can do what](/concepts/access-model).
 
 ## 👥 Platform groups are something else
 
-**Platform groups** are the groups *people* belong to, kept by Steward's identity service. They
+**Platform groups** are the groups _people_ belong to, kept by Steward's identity service. They
 are not categories: a category holds documents, a platform group holds members. Reporting's
 officer setting, SSO group mappings and group managers all name a platform group.
 

@@ -17,14 +17,14 @@ Open **Reporting cases** to see the queue, filtered to **Open** by default, or s
 or **Mine**. Each case shows its status and the nearest unmet deadline, if it has one; cases with
 a looming deadline sort to the top.
 
-| Status | What it means |
-| --- | --- |
-| New | Just received, not yet triaged. |
-| In review | Being worked. |
-| Needs reporter reply | Waiting on more information from whoever reported it. |
-| Risk assessment | The risk to the people affected is being assessed. |
-| Notification due | A notice to a regulator or an affected person is owed. |
-| Closed | Resolved, with an outcome recorded. |
+| Status               | What it means                                          |
+| -------------------- | ------------------------------------------------------ |
+| New                  | Just received, not yet triaged.                        |
+| In review            | Being worked.                                          |
+| Needs reporter reply | Waiting on more information from whoever reported it.  |
+| Risk assessment      | The risk to the people affected is being assessed.     |
+| Notification due     | A notice to a regulator or an affected person is owed. |
+| Closed               | Resolved, with an outcome recorded.                    |
 
 ## 🔎 Work a case
 

@@ -27,7 +27,7 @@ category's access rules; see [Who can do what](/concepts/access-model).
 
 ## ⏰ When to acknowledge: the trigger
 
-The access rules say *who*. The **trigger** says *when* an acknowledgement is required.
+The access rules say _who_. The **trigger** says _when_ an acknowledgement is required.
 
 - **On publish** — Users acknowledge once, when the document is published. A later new version
   does **not** force people to acknowledge again.

@@ -1,33 +1,26 @@
+import type * as Preset from "@docusaurus/preset-classic";
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type { Config } from "@docusaurus/types";
-import type * as Preset from "@docusaurus/preset-classic";
 
 // The Steward guide: a plain-language Docusaurus site. The brand colours and fonts in
 // src/css/custom.css mirror packages/ui/src/styles/steward.css's design tokens (a lightweight
 // Infima mapping, not an import of that package: Docusaurus's React and build pipeline are
 // separate from the apps built on packages/ui).
 const config: Config = {
-  title: "Steward Guide",
-  tagline: "A plain-language guide to policies, procedures and compliance",
-  favicon: "img/mark.svg",
-
-  url: "https://steward-grc.com",
   baseUrl: "/",
-
-  organizationName: "Steward-GRC",
-  projectName: "steward-web",
-
-  onBrokenLinks: "throw",
-  markdown: {
-    hooks: { onBrokenMarkdownLinks: "throw" },
-  },
-
+  favicon: "img/mark.svg",
   i18n: {
     defaultLocale: "en",
     locales: ["en"],
   },
 
+  markdown: {
+    hooks: { onBrokenMarkdownLinks: "throw" },
+  },
+  onBrokenLinks: "throw",
+
+  organizationName: "Steward-GRC",
   presets: [
     [
       "classic",
@@ -44,6 +37,9 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
+
+  projectName: "steward-web",
+  tagline: "A plain-language guide to policies, procedures and compliance",
 
   themeConfig: {
     navbar: {
@@ -90,6 +86,10 @@ const config: Config = {
       additionalLanguages: ["bash", "json"],
     },
   } satisfies Preset.ThemeConfig,
+
+  title: "Steward Guide",
+
+  url: "https://steward-grc.com",
 };
 
 export default config;

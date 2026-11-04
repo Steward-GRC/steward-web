@@ -7,12 +7,13 @@ import { describe, expect, it } from "vitest";
 
 import { CodeInput, digitsOnly } from "./CodeInput";
 
+const Host = () => {
+  const [value, setValue] = useState("");
+  return <CodeInput aria-label="Verification code" onChange={setValue} value={value} />;
+};
+
 describe("CodeInput", () => {
   it("keeps digits only, up to the length", async () => {
-    const Host = () => {
-      const [value, setValue] = useState("");
-      return <CodeInput aria-label="Verification code" onChange={setValue} value={value} />;
-    };
     render(<Host />);
     await userEvent.type(screen.getByLabelText("Verification code"), "12a3 4-567");
     expect(screen.getByLabelText("Verification code")).toHaveValue("123456");

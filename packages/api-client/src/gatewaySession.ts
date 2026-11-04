@@ -73,6 +73,7 @@ export const csrfTokenFor = (
   queryUrl: string = defaultQueryUrl(),
 ): Promise<string | undefined> => {
   const sid = readCookie(cookie, SESSION_COOKIE);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- the fix drops the argument and the return type loses `undefined`
   if (!sid) return Promise.resolve(undefined);
   const cached = cache.get(sid);
   if (cached && cached.expiresAt > Date.now()) return cached.token;

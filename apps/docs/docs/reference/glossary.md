@@ -50,11 +50,11 @@ This page is a short dictionary of the main terms used in this guide, followed b
 
 ## 🏷️ Document statuses
 
-| Status | What it means |
-| --- | --- |
-| Draft | Being written. Not yet submitted. |
-| In review | Submitted and moving through the approval workflow. |
-| Published | Approved and official. Readers can see it. |
-| Rejected | An approver turned the draft down. |
-| Withdrawn | A published document was pulled back and is no longer in force. |
-| Superseded | A newer version has taken this one's place. |
+| Status     | What it means                                                   |
+| ---------- | --------------------------------------------------------------- |
+| Draft      | Being written. Not yet submitted.                               |
+| In review  | Submitted and moving through the approval workflow.             |
+| Published  | Approved and official. Readers can see it.                      |
+| Rejected   | An approver turned the draft down.                              |
+| Withdrawn  | A published document was pulled back and is no longer in force. |
+| Superseded | A newer version has taken this one's place.                     |

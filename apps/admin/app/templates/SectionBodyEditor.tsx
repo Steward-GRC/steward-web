@@ -24,15 +24,16 @@ const useHydrated = (): boolean =>
 
 export type SectionBodyEditorProps = Omit<StewardEditorProps, "collaboration">;
 
+const fallback = (document?: SerializedDocument) => (
+  <div aria-busy="true" aria-label="Loading the section editor">
+    <LexicalDocumentView document={document} />
+  </div>
+);
+
 /** A template section's boilerplate content editor — the same Lexical build the policy
  *  authoring editor uses, standalone (no collaboration room). */
 export const SectionBodyEditor = (props: SectionBodyEditorProps) => {
   const hydrated = useHydrated();
-  const fallback = (document?: SerializedDocument) => (
-    <div aria-busy="true" aria-label="Loading the section editor">
-      <LexicalDocumentView document={document} />
-    </div>
-  );
   if (!hydrated) return fallback(props.initialDocument);
   return (
     <Suspense fallback={fallback(props.initialDocument)}>

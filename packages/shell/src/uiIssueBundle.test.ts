@@ -231,13 +231,13 @@ describe("redactMessage", () => {
     [
       "a property path",
       [
-        ["window", "app", "init"],
-        ["import", "meta", "env", "DEV"],
-        ["console", "info"],
-      ]
-        .map((parts) => parts.join("."))
-        .concat(["user", "home"].join("."))
-        .join(", "),
+        ...[
+          ["window", "app", "init"],
+          ["import", "meta", "env", "DEV"],
+          ["console", "info"],
+        ].map((parts) => parts.join(".")),
+        ["user", "home"].join("."),
+      ].join(", "),
     ],
   ])("leaves %s readable", (_name, raw) => {
     expect(redactMessage(raw)).toBe(raw);

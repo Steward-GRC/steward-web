@@ -6,20 +6,17 @@ const sidebars: SidebarsConfig = {
   docs: [
     "welcome",
     {
-      type: "category",
-      label: "Concepts",
-      link: { type: "doc", id: "concepts/index" },
       items: [
         "concepts/what-is-a-policy",
         "concepts/lifecycle",
         "concepts/acknowledgement",
         "concepts/access-model",
       ],
+      label: "Concepts",
+      link: { type: "doc", id: "concepts/index" },
+      type: "category",
     },
     {
-      type: "category",
-      label: "User Guide",
-      link: { type: "doc", id: "user-guide/index" },
       items: [
         "user-guide/signing-in",
         "user-guide/your-dashboard",
@@ -29,11 +26,11 @@ const sidebars: SidebarsConfig = {
         "user-guide/review-and-approve",
         "user-guide/compliance-reporting",
       ],
+      label: "User Guide",
+      link: { type: "doc", id: "user-guide/index" },
+      type: "category",
     },
     {
-      type: "category",
-      label: "Admin Guide",
-      link: { type: "doc", id: "admin-guide/index" },
       items: [
         "admin-guide/first-run-setup",
         "admin-guide/users-and-roles",
@@ -42,12 +39,15 @@ const sidebars: SidebarsConfig = {
         "admin-guide/organisations-and-sso",
         "admin-guide/audit-log",
       ],
+      label: "Admin Guide",
+      link: { type: "doc", id: "admin-guide/index" },
+      type: "category",
     },
     {
-      type: "category",
+      items: ["reference/glossary"],
       label: "Reference",
       link: { type: "doc", id: "reference/index" },
-      items: ["reference/glossary"],
+      type: "category",
     },
   ],
 };

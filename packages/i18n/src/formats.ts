@@ -144,6 +144,7 @@ export const formatRelativeTime = (
     ["minute", 60],
   ];
 
+  // oxlint-disable-next-line react/display-name -- memo is this file's own cache helper, not React.memo
   const rtf = memo(
     "rt",
     locale,

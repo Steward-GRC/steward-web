@@ -85,19 +85,19 @@ describe("resolveBuildInfo", () => {
 
 const readyWith = (state: ReadinessState) => (): Promise<ReadinessState> => Promise.resolve(state);
 
-describe("handleHealthRoute", () => {
-  const listen = (server: Server): Promise<string> =>
-    new Promise((resolve) => {
-      server.listen(0, "127.0.0.1", () => {
-        const address = server.address();
-        if (address == null || typeof address === "string") throw new Error("no port");
-        resolve(`http://127.0.0.1:${address.port}`);
-      });
+const listen = (server: Server): Promise<string> =>
+  new Promise((resolve) => {
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (address == null || typeof address === "string") throw new Error("no port");
+      resolve(`http://127.0.0.1:${address.port}`);
     });
+  });
 
-  const close = (server: Server): Promise<void> =>
-    new Promise((resolve) => server.close(() => resolve()));
+const close = (server: Server): Promise<void> =>
+  new Promise((resolve) => server.close(() => resolve()));
 
+describe("handleHealthRoute", () => {
   let server: Server | undefined;
 
   afterEach(async () => {

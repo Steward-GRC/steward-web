@@ -13,11 +13,11 @@ a group's policies are published.
 A **workflow** has ordered **stages**, and a policy moves through them one after another. Each
 stage names its **approvers** and a **quorum**:
 
-| Quorum | What it means |
-| --- | --- |
-| One | Any single approver's approval passes the stage. |
-| Majority | More than half of the approvers must approve. |
-| All | Every listed approver must approve. |
+| Quorum   | What it means                                    |
+| -------- | ------------------------------------------------ |
+| One      | Any single approver's approval passes the stage. |
+| Majority | More than half of the approvers must approve.    |
+| All      | Every listed approver must approve.              |
 
 A workflow is not usable — a group cannot select it as a default — until it has at least one
 stage, and every stage has at least one approver.

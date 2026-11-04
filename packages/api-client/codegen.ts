@@ -37,7 +37,7 @@ const config: CodegenConfig = {
     },
   },
   hooks: {
-    afterOneFileWrite: ["prettier --write"],
+    afterOneFileWrite: ["oxfmt"],
   },
   schema: "schema/gateway.graphql",
 };

@@ -14,12 +14,12 @@ parts of the category tree.
 There are four things you can do with a document. Each one can be allowed or denied for you
 individually.
 
-| Action | What it means |
-| --- | --- |
-| Read | View the document's content |
-| Acknowledge | Confirm you have read it |
-| Approve | Approve or reject a draft in a workflow |
-| Author | Create and edit drafts |
+| Action      | What it means                           |
+| ----------- | --------------------------------------- |
+| Read        | View the document's content             |
+| Acknowledge | Confirm you have read it                |
+| Approve     | Approve or reject a draft in a workflow |
+| Author      | Create and edit drafts                  |
 
 :::note
 **Read gates everything else.** If you cannot read a document, you also cannot acknowledge,

@@ -60,7 +60,6 @@ A React single-page app built with Vite.
 ├── tsconfig.app.json
 ├── tsconfig.node.json
 ├── vite.config.ts        build and Vitest config
-├── eslint.config.mjs
 └── Taskfile.yml
 ```
 
