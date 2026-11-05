@@ -4,7 +4,12 @@ import type { AckExport, AckRoster, CompletionReport } from "@steward-web/api-cl
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { exportAcks, getAckRoster, getCompletionReport } from "./completion.server";
+import {
+  ackExportDownload,
+  exportAcks,
+  getAckRoster,
+  getCompletionReport,
+} from "./completion.server";
 
 const readerMe = {
   email: "reader@example.com",
@@ -90,5 +95,45 @@ describe("exportAcks", () => {
       format: "csv",
       policyVersionId: "pv-1",
     });
+  });
+});
+
+const exportRequest = (query: string) =>
+  new Request(`https://admin.steward.example/admin/resources/acks-export?${query}`);
+
+describe("ackExportDownload", () => {
+  it("answers the export as a CSV file download named after the policy", async () => {
+    const result: AckExport = { contentType: "text/csv", data: "dXNlcixlbWFpbAo=" };
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonOnce({ me: readerMe }))
+        .mockResolvedValueOnce(jsonOnce({ exportAcks: result })),
+    );
+
+    const response = await ackExportDownload(
+      exportRequest("policyVersionId=pv-1&number=POL-HR-002"),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("text/csv");
+    expect(response.headers.get("Content-Disposition")).toBe(
+      'attachment; filename="acks-POL-HR-002.csv"',
+    );
+    expect(await response.text()).toBe("user,email\n");
+  });
+
+  it("refuses a request with no policy version", async () => {
+    const thrown: unknown = await ackExportDownload(exportRequest("number=POL-HR-002")).catch(
+      (error: unknown) => error,
+    );
+    expect(thrown).toMatchObject({ init: { status: 400 } });
+  });
+
+  it("refuses a policy number that would break the file name header", async () => {
+    const thrown: unknown = await ackExportDownload(
+      exportRequest(`policyVersionId=pv-1&number=${encodeURIComponent('x"\r\nSet-Cookie: a=b')}`),
+    ).catch((error: unknown) => error);
+    expect(thrown).toMatchObject({ init: { status: 400 } });
   });
 });

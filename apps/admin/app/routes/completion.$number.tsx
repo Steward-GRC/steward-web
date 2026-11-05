@@ -19,12 +19,11 @@ import {
   THead,
 } from "@steward-web/ui";
 import { useState } from "react";
-import { data, Link } from "react-router";
+import { Link } from "react-router";
 
 import type { Route } from "./+types/completion.$number";
 
 import {
-  exportAcks,
   getAckRoster,
   getCompletionReport,
   listAllPolicies,
@@ -50,21 +49,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return { categories: orderedWithPaths(groups), groupId, policy, report, roster };
 };
 
-export const action = async ({ params, request }: Route.ActionArgs) => {
-  const form = await request.formData();
-  const policyVersionId = String(form.get("policyVersionId") ?? "");
-  if (!policyVersionId) throw data("missing policyVersionId", { status: 400 });
-
-  const result = await exportAcks(request, policyVersionId);
-  const bytes = Uint8Array.from(Buffer.from(result.data, "base64"));
-  return new Response(bytes, {
-    headers: {
-      "Content-Disposition": `attachment; filename="acks-${params.number}.csv"`,
-      "Content-Type": result.contentType,
-    },
-  });
-};
-
 export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
   const { categories, groupId, policy, report, roster } = loaderData;
   const [tab, setTab] = useState<"acked" | "pending">("acked");
@@ -86,26 +70,29 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
         title={policy.title}
       />
 
-      <form className="flex flex-wrap items-end gap-3" method="get">
-        <Field label="Group">
-          <Select defaultValue={groupId ?? ""} name="groupId" options={categoryOptions} />
-        </Field>
-        <Button type="submit" variant="secondary">
-          Apply
-        </Button>
-        {report ? (
-          <form method="post">
-            <input
-              name="policyVersionId"
-              type="hidden"
-              value={policy.currentPublishedVersionId ?? ""}
-            />
-            <Button type="submit" variant="secondary">
+      <div className="flex flex-wrap items-end gap-3">
+        <form className="flex flex-wrap items-end gap-3" method="get">
+          <Field label="Group">
+            <Select defaultValue={groupId ?? ""} name="groupId" options={categoryOptions} />
+          </Field>
+          <Button type="submit" variant="secondary">
+            Apply
+          </Button>
+        </form>
+        {report && policy.currentPublishedVersionId ? (
+          <Button asChild variant="secondary">
+            <Link
+              reloadDocument
+              to={`/resources/acks-export?${new URLSearchParams({
+                number: policy.number,
+                policyVersionId: policy.currentPublishedVersionId,
+              }).toString()}`}
+            >
               Export CSV
-            </Button>
-          </form>
+            </Link>
+          </Button>
         ) : null}
-      </form>
+      </div>
 
       {!report || !roster ? (
         <EmptyState

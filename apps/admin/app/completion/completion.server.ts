@@ -11,6 +11,7 @@ import type {
 import { DocumentType } from "@steward-web/api-client";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
+import { data } from "react-router";
 
 import { listGroups } from "../groups/groups.server";
 import { obligatingPolicies } from "./completion.logic";
@@ -57,4 +58,28 @@ export const getAckRoster = async (
 export const exportAcks = async (request: Request, policyVersionId: string): Promise<AckExport> => {
   await requireIdentityFromRequest(request);
   return edge.exportAcks(policyVersionId, "csv", cookieOf(request));
+};
+
+const policyNumberPattern = /^[\w.-]{1,64}$/;
+
+/**
+ * The acknowledgement roster as a file download, for the export resource route. The policy
+ * number only names the file, so anything that isn't a plain number is refused rather than
+ * written into the header.
+ */
+export const ackExportDownload = async (request: Request): Promise<Response> => {
+  const query = new URL(request.url).searchParams;
+  const policyVersionId = query.get("policyVersionId") ?? "";
+  const number = query.get("number") ?? "";
+  if (!policyVersionId || !policyNumberPattern.test(number)) {
+    throw data("missing or malformed policyVersionId or number", { status: 400 });
+  }
+
+  const result = await exportAcks(request, policyVersionId);
+  return new Response(Uint8Array.from(Buffer.from(result.data, "base64")), {
+    headers: {
+      "Content-Disposition": `attachment; filename="acks-${number}.csv"`,
+      "Content-Type": result.contentType,
+    },
+  });
 };
