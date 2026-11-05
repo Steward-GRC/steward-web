@@ -53,9 +53,6 @@ export const saveDraft = (
 ): Promise<PolicyVersion> =>
   edge.saveDraft(policyId, contentJson, templateVersionId, cookieOf(request));
 
-export const publishDraft = (request: Request, policyId: string): Promise<PolicyVersion> =>
-  edge.publishDraft(policyId, cookieOf(request));
-
 /**
  * Sends the policy's working draft for review (#110): the gateway's `submitWorkflow` starts
  * the approval run of the workflow its home category carries or inherits. The gateway decides
@@ -116,30 +113,3 @@ export const reorderAppendices = (
   orderedIds: readonly string[],
 ): Promise<readonly Appendix[]> =>
   edge.reorderAppendices(policyVersionId, orderedIds, cookieOf(request));
-
-export interface GroupPath {
-  id: string;
-  path: string;
-}
-
-/** Every group, depth-first, each with its full parent -> child display path (e.g.
- *  "Meridian Holdings › IT Security"), for the "new policy" group picker. Mirrors the
- *  admin groups area's own `orderedWithPaths` — kept local rather than shared, since the two
- *  apps' group screens otherwise have nothing else in common. */
-export const orderedGroupPaths = (groups: readonly Group[]): GroupPath[] => {
-  const byParent = new Map<null | string, Group[]>();
-  for (const g of groups) {
-    const key = g.parentId ?? null;
-    byParent.set(key, [...(byParent.get(key) ?? []), g]);
-  }
-  const out: GroupPath[] = [];
-  const walk = (parentId: null | string, prefix: string) => {
-    for (const g of byParent.get(parentId) ?? []) {
-      const path = prefix ? `${prefix} › ${g.name}` : g.name;
-      out.push({ id: g.id, path });
-      walk(g.id, path);
-    }
-  };
-  walk(null, "");
-  return out;
-};

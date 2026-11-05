@@ -24,25 +24,36 @@ there. Ask your administrator — see [Who can do what](/concepts/access-model).
 
 ## 📝 The steps
 
-1. **Start a draft.** Create a new policy or procedure and give it a clear, specific title.
-2. **Pick a category.** The category decides the **starting template**, the **approval workflow**
-   the draft follows, and later **who must acknowledge** the published document.
-3. **Use the template's sections.** If the category has a template, your draft starts with its
-   headings already in place, including the sections that are **required**. If the category is
-   freeform, you write from a blank page instead.
-4. **Write the content**, using headings, lists, tables and links to keep it organised.
-5. **Submit for review.** The draft leaves the draft stage, enters an approval workflow, and goes
-   to the right people, who either approve it or ask for changes.
+1. **Start a draft.** Choose **New policy** or **New procedure** in the library's header, or from
+   the search panel (Shift+C). Pick the type, give it a clear, specific title, and choose its
+   **Category** and, if it has them, a **Subcategory**.
+2. **Pick a template and sensitivity.** The category decides the **approval workflow** the draft
+   follows, and later **who must acknowledge** the published document. Choose a **Template** (or
+   **No template (freeform)**) and whether it's **Standard** or **Sensitive**, then **Create
+   policy**.
+3. **Use the template's sections.** If you chose a template, your draft starts with its headings
+   already in place. The **Required sections** list beside the editor ticks each required section
+   once it has content.
+4. **Write the content**, using headings, lists, tables and links to keep it organised. Add
+   supporting material under **Appendices**, beside the editor.
+5. **Save draft** keeps your work; the header says **Saved** or **Unsaved changes**.
+6. **Submit for approval.** Steward asks you to confirm before the draft goes to its approvers. If
+   a required section is still empty, it tells you which instead. You can't edit the draft while
+   it's in review.
+
+To throw a draft away, choose **Actions → Discard draft…**. A published version stays live.
 
 :::note
-Drafts save automatically as you work, so you will not lose your progress. You can leave the
-editor and come back later — your draft stays private until you submit it.
+While you write with others, Steward keeps the shared draft as you go. On your own, use **Save
+draft** before you leave; an unfinished **New policy** form is kept in your browser so you can
+come back to it.
 :::
 
 ## 👥 Writing together
 
-More than one author can open the same draft at once. While you are both editing, you see each
-other's cursor and changes as they happen, so you never overwrite one another's work.
+More than one author can open the same draft at once. The header shows who else is in it and
+**Editing together** (or **Reconnecting…** if the connection drops). You see each other's cursor
+and changes as they happen, so you never overwrite one another's work.
 
 ## 🤖 AI assistance
 
