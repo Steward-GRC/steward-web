@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  AckActivityDay,
   AckExport,
   AckRoster,
   CompletionReport,
@@ -53,6 +54,24 @@ export const getAckRoster = async (
 ): Promise<AckRoster> => {
   await requireIdentityFromRequest(request);
   return edge.ackRoster(policyVersionId, groupId, cookieOf(request));
+};
+
+/**
+ * Acknowledgements per day over the last `days` days (A14's "Activity over time"). Null when
+ * the gateway can't say, so the chart says so and the rest of the page still shows.
+ */
+export const getAckActivity = async (
+  request: Request,
+  policyVersionId: string,
+  days: number,
+  groupId: null | string = null,
+): Promise<null | readonly AckActivityDay[]> => {
+  await requireIdentityFromRequest(request);
+  try {
+    return await edge.ackActivity(policyVersionId, groupId, days, cookieOf(request));
+  } catch {
+    return null;
+  }
 };
 
 export const exportAcks = async (request: Request, policyVersionId: string): Promise<AckExport> => {
