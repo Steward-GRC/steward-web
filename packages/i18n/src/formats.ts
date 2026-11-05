@@ -30,6 +30,14 @@ const memo = <T>(kind: string, locale: string, options: object, make: () => T): 
 const dateTimeFormat = (locale: string, options: Intl.DateTimeFormatOptions) =>
   memo("dt", locale, options, () => new Intl.DateTimeFormat(locale, options));
 
+/**
+ * The locale a calendar date is written in. The decided date style (3-colour-type-tokens.s6)
+ * is day, short month, year: "2 Oct 2026". The app's default English is the bare `en` tag,
+ * which Intl reads as US English ("Oct 2, 2026"), so it writes dates as British English does;
+ * every other locale keeps its own order.
+ */
+const dateLocale = (locale: string): string => (locale === "en" ? "en-GB" : locale);
+
 /** Accepts what the data layer actually holds: an ISO string, epoch ms, or Date.
  *  Returns undefined for null/blank/unparseable rather than "Invalid Date". */
 const toDate = (value: Date | null | number | string | undefined): Date | undefined => {
@@ -52,18 +60,18 @@ export const formatDayMonth = (
 ): string => {
   const date = toDate(value);
   if (!date) return fallback;
-  return dateTimeFormat(locale, { day: "numeric", month: "short" }).format(date);
+  return dateTimeFormat(dateLocale(locale), { day: "numeric", month: "short" }).format(date);
 };
 
-/** Medium date, e.g. "24 Aug 2026" / "Aug 24, 2026" depending on locale. */
+/** Medium date in the decided style, e.g. "24 Aug 2026"; other locales keep their own order. */
 export const formatDate = (
   value: Date | null | number | string | undefined,
   { fallback = "—", locale = currentLocale() }: FormatOptions = {},
 ): string => {
   const date = toDate(value);
   if (!date) return fallback;
-  return dateTimeFormat(locale, {
-    day: "2-digit",
+  return dateTimeFormat(dateLocale(locale), {
+    day: "numeric",
     month: "short",
     year: "numeric",
   }).format(date);
@@ -76,8 +84,8 @@ export const formatDateTime = (
 ): string => {
   const date = toDate(value);
   if (!date) return fallback;
-  return dateTimeFormat(locale, {
-    day: "2-digit",
+  return dateTimeFormat(dateLocale(locale), {
+    day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     month: "short",

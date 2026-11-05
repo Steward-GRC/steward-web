@@ -49,6 +49,30 @@ describe("formatDate / formatDateTime", () => {
   });
 });
 
+describe("the decided date style (3-colour-type-tokens.s6)", () => {
+  // The app's default English is the en descriptor (US), but the decided style is the same
+  // everywhere: day, short month, year ("2 Oct 2026"), and "2 Oct" without the year.
+  const iso = "2026-10-02T10:00:00Z";
+
+  it("is day, short month and year for the app's default locale", () => {
+    expect(formatDate(iso)).toBe("2 Oct 2026");
+    expect(formatDate(iso, { locale: "en" })).toBe("2 Oct 2026");
+    expect(formatDate(iso, { locale: "en-GB" })).toBe("2 Oct 2026");
+  });
+
+  it("drops the year, not the order, for the day and month", () => {
+    expect(formatDayMonth(iso)).toBe("2 Oct");
+  });
+
+  it("puts the 24-hour time after the same date", () => {
+    expect(formatDateTime("2026-10-02T14:02:00", { locale: "en" })).toBe("2 Oct 2026, 14:02");
+  });
+
+  it("still follows another locale's own order", () => {
+    expect(formatDate(iso, { locale: "de" })).toMatch(/^2\. Okt\. 2026$/);
+  });
+});
+
 describe("formatHour", () => {
   it("uses a 12-hour clock for en and a 24-hour clock for de", () => {
     // Replaces the hardcoded `HH:00`, which showed "14:00" to a US audience.
@@ -137,7 +161,7 @@ describe("formatList", () => {
 describe("formatDayMonth", () => {
   it("is the day and short month, without the year", () => {
     expect(formatDayMonth("2026-10-02T10:00:00Z", { locale: "en-GB" })).toBe("2 Oct");
-    expect(formatDayMonth("2026-10-02T10:00:00Z", { locale: "en" })).toBe("Oct 2");
+    expect(formatDayMonth("2026-10-02T10:00:00Z", { locale: "en" })).toBe("2 Oct");
     expect(formatDayMonth(undefined, { locale: "en" })).toBe("—");
   });
 });
