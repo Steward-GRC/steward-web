@@ -380,6 +380,26 @@ describe("liveEdge.policyDetail", () => {
     });
   });
 
+  it("takes the next review from the nearest category that sets one (R1)", async () => {
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      CategoryTree: () => ({
+        categoryTree: [
+          { ...category("c-fin", "Finance"), reviewDate: "2027-10-02T00:00:00Z" },
+          category("c-travel", "Travel", "c-fin"),
+        ],
+      }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.nextReview).toBe("2027-10-02T00:00:00Z");
+  });
+
+  it("has no next review when no category in the chain sets one", async () => {
+    routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.nextReview).toBeNull();
+  });
+
   it("reads AI as unavailable when the health check itself fails", async () => {
     routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");

@@ -828,3 +828,22 @@ html[data-text-size="large"] {
 html[data-text-size="x-large"] {
   font-size: 125%;
 }
+
+/* The print layout (R1). The reader draws it into the body only while the browser prints;
+   then it is the only thing on the page, and it is always light. */
+.steward-print {
+  display: none;
+}
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #261b25;
+  }
+  body > :not(.steward-print) {
+    display: none !important;
+  }
+  .steward-print {
+    display: block;
+  }
+}

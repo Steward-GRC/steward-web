@@ -31,6 +31,14 @@ it. To acknowledge means to confirm you have read and understood it.
 Use the star beside the title to keep a document in your starred list, and **Actions** to print it
 or jump to its **History & approvals**.
 
+**Print / Export** (or your browser's own print) prints the document on its own, without the
+app around it, on A4 or Letter. Each page has your organisation's name and the document's number,
+version and status at the top, and at the bottom when and by whom it was printed with the page
+number. Defined terms are marked † and listed at the end, links are numbered with their
+addresses at the end, each appendix starts on a new page, and the last pages carry the full
+history. A printed copy can go out of date, so the footer reminds readers to check Steward for
+the current version. To keep a PDF, choose **Save as PDF** in your browser's print dialog.
+
 That is all it takes. Your organisation now has a clear record that you did your part.
 
 ## 🔎 More about the document

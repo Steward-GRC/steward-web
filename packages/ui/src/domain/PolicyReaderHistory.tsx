@@ -76,7 +76,21 @@ const DOT_COLOUR: Readonly<Record<DotTone, string>> = {
   withdrawn: "var(--status-withdrawn)",
 };
 
-const withV = (version: string) => (version.startsWith("v") ? version : `v${version}`);
+/** "2" or "v2" as "v2". */
+export const withV = (version: string) => (version.startsWith("v") ? version : `v${version}`);
+
+/** An event's title in the history ("Published v2", "Final approval approved"), from its kind;
+ *  a kind with no label yet is spelled out. `label` is its version as "v2". */
+export const historyEventTitle = (
+  t: (key: string, options: Record<string, string>) => string,
+  event: HistoryEntry,
+  label: string,
+): string =>
+  t(`reader.history.events.${event.kind}`, {
+    defaultValue: spelledOut(event.kind),
+    stage: event.stage ?? "",
+    version: label.slice(1),
+  });
 
 /** A version's status in the history: its newest event that says one, else draft. */
 const statusOfVersion = (events: readonly HistoryEntry[]): HistoryStatus => {
@@ -150,11 +164,7 @@ const VersionGroup = ({
                 />
                 <div className="flex flex-col gap-0.5">
                   <span className="font-semibold" data-testid="history-event-title">
-                    {t(`reader.history.events.${event.kind}`, {
-                      defaultValue: spelledOut(event.kind),
-                      stage: event.stage ?? "",
-                      version: label.slice(1),
-                    })}
+                    {historyEventTitle(t, event, label)}
                   </span>
                   {detail ? <span className="text-muted">{detail}</span> : null}
                 </div>

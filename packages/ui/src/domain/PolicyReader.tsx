@@ -13,6 +13,7 @@ import {
   Star,
 } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { createPortal, flushSync } from "react-dom";
 import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
 
 import { Button } from "#ui/components/Button";
@@ -46,6 +47,7 @@ import { useFavorites } from "./favorites";
 import { OutlineCard } from "./OutlineCard";
 import { documentTypeBasePath } from "./policy";
 import { bodyShape, outlineItems, PolicyDocument, RedactedDocument } from "./PolicyDocument";
+import { PolicyPrint } from "./PolicyPrint";
 import { PolicyReaderHistory } from "./PolicyReaderHistory";
 import {
   ackBannerState,
@@ -426,9 +428,31 @@ const tab =
 
 export interface PolicyReaderProps {
   detail: PolicyDetail;
-  /** The signed-in person's name, for D1's record box. */
+  /** The organisation's name, for the printed page's running header (R1). */
+  organisation?: null | string;
+  /** The signed-in person's name, for D1's record box and the printed footer. */
   viewerName?: string;
 }
+
+/**
+ * While the browser prints, the moment it started; null otherwise. The print layout (R1) is
+ * drawn only then, synchronously in `beforeprint`, so the page itself never carries a second
+ * copy of the document. It covers the Print / Export actions and the browser's own print.
+ */
+const usePrinting = (): Date | null => {
+  const [printedAt, setPrintedAt] = useState<Date | null>(null);
+  useEffect(() => {
+    const before = () => flushSync(() => setPrintedAt(new Date()));
+    const after = () => setPrintedAt(null);
+    globalThis.addEventListener("beforeprint", before);
+    globalThis.addEventListener("afterprint", after);
+    return () => {
+      globalThis.removeEventListener("beforeprint", before);
+      globalThis.removeEventListener("afterprint", after);
+    };
+  }, []);
+  return printedAt;
+};
 
 /**
  * The policy/procedure reader (U7, U8, U10, U12-U18, D1, D2): the back link and the serif
@@ -437,8 +461,9 @@ export interface PolicyReaderProps {
  * summary toggle, the document in the reading style beside the "On this page" outline, and the
  * history at the foot. It reads at full width (decision 2-layout-and-navigation.s9).
  */
-export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
+export const PolicyReader = ({ detail, organisation, viewerName }: PolicyReaderProps) => {
   const { t } = useTranslation("policy");
+  const printedAt = usePrinting();
   const favorites = useFavorites();
   const [view, setView] = useState("view");
   const [summaryOn, setSummaryOn] = useState(false);
@@ -764,6 +789,17 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
       <div id={HISTORY_ID}>
         <PolicyReaderHistory history={detail.history} />
       </div>
+      {printedAt
+        ? createPortal(
+            <PolicyPrint
+              detail={detail}
+              organisation={organisation}
+              printedAt={printedAt}
+              viewerName={viewerName}
+            />,
+            document.body,
+          )
+        : null}
     </div>
   );
 };
