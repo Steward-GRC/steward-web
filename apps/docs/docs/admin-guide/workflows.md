@@ -13,30 +13,38 @@ a group's policies are published.
 A **workflow** has ordered **stages**, and a policy moves through them one after another. Each
 stage names its **approvers** and a **quorum**:
 
-| Quorum   | What it means                                    |
-| -------- | ------------------------------------------------ |
-| One      | Any single approver's approval passes the stage. |
-| Majority | More than half of the approvers must approve.    |
-| All      | Every listed approver must approve.              |
+| Quorum | What it means                             |
+| ------ | ----------------------------------------- |
+| One    | The first approval moves it on.           |
+| Quorum | A majority of the approvers must approve. |
+| All    | Every approver must approve.              |
 
-A workflow is not usable — a group cannot select it as a default — until it has at least one
-stage, and every stage has at least one approver.
+An approver is a person or a group. A group approves **as a group**: it needs as many of its
+members as its own quorum asks for, shown as "As a group · 2 of 3".
 
-Open **Workflows** under `/admin` to see every workflow and whether it is usable.
+A workflow is a **Draft**, and a category can't use it, until it has at least one stage and every
+stage has at least one approver.
+
+**Workflows** under `/admin` shows each workflow as a card, grouped by the site whose categories
+use it, with how many stages it has and how many categories use it. A card warns when an approver's
+account is disabled and needs replacing.
 
 ## ➕ Create and edit a workflow
 
-1. Select **New workflow**, give it a name and an optional description.
-2. Add a stage, name it, and choose its quorum and approvers. Reorder stages with the up and
-   down controls — the order is the approval sequence, so put the earliest reviewer first and
-   the final sign-off last.
-3. Save. An existing workflow opens the same stage editor to add, remove, reorder or rename
-   stages, or change their approvers and quorum.
+1. Select **+ New workflow**, give it a name and an optional description.
+2. Each stage is a card. Name it, choose **One**, **Quorum** or **All**, and add approvers with
+   **+ Add approver**; the cross on a chip removes one. A disabled approver shows as "disabled —
+   replace". **Due** sets how many working days the stage has.
+3. Drag a card by its grip to reorder the stages, or focus the grip and use the up and down arrow
+   keys. The order is the approval sequence, so put the earliest reviewer first and the final
+   sign-off last. **+ Add stage** adds one at the end.
+4. Select **Save workflow**.
 
-A group picks its default workflow from this list, under the group's **Defaults & governance**
-tab (see [Groups](/admin-guide/groups)).
+**Duplicate workflow** makes a copy to start from. A category picks its default workflow on its
+**Details & Defaults** (see [Groups](/admin-guide/groups)).
 
-## 🗑️ Archive a workflow
+## 🗑️ Delete a workflow
 
-Archiving removes a workflow from the list a group can pick as its default. It does not change
-any group already using it, or any policy already moving through it.
+**Delete workflow** is off while any category uses the workflow. Otherwise it takes the workflow
+out of every list where one is chosen. Its history is kept, and no policy already moving through
+it changes.

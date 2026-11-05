@@ -1,138 +1,262 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-// A workflow definition's stage editor: reorder with the up/down buttons, name each stage,
-// pick its individual approvers and set its quorum. Presentational only: the host route owns
-// the save action (a hidden `stagesJson` field mirrors `onChange`'s latest value).
-//
-// Per-category approver overrides and group-vote units (`approversByCategory`, `groupUnits`)
-// have no editor here — this port carries whatever a stage already has for them through
-// unchanged, never dropping them, but doesn't let an admin set them from this screen.
-import type { WorkflowStageInput } from "@steward-web/api-client";
+// The workflow editor's stage cards (A9). Presentational: the route owns the save, through a
+// hidden field that mirrors `onChange`'s latest stage list.
+import type { GroupUnitInput, WorkflowStageInput } from "@steward-web/api-client";
 
-import { Badge, Button, Checkbox, Field, Input } from "@steward-web/ui";
-import { useState } from "react";
+import { useTranslation } from "@steward-web/i18n";
+import { cn, Select } from "@steward-web/ui";
+import { GripVertical, X } from "lucide-react";
+import { type KeyboardEvent, useId, useState } from "react";
 
-import { moveDown, moveUp, newStage } from "./stageOutline";
+import { moveDown, moveUp } from "./stageOutline";
 
 export interface StageEditorProps {
-  initialStages: readonly WorkflowStageInput[];
-  /** Fires on every edit with the current stage list. */
+  /** Platform group names, for group approvers. */
+  groupNames: Record<string, string>;
   onChange: (stages: readonly WorkflowStageInput[]) => void;
-  userOptions: readonly StageEditorUser[];
+  people: readonly StagePerson[];
+  stages: readonly WorkflowStageInput[];
 }
 
-export interface StageEditorUser {
-  label: string;
-  userId: string;
+export interface StagePerson {
+  enabled: boolean;
+  id: string;
+  name: string;
 }
 
-export const StageEditor = ({ initialStages, onChange, userOptions }: StageEditorProps) => {
-  const [stages, setStages] = useState<readonly WorkflowStageInput[]>(initialStages);
+const QUORUMS = ["one", "majority", "all"] as const;
 
-  const commit = (next: readonly WorkflowStageInput[]) => {
-    setStages(next);
+/** How many of a group's members its internal quorum needs. */
+const needed = (unit: GroupUnitInput) => {
+  const total = unit.memberUserIds.length;
+  if (unit.internalQuorum === "all") return total;
+  if (unit.internalQuorum === "majority") return Math.floor(total / 2) + 1;
+  return Math.min(1, total);
+};
+
+const CHIP = "flex h-7 items-center gap-1.5 rounded-full px-2.5";
+
+/** One stage card: grip, number and name, Always last, the quorum, approvers and due date. */
+const StageCard = ({
+  groupNames,
+  index,
+  onDragStart,
+  onDrop,
+  onMove,
+  onRemove,
+  onUpdate,
+  people,
+  stage,
+}: {
+  groupNames: Record<string, string>;
+  index: number;
+  onDragStart: () => void;
+  onDrop: () => void;
+  onMove: (delta: -1 | 1) => void;
+  onRemove: () => void;
+  onUpdate: (patch: Partial<WorkflowStageInput>) => void;
+  people: readonly StagePerson[];
+  stage: WorkflowStageInput;
+}) => {
+  const { t } = useTranslation("admin");
+  const number = index + 1;
+  const dueId = useId();
+  const hintId = useId();
+  const quorum = QUORUMS.find((entry) => entry === stage.quorum);
+  const explain = quorum
+    ? t(`workflows.editor.explain.${quorum}`)
+    : t("workflows.editor.explain.count", { count: Number(stage.quorum) || 0 });
+  const person = (id: string) => people.find((entry) => entry.id === id);
+
+  const onGripKey = (event: KeyboardEvent) => {
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      onMove(-1);
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      onMove(1);
+    }
+  };
+
+  return (
+    <div
+      aria-label={t("workflows.editor.stageGroup", { number })}
+      className="overflow-hidden rounded-[10px] border border-border bg-surface"
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={onDrop}
+      role="group"
+    >
+      <div className="flex flex-wrap items-center gap-2.5 border-b border-border px-3.5 py-2.5">
+        <span className="sr-only" id={hintId}>
+          {t("workflows.editor.moveHint")}
+        </span>
+        <button
+          aria-describedby={hintId}
+          aria-label={t("workflows.editor.move", { number })}
+          className="flex cursor-grab text-muted hover:text-ink"
+          draggable
+          onDragStart={onDragStart}
+          onKeyDown={onGripKey}
+          type="button"
+        >
+          <GripVertical aria-hidden="true" className="size-4" />
+        </button>
+        <b className="flex min-w-0 items-center">
+          <span aria-hidden="true">{t("workflows.editor.stage", { number })}</span>
+          <input
+            aria-label={t("workflows.editor.stageName", { number })}
+            className="min-w-0 rounded-sm bg-transparent font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]"
+            onChange={(event) => onUpdate({ name: event.target.value })}
+            value={stage.name}
+          />
+        </b>
+        {stage.pinnedLast ? (
+          <span className="text-xs text-muted">{t("workflows.editor.alwaysLast")}</span>
+        ) : null}
+        <div
+          aria-label={t("workflows.editor.quorum", { number })}
+          className="ml-auto flex rounded-md bg-sunken p-0.5 text-xs"
+          role="radiogroup"
+        >
+          {QUORUMS.map((entry) => (
+            <label
+              className={cn(
+                "cursor-pointer rounded-[4px] px-2.5 py-1 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--focus)]",
+                stage.quorum === entry && "bg-surface font-bold",
+              )}
+              key={entry}
+            >
+              <input
+                checked={stage.quorum === entry}
+                className="sr-only"
+                name={`quorum-${index}`}
+                onChange={() => onUpdate({ quorum: entry })}
+                type="radio"
+                value={entry}
+              />
+              {t(`workflows.editor.quorums.${entry}`)}
+            </label>
+          ))}
+        </div>
+        <button
+          aria-label={t("workflows.editor.removeStage", { number })}
+          className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink"
+          onClick={onRemove}
+          type="button"
+        >
+          <X aria-hidden="true" className="size-4" />
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-2 px-3.5 py-3 text-sm">
+        <ul
+          aria-label={t("workflows.editor.approvers", { number })}
+          className="flex flex-wrap items-center gap-1.5"
+        >
+          {stage.approvers.map((id) => {
+            const who = person(id);
+            const name = who?.name ?? id;
+            const disabled = who !== undefined && !who.enabled;
+            return (
+              <li className={cn(CHIP, disabled ? "bg-warn-soft text-warn" : "bg-sunken")} key={id}>
+                {disabled ? t("workflows.editor.disabled", { name }) : name}
+                <button
+                  aria-label={t("workflows.editor.removeApprover", { name, number })}
+                  className="flex rounded-full opacity-70 hover:opacity-100"
+                  onClick={() =>
+                    onUpdate({ approvers: stage.approvers.filter((entry) => entry !== id) })
+                  }
+                  type="button"
+                >
+                  <X aria-hidden="true" className="size-4" />
+                </button>
+              </li>
+            );
+          })}
+          {(stage.groupUnits ?? []).map((unit) => (
+            <li className={cn(CHIP, "bg-sunken")} key={unit.groupId}>
+              {t("workflows.editor.group", {
+                name: groupNames[unit.groupId] ?? unit.groupId,
+                need: needed(unit),
+                total: unit.memberUserIds.length,
+              })}
+            </li>
+          ))}
+          <li>
+            <Select
+              aria-label={t("workflows.editor.addApprover")}
+              className="h-7 w-auto rounded-full border-0 px-2.5 text-sm font-semibold text-primary shadow-[inset_0_0_0_1px_var(--border-strong)]"
+              onValueChange={(id) => onUpdate({ approvers: [...stage.approvers, id] })}
+              options={people
+                .filter((entry) => entry.enabled && !stage.approvers.includes(entry.id))
+                .map((entry) => ({ label: entry.name, value: entry.id }))}
+              placeholder={t("workflows.editor.addApprover")}
+              value=""
+            />
+          </li>
+        </ul>
+        <span className="text-muted">{explain}</span>
+        <span className="flex flex-wrap items-center gap-2">
+          <label className="text-muted" htmlFor={dueId}>
+            {t("workflows.editor.due")}
+          </label>
+          <input
+            aria-label={t("workflows.editor.dueLabel", { number })}
+            className="h-[30px] w-16 rounded-md border border-control bg-surface px-2.5"
+            id={dueId}
+            inputMode="numeric"
+            min={1}
+            onChange={(event) =>
+              onUpdate({ slaDays: event.target.value ? Number(event.target.value) : null })
+            }
+            placeholder="—"
+            type="number"
+            value={stage.slaDays ?? ""}
+          />
+          <span className="text-muted">{t("workflows.editor.workingDays")}</span>
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * The stage cards (A9): drag a card, or use the arrow keys on its grip, to reorder; each stage
+ * has its quorum (One, Quorum or All, with a line explaining it), its approvers as chips (a
+ * disabled one asks to be replaced, a group shows "As a group · 2 of 3") and its due date.
+ */
+export const StageEditor = ({ groupNames, onChange, people, stages }: StageEditorProps) => {
+  const [dragging, setDragging] = useState<null | number>(null);
+  const update = (index: number, patch: Partial<WorkflowStageInput>) =>
+    onChange(stages.map((stage, at) => (at === index ? { ...stage, ...patch } : stage)));
+  const move = (index: number, delta: -1 | 1) =>
+    onChange(delta === -1 ? moveUp(stages, index) : moveDown(stages, index));
+  const drop = (to: number) => {
+    if (dragging === null || dragging === to) return;
+    const next = [...stages];
+    const [moving] = next.splice(dragging, 1);
+    next.splice(to, 0, moving!);
+    setDragging(null);
     onChange(next);
   };
 
-  const updateStage = (index: number, patch: Partial<WorkflowStageInput>) =>
-    commit(stages.map((s, index_) => (index_ === index ? { ...s, ...patch } : s)));
-
-  const toggleApprover = (index: number, userId: string) => {
-    const stage = stages[index]!;
-    const approvers = stage.approvers.includes(userId)
-      ? stage.approvers.filter((id) => id !== userId)
-      : [...stage.approvers, userId];
-    updateStage(index, { approvers });
-  };
-
-  const removeStage = (index: number) => commit(stages.filter((_, index_) => index_ !== index));
-
-  const addStage = () => commit([...stages, newStage(stages)]);
-
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3.5">
       {stages.map((stage, index) => (
-        <div className="flex flex-col gap-3 rounded-lg border border-border p-4" key={index}>
-          <div className="flex items-center gap-2">
-            <Badge className="shrink-0 font-mono" tone="neutral">
-              Stage {index + 1}
-            </Badge>
-            <div className="flex shrink-0 items-center gap-1">
-              <Button
-                aria-label="Move up"
-                disabled={index === 0}
-                onClick={() => commit(moveUp(stages, index))}
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                ↑
-              </Button>
-              <Button
-                aria-label="Move down"
-                disabled={index === stages.length - 1}
-                onClick={() => commit(moveDown(stages, index))}
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                ↓
-              </Button>
-            </div>
-            <Input
-              aria-label={`Stage ${index + 1} name`}
-              className="flex-1"
-              onChange={(event) => updateStage(index, { name: event.target.value })}
-              placeholder="Stage name"
-              value={stage.name}
-            />
-            <Button
-              aria-label="Remove stage"
-              disabled={stages.length === 1}
-              onClick={() => removeStage(index)}
-              size="icon"
-              type="button"
-              variant="ghost"
-            >
-              ×
-            </Button>
-          </div>
-
-          <Field hint="one, majority, all, or a specific count." label="Quorum">
-            <Input
-              className="max-w-40"
-              onChange={(event) => updateStage(index, { quorum: event.target.value })}
-              value={stage.quorum}
-            />
-          </Field>
-
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-semibold text-ink">Approvers</legend>
-            {userOptions.length === 0 ? (
-              <p className="text-xs text-muted">No users available to assign.</p>
-            ) : (
-              userOptions.map((option) => (
-                <label className="flex items-center gap-2 text-sm text-ink" key={option.userId}>
-                  <Checkbox
-                    checked={stage.approvers.includes(option.userId)}
-                    onCheckedChange={() => toggleApprover(index, option.userId)}
-                  />
-                  {option.label}
-                </label>
-              ))
-            )}
-            {stage.approvers.length === 0 ? (
-              <p className="text-xs text-warn">
-                No approvers yet — this workflow isn&apos;t usable until every stage has one.
-              </p>
-            ) : null}
-          </fieldset>
-        </div>
+        <StageCard
+          groupNames={groupNames}
+          index={index}
+          key={stage.id ?? `new-${index}`}
+          onDragStart={() => setDragging(index)}
+          onDrop={() => drop(index)}
+          onMove={(delta) => move(index, delta)}
+          onRemove={() => onChange(stages.filter((_, at) => at !== index))}
+          onUpdate={(patch) => update(index, patch)}
+          people={people}
+          stage={stage}
+        />
       ))}
-
-      <Button className="self-start" onClick={addStage} size="sm" type="button" variant="secondary">
-        Add stage
-      </Button>
     </div>
   );
 };

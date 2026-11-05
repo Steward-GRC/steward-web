@@ -752,5 +752,85 @@
       "cancel": "Cancel",
       "failed": "Couldn't create this category"
     }
+  },
+  "workflows": {
+    "title": "Workflows",
+    "subtitle": "Approval workflows for policy review.",
+    "new": "+ New workflow",
+    "empty": {
+      "title": "No workflows yet",
+      "description": "Create the first workflow to start building approval chains."
+    },
+    "notInUse": "Not in use",
+    "draft": "Draft",
+    "disabledApprover": "Disabled approver — needs replacement",
+    "summary": "{{stages}} · {{usedBy}}",
+    "stages_one": "{{count}} stage",
+    "stages_other": "{{count}} stages",
+    "usedBy_one": "used by {{count}} group",
+    "usedBy_other": "used by {{count}} groups",
+    "editor": {
+      "eyebrow": "Workflows",
+      "sequential": "Stages run sequentially. Each runs after the previous one approves.",
+      "details": "Name and description",
+      "name": "Name",
+      "description": "Description",
+      "notUsableTitle": "Not usable yet — draft",
+      "notUsable": "Every required step needs at least one approver before this workflow can be selected for a policy or run…",
+      "stage": "{{number}} · ",
+      "stageName": "Stage {{number}} name",
+      "alwaysLast": "Always last",
+      "move": "Move stage {{number}}",
+      "moveHint": "Use the up and down arrow keys, or drag the card.",
+      "removeStage": "Remove stage {{number}}",
+      "quorum": "Stage {{number}} quorum",
+      "quorums": {
+        "one": "One",
+        "majority": "Quorum",
+        "all": "All"
+      },
+      "explain": {
+        "one": "One: the first approval moves it on.",
+        "majority": "Quorum: a majority of approvers must approve.",
+        "all": "All: every approver must approve.",
+        "count": "Quorum: {{count}} approvers must approve."
+      },
+      "approvers": "Stage {{number}} approvers",
+      "disabled": "{{name}} · disabled — replace",
+      "group": "Group: {{name}} · As a group · {{need}} of {{total}}",
+      "members": "Group: {{name}} · Members",
+      "removeApprover": "Remove {{name}} from stage {{number}}",
+      "addApprover": "+ Add approver",
+      "due": "Due",
+      "dueLabel": "Stage {{number}} due within",
+      "workingDays": "working days",
+      "noDue": "No due date",
+      "addStage": "+ Add stage",
+      "duplicate": "Duplicate workflow",
+      "delete": "Delete workflow",
+      "inUse_one": "In use by {{count}} group",
+      "inUse_other": "In use by {{count}} groups",
+      "deleteTitle": "Delete {{name}}?",
+      "deleteDescription": "It's archived: it stops appearing where a workflow is chosen, and its history is kept.",
+      "deleteConfirm": "Delete workflow",
+      "cancel": "Cancel",
+      "save": "Save workflow",
+      "saved": "Saved!",
+      "required": "A name is required.",
+      "failed": "Couldn't save this workflow",
+      "copyName": "{{name}} (copy)",
+      "notFound": {
+        "title": "Workflow not found",
+        "description": "No workflow matches that address.",
+        "action": "Back to workflows"
+      },
+      "stageGroup": "Stage {{number}}"
+    },
+    "add": {
+      "title": "New workflow",
+      "submit": "Create workflow",
+      "cancel": "Cancel",
+      "failed": "Couldn't create this workflow"
+    }
   }
 }
