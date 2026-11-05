@@ -3,16 +3,21 @@
 import { useIdentity } from "@steward-web/auth";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { refusalOf } from "@steward-web/shell";
-import { DocumentType, PolicyReader } from "@steward-web/ui/domain";
+import { shellConfigFromEnvironment } from "@steward-web/shell/server";
+import { DocumentType, Sensitivity } from "@steward-web/ui/domain";
 import {
   acknowledgePolicy,
   breakGlassReveal,
   getPolicyDetail,
 } from "@steward-web/ui/domain/server";
-import { data, useRouteLoaderData } from "react-router";
+import { data, type ShouldRevalidateFunctionArgs, useRouteLoaderData } from "react-router";
 
 import type { loader as rootLoader } from "../root";
 import type { Route } from "./+types/procedure";
+
+import { AdminPolicyReader } from "../policies/AdminPolicyReader";
+import { type GovernanceResult } from "../policies/governance";
+import { runGovernance } from "../policies/governance.server";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requireIdentityFromRequest(request);
@@ -22,13 +27,42 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return data({ detail });
 };
 
-export const action = async ({ request }: Route.ActionArgs) => {
+/**
+ * After a governance action only a new author changes what the page shows. Retire, delete and
+ * move take the document away from this number (the dialog moves on), and an export or a link
+ * changes nothing on the page.
+ */
+export const shouldRevalidate = ({
+  actionResult,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) => {
+  const result = actionResult as Partial<GovernanceResult> | undefined;
+  if (result?.intent && result.intent !== "changeAuthor") return false;
+  return defaultShouldRevalidate;
+};
+
+export const action = async ({ params, request }: Route.ActionArgs) => {
   await requireIdentityFromRequest(request);
   const cookie = request.headers.get("cookie") ?? undefined;
   const form = await request.formData();
   const intent = form.get("intent");
   if (intent !== "acknowledge" && intent !== "breakGlass") {
-    throw new Response("Bad Request", { status: 400 });
+    // The governance actions (A11) act on the procedure this page shows, read here, not on ids
+    // from the form.
+    const detail = await getPolicyDetail(DocumentType.Procedure, params.number, cookie);
+    if (!detail) throw data({ kind: "procedure", number: params.number }, { status: 404 });
+    return data(
+      await runGovernance({
+        document: {
+          currentVersionId: detail.currentVersionId,
+          id: detail.id,
+          sensitive: detail.sensitivity === Sensitivity.Sensitive,
+        },
+        form,
+        request,
+        staffUrl: shellConfigFromEnvironment().staffUrl,
+      }),
+    );
   }
 
   try {
@@ -52,8 +86,9 @@ export default function ProcedureRoute({ loaderData }: Route.ComponentProps) {
   // The organisation's name heads every printed page (R1).
   const organisation = useRouteLoaderData<typeof rootLoader>("root")?.shell.config.organisation;
   return (
-    <PolicyReader
+    <AdminPolicyReader
       detail={loaderData.detail}
+      isSiteAdmin={identity.isSiteAdmin}
       organisation={organisation}
       viewerName={identity.name || undefined}
     />

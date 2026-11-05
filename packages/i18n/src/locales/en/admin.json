@@ -1045,5 +1045,84 @@
       "title": "The list isn't available yet",
       "description": "Magic links are made and revoked from the policy they share. This page lists them once the gateway can."
     }
+  },
+  "catalog": {
+    "subtitle": "Every policy across the org.",
+    "title": "Catalog"
+  },
+  "governance": {
+    "menu": {
+      "changeAuthor": "Change author",
+      "delete": "Delete",
+      "exportPdf": "Export PDF",
+      "magicLinks": "Magic link",
+      "move": "Move to section",
+      "retire": "Retire"
+    },
+    "noun": {
+      "policy": "policy",
+      "procedure": "procedure"
+    },
+    "nounPlural": {
+      "policy": "Published policies",
+      "procedure": "Published procedures"
+    },
+    "exportPdf": {
+      "title": "Export PDF",
+      "sensitive": "{{title}} · watermarked (sensitive)",
+      "rendering": "Rendering the document… this usually takes a few seconds.",
+      "ready": "Your PDF is ready to download.",
+      "download": "Download PDF",
+      "failed": "The PDF couldn't be made. Close this and try again."
+    },
+    "magicLinks": {
+      "title": "Magic links",
+      "subtitle": "{{title}} · {{number}}",
+      "create": "Create for v{{version}}",
+      "copy": "Copy",
+      "copied": "Link copied",
+      "revoke": "Revoke",
+      "reissue": "Re-issue",
+      "active": "Active · by {{name}} · {{date}}",
+      "revoked": "Revoked · by {{name}} · {{date}}",
+      "qr": "QR code for the v{{version}} link",
+      "earlier": "Links issued before aren't listed here yet. They will be once the gateway can list them.",
+      "unpublished": "Publish this {{noun}} before sharing a link to it.",
+      "version": "v{{version}}"
+    },
+    "changeAuthor": {
+      "title": "Change author",
+      "description": "The new author can edit drafts of {{title}}.",
+      "field": "New author",
+      "placeholder": "Search by name or email",
+      "noMatches": "No one matches.",
+      "cta": "Change author",
+      "done": "{{name}} is now the author."
+    },
+    "move": {
+      "title": "Move to section",
+      "description": "This renumbers the {{noun}} to the target section's sequence.",
+      "destination": "Destination section",
+      "choose": "Choose a section",
+      "loading": "Loading sections…",
+      "newNumber": "New number",
+      "numberLater": "Given when it moves",
+      "cta": "Move {{noun}}",
+      "done": "Moved. It's now {{number}}."
+    },
+    "retire": {
+      "title": "Retire this {{noun}}?",
+      "description": "Retiring {{title}} ({{number}}) hides it from the catalog and cancels any outstanding acknowledgements. Its version history is kept, and so are the acknowledgements already recorded.",
+      "cta": "Retire {{noun}}",
+      "done": "{{title}} is retired."
+    },
+    "delete": {
+      "title": "Permanently delete this {{noun}}?",
+      "description": "This removes the {{noun}}, its draft, and any appendices. This can't be undone.",
+      "published": "{{nounPlural}} cannot be deleted.",
+      "cta": "Delete {{noun}}",
+      "done": "{{title}} is deleted."
+    },
+    "failed": "That didn't go through."
   }
 }

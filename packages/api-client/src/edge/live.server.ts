@@ -38,6 +38,7 @@ import {
   CreateCategoryDocument,
   CreateContactBlockDocument,
   CreateDefinitionDocument,
+  CreateMagicLinkDocument,
   CreatePlatformGroupDocument,
   CreatePolicyDocument,
   CreateReferenceDocument,
@@ -50,6 +51,7 @@ import {
   DeleteDefinitionDocument,
   DeleteGroupMappingDocument,
   DeleteOrganizationDocument,
+  DeletePolicyDocument,
   DeleteReferenceDocument,
   DeleteTemplateDocument,
   DeleteUserDocument,
@@ -75,12 +77,14 @@ import {
   MeDocument,
   MergeAccountsDocument,
   MoveCategoryDocument,
+  MovePolicyDocument,
   MyAckSummaryDocument,
   MyDraftsDocument,
   MyFactorsDocument,
   MyManagedGroupsDocument,
   MyObligationsDocument,
   OrganizationsDocument,
+  PdfDownloadLinkDocument,
   PendingTasksDocument,
   PlatformGroupsDocument,
   PoliciesDocument,
@@ -107,11 +111,14 @@ import {
   ReorderAppendicesDocument,
   ReportCaseDocument,
   ReportCasesDocument,
+  RequestPdfExportDocument,
   RequestStepUpOtpDocument,
   ResendWelcomeEmailDocument,
   ResetUserPasswordDocument,
   ResolveUserLabelsDocument,
+  RetirePolicyDocument,
   RetireTemplateDocument,
+  RevokeMagicLinkDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
   SaveDraftDocument,
@@ -129,6 +136,7 @@ import {
   SetDefinitionArchivedDocument,
   SetEmailServiceConfigDocument,
   SetGlobalSettingsDocument,
+  SetPolicyOwnerDocument,
   SetReferenceArchivedDocument,
   SetUserPolicyOverrideDocument,
   SignalWorkflowDocument,
@@ -617,6 +625,15 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(CreateCategoryDocument, input, "CreateCategory", { cookie });
     return data.createCategory;
   },
+  async createMagicLink(policyVersionId, sensitive, cookie) {
+    const data = await gatewayFetch(
+      CreateMagicLinkDocument,
+      { policyVersionId, sensitive },
+      "CreateMagicLink",
+      { cookie },
+    );
+    return data.createMagicLink;
+  },
   async createPlatformGroup(name, parentId, cookie) {
     const data = await gatewayFetch(
       CreatePlatformGroupDocument,
@@ -711,6 +728,10 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.deleteOrganization;
+  },
+  async deletePolicy(id, cookie) {
+    const data = await gatewayFetch(DeletePolicyDocument, { id }, "DeletePolicy", { cookie });
+    return data.deletePolicy;
   },
   async deleteReference(id, cookie) {
     const data = await gatewayFetch(DeleteReferenceDocument, { id }, "DeleteReference", {
@@ -936,6 +957,15 @@ export const liveEdge: Edge = {
     );
     return data.moveCategory;
   },
+  async movePolicy(policyId, homeCategoryId, cookie) {
+    const data = await gatewayFetch(
+      MovePolicyDocument,
+      { homeCategoryId, policyId },
+      "MovePolicy",
+      { cookie },
+    );
+    return data.movePolicy;
+  },
   async myAckSummary(cookie) {
     const { myAckSummary } = await gatewayFetch(MyAckSummaryDocument, {}, "MyAckSummary", {
       cookie,
@@ -978,6 +1008,12 @@ export const liveEdge: Edge = {
       cookie,
     });
   },
+  async pdfDownloadLink(jobId, cookie) {
+    const data = await gatewayFetch(PdfDownloadLinkDocument, { jobId }, "PdfDownloadLink", {
+      cookie,
+    });
+    return data.pdfDownloadLink;
+  },
   async pendingTasks(cookie) {
     const data = await gatewayFetch(PendingTasksDocument, {}, "PendingTasks", { cookie });
     return data.pendingTasks;
@@ -1012,6 +1048,25 @@ export const liveEdge: Edge = {
       ? assembleDetail(found, index, cookie)
       : null;
   },
+  async requestPdfExport(policyVersionId, cookie) {
+    const data = await gatewayFetch(
+      RequestPdfExportDocument,
+      { policyVersionId },
+      "RequestPdfExport",
+      { cookie },
+    );
+    return data.requestPDFExport;
+  },
+  async retirePolicy(id, cookie) {
+    const data = await gatewayFetch(RetirePolicyDocument, { id }, "RetirePolicy", { cookie });
+    return data.retirePolicy;
+  },
+  async revokeMagicLink(token, cookie) {
+    const data = await gatewayFetch(RevokeMagicLinkDocument, { token }, "RevokeMagicLink", {
+      cookie,
+    });
+    return data.revokeMagicLink;
+  },
   async setAiEnabled(enabled, cookie) {
     const data = await gatewayFetch(SetAiEnabledDocument, { enabled }, "SetAiEnabled", { cookie });
     return data.setAIEnabled;
@@ -1033,6 +1088,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.setAIRetrievalConfig.topK;
+  },
+  async setPolicyOwner(policyId, ownerUserId, cookie) {
+    const data = await gatewayFetch(
+      SetPolicyOwnerDocument,
+      { ownerUserId, policyId },
+      "SetPolicyOwner",
+      { cookie },
+    );
+    return data.setPolicyOwner;
   },
   async versionDocument(versionId, cookie) {
     const { policyVersion } = await gatewayFetch(

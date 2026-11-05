@@ -750,6 +750,15 @@ export type CreateDefinitionMutation = {
   };
 };
 
+export type CreateMagicLinkMutationVariables = Exact<{
+  policyVersionId: string | number;
+  sensitive: boolean;
+}>;
+
+export type CreateMagicLinkMutation = {
+  readonly createMagicLink: { readonly token: string; readonly expiresAt: string };
+};
+
 export type CreatePlatformGroupMutationVariables = Exact<{
   name: string;
   parentId?: string | number | null | undefined;
@@ -940,6 +949,12 @@ export type DeleteOrganizationMutationVariables = Exact<{
 }>;
 
 export type DeleteOrganizationMutation = { readonly deleteOrganization: boolean };
+
+export type DeletePolicyMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type DeletePolicyMutation = { readonly deletePolicy: boolean };
 
 export type DeleteReferenceMutationVariables = Exact<{
   id: string | number;
@@ -1401,6 +1416,15 @@ export type MoveCategoryMutation = {
   };
 };
 
+export type MovePolicyMutationVariables = Exact<{
+  policyId: string | number;
+  homeCategoryId: string | number;
+}>;
+
+export type MovePolicyMutation = {
+  readonly movePolicy: { readonly id: string; readonly number: string };
+};
+
 export type MyAckSummaryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type MyAckSummaryQuery = {
@@ -1501,6 +1525,14 @@ export type OrganizationsQuery = {
     readonly allowLocal: boolean;
     readonly secretReentryRequired: boolean;
   }>;
+};
+
+export type PdfDownloadLinkQueryVariables = Exact<{
+  jobId: string | number;
+}>;
+
+export type PdfDownloadLinkQuery = {
+  readonly pdfDownloadLink: { readonly signedUrl: string; readonly expiresAt: string };
 };
 
 export type PendingTasksQueryVariables = Exact<{ [key: string]: never }>;
@@ -2195,6 +2227,12 @@ export type ReportCasesQuery = {
   };
 };
 
+export type RequestPdfExportMutationVariables = Exact<{
+  policyVersionId: string | number;
+}>;
+
+export type RequestPdfExportMutation = { readonly requestPDFExport: { readonly jobId: string } };
+
 export type RequestStepUpOtpMutationVariables = Exact<{ [key: string]: never }>;
 
 export type RequestStepUpOtpMutation = { readonly requestStepUpOtp: boolean };
@@ -2224,6 +2262,12 @@ export type ResolveUserLabelsQuery = {
   }>;
 };
 
+export type RetirePolicyMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type RetirePolicyMutation = { readonly retirePolicy: { readonly id: string } };
+
 export type RetireTemplateMutationVariables = Exact<{
   id: string | number;
 }>;
@@ -2237,6 +2281,12 @@ export type RetireTemplateMutation = {
     readonly retiredAt: string | null;
   };
 };
+
+export type RevokeMagicLinkMutationVariables = Exact<{
+  token: string;
+}>;
+
+export type RevokeMagicLinkMutation = { readonly revokeMagicLink: boolean };
 
 export type RevokeRoleMutationVariables = Exact<{
   userId: string | number;
@@ -2657,6 +2707,13 @@ export type SetGlobalSettingsMutation = {
     readonly maintenance: { readonly enabled: boolean; readonly message: string };
   };
 };
+
+export type SetPolicyOwnerMutationVariables = Exact<{
+  policyId: string | number;
+  ownerUserId: string | number;
+}>;
+
+export type SetPolicyOwnerMutation = { readonly setPolicyOwner: { readonly id: string } };
 
 export type SetReferenceArchivedMutationVariables = Exact<{
   id: string | number;
@@ -6203,6 +6260,62 @@ export const CreateDefinitionDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateDefinitionMutation, CreateDefinitionMutationVariables>;
+export const CreateMagicLinkDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreateMagicLink" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "sensitive" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createMagicLink" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "sensitive" },
+                value: { kind: "Variable", name: { kind: "Name", value: "sensitive" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "token" } },
+                { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateMagicLinkMutation, CreateMagicLinkMutationVariables>;
 export const CreatePlatformGroupDocument = {
   kind: "Document",
   definitions: [
@@ -6976,6 +7089,42 @@ export const DeleteOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteOrganizationMutation, DeleteOrganizationMutationVariables>;
+export const DeletePolicyDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeletePolicy" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deletePolicy" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeletePolicyMutation, DeletePolicyMutationVariables>;
 export const DeleteReferenceDocument = {
   kind: "Document",
   definitions: [
@@ -8555,6 +8704,62 @@ export const MoveCategoryDocument = {
     },
   ],
 } as unknown as DocumentNode<MoveCategoryMutation, MoveCategoryMutationVariables>;
+export const MovePolicyDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "MovePolicy" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "homeCategoryId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "movePolicy" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "homeCategoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "homeCategoryId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MovePolicyMutation, MovePolicyMutationVariables>;
 export const MyAckSummaryDocument = {
   kind: "Document",
   definitions: [
@@ -8779,6 +8984,49 @@ export const OrganizationsDocument = {
     },
   ],
 } as unknown as DocumentNode<OrganizationsQuery, OrganizationsQueryVariables>;
+export const PdfDownloadLinkDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PdfDownloadLink" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "jobId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "pdfDownloadLink" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "jobId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "jobId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "signedUrl" } },
+                { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PdfDownloadLinkQuery, PdfDownloadLinkQueryVariables>;
 export const PendingTasksDocument = {
   kind: "Document",
   definitions: [
@@ -10765,6 +11013,46 @@ export const ReportCasesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReportCasesQuery, ReportCasesQueryVariables>;
+export const RequestPdfExportDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RequestPdfExport" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "requestPDFExport" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "jobId" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RequestPdfExportMutation, RequestPdfExportMutationVariables>;
 export const RequestStepUpOtpDocument = {
   kind: "Document",
   definitions: [
@@ -10914,6 +11202,46 @@ export const ResolveUserLabelsDocument = {
     },
   ],
 } as unknown as DocumentNode<ResolveUserLabelsQuery, ResolveUserLabelsQueryVariables>;
+export const RetirePolicyDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RetirePolicy" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "retirePolicy" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "id" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RetirePolicyMutation, RetirePolicyMutationVariables>;
 export const RetireTemplateDocument = {
   kind: "Document",
   definitions: [
@@ -10971,6 +11299,42 @@ export const RetireTemplateDocument = {
     },
   ],
 } as unknown as DocumentNode<RetireTemplateMutation, RetireTemplateMutationVariables>;
+export const RevokeMagicLinkDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RevokeMagicLink" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "token" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "revokeMagicLink" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "token" },
+                value: { kind: "Variable", name: { kind: "Name", value: "token" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RevokeMagicLinkMutation, RevokeMagicLinkMutationVariables>;
 export const RevokeRoleDocument = {
   kind: "Document",
   definitions: [
@@ -12450,6 +12814,59 @@ export const SetGlobalSettingsDocument = {
     },
   ],
 } as unknown as DocumentNode<SetGlobalSettingsMutation, SetGlobalSettingsMutationVariables>;
+export const SetPolicyOwnerDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetPolicyOwner" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "ownerUserId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setPolicyOwner" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "ownerUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "ownerUserId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "id" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetPolicyOwnerMutation, SetPolicyOwnerMutationVariables>;
 export const SetReferenceArchivedDocument = {
   kind: "Document",
   definitions: [

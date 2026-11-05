@@ -4,9 +4,11 @@ import { DocumentType, PolicyStatus, ReferenceKind, Sensitivity } from "@steward
 import { formatDate, formatTime } from "@steward-web/i18n";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { type ReactNode } from "react";
 import { createRoutesStub, useLoaderData } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { MenuItem } from "#ui/components/Overlays";
 import { Toaster } from "#ui/feedback/Toast";
 
 import type { PolicyDetail } from "./policyReaderModel";
@@ -106,13 +108,17 @@ const section = (sectionKey: string, changeType: string, wordDiffHtml = "") => (
   wordDiffHtml,
 });
 
-const renderAt = (detail: PolicyDetail, action?: (arguments_: { request: Request }) => unknown) => {
+const renderAt = (
+  detail: PolicyDetail,
+  action?: (arguments_: { request: Request }) => unknown,
+  governance?: ReactNode,
+) => {
   const Stub = createRoutesStub([
     {
       action,
       Component: () => (
         <>
-          <PolicyReader detail={detail} viewerName="Erin Reader" />
+          <PolicyReader detail={detail} governance={governance} viewerName="Erin Reader" />
           <Toaster />
         </>
       ),
@@ -142,6 +148,30 @@ describe("PolicyReader", () => {
     await userEvent.click(screen.getByRole("button", { name: "Actions" }));
     expect(await screen.findByRole("menuitem", { name: "Print / Export" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "History & approvals" })).toBeInTheDocument();
+  });
+
+  it("keeps the staff Actions menu to its two items when there's no governance group", async () => {
+    renderAt(baseDetail);
+    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Print / Export", "History & approvals"]);
+    expect(within(menu).queryByRole("separator")).not.toBeInTheDocument();
+  });
+
+  it("adds the admin governance group after a separator (A11)", async () => {
+    renderAt(baseDetail, undefined, <MenuItem>Retire</MenuItem>);
+    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Print / Export", "History & approvals", "Retire"]);
+    expect(within(menu).getByRole("separator")).toBeInTheDocument();
   });
 
   it("puts the acknowledgement banner above the six-up detail strip", () => {
