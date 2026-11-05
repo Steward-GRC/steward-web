@@ -57,10 +57,27 @@ and changes as they happen, so you never overwrite one another's work.
 
 ## 🤖 AI assistance
 
-Where an organisation has turned it on at install, Steward can draft or suggest text for an empty
-section, or offer to improve a section you have already written. AI assistance is an optional
-feature your organisation's administrator chooses when Steward is set up; it has no effect on
-drafts if it was not switched on for your installation.
+Where your organisation has turned it on, the **AI** menu in the draft's header helps you write.
+Nothing the AI suggests changes your draft until you apply it, and you still save and submit the
+draft yourself.
+
+- **Generate a draft…** (on an empty draft) opens a page where you write a brief, add a reference
+  document or links if you have them, choose which optional sections to include, and get a first
+  draft. Refine it in the chat beside the preview: pick what each turn should do (Draft, Improve,
+  Rewrite, Review or Summarize) and ask for a change. Lock a section to keep it as it is; if a
+  change would touch a locked section, Steward asks first. **Apply draft** puts it in the editor.
+- **Improve draft…** (once the draft has text) asks what should change, then shows the change set
+  section by section: what changed, what's new and what was removed, with a word-by-word diff.
+  **Apply as draft revision** puts it in the editor.
+- **Rewrite a section…** suggests new wording for one section, to rewrite it or make it clearer.
+  You see the original beside the suggestion, then **Apply to draft** or **Discard**.
+- **Review draft** runs a gap check before you submit. Its findings are grouped as Blocker,
+  Warning and Note, and each one can take you to its section. The findings are advice only.
+- **Rework selected text with AI** appears when you select text in the draft. Choose **Rewrite**
+  or **Clarify** to get a suggestion for just that text.
+
+The AI menu shows when it's working and pulses when a review is ready to look at. If AI is off,
+the menu says why when you point at it.
 
 ## 👀 After you submit
 

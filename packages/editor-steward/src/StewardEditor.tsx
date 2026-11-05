@@ -14,11 +14,22 @@ import type { StewardCollaboration } from "./collab/stewardCollaboration";
 
 import { parseDocument, type SerializedDocument, serializeDocument } from "./document/tree";
 import { STEWARD_NODES } from "./nodes";
+import {
+  replaceSavedSelection,
+  type ReworkRequest,
+  ReworkSelectionPlugin,
+  type SavedSelection,
+} from "./ReworkSelection";
 
 /** What a host can do with a mounted editor. */
 export interface StewardEditorHandle {
   /** The document as it stands now. */
   getDocument: () => SerializedDocument;
+  /**
+   * Put `text` in place of the selection last sent to `onRework`. False when there's none, or
+   * when that text has gone since. In a collaborative session the change syncs to every peer.
+   */
+  replaceSelection: (text: string) => boolean;
   /** Replace the whole document. In a collaborative session the change syncs to every peer. */
   setDocument: (document: SerializedDocument) => void;
 }
@@ -31,6 +42,11 @@ export interface StewardEditorProps {
   initialDocument?: SerializedDocument;
   onChange?: (document: SerializedDocument) => void;
   onReady?: (handle: StewardEditorHandle) => void;
+  /**
+   * Shows "Rework selected text with AI" under a text selection, with Rewrite and Clarify, and
+   * is called with the choice and the selected text. Without it there's no button.
+   */
+  onRework?: (request: ReworkRequest) => void;
   placeholder?: string;
   readOnly?: boolean;
   /** Stores an image and answers its URL. Without one the image card says uploads are off. */
@@ -99,6 +115,7 @@ export const StewardEditor = ({
   initialDocument,
   onChange,
   onReady,
+  onRework,
   placeholder,
   readOnly = false,
   uploadImage,
@@ -106,6 +123,7 @@ export const StewardEditor = ({
   const { t } = useTranslation("authoring");
   const apiRef = useRef<KoenigEditorAPI | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
+  const savedSelection: SavedSelection = useRef(null);
   const useFileUpload = useImageUploader(uploadImage, t("editor.imageUploadUnavailable"));
   const fileUploader = useMemo(() => ({ fileTypes: IMAGE_TYPES, useFileUpload }), [useFileUpload]);
   // Fixed at mount: the composer reads its initial state and collaboration mode once.
@@ -122,6 +140,7 @@ export const StewardEditor = ({
       apiRef.current = api;
       onReady?.({
         getDocument: () => api.editorInstance.getEditorState().toJSON() as SerializedDocument,
+        replaceSelection: (text) => replaceSavedSelection(api.editorInstance, savedSelection, text),
         setDocument: (document) => {
           const editor = api.editorInstance;
           editor.setEditorState(editor.parseEditorState(serializeDocument(document)));
@@ -158,6 +177,13 @@ export const StewardEditor = ({
           readOnly={readOnly}
           registerAPI={registerAPI}
         />
+        {onRework ? (
+          <ReworkSelectionPlugin
+            containerRef={cursorsContainerRef}
+            onRework={onRework}
+            saved={savedSelection}
+          />
+        ) : null}
       </KoenigComposer>
     </div>
   );

@@ -194,3 +194,25 @@ export const fillEmptySections = (
   }
   return result;
 };
+
+/**
+ * Add a section the template doesn't have (a revision's new section): its heading, at the
+ * level of the section it follows, and its text, after that section's whole body. With no
+ * known section to follow it goes at the end.
+ */
+export const insertSectionAfter = (
+  document: SerializedDocument,
+  sections: readonly TemplateSectionOutline[],
+  afterKey: string | undefined,
+  title: string,
+  value: string,
+): SerializedDocument => {
+  const children = [...document.root.children];
+  const after = sections.find((s) => s.key === afterKey);
+  const start = after ? findHeading(children, after.title) : -1;
+  const level = start === -1 ? (sections[0]?.level ?? 2) : headingLevel(children[start]!);
+  const nodes = [headingNode(title, level), ...paragraphsFromText(value)];
+  if (start === -1) children.push(...nodes);
+  else children.splice(sectionEnd(children, start), 0, ...nodes);
+  return { ...document, root: { ...document.root, children } };
+};

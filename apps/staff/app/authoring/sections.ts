@@ -8,6 +8,7 @@ import {
   ensureTemplateSections,
   extractSections,
   fillEmptySections,
+  insertSectionAfter,
   nodeText,
   paragraphsFromText,
   parseDocument,
@@ -16,6 +17,8 @@ import {
   type TemplateSectionOutline,
   wrapRoot,
 } from "@steward-web/editor-steward/document";
+
+import type { ChangeEntry } from "./ai/results";
 
 export {
   missingRequiredSections,
@@ -77,4 +80,40 @@ export const fillGenerated = (
   return freeform && current === ""
     ? applyAiText(document, outline, FREEFORM_KEY, freeform.text)
     : document;
+};
+
+/** Apply a whole generated draft (U30's Apply draft): every section the generation wrote,
+ *  authored ones included; a section it left empty stays as it is. */
+export const applyGenerated = (
+  document: SerializedDocument,
+  outline: readonly TemplateSectionOutline[],
+  generated: readonly { sectionKey: string; text: string }[],
+): SerializedDocument => {
+  let result = document;
+  for (const section of generated) {
+    if (section.text.trim() === "") continue;
+    result = applyAiText(result, outline, section.sectionKey, section.text);
+  }
+  return result;
+};
+
+/**
+ * Apply a revision's change set (U31's Apply as draft revision): a changed section takes its
+ * new text, a removed one is emptied (a template keeps its headings), and a new section goes
+ * after the one it follows, or at the end.
+ */
+export const applyChangeSet = (
+  document: SerializedDocument,
+  outline: readonly TemplateSectionOutline[],
+  entries: readonly ChangeEntry[],
+): SerializedDocument => {
+  let result = document;
+  for (const entry of entries) {
+    if (entry.kind === "changed") result = applyAiText(result, outline, entry.key, entry.after);
+    if (entry.kind === "removed") result = applyAiText(result, outline, entry.key, "");
+    if (entry.kind === "new") {
+      result = insertSectionAfter(result, outline, entry.afterKey, entry.title, entry.after);
+    }
+  }
+  return result;
 };

@@ -2795,6 +2795,14 @@ export type SubmitPolicyReviewMutation = {
   readonly submitPolicyReview: { readonly jobId: string };
 };
 
+export type SubmitPolicyRevisionMutationVariables = Exact<{
+  input: Types.SubmitPolicyRevisionInput;
+}>;
+
+export type SubmitPolicyRevisionMutation = {
+  readonly submitPolicyRevision: { readonly jobId: string };
+};
+
 export type SubmitWorkflowMutationVariables = Exact<{
   policyVersionId: string | number;
   policyId: string | number;
@@ -13021,6 +13029,46 @@ export const SubmitPolicyReviewDocument = {
     },
   ],
 } as unknown as DocumentNode<SubmitPolicyReviewMutation, SubmitPolicyReviewMutationVariables>;
+export const SubmitPolicyRevisionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SubmitPolicyRevision" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "SubmitPolicyRevisionInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "submitPolicyRevision" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "jobId" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SubmitPolicyRevisionMutation, SubmitPolicyRevisionMutationVariables>;
 export const SubmitWorkflowDocument = {
   kind: "Document",
   definitions: [

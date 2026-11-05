@@ -4,7 +4,7 @@ import type { Edge } from "../edge";
 import type { Me, Policy, PolicyDetail, PolicySectionDiff } from "../views";
 
 import { GatewayError, gatewayFetch } from "../gatewayFetch";
-import { gatewayRestFetch } from "../gatewayRestFetch";
+import { gatewayRestFetch, gatewayRestUpload } from "../gatewayRestFetch";
 import {
   AckRosterDocument,
   AckStatusDocument,
@@ -139,6 +139,7 @@ import {
   StopImpersonationDocument,
   SubmitDraftGenerationDocument,
   SubmitPolicyReviewDocument,
+  SubmitPolicyRevisionDocument,
   SubmitWorkflowDocument,
   TemplatesDocument,
   TemplateVersionsDocument,
@@ -785,6 +786,14 @@ export const liveEdge: Edge = {
     });
     return data.exportAcks;
   },
+  extractDocument(file, cookie) {
+    return gatewayRestUpload<{ content: string; title: string }>(
+      "/documents/extract",
+      file,
+      "ExtractDocument",
+      { cookie },
+    );
+  },
   async fetchIdpCert(url, cookie) {
     const body = await gatewayRestFetch<{ certificatePem: string }>(
       "/admin/idp/fetch-cert",
@@ -1380,6 +1389,10 @@ export const liveEdge: Edge = {
         input: {
           brief: input.brief,
           categoryId: input.homeGroupId,
+          ...(input.referenceDocuments?.length
+            ? { referenceDocuments: input.referenceDocuments }
+            : {}),
+          ...(input.referenceHints?.length ? { referenceHints: input.referenceHints } : {}),
           sections: input.sections,
           title: input.title,
         },
@@ -1394,6 +1407,15 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.submitPolicyReview;
+  },
+  async submitPolicyRevision(input, cookie) {
+    const data = await gatewayFetch(
+      SubmitPolicyRevisionDocument,
+      { input },
+      "SubmitPolicyRevision",
+      { cookie },
+    );
+    return data.submitPolicyRevision;
   },
   async submitWorkflow(policyVersionId, policyId, categoryId, cookie) {
     // ancestorCategoryIds stays empty: the gateway rebuilds the lineage from categoryId and
@@ -1588,6 +1610,9 @@ export const liveEdge: Edge = {
   async users(input, cookie) {
     const data = await gatewayFetch(UsersDocument, input, "Users", { cookie });
     return data.users;
+  },
+  validateReferenceUrl(url, cookie) {
+    return gatewayRestFetch("/documents/validate-url", { url }, "ValidateReferenceUrl", { cookie });
   },
   async verifyAuditChain(fromRecordId, toRecordId, cookie) {
     const data = await gatewayFetch(

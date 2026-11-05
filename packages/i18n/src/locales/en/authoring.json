@@ -20,9 +20,14 @@
       "menu": "Actions"
     },
     "aiMenu": {
+      "generate": "Generate a draft…",
       "improve": "Improve draft…",
       "label": "AI",
+      "labelReady": "AI, result ready",
+      "labelWorking": "AI, working",
+      "limitReached": "AI limit reached",
       "offByAdmin": "AI turned off by an administrator",
+      "result": "AI result ready to review",
       "review": "Review draft",
       "rewrite": "Rewrite a section…",
       "unavailable": "AI isn't available right now"
@@ -30,7 +35,15 @@
     "appendices": {
       "add": "Add appendix",
       "delete": "Delete appendix",
+      "deleteDescription": "{{name}} and its content will be removed from this draft.",
+      "deleteTitle": "Delete this appendix?",
       "empty": "No appendices yet. Add one to attach supplementary material.",
+      "keep": "Keep appendix",
+      "move": {
+        "down": "Move appendix {{letter}} down",
+        "up": "Move appendix {{letter}} up"
+      },
+      "name": "Appendix {{letter}}: {{title}}",
       "save": "Save appendix",
       "textLabel": "Appendix {{letter}} text",
       "title": "Appendices",
@@ -76,6 +89,11 @@
       "submitFailed": "The draft wasn't sent for review",
       "submitRefused": "This draft can't go for review yet",
       "submitRefusedDetail": "No approval workflow applies to its group, or a stage has no approver. Ask an administrator to attach one."
+    },
+    "rework": {
+      "button": "Rework selected text with AI",
+      "clarify": "Clarify",
+      "rewrite": "Rewrite"
     },
     "saveDraft": "Save draft",
     "saveState": {

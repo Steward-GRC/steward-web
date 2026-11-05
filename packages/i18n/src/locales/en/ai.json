@@ -18,21 +18,17 @@
     "tryAsking": "Try asking",
     "unavailable": "Ask policies & procedures is temporarily unavailable. Everything else in the app keeps working as usual."
   },
-  "assist": {
-    "apply": "Use this suggestion",
-    "ask": "Suggest",
-    "instruction": "Instruction (optional)",
-    "operation": {
-      "ASSIST_OPERATION_CLARIFY": "Clarify",
-      "ASSIST_OPERATION_DRAFT": "Draft",
-      "ASSIST_OPERATION_EXPAND": "Expand",
-      "ASSIST_OPERATION_REWRITE": "Rewrite",
-      "ASSIST_OPERATION_SUMMARIZE": "Summarize"
+  "change": {
+    "diff": "Diff",
+    "final": "Final",
+    "tag": {
+      "changed": "Changed",
+      "locked": "Locked",
+      "new": "New",
+      "removed": "Removed",
+      "unchanged": "Unchanged"
     },
-    "operationLabel": "Operation",
-    "section": "Section",
-    "title": "AI assist",
-    "unavailable": "AI assist isn't available right now."
+    "view": "Show"
   },
   "finding": {
     "blocker": "Blocker",
@@ -40,7 +36,39 @@
     "warning": "Warning"
   },
   "generate": {
-    "brief": "Describe what this policy should cover",
+    "addUrl": "Add URL",
+    "apply": "Apply draft",
+    "ask": "Ask for a change…",
+    "back": "Back",
+    "brief": "Brief",
+    "briefHint": "What should this policy cover?",
+    "changedThisTurn": "Changed this turn",
+    "conflict": "May need updating · {{title}} (locked)",
+    "document": "Reference document (optional)",
+    "drafting": "Drafting…",
+    "eyebrow": "AI",
+    "freeform": "Freeform authoring: Steward drafts one body of text.",
+    "keepLocked": "Keep locked",
+    "lock": "Lock {{title}}",
+    "mode": "What should this turn do?",
+    "modes": {
+      "draft": "Draft",
+      "improve": "Improve",
+      "review": "Review",
+      "rewrite": "Rewrite",
+      "summarize": "Summarize"
+    },
+    "next": "Next",
+    "noTemplate": "No template attached",
+    "notes": "Notes on existing policies or tone (optional)",
+    "pageTitle": "Generate “{{title}}” with AI",
+    "paused": "New turns are paused until AI is back.",
+    "read_one": "Read {{formatted}} character",
+    "read_other": "Read {{formatted}} characters",
+    "reading": "Reading…",
+    "required": "Required",
+    "rewritePrefix": "Rewrite:",
+    "send": "Send",
     "stage": {
       "done": "Done",
       "failed": "Failed",
@@ -49,13 +77,73 @@
       "queued": "Queued",
       "retrieving": "Retrieving context"
     },
-    "start": "Generate",
-    "title": "Generate with AI"
+    "start": "Generate draft",
+    "step": {
+      "format": "Output format",
+      "refine": "Draft & refine",
+      "sources": "Sources & brief"
+    },
+    "steps": "Steps",
+    "turn": {
+      "drafted_one": "Drafted {{count}} section.",
+      "drafted_other": "Drafted {{count}} sections.",
+      "unchanged": "Nothing needed changing.",
+      "updated": "Updated {{sections}}."
+    },
+    "unlock": "Unlock {{title}}",
+    "unlockUpdate": "Unlock & update",
+    "unreadable": "Could not read that document.",
+    "url": "Reference URL (optional)",
+    "urlState": {
+      "checking": "Checking…",
+      "invalid": "That doesn’t look like a valid URL.",
+      "readable": "Readable",
+      "unreadable": "Not readable"
+    }
   },
-  "review": {
-    "empty": "No findings.",
-    "start": "Review draft",
-    "suggestion": "Suggestion: {{suggestion}}",
-    "title": "Review with AI"
+  "progress": {
+    "retry": "Try again",
+    "step": "step {{step}} of {{total}}"
+  },
+  "refused": "Steward couldn't start that. Try again, or ask an administrator if it keeps happening.",
+  "reviewSheet": {
+    "description": "A pre-submit gap check of this draft. Findings are advisory, and nothing in the draft changes.",
+    "jump": "Jump to §{{number}}",
+    "none": "No gaps found",
+    "rerun": "Re-run review",
+    "title": "AI review"
+  },
+  "revise": {
+    "apply": "Apply as draft revision",
+    "back": "AI",
+    "counts": "{{changed}} changed · {{new}} new · {{removed}} removed · {{unchanged}} unchanged",
+    "generate": "Generate change set",
+    "nothing": "Nothing to change",
+    "placeholder": "e.g. \"clean up the wording\" or \"add a rollback section\"",
+    "question": "What should change?",
+    "startOver": "Start over",
+    "title": "Improve “{{title}}”",
+    "unchanged_one": "{{count}} unchanged section",
+    "unchanged_other": "{{count}} unchanged sections"
+  },
+  "rewrite": {
+    "cancel": "Cancel",
+    "clarify": "Clarify",
+    "description": "Steward suggests new wording for one section. Nothing changes until you apply it.",
+    "instruction": "Instruction (optional)",
+    "instructionHint": "e.g. make it shorter",
+    "kind": "What to do",
+    "rewrite": "Rewrite",
+    "section": "Section",
+    "suggest": "Suggest",
+    "title": "Rewrite a section"
+  },
+  "suggestion": {
+    "apply": "Apply to draft",
+    "discard": "Discard",
+    "original": "Original",
+    "suggested": "Suggested",
+    "title": "Review suggestion",
+    "stale": "The selected text changed while the suggestion was on its way, so it wasn't applied."
   }
 }

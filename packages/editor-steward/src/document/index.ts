@@ -7,6 +7,7 @@ export {
   ensureTemplateSections,
   extractSections,
   fillEmptySections,
+  insertSectionAfter,
   missingRequiredSections,
   paragraphsFromText,
   scaffoldFromTemplate,

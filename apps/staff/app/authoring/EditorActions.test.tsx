@@ -134,10 +134,43 @@ describe("the AI menu (U27)", () => {
     expect(choose).toHaveBeenCalledWith("review");
   });
 
+  it("offers Generate a draft on an empty draft", async () => {
+    const choose = vi.fn();
+    render(<AiMenu available emptyDraft onChoose={choose} />);
+    await userEvent.click(screen.getByRole("button", { name: "AI" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Generate a draft…" }));
+    expect(choose).toHaveBeenCalledWith("generate");
+  });
+
+  it("says it's working while an AI task runs", () => {
+    render(<AiMenu available onChoose={() => {}} status="working" />);
+    expect(screen.getByRole("button", { name: "AI, working" })).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+  });
+
+  it("pulses when a result is ready, and offers it in the menu", async () => {
+    const choose = vi.fn();
+    render(<AiMenu available onChoose={choose} status="ready" />);
+    const button = screen.getByRole("button", { name: "AI, result ready" });
+    expect(button).toHaveAttribute("data-ready", "true");
+    await userEvent.click(button);
+    await userEvent.click(screen.getByRole("menuitem", { name: "AI result ready to review" }));
+    expect(choose).toHaveBeenCalledWith("result");
+  });
+
   it("is off with the reason when AI is unavailable", () => {
     render(<AiMenu available={false} onChoose={() => {}} reason="disabled_by_admin" />);
     const button = screen.getByRole("button", { name: "AI" });
     expect(button).toHaveAttribute("aria-disabled", "true");
     expect(button).toHaveAccessibleDescription("AI turned off by an administrator");
+  });
+
+  it("says when the AI limit is reached", () => {
+    render(<AiMenu available={false} onChoose={() => {}} reason="limit_reached" />);
+    expect(screen.getByRole("button", { name: "AI" })).toHaveAccessibleDescription(
+      "AI limit reached",
+    );
   });
 });
