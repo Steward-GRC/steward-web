@@ -1,0 +1,21 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+/** Each page's title (its i18n key), by route id; the root `meta` turns it into "<page> · Steward". */
+export const PAGE_TITLES: Readonly<Record<string, string>> = {
+  "routes/approvals": "shell:titles.staff.approvals",
+  "routes/approvals.$number": "shell:titles.staff.review",
+  "routes/drafts": "shell:titles.staff.drafts",
+  "routes/drafts.$policyId": "shell:titles.staff.draft",
+  "routes/drafts.new": "shell:titles.staff.newDraft",
+  "routes/home": "shell:titles.staff.myWork",
+  "routes/policies": "shell:titles.staff.policies",
+  "routes/policy": "shell:titles.staff.policy",
+  "routes/procedure": "shell:titles.staff.procedure",
+  "routes/procedures": "shell:titles.staff.procedures",
+  "routes/profile": "shell:titles.staff.profile",
+  "routes/reporting.cases": "shell:titles.staff.cases",
+  "routes/reporting.cases.$caseId": "shell:titles.staff.case",
+  "routes/search": "shell:titles.staff.search",
+  "routes/sign-in": "shell:titles.staff.signIn",
+  "routes/sign-out": "shell:titles.staff.signOut",
+};

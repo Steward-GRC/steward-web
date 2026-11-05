@@ -114,6 +114,13 @@ export const sharedAliases = (
   "#ui": source("ui"),
 });
 
+/**
+ * The folder both apps serve as their Vite public directory: the designed favicons, touch icon,
+ * and web manifest (decision 1-brand-and-voice.s6). One copy, so the two apps
+ * can't drift apart.
+ */
+export const brandPublicDirectory = () => path.join(root, "packages", "ui", "public");
+
 /** The rich-text editor imports its icons as React components (`*.svg?react`). */
 export const editorPlugins = () => [svgr()];
 

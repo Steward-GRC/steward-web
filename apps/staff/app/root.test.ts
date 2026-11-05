@@ -1,8 +1,11 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { pageTitle } from "@steward-web/shell";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { loader } from "./root";
+import { links, loader } from "./root";
+import routes from "./routes";
+import { PAGE_TITLES } from "./titles";
 
 const settings = {
   announcement: { enabled: true, level: "warning", message: "Acknowledge by Friday." },
@@ -48,5 +51,23 @@ describe("staff root loader", () => {
     } as unknown as LoaderArguments);
 
     expect(result.siteSettings).toBeNull();
+  });
+});
+
+describe("the page head", () => {
+  it("links the designed favicons, touch icon and web manifest", () => {
+    const hrefs = links().map((link) => ("href" in link ? link.href : ""));
+    for (const file of ["favicon.ico", "favicon.svg", "apple-touch-icon.png", "site.webmanifest"]) {
+      expect(hrefs.some((href) => href?.endsWith(`/${file}`))).toBe(true);
+    }
+  });
+
+  it("gives every page route a title, as '<page> · Steward'", () => {
+    const pages = routes
+      .map((entry) => entry.file.replace(/\.tsx$/, ""))
+      .filter((id) => !id.startsWith("routes/resources."));
+    for (const id of pages) {
+      expect(pageTitle(PAGE_TITLES, [{ id: "root" }, { id }]), id).toMatch(/^\S.* · Steward$/);
+    }
   });
 });

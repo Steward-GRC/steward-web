@@ -7,6 +7,9 @@
   "account": {
     "profile": "Your profile"
   },
+  "brand": {
+    "name": "Steward"
+  },
   "copyDiagnostics": {
     "action": "Copy diagnostics",
     "announced": "Diagnostics copied",
@@ -21,8 +24,66 @@
     "fallbackHint": "Your browser didn't allow the copy. Select the text below and copy it by hand.",
     "fallbackTitle": "UI issue bundle"
   },
+  "pageTitle": "{{page}} · {{brand}}",
   "siteBanners": {
     "announcement": "Announcement",
     "maintenance": "Scheduled maintenance"
+  },
+  "titles": {
+    "admin": {
+      "audit": "Audit log",
+      "catalog": "Catalog",
+      "category": "Category",
+      "completion": "Completion",
+      "contactLibrary": "Contact library",
+      "definitions": "Definitions",
+      "directory": "Directory",
+      "magicLinks": "Magic links",
+      "mergeUsers": "Merge users",
+      "myGroups": "My groups",
+      "newCategory": "New category",
+      "newOrganisation": "New organization",
+      "newTemplate": "New template",
+      "newWorkflow": "New workflow",
+      "organisation": "Organization",
+      "organisations": "Organizations",
+      "overview": "Overview",
+      "platformGroups": "Platform groups",
+      "policy": "Policy",
+      "policyCompletion": "Policy completion",
+      "procedure": "Procedure",
+      "procedures": "Procedures",
+      "profile": "Your profile",
+      "references": "References",
+      "search": "Search",
+      "settings": "Settings",
+      "setup": "First-run setup",
+      "signIn": "Sign in",
+      "signOut": "Sign out",
+      "template": "Template",
+      "templates": "Templates",
+      "user": "User",
+      "users": "Users & roles",
+      "workflow": "Workflow",
+      "workflows": "Workflows"
+    },
+    "staff": {
+      "approvals": "Approvals",
+      "case": "Case",
+      "cases": "Cases",
+      "draft": "Edit draft",
+      "drafts": "Drafts",
+      "myWork": "My work",
+      "newDraft": "New draft",
+      "policies": "Policies",
+      "policy": "Policy",
+      "procedure": "Procedure",
+      "procedures": "Procedures",
+      "profile": "Your profile",
+      "review": "Review",
+      "search": "Search",
+      "signIn": "Sign in",
+      "signOut": "Sign out"
+    }
   }
 }
