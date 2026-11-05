@@ -15,6 +15,7 @@ export {
 } from "./sections";
 export {
   countNodeTypes,
+  documentText,
   emptyParagraph,
   hasText,
   nodeText,

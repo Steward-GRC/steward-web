@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { nodeText, parseDocument, serializeDocument, wrapRoot } from "./tree";
+import { documentText, nodeText, parseDocument, serializeDocument, wrapRoot } from "./tree";
 
 describe("parseDocument", () => {
   it("reads a stored Lexical editor state", () => {
@@ -55,5 +55,23 @@ describe("nodeText", () => {
       type: "table",
     };
     expect(nodeText(table)).toBe("Name\tDose\nAspirin\t81mg");
+  });
+});
+
+describe("documentText", () => {
+  it("lays each top-level block out as its own blank-line-separated paragraph, skipping empty ones", () => {
+    const document = wrapRoot([
+      { children: [{ text: "Purpose", type: "text" }], tag: "h2", type: "heading" },
+      { children: [], type: "paragraph" },
+      { children: [{ text: "  Why it exists.  ", type: "text" }], type: "paragraph" },
+      {
+        children: [
+          { children: [{ text: "One", type: "text" }], type: "listitem" },
+          { children: [{ text: "Two", type: "text" }], type: "listitem" },
+        ],
+        type: "list",
+      },
+    ]);
+    expect(documentText(document)).toBe("Purpose\n\nWhy it exists.\n\nOne\nTwo");
   });
 });

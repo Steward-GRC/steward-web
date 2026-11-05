@@ -1,5 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { documentText, parseDocument } from "@steward-web/editor-steward/document";
+
 import type { AuthoringPolicyFieldsFragment } from "../generated/graphql";
 
 import { GatewayError } from "../gatewayFetch";
@@ -18,8 +20,9 @@ interface StoredSection {
 }
 
 /**
- * A version's `contentJson` (the editor's JSON array of `{ sectionKey, title, text }`) as
- * the reader's plain-text body: each section with text, titled, in stored order.
+ * A version's `contentJson` as the reader's plain-text body. The editor saves its serialized
+ * document (a `{ root }` tree), read block by block; older content is a JSON array of
+ * `{ sectionKey, title, text }`, read as each section with text, titled, in stored order.
  */
 export const bodyTextFromContent = (contentJson: string): string => {
   let parsed: unknown;
@@ -28,7 +31,10 @@ export const bodyTextFromContent = (contentJson: string): string => {
   } catch {
     return "";
   }
-  if (!Array.isArray(parsed)) return "";
+  if (!Array.isArray(parsed)) {
+    const document = parseDocument(contentJson);
+    return document ? documentText(document) : "";
+  }
   return (parsed as StoredSection[])
     .filter((s) => typeof s.text === "string" && s.text.trim() !== "")
     .map((s) => `${typeof s.title === "string" ? s.title : ""}\n\n${String(s.text)}`)

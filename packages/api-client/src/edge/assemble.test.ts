@@ -1,5 +1,10 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import {
+  applySectionText,
+  scaffoldFromTemplate,
+  serializeDocument,
+} from "@steward-web/editor-steward/document";
 import { describe, expect, it } from "vitest";
 
 import { GatewayError } from "../gatewayFetch";
@@ -33,7 +38,21 @@ describe("bodyTextFromContent", () => {
     expect(bodyTextFromContent(content)).toBe("Purpose\n\nWhy it exists.\n\nRules\n\nDo this.");
   });
 
-  it("returns an empty body for unparseable or non-array content", () => {
+  it("reads the document the editor saves: each heading and block as its own paragraph", () => {
+    const outline = [
+      { key: "purpose", level: 2, order: 0, required: true, title: "Purpose" },
+      { key: "scope", level: 2, order: 1, required: false, title: "Scope" },
+    ];
+    let document = scaffoldFromTemplate(outline);
+    document = applySectionText(document, outline, "purpose", "Why it exists.\n\nAnd why now.");
+    document = applySectionText(document, outline, "scope", "Everyone.");
+
+    expect(bodyTextFromContent(serializeDocument(document))).toBe(
+      "Purpose\n\nWhy it exists.\n\nAnd why now.\n\nScope\n\nEveryone.",
+    );
+  });
+
+  it("returns an empty body for unparseable content or content in neither format", () => {
     expect(bodyTextFromContent("not json")).toBe("");
     expect(bodyTextFromContent('{"text":"x"}')).toBe("");
   });

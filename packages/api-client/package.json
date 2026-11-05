@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
+    "@steward-web/editor-steward": "workspace:*",
     "graphql": "^17.0.2",
     "graphql-ws": "^6.3.0",
     "ws": "^8.22.0"

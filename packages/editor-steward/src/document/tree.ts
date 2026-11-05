@@ -110,6 +110,14 @@ export const nodeText = (node: SerializedNode): string => {
   return (node.children ?? []).map((child) => nodeText(child)).join(separator);
 };
 
+/** A whole document's plain text: each top-level block (a heading, a paragraph, a list, a
+ *  table) trimmed and blank-line separated, with empty blocks left out. */
+export const documentText = (document: SerializedDocument): string =>
+  document.root.children
+    .map((node) => nodeText(node).trim())
+    .filter(Boolean)
+    .join("\n\n");
+
 /** How many nodes of each type a document holds, the root included. */
 export const countNodeTypes = (document: SerializedDocument): Record<string, number> => {
   const counts: Record<string, number> = {};
