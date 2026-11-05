@@ -210,8 +210,8 @@
     }
   },
   "siteBanners": {
-    "announcement": "Announcement",
-    "maintenance": "Scheduled maintenance"
+    "dismiss": "Dismiss announcement",
+    "maintenance": "Maintenance notice"
   },
   "ssoTest": {
     "landing": {
