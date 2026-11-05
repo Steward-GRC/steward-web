@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type { Provider, ProviderAwareness, UserState } from "@lexical/yjs";
-import type { KoenigCollaboration } from "@steward-web/editor";
+import type { KoenigCollaboration } from "node-koenig-editor";
 
 import { Awareness } from "y-protocols/awareness";
 import { type Doc, XmlText } from "yjs";

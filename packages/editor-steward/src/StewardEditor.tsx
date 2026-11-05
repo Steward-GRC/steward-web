@@ -1,19 +1,19 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import "@steward-web/editor/styles.css";
+import "node-koenig-editor/styles.css";
+import { useTranslation } from "@steward-web/i18n";
 import {
   type FileUploader,
   KoenigComposer,
   KoenigEditor,
   type KoenigEditorAPI,
-} from "@steward-web/editor";
-import { useTranslation } from "@steward-web/i18n";
+} from "node-koenig-editor";
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { StewardCollaboration } from "./collab/stewardCollaboration";
 
 import { parseDocument, type SerializedDocument, serializeDocument } from "./document/tree";
-import { stewardEditorNodes } from "./nodes";
+import { STEWARD_NODES } from "./nodes";
 
 /** What a host can do with a mounted editor. */
 export interface StewardEditorHandle {
@@ -147,10 +147,10 @@ export const StewardEditor = ({
     <div className={className} ref={cursorsContainerRef} style={EDITOR_THEME}>
       <KoenigComposer
         collaboration={koenigCollaboration}
+        customNodes={STEWARD_NODES}
         editable={!readOnly}
         fileUploader={fileUploader}
         initialEditorState={initialEditorState}
-        nodes={stewardEditorNodes}
       >
         <KoenigEditor
           onChange={handleChange}

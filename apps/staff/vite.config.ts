@@ -6,7 +6,6 @@ import {
   buildInfoDefines,
   chooseDevelopmentQuickLogin,
   chooseDevelopmentUiIssueButton,
-  editorPlugins,
   sharedAliases,
   testConfig,
 } from "@steward-web/vite-config";
@@ -15,7 +14,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig(({ command }) => ({
   define: buildInfoDefines(),
-  plugins: [tailwindcss(), reactRouter(), ...editorPlugins()],
+  plugins: [tailwindcss(), reactRouter()],
   publicDir: brandPublicDirectory(),
   resolve: {
     alias: sharedAliases(chooseDevelopmentUiIssueButton(), chooseDevelopmentQuickLogin(command)),

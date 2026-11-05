@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import "@steward-web/editor/styles.css";
+import "node-koenig-editor/styles.css";
 import { createElement, type ReactNode } from "react";
 
 import type { SerializedDocument, SerializedNode } from "./document/tree";

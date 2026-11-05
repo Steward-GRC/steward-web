@@ -1,8 +1,9 @@
 # The authoring editor
 
-Staff write policies and procedures in a rich-text editor: a build of Ghost's Koenig editor on
-Lexical (`packages/editor`), with Steward's wiring in `packages/editor-steward`. This page covers
-how the staff draft page uses it.
+Staff write policies and procedures in a rich-text editor: Ghost's Koenig editor on Lexical,
+from the published [node-koenig-editor](https://github.com/Bugs5382/node-koenig-editor) package,
+with Steward's nodes, collab wiring, wording and theme in `packages/editor-steward`. This page
+covers how the staff draft page uses it.
 
 ## What the author gets
 
