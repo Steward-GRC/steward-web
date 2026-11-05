@@ -43,6 +43,16 @@
     },
     "toggleStar": "Star {{number}}"
   },
+  "print": {
+    "definitions": "Defined terms",
+    "header": "{{number}} · v{{version}} · {{status}}",
+    "history": "History & approvals · {{version}}",
+    "links": "Links",
+    "nextReview": "Next review",
+    "page": "Steward · Page {{page}} of {{pages}}",
+    "printed": "Printed {{time}} · Check Steward for the current version",
+    "printedBy": "Printed {{time}} by {{name}} · Check Steward for the current version"
+  },
   "reader": {
     "ack": {
       "acknowledge": "Acknowledge",

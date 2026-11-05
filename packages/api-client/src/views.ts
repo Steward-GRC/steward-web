@@ -248,6 +248,8 @@ export interface PolicyDetail {
   readonly documentType: DocumentType;
   readonly history: readonly HistoryEntry[];
   readonly id: string;
+  /** When the document is next due for review, from its category chain (R1). */
+  readonly nextReview?: null | string;
   readonly number: string;
   readonly ownerName?: null | string;
   readonly priorVersion?: null | PolicyVersionSummary;

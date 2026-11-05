@@ -171,6 +171,7 @@ import {
   isNotFound,
   isPermissionDenied,
   isUnauthenticated,
+  nextReviewOf,
   policyStatusOf,
   readableContent,
   toPolicyView,
@@ -370,6 +371,7 @@ const assembleDetail = async (
     documentType: policy.documentType,
     history,
     id: policy.id,
+    nextReview: nextReviewOf(index, policy.homeCategoryId),
     number: policy.number,
     ownerName: policy.ownerName ?? null,
     priorVersion:

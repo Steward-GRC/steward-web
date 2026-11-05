@@ -23,6 +23,8 @@ export interface CategoryNode {
   readonly id: string;
   readonly name: string;
   readonly parentId?: null | string;
+  /** When the category's documents are next due for review (RFC 3339), if it sets one. */
+  readonly reviewDate?: null | string;
 }
 
 interface StoredSection {
@@ -217,6 +219,20 @@ export const appendixText = (contentJson: string): string => {
     return "";
   }
   return "";
+};
+
+/** A document's next review: the review date of its home category, else the nearest ancestor
+ *  that sets one; null when none does. */
+export const nextReviewOf = (
+  index: ReadonlyMap<string, CategoryNode>,
+  homeCategoryId: string,
+): null | string => {
+  let node = index.get(homeCategoryId);
+  for (let steps = 0; node && steps <= index.size; steps += 1) {
+    if (node.reviewDate) return node.reviewDate;
+    node = node.parentId ? index.get(node.parentId) : undefined;
+  }
+  return null;
 };
 
 /** The library's category (root ancestor) and subcategory (the level below it) names. */

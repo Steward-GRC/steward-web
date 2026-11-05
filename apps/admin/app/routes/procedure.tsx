@@ -9,8 +9,9 @@ import {
   breakGlassReveal,
   getPolicyDetail,
 } from "@steward-web/ui/domain/server";
-import { data } from "react-router";
+import { data, useRouteLoaderData } from "react-router";
 
+import type { loader as rootLoader } from "../root";
 import type { Route } from "./+types/procedure";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
@@ -48,5 +49,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 export default function ProcedureRoute({ loaderData }: Route.ComponentProps) {
   const identity = useIdentity();
-  return <PolicyReader detail={loaderData.detail} viewerName={identity.name || undefined} />;
+  // The organisation's name heads every printed page (R1).
+  const organisation = useRouteLoaderData<typeof rootLoader>("root")?.shell.config.organisation;
+  return (
+    <PolicyReader
+      detail={loaderData.detail}
+      organisation={organisation}
+      viewerName={identity.name || undefined}
+    />
+  );
 }
