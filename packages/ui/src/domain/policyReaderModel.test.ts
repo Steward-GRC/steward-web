@@ -9,7 +9,7 @@ import {
   plainTextOf,
   redactionState,
   revisionNoticeOf,
-} from "./policyReader";
+} from "./policyReaderModel";
 
 describe("ackBannerState", () => {
   it("is hidden when the document carries no acknowledgement", () => {

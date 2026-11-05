@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
+import { ArrowUp, Check, Dot, Hourglass, type LucideIcon, RotateCcw, X } from "lucide-react";
 
 import {
   Accordion,
@@ -10,19 +11,19 @@ import {
 } from "#ui/components/Display";
 import { EmptyState } from "#ui/feedback/States";
 
-import type { HistoryEntry, PolicyVersionSummary } from "./policyReader";
+import type { HistoryEntry, PolicyVersionSummary } from "./policyReaderModel";
 
-import { groupHistoryByVersion, plainTextOf } from "./policyReader";
+import { groupHistoryByVersion, plainTextOf } from "./policyReaderModel";
 
-const EVENT_BADGE: Record<HistoryEntry["kind"], string> = {
-  changesRequested: "×",
-  decided: "✓",
-  inReview: "⏳",
-  published: "✓",
-  rejected: "×",
-  submitted: "↑",
-  superseded: "↺",
-  withdrawn: "↺",
+const EVENT_BADGE: Record<HistoryEntry["kind"], LucideIcon> = {
+  changesRequested: X,
+  decided: Check,
+  inReview: Hourglass,
+  published: Check,
+  rejected: X,
+  submitted: ArrowUp,
+  superseded: RotateCcw,
+  withdrawn: RotateCcw,
 };
 
 /**
@@ -44,22 +45,29 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
           <AccordionTrigger>{group.version}</AccordionTrigger>
           <AccordionContent>
             <ol className="grid gap-2">
-              {group.events.map((event, index) => (
-                <li className="flex items-start gap-2 text-sm" key={index}>
-                  <span aria-hidden="true" className="mt-0.5 text-muted">
-                    {EVENT_BADGE[event.kind] ?? "·"}
-                  </span>
-                  <div>
-                    <p className="text-ink">
-                      {t(`reader.history.events.${event.kind}`, { stage: event.stage ?? "" })}
-                    </p>
-                    <p className="text-muted">
-                      {[event.actorName, event.at].filter(Boolean).join(" · ")}
-                    </p>
-                    {event.comment ? <p className="text-muted italic">{event.comment}</p> : null}
-                  </div>
-                </li>
-              ))}
+              {group.events.map((event, index) => {
+                const Badge = EVENT_BADGE[event.kind] ?? Dot;
+                return (
+                  <li className="flex items-start gap-2 text-sm" key={index}>
+                    <span
+                      aria-hidden="true"
+                      className="mt-0.5 text-muted"
+                      data-testid="history-event-badge"
+                    >
+                      <Badge className="size-4" />
+                    </span>
+                    <div>
+                      <p className="text-ink">
+                        {t(`reader.history.events.${event.kind}`, { stage: event.stage ?? "" })}
+                      </p>
+                      <p className="text-muted">
+                        {[event.actorName, event.at].filter(Boolean).join(" · ")}
+                      </p>
+                      {event.comment ? <p className="text-muted italic">{event.comment}</p> : null}
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </AccordionContent>
         </AccordionItem>

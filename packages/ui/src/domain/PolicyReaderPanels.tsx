@@ -10,10 +10,10 @@ import type {
   PolicyDefinition,
   PolicyReference,
   RelatedPolicy,
-} from "./policyReader";
+} from "./policyReaderModel";
 
 import { policyPath } from "./policy";
-import { ReferenceKind } from "./policyReader";
+import { ReferenceKind } from "./policyReaderModel";
 
 /** The definitions panel (U13): this policy's attached glossary entries, read-only. */
 export const DefinitionsPanel = ({ definitions }: { definitions: readonly PolicyDefinition[] }) => {

@@ -19,6 +19,7 @@ export {
   Sensitivity,
 } from "./policy";
 export { PolicyLibrary, type PolicyLibraryProps } from "./PolicyLibrary";
+export { PolicyReader, type PolicyReaderProps } from "./PolicyReader";
 export {
   ackBannerState,
   type AckBannerState,
@@ -39,5 +40,4 @@ export {
   type RelatedPolicy,
   type RevisionNoticeKind,
   revisionNoticeOf,
-} from "./policyReader";
-export { PolicyReader, type PolicyReaderProps } from "./PolicyReader";
+} from "./policyReaderModel";

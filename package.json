@@ -28,6 +28,7 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
+    "check:case-collisions": "node scripts/check-case-collisions.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:no-dev-quick-login-leak": "node scripts/check-no-development-quick-login-leak.mjs",
     "check:no-dev-ui-issue-leak": "node scripts/check-no-development-ui-issue-leak.mjs",

@@ -34,13 +34,13 @@ import { type Failure } from "#ui/feedback/failure";
 import { PageHeader } from "#ui/layout/PageHeader";
 
 import { documentStatusOf, documentTypeBasePath } from "./policy";
+import { PolicyReaderChanges, PolicyReaderHistory } from "./PolicyReaderHistory";
 import {
   ackBannerState,
   type PolicyDetail,
   redactionState,
   revisionNoticeOf,
-} from "./policyReader";
-import { PolicyReaderChanges, PolicyReaderHistory } from "./PolicyReaderHistory";
+} from "./policyReaderModel";
 import {
   ContactsPanel,
   DefinitionsPanel,

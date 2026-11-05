@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { PolicyDetail } from "./policyReader";
+import type { PolicyDetail } from "./policyReaderModel";
 
 import { PolicyReader } from "./PolicyReader";
 
@@ -117,6 +117,16 @@ describe("PolicyReader", () => {
     renderAt(baseDetail);
     expect(screen.getByText("History & approvals")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "2.0.0" })).toBeInTheDocument();
+  });
+
+  it("marks each history event with an icon, not a text glyph", () => {
+    renderAt(baseDetail);
+    const badges = screen.getAllByTestId("history-event-badge");
+    expect(badges.length).toBeGreaterThan(0);
+    for (const badge of badges) {
+      expect(badge.innerHTML).toMatch(/^<svg\b/);
+      expect(badge.textContent).toBe("");
+    }
   });
 
   it("submits the acknowledge dialog's form with the current version id", async () => {
