@@ -20,7 +20,10 @@ describe("instanceState", () => {
   it("asks the gateway's public setup state", async () => {
     const fetchSpy = answer(async () => Response.json({ needsSetup: true }));
     expect(await instanceState({ queryUrl: QUERY_URL })).toBe("needsSetup");
-    expect(fetchSpy).toHaveBeenCalledWith("https://gateway.steward.example/setup/state", expect.anything());
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://gateway.steward.example/setup/state",
+      expect.anything(),
+    );
   });
 
   it("is ready once the root administrator exists", async () => {

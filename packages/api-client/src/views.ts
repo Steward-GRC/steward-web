@@ -41,6 +41,12 @@ export interface AckStatus {
   readonly required: boolean;
 }
 
+/** The caller's mandatory reads and how many are done (My work's compliance card, U1). */
+export interface AckSummary {
+  readonly done: number;
+  readonly required: number;
+}
+
 export interface BreakGlassGrant {
   readonly grantedUntil: string;
 }
@@ -105,6 +111,15 @@ export interface Me {
   readonly permissions: readonly string[];
   readonly roles: readonly string[];
   readonly username: string;
+}
+
+/** A published version the caller still has to acknowledge (To acknowledge, U2). */
+export interface Obligation {
+  readonly number: string;
+  readonly policyId: string;
+  readonly policyVersionId: string;
+  readonly title: string;
+  readonly version: string;
 }
 
 /**

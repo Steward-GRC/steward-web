@@ -25,6 +25,7 @@ export default [
   route("sso-test/result", "routes/sso-test.result.tsx"),
   route("resources/status", "routes/resources.status.tsx"),
   route("profile", "routes/profile.tsx"),
+  route("acknowledge", "routes/acknowledge.tsx"),
   route("search", "routes/search.tsx"),
   route("policies", "routes/policies.tsx"),
   route("policies/:number", "routes/policy.tsx"),

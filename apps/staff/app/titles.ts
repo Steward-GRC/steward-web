@@ -4,6 +4,7 @@ import { COMING_SOON_PATHS } from "@steward-web/shell/coming-soon";
 
 /** Each page's title (its i18n key), by route id; the root `meta` turns it into "<page> · Steward". */
 export const PAGE_TITLES: Readonly<Record<string, string>> = {
+  "routes/acknowledge": "shell:titles.staff.toAcknowledge",
   "routes/approvals": "shell:titles.staff.approvals",
   "routes/approvals.$number": "shell:titles.staff.review",
   "routes/drafts": "shell:titles.staff.drafts",

@@ -143,6 +143,40 @@ describe("liveEdge.completeOnboarding", () => {
   });
 });
 
+describe("liveEdge: the caller's acknowledgements", () => {
+  it("lists what the caller still has to acknowledge", async () => {
+    routeGateway({
+      MyObligations: () => ({
+        myObligations: [
+          {
+            number: "POL-EXPENSES-000002",
+            policyId: "p-2",
+            policyVersionId: "v-2",
+            title: "Expense Claims Policy",
+            version: "2.0.0",
+          },
+        ],
+      }),
+    });
+    const { myObligations } = liveEdge;
+    expect(await myObligations("c=1")).toEqual([
+      {
+        number: "POL-EXPENSES-000002",
+        policyId: "p-2",
+        policyVersionId: "v-2",
+        title: "Expense Claims Policy",
+        version: "2.0.0",
+      },
+    ]);
+  });
+
+  it("counts the caller's mandatory reads and how many are done", async () => {
+    routeGateway({ MyAckSummary: () => ({ myAckSummary: { done: 3, required: 4 } }) });
+    const { myAckSummary } = liveEdge;
+    expect(await myAckSummary("c=1")).toEqual({ done: 3, required: 4 });
+  });
+});
+
 describe("liveEdge.categories", () => {
   it("lists the root categories with their direct children's names, in one call", async () => {
     const calls = routeGateway(treeHandlers);

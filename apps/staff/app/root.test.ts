@@ -136,6 +136,29 @@ const gateway = (permissions: string[], calls: string[] = []) =>
     return Promise.reject(new Error(`unexpected request: ${body.slice(0, 40)}`));
   });
 
+describe("the staff shell's To acknowledge count", () => {
+  it("counts what the person still has to acknowledge", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init: RequestInit) => {
+        const body = String(init.body);
+        if (body.includes("globalSettings")) return answer({ globalSettings: settings });
+        if (body.includes("query Me")) return answer({ me: me(["policy.read"]) });
+        if (body.includes("query CategoryTree")) return answer({ categoryTree: [] });
+        if (body.includes("query MyObligations"))
+          return answer({
+            myObligations: [
+              { number: "N-1", policyId: "p-1", policyVersionId: "v-1", title: "T", version: "1" },
+            ],
+          });
+        return Promise.reject(new Error(`unexpected request: ${body.slice(0, 40)}`));
+      }),
+    );
+    const result = await load();
+    expect(result.shell.counts).toEqual({ acknowledge: 1 });
+  });
+});
+
 describe("the staff shell's data", () => {
   it("counts pending approvals and lists the categories for Browse by category", async () => {
     vi.stubGlobal("fetch", gateway(["policy.read", "policy.approve"]));

@@ -5,14 +5,28 @@ title: Your home dashboard
 
 # Your home dashboard
 
-When you sign in, you land on your **home dashboard**. It is your starting point, and it links
-you straight into the areas you are allowed to use: your policy and procedure library, search,
-drafts you are authoring, approvals waiting on you, and compliance cases if you handle them.
+When you sign in, you land on **My work**: everything waiting on you, across your roles.
 
-The dashboard is **personal**. What it shows depends on your role and your access, so two people
-rarely see exactly the same dashboard — a reader who never authors or approves sees fewer links
-than someone who does both. That is the expected, complete view for each person, not a sign that
-something is missing.
+- **Cards for your roles.** Authors see **Drafts in progress**, approvers see **Awaiting my
+  approval**, and everyone sees **To acknowledge**, each with its count. Select a card to open
+  that list.
+- **Library overview.** Authors and approvers see how many policies the library holds, how many
+  are published, in draft, in review and sensitive, and a bar per category.
+- **Acknowledgement compliance.** How many of your mandatory reads you've acknowledged, as a
+  percentage, with how many are still waiting on you.
+- **Your lists.** **My drafts** (Continue →), **Awaiting my approval** (Review) and **To
+  acknowledge** (Read & acknowledge), each with a short note when there's nothing in it.
+
+My work is **personal**. What it shows depends on your role and your access. If you only read
+policies, the page is your acknowledgement ring, how many of your mandatory reads are done, and a
+button to read the next one. That is the complete view for a reader, not a sign that something is
+missing.
+
+## ✅ To acknowledge
+
+**To acknowledge** in the sidebar (with its count) lists the published policies you must confirm
+you have read, each with **Read & acknowledge**. When there are none, it says "You're all caught
+up".
 
 ## 🔎 Finding anything else
 

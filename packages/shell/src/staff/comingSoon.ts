@@ -17,7 +17,6 @@ export const COMING_SOON = {
   notifications: "/notifications",
   reportConcern: "/compliance/report",
   templates: "/templates",
-  toAcknowledge: "/acknowledge",
 } as const;
 
 export const COMING_SOON_PATHS: readonly string[] = Object.values(COMING_SOON);

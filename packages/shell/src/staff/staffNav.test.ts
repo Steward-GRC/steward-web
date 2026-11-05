@@ -31,6 +31,11 @@ const approvals = (count?: number) =>
     .flatMap((section) => section.items)
     .find((item) => item.id === "approvals");
 
+const toAcknowledge = (count?: number) =>
+  staffNav(input({ counts: { acknowledge: count } }))
+    .flatMap((section) => section.items)
+    .find((item) => item.id === "toAcknowledge");
+
 describe("staffNav", () => {
   it("lists H1's sections and items, in order, for someone who can do everything", () => {
     expect(outline(staffNav(input()))).toEqual([
@@ -72,6 +77,11 @@ describe("staffNav", () => {
     expect(only("audit.read")).toContain("Audit log");
   });
 
+  it("counts what's left to acknowledge on To acknowledge, and shows no badge at zero", () => {
+    expect(toAcknowledge(2)?.badge).toBe(2);
+    expect(toAcknowledge(0)?.badge).toBeUndefined();
+  });
+
   it("counts pending approvals on the Approvals item, and shows no badge at zero", () => {
     expect(approvals(3)?.badge).toBe(3);
     expect(approvals(0)?.badge).toBeUndefined();
@@ -89,15 +99,10 @@ describe("staffNav", () => {
       myWork: "/",
       policies: "/policies",
       procedures: "/procedures",
+      toAcknowledge: "/acknowledge",
     });
-    for (const id of [
-      "toAcknowledge",
-      "ask",
-      "templates",
-      "auditLog",
-      "reportConcern",
-      "myReports",
-    ]) {
+    expect(COMING_SOON_PATHS).not.toContain("/acknowledge");
+    for (const id of ["ask", "templates", "auditLog", "reportConcern", "myReports"]) {
       expect(COMING_SOON_PATHS).toContain(links[id]);
     }
   });

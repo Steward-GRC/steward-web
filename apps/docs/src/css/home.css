@@ -22,7 +22,8 @@ SPDX-License-Identifier: Apache-2.0
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image: linear-gradient(
+  background-image:
+    linear-gradient(
       to right,
       color-mix(in srgb, var(--ifm-table-border-color) 65%, transparent) 1px,
       transparent 1px
@@ -44,7 +45,11 @@ SPDX-License-Identifier: Apache-2.0
   width: 30rem;
   height: 30rem;
   border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--ifm-color-primary) 45%, transparent) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--ifm-color-primary) 45%, transparent) 0%,
+    transparent 70%
+  );
   filter: blur(60px);
 }
 
