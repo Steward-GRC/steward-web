@@ -110,6 +110,12 @@ export {
   TypeToConfirm,
   type TypeToConfirmProps,
 } from "./components/Overlays";
+export {
+  type CardSlot,
+  type ResponsiveColumn,
+  ResponsiveTable,
+  type ResponsiveTableProps,
+} from "./components/ResponsiveTable";
 export { Spinner } from "./components/Spinner";
 export { AckSnapshot, StatCard } from "./components/StatCards";
 export { Banner, type BannerProps, type BannerTone } from "./feedback/Banner";

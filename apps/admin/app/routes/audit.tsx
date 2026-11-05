@@ -9,10 +9,7 @@ import {
   Field,
   Input,
   PageHeader,
-  Table,
-  TD,
-  TH,
-  THead,
+  ResponsiveTable,
 } from "@steward-web/ui";
 import { data, Form } from "react-router";
 
@@ -108,34 +105,65 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
         </Form>
       ) : null}
 
-      {records.length === 0 ? (
-        <EmptyState description="No audit records match these filters." title="No records found" />
-      ) : (
-        <Table>
-          <THead>
-            <tr>
-              <TH>When</TH>
-              <TH>Action</TH>
-              <TH>Actor</TH>
-              <TH>Subject</TH>
-              <TH>Group</TH>
-            </tr>
-          </THead>
-          <tbody>
-            {records.map((record) => (
-              <tr key={record.id}>
-                <TD className="whitespace-nowrap text-sm text-muted">{fmt(record.occurredAt)}</TD>
-                <TD>{actionLabel(record.action)}</TD>
-                <TD className="text-muted">{displayLabel(record.actorName, record.actorUserId)}</TD>
-                <TD className="text-muted">{displayLabel(record.subjectLabel, record.subject)}</TD>
-                <TD>
-                  <Badge tone="neutral">{displayLabel(record.groupName, record.groupId)}</Badge>
-                </TD>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+      <ResponsiveTable
+        columns={[
+          {
+            card: "meta",
+            cell: (record) => fmt(record.occurredAt),
+            className: "whitespace-nowrap text-sm text-muted",
+            header: "When",
+            key: "when",
+          },
+          {
+            card: "title",
+            cell: (record) => actionLabel(record.action),
+            header: "Action",
+            key: "action",
+          },
+          {
+            card: "meta",
+            cell: (record) => displayLabel(record.actorName, record.actorUserId),
+            className: "text-muted",
+            header: "Actor",
+            key: "actor",
+          },
+          {
+            card: "meta",
+            cell: (record) => displayLabel(record.subjectLabel, record.subject),
+            className: "text-muted",
+            header: "Subject",
+            key: "subject",
+          },
+          {
+            card: "status",
+            cell: (record) => (
+              <Badge tone="neutral">{displayLabel(record.groupName, record.groupId)}</Badge>
+            ),
+            header: "Group",
+            key: "group",
+          },
+        ]}
+        empty={
+          <EmptyState
+            description="No audit records match these filters."
+            title="No records found"
+          />
+        }
+        label="Audit log"
+        rowKey={(record) => record.id}
+        rows={records}
+        search={{
+          label: "Search these records",
+          placeholder: "Search these records",
+          text: (record) =>
+            [
+              actionLabel(record.action),
+              displayLabel(record.actorName, record.actorUserId),
+              displayLabel(record.subjectLabel, record.subject),
+              displayLabel(record.groupName, record.groupId),
+            ].join(" "),
+        }}
+      />
     </div>
   );
 }

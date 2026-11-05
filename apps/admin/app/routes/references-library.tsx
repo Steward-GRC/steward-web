@@ -21,11 +21,8 @@ import {
   Input,
   RadioGroup,
   RadioItem,
-  Table,
+  ResponsiveTable,
   TabsContent,
-  TD,
-  TH,
-  THead,
 } from "@steward-web/ui";
 import { useId, useState } from "react";
 import { data, useFetcher } from "react-router";
@@ -45,13 +42,7 @@ import {
   setReferenceArchived,
   updateReference,
 } from "../libraries/libraries.server";
-import {
-  DeleteButton,
-  LibraryHeader,
-  LibraryTabs,
-  TableCard,
-  UsedBy,
-} from "../libraries/LibraryParts";
+import { DeleteButton, LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
 export const loader = async ({ request }: Route.LoaderArgs) => ({
   refs: await listReferences(request),
@@ -186,96 +177,103 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
 
       <LibraryTabs onTab={setTab} tab={tab}>
         <TabsContent value={tab}>
-          {rows.length === 0 ? (
-            <EmptyState
-              description={t(`libraries.references.empty.${tab}Description`)}
-              title={t(`libraries.references.empty.${tab}`)}
-            />
-          ) : (
-            <TableCard>
-              <Table>
-                <THead>
-                  <tr>
-                    <TH>{t("libraries.references.columns.label")}</TH>
-                    <TH>{t("libraries.references.columns.kind")}</TH>
-                    <TH>{t("libraries.references.columns.text")}</TH>
-                    <TH>{t("libraries.references.columns.usedBy")}</TH>
-                    <TH>
-                      <span className="sr-only">{t("libraries.actions.label")}</span>
-                    </TH>
-                  </tr>
-                </THead>
-                <tbody>
-                  {rows.map((ref) => {
-                    const deletable = isDeletable(ref.usedByCount);
-                    const curatable = canCurateRef(ref);
-                    return (
-                      <tr key={ref.id}>
-                        <TD className="font-medium">{ref.label}</TD>
-                        <TD>
-                          <Badge tone={KIND_TONE[ref.kind]}>
-                            {t(`libraries.references.kinds.${ref.kind}`)}
-                          </Badge>
-                        </TD>
-                        <TD className="max-w-md text-muted">
-                          {ref.kind === ReferenceKind.Link && ref.url ? (
-                            <a
-                              className="inline-block max-w-xs truncate text-primary hover:underline"
-                              href={ref.url}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                            >
-                              {ref.url}
-                            </a>
-                          ) : (
-                            referenceDetail(ref) || t("libraries.none")
-                          )}
-                        </TD>
-                        <TD className="text-muted">
-                          <UsedBy count={ref.usedByCount} />
-                        </TD>
-                        <TD>
-                          {curatable ? (
-                            <div className="flex items-center justify-end gap-2">
-                              {ref.archived ? (
-                                <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
-                              ) : (
-                                <Button onClick={() => openEdit(ref)} size="sm" variant="ghost">
-                                  {t("libraries.actions.edit")}
-                                </Button>
-                              )}
-                              {ref.archived ? (
-                                <saveFetcher.Form method="post">
-                                  <input name="intent" type="hidden" value="archive" />
-                                  <input name="id" type="hidden" value={ref.id} />
-                                  <input name="archived" type="hidden" value="false" />
-                                  <Button size="sm" type="submit" variant="secondary">
-                                    {t("libraries.actions.restore")}
-                                  </Button>
-                                </saveFetcher.Form>
-                              ) : (
-                                <Button
-                                  onClick={() => setArchiveTarget(ref)}
-                                  size="sm"
-                                  variant="secondary"
-                                >
-                                  {t("libraries.actions.archive")}
-                                </Button>
-                              )}
-                              <DeleteButton
-                                inUse={!deletable}
-                                onDelete={() => setDeleteTarget(ref)}
-                              />
-                            </div>
-                          ) : null}
-                        </TD>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </TableCard>
-          )}
+          <ResponsiveTable
+            columns={[
+              {
+                card: "title",
+                cell: (ref) => ref.label,
+                className: "font-medium",
+                header: t("libraries.references.columns.label"),
+                key: "label",
+              },
+              {
+                card: "status",
+                cell: (ref) => (
+                  <Badge tone={KIND_TONE[ref.kind]}>
+                    {t(`libraries.references.kinds.${ref.kind}`)}
+                  </Badge>
+                ),
+                header: t("libraries.references.columns.kind"),
+                key: "kind",
+              },
+              {
+                card: "meta",
+                cell: (ref) =>
+                  ref.kind === ReferenceKind.Link && ref.url ? (
+                    <a
+                      className="inline-block max-w-xs truncate text-primary hover:underline"
+                      href={ref.url}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {ref.url}
+                    </a>
+                  ) : (
+                    referenceDetail(ref) || t("libraries.none")
+                  ),
+                className: "max-w-md text-muted",
+                header: t("libraries.references.columns.text"),
+                key: "text",
+              },
+              {
+                card: "meta",
+                cell: (ref) => <UsedBy count={ref.usedByCount} />,
+                className: "text-muted",
+                header: t("libraries.references.columns.usedBy"),
+                key: "usedBy",
+              },
+              {
+                card: "action",
+                cell: (ref) =>
+                  canCurateRef(ref) ? (
+                    <div className="flex items-center justify-end gap-2">
+                      {ref.archived ? (
+                        <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
+                      ) : (
+                        <Button onClick={() => openEdit(ref)} size="sm" variant="ghost">
+                          {t("libraries.actions.edit")}
+                        </Button>
+                      )}
+                      {ref.archived ? (
+                        <saveFetcher.Form method="post">
+                          <input name="intent" type="hidden" value="archive" />
+                          <input name="id" type="hidden" value={ref.id} />
+                          <input name="archived" type="hidden" value="false" />
+                          <Button size="sm" type="submit" variant="secondary">
+                            {t("libraries.actions.restore")}
+                          </Button>
+                        </saveFetcher.Form>
+                      ) : (
+                        <Button onClick={() => setArchiveTarget(ref)} size="sm" variant="secondary">
+                          {t("libraries.actions.archive")}
+                        </Button>
+                      )}
+                      <DeleteButton
+                        inUse={!isDeletable(ref.usedByCount)}
+                        onDelete={() => setDeleteTarget(ref)}
+                      />
+                    </div>
+                  ) : null,
+                header: <span className="sr-only">{t("libraries.actions.label")}</span>,
+                key: "actions",
+              },
+            ]}
+            empty={
+              <EmptyState
+                description={t(`libraries.references.empty.${tab}Description`)}
+                title={t(`libraries.references.empty.${tab}`)}
+              />
+            }
+            framed
+            label={t("libraries.references.title")}
+            rowKey={(ref) => ref.id}
+            rows={rows}
+            search={{
+              label: t("libraries.references.search"),
+              placeholder: t("libraries.references.search"),
+              text: (ref) => `${ref.label} ${ref.url ?? ""} ${referenceDetail(ref)}`,
+            }}
+          />
         </TabsContent>
       </LibraryTabs>
 

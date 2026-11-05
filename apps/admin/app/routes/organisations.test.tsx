@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { asPhone } from "../test/phone";
 import Organizations from "./organisations";
 
 const ORGS = [
@@ -112,5 +113,36 @@ describe("Organizations (A23)", () => {
   it("says when there are no organizations", async () => {
     openOrganizations([]);
     expect(await screen.findByText("No organizations yet")).toBeInTheDocument();
+  });
+});
+
+describe("Organizations on a phone (7-responsive.s3)", () => {
+  it("lists each domain as a card with its organization and its badges", async () => {
+    asPhone();
+    openOrganizations();
+    const list = await screen.findByRole("list", { name: "Organizations" });
+    expect(screen.queryByRole("table")).toBeNull();
+    const [partner, example] = within(list).getAllByRole("listitem");
+    expect(within(partner!).getByRole("link", { name: "partner.example.net" })).toHaveAttribute(
+      "href",
+      "/organisations/partner.example.net",
+    );
+    // The domain, the organization's name, then the protocol and the three badges.
+    expect(partner!.textContent).toBe(
+      "partner.example.netPartner OrgSAMLVerifiedNot testedNot active",
+    );
+    expect(example).toHaveTextContent("example.org");
+  });
+
+  it("narrows the cards from the search", async () => {
+    asPhone();
+    openOrganizations();
+    await userEvent.type(
+      await screen.findByRole("searchbox", { name: "Search organizations" }),
+      "partner",
+    );
+    expect(
+      within(screen.getByRole("list", { name: "Organizations" })).getAllByRole("listitem"),
+    ).toHaveLength(1);
   });
 });

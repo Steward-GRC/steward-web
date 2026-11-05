@@ -13,10 +13,7 @@ import {
   Field,
   Input,
   PageHeader,
-  Table,
-  TD,
-  TH,
-  THead,
+  ResponsiveTable,
 } from "@steward-web/ui";
 import { data, Form } from "react-router";
 
@@ -77,42 +74,52 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 };
 
-const MemberTable = ({ groupId, members }: { groupId: string; members: readonly GroupMember[] }) =>
-  members.length === 0 ? (
-    <p className="text-sm text-muted">No members yet. Add one below.</p>
-  ) : (
-    <Table>
-      <THead>
-        <tr>
-          <TH>Name</TH>
-          <TH>Email</TH>
-          <TH />
-        </tr>
-      </THead>
-      <tbody>
-        {members.map((m) => (
-          <tr key={m.userId}>
-            <TD>{m.name}</TD>
-            <TD className="text-muted">{m.email}</TD>
-            <TD className="text-right">
-              {m.source === "idp-sync" ? (
-                <Badge tone="neutral">Synced</Badge>
-              ) : (
-                <Form method="post">
-                  <input name="intent" type="hidden" value="remove-member" />
-                  <input name="groupId" type="hidden" value={groupId} />
-                  <input name="userId" type="hidden" value={m.userId} />
-                  <Button size="sm" type="submit" variant="ghost">
-                    Remove
-                  </Button>
-                </Form>
-              )}
-            </TD>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
-  );
+/** A group's members. Each group's list is short, so its cards on a phone carry no search. */
+const MemberTable = ({
+  groupId,
+  groupPath,
+  members,
+}: {
+  groupId: string;
+  groupPath: string;
+  members: readonly GroupMember[];
+}) => (
+  <ResponsiveTable
+    columns={[
+      { card: "title", cell: (m) => m.name, header: "Name", key: "name" },
+      {
+        card: "meta",
+        cell: (m) => m.email,
+        className: "text-muted",
+        header: "Email",
+        key: "email",
+      },
+      {
+        card: "action",
+        cell: (m) =>
+          m.source === "idp-sync" ? (
+            <Badge tone="neutral">Synced</Badge>
+          ) : (
+            <Form method="post">
+              <input name="intent" type="hidden" value="remove-member" />
+              <input name="groupId" type="hidden" value={groupId} />
+              <input name="userId" type="hidden" value={m.userId} />
+              <Button aria-label={`Remove ${m.name}`} size="sm" type="submit" variant="ghost">
+                Remove
+              </Button>
+            </Form>
+          ),
+        className: "text-right",
+        header: null,
+        key: "actions",
+      },
+    ]}
+    empty={<p className="text-sm text-muted">No members yet. Add one below.</p>}
+    label={`Members of ${groupPath}`}
+    rowKey={(m) => m.userId}
+    rows={members}
+  />
+);
 
 export default function PlatformGroups({ actionData, loaderData }: Route.ComponentProps) {
   const { groups } = loaderData;
@@ -176,7 +183,7 @@ export default function PlatformGroups({ actionData, loaderData }: Route.Compone
                 <p className="text-sm text-muted">
                   Id <code className="select-all text-ink">{group.id}</code>
                 </p>
-                <MemberTable groupId={group.id} members={group.members} />
+                <MemberTable groupId={group.id} groupPath={group.path} members={group.members} />
                 <Form className="flex flex-wrap items-end gap-3" method="post">
                   <input name="intent" type="hidden" value="add-member" />
                   <input name="groupId" type="hidden" value={group.id} />

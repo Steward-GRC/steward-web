@@ -7,6 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
+import { asPhone } from "../test/phone";
 import ReferencesLibrary from "./references-library";
 
 const ADMIN: Identity = { ...NO_ACCESS, id: "u-alice", isSiteAdmin: true, name: "Alice" };
@@ -115,6 +116,33 @@ describe("References & standards (A26)", () => {
     const posted = openReferences();
     const portal = screen.getByRole("row", { name: /Travel portal/ });
     await userEvent.click(within(portal).getByRole("button", { name: "Delete" }));
+    const dialog = await screen.findByRole("dialog", { name: "Delete this reference?" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete reference" }));
+    expect(posted).toEqual([{ id: "r-2", intent: "delete" }]);
+  });
+});
+
+describe("References & standards on a phone (7-responsive.s3)", () => {
+  it("lists each reference as a card with its kind badge and its actions", async () => {
+    asPhone();
+    const posted = openReferences();
+    expect(screen.queryByRole("table")).toBeNull();
+    const [standard, portal] = within(
+      screen.getByRole("list", { name: "References & standards" }),
+    ).getAllByRole("listitem");
+    expect(standard!.textContent).toBe(
+      [
+        "Workplace health standard",
+        "§4.2 · 3 policies",
+        "Standard",
+        // Delete's reason is there for screen readers.
+        "EditArchiveDeleteIn use — archive instead of deleting.",
+      ].join(""),
+    );
+    expect(
+      within(portal!).getByRole("link", { name: "https://travel.example.org" }),
+    ).toHaveAttribute("href", "https://travel.example.org");
+    await userEvent.click(within(portal!).getByRole("button", { name: "Delete" }));
     const dialog = await screen.findByRole("dialog", { name: "Delete this reference?" });
     await userEvent.click(within(dialog).getByRole("button", { name: "Delete reference" }));
     expect(posted).toEqual([{ id: "r-2", intent: "delete" }]);

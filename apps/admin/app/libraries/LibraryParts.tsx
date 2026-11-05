@@ -59,13 +59,6 @@ export const LibraryTabs = ({
   );
 };
 
-/** The table's card: a surface with a 1 px border and 10 px corners, as A12 draws it. */
-export const TableCard = ({ children }: { children: ReactNode }) => (
-  <div className="overflow-hidden rounded-[10px] border border-border bg-surface text-sm">
-    {children}
-  </div>
-);
-
 /** "3 policies": how many policies attach the entry. */
 export const UsedBy = ({ count }: { count: number }) => {
   const { t } = useTranslation("admin");

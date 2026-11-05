@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { asPhone } from "../test/phone";
 import Templates from "./templates";
 
 const ROWS = [
@@ -84,5 +85,30 @@ describe("Templates (A6)", () => {
   it("says when there are no templates", async () => {
     openTemplates([]);
     expect(await screen.findByText("No templates yet")).toBeInTheDocument();
+  });
+});
+
+describe("Templates on a phone (7-responsive.s3)", () => {
+  it("lists each template as a card: its name, then its ID, category and latest version", async () => {
+    asPhone();
+    openTemplates();
+    const list = await screen.findByRole("list", { name: "Templates" });
+    expect(screen.queryByRole("table")).toBeNull();
+    const [standard, short] = within(list).getAllByRole("listitem");
+    expect(within(standard!).getByRole("link", { name: "Standard Policy" })).toHaveAttribute(
+      "href",
+      "/templates/TPL-001",
+    );
+    expect(standard!.textContent).toBe("Standard PolicyTPL-001 · Finance · v3 · draft");
+    expect(short!.textContent).toBe("Short noticeRetiredTPL-002 · — · —");
+  });
+
+  it("narrows the cards from the search", async () => {
+    asPhone();
+    openTemplates();
+    await userEvent.type(await screen.findByRole("searchbox", { name: "Search templates" }), "002");
+    const cards = within(screen.getByRole("list", { name: "Templates" })).getAllByRole("listitem");
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toHaveTextContent("Short notice");
   });
 });

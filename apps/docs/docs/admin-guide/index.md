@@ -38,6 +38,12 @@ page, and choosing a page or pressing Escape closes it. On a phone the rail goes
 menu** in the header lists every group with its pages, with **Staff** and **Docs** at the foot.
 Below 1024 px the header's search becomes a search button.
 
+On a phone the lists that are tables on a wider screen (users, organizations, templates, magic
+links, completion and its roster, the libraries, the audit log and each platform group's members)
+show one card per row instead: the name in bold, the details on one line under it, the status
+badges, then the row's actions. A search field above the cards narrows them as you type. The
+category access table stays a table, and scrolls sideways inside its own box.
+
 **Skip to main content** is the first thing the Tab key reaches on every page, and after you follow
 a link, focus moves to the new page's content.
 

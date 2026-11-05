@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { asPhone } from "../test/phone";
 import Users from "./users";
 
 const user = (overrides: Record<string, unknown>) => ({
@@ -154,5 +155,44 @@ describe("Users & roles (A16)", () => {
     expect(toggle).not.toBeChecked();
     await userEvent.click(toggle);
     await vi.waitFor(() => expect(visited.at(-1)).toBe("?deleted=1"));
+  });
+});
+
+describe("Users & roles on a phone (7-responsive.s3)", () => {
+  it("lists each person as a card: the name, a muted line, then the status pill", async () => {
+    asPhone();
+    openUsers();
+    const list = await screen.findByRole("list", { name: "Users & roles" });
+    expect(screen.queryByRole("table")).toBeNull();
+    const cards = within(list).getAllByRole("listitem");
+    // Each card starts with the name, then the email.
+    expect(cards.map((card) => card.textContent)).toEqual([
+      expect.stringMatching(/^Alicealice@/),
+      expect.stringMatching(/^Gracegrace@/),
+      expect.stringMatching(/^Erinerin@/),
+      expect.stringMatching(/^Ivanivan@/),
+      expect.stringMatching(/^Erin \(old\)erin\.old@/),
+    ]);
+    // The name, then email, roles, groups and access on one line, then the status pill.
+    expect(cards[1]!.textContent).toBe(
+      "Gracegrace@example.org · Compliance admin · All staff · All · −2 policies, +1 policyenabled",
+    );
+    expect(within(cards[0]!).getByRole("link", { name: "Alice" })).toHaveAttribute(
+      "href",
+      "/users/mock-user-alice",
+    );
+    expect(within(cards[4]!).queryByRole("link")).toBeNull();
+  });
+
+  it("narrows the cards by name or email from the search", async () => {
+    asPhone();
+    openUsers();
+    await userEvent.type(await screen.findByRole("searchbox", { name: "Search users" }), "erin");
+    const cards = within(screen.getByRole("list", { name: "Users & roles" })).getAllByRole(
+      "listitem",
+    );
+    expect(cards).toHaveLength(2);
+    expect(cards[0]).toHaveTextContent(/^Erinerin@example\.org/);
+    expect(cards[1]).toHaveTextContent(/^Erin \(old\)erin\.old@example\.org/);
   });
 });

@@ -15,10 +15,7 @@ import {
   DialogTrigger,
   EmptyState,
   type Failure,
-  Table,
-  TD,
-  TH,
-  THead,
+  ResponsiveTable,
 } from "@steward-web/ui";
 import { useId, useState } from "react";
 import { data, Link, useFetcher } from "react-router";
@@ -160,60 +157,73 @@ export default function Organizations({ loaderData }: Route.ComponentProps) {
         </Button>
       </header>
 
-      {organisations.length === 0 ? (
-        <EmptyState
-          description={t("organizations.empty.description")}
-          title={t("organizations.empty.title")}
-        />
-      ) : (
-        <Table>
-          <THead>
-            <tr>
-              <TH>{t("organizations.columns.domain")}</TH>
-              <TH>{t("organizations.columns.organization")}</TH>
-              <TH>{t("organizations.columns.protocol")}</TH>
-              <TH>{t("organizations.columns.status")}</TH>
-            </tr>
-          </THead>
-          <tbody>
-            {organisations.map((org) => (
-              <tr key={org.domain}>
-                <TD>
-                  <Link
-                    className="font-mono text-sm text-primary hover:underline"
-                    to={`/organisations/${encodeURIComponent(org.domain)}`}
-                  >
-                    {org.domain}
-                  </Link>
-                </TD>
-                <TD>{org.orgName}</TD>
-                <TD>
-                  <Badge tone="neutral">{org.protocol.toUpperCase()}</Badge>
-                </TD>
-                <TD>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <Badge tone={org.verified ? "ok" : "neutral"}>
-                      {org.verified
-                        ? t("organizations.badges.verified")
-                        : t("organizations.badges.notVerified")}
-                    </Badge>
-                    <Badge tone={org.testPassed ? "ok" : "neutral"}>
-                      {org.testPassed
-                        ? t("organizations.badges.tested")
-                        : t("organizations.badges.notTested")}
-                    </Badge>
-                    <Badge tone={org.enabled ? "primary" : "neutral"}>
-                      {org.enabled
-                        ? t("organizations.badges.active")
-                        : t("organizations.badges.inactive")}
-                    </Badge>
-                  </div>
-                </TD>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+      <ResponsiveTable
+        columns={[
+          {
+            card: "title",
+            cell: (org) => (
+              <Link
+                className="font-mono text-sm text-primary hover:underline"
+                to={`/organisations/${encodeURIComponent(org.domain)}`}
+              >
+                {org.domain}
+              </Link>
+            ),
+            header: t("organizations.columns.domain"),
+            key: "domain",
+          },
+          {
+            card: "meta",
+            cell: (org) => org.orgName,
+            header: t("organizations.columns.organization"),
+            key: "organization",
+          },
+          {
+            card: "status",
+            cell: (org) => <Badge tone="neutral">{org.protocol.toUpperCase()}</Badge>,
+            header: t("organizations.columns.protocol"),
+            key: "protocol",
+          },
+          {
+            card: "status",
+            cell: (org) => (
+              <div className="flex flex-wrap items-center gap-1">
+                <Badge tone={org.verified ? "ok" : "neutral"}>
+                  {org.verified
+                    ? t("organizations.badges.verified")
+                    : t("organizations.badges.notVerified")}
+                </Badge>
+                <Badge tone={org.testPassed ? "ok" : "neutral"}>
+                  {org.testPassed
+                    ? t("organizations.badges.tested")
+                    : t("organizations.badges.notTested")}
+                </Badge>
+                <Badge tone={org.enabled ? "primary" : "neutral"}>
+                  {org.enabled
+                    ? t("organizations.badges.active")
+                    : t("organizations.badges.inactive")}
+                </Badge>
+              </div>
+            ),
+            header: t("organizations.columns.status"),
+            key: "status",
+          },
+        ]}
+        empty={
+          <EmptyState
+            description={t("organizations.empty.description")}
+            title={t("organizations.empty.title")}
+          />
+        }
+        label={t("organizations.title")}
+        rowKey={(org) => org.domain}
+        rows={organisations}
+        search={{
+          label: t("organizations.search"),
+          placeholder: t("organizations.search"),
+          text: (org) => `${org.domain} ${org.orgName}`,
+        }}
+      />
 
       <SpCertificateCard certificate={spCertificate} />
     </div>

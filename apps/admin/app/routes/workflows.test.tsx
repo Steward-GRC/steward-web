@@ -4,6 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
+import { asPhone } from "../test/phone";
 import Workflows from "./workflows";
 
 const stage = (approvers: string[]) => ({
@@ -72,5 +73,18 @@ describe("Workflows (A8)", () => {
   it("says when there are no workflows", async () => {
     openWorkflows([]);
     expect(await screen.findByText("No workflows yet")).toBeInTheDocument();
+  });
+});
+
+describe("Workflows on a phone (7-responsive.s3)", () => {
+  it("keeps A8's cards, each one a link, since there's no table to fold", async () => {
+    asPhone();
+    openWorkflows();
+    const finance = await screen.findByRole("region", { name: "Finance" });
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(within(finance).getByRole("link", { name: /Finance sign-off/ })).toHaveAttribute(
+      "href",
+      "/workflows/w-finance",
+    );
   });
 });
