@@ -119,6 +119,7 @@ let nextWorkflowSeq = mockWorkflows.length + 1;
 let nextWorkflowStageSeq = mockWorkflows.flatMap((w) => w.stages).length + 1;
 let pendingTasks = [...mockPendingTasks];
 let workflowStatuses = structuredClone(mockWorkflowStatuses);
+let nextRunSeq = 1;
 let reportCases = structuredClone(mockReportCases);
 let nextCaseNoteSeq = 2;
 let nextCaseMessageSeq = 2;
@@ -1589,6 +1590,63 @@ export const mockEdge: Edge = {
     }));
     aiJobs.set(jobId, { error: null, polls: 0, resultJson: JSON.stringify({ findings }) });
     return { jobId };
+  },
+  submitWorkflow: async (policyVersionId, policyId, categoryId) => {
+    const policy = requirePolicy("SubmitWorkflow", policyId);
+    const draft = requireDraftVersion("SubmitWorkflow", policyId);
+    if (draft.id !== policyVersionId) {
+      throw new GatewayError(
+        "SubmitWorkflow",
+        "only the policy's current draft can go for review",
+        {
+          code: "FAILED_PRECONDITION",
+        },
+      );
+    }
+    // The gateway's resolution: the first workflow up the group lineage, leaf to root.
+    let workflowId: null | string | undefined = null;
+    for (let id: null | string = categoryId; id && !workflowId;) {
+      const group = groups.find((g) => g.id === id);
+      workflowId = group?.defaultWorkflowId;
+      id = group?.parentId ?? null;
+    }
+    const workflow = workflowDefs.find((w) => w.id === workflowId);
+    if (!workflow) {
+      throw new GatewayError(
+        "SubmitWorkflow",
+        "no approval workflow is attached to this policy's category; attach one before submitting",
+        { code: "FAILED_PRECONDITION" },
+      );
+    }
+    const unstaffed = workflow.stages.find((s) => s.approvers.length === 0);
+    if (unstaffed) {
+      throw new GatewayError("SubmitWorkflow", `the "${unstaffed.name}" stage has no approver`, {
+        code: "FAILED_PRECONDITION",
+      });
+    }
+    const runId = mockId("run", nextRunSeq++);
+    workflowStatuses = {
+      ...workflowStatuses,
+      [draft.id]: {
+        currentStageIdx: 0,
+        runId,
+        stageAssignees: workflow.stages.map((stage) =>
+          stage.approvers.map((userId) => ({
+            comment: null,
+            decidedAt: null,
+            name: users.find((u) => u.userId === userId)?.name ?? null,
+            state: "pending",
+            userId,
+          })),
+        ),
+        stageNames: workflow.stages.map((stage) => stage.name),
+        stageUnitProgress: workflow.stages.map(() => []),
+        status: ApprovalStatus.ApprovalStatusInReview,
+      },
+    };
+    replaceVersion({ ...draft, status: "IN_REVIEW" });
+    replacePolicy({ ...policy, updated: new Date().toISOString() });
+    return { runId };
   },
   templates: () => Promise.resolve(templates),
   templateVersions: (templateId) =>

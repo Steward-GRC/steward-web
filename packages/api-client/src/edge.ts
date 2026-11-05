@@ -604,6 +604,19 @@ export interface Edge {
   ): Promise<{ jobId: string }>;
   /** Submit review & gap-analysis of an existing draft as an async job; the result is a findings list, never an edit applied to the policy. */
   submitPolicyReview(input: SubmitPolicyReviewInput, cookie?: string): Promise<{ jobId: string }>;
+  /**
+   * Sends a policy's working draft for review: starts the approval run of the workflow
+   * attached to (or inherited by) the policy's category. The submitter is bound server-side,
+   * and the gateway walks the category lineage itself from `categoryId`. Refused with
+   * `GatewayError` when no workflow applies, a stage has no approver, or the caller isn't an
+   * author of the policy.
+   */
+  submitWorkflow(
+    policyVersionId: string,
+    policyId: string,
+    categoryId: string,
+    cookie?: string,
+  ): Promise<{ runId: string }>;
   /** The templates selectable as a group's default. Site-admin only. */
   templates(cookie?: string): Promise<readonly Template[]>;
   /** All of a template's versions, newest first, drafts included. Site-admin only. */

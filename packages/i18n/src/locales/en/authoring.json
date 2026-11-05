@@ -19,7 +19,10 @@
     "actions": {
       "discard": "Discard draft",
       "discardConfirm": "Discard this draft? This can't be undone.",
-      "publish": "Publish"
+      "publish": "Publish",
+      "publishing": "Publishing…",
+      "submitForReview": "Submit for review",
+      "submitting": "Submitting…"
     },
     "appendices": {
       "add": "Add appendix",
@@ -34,6 +37,13 @@
     "presence": "{{count}} people editing",
     "published": "Published as version {{version}}.",
     "requiredMissing": "These required sections still need content: {{sections}}",
+    "review": {
+      "inReview": "Sent for review. Its approvers see it in Approvals, and it publishes when the last stage approves.",
+      "publishFailed": "The draft wasn't published",
+      "submitFailed": "The draft wasn't sent for review",
+      "submitRefused": "This draft can't go for review yet",
+      "submitRefusedDetail": "No approval workflow applies to its group, or a stage has no approver. Ask an administrator to attach one."
+    },
     "sections": {
       "title": "Section title",
       "text": "Section text"

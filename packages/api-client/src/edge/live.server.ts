@@ -114,6 +114,7 @@ import {
   StartDomainVerificationDocument,
   SubmitDraftGenerationDocument,
   SubmitPolicyReviewDocument,
+  SubmitWorkflowDocument,
   TemplatesDocument,
   TemplateVersionsDocument,
   UpcomingApprovalsDocument,
@@ -1108,6 +1109,17 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.submitPolicyReview;
+  },
+  async submitWorkflow(policyVersionId, policyId, categoryId, cookie) {
+    // ancestorCategoryIds stays empty: the gateway rebuilds the lineage from categoryId and
+    // falls back to the client's list only when it finds none.
+    const data = await gatewayFetch(
+      SubmitWorkflowDocument,
+      { ancestorCategoryIds: [], categoryId, policyId, policyVersionId },
+      "SubmitWorkflow",
+      { cookie },
+    );
+    return { runId: data.submitWorkflow.runId };
   },
   async templates(cookie) {
     const data = await gatewayFetch(TemplatesDocument, {}, "Templates", { cookie });

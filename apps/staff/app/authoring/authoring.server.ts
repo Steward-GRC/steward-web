@@ -1,15 +1,15 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type {
-  Appendix,
-  CreatePolicyInput,
-  Group,
-  Policy,
-  PolicyVersion,
-  Template,
-  TemplateVersion,
+import {
+  type Appendix,
+  ApprovalStatus,
+  type CreatePolicyInput,
+  type Group,
+  type Policy,
+  type PolicyVersion,
+  type Template,
+  type TemplateVersion,
 } from "@steward-web/api-client";
-
 import edge from "@steward-web/edge.server";
 
 const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
@@ -55,6 +55,40 @@ export const saveDraft = (
 
 export const publishDraft = (request: Request, policyId: string): Promise<PolicyVersion> =>
   edge.publishDraft(policyId, cookieOf(request));
+
+/**
+ * Sends the policy's working draft for review (#110): the gateway's `submitWorkflow` starts
+ * the approval run of the workflow its home category carries or inherits. The gateway decides
+ * whether one applies and refuses when none does; this only names the draft and the category.
+ */
+export const submitDraftForReview = async (
+  request: Request,
+  policyId: string,
+): Promise<{ runId: string }> => {
+  const policy = await edge.policy(policyId, cookieOf(request));
+  if (!policy?.currentDraftVersionId) throw new Response("Not Found", { status: 404 });
+  return edge.submitWorkflow(
+    policy.currentDraftVersionId,
+    policy.id,
+    policy.homeGroupId,
+    cookieOf(request),
+  );
+};
+
+/**
+ * Whether the working draft is with its approvers. steward-workflow keeps the run's status on
+ * the run, not on the version (core's version stays a draft), so the run is read first; the
+ * version's own status answers when the run can't be read.
+ */
+export const isDraftInReview = async (request: Request, draft: PolicyVersion): Promise<boolean> => {
+  const byVersion = draft.status.toUpperCase() === "IN_REVIEW";
+  try {
+    const run = await edge.workflowStatus(draft.id, cookieOf(request));
+    return run.status === ApprovalStatus.ApprovalStatusInReview || byVersion;
+  } catch {
+    return byVersion;
+  }
+};
 
 export const discardDraft = (request: Request, policyId: string): Promise<boolean> =>
   edge.discardDraft(policyId, cookieOf(request));

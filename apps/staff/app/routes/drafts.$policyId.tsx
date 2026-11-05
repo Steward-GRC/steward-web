@@ -45,13 +45,16 @@ import {
   getDraftVersion,
   getLatestTemplateVersion,
   getPolicy,
+  isDraftInReview,
   publishDraft,
   saveDraft,
+  submitDraftForReview,
   updateAppendix,
 } from "../authoring/authoring.server";
 import { issueCollabToken } from "../authoring/collab/collab.server";
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
+import { DraftReviewActions } from "../authoring/DraftReviewActions";
 import {
   aiSections,
   applyAiText,
@@ -79,7 +82,8 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     getDraftVersion(request, policy.id),
     policy.templateId ? getLatestTemplateVersion(request, policy.templateId) : null,
   ]);
-  return { aiHealth, draft, policy, templateVersion };
+  const inReview = draft ? await isDraftInReview(request, draft) : false;
+  return { aiHealth, draft, inReview, policy, templateVersion };
 };
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
@@ -161,6 +165,10 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         await saveDraft(request, policyId, serializeDocument(document), templateVersionId);
         return data({ intent, ok: true } as const);
       }
+      case "submit-review": {
+        const { runId } = await submitDraftForReview(request, policyId);
+        return data({ intent, ok: true, runId } as const);
+      }
       case "update-appendix": {
         const id = String(form.get("appendixId") ?? "");
         const title = String(form.get("title") ?? "");
@@ -213,7 +221,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("authoring");
   const { t: tAi } = useTranslation("ai");
   const { t: tCommon } = useTranslation("common");
-  const { draft, policy, templateVersion } = loaderData;
+  const { draft, inReview, policy, templateVersion } = loaderData;
   const aiHealth = useAiHealth({
     available: loaderData.aiHealth.available,
     reason: loaderData.aiHealth.reason ?? null,
@@ -234,7 +242,6 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const [appliedGenerateJobId, setAppliedGenerateJobId] = useState<null | string>(null);
 
   const saveFetcher = useFetcher<typeof action>();
-  const publishFetcher = useFetcher<typeof action>();
   const assistFetcher = useFetcher<typeof action>();
   const generateFetcher = useFetcher<typeof action>();
   const reviewFetcher = useFetcher<typeof action>();
@@ -382,7 +389,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
             </span>
           ) : null}
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-start gap-2">
           {aiHealth.available ? (
             <>
               <Dialog>
@@ -479,15 +486,12 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
             <Banner title={tAi("assist.unavailable")} tone="info" />
           )}
 
-          <publishFetcher.Form method="post">
-            <input name="intent" type="hidden" value="publish" />
-            <Button
-              disabled={publishFetcher.state !== "idle" || missing.length > 0 || collabReadOnly}
-              type="submit"
-            >
-              {t("editor.actions.publish")}
-            </Button>
-          </publishFetcher.Form>
+          <DraftReviewActions
+            blocked={missing.length > 0 || collabReadOnly}
+            canPublish={policy.viewerCan.edit}
+            canSubmit={policy.viewerCan.submit}
+            inReview={inReview}
+          />
 
           <Dialog>
             <DialogTrigger asChild>

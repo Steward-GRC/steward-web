@@ -2415,6 +2415,15 @@ export type SubmitPolicyReviewMutation = {
   readonly submitPolicyReview: { readonly jobId: string };
 };
 
+export type SubmitWorkflowMutationVariables = Exact<{
+  policyVersionId: string | number;
+  policyId: string | number;
+  categoryId: string | number;
+  ancestorCategoryIds: ReadonlyArray<string | number> | string | number;
+}>;
+
+export type SubmitWorkflowMutation = { readonly submitWorkflow: { readonly runId: string } };
+
 export type TemplateFieldsFragment = {
   readonly id: string;
   readonly code: string;
@@ -11117,6 +11126,91 @@ export const SubmitPolicyReviewDocument = {
     },
   ],
 } as unknown as DocumentNode<SubmitPolicyReviewMutation, SubmitPolicyReviewMutationVariables>;
+export const SubmitWorkflowDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SubmitWorkflow" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "ancestorCategoryIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "submitWorkflow" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "categoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "ancestorCategoryIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "ancestorCategoryIds" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "runId" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SubmitWorkflowMutation, SubmitWorkflowMutationVariables>;
 export const TemplateVersionsDocument = {
   kind: "Document",
   definitions: [

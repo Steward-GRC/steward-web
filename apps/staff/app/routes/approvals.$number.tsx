@@ -25,22 +25,39 @@ import { decideApproval, getWorkflowStatus, listPendingTasks } from "../approval
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requireIdentityFromRequest(request);
   const cookie = request.headers.get("cookie") ?? undefined;
-  const [policies, procedures] = await Promise.all([
+  const [policies, procedures, pendingTasks] = await Promise.all([
     listPolicies(DocumentType.Policy, cookie),
     listPolicies(DocumentType.Procedure, cookie),
+    listPendingTasks(request),
   ]);
-  const match = [...policies, ...procedures].find((p) => p.number === params.number);
-  if (!match) return data({ match: null }, { status: 404 });
+  const found = [...policies, ...procedures].find((p) => p.number === params.number);
 
   // The version a live run acts on: the draft currently in review when there is one, else
   // the published version (a run that already resolved, kept here for a read-only stepper).
-  const policyVersionId = match.currentDraftVersionId ?? match.currentPublishedVersionId;
+  // A draft the approver can't edit is hidden from their library, so the inbox links its task
+  // by version id instead, and the task alone names it (#110).
+  const byVersion = found
+    ? undefined
+    : pendingTasks.find((t) => t.policyVersionId === params.number);
+  const policyVersionId = found
+    ? (found.currentDraftVersionId ?? found.currentPublishedVersionId)
+    : byVersion?.policyVersionId;
   if (!policyVersionId) return data({ match: null }, { status: 404 });
+  const match: {
+    category: string;
+    documentType: DocumentType | null;
+    number: string;
+    title: string;
+  } = found
+    ? {
+        category: found.category,
+        documentType: found.documentType,
+        number: found.number,
+        title: found.title,
+      }
+    : { category: "", documentType: null, number: "", title: byVersion?.policyTitle ?? "" };
 
-  const [workflow, pendingTasks] = await Promise.all([
-    getWorkflowStatus(request, policyVersionId),
-    listPendingTasks(request),
-  ]);
+  const workflow = await getWorkflowStatus(request, policyVersionId);
   const task = pendingTasks.find((t) => t.policyVersionId === policyVersionId) ?? null;
 
   return data({ match, policyVersionId, task, workflow });
@@ -157,12 +174,14 @@ export default function ApprovalReviewRoute({
         </Card>
       ) : null}
 
-      <Link
-        className="text-sm text-primary hover:underline"
-        to={`${documentTypeBasePath(match.documentType)}/${encodeURIComponent(match.number)}`}
-      >
-        {t("review.viewFull")}
-      </Link>
+      {match.documentType && match.number ? (
+        <Link
+          className="text-sm text-primary hover:underline"
+          to={`${documentTypeBasePath(match.documentType)}/${encodeURIComponent(match.number)}`}
+        >
+          {t("review.viewFull")}
+        </Link>
+      ) : null}
     </div>
   );
 }

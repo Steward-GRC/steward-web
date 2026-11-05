@@ -622,6 +622,46 @@ describe("mockEdge users directory", () => {
       expect(policy?.currentPublishedVersionId).toBe(published.id);
     });
 
+    it("submitWorkflow() refuses, as the gateway does, when no workflow applies", async () => {
+      const group = await mockEdge.createGroup({ name: "No Workflow", parentId: null, slug: "nw" });
+      const created = await mockEdge.createPolicy({
+        homeGroupId: group.id,
+        sensitivity: Sensitivity.Standard,
+        title: "Unreviewable Draft",
+      });
+      await expect(
+        mockEdge.submitWorkflow(created.currentDraftVersionId!, created.id, group.id),
+      ).rejects.toMatchObject({ code: "FAILED_PRECONDITION", name: "GatewayError" });
+    });
+
+    it("submitWorkflow() puts the draft in review on a workflow an ancestor group carries", async () => {
+      const parent = await mockEdge.createGroup({ name: "Reviewed", parentId: null, slug: "rv" });
+      await mockEdge.updateGroupSettings({
+        defaultWorkflowId: mockId("workflow", 1),
+        id: parent.id,
+      });
+      const child = await mockEdge.createGroup({
+        name: "Reviewed Child",
+        parentId: parent.id,
+        slug: "rvc",
+      });
+      const created = await mockEdge.createPolicy({
+        homeGroupId: child.id,
+        sensitivity: Sensitivity.Standard,
+        title: "Reviewed Draft",
+      });
+      const draftId = created.currentDraftVersionId!;
+
+      const { runId } = await mockEdge.submitWorkflow(draftId, created.id, child.id);
+
+      expect(runId).toContain(MOCK_MARKER);
+      const status = await mockEdge.workflowStatus(draftId);
+      expect(status).toMatchObject({ runId, status: "APPROVAL_STATUS_IN_REVIEW" });
+      expect(status.stageNames).toEqual(["Approval"]);
+      const draft = await mockEdge.draftVersion(created.id);
+      expect(draft?.status).toBe("IN_REVIEW");
+    });
+
     it("discardDraft() drops the working draft without erroring on a policy with none", async () => {
       const [group] = await mockEdge.authorableGroups();
       const created = await mockEdge.createPolicy({

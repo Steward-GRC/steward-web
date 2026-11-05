@@ -532,3 +532,42 @@ describe("liveEdge.listUserSessions last seen", () => {
     expect(unseen?.lastSeenAt).toBeNull();
   });
 });
+
+describe("liveEdge.submitWorkflow", () => {
+  it("starts the approval run for the draft and answers its run id", async () => {
+    const calls = routeGateway({
+      SubmitWorkflow: () => ({ submitWorkflow: { runId: "run-1" } }),
+    });
+    expect(await liveEdge.submitWorkflow("v-9", "p-1", "c-travel")).toEqual({ runId: "run-1" });
+    // The gateway walks the category lineage itself from categoryId, so none is sent.
+    expect(calls).toEqual([
+      {
+        operation: "SubmitWorkflow",
+        variables: {
+          ancestorCategoryIds: [],
+          categoryId: "c-travel",
+          policyId: "p-1",
+          policyVersionId: "v-9",
+        },
+      },
+    ]);
+  });
+
+  it("passes the gateway's refusal through, code and all", async () => {
+    routeGateway({
+      SubmitWorkflow: () => ({
+        errors: [
+          {
+            extensions: { code: "FAILED_PRECONDITION" },
+            message: "No approval workflow is attached to this policy's category.",
+          },
+        ],
+      }),
+    });
+    await expect(liveEdge.submitWorkflow("v-9", "p-1", "c-travel")).rejects.toMatchObject({
+      code: "FAILED_PRECONDITION",
+      message: "No approval workflow is attached to this policy's category.",
+      operation: "SubmitWorkflow",
+    });
+  });
+});
