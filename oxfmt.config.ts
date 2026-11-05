@@ -9,7 +9,6 @@ export default {
     ...shared.ignorePatterns,
     "**/dist/**",
     "**/build/**",
-    "**/build-mock/**",
     "**/coverage/**",
     "**/.react-router/**",
     "packages/api-client/schema/**",

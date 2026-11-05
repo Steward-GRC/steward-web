@@ -4,7 +4,6 @@ import { IdentityProvider } from "@steward-web/auth";
 import { identityFromRequest } from "@steward-web/auth/server";
 import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
 import { DEFAULT_LOCALE } from "@steward-web/i18n";
-import { MockBanner } from "@steward-web/mock-banner";
 import { AppShell, DiagnosticsProvider } from "@steward-web/shell";
 import { siteSettingsFromRequest } from "@steward-web/shell/server";
 import { Toaster } from "@steward-web/ui";
@@ -59,7 +58,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
   return (
     <IdentityProvider identity={loaderData.identity}>
       <AppShell banners={loaderData.siteSettings}>
-        <MockBanner />
         <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
         <Outlet />
       </AppShell>

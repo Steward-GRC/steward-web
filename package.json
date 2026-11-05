@@ -19,7 +19,6 @@
   },
   "scripts": {
     "build": "pnpm -r --if-present run build",
-    "build:mock": "pnpm -r --if-present run build:mock",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -32,9 +31,8 @@
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:no-dev-quick-login-leak": "node scripts/check-no-development-quick-login-leak.mjs",
     "check:no-dev-ui-issue-leak": "node scripts/check-no-development-ui-issue-leak.mjs",
-    "check:no-mock-leak": "node scripts/check-no-mock-leak.mjs",
     "check:schema": "bash packages/api-client/scripts/schema-check.sh",
-    "check": "pnpm run check:schema && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:no-mock-leak && pnpm run check:no-dev-ui-issue-leak && pnpm run check:no-dev-quick-login-leak"
+    "check": "pnpm run check:schema && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:no-dev-ui-issue-leak && pnpm run check:no-dev-quick-login-leak"
   },
   "devDependencies": {
     "@bugs5382/node-oxlint-config": "^1.0.1",

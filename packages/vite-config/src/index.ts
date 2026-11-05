@@ -11,51 +11,6 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
 const source = (name: string) => path.join(root, "packages", name, "src");
 
-/** The Vite mode that builds an app against the mock gateway. Any other mode is live. */
-export const MOCK_MODE = "mock";
-
-/** True when this process is a `--mode mock` build or dev server. */
-export const isMockRun = (argv: string[] = process.argv): boolean => {
-  const index = argv.indexOf("--mode");
-  return index !== -1 && argv[index + 1] === MOCK_MODE;
-};
-
-export interface EdgeChoice {
-  /** The client component every app imports as `@steward-web/mock-banner`. */
-  banner: string;
-  mock: boolean;
-  /** The server module every app imports as `@steward-web/edge.server`. */
-  module: string;
-}
-
-/**
- * Pick the network edge (and its banner) for a build. The choice is made here, at build
- * time, from the Vite mode alone: `--mode mock` swaps in the mock gateway and its persistent
- * "MOCK DATA" banner, everything else is live. A STEWARD_MOCK variable on a live build is
- * refused, so a production build can't be talked into mock mode.
- */
-export const chooseEdge = (
-  mode: string,
-  environment: NodeJS.ProcessEnv = process.env,
-): EdgeChoice => {
-  const mock = mode === MOCK_MODE;
-  const flag = environment.STEWARD_MOCK;
-  if (!mock && flag !== undefined && flag !== "" && flag !== "false") {
-    throw new Error(
-      `STEWARD_MOCK=${flag} is set for a "${mode}" build. Mock mode comes only from --mode mock.`,
-    );
-  }
-  return {
-    banner: mock
-      ? path.join(source("mock-gateway"), "MockBanner.tsx")
-      : path.join(source("shell"), "NoMockBanner.tsx"),
-    mock,
-    module: mock
-      ? path.join(source("mock-gateway"), "edge.server.ts")
-      : path.join(source("api-client"), "edge/live.server.ts"),
-  };
-};
-
 export interface DevelopmentUiIssueChoice {
   enabled: boolean;
   /** The client component every app imports as `@steward-web/dev-ui-issue-button`. */
@@ -91,19 +46,15 @@ export interface DevelopmentQuickLoginChoice {
 /**
  * Pick the dev quick login's modules at build time. It is allowed for the dev server
  * (`command === "serve"`) and for a build with `STEWARD_DEV_QUICK_LOGIN_BUILD=true` (the
- * `DEV_QUICK_LOGIN` Dockerfile build argument), never for a mock build, which has no real
- * accounts. Anything else aliases in the no-ops, so the users-file reader and the picker never
+ * `DEV_QUICK_LOGIN` Dockerfile build argument). Anything else aliases in the no-ops, so the users-file reader and the picker never
  * reach a release build. The server still has to turn it on at runtime
  * (`STEWARD_DEV_QUICK_LOGIN=true`).
  */
 export const chooseDevelopmentQuickLogin = (
-  mode: string,
   command: "build" | "serve",
   environment: NodeJS.ProcessEnv = process.env,
 ): DevelopmentQuickLoginChoice => {
-  const enabled =
-    mode !== MOCK_MODE &&
-    (command === "serve" || environment.STEWARD_DEV_QUICK_LOGIN_BUILD === "true");
+  const enabled = command === "serve" || environment.STEWARD_DEV_QUICK_LOGIN_BUILD === "true";
   return {
     component: enabled
       ? path.join(source("auth"), "QuickLogin.tsx")
@@ -143,25 +94,22 @@ export const buildInfoDefines = (
   };
 };
 
-/** Aliases shared by every app and package: the package-internal prefixes, the edge and its banner. */
+/**
+ * Aliases shared by every app and package: the package-internal prefixes and the network edge.
+ * The edge is always the live gateway client; mock data comes from steward-mock-server, which
+ * the apps reach through GATEWAY_URL like any gateway.
+ */
 export const sharedAliases = (
-  edge: EdgeChoice,
   developmentUiIssue: DevelopmentUiIssueChoice = chooseDevelopmentUiIssueButton({}),
-  developmentQuickLogin: DevelopmentQuickLoginChoice = chooseDevelopmentQuickLogin(
-    "production",
-    "build",
-    {},
-  ),
+  developmentQuickLogin: DevelopmentQuickLoginChoice = chooseDevelopmentQuickLogin("build", {}),
 ): Record<string, string> => ({
   "@steward-web/dev-quick-login": developmentQuickLogin.component,
   "@steward-web/dev-quick-login.server": developmentQuickLogin.module,
   "@steward-web/dev-ui-issue-button": developmentUiIssue.module,
-  "@steward-web/edge.server": edge.module,
-  "@steward-web/mock-banner": edge.banner,
+  "@steward-web/edge.server": path.join(source("api-client"), "edge/live.server.ts"),
   "#api": source("api-client"),
   "#auth": source("auth"),
   "#i18n": source("i18n"),
-  "#mock": source("mock-gateway"),
   "#shell": source("shell"),
   "#ui": source("ui"),
 });
@@ -185,6 +133,6 @@ export const packageConfig = (
 ): { test: ReturnType<typeof testConfig> } & UserConfig => ({
   define: buildInfoDefines({}),
   plugins: [react(), ...editorPlugins()],
-  resolve: { alias: sharedAliases(chooseEdge("test", {})) },
+  resolve: { alias: sharedAliases() },
   test: testConfig(directory),
 });

@@ -4,7 +4,7 @@
 // `./index.server.ts` (imported as `@steward-web/auth/server`): the two never share a barrel,
 // so a client bundle can never pull in a `*.server.ts` module through this one.
 export { can } from "./can";
-export { type Permission, PERMISSIONS, permissionsForRoles } from "./catalog";
+export { type Permission, PERMISSIONS } from "./catalog";
 export { type Identity, identityFromMe, type Me, NO_ACCESS } from "./identity";
 export { IdentityProvider, useCan, useIdentity } from "./IdentityContext";
 export { ProfileName, type ProfileNameProps } from "./ProfileName";

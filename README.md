@@ -18,7 +18,7 @@ pnpm run check     # lint, typecheck, unit tests and builds
 - [The authoring editor](docs/authoring-editor.md): what staff get, the draft format and
   co-editing.
 - [`docs/configuration.md`](docs/configuration.md) — every build argument and environment variable, with its default
-- [`docs/development.md`](docs/development.md) — the workspace, the codegen step and the mock build
+- [`docs/development.md`](docs/development.md) — the workspace, the codegen step and running against the mock server
 - [`docs/runbook.md`](docs/runbook.md) — the health probes, reading the build info, and calling other services
 - [`apps/docs`](apps/docs): the plain-language Steward guide for staff and administrators, a
   Docusaurus site. Run it with `pnpm --filter @steward-web/docs run dev`.

@@ -7,9 +7,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "build": "react-router build",
-    "build:mock": "react-router build --mode mock",
     "dev": "react-router dev",
-    "dev:mock": "react-router dev --mode mock",
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {

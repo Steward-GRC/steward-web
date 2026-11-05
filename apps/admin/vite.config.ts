@@ -5,7 +5,6 @@ import {
   buildInfoDefines,
   chooseDevelopmentQuickLogin,
   chooseDevelopmentUiIssueButton,
-  chooseEdge,
   editorPlugins,
   sharedAliases,
   testConfig,
@@ -13,15 +12,14 @@ import {
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig(({ command, mode }) => ({
+export default defineConfig(({ command }) => ({
   define: buildInfoDefines(),
   plugins: [tailwindcss(), reactRouter(), ...editorPlugins()],
   resolve: {
-    alias: sharedAliases(
-      chooseEdge(mode),
-      chooseDevelopmentUiIssueButton(),
-      chooseDevelopmentQuickLogin(mode, command),
-    ),
+    alias: sharedAliases(chooseDevelopmentUiIssueButton(), chooseDevelopmentQuickLogin(command)),
   },
+  // Pinned so the documented URLs hold whichever app starts first; a busy port fails
+  // instead of moving.
+  server: { port: 5174, strictPort: true },
   test: testConfig(import.meta.dirname),
 }));

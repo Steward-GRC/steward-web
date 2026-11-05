@@ -798,10 +798,9 @@ export interface UpdateGroupSettingsInput {
 }
 
 /**
- * The network edge every loader and action calls through `@steward-web/edge.server`
- * (aliased by `@steward-web/vite-config`'s `chooseEdge` to either `edge/live.server.ts`
- * here or `packages/mock-gateway`'s `edge.server.ts`). Both implement this same shape, so
- * swapping the edge is the only thing `--mode mock` changes.
+ * The network edge every loader and action calls through `@steward-web/edge.server`, which
+ * `@steward-web/vite-config` aliases to `edge/live.server.ts` here. Mock data comes from
+ * steward-mock-server, reached through `GATEWAY_URL` like any gateway.
  */
 export interface UpdateMyProfileInput {
   firstName: string;

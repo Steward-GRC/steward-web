@@ -21,9 +21,6 @@
     "fallbackHint": "Your browser didn't allow the copy. Select the text below and copy it by hand.",
     "fallbackTitle": "UI issue bundle"
   },
-  "mockBanner": {
-    "title": "Mock data"
-  },
   "siteBanners": {
     "announcement": "Announcement",
     "maintenance": "Scheduled maintenance"

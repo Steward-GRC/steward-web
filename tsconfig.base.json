@@ -25,7 +25,6 @@
       "#api/*": ["./packages/api-client/src/*"],
       "#auth/*": ["./packages/auth/src/*"],
       "#i18n/*": ["./packages/i18n/src/*"],
-      "#mock/*": ["./packages/mock-gateway/src/*"],
       "#shell/*": ["./packages/shell/src/*"],
       "#ui/*": ["./packages/ui/src/*"],
       "@steward-web/dev-quick-login": ["./packages/auth/src/NoQuickLogin.tsx"],
@@ -33,8 +32,7 @@
         "./packages/auth/src/NoDevelopmentQuickLogin.server.ts"
       ],
       "@steward-web/dev-ui-issue-button": ["./packages/shell/src/NoDevelopmentUiIssueButton.tsx"],
-      "@steward-web/edge.server": ["./packages/api-client/src/edge/live.server.ts"],
-      "@steward-web/mock-banner": ["./packages/shell/src/NoMockBanner.tsx"]
+      "@steward-web/edge.server": ["./packages/api-client/src/edge/live.server.ts"]
     }
   },
   "files": ["./types/env.d.ts"]

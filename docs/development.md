@@ -3,14 +3,13 @@
 ## The workspace
 
 A pnpm workspace (`pnpm-workspace.yaml`): `apps/staff`, `apps/admin` and `apps/docs`, plus the
-shared `packages/*` (`ui`, `i18n`, `auth`, `shell`, `api-client`, `mock-gateway`,
-`vite-config`) and the `server/` Node server image. `pnpm install --ignore-scripts` is the
+shared `packages/*` (`ui`, `i18n`, `auth`, `shell`, `api-client`, `vite-config`) and the `server/` Node server image. `pnpm install --ignore-scripts` is the
 only install step; `--ignore-scripts` keeps a `prepare` hook from resetting the commit hooks.
 
 ```bash
 corepack enable pnpm
 pnpm install --ignore-scripts
-pnpm run check     # schema check, lint, typecheck, unit tests, build, mock-leak check
+pnpm run check     # schema check, lint, typecheck, unit tests, build, leak checks
 ```
 
 Run one app in dev mode from its own directory, or with pnpm's `--filter`:
@@ -21,7 +20,7 @@ pnpm --filter @steward-web/admin run dev
 ```
 
 Both talk to `GATEWAY_URL` (default `http://localhost:8080/query`; see
-`docs/configuration.md`) unless started with `dev:mock` (below).
+`docs/configuration.md`). To work on mock data, point it at the mock server (below).
 
 `apps/docs` is a standalone Docusaurus site with no gateway dependency; run it the same way:
 
@@ -50,21 +49,30 @@ rewrites the schema file and its hash, and reruns codegen. Commit the three file
 matches the pinned commit and hash, and that `src/generated/` is exactly what codegen produces
 from it; it never writes.
 
-## The mock build
+## Mock data
 
-A build's network edge is chosen at build time, from the Vite mode alone:
+Mock data comes from [steward-mock-server](https://github.com/Steward-GRC/steward-mock-server), a
+standalone server that answers steward-gateway's API on its real protocol from invented,
+resettable data. The apps run in their normal live mode against it, so there is no mock build
+and no mock code in this repo. Clone it beside this repo and start it on port 5175:
 
 ```bash
-pnpm --filter @steward-web/staff run dev:mock     # dev server against the mock gateway
-pnpm run build:mock                                # every app, mock edge
+git clone https://github.com/Steward-GRC/steward-mock-server.git ../steward-mock-server
+(cd ../steward-mock-server && npm ci --ignore-scripts && npm start)
 ```
 
-`--mode mock` swaps in `packages/mock-gateway` as the app's network edge and its persistent
-"MOCK DATA" banner; every other mode (including no mode) is live. There is no environment
-variable that turns mock mode on — `packages/vite-config`'s `chooseEdge` refuses a live build
-that has `STEWARD_MOCK` set to anything but empty or `false`, so a production build can't be
-talked into serving mock data. `pnpm run check:no-mock-leak` (part of `pnpm run check`) scans
-each app's live `build/` output for the mock marker as a regression guard.
+Then run the apps against it, each in its own terminal:
+
+```bash
+GATEWAY_URL=http://localhost:5175/query pnpm --filter @steward-web/staff run dev
+GATEWAY_URL=http://localhost:5175/query pnpm --filter @steward-web/admin run dev
+```
+
+Staff is on <http://localhost:5173> and admin on <http://localhost:5174/admin>; both ports are
+pinned, so a port already in use stops that app instead of moving it. The mock's
+controls and the people you can sign in as are on <http://localhost:5175/_mock>. Any password
+works, and any six-digit code except `000000`. First-run setup takes the token
+`mock-setup-token` (the mock's `MOCK_SETUP_TOKEN`).
 
 ## The dev UI-issue button
 
@@ -72,7 +80,7 @@ A "Copy for UI issue" button, for local development only, in both the staff and 
 One click copies a single line of compact JSON describing the current page, for pasting into
 an issue or a chat.
 
-It needs two things set together, the same two-flag pattern the mock build uses:
+It needs two things set together:
 
 ```bash
 # Build with the button's code included.
@@ -85,12 +93,11 @@ STEWARD_DEV_UI_ISSUE_COPY=true pnpm --filter @steward-web/staff run dev
 `DEV_UI_ISSUE_COPY=true` (the Dockerfile build argument, `STEWARD_DEV_UI_ISSUE_COPY_BUILD` once
 it reaches the build) is what lets the button's code into the bundle at all:
 `packages/vite-config`'s `chooseDevUiIssueButton` aliases `@steward-web/dev-ui-issue-button` to
-the real button only then, a no-op otherwise, the same tree-shaking swap the mock banner uses.
+the real button only then, a no-op otherwise, a tree-shaking swap.
 `STEWARD_DEV_UI_ISSUE_COPY=true` is the server env the root loader reads to decide whether to
 actually render it. Both default to off, and either one being off hides the button.
 `pnpm run check:no-dev-ui-issue-leak` (part of `pnpm run check`) scans each app's live `build/`
-output for the button's marker as a regression guard, the same way `check:no-mock-leak` guards
-the mock banner.
+output for the button's marker as a regression guard.
 
 What it copies (schema v1, shared with every product's web repos — see
 `packages/shell/src/uiIssueBundle.ts`): one line of minified JSON with fixed keys in a fixed
@@ -146,8 +153,7 @@ It needs both switches, the same pattern as the dev UI-issue button:
 
 - **Build allowance:** always on for the dev server (`pnpm --filter @steward-web/staff run
   dev`); a production build only with `STEWARD_DEV_QUICK_LOGIN_BUILD=true`, which the image
-  sets from the `DEV_QUICK_LOGIN` build argument (default `false`). Never in a `--mode mock`
-  build. Without the allowance, `packages/vite-config`'s `chooseDevelopmentQuickLogin` aliases
+  sets from the `DEV_QUICK_LOGIN` build argument (default `false`). Without the allowance, `packages/vite-config`'s `chooseDevelopmentQuickLogin` aliases
   `@steward-web/dev-quick-login` and `@steward-web/dev-quick-login.server` to no-ops, so the
   picker and the users-file reader are not in the bundle and the `dev-quick-login` intent
   answers 404.
