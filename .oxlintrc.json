@@ -74,6 +74,7 @@
         "apps/*/app/routes.ts",
         "apps/*/app/routes/**/*.tsx",
         "apps/docs/sidebars.ts",
+        "apps/docs/src/pages/**/*.tsx",
         "packages/api-client/codegen.ts",
         "packages/api-client/src/edge/live.server.ts",
         "packages/editor-steward/src/client.ts",
