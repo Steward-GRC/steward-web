@@ -21,6 +21,7 @@ export default function ProceduresRoute({ loaderData }: Route.ComponentProps) {
   return (
     <PolicyLibrary
       categories={loaderData.categories}
+      columnOptions
       documentType={DocumentType.Procedure}
       policies={loaderData.policies}
     />

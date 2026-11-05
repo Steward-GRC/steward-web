@@ -18,12 +18,14 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return data({ categories, policies });
 };
 
-/** The admin catalog (A10): the staff library's table (U3), headed "Catalog". */
+/** The admin catalog (A10): the staff library's table (U3), headed "Catalog", with column
+ *  filters and Columns to hide and reorder them. */
 export default function PoliciesRoute({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
   return (
     <PolicyLibrary
       categories={loaderData.categories}
+      columnOptions
       documentType={DocumentType.Policy}
       policies={loaderData.policies}
       subtitle={t("catalog.subtitle")}

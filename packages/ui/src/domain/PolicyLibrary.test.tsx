@@ -1,7 +1,7 @@
-import type * as React from "react";
-
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type * as React from "react";
+
 import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -71,6 +71,7 @@ const renderAt = (
   initialEntries: string[] = ["/policies"],
   actions?: React.ReactNode,
   heading: { subtitle?: string; title?: string } = {},
+  columnOptions?: boolean,
 ) => {
   const Stub = createRoutesStub([
     {
@@ -78,6 +79,7 @@ const renderAt = (
         <PolicyLibrary
           actions={actions}
           categories={categories}
+          columnOptions={columnOptions}
           documentType={DocumentType.Policy}
           policies={policies}
           subtitle={heading.subtitle}
@@ -90,10 +92,33 @@ const renderAt = (
   render(<Stub initialEntries={initialEntries} />);
 };
 
+/** The header row's column names, after the star column. */
+const headers = () =>
+  within(screen.getAllByRole("row")[0]!)
+    .getAllByRole("columnheader")
+    .slice(1)
+    // The sorted column's arrow isn't part of its name.
+    .map((cell) => cell.textContent?.replaceAll(/[↑↓]/g, "").trim());
+
+const STAFF_HEADERS = [
+  "Number",
+  "Title",
+  "Category",
+  "Subcategory",
+  "Sensitivity",
+  "Status",
+  "Version",
+  "Updated",
+];
+
+/** The whole library's table with the column options on (A10). */
+const openColumns = () => renderAt(["/policies?status=all"], undefined, {}, true);
+
 const rowTitles = () =>
   screen
     .getAllByRole("row")
-    .slice(1)
+    // The header rows (and the column options' filter row) have no cells.
+    .filter((row) => within(row).queryAllByRole("cell").length > 0)
     .map((row) => within(row).getAllByRole("cell")[2]!.textContent);
 
 describe("PolicyLibrary", () => {
@@ -237,5 +262,48 @@ describe("PolicyLibrary", () => {
   it("shows the empty state when no row matches the filters", () => {
     renderAt(["/policies?q=no+such+policy"]);
     expect(screen.getByText("No policies match these filters.")).toBeInTheDocument();
+  });
+
+  it("has no column options unless they're turned on, as the staff library leaves them", () => {
+    renderAt(["/policies?status=all"]);
+    expect(screen.queryByRole("button", { name: "Columns" })).toBeNull();
+    expect(screen.queryByRole("searchbox", { name: "Filter Title" })).toBeNull();
+    expect(headers()).toEqual(STAFF_HEADERS);
+  });
+
+  describe("with column options (A10)", () => {
+    it("filters a column from the filter row under the headers", async () => {
+      openColumns();
+      await userEvent.type(screen.getByRole("searchbox", { name: "Filter Title" }), "accept");
+      expect(rowTitles()).toEqual(["Acceptable Use"]);
+      expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent(
+        "Title: “accept”",
+      );
+    });
+
+    it("filters a column by its values", async () => {
+      openColumns();
+      await userEvent.click(screen.getByRole("combobox", { name: "Filter Sensitivity" }));
+      await userEvent.click(await screen.findByRole("option", { name: "Sensitive" }));
+      expect(rowTitles()).toEqual(["Acceptable Use"]);
+    });
+
+    it("hides a column and shows it again", async () => {
+      openColumns();
+      await userEvent.click(screen.getByRole("button", { name: "Columns" }));
+      await userEvent.click(await screen.findByRole("checkbox", { name: "Subcategory" }));
+      expect(headers()).not.toContain("Subcategory");
+      await userEvent.click(screen.getByRole("checkbox", { name: "Subcategory" }));
+      expect(headers()).toContain("Subcategory");
+    });
+
+    it("moves a column earlier or later", async () => {
+      openColumns();
+      await userEvent.click(screen.getByRole("button", { name: "Columns" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Move Title earlier" }));
+      expect(headers().slice(0, 2)).toEqual(["Title", "Number"]);
+      await userEvent.click(screen.getByRole("button", { name: "Move Title later" }));
+      expect(headers().slice(0, 2)).toEqual(["Number", "Title"]);
+    });
   });
 });
