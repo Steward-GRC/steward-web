@@ -21,6 +21,7 @@ import type { ShellConfig } from "../shellConfig";
 import { AccountMenu } from "../AccountMenu";
 import { staffCreates } from "../createActions";
 import { EnvironmentBanner } from "../EnvironmentBanner";
+import { MainContent, SkipLink } from "../MainContent";
 import { SearchField } from "../SearchField";
 import { ActingAsBanner, ConnectionLostBanner, SecondFactorNudge } from "../ShellBanners";
 import { ShellFooter } from "../ShellFooter";
@@ -129,6 +130,7 @@ export const StaffShell = ({
 
   return (
     <div className="flex min-h-dvh flex-col" style={style}>
+      <SkipLink />
       <div className="sticky top-0 z-[var(--z-header)]">
         {impersonation ? <ActingAsBanner session={impersonation} /> : null}
         <EnvironmentBanner name={config.environment} />
@@ -217,7 +219,7 @@ export const StaffShell = ({
           {signedIn && secondFactorNudge ? (
             <SecondFactorNudge setUpUrl={ACCOUNT_PATHS.security} />
           ) : null}
-          <main className="flex-1">{children}</main>
+          <MainContent className="flex-1 outline-none">{children}</MainContent>
           <ShellFooter organisation={config.organisation} />
         </div>
       </div>

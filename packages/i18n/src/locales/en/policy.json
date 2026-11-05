@@ -23,6 +23,10 @@
       },
       "status": "Status"
     },
+    "phone": {
+      "all": "All",
+      "category": "Category"
+    },
     "policies": {
       "subtitle": "Draft, publish, and manage your group's policies.",
       "title": "Policies"

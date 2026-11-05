@@ -7,6 +7,7 @@ import { type CSSProperties, Fragment, type ReactNode, useId, useState } from "r
 import type { ChangeType } from "#ui/components/Badges";
 
 import { cn } from "#ui/lib/cn";
+import { PHONE, useMediaQuery } from "#ui/lib/media";
 
 export interface ApprovalStepperProps {
   /** Called with the stage index and the seat when someone picks Reassign (D14). */
@@ -373,8 +374,8 @@ const EndCap = ({
  * The approval stepper (U25, U25v): a "Submitted" end cap, one card per stage listing its
  * approvers, and a "Publish" end cap. Horizontal for up to four stages; beyond that it's
  * vertical, each stage collapsed to "{stage} · stage N of M · {rule} / Pending: {names}" and
- * the current one open, with any group units. Below the medium breakpoint the horizontal
- * form stacks its cards.
+ * the current one open, with any group units. On a phone it always takes the vertical form
+ * (U25m).
  */
 export const ApprovalStepper = ({
   onReassign,
@@ -384,7 +385,10 @@ export const ApprovalStepper = ({
   submitted,
 }: ApprovalStepperProps) => {
   const { t } = useTranslation(["approvals", "policy"]);
-  const vertical = orientation === "vertical" || (orientation === "auto" && stages.length > 4);
+  // A phone always takes the vertical form (U25m); wider, it's vertical beyond four stages.
+  const phone = useMediaQuery(PHONE);
+  const vertical =
+    orientation === "vertical" || (orientation === "auto" && (stages.length > 4 || phone));
   const publishLine = publish?.version
     ? publish.changeType
       ? t("stepper.publishAsChange", {

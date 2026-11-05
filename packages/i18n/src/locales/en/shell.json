@@ -274,6 +274,7 @@
     "dismiss": "Dismiss announcement",
     "maintenance": "Maintenance notice"
   },
+  "skipToMain": "Skip to main content",
   "ssoTest": {
     "landing": {
       "body_one": "{{requester}} at {{organisation}} asked you to test your sign-in. Nothing is saved to your account. Link valid for {{count}} hour.",

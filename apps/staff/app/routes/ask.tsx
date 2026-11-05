@@ -129,16 +129,20 @@ export default function Ask({ actionData, loaderData }: Route.ComponentProps) {
   const submit = useSubmit();
   const form = useRef<HTMLFormElement>(null);
   const [question, setQuestion] = useState("");
+  // The question last sent, repeated as a bubble above its answer on a phone (U6m).
+  const [asked, setAsked] = useState("");
   const asking = navigation.state === "submitting" && navigation.formAction?.endsWith("/ask");
   const triesId = useId();
 
   const send = (text: string) => {
     if (!text.trim()) return;
+    setAsked(text.trim());
     void submit({ question: text }, { method: "post" });
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 p-6 text-base text-ink sm:px-8 sm:py-7">
+    // On a phone the question box is pinned to the bottom (U6m); keep the page clear of it.
+    <div className="flex w-full flex-col gap-4 p-6 text-base text-ink max-md:pb-28 sm:px-8 sm:py-7">
       <div className="flex max-w-[720px] flex-col gap-1">
         <h1 className="text-[28px] leading-tight font-semibold">{t("ask.title")}</h1>
         <p className="leading-normal text-muted">{t("ask.description")}</p>
@@ -146,10 +150,16 @@ export default function Ask({ actionData, loaderData }: Route.ComponentProps) {
 
       {loaderData.available ? (
         <>
-          <Form className={`${card} flex flex-col gap-2 rounded-xl p-3.5`} method="post" ref={form}>
+          <Form
+            aria-label={t("ask.question")}
+            className={`${card} flex flex-col gap-2 rounded-xl p-3.5 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-[var(--z-sticky)] max-md:flex-row max-md:items-center max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:border-border-strong max-md:px-3 max-md:pt-2.5 max-md:pb-5`}
+            method="post"
+            onSubmit={() => setAsked(question.trim())}
+            ref={form}
+          >
             <textarea
               aria-label={t("ask.question")}
-              className="min-h-12 resize-none bg-transparent text-md leading-normal outline-none placeholder:text-muted"
+              className="min-h-12 resize-none bg-transparent text-md leading-normal outline-none placeholder:text-muted max-md:h-11 max-md:min-h-0 max-md:flex-1 max-md:rounded-full max-md:border max-md:border-control max-md:px-3.5 max-md:py-2.5 max-md:text-base"
               name="question"
               onChange={(event) => setQuestion(event.target.value)}
               onKeyDown={(event) => {
@@ -162,13 +172,13 @@ export default function Ask({ actionData, loaderData }: Route.ComponentProps) {
               value={question}
             />
             <div className="flex items-center gap-2.5">
-              <span className="text-xs text-muted">{t("ask.hint")}</span>
+              <span className="text-xs text-muted max-md:hidden">{t("ask.hint")}</span>
               <Button
-                className="ml-auto h-[38px] px-4"
+                className="ml-auto h-[38px] px-4 max-md:size-11 max-md:rounded-full max-md:px-0"
                 disabled={!question.trim() || asking}
                 type="submit"
               >
-                {t("ask.submit")}
+                <span className="max-md:sr-only">{t("ask.submit")}</span>
                 <Send aria-hidden="true" />
               </Button>
             </div>
@@ -197,6 +207,16 @@ export default function Ask({ actionData, loaderData }: Route.ComponentProps) {
                 </button>
               ))}
             </div>
+          ) : null}
+
+          {asked && (asking || actionData) ? (
+            <p
+              aria-label={t("ask.question")}
+              className="max-w-[85%] self-end rounded-[12px_12px_2px_12px] bg-primary-soft px-3 py-2.5 text-on-primary-soft md:hidden"
+              role="note"
+            >
+              {asked}
+            </p>
           ) : null}
 
           {asking ? (

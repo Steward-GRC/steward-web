@@ -6,7 +6,7 @@ import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import type { Category, Policy } from "./policy";
 
@@ -305,5 +305,47 @@ describe("PolicyLibrary", () => {
       await userEvent.click(screen.getByRole("button", { name: "Move Title later" }));
       expect(headers().slice(0, 2)).toEqual(["Number", "Title"]);
     });
+  });
+});
+
+/** A phone-width screen, as the browser's media queries report it. */
+const asPhone = () => {
+  globalThis.matchMedia = ((query: string) => ({
+    addEventListener: () => {},
+    matches: query === "(max-width: 47.98rem)",
+    media: query,
+    removeEventListener: () => {},
+  })) as unknown as typeof globalThis.matchMedia;
+};
+
+describe("PolicyLibrary on a phone (U3m)", () => {
+  const restore = globalThis.matchMedia;
+  afterEach(() => {
+    globalThis.matchMedia = restore;
+  });
+
+  it("lists every document as a card instead of the tiles and the table", async () => {
+    asPhone();
+    renderAt();
+    const cards = await screen.findByRole("list", { name: "Policies" });
+    const expense = within(cards).getByRole("link", { name: /Expense Claims/ });
+    expect(expense).toHaveAttribute("href", "/policies/POL-FINANCE-001");
+    expect(expense).toHaveTextContent("POL-FINANCE-001 · v2.0.0");
+    expect(expense).toHaveTextContent("Finance · Reimbursement");
+    expect(screen.queryByRole("table")).toBeNull();
+  });
+
+  it("filters by category from a row of chips, starting at All", async () => {
+    asPhone();
+    renderAt();
+    const chips = await screen.findByRole("group", { name: "Category" });
+    expect(within(chips).getByRole("button", { name: "All" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await userEvent.click(within(chips).getByRole("button", { name: "IT Security" }));
+    const cards = screen.getByRole("list", { name: "Policies" });
+    expect(within(cards).getAllByRole("link")).toHaveLength(1);
+    expect(within(cards).getByRole("link", { name: /Acceptable Use/ })).toBeInTheDocument();
   });
 });

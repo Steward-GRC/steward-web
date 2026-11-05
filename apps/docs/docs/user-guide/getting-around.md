@@ -67,3 +67,14 @@ options**:
 
 Your choices save to this browser and apply straight away. **Reset** puts them all back. The
 light or dark theme is under **Your profile** → **Preferences**.
+
+Using a keyboard? The first Tab on any page shows **Skip to main content**, which jumps past the
+header and menu to the page itself. When a link opens another page, the keyboard starts at that
+page's content.
+
+## 📱 On a phone
+
+Steward fits a phone's screen. The library lists each document as a card, with a row of
+categories to filter by. **Ask policies & procedures** keeps the question box at the bottom of the
+screen and repeats your question above its answer. An approval's stages are listed one under
+another.

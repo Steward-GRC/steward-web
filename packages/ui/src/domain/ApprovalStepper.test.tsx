@@ -173,6 +173,25 @@ describe("the approval stepper (U25)", () => {
     expect(within(legal).getAllByText("Alice").length).toBeGreaterThan(1);
   });
 
+  it("goes vertical on a phone by itself, however few the stages (U25m)", async () => {
+    const restore = globalThis.matchMedia;
+    globalThis.matchMedia = ((query: string) => ({
+      addEventListener: () => {},
+      matches: query === "(max-width: 47.98rem)",
+      media: query,
+      removeEventListener: () => {},
+    })) as unknown as typeof globalThis.matchMedia;
+    try {
+      render(<ApprovalStepper stages={twoStages} />);
+      expect(await screen.findByRole("list", { name: "Approval stages" })).toHaveAttribute(
+        "data-orientation",
+        "vertical",
+      );
+    } finally {
+      globalThis.matchMedia = restore;
+    }
+  });
+
   it("can be forced vertical, as on a phone", () => {
     render(<ApprovalStepper orientation="vertical" stages={twoStages} />);
     expect(screen.getByRole("list", { name: "Approval stages" })).toHaveAttribute(

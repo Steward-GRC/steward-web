@@ -158,3 +158,23 @@ describe("Ask policies & procedures (U6)", () => {
     expect(await screen.findByText(/is temporarily unavailable/)).toBeInTheDocument();
   });
 });
+
+describe("Ask on a phone (U6m)", () => {
+  it("repeats the question as a bubble above its answer", async () => {
+    renderAsk(available);
+    await userEvent.type(
+      await screen.findByRole("textbox", { name: "Your question" }),
+      "How long do I have to file an expense claim?",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const bubble = await screen.findByRole("note", { name: "Your question" });
+    expect(bubble).toHaveTextContent("How long do I have to file an expense claim?");
+    expect(bubble).toHaveClass("md:hidden");
+  });
+
+  it("pins the question box to the bottom of a phone's screen", async () => {
+    renderAsk(available);
+    const box = await screen.findByRole("form", { name: "Your question" });
+    expect(box).toHaveClass("max-md:fixed", "max-md:bottom-0");
+  });
+});
