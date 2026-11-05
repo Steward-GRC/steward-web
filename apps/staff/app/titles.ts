@@ -20,7 +20,10 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/reporting.cases.$caseId": "shell:titles.staff.case",
   "routes/search": "shell:titles.staff.search",
   "routes/sign-in": "shell:titles.staff.signIn",
+  "routes/share.$token": "shell:titles.staff.shared",
   "routes/sign-out": "shell:titles.staff.signOut",
+  "routes/sso-test": "shell:titles.staff.ssoTest",
+  "routes/sso-test.result": "shell:titles.staff.ssoTestResult",
   "routes/welcome": "shell:titles.staff.welcome",
   ...Object.fromEntries(
     COMING_SOON_PATHS.map((path) => [`coming-soon${path}`, "shell:titles.staff.comingSoon"]),

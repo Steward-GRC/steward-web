@@ -96,3 +96,25 @@ describe("the dev gate preview for the status gates", () => {
     });
   });
 });
+
+describe("the dev gate preview for pages opened from a link", () => {
+  it("shows G16's reader and its refusals with a sample policy", async () => {
+    const { sharedLinkPreview } = await import("@steward-web/dev-gate-preview.server");
+    const at = (gate: string) => sharedLinkPreview(new URL(`${ORIGIN}/share/x?gate=${gate}`));
+    expect(at("G16")).toMatchObject({ policy: { title: "Desk Booking Policy" }, view: "policy" });
+    expect(at("G16-revoked")).toEqual({ view: "revoked" });
+    expect(at("G16-expired")).toMatchObject({ view: "expired" });
+    expect(at("G16-email")).toEqual({ view: "email" });
+    expect(at("G18")).toBeUndefined();
+  });
+
+  it("shows G18's landing with a sample test", async () => {
+    const { ssoTestPreview } = await import("@steward-web/dev-gate-preview.server");
+    expect(ssoTestPreview(new URL(`${ORIGIN}/sso-test?gate=G18`))).toMatchObject({
+      domain: "example.net",
+      requester: "Alice",
+      view: "landing",
+    });
+    expect(ssoTestPreview(new URL(`${ORIGIN}/sso-test?gate=G16`))).toBeUndefined();
+  });
+});

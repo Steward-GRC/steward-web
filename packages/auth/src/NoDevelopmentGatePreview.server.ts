@@ -1,7 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  sharedLinkPreview as RealSharedLinkPreview,
   signInPreview as RealSignInPreview,
+  ssoTestPreview as RealSsoTestPreview,
   statusGatePreview as RealStatusGatePreview,
   welcomePreview as RealWelcomePreview,
 } from "./developmentGatePreview.server";
@@ -17,3 +19,7 @@ export const signInPreview: typeof RealSignInPreview = () => {};
 export const statusGatePreview: typeof RealStatusGatePreview = () => {};
 
 export const welcomePreview: typeof RealWelcomePreview = () => {};
+
+export const sharedLinkPreview: typeof RealSharedLinkPreview = () => {};
+
+export const ssoTestPreview: typeof RealSsoTestPreview = () => {};
