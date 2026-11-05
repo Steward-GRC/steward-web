@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { PERMISSIONS, useCan } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
-import { COMING_SOON } from "@steward-web/shell/coming-soon";
 import { Button } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
 import { Upload } from "lucide-react";
@@ -20,7 +19,7 @@ export const LibraryActions = ({ documentType }: { documentType: DocumentType })
   return (
     <>
       <Button asChild className="h-[38px] px-3" variant="secondary">
-        <Link to={COMING_SOON.importPolicies}>
+        <Link to="/drafts/import">
           <Upload aria-hidden="true" />
           {t("library.actions.import")}
         </Link>

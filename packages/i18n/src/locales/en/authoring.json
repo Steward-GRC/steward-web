@@ -121,6 +121,43 @@
       "workedOut": "Worked out by Steward"
     }
   },
+  "import": {
+    "asDrafts": "They were created as drafts.",
+    "choose": "Choose CSV",
+    "columns": "Columns: title and category, then optionally subcategory, type (policy or procedure), sensitivity (standard or sensitive) and template.",
+    "created": "Created as a draft",
+    "done_one": "Imported {{count}} policy",
+    "done_other": "Imported {{count}} policies",
+    "failed_one": "{{count}} row failed to import",
+    "failed_other": "{{count}} rows failed to import",
+    "failedRow": "Couldn't create it",
+    "headers": {
+      "category": "Category",
+      "issues": "Issues",
+      "title": "Title"
+    },
+    "issues": {
+      "duplicateTitle": "title used twice in this file",
+      "missingCategory": "missing category",
+      "missingTitle": "missing title",
+      "unknownCategory": "unknown category “{{value}}”",
+      "unknownSensitivity": "unknown sensitivity “{{value}}”",
+      "unknownSubcategory": "unknown subcategory “{{value}}”",
+      "unknownTemplate": "unknown template “{{value}}”",
+      "unknownType": "unknown type “{{value}}”"
+    },
+    "missingColumn": "This file has no {{column}} column.",
+    "ready_one": "{{count}} ready",
+    "ready_other": "{{count}} ready",
+    "readyRow": "Ready",
+    "submit_one": "Import {{count}} policy",
+    "submit_other": "Import {{count}} policies",
+    "subtitle": "Bulk-create policy drafts from a CSV file.",
+    "template": "CSV template",
+    "title": "Import from CSV",
+    "withIssues_one": "{{count}} with issues",
+    "withIssues_other": "{{count}} with issues"
+  },
   "new": {
     "cancel": "Cancel",
     "create": {
@@ -165,5 +202,26 @@
         "label": "Procedure"
       }
     }
+  },
+  "templates": {
+    "description": "Reusable section structures policies can be drafted against. Templates are created and managed in the admin console.",
+    "detail": {
+      "description": "Drafts pinned to this template inherit this structure, in order.",
+      "noSections": "This template has no sections yet.",
+      "optional": "Optional",
+      "required": "Required",
+      "sections": "Sections",
+      "use": "Use this template"
+    },
+    "empty": {
+      "body": "Your administrators haven't made any templates you can draft against.",
+      "title": "No templates yet"
+    },
+    "headers": {
+      "name": "Name",
+      "sections": "Sections",
+      "version": "Version"
+    },
+    "title": "Templates"
   }
 }

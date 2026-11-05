@@ -104,7 +104,10 @@ describe("staffNav", () => {
     expect(COMING_SOON_PATHS).not.toContain("/acknowledge");
     expect(links.ask).toBe("/ask");
     expect(COMING_SOON_PATHS).not.toContain("/ask");
-    for (const id of ["templates", "auditLog", "reportConcern", "myReports"]) {
+    expect(links.templates).toBe("/templates");
+    expect(COMING_SOON_PATHS).not.toContain("/templates");
+    expect(COMING_SOON_PATHS).not.toContain("/drafts/import");
+    for (const id of ["auditLog", "reportConcern", "myReports"]) {
       expect(COMING_SOON_PATHS).toContain(links[id]);
     }
   });

@@ -10,12 +10,9 @@
 export const COMING_SOON = {
   auditLog: "/audit",
   feedback: "/feedback",
-  // U21 (CSV import) lands with the editor and new-draft issue (#15).
-  importPolicies: "/drafts/import",
   logOutEverywhere: "/log-out-everywhere",
   myReports: "/compliance/reports",
   reportConcern: "/compliance/report",
-  templates: "/templates",
 } as const;
 
 export const COMING_SOON_PATHS: readonly string[] = Object.values(COMING_SOON);

@@ -49,6 +49,24 @@ draft** before you leave; an unfinished **New policy** form is kept in your brow
 come back to it.
 :::
 
+## 🧩 Starting from a template
+
+**Templates** in the side menu lists the section structures your administrators have made, with
+how many sections each has and its version. Open one to see its sections in order, which are
+required and which optional, then choose **Use this template** to start a new draft with it.
+
+## 📥 Importing many drafts from a CSV file
+
+To start several drafts at once, choose **Import** in the library's header.
+
+1. Download the **CSV template** and fill in a row per document. **title** and **category** are
+   required. **subcategory**, **type** (policy or procedure), **sensitivity** (standard or
+   sensitive) and **template** (a template's name) are optional.
+2. **Choose CSV.** Steward checks every row and shows how many are ready and how many have
+   issues, such as a missing title or a category you can't author in.
+3. Choose **Import**. Each ready row becomes a draft; rows with issues are left out. Steward says
+   how many it imported and links each new draft, and names any row it couldn't create.
+
 ## 👥 Writing together
 
 More than one author can open the same draft at once. The header shows who else is in it and

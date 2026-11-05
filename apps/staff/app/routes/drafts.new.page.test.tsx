@@ -115,4 +115,9 @@ describe("New policy (U20)", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create policy" })).toBeNull();
   });
+
+  it("opens with the template chosen from Use this template", async () => {
+    openForm("/drafts/new?template=tpl-1");
+    expect(await screen.findByRole("combobox", { name: "Template" })).toHaveValue("tpl-1");
+  });
 });
