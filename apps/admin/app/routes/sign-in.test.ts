@@ -117,3 +117,19 @@ describe("admin sign-in round trip under the /admin basename", () => {
     expect(await locationOf(request)).toBe("/admin");
   });
 });
+
+describe("admin sign-in as a gate", () => {
+  it("renders outside the app shell, as the centred gate card", () => {
+    expect(signIn.handle).toEqual({ gate: true });
+  });
+
+  it("hands the page what the gateway's sign-in offers besides the password", async () => {
+    stubGateway();
+    const result = await handler().query(new Request(`${ORIGIN}/admin/sign-in`));
+    if (result instanceof Response) throw new Error("expected the sign-in page");
+    expect(result.loaderData["sign-in"]).toMatchObject({
+      capabilities: { passwordReset: true },
+      state: { view: "password" },
+    });
+  });
+});

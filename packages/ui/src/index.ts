@@ -94,6 +94,16 @@ export { type Failure, toFailure } from "./feedback/failure";
 export { FailureDialog, type FailureDialogProps } from "./feedback/FailureDialog";
 export { EmptyState, NotFound, ReachError, type ReachErrorProps } from "./feedback/States";
 export { notify, type NotifyOptions, ToastCard, Toaster, type ToastTone } from "./feedback/Toast";
+export { CodeBoxes, type CodeBoxesProps } from "./gate/CodeBoxes";
+export {
+  GateAlert,
+  GateBrand,
+  GateCard,
+  type GateCardProps,
+  GateOrganisation,
+  GatePage,
+} from "./gate/Gate";
+export { QrCode } from "./gate/QrCode";
 export { PageHeader, type PageHeaderProps } from "./layout/PageHeader";
 export { cn } from "./lib/cn";
 export {

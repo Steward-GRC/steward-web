@@ -14,6 +14,7 @@ export {
   type StewardFacts,
 } from "./diagnosticsText";
 export { EnvironmentBanner } from "./EnvironmentBanner";
+export { GATE_HANDLE, GateShell, type GateShellProps, useIsGate } from "./GateShell";
 export { PageTitle, pageTitle } from "./pageTitle";
 export { refusalOf, useRefusalMessage } from "./refusal";
 export { RouteErrorBoundary } from "./RouteErrorBoundary";

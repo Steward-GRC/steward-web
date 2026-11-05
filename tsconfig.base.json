@@ -27,6 +27,9 @@
       "#i18n/*": ["./packages/i18n/src/*"],
       "#shell/*": ["./packages/shell/src/*"],
       "#ui/*": ["./packages/ui/src/*"],
+      "@steward-web/dev-gate-preview.server": [
+        "./packages/auth/src/NoDevelopmentGatePreview.server.ts"
+      ],
       "@steward-web/dev-quick-login": ["./packages/auth/src/NoQuickLogin.tsx"],
       "@steward-web/dev-quick-login.server": [
         "./packages/auth/src/NoDevelopmentQuickLogin.server.ts"
