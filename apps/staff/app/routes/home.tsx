@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useIdentity } from "@steward-web/auth";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
-import { Link } from "react-router";
+import { Link, useLoaderData } from "react-router";
 
 import type { Route } from "./+types/home";
+
+import { reportingEnabled } from "../reporting/enabled.server";
 
 /**
  * A placeholder landing page: the staff feature areas (gates, library, reader, authoring,
@@ -12,10 +14,14 @@ import type { Route } from "./+types/home";
  * entries come with the shell's left rail, a later port PR; these are a stopgap link in.
  * Ethics is a v0.2.0 feature area; it has no link here yet.
  */
-export const loader = ({ request }: Route.LoaderArgs) => requireIdentityFromRequest(request);
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  await requireIdentityFromRequest(request);
+  return { reporting: reportingEnabled() };
+};
 
 export default function Home() {
   const identity = useIdentity();
+  const { reporting } = useLoaderData<typeof loader>();
   return (
     <div className="grid gap-4 p-8">
       <p>Signed in as {identity.name || identity.username}.</p>
@@ -32,9 +38,11 @@ export default function Home() {
         <Link className="text-primary hover:underline" to="/search">
           Search
         </Link>
-        <Link className="text-primary hover:underline" to="/reporting/cases">
-          Reporting cases
-        </Link>
+        {reporting ? (
+          <Link className="text-primary hover:underline" to="/reporting/cases">
+            Reporting cases
+          </Link>
+        ) : null}
       </nav>
     </div>
   );

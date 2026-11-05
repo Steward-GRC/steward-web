@@ -41,6 +41,7 @@ import { data, Link, useFetcher } from "react-router";
 import type { Route } from "./+types/reporting.cases.$caseId";
 
 import { OPEN_SETTABLE_STATUSES, statusTone } from "../reporting/caseStatus";
+import { requireReporting } from "../reporting/enabled.server";
 import { enumLabelKey } from "../reporting/enumLabel";
 import {
   addCaseNote,
@@ -56,6 +57,7 @@ import {
 } from "../reporting/reporting.server";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
+  requireReporting();
   try {
     const reportCase = await getReportCase(request, params.caseId);
     return { reportCase };
@@ -65,6 +67,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 };
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
+  requireReporting();
   const caseId = params.caseId;
   const form = await request.formData();
   const intent = form.get("intent");
