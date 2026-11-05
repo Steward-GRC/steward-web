@@ -51,10 +51,29 @@
     },
     "back": "Back to the library",
     "changes": {
+      "added": "added: {{text}}",
+      "counts": "{{added}} added, {{removed}} removed",
       "empty": "No changes from the version it superseded.",
       "legend": "Added in the newer version is underlined; removed from the older version is struck through.",
+      "legendAdded": "added in the newer version",
+      "legendNew": "new",
+      "legendOld": "old",
+      "legendRemoved": "removed from the older version",
+      "newer": "Newer version",
+      "older": "Older version",
+      "removed": "removed: {{text}}",
+      "show": "Show",
+      "showUnchanged_one": "Show {{count}} unchanged paragraph",
+      "showUnchanged_other": "Show {{count}} unchanged paragraphs",
       "title": "Changes",
-      "versusPrior": "Changes vs. version {{version}}"
+      "unchanged_one": "{{count}} unchanged paragraph",
+      "unchanged_other": "{{count}} unchanged paragraphs",
+      "versusPrior": "Changes vs. version {{version}}",
+      "view": {
+        "label": "Diff layout",
+        "sideBySide": "Side by side",
+        "unified": "Unified"
+      }
     },
     "contacts": {
       "empty": "No contacts attached.",
@@ -78,6 +97,7 @@
       }
     },
     "history": {
+      "current": "· current",
       "empty": "No approval activity yet.",
       "events": {
         "ackConfigUpdated": "Acknowledgement settings changed",
@@ -141,15 +161,18 @@
       "superseded": "This version has been superseded.",
       "withdrawn": "This version was withdrawn."
     },
+    "outline": {
+      "collapse": "Collapse outline",
+      "expand": "Show outline: {{title}}",
+      "position": "{{current}} of {{total}}",
+      "positionShort": "{{current}}/{{total}}",
+      "title": "On this page"
+    },
     "redacted": {
       "body": "You're outside this sensitive policy's read audience, so its content is obfuscated.",
       "breakGlass": "Break glass to reveal",
       "noPermission": "You don't have permission to reveal it. Contact a compliance admin if you need access.",
       "title": "Sensitive content is hidden"
-    },
-    "related": {
-      "empty": "No related policies.",
-      "title": "Related"
     },
     "references": {
       "empty": "No references attached.",
@@ -160,12 +183,16 @@
       },
       "title": "References"
     },
+    "related": {
+      "empty": "No related policies.",
+      "title": "Related"
+    },
     "tabs": {
       "changes": "Changes",
       "contacts": "Contacts",
       "definitions": "Definitions",
-      "related": "Related",
       "references": "References",
+      "related": "Related",
       "view": "View"
     }
   },

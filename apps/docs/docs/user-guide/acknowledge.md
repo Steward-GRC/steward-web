@@ -16,8 +16,10 @@ it. To acknowledge means to confirm you have read and understood it.
 1. **Open the document.** Find it through your dashboard, or through
    [search](/user-guide/search).
 2. **Read it.** Read it from start to finish, not just the title.
-3. **Confirm.** Select **Acknowledge** and confirm in the dialog. This means "I have read and
-   understood this document." Steward records your name and the date.
+3. **Confirm.** Select **Acknowledge** on the plum "Please review and confirm" banner (at the
+   bottom of the screen on a phone) and confirm in the dialog. This means "I have read and
+   understood this document." Steward records your name and the date, and the banner changes to
+   "Acknowledged" with the date you did it.
 
 That is all it takes. Your organisation now has a clear record that you did your part.
 

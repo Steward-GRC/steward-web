@@ -32,11 +32,14 @@
   },
   "review": {
     "back": "Back to approvals",
-    "viewFull": "View the full document",
     "decision": {
       "approve": "Approve",
-      "comment": "Comment",
+      "comment": "Decision comment",
+      "commentHint": "Required to approve or reject…",
+      "commentPhone": "Decision comment (required)",
       "commentRequired": "A comment is required for this decision.",
+      "phoneNote": "Approve is enabled once you've written a comment.",
+      "recorded": "Your decision and comment are recorded against your name.",
       "reject": "Reject",
       "title": "Your decision"
     },
@@ -47,6 +50,50 @@
     "stepper": {
       "awaiting": "Awaiting a decision",
       "title": "Approval stages"
-    }
+    },
+    "viewFull": "View the full document"
+  },
+  "stepper": {
+    "approvedBy": "Approved by {{names}} · {{date}}",
+    "approvedOn": "Approved {{date}}",
+    "group": {
+      "approved": "Approved: {{names}}",
+      "pending": "Pending: {{names}}",
+      "quorum": {
+        "all": "all",
+        "majority": "majority",
+        "one": "one"
+      },
+      "rule": "— {{quorum}}: {{required}}/{{roster}}",
+      "status": {
+        "pending": "Pending",
+        "rejected": "Rejected",
+        "satisfied": "Satisfied"
+      }
+    },
+    "label": "Approval stages",
+    "pending": "Pending",
+    "pendingLabel": "Pending:",
+    "publish": "Publish",
+    "publishAs": "as {{version}}",
+    "publishAsChange": "as {{version}} · {{change}}",
+    "reassign": "Reassign",
+    "reassignName": "Reassign {{name}}",
+    "rejectedBy": "Rejected by {{names}} · {{date}}",
+    "rejectedOn": "Rejected {{date}}",
+    "role": "· {{role}}",
+    "roleYou": "· {{role}} · you",
+    "rule": {
+      "all": "all · {{approvals}} of {{required}}",
+      "quorum": "quorum · {{approvals}} of {{required}}"
+    },
+    "stageOf": "· stage {{n}} of {{total}}",
+    "stageState": {
+      "done": "Approved",
+      "rejected": "Rejected"
+    },
+    "submitted": "Submitted",
+    "submittedBy": "{{name}} · {{date}}",
+    "you": "· you"
   }
 }

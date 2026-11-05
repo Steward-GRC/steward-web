@@ -6,6 +6,7 @@ import {
   clearFormatCache,
   formatDate,
   formatDateTime,
+  formatDayMonth,
   formatHour,
   formatList,
   formatNumber,
@@ -45,6 +46,30 @@ describe("formatDate / formatDateTime", () => {
     const iso = "2026-08-24T14:30:00.000Z";
     expect(formatDateTime(iso, { locale: "en" })).toMatch(/\d{1,2}:\d{2}/);
     expect(formatDate(iso, { locale: "en" })).not.toMatch(/\d{1,2}:\d{2}/);
+  });
+});
+
+describe("the decided date style (3-colour-type-tokens.s6)", () => {
+  // The app's default English is the en descriptor (US), but the decided style is the same
+  // everywhere: day, short month, year ("2 Oct 2026"), and "2 Oct" without the year.
+  const iso = "2026-10-02T10:00:00Z";
+
+  it("is day, short month and year for the app's default locale", () => {
+    expect(formatDate(iso)).toBe("2 Oct 2026");
+    expect(formatDate(iso, { locale: "en" })).toBe("2 Oct 2026");
+    expect(formatDate(iso, { locale: "en-GB" })).toBe("2 Oct 2026");
+  });
+
+  it("drops the year, not the order, for the day and month", () => {
+    expect(formatDayMonth(iso)).toBe("2 Oct");
+  });
+
+  it("puts the 24-hour time after the same date", () => {
+    expect(formatDateTime("2026-10-02T14:02:00", { locale: "en" })).toBe("2 Oct 2026, 14:02");
+  });
+
+  it("still follows another locale's own order", () => {
+    expect(formatDate(iso, { locale: "de" })).toMatch(/^2\. Okt\. 2026$/);
   });
 });
 
@@ -130,5 +155,19 @@ describe("formatList", () => {
 
   it("supports a disjunction", () => {
     expect(formatList(["A", "B"], { locale: "en", type: "disjunction" })).toBe("A or B");
+  });
+});
+
+describe("formatDayMonth", () => {
+  it("is the day and short month, without the year", () => {
+    expect(formatDayMonth("2026-10-02T10:00:00Z", { locale: "en-GB" })).toBe("2 Oct");
+    expect(formatDayMonth("2026-10-02T10:00:00Z", { locale: "en" })).toBe("2 Oct");
+    expect(formatDayMonth(undefined, { locale: "en" })).toBe("—");
+  });
+});
+
+describe("formatList as a unit list", () => {
+  it("joins names with the locale's separator and no conjunction", () => {
+    expect(formatList(["Carol", "Grace"], { locale: "en", type: "unit" })).toBe("Carol, Grace");
   });
 });

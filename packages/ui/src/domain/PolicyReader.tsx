@@ -4,7 +4,7 @@ import { useTranslation } from "@steward-web/i18n";
 import { useState } from "react";
 import { Link, useFetcher } from "react-router";
 
-import { Detail, SensitivityBadge, StatusPill } from "#ui/components/Badges";
+import { Detail, SensitivityBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import {
   Accordion,
@@ -13,8 +13,6 @@ import {
   AccordionTrigger,
   Card,
   CardBody,
-  CardHeader,
-  CardTitle,
   Tabs,
   TabsContent,
   TabsList,
@@ -33,8 +31,11 @@ import {
 import { Banner } from "#ui/feedback/Banner";
 import { type Failure } from "#ui/feedback/failure";
 import { PageHeader } from "#ui/layout/PageHeader";
+import { cn } from "#ui/lib/cn";
 
-import { documentStatusOf, documentTypeBasePath } from "./policy";
+import { AckBanner } from "./AckBanner";
+import { DocumentStatusPill } from "./DocumentStatusPill";
+import { documentTypeBasePath } from "./policy";
 import { PolicyReaderChanges, PolicyReaderHistory } from "./PolicyReaderHistory";
 import {
   ackBannerState,
@@ -192,7 +193,8 @@ export const PolicyReader = ({ detail }: PolicyReaderProps) => {
   const notice = revisionNoticeOf(detail.status);
 
   return (
-    <div className="grid gap-6 p-6">
+    // The pending acknowledgement is pinned to the bottom on a phone; keep the page clear of it.
+    <div className={cn("grid gap-6 p-6", ackState === "pending" && "max-md:pb-48")}>
       <Link
         className="text-sm text-muted hover:text-ink hover:underline"
         to={documentTypeBasePath(detail.documentType)}
@@ -203,7 +205,7 @@ export const PolicyReader = ({ detail }: PolicyReaderProps) => {
       <PageHeader
         actions={
           <>
-            <StatusPill status={documentStatusOf(detail.status)} />
+            <DocumentStatusPill status={detail.status} />
             <SensitivityBadge sensitive={detail.sensitivity === "SENSITIVE"} />
           </>
         }
@@ -216,7 +218,7 @@ export const PolicyReader = ({ detail }: PolicyReaderProps) => {
         <CardBody className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Detail
             label={t("reader.metadata.status")}
-            value={<StatusPill status={documentStatusOf(detail.status)} />}
+            value={<DocumentStatusPill status={detail.status} />}
           />
           <Detail
             label={t("reader.metadata.sensitivity")}
@@ -232,19 +234,12 @@ export const PolicyReader = ({ detail }: PolicyReaderProps) => {
       {notice ? <Banner title={t(`reader.notices.${notice}`)} tone={NOTICE_TONE[notice]} /> : null}
 
       {ackState === "pending" && detail.currentVersionId ? (
-        <Banner
-          actions={<AcknowledgeDialog currentVersionId={detail.currentVersionId} />}
-          title={t("reader.ack.pendingTitle")}
-          tone="warn"
-        >
-          {t("reader.ack.pendingBody")}
-        </Banner>
+        <AckBanner
+          action={<AcknowledgeDialog currentVersionId={detail.currentVersionId} />}
+          state="pending"
+        />
       ) : null}
-      {ackState === "done" ? (
-        <Banner title={t("reader.ack.doneTitle")} tone="ok">
-          {t("reader.ack.doneBody", { date: detail.ack?.ackedAt })}
-        </Banner>
-      ) : null}
+      {ackState === "done" ? <AckBanner ackedAt={detail.ack?.ackedAt} state="done" /> : null}
 
       {redaction === "visible" ? (
         <Tabs defaultValue="view">
@@ -304,14 +299,7 @@ export const PolicyReader = ({ detail }: PolicyReaderProps) => {
         </Banner>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("reader.history.title")}</CardTitle>
-        </CardHeader>
-        <CardBody>
-          <PolicyReaderHistory history={detail.history} />
-        </CardBody>
-      </Card>
+      <PolicyReaderHistory history={detail.history} />
     </div>
   );
 };

@@ -27,6 +27,12 @@ describe("documentStatusOf", () => {
     expect(documentStatusOf("APPROVAL_STATUS_ARCHIVED")).toBe("retired");
     expect(documentStatusOf("APPROVAL_STATUS_UNSPECIFIED")).toBe("draft");
   });
+
+  it("gives no pill for rejected, superseded and withdrawn: they're history events", () => {
+    expect(documentStatusOf("APPROVAL_STATUS_REJECTED")).toBeNull();
+    expect(documentStatusOf("APPROVAL_STATUS_SUPERSEDED")).toBeNull();
+    expect(documentStatusOf("APPROVAL_STATUS_WITHDRAWN")).toBeNull();
+  });
 });
 
 describe("VersionBadge", () => {

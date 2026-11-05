@@ -4,26 +4,23 @@ import { SignalType } from "@steward-web/api-client";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
+import { EmptyState, PageHeader } from "@steward-web/ui";
 import {
-  ApproverPill,
-  type ApproverState,
-  Button,
-  Card,
-  CardBody,
-  EmptyState,
-  PageHeader,
-  Textarea,
-} from "@steward-web/ui";
-import { DocumentType, documentTypeBasePath } from "@steward-web/ui/domain";
+  ApprovalStepper,
+  DecisionPanel,
+  DocumentType,
+  documentTypeBasePath,
+} from "@steward-web/ui/domain";
 import { listPolicies } from "@steward-web/ui/domain/server";
 import { data, Link, redirect } from "react-router";
 
 import type { Route } from "./+types/approvals.$number";
 
 import { decideApproval, getWorkflowStatus, listPendingTasks } from "../approvals/approvals.server";
+import { stepperStagesOf } from "../approvals/stepperStages";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  await requireIdentityFromRequest(request);
+  const identity = await requireIdentityFromRequest(request);
   const cookie = request.headers.get("cookie") ?? undefined;
   const [policies, procedures, pendingTasks] = await Promise.all([
     listPolicies(DocumentType.Policy, cookie),
@@ -60,7 +57,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const workflow = await getWorkflowStatus(request, policyVersionId);
   const task = pendingTasks.find((t) => t.policyVersionId === policyVersionId) ?? null;
 
-  return data({ match, policyVersionId, task, workflow });
+  return data({ match, meId: identity.id, policyVersionId, task, workflow });
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -89,11 +86,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 };
 
-export default function ApprovalReviewRoute({
-  actionData,
-  loaderData,
-  params,
-}: Route.ComponentProps) {
+export default function ApprovalReviewRoute({ actionData, loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("approvals");
   const refusalMessage = useRefusalMessage(actionData?.error ?? {});
 
@@ -111,77 +104,34 @@ export default function ApprovalReviewRoute({
     );
   }
 
-  const { match, policyVersionId, task, workflow } = loaderData;
-  const stageIndex = workflow.currentStageIdx;
-  const assignees = workflow.stageAssignees[stageIndex] ?? [];
+  const { match, meId, policyVersionId, task, workflow } = loaderData;
 
   return (
-    <div className="grid gap-6 p-6">
+    // On a phone the decision panel is pinned to the bottom (U25m); keep the page clear of it.
+    <div className={task ? "grid gap-6 p-6 max-md:pb-80" : "grid gap-6 p-6"}>
       <PageHeader eyebrow={match.number} subtitle={match.category} title={match.title} />
 
-      <Card>
-        <CardBody className="grid gap-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-            {t("review.stepper.title")}
-          </h2>
-          <ol className="grid gap-3">
-            {workflow.stageNames.map((name, index) => (
-              <li className="grid gap-2" key={`${params.number}-stage-${index}`}>
-                <p className={index === stageIndex ? "font-semibold text-ink" : "text-muted"}>
-                  {name}
-                </p>
-                {index === stageIndex ? (
-                  <div className="flex flex-wrap gap-2">
-                    {assignees.map((assignee) => (
-                      <ApproverPill key={assignee.userId} state={assignee.state as ApproverState} />
-                    ))}
-                  </div>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        </CardBody>
-      </Card>
+      <ApprovalStepper stages={stepperStagesOf(workflow, meId)} />
 
-      {task ? (
-        <Card>
-          <CardBody>
-            <form className="grid gap-4" method="post">
-              <input name="policyVersionId" type="hidden" value={policyVersionId} />
-              <input name="runId" type="hidden" value={task.runId} />
-              <input name="taskId" type="hidden" value={task.taskId} />
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-                {t("review.decision.title")}
-              </h2>
-              <Textarea
-                aria-label={t("review.decision.comment")}
-                name="comment"
-                placeholder={t("review.decision.comment")}
-                required
-                rows={3}
-              />
-              {actionData?.error ? <p className="text-sm text-danger">{refusalMessage}</p> : null}
-              <div className="flex gap-2">
-                <Button name="intent" type="submit" value="approve">
-                  {t("review.decision.approve")}
-                </Button>
-                <Button name="intent" type="submit" value="reject" variant="danger">
-                  {t("review.decision.reject")}
-                </Button>
-              </div>
-            </form>
-          </CardBody>
-        </Card>
-      ) : null}
-
-      {match.documentType && match.number ? (
-        <Link
-          className="text-sm text-primary hover:underline"
-          to={`${documentTypeBasePath(match.documentType)}/${encodeURIComponent(match.number)}`}
-        >
-          {t("review.viewFull")}
-        </Link>
-      ) : null}
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div>
+          {match.documentType && match.number ? (
+            <Link
+              className="text-sm text-primary hover:underline"
+              to={`${documentTypeBasePath(match.documentType)}/${encodeURIComponent(match.number)}`}
+            >
+              {t("review.viewFull")}
+            </Link>
+          ) : null}
+        </div>
+        {task ? (
+          <DecisionPanel error={actionData?.error ? refusalMessage : undefined}>
+            <input name="policyVersionId" type="hidden" value={policyVersionId} />
+            <input name="runId" type="hidden" value={task.runId} />
+            <input name="taskId" type="hidden" value={task.taskId} />
+          </DecisionPanel>
+        ) : null}
+      </div>
     </div>
   );
 }

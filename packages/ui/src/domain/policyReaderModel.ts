@@ -68,19 +68,6 @@ export const revisionNoticeOf = (status: PolicyStatus): null | RevisionNoticeKin
   }
 };
 
-/**
- * Strips markup from the gateway's word-level diff HTML (`PolicySectionDiff.wordDiffHtml`)
- * down to plain text. The reader has no sanitizer for arbitrary server HTML yet (a follow-up
- * for when the shared document renderer lands with the authoring area), so the Changes
- * panel shows the diff's words without the `<ins>`/`<del>` styling rather than risk
- * rendering unsanitized markup.
- */
-export const plainTextOf = (html: string): string =>
-  html
-    .replaceAll(/<[^>]*>/g, "")
-    .replaceAll(/\s+/g, " ")
-    .trim();
-
 export interface HistoryVersionGroup {
   events: readonly HistoryEntry[];
   version: string;
