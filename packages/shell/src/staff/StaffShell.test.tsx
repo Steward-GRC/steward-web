@@ -292,3 +292,34 @@ describe("StaffShell signed out", () => {
     expect(screen.getByText("page content")).toBeInTheDocument();
   });
 });
+
+describe("the staff shell's banners (H7, H8, H9)", () => {
+  it("puts the acting-as banner above everything, the environment banner included", () => {
+    renderShell(bob, {
+      impersonation: {
+        expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+        targetName: "Erin",
+      },
+    });
+    const actingAs = screen.getByTestId("acting-as-banner");
+    expect(actingAs).toHaveTextContent("You are acting as Erin");
+    expect(
+      actingAs.compareDocumentPosition(screen.getByTestId("environment-banner")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("nudges for a stronger second factor when asked to, and not otherwise", () => {
+    renderShell(bob, { secondFactorNudge: true });
+    expect(screen.getByRole("link", { name: "Set up" })).toHaveAttribute(
+      "href",
+      "/profile/security",
+    );
+  });
+
+  it("has no acting-as banner or nudge by default", () => {
+    renderShell(bob);
+    expect(screen.queryByTestId("acting-as-banner")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Set up" })).toBeNull();
+  });
+});

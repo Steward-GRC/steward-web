@@ -57,6 +57,20 @@
     "staff": "Staff",
     "tag": "Admin"
   },
+  "banners": {
+    "actingAs": {
+      "before": "You are acting as ",
+      "detail": "· {{minutes}} min left · actions are audited under your own account",
+      "label": "Acting as {{name}}",
+      "stop": "Stop"
+    },
+    "connectionLost": "Can't reach the server — reconnecting…",
+    "secondFactor": {
+      "body": "Add an authenticator app or passkey for stronger sign-in — email codes still work.",
+      "dismiss": "Dismiss for 24 hours",
+      "setUp": "Set up"
+    }
+  },
   "brand": {
     "name": "Steward",
     "tagline": "Rules kept. Voices heard.™"

@@ -1,7 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type {
+  ImpersonationStatusQuery,
   LatestTemplateVersionQuery,
+  MyFactorsQuery,
   SearchAndAnswerQuery,
   SearchUsersQuery,
   UserFieldsFragment,
@@ -119,6 +121,9 @@ export interface HistoryEntry {
   readonly stage?: null | string;
   readonly versionLabel: string;
 }
+
+/** The caller's "act as" session (H9), or null when they aren't acting as anyone. */
+export type ImpersonationStatus = ImpersonationStatusQuery["impersonationStatus"];
 
 /** One run of inline text in a document block, with its marks and link. */
 export interface InlineRun {
@@ -272,6 +277,9 @@ export interface PolicyVersionSummary {
   readonly diff: readonly PolicySectionDiff[];
   readonly version: string;
 }
+
+/** One of the caller's second factors: kind is "totp", "email" or "passkey". */
+export type SecondFactor = MyFactorsQuery["myFactors"][number];
 
 /** A template selectable as a default or for a new draft. */
 export interface Template {

@@ -13,13 +13,16 @@ import { reportingEnabled } from "../reporting/enabled.server";
 /**
  * What the staff shell (H1) needs beyond the identity: the install settings, the reporting
  * switch, the category tree for Browse by category, and the counts for the Approvals and To
- * acknowledge chips. Each read is asked only of someone who can use it, and a failed read leaves
+ * acknowledge chips, the acting-as session (H9) and whether to nudge for a stronger second
+ * factor (H8). Each read is asked only of someone who can use it, and a failed read leaves
  * that part of the shell empty rather than failing the page.
  */
+const STRONG_FACTORS = new Set(["passkey", "totp"]);
+
 export const staffShellData = async (request: Request, identity: Identity) => {
   const signedIn = identity.id !== "";
   const cookie = request.headers.get("cookie") ?? undefined;
-  const [categories, approvals, acknowledge] = await Promise.all([
+  const [categories, approvals, acknowledge, impersonation, factors] = await Promise.all([
     signedIn && can(identity, "policy.read")
       ? listCategories(cookie).catch((): readonly Category[] => [])
       : Promise.resolve<readonly Category[]>([]),
@@ -35,6 +38,9 @@ export const staffShellData = async (request: Request, identity: Identity) => {
           () => null,
         )
       : Promise.resolve(null),
+    // The acting-as banner (H9) and the second-factor nudge (H8). A failed read shows neither.
+    signedIn ? edge.impersonationStatus(cookie).catch(() => null) : Promise.resolve(null),
+    signedIn ? edge.myFactors(cookie).catch(() => null) : Promise.resolve(null),
   ]);
   return {
     categories,
@@ -43,6 +49,12 @@ export const staffShellData = async (request: Request, identity: Identity) => {
       ...(acknowledge === null ? {} : { acknowledge }),
       ...(approvals === null ? {} : { approvals }),
     },
+    impersonation: impersonation
+      ? { expiresAt: impersonation.expiresAt, targetName: impersonation.targetName }
+      : null,
     reporting: reportingEnabled(),
+    // Only email codes: nudge towards an authenticator app or a passkey (H8).
+    secondFactorNudge:
+      Array.isArray(factors) && !factors.some((factor) => STRONG_FACTORS.has(factor.kind)),
   };
 };

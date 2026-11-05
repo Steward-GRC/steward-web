@@ -18,6 +18,18 @@ Every page has the same frame: a header across the top, a menu down the left, an
 - Your initial, at the far right, opens your account menu: **Your profile**, **Notifications**,
   **About and diagnostics** and **Sign out**.
 
+## 🚩 Messages at the top of the page
+
+A strip at the top of the page tells you about something that affects every page:
+
+- **You are acting as …** (with your name) — a site administrator is using Steward as you see it, to help
+  you. It shows the minutes left, every action is recorded under the administrator's own
+  account, and **Stop** ends it. It can't be hidden while it lasts.
+- **Can't reach the server — reconnecting…** — your connection or Steward dropped. It clears by
+  itself once Steward answers again.
+- **Add an authenticator app or passkey for stronger sign-in** — you only sign in with email
+  codes. **Set up** adds a stronger one; the × hides the message for a day.
+
 ## 📚 The menu
 
 The menu on the left groups everything you can use:

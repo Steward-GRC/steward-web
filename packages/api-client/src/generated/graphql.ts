@@ -1159,6 +1159,17 @@ export type GroupMappingsQuery = {
   }>;
 };
 
+export type ImpersonationStatusQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ImpersonationStatusQuery = {
+  readonly impersonationStatus: {
+    readonly targetUserId: string;
+    readonly targetName: string;
+    readonly startedAt: string;
+    readonly expiresAt: string;
+  } | null;
+};
+
 export type IssueCollabTokenMutationVariables = Exact<{
   policyId: string | number;
   draftId: string | number;
@@ -1347,6 +1358,12 @@ export type MyDraftsQuery = {
       readonly ack: boolean;
     };
   }>;
+};
+
+export type MyFactorsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type MyFactorsQuery = {
+  readonly myFactors: ReadonlyArray<{ readonly kind: string; readonly enrolledAt: string | null }>;
 };
 
 export type MyManagedGroupsQueryVariables = Exact<{ [key: string]: never }>;
@@ -2554,6 +2571,10 @@ export type StartDomainVerificationMutation = {
     readonly token: string;
   };
 };
+
+export type StopImpersonationMutationVariables = Exact<{ [key: string]: never }>;
+
+export type StopImpersonationMutation = { readonly stopImpersonation: boolean };
 
 export type SubmitDraftGenerationMutationVariables = Exact<{
   input: Types.SubmitDraftGenerationInput;
@@ -7510,6 +7531,34 @@ export const GroupMappingsDocument = {
     },
   ],
 } as unknown as DocumentNode<GroupMappingsQuery, GroupMappingsQueryVariables>;
+export const ImpersonationStatusDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ImpersonationStatus" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "impersonationStatus" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "targetUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "targetName" } },
+                { kind: "Field", name: { kind: "Name", value: "startedAt" } },
+                { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ImpersonationStatusQuery, ImpersonationStatusQueryVariables>;
 export const IssueCollabTokenDocument = {
   kind: "Document",
   definitions: [
@@ -8112,6 +8161,32 @@ export const MyDraftsDocument = {
     },
   ],
 } as unknown as DocumentNode<MyDraftsQuery, MyDraftsQueryVariables>;
+export const MyFactorsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "MyFactors" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "myFactors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "enrolledAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MyFactorsQuery, MyFactorsQueryVariables>;
 export const MyManagedGroupsDocument = {
   kind: "Document",
   definitions: [
@@ -11790,6 +11865,20 @@ export const StartDomainVerificationDocument = {
   StartDomainVerificationMutation,
   StartDomainVerificationMutationVariables
 >;
+export const StopImpersonationDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "StopImpersonation" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [{ kind: "Field", name: { kind: "Name", value: "stopImpersonation" } }],
+      },
+    },
+  ],
+} as unknown as DocumentNode<StopImpersonationMutation, StopImpersonationMutationVariables>;
 export const SubmitDraftGenerationDocument = {
   kind: "Document",
   definitions: [

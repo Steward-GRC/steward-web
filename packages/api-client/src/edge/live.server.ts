@@ -65,6 +65,7 @@ import {
   GlobalSettingsDocument,
   GrantRoleDocument,
   GroupMappingsDocument,
+  ImpersonationStatusDocument,
   IssueCollabTokenDocument,
   LatestTemplateVersionDocument,
   ListUserSessionsDocument,
@@ -74,6 +75,7 @@ import {
   MoveCategoryDocument,
   MyAckSummaryDocument,
   MyDraftsDocument,
+  MyFactorsDocument,
   MyManagedGroupsDocument,
   MyObligationsDocument,
   OrganizationsDocument,
@@ -121,6 +123,7 @@ import {
   SimulateCategoryDocument,
   SpCertificateDocument,
   StartDomainVerificationDocument,
+  StopImpersonationDocument,
   SubmitDraftGenerationDocument,
   SubmitPolicyReviewDocument,
   SubmitWorkflowDocument,
@@ -780,6 +783,12 @@ export const liveEdge: Edge = {
     });
     return data.groupMappings;
   },
+  async impersonationStatus(cookie) {
+    const data = await gatewayFetch(ImpersonationStatusDocument, {}, "ImpersonationStatus", {
+      cookie,
+    });
+    return data.impersonationStatus ?? null;
+  },
   async importIdpMetadata(url, cookie) {
     return gatewayRestFetch("/admin/idp/import-metadata", { url }, "ImportIdpMetadata", { cookie });
   },
@@ -898,6 +907,10 @@ export const liveEdge: Edge = {
       title,
       version,
     }));
+  },
+  async myFactors(cookie) {
+    const data = await gatewayFetch(MyFactorsDocument, {}, "MyFactors", { cookie });
+    return data.myFactors;
   },
   async myManagedGroups(cookie) {
     const data = await gatewayFetch(MyManagedGroupsDocument, {}, "MyManagedGroups", { cookie });
@@ -1195,6 +1208,12 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.startDomainVerification;
+  },
+  async stopImpersonation(cookie) {
+    const data = await gatewayFetch(StopImpersonationDocument, {}, "StopImpersonation", {
+      cookie,
+    });
+    return data.stopImpersonation;
   },
   async submitDraftGeneration(input, cookie) {
     const data = await gatewayFetch(
