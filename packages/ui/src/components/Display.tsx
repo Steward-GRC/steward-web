@@ -173,7 +173,7 @@ export const Kbd = ({ className, ...props }: ComponentProps<"kbd">) => (
 );
 
 export const Table = ({ className, ...props }: ComponentProps<"table">) => (
-  <div className="w-full overflow-x-auto">
+  <div className="relative w-full overflow-x-auto">
     <table className={cn("w-full border-collapse text-base", className)} {...props} />
   </div>
 );
