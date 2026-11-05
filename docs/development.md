@@ -75,9 +75,13 @@ sign-in page offers one button per person the mock manages. Plain
 it.
 
 Staff is on <http://localhost:5173> and admin on <http://localhost:5174/admin>; both ports are
-pinned, so a port already in use stops that app instead of moving it. The mock's
-controls and the people you can sign in as are on <http://localhost:5175/_mock>. Any password
-works, and any six-digit code except `000000`. First-run setup takes the token
+pinned, so a port already in use stops that app instead of moving it. Admin's `dev` and
+`dev:mock` set `STEWARD_STAFF_URL=http://localhost:5173`, so the admin header's Staff link and the
+magic links admin issues (`/share/{token}`, the staff app's shared reader) open on the staff
+app, not on admin's own port. The mock's
+controls and the people you can sign in as are on <http://localhost:5175/_mock>. Each person's
+password is `<username>-password` (for example `alice-password`), and any six-digit code except
+`000000` works. First-run setup takes the token
 `mock-setup-token` (the mock's `MOCK_SETUP_TOKEN`).
 
 Signing in on the mock's own page (`/_mock`, "Sign in here") sets the session cookie for
