@@ -64,10 +64,108 @@ describe("the page head", () => {
 
   it("gives every page route a title, as '<page> · Steward'", () => {
     const pages = routes
-      .map((entry) => entry.file.replace(/\.tsx$/, ""))
+      .map((entry) => entry.id ?? entry.file.replace(/\.tsx$/, ""))
       .filter((id) => !id.startsWith("routes/resources."));
     for (const id of pages) {
       expect(pageTitle(PAGE_TITLES, [{ id: "root" }, { id }]), id).toMatch(/^\S.* · Steward$/);
     }
+  });
+});
+
+const me = (permissions: string[]) => ({
+  email: "alice@example.org",
+  firstName: "Alice",
+  lastName: "Admin",
+  managedGroupIds: [],
+  name: "Alice Admin",
+  permissions,
+  roles: [],
+  scopes: { author: [] },
+  userId: "user-alice",
+  username: "alice",
+});
+
+const category = (id: string, name: string, parentId: null | string) => ({
+  ackEveryone: false,
+  ackEveryoneSet: false,
+  ackTriggers: [],
+  defaultTemplateId: null,
+  defaultTemplateNone: false,
+  defaultWorkflowId: null,
+  exclusionGroupIds: [],
+  id,
+  idpGroupIds: [],
+  name,
+  owners: [],
+  parentId,
+  reviewCadence: null,
+  reviewDate: null,
+  slug: name.toLowerCase(),
+});
+
+const answer = (data: unknown) => Promise.resolve(Response.json({ data }));
+
+const load = () =>
+  loader({
+    request: new Request("https://staff.steward.example/", {
+      headers: { cookie: "steward_sid=abc" },
+    }),
+  } as unknown as LoaderArguments);
+
+const gateway = (permissions: string[], calls: string[] = []) =>
+  vi.fn((_url: string, init: RequestInit) => {
+    const body = String(init.body);
+    if (body.includes("globalSettings")) return answer({ globalSettings: settings });
+    if (body.includes("query Me")) return answer({ me: me(permissions) });
+    if (body.includes("query CategoryTree")) {
+      calls.push("categories");
+      return answer({
+        categoryTree: [category("c1", "Workplace", null), category("c2", "Facilities", "c1")],
+      });
+    }
+    if (body.includes("query PendingTasks")) {
+      calls.push("approvals");
+      const task = { dueAt: null, policyTitle: "Desk Booking Policy", stageIndex: 0 };
+      return answer({
+        pendingTasks: [
+          { ...task, policyVersionId: "v1", runId: "r1", taskId: "t1" },
+          { ...task, policyVersionId: "v2", runId: "r2", taskId: "t2" },
+        ],
+      });
+    }
+    return Promise.reject(new Error(`unexpected request: ${body.slice(0, 40)}`));
+  });
+
+describe("the staff shell's data", () => {
+  it("counts pending approvals and lists the categories for Browse by category", async () => {
+    vi.stubGlobal("fetch", gateway(["policy.read", "policy.approve"]));
+    const result = await load();
+    expect(result.shell.counts).toEqual({ approvals: 2 });
+    expect(result.shell.categories).toEqual([
+      { id: "c1", name: "Workplace", slug: "workplace", subcategories: ["Facilities"] },
+    ]);
+  });
+
+  it("asks for nothing the person can't use", async () => {
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", gateway([], calls));
+    const result = await load();
+    expect(calls).toEqual([]);
+    expect(result.shell.counts).toEqual({});
+    expect(result.shell.categories).toEqual([]);
+  });
+
+  it("reads the install settings and the reporting switch", async () => {
+    vi.stubEnv("STEWARD_ENVIRONMENT", "test");
+    vi.stubEnv("STEWARD_ORGANISATION", "Example Organisation");
+    vi.stubEnv("STEWARD_REPORTING", "true");
+    vi.stubGlobal("fetch", gateway(["policy.read"]));
+    const result = await load();
+    expect(result.shell.config).toMatchObject({
+      environment: "test",
+      organisation: "Example Organisation",
+    });
+    expect(result.shell.reporting).toBe(true);
+    vi.unstubAllEnvs();
   });
 });

@@ -13,6 +13,16 @@ SPDX-License-Identifier: Apache-2.0
 @source "../../..";
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hc (&:where(.hc, .hc *));
+/* The staff sidebar's 64 px icon rail (H1t): always between 1024 and 1280 px, and at any width
+   once someone collapses it (data-rail="true" on the nav). */
+@custom-variant rail {
+  @media (width >= 64rem) and (width < 80rem) {
+    @slot;
+  }
+  &:where([data-rail="true"], [data-rail="true"] *) {
+    @slot;
+  }
+}
 
 @theme inline {
   --color-background: var(--background);

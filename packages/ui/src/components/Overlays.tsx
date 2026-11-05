@@ -93,6 +93,32 @@ export const DialogContent = ({
   );
 };
 
+/**
+ * A sheet from the left edge (the phone menu, H3o): the dialog's focus trap and Escape, with a
+ * 50% night scrim. `title` names it for screen readers; the sheet draws its own header.
+ */
+export const SheetContent = ({
+  children,
+  className,
+  title,
+  ...props
+}: { title: ReactNode } & Omit<ComponentProps<typeof DialogPrimitive.Content>, "title">) => (
+  <DialogPrimitive.Portal>
+    <DialogPrimitive.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-[rgb(29_21_32/.5)]" />
+    <DialogPrimitive.Content
+      aria-describedby={undefined}
+      className={cn(
+        "fixed inset-y-0 left-0 z-[var(--z-dialog)] flex flex-col bg-surface text-ink shadow-[0_20px_48px_rgb(38_27_37/.25)] focus:outline-none",
+        className,
+      )}
+      {...props}
+    >
+      <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
+      {children}
+    </DialogPrimitive.Content>
+  </DialogPrimitive.Portal>
+);
+
 export const DialogFooter = ({ className, ...props }: ComponentProps<"div">) => (
   <div className={cn("flex flex-wrap justify-end gap-2", className)} {...props} />
 );
@@ -150,13 +176,22 @@ export const PopoverContent = ({
 );
 
 /** A short hint on hover and focus. The trigger must already have an accessible name. */
-export const Tooltip = ({ children, content }: { children: ReactNode; content: ReactNode }) => (
+export const Tooltip = ({
+  children,
+  content,
+  side,
+}: {
+  children: ReactNode;
+  content: ReactNode;
+  side?: ComponentProps<typeof TooltipPrimitive.Content>["side"];
+}) => (
   <TooltipPrimitive.Provider delayDuration={300}>
     <TooltipPrimitive.Root>
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           className="z-[var(--z-popover)] max-w-xs rounded-md bg-ink px-2 py-1 text-xs text-surface"
+          side={side}
           sideOffset={4}
         >
           {content}

@@ -70,7 +70,16 @@ export const Mark = ({ className, size = 32, title, variant }: MarkProps) => {
  * header lockup (H1): a 26 px mark beside a wordmark at 20 px type. It names itself "Steward"
  * once, for screen readers.
  */
-export const Lockup = ({ className, size = 26 }: { className?: string; size?: number }) => {
+export const Lockup = ({
+  className,
+  fontSize,
+  size = 26,
+}: {
+  className?: string;
+  /** The wordmark's type size; by default it scales with the mark (20 px beside 26 px). */
+  fontSize?: number;
+  size?: number;
+}) => {
   const { t } = useTranslation("shell");
   return (
     <span
@@ -79,7 +88,7 @@ export const Lockup = ({ className, size = 26 }: { className?: string; size?: nu
       role="img"
     >
       <Mark size={size} variant="full" />
-      <Wordmark fontSize={(size * 20) / 26} />
+      <Wordmark fontSize={fontSize ?? (size * 20) / 26} />
     </span>
   );
 };

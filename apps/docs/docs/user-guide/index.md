@@ -20,6 +20,8 @@ Staff work at the main site; setup and administration live under `/admin` and ar
 
 - **[Signing in and passwords](/user-guide/signing-in)** — how to sign in, reset a password, and
   use one-time codes.
+- **[Getting around](/user-guide/getting-around)** — the header, the menu and the accessibility
+  button.
 - **[Your home dashboard](/user-guide/your-dashboard)** — what you see when you sign in.
 - **[Search](/user-guide/search)** — how to find a policy or procedure.
 - **[Acknowledge a document](/user-guide/acknowledge)** — how to confirm you have read one you

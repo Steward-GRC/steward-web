@@ -6,7 +6,7 @@ import { QuickLoginBar } from "@steward-web/dev-quick-login";
 import { quickLoginUsers } from "@steward-web/dev-quick-login.server";
 import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
 import { DEFAULT_LOCALE } from "@steward-web/i18n";
-import { AppShell, DiagnosticsProvider, PageTitle } from "@steward-web/shell";
+import { DiagnosticsProvider, PageTitle, StaffShell } from "@steward-web/shell";
 import { siteSettingsFromRequest } from "@steward-web/shell/server";
 import {
   brandLinks,
@@ -21,6 +21,7 @@ import { Links, Meta, Outlet, Scripts, type ShouldRevalidateFunctionArgs } from 
 
 import type { Route } from "./+types/root";
 
+import { staffShellData } from "./shell/shellData.server";
 import { PAGE_TITLES } from "./titles";
 
 export const links: Route.LinksFunction = () => [
@@ -43,6 +44,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     // Reused, not re-checked: quickLoginUsers() is already both build- and runtime-gated (empty
     // in any build or deployment that doesn't allow the dev quick login).
     quickLoginOn: quickLoginUsers().length > 0,
+    shell: await staffShellData(request, identity),
     siteSettings,
   };
 };
@@ -86,11 +88,17 @@ export const Layout = ({ children }: { children: ReactNode }) => (
 export default function App({ loaderData }: Route.ComponentProps) {
   return (
     <IdentityProvider identity={loaderData.identity}>
-      <AppShell banners={loaderData.siteSettings}>
+      <StaffShell
+        banners={loaderData.siteSettings}
+        categories={loaderData.shell.categories}
+        config={loaderData.shell.config}
+        counts={loaderData.shell.counts}
+        reporting={loaderData.shell.reporting}
+      >
         <QuickLoginBar enabled={loaderData.quickLoginOn} />
         <DevelopmentUiIssueButton app="staff" enabled={loaderData.devUiIssueCopy} />
         <Outlet />
-      </AppShell>
+      </StaffShell>
     </IdentityProvider>
   );
 }

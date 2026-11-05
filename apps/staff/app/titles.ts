@@ -1,5 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { COMING_SOON_PATHS } from "@steward-web/shell/coming-soon";
+
 /** Each page's title (its i18n key), by route id; the root `meta` turns it into "<page> · Steward". */
 export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/approvals": "shell:titles.staff.approvals",
@@ -18,4 +20,7 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/search": "shell:titles.staff.search",
   "routes/sign-in": "shell:titles.staff.signIn",
   "routes/sign-out": "shell:titles.staff.signOut",
+  ...Object.fromEntries(
+    COMING_SOON_PATHS.map((path) => [`coming-soon${path}`, "shell:titles.staff.comingSoon"]),
+  ),
 };
