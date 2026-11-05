@@ -14,6 +14,14 @@ share it with a magic link, give it a new author, move it, retire it or delete i
 people use in the staff app: the category tiles and their subcategories, the status filter,
 starred policies, and sorting by any column. Open a policy to read it.
 
+The admin table adds column options, and **Procedures** has them too:
+
+- **Filters under the headers:** type in **Number**, **Title** or **Version**, or pick one
+  **Category**, **Subcategory**, **Sensitivity** or **Status**. Each filter is a chip in
+  **Filtered by**, removable like the others.
+- **Columns:** show or hide a column, or move it earlier or later. **Title** always shows. Your
+  choice is kept in this browser.
+
 ## 🛠️ The Actions menu
 
 A policy (or procedure) opened from the admin console reads exactly as it does for staff. Its

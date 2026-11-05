@@ -24,4 +24,19 @@ describe("Catalog (A10)", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Catalog" })).toBeInTheDocument();
     expect(screen.getByText("Every policy across the org.")).toBeInTheDocument();
   });
+
+  it("turns on the library's column options (A10)", async () => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => (
+          <Policies
+            {...({ loaderData: { categories: [], policies: [] } } as unknown as PoliciesProps)}
+          />
+        ),
+        path: "/policies",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies"]} />);
+    expect(await screen.findByRole("button", { name: "Columns" })).toBeInTheDocument();
+  });
 });

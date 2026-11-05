@@ -41,7 +41,16 @@
       "updated": "Updated",
       "version": "Version"
     },
-    "toggleStar": "Star {{number}}"
+    "toggleStar": "Star {{number}}",
+    "columns": {
+      "button": "Columns",
+      "earlier": "Move {{column}} earlier",
+      "later": "Move {{column}} later",
+      "filter": "Filter {{column}}",
+      "any": "Any",
+      "chipText": "{{column}}: “{{value}}”",
+      "chipValue": "{{column}}: {{value}}"
+    }
   },
   "print": {
     "definitions": "Defined terms",

@@ -1,11 +1,10 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { formatDate, useTranslation } from "@steward-web/i18n";
+import { useTranslation } from "@steward-web/i18n";
 import { ChevronDown, Star } from "lucide-react";
-import { type ReactNode, useMemo } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Fragment, type ReactNode, useMemo } from "react";
+import { useSearchParams } from "react-router";
 
-import { SensitivityBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Table, TD, TH, THead } from "#ui/components/Display";
 import { CategoryTiles, FilterBar, Pager, SortHeader } from "#ui/components/LibraryControls";
@@ -22,14 +21,25 @@ import { cn } from "#ui/lib/cn";
 
 import type { Category, DocumentType, Policy } from "./policy";
 
-import { DocumentStatusPill } from "./DocumentStatusPill";
 import { useFavorites } from "./favorites";
-import { documentTypeCopy, policyPath } from "./policy";
+import {
+  CELL_CLASS,
+  ColumnFilter,
+  ColumnsMenu,
+  filterParameter,
+  LIBRARY_COLUMNS,
+  matchesColumnFilters,
+  useColumnPreferences,
+} from "./libraryColumns";
+import { documentTypeCopy } from "./policy";
 
 export interface PolicyLibraryProps {
   /** The header's own actions after Starred and Status: Import and New policy for an author. */
   actions?: ReactNode;
   categories: readonly Category[];
+  /** Column filters under the headers, and "Columns" to hide and reorder them, as the admin
+   *  catalog has (A10). Off by default, so the staff library (U3) stays as it is. */
+  columnOptions?: boolean;
   documentType: DocumentType;
   policies: readonly Policy[];
   /** The header's line under the title; the staff library's own when it's left out. */
@@ -74,6 +84,7 @@ const sortValue = (policy: Policy, key: SortKey): string => (policy[key] ?? "").
 export const PolicyLibrary = ({
   actions,
   categories,
+  columnOptions = false,
   documentType,
   policies,
   subtitle,
@@ -81,6 +92,9 @@ export const PolicyLibrary = ({
 }: PolicyLibraryProps) => {
   const { t } = useTranslation(["policy", "common"]);
   const { isFavorite, toggle } = useFavorites();
+  const columns = useColumnPreferences(documentType);
+  // Without column options the table keeps the staff library's columns, in its order.
+  const visibleColumns = columnOptions ? columns.visible : LIBRARY_COLUMNS;
   const [parameters, setParameters] = useSearchParams();
 
   const category = parameters.get("category") ?? "";
@@ -112,13 +126,26 @@ export const PolicyLibrary = ({
       .filter((p) => (statusValue ? statusValue.includes(p.status) : true))
       .filter((p) => (starredOnly ? isFavorite(p.number) : true))
       .filter((p) => (needle ? `${p.number} ${p.title}`.toLowerCase().includes(needle) : true))
+      .filter((p) => (columnOptions ? matchesColumnFilters(p, parameters) : true))
       .toSorted((a, b) => {
         const order = sortValue(a, sort).localeCompare(sortValue(b, sort), undefined, {
           numeric: true,
         });
         return direction === "asc" ? order : -order;
       });
-  }, [category, direction, isFavorite, policies, q, sort, starredOnly, status, subcategory]);
+  }, [
+    category,
+    columnOptions,
+    direction,
+    isFavorite,
+    parameters,
+    policies,
+    q,
+    sort,
+    starredOnly,
+    status,
+    subcategory,
+  ]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(Math.max(Number(parameters.get("page")) || 1, 1), pages);
@@ -129,6 +156,22 @@ export const PolicyLibrary = ({
     if (value === "in-progress") return t("library.filters.inProgress");
     return t(`status.${value}`);
   };
+
+  // Each column filter in the address is a chip too, removable like the others.
+  const columnChips = LIBRARY_COLUMNS.flatMap((column) => {
+    const value = parameters.get(filterParameter(column.key));
+    if (!value || !column.filter) return [];
+    const name = t(`library.table.${column.key}`);
+    return [
+      {
+        id: filterParameter(column.key),
+        label:
+          column.filter === "text"
+            ? t("library.columns.chipText", { column: name, value })
+            : t("library.columns.chipValue", { column: name, value: column.label(value, t) }),
+      },
+    ];
+  });
 
   const chips = [
     category ? { id: "category", label: category } : null,
@@ -141,6 +184,7 @@ export const PolicyLibrary = ({
       : null,
     starredOnly ? { id: "starred", label: t("library.filters.starred") } : null,
     q ? { id: "q", label: `“${q}”` } : null,
+    ...(columnOptions ? columnChips : []),
   ].filter((chip): chip is { id: string; label: string } => chip !== null);
 
   const header = (key: SortKey, label: string) => (
@@ -186,6 +230,14 @@ export const PolicyLibrary = ({
                 </MenuRadioGroup>
               </MenuContent>
             </Menu>
+            {columnOptions ? (
+              <ColumnsMenu
+                hidden={columns.preferences.hidden}
+                onMove={columns.move}
+                onToggle={columns.toggle}
+                order={columns.order}
+              />
+            ) : null}
             {actions}
           </>
         }
@@ -229,17 +281,33 @@ export const PolicyLibrary = ({
                 <TH className="w-9 px-3.5 py-2.5">
                   <span className="sr-only">{t("library.filters.starred")}</span>
                 </TH>
-                {header("number", t("library.table.number"))}
-                {header("title", t("library.table.title"))}
-                {header("category", t("library.table.category"))}
-                {header("subcategory", t("library.table.subcategory"))}
-                <TH className="px-3.5 py-2.5 text-sm text-muted">
-                  {t("library.table.sensitivity")}
-                </TH>
-                {header("status", t("library.table.status"))}
-                {header("version", t("library.table.version"))}
-                {header("updated", t("library.table.updated"))}
+                {visibleColumns.map((column) =>
+                  column.sorts ? (
+                    <Fragment key={column.key}>
+                      {header(column.key as SortKey, t(`library.table.${column.key}`))}
+                    </Fragment>
+                  ) : (
+                    <TH className="px-3.5 py-2.5 text-sm text-muted" key={column.key}>
+                      {t(`library.table.${column.key}`)}
+                    </TH>
+                  ),
+                )}
               </tr>
+              {columnOptions ? (
+                <tr>
+                  <TH className="px-3.5 pb-2" />
+                  {visibleColumns.map((column) => (
+                    <TH className="px-3.5 pb-2 font-normal" key={column.key}>
+                      <ColumnFilter
+                        column={column}
+                        onChange={(value) => update({ [filterParameter(column.key)]: value })}
+                        policies={policies}
+                        value={parameters.get(filterParameter(column.key)) ?? ""}
+                      />
+                    </TH>
+                  ))}
+                </tr>
+              ) : null}
             </THead>
             <tbody>
               {shown.map((policy) => (
@@ -261,29 +329,11 @@ export const PolicyLibrary = ({
                       />
                     </button>
                   </TD>
-                  <TD className="px-3.5 py-[11px] align-middle font-mono text-xs">
-                    {policy.number}
-                  </TD>
-                  <TD className="px-3.5 py-[11px] align-middle">
-                    <Link
-                      className="font-semibold text-ink hover:underline"
-                      to={policyPath(policy)}
-                    >
-                      {policy.title}
-                    </Link>
-                  </TD>
-                  <TD className="px-3.5 py-[11px] align-middle">{policy.category}</TD>
-                  <TD className="px-3.5 py-[11px] align-middle">{policy.subcategory}</TD>
-                  <TD className="px-3.5 py-[11px] align-middle">
-                    <SensitivityBadge sensitive={policy.sensitivity === "SENSITIVE"} />
-                  </TD>
-                  <TD className="px-3.5 py-[11px] align-middle">
-                    <DocumentStatusPill status={policy.status} />
-                  </TD>
-                  <TD className="px-3.5 py-[11px] align-middle font-mono">{policy.version}</TD>
-                  <TD className="px-3.5 py-[11px] align-middle text-muted">
-                    {formatDate(policy.updated)}
-                  </TD>
+                  {visibleColumns.map((column) => (
+                    <TD className={cn(CELL_CLASS, column.cellClass)} key={column.key}>
+                      {column.render(policy)}
+                    </TD>
+                  ))}
                 </tr>
               ))}
             </tbody>
