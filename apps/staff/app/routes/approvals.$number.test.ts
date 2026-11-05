@@ -107,3 +107,113 @@ describe("approvals.$number loader", () => {
     expect(result.data).toEqual({ match: null });
   });
 });
+
+const category = (id: string, name: string, parentId: null | string = null) => ({
+  ackEveryone: false,
+  ackEveryoneSet: false,
+  ackTriggers: "ON_PUBLISH",
+  defaultTemplateId: null,
+  defaultTemplateNone: false,
+  defaultWorkflowId: null,
+  exclusionGroupIds: null,
+  id,
+  idpGroupIds: null,
+  name,
+  owners: [],
+  parentId,
+  reviewCadence: "NONE",
+  reviewDate: null,
+  slug: name.toLowerCase(),
+});
+
+const expenses = {
+  currentDraftVersionId: "version-3",
+  currentPublishedVersionId: "version-2",
+  currentVersionNo: 2,
+  currentVersionStatus: "published",
+  documentType: "POLICY",
+  homeCategoryId: "c-expenses",
+  id: "p-1",
+  number: "POL-EXPENSES-000002",
+  ownerName: "Dave",
+  ownerUserId: "u-4",
+  retiredAt: null,
+  sensitivity: "STANDARD",
+  templateId: null,
+  templateNone: true,
+  title: "Expense Claims Policy",
+  updatedAt: "2026-10-01T00:00:00Z",
+  viewerCan: {
+    ack: false,
+    approve: true,
+    canBreakGlass: false,
+    contentObfuscated: false,
+    edit: false,
+    read: true,
+    submit: false,
+  },
+};
+
+describe("approvals.$number loader: the review", () => {
+  it("diffs the draft against the published version, reads the draft, and knows a preview", async () => {
+    const asked: string[] = [];
+    routeGateway({
+      CategoryTree: () => ({
+        categoryTree: [category("c-fin", "Finance"), category("c-expenses", "Expenses", "c-fin")],
+      }),
+      DiffVersions: (v) => {
+        asked.push(`${String(v.fromVersionId)}→${String(v.toVersionId)}`);
+        return {
+          diffVersions: [
+            {
+              changeType: "changed",
+              sectionKey: "claim",
+              sectionTitle: "Claim",
+              wordDiffHtml: "<ins>30</ins>",
+            },
+          ],
+        };
+      },
+      Me: () => ({ me: approver }),
+      PendingTasks: () => ({ pendingTasks: [] }),
+      Policies: () => ({ policies: [expenses] }),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          contentJson: "[]",
+          createdAt: null,
+          id: "version-3",
+          policyId: "p-1",
+          publishedAt: null,
+          status: "in_review",
+          templateVersionId: "",
+          versionNo: 3,
+        },
+      }),
+      UpcomingApprovals: () => ({
+        upcomingApprovals: [
+          {
+            policyTitle: "Expense Claims Policy",
+            policyVersionId: "version-3",
+            stageIndex: 1,
+            stageName: "Final approval",
+          },
+        ],
+      }),
+      WorkflowStatus: () => inReview,
+    });
+
+    const result = await load("POL-EXPENSES-000002");
+
+    expect(asked).toEqual(["version-2→version-3"]);
+    expect(result.data).toMatchObject({
+      match: { category: "Finance", subcategory: "Expenses", version: "3" },
+      preview: { stageNumber: 2 },
+      review: {
+        diff: [{ sectionKey: "claim" }],
+        upcoming: { blocks: [], version: "3" },
+      },
+      task: null,
+    });
+  });
+});

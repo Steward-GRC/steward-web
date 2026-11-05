@@ -84,6 +84,7 @@ import type {
   User,
   UserLabel,
   UserPage,
+  VersionDocument,
   Workflow,
   WorkflowDef,
 } from "./views";
@@ -217,6 +218,7 @@ export type {
   TemplateVersion,
   User,
   UserPage,
+  VersionDocument,
   Workflow,
   WorkflowDef,
   WorkflowStageDef,
@@ -834,6 +836,9 @@ export interface Edge {
     toVersionId: string,
     cookie?: string,
   ): Promise<readonly PolicySectionDiff[]>;
+  /** One version's body and appendices as the reader draws them, for the review page's
+   *  "Upcoming version" (U25). Null when the caller can't read it. */
+  versionDocument(versionId: string, cookie?: string): Promise<null | VersionDocument>;
   /** One workflow definition's full detail (its approval stages), for admin management. Null
    *  when it doesn't exist (or was archived). Site-admin only. */
   workflowDef(id: string, cookie?: string): Promise<null | WorkflowDef>;

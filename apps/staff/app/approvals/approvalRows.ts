@@ -15,10 +15,10 @@ type CatalogRow = {
 
 /** The catalog row whose published or current draft version is the given id, or undefined
  *  when the catalog hasn't loaded it (e.g. a version the viewer can't otherwise see). */
-export const matchPolicyForVersion = (
-  policies: readonly CatalogRow[],
+export const matchPolicyForVersion = <T extends CatalogRow>(
+  policies: readonly T[],
   versionId: string,
-): CatalogRow | undefined =>
+): T | undefined =>
   policies.find(
     (p) => p.currentPublishedVersionId === versionId || p.currentDraftVersionId === versionId,
   );

@@ -330,6 +330,13 @@ export interface UserPage {
   readonly users: readonly User[];
 }
 
+/** One version's body and appendices, as the reader draws them. */
+export interface VersionDocument {
+  readonly appendices: readonly PolicyAppendix[];
+  readonly blocks: readonly DocumentBlock[];
+  readonly version: string;
+}
+
 /** A workflow definition selectable as a category's default. */
 export interface Workflow {
   readonly id: string;

@@ -1021,6 +1021,25 @@ export const liveEdge: Edge = {
     );
     return data.setAIRetrievalConfig.topK;
   },
+  async versionDocument(versionId, cookie) {
+    const { policyVersion } = await gatewayFetch(
+      PolicyVersionDocument,
+      { id: versionId },
+      "PolicyVersion",
+      { cookie },
+    );
+    if (!policyVersion) return null;
+    return {
+      appendices: policyVersion.appendices.map((a) => ({
+        id: a.id,
+        letter: a.letter,
+        text: appendixText(a.contentJson),
+        title: a.title,
+      })),
+      blocks: documentBlocksFromContent(policyVersion.contentJson),
+      version: String(policyVersion.versionNo),
+    };
+  },
   async versionDiff(fromVersionId, toVersionId, cookie) {
     const data = await gatewayFetch(
       DiffVersionsDocument,

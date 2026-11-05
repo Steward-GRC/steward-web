@@ -117,6 +117,7 @@ export type {
   UserDeletionPreview,
   UserLabel,
   UserPage,
+  VersionDocument,
   Workflow,
   WorkflowDef,
   WorkflowStageDef,

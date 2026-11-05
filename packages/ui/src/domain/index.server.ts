@@ -9,4 +9,5 @@ export {
   breakGlassReveal,
   getPolicyDetail,
   getVersionDiff,
+  getVersionDocument,
 } from "./policyDetail.server";
