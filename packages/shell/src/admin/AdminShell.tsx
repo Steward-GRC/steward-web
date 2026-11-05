@@ -12,6 +12,7 @@ import { Link, useLocation } from "react-router";
 import type { ShellConfig } from "../shellConfig";
 
 import { AccountMenu } from "../AccountMenu";
+import { adminCreates } from "../createActions";
 import { EnvironmentBanner } from "../EnvironmentBanner";
 import { SearchField } from "../SearchField";
 import { ShellFooter } from "../ShellFooter";
@@ -220,6 +221,11 @@ export const AdminShell = ({
       }),
     [identity, reporting],
   );
+  const creates = useMemo(
+    () =>
+      adminCreates((permission) => identity.isSiteAdmin || identity.permissions.has(permission)),
+    [identity],
+  );
   const currentGroup = activeAdminGroup(groups, pathname);
   const currentDestination = activeAdminDestination(groups, pathname);
   // The canvas frames size boxes content-box: a 56 px header plus its 1 px rule is 57 px.
@@ -240,6 +246,7 @@ export const AdminShell = ({
             <>
               <SearchField
                 className="ml-[52px] hidden h-[38px] w-[382px] border-[#56465b] bg-transparent text-[#c9b8c7] focus-within:border-[#d9a6d2] lg:flex"
+                creates={creates}
                 placeholder={t("admin.searchPlaceholder")}
                 tone="on-dark"
               />

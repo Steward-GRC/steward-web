@@ -11,7 +11,13 @@ import {
 import { useEffect, useState } from "react";
 import { useFetcher, useNavigate } from "react-router";
 
+import type { CreateAction } from "./createActions";
+
 import { readRecent, rememberRecent } from "./commandPaletteRecent";
+
+/** A create action answers words in its label ("New procedure" for "proc" or "new pro"). */
+const matchesCreate = (label: string, words: string) =>
+  label.toLowerCase().includes(words.toLowerCase());
 
 /** Each app's `/resources/command-palette?q=` answers this: its results, grouped. */
 export interface CommandPaletteResults {
@@ -29,10 +35,13 @@ const SEARCH_DELAY_MS = 120;
  * categories (and, in admin, templates and groups), and "Recent" when nothing is typed.
  */
 export const ShellCommandPalette = ({
+  creates = [],
   initialQuery,
   onOpenChange,
   open,
 }: {
+  /** What the person may create ("New policy"…), listed under Create. */
+  creates?: readonly CreateAction[];
   initialQuery: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -66,13 +75,32 @@ export const ShellCommandPalette = ({
     return () => clearTimeout(timer);
   }, [load, open, words]);
 
-  const groups: PaletteGroup[] = words
-    ? (fetcher.data?.groups ?? []).map((group) => ({
-        heading: t(`palette.groups.${group.id}`, { defaultValue: group.id }),
-        id: group.id,
-        items: group.items,
+  // Create, as Brigade's command bar ranks it: what the person may create, narrowed to the
+  // words ("proc" keeps New procedure). It comes first with nothing typed, and after the
+  // search's own results once something is.
+  const createGroup: PaletteGroup = {
+    heading: t("palette.groups.create"),
+    id: "create",
+    items: creates
+      .map((action) => ({
+        icon: "create" as const,
+        id: `create:${action.id}`,
+        label: t(action.label),
+        to: action.to,
       }))
+      .filter((item) => !words || matchesCreate(item.label, words)),
+  };
+  const groups: PaletteGroup[] = words
+    ? [
+        ...(fetcher.data?.groups ?? []).map((group) => ({
+          heading: t(`palette.groups.${group.id}`, { defaultValue: group.id }),
+          id: group.id,
+          items: group.items,
+        })),
+        createGroup,
+      ]
     : [
+        createGroup,
         {
           heading: t("palette.groups.recent"),
           id: "recent",
@@ -100,10 +128,14 @@ export const ShellCommandPalette = ({
       groups={groups}
       loading={Boolean(words) && fetcher.state !== "idle"}
       onOpenChange={onOpenChange}
+      onOpenInNewTab={(item) => {
+        onOpenChange(false);
+        globalThis.open(item.to, "_blank", "noopener");
+      }}
       onQueryChange={setQuery}
       onSeeAll={(text) => go(`/search?${new URLSearchParams({ q: text }).toString()}`)}
       onSelect={(item) => {
-        rememberRecent(item);
+        if (item.icon !== "create") rememberRecent(item);
         go(item.to);
       }}
       open={open}

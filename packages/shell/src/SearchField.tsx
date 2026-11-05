@@ -6,7 +6,14 @@ import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Form } from "react-router";
 
+import type { CreateAction } from "./createActions";
+
 import { ShellCommandPalette } from "./ShellCommandPalette";
+
+/** True while the person is typing in a field, where a letter shortcut must not fire. */
+const typingIn = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName));
 
 /**
  * The header search (H1): a 36 px field with the ⌘K keycap. Focusing it, or ⌘K / Ctrl+K,
@@ -15,11 +22,14 @@ import { ShellCommandPalette } from "./ShellCommandPalette";
  */
 export const SearchField = ({
   className,
+  creates = [],
   placeholder,
   shortcut = true,
   tone = "default",
 }: {
   className?: string;
+  /** What the person may create from the palette ("New policy"…), by permission. */
+  creates?: readonly CreateAction[];
   placeholder?: string;
   /** Show the ⌘K keycap and listen for the shortcut. */
   shortcut?: boolean;
@@ -40,11 +50,26 @@ export const SearchField = ({
         event.preventDefault();
         setTyped(input.current?.value ?? "");
         setOpen(true);
+        return;
+      }
+      // Shift+C opens it on Create, as "New " typed; never while typing in a field.
+      if (
+        creates.length > 0 &&
+        event.shiftKey &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        event.key.toLowerCase() === "c" &&
+        !typingIn(event.target)
+      ) {
+        event.preventDefault();
+        setTyped(t("palette.createPrefix"));
+        setOpen(true);
       }
     };
     globalThis.addEventListener("keydown", onKey);
     return () => globalThis.removeEventListener("keydown", onKey);
-  }, [shortcut]);
+  }, [creates.length, shortcut, t]);
 
   return (
     <>
@@ -96,7 +121,12 @@ export const SearchField = ({
           </kbd>
         ) : null}
       </Form>
-      <ShellCommandPalette initialQuery={typed} onOpenChange={setOpen} open={open} />
+      <ShellCommandPalette
+        creates={creates}
+        initialQuery={typed}
+        onOpenChange={setOpen}
+        open={open}
+      />
     </>
   );
 };

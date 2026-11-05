@@ -12,12 +12,17 @@ const Where = () => {
   return <p>at {location.pathname + location.search}</p>;
 };
 
-const mountField = (loader = vi.fn()) => {
+const CREATES = [
+  { id: "policy", label: "shell:create.policy", to: "/drafts/new?type=POLICY" },
+  { id: "procedure", label: "shell:create.procedure", to: "/drafts/new?type=PROCEDURE" },
+];
+
+const mountField = (loader = vi.fn(), creates: typeof CREATES = []) => {
   const Stub = createRoutesStub([
     {
       Component: () => (
         <>
-          <SearchField />
+          <SearchField creates={creates} />
           <Where />
         </>
       ),
@@ -123,5 +128,77 @@ describe("the header search opens the command palette (H10)", () => {
     await userEvent.keyboard("{Meta>}k{/Meta}");
     const recent = await screen.findByRole("group", { name: "Recent" });
     expect(within(recent).getByRole("option", { name: /Desk Booking Policy/ })).toBeInTheDocument();
+  });
+});
+
+describe("creating from the command bar (Brigade-style)", () => {
+  it("lists what the person can create first when nothing is typed", async () => {
+    mountField(vi.fn(), CREATES);
+    await userEvent.keyboard("{Meta>}k{/Meta}");
+    const create = await screen.findByRole("group", { name: "Create" });
+    expect(
+      within(create)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["New policy", "New procedure"]);
+    expect(within(create).getByRole("option", { name: "New policy" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("narrows the create actions to the words, after the search's results", async () => {
+    mountField(vi.fn(), CREATES);
+    await userEvent.keyboard("{Meta>}k{/Meta}");
+    await userEvent.type(screen.getByRole("combobox"), "desk");
+    await screen.findByRole("group", { name: "Policies" });
+    expect(screen.queryByRole("group", { name: "Create" })).toBeNull();
+    await userEvent.clear(screen.getByRole("combobox"));
+    await userEvent.type(screen.getByRole("combobox"), "proc");
+    const create = await screen.findByRole("group", { name: "Create" });
+    expect(
+      within(create)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["New procedure"]);
+  });
+
+  it("opens the create page on Enter", async () => {
+    mountField(vi.fn(), CREATES);
+    await userEvent.keyboard("{Meta>}k{/Meta}");
+    await screen.findByRole("group", { name: "Create" });
+    await userEvent.keyboard("{Enter}");
+    expect(await screen.findByText("at /drafts/new?type=POLICY")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("opens on Create with Shift+C", async () => {
+    mountField(vi.fn(), CREATES);
+    await userEvent.keyboard("{Shift>}C{/Shift}");
+    expect(await screen.findByRole("combobox")).toHaveValue("New ");
+    expect(await screen.findByRole("group", { name: "Create" })).toBeInTheDocument();
+  });
+
+  it("leaves Shift+C alone while typing in a field", async () => {
+    render(
+      <>
+        <input aria-label="Notes" />
+      </>,
+    );
+    mountField(vi.fn(), CREATES);
+    await userEvent.type(screen.getByRole("textbox", { name: "Notes" }), "C");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("opens a result in a new tab with Cmd+Enter", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    mountField(vi.fn(), CREATES);
+    await userEvent.keyboard("{Meta>}k{/Meta}");
+    await screen.findByRole("group", { name: "Create" });
+    await userEvent.keyboard("{Meta>}{Enter}{/Meta}");
+    expect(open).toHaveBeenCalledWith("/drafts/new?type=POLICY", "_blank", "noopener");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    vi.unstubAllGlobals();
   });
 });

@@ -12,7 +12,10 @@ Every page has the same frame: a header across the top, a menu down the left, an
 - **Steward** at the top left takes you back to **My work**. Your organisation's name sits beside
   it.
 - **Search** finds policies, procedures and categories. Click the search box, or press ⌘K (Ctrl+K
-  on Windows) from anywhere, to open the search panel; see [Search](/user-guide/search).
+  on Windows) from anywhere, to open the search panel; see [Search](/user-guide/search). If you
+  write policies, the panel also starts new ones: **New policy**, **New procedure** and **New
+  draft from a template**. **Shift+C** opens it straight on these, and **⌘↵** (Ctrl+Enter)
+  opens a result in a new tab.
 - **Admin** appears if you can manage Steward, and opens the admin app.
 - **Feedback** and **Docs** are next, then the bell for your notifications.
 - Your initial, at the far right, opens your account menu: **Your profile**, **Notifications**,
