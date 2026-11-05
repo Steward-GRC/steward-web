@@ -70,7 +70,7 @@ export const adminNav = ({ compliance }: { compliance: boolean }): AdminGroup[] 
   group("overview", LayoutGrid, [destination("overview", LayoutGrid, "/")]),
   group("categories", Folder, [
     destination("directory", FolderTree, "/groups"),
-    destination("access", ListChecks, ADMIN_COMING_SOON.access),
+    destination("access", ListChecks, "/access"),
   ]),
   group("structure", LayoutTemplate, [
     destination("templates", LayoutTemplate, "/templates"),

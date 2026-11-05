@@ -53,6 +53,9 @@ export default [
   route("workflows/:id", "routes/workflows.$id.tsx"),
   route("settings", "routes/settings.tsx"),
   route("setup", "routes/setup.tsx"),
+  route("access", "routes/access.tsx"),
+  route("access/:categoryId", "routes/access.$categoryId.tsx"),
+  route("resources/access-simulate", "routes/resources.access-simulate.tsx"),
   route("audit", "routes/audit.tsx"),
   // The shell's designed destinations that aren't built yet (H2, H14): each answers "Coming
   // soon" until its feature PR replaces the route.

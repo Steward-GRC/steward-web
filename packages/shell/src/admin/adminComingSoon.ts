@@ -6,7 +6,6 @@
  * imports: the admin app's `routes.ts` reads it at config time.
  */
 export const ADMIN_COMING_SOON = {
-  access: "/access",
   caseSettings: "/compliance/settings",
   logOutEverywhere: "/log-out-everywhere",
   notifications: "/notifications",

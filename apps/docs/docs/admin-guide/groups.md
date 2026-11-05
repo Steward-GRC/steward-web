@@ -69,5 +69,5 @@ identity provider sends at sign-in can be named there instead, by its name.
 
 ## ➡️ What comes next
 
-With groups and their defaults in place, see [Who can do what](/concepts/access-model) for how
-access is decided within a group, or move on to [Libraries](/admin-guide/libraries).
+With groups and their defaults in place, set who can do what in each one on
+[Category access](/admin-guide/category-access), or move on to [Libraries](/admin-guide/libraries).

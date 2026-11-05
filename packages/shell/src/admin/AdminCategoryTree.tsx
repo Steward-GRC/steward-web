@@ -34,15 +34,22 @@ const withAncestors = (byId: Map<string, CategoryNode>, id: string) => {
 
 /**
  * The category tree in the admin panel on Directory and Access (H2): a filter, then each
- * top-level category with a chevron that opens its subcategories (28 px in). The category
- * being edited is marked; its branch starts open.
+ * top-level category with a chevron that opens its subcategories (28 px in). Each category
+ * opens on the destination showing (`base`: its details on Directory, its access on Access).
+ * The category being edited is marked; its branch starts open.
  */
-export const AdminCategoryTree = ({ categories }: { categories: readonly CategoryNode[] }) => {
+export const AdminCategoryTree = ({
+  base = "/groups",
+  categories,
+}: {
+  base?: "/access" | "/groups";
+  categories: readonly CategoryNode[];
+}) => {
   const { t } = useTranslation("shell");
   const { pathname } = useLocation();
   const [query, setQuery] = useState("");
   const byId = useMemo(() => new Map(categories.map((node) => [node.id, node])), [categories]);
-  const currentId = /^\/groups\/([^/]+)$/.exec(pathname)?.[1];
+  const currentId = /^\/(?:access|groups)\/([^/]+)$/.exec(pathname)?.[1];
   const [open, setOpen] = useState<ReadonlySet<string>>(
     () => new Set(currentId ? withAncestors(byId, currentId) : []),
   );
@@ -95,7 +102,7 @@ export const AdminCategoryTree = ({ categories }: { categories: readonly Categor
             <Link
               aria-current={current ? "location" : undefined}
               className="min-w-0 flex-1 truncate text-inherit hover:text-inherit"
-              to={`/groups/${node.id}`}
+              to={`${base}/${node.id}`}
             >
               {node.name}
             </Link>

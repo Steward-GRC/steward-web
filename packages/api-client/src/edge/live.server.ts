@@ -27,6 +27,7 @@ import {
   CategoryChildrenDocument,
   CategoryDocument,
   type CategoryFieldsFragment,
+  CategoryRulesetDocument,
   CategoryTreeDocument,
   ChangeOrgProtocolDocument,
   CloseCaseDocument,
@@ -99,6 +100,7 @@ import {
   ReorderAppendicesDocument,
   ReportCaseDocument,
   ReportCasesDocument,
+  ResolveUserLabelsDocument,
   RetireTemplateDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
@@ -108,12 +110,14 @@ import {
   SetCaseStatusDocument,
   SetCategoryDefaultsDocument,
   SetCategoryGovernanceDocument,
+  SetCategoryRulesetDocument,
   SetContactBlockArchivedDocument,
   SetDefinitionArchivedDocument,
   SetEmailServiceConfigDocument,
   SetGlobalSettingsDocument,
   SetReferenceArchivedDocument,
   SignalWorkflowDocument,
+  SimulateCategoryDocument,
   SpCertificateDocument,
   StartDomainVerificationDocument,
   SubmitDraftGenerationDocument,
@@ -508,6 +512,12 @@ export const liveEdge: Edge = {
       slug: root.slug,
       subcategories: all.filter((c) => c.parentId === root.id).map((c) => c.name),
     }));
+  },
+  async categoryRuleset(categoryId, cookie) {
+    const data = await gatewayFetch(CategoryRulesetDocument, { categoryId }, "CategoryRuleset", {
+      cookie,
+    });
+    return data.categoryRuleset.rules;
   },
   async changeOrgProtocol(domain, protocol, config, secret, cookie) {
     const data = await gatewayFetch(
@@ -1031,6 +1041,16 @@ export const liveEdge: Edge = {
     );
     return data.reportCases;
   },
+  async resolveUserLabels(ids, cookie) {
+    if (ids.length === 0) return [];
+    const data = await gatewayFetch(
+      ResolveUserLabelsDocument,
+      { ids: [...ids] },
+      "ResolveUserLabels",
+      { cookie },
+    );
+    return data.resolveUserLabels;
+  },
   async retireTemplate(id, cookie) {
     const data = await gatewayFetch(RetireTemplateDocument, { id }, "RetireTemplate", { cookie });
     return data.retireTemplate;
@@ -1083,6 +1103,15 @@ export const liveEdge: Edge = {
     });
     return data.setCaseStatus;
   },
+  async setCategoryRuleset(categoryId, rules, cookie) {
+    const data = await gatewayFetch(
+      SetCategoryRulesetDocument,
+      { categoryId, rules: [...rules] },
+      "SetCategoryRuleset",
+      { cookie },
+    );
+    return data.setCategoryRuleset.rules;
+  },
   async setContactBlockArchived(id, archived, cookie) {
     const data = await gatewayFetch(
       SetContactBlockArchivedDocument,
@@ -1133,6 +1162,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.signalWorkflow;
+  },
+  async simulateCategory(categoryId, userId, draftRules, cookie) {
+    const data = await gatewayFetch(
+      SimulateCategoryDocument,
+      { categoryId, draftRules: draftRules ? [...draftRules] : null, userId },
+      "SimulateCategory",
+      { cookie },
+    );
+    return data.simulateCategory;
   },
   async spCertificate(cookie) {
     const data = await gatewayFetch(SpCertificateDocument, {}, "SpCertificate", { cookie });
@@ -1273,7 +1311,9 @@ export const liveEdge: Edge = {
       const data = await gatewayFetch(
         SetCategoryGovernanceDocument,
         {
-          ackEveryone: input.ackEveryone ?? current.ackEveryone,
+          // An unset input keeps an inherited value inherited (null), rather than pinning the
+          // category's own copy of it.
+          ackEveryone: input.ackEveryone ?? (current.ackEveryoneSet ? current.ackEveryone : null),
           ackTriggers: input.ackTriggers ?? current.ackTriggers,
           exclusionGroupIds:
             input.exclusionGroupIds === undefined

@@ -1,4 +1,138 @@
 {
+  "access": {
+    "title": "Category access",
+    "subtitle": "Per-category RACI firewall rules — who can read, acknowledge, approve, and author.",
+    "pathLabel": "Category path",
+    "edit": "Edit rules",
+    "done": "Done",
+    "save": "Save rules",
+    "saved": "Rules saved",
+    "saveFailed": "Couldn't save the rules",
+    "viewOnly": "View only",
+    "noSelection": {
+      "title": "No category selected",
+      "description": "Select a category from the sidebar."
+    },
+    "notFound": {
+      "title": "Category not found",
+      "description": "No category matches that address.",
+      "action": "Back to the directory"
+    },
+    "owners": {
+      "title": "Owners",
+      "inherited": "{{name}} · Inherited from {{from}} (read-only).",
+      "remove": "Remove {{name}} as an owner",
+      "empty": "No owners",
+      "failed": "Couldn't change the owners"
+    },
+    "ack": {
+      "title": "Acknowledgement trigger",
+      "options": {
+        "NONE": "None",
+        "ON_PUBLISH": "On publish",
+        "ON_CHANGE": "On change"
+      },
+      "status": {
+        "NONE": "Saved · nobody is asked to acknowledge",
+        "ON_PUBLISH": "Saved · asks once, on the first publish",
+        "ON_CHANGE": "Saved · re-asks on Major versions"
+      },
+      "saving": "Saving…",
+      "failed": "Couldn't save the trigger"
+    },
+    "rules": {
+      "title": "Rules",
+      "order": "top-down, first match per action wins",
+      "add": "+ Add rule",
+      "number": "#",
+      "subject": "Subject",
+      "actions": {
+        "read": "Read",
+        "ack": "Acknowledge",
+        "approve": "Approve",
+        "author": "Author"
+      },
+      "letters": {
+        "read": "R",
+        "ack": "A",
+        "approve": "C",
+        "author": "I"
+      },
+      "kinds": {
+        "EVERYONE": "Everyone",
+        "GROUP": "Group",
+        "USER": "Person"
+      },
+      "everyone": "Everyone",
+      "from": "from {{from}}",
+      "moved": {
+        "up": "moved up",
+        "down": "moved down"
+      },
+      "inherited": "Inherited",
+      "grants": {
+        "ALLOW": "Allow",
+        "DENY": "Deny",
+        "BLANK": "Blank"
+      },
+      "cell": "{{action}} for {{subject}}: {{grant}}",
+      "moveUp": "Move rule {{number}} up",
+      "moveDown": "Move rule {{number}} down",
+      "remove": "Remove rule {{number}}",
+      "empty": "No rules — default deny applies to everyone.",
+      "footer": "Default: deny anything left blank · rules inherit down; own rules override ancestor rules.",
+      "legend": {
+        "label": "Legend",
+        "allow": "allow",
+        "deny": "deny",
+        "blank": "blank",
+        "inherited": "inherited",
+        "cycle": "click or Space cycles · → ✓ → ✗"
+      }
+    },
+    "addRule": {
+      "title": "Add rule",
+      "description": "It joins the bottom of this category's rules, every action blank. Move it up to give it priority.",
+      "kind": "Subject",
+      "group": "Group",
+      "groupHint": "The group's name in your identity provider.",
+      "person": "Person",
+      "personPlaceholder": "Choose a person",
+      "submit": "Add rule",
+      "cancel": "Cancel",
+      "groupName": "Group name"
+    },
+    "simulator": {
+      "title": "Simulator",
+      "live": "LIVE · before save",
+      "person": "Person",
+      "baseline": "Everyone (baseline)",
+      "personOption": "{{name}} · {{email}}",
+      "actions": {
+        "read": "Read / view",
+        "ack": "Must ack",
+        "approve": "Can approve",
+        "author": "Can author"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "running": "Checking…",
+      "failed": "Couldn't run the simulator",
+      "reasons": {
+        "owner": "owner-granted",
+        "siteAdmin": "site admins read everything",
+        "defaultDeny": "no rule matched · default deny",
+        "authorImpliesRead": "authors can read",
+        "approverImpliesRead": "approvers can read",
+        "requiresRead": "needs Read first",
+        "rule": "rule #{{number}}",
+        "ancestorRule": "{{category}} rule #{{number}}",
+        "group": "via membership in {{group}} · {{rule}}",
+        "person": "{{rule}} · {{name}}",
+        "everyone": "{{rule}} · Everyone"
+      }
+    }
+  },
   "merge": {
     "confirm": {
       "source": "Source — closed after merge",

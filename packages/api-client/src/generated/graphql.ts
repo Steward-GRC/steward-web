@@ -460,6 +460,24 @@ export type CategoryFieldsFragment = {
   readonly reviewDate: string | null;
 };
 
+export type CategoryRulesetQueryVariables = Exact<{
+  categoryId: string | number;
+}>;
+
+export type CategoryRulesetQuery = {
+  readonly categoryRuleset: {
+    readonly categoryId: string;
+    readonly rules: ReadonlyArray<{
+      readonly subjectKind: Types.RaciSubjectKind;
+      readonly subjectRef: string;
+      readonly read: Types.RaciGrant;
+      readonly ack: Types.RaciGrant;
+      readonly approve: Types.RaciGrant;
+      readonly author: Types.RaciGrant;
+    }>;
+  };
+};
+
 export type CategoryTreeQueryVariables = Exact<{
   rootId?: string | number | null | undefined;
 }>;
@@ -1749,6 +1767,15 @@ export type PublishTemplateVersionMutation = {
   };
 };
 
+export type RaciRuleFieldsFragment = {
+  readonly subjectKind: Types.RaciSubjectKind;
+  readonly subjectRef: string;
+  readonly read: Types.RaciGrant;
+  readonly ack: Types.RaciGrant;
+  readonly approve: Types.RaciGrant;
+  readonly author: Types.RaciGrant;
+};
+
 export type RecordAckMutationVariables = Exact<{
   policyVersionId: string | number;
 }>;
@@ -2036,6 +2063,18 @@ export type ReportCasesQuery = {
     }>;
     readonly counts: ReadonlyArray<{ readonly status: Types.CaseStatus; readonly count: number }>;
   };
+};
+
+export type ResolveUserLabelsQueryVariables = Exact<{
+  ids: ReadonlyArray<string | number> | string | number;
+}>;
+
+export type ResolveUserLabelsQuery = {
+  readonly resolveUserLabels: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly email: string | null;
+  }>;
 };
 
 export type RetireTemplateMutationVariables = Exact<{
@@ -2329,6 +2368,25 @@ export type SetCategoryGovernanceMutation = {
   };
 };
 
+export type SetCategoryRulesetMutationVariables = Exact<{
+  categoryId: string | number;
+  rules: ReadonlyArray<Types.RaciRuleInput> | Types.RaciRuleInput;
+}>;
+
+export type SetCategoryRulesetMutation = {
+  readonly setCategoryRuleset: {
+    readonly categoryId: string;
+    readonly rules: ReadonlyArray<{
+      readonly subjectKind: Types.RaciSubjectKind;
+      readonly subjectRef: string;
+      readonly read: Types.RaciGrant;
+      readonly ack: Types.RaciGrant;
+      readonly approve: Types.RaciGrant;
+      readonly author: Types.RaciGrant;
+    }>;
+  };
+};
+
 export type SetContactBlockArchivedMutationVariables = Exact<{
   id: string | number;
   archived: boolean;
@@ -2425,6 +2483,25 @@ export type SignalWorkflowMutationVariables = Exact<{
 }>;
 
 export type SignalWorkflowMutation = { readonly signalWorkflow: boolean };
+
+export type SimulateCategoryQueryVariables = Exact<{
+  categoryId: string | number;
+  userId: string | number;
+  draftRules?: ReadonlyArray<Types.RaciRuleInput> | Types.RaciRuleInput | null | undefined;
+}>;
+
+export type SimulateCategoryQuery = {
+  readonly simulateCategory: {
+    readonly read: boolean;
+    readonly readReason: string;
+    readonly ack: boolean;
+    readonly ackReason: string;
+    readonly approve: boolean;
+    readonly approveReason: string;
+    readonly author: boolean;
+    readonly authorReason: string;
+  };
+};
 
 export type SpCertificateQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -3192,6 +3269,27 @@ export const PolicyVersionFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<PolicyVersionFieldsFragment, unknown>;
+export const RaciRuleFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "RaciRuleFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "RaciRule" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+          { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+          { kind: "Field", name: { kind: "Name", value: "read" } },
+          { kind: "Field", name: { kind: "Name", value: "ack" } },
+          { kind: "Field", name: { kind: "Name", value: "approve" } },
+          { kind: "Field", name: { kind: "Name", value: "author" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RaciRuleFieldsFragment, unknown>;
 export const ReportCaseFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -4905,6 +5003,74 @@ export const CategoryChildrenDocument = {
     },
   ],
 } as unknown as DocumentNode<CategoryChildrenQuery, CategoryChildrenQueryVariables>;
+export const CategoryRulesetDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "CategoryRuleset" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categoryRuleset" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "categoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rules" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "FragmentSpread", name: { kind: "Name", value: "RaciRuleFields" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "RaciRuleFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "RaciRule" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+          { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+          { kind: "Field", name: { kind: "Name", value: "read" } },
+          { kind: "Field", name: { kind: "Name", value: "ack" } },
+          { kind: "Field", name: { kind: "Name", value: "approve" } },
+          { kind: "Field", name: { kind: "Name", value: "author" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CategoryRulesetQuery, CategoryRulesetQueryVariables>;
 export const CategoryTreeDocument = {
   kind: "Document",
   definitions: [
@@ -9824,6 +9990,56 @@ export const ReportCasesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReportCasesQuery, ReportCasesQueryVariables>;
+export const ResolveUserLabelsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ResolveUserLabels" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "ids" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "resolveUserLabels" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "ids" },
+                value: { kind: "Variable", name: { kind: "Name", value: "ids" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ResolveUserLabelsQuery, ResolveUserLabelsQueryVariables>;
 export const RetireTemplateDocument = {
   kind: "Document",
   definitions: [
@@ -10808,6 +11024,93 @@ export const SetCategoryGovernanceDocument = {
     },
   ],
 } as unknown as DocumentNode<SetCategoryGovernanceMutation, SetCategoryGovernanceMutationVariables>;
+export const SetCategoryRulesetDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetCategoryRuleset" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "rules" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "RaciRuleInput" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setCategoryRuleset" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "categoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "rules" },
+                value: { kind: "Variable", name: { kind: "Name", value: "rules" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rules" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "FragmentSpread", name: { kind: "Name", value: "RaciRuleFields" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "RaciRuleFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "RaciRule" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+          { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+          { kind: "Field", name: { kind: "Name", value: "read" } },
+          { kind: "Field", name: { kind: "Name", value: "ack" } },
+          { kind: "Field", name: { kind: "Name", value: "approve" } },
+          { kind: "Field", name: { kind: "Name", value: "author" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetCategoryRulesetMutation, SetCategoryRulesetMutationVariables>;
 export const SetContactBlockArchivedDocument = {
   kind: "Document",
   definitions: [
@@ -11199,6 +11502,84 @@ export const SignalWorkflowDocument = {
     },
   ],
 } as unknown as DocumentNode<SignalWorkflowMutation, SignalWorkflowMutationVariables>;
+export const SimulateCategoryDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "SimulateCategory" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "draftRules" } },
+          type: {
+            kind: "ListType",
+            type: {
+              kind: "NonNullType",
+              type: { kind: "NamedType", name: { kind: "Name", value: "RaciRuleInput" } },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "simulateCategory" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "categoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "draftRules" },
+                value: { kind: "Variable", name: { kind: "Name", value: "draftRules" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "read" } },
+                { kind: "Field", name: { kind: "Name", value: "readReason" } },
+                { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "ackReason" } },
+                { kind: "Field", name: { kind: "Name", value: "approve" } },
+                { kind: "Field", name: { kind: "Name", value: "approveReason" } },
+                { kind: "Field", name: { kind: "Name", value: "author" } },
+                { kind: "Field", name: { kind: "Name", value: "authorReason" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SimulateCategoryQuery, SimulateCategoryQueryVariables>;
 export const SpCertificateDocument = {
   kind: "Document",
   definitions: [

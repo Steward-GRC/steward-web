@@ -184,6 +184,30 @@ describe("AdminShell rail and panel (H2)", () => {
     expect(within(panel).getByRole("link", { name: "People" })).toBeInTheDocument();
     expect(within(panel).queryByRole("link", { name: "Facilities" })).toBeNull();
   });
+  it("points the tree at each category's access on Access (A5)", () => {
+    renderShell(alice, "/access/c-fac");
+    const panel = screen.getByRole("navigation", { name: "Categories pages" });
+    expect(within(panel).getByRole("link", { name: "Access" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    const current = within(panel).getByRole("link", { current: "location" });
+    expect(current).toHaveTextContent("Facilities");
+    expect(current).toHaveAttribute("href", "/access/c-fac");
+    expect(within(panel).getByRole("link", { name: "Directory" })).toHaveAttribute(
+      "href",
+      "/groups/c-fac",
+    );
+  });
+
+  it("switches from a category's details to the same category's access", () => {
+    renderShell(alice, "/groups/c-fac");
+    const panel = screen.getByRole("navigation", { name: "Categories pages" });
+    expect(within(panel).getByRole("link", { name: "Access" })).toHaveAttribute(
+      "href",
+      "/access/c-fac",
+    );
+  });
 });
 
 describe("AdminShell banners and footer", () => {
