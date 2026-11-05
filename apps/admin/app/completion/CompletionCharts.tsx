@@ -4,7 +4,7 @@ import type { AckActivityDay } from "@steward-web/api-client";
 
 import { formatDate, formatNumber, formatPercent, useTranslation } from "@steward-web/i18n";
 import { cn } from "@steward-web/ui";
-import { useId } from "react";
+import { useId, useRef } from "react";
 
 /** A calendar day ("2026-10-02") read at midday, so no time zone moves it to the day before. */
 const dayOf = (date: string) => (/^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T12:00:00` : date);
@@ -90,6 +90,7 @@ export const ActivityBars = ({
   const { t } = useTranslation("admin");
   const titleId = useId();
   const most = Math.max(1, ...(activity ?? []).map((day) => day.acks));
+  const radios = useRef<(HTMLButtonElement | null)[]>([]);
   return (
     <section aria-labelledby={titleId} className={CARD}>
       <div className="flex items-center justify-between gap-2">
@@ -101,7 +102,7 @@ export const ActivityBars = ({
           className="flex rounded-[5px] bg-sunken p-0.5 text-xs"
           role="radiogroup"
         >
-          {ACTIVITY_DAYS.map((option) => (
+          {ACTIVITY_DAYS.map((option, index) => (
             <button
               aria-checked={days === option}
               className={cn(
@@ -110,7 +111,20 @@ export const ActivityBars = ({
               )}
               key={option}
               onClick={() => onDaysChange(option)}
+              onKeyDown={(event) => {
+                // A radio group is one tab stop; the arrow keys move and choose (APG radio).
+                const step = { ArrowDown: 1, ArrowLeft: -1, ArrowRight: 1, ArrowUp: -1 }[event.key];
+                if (!step) return;
+                event.preventDefault();
+                const next = (index + step + ACTIVITY_DAYS.length) % ACTIVITY_DAYS.length;
+                radios.current[next]?.focus();
+                onDaysChange(ACTIVITY_DAYS[next]!);
+              }}
+              ref={(element) => {
+                radios.current[index] = element;
+              }}
               role="radio"
+              tabIndex={days === option ? 0 : -1}
               type="button"
             >
               {t("completion.detail.activity.days", { count: option })}

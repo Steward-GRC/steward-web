@@ -14,7 +14,7 @@ import {
   notify,
 } from "@steward-web/ui";
 import { type PolicyDetail } from "@steward-web/ui/domain";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 
 import { refusalIn, useGovernanceFetcher } from "./useGovernance";
@@ -43,6 +43,8 @@ export const ChangeAuthorDialog = ({
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<Person>();
   const listId = useId();
+  const field = useRef<HTMLInputElement>(null);
+  const options = useRef<(HTMLLIElement | null)[]>([]);
   const failure = refusalIn(fetcher);
   const done = fetcher.state === "idle" && fetcher.data?.ok === true;
 
@@ -83,7 +85,14 @@ export const ChangeAuthorDialog = ({
                 setQuery(event.target.value);
                 setPicked(undefined);
               }}
+              onKeyDown={(event) => {
+                // Down moves into the matches, as a combobox's list does.
+                if (event.key !== "ArrowDown" || people.length === 0) return;
+                event.preventDefault();
+                options.current[0]?.focus();
+              }}
               placeholder={t("governance.changeAuthor.placeholder")}
+              ref={field}
               role="combobox"
               value={picked ? picked.name : query}
             />
@@ -97,7 +106,7 @@ export const ChangeAuthorDialog = ({
             id={listId}
             role="listbox"
           >
-            {people.map((person) => (
+            {people.map((person, index) => (
               <li
                 aria-selected={false}
                 className="cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-primary-soft hover:text-on-primary-soft"
@@ -107,10 +116,21 @@ export const ChangeAuthorDialog = ({
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
                     setPicked(person);
+                    field.current?.focus();
+                    return;
                   }
+                  const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
+                  if (!step) return;
+                  event.preventDefault();
+                  // Up from the first match goes back to the field.
+                  if (index + step < 0) field.current?.focus();
+                  else options.current[Math.min(index + step, people.length - 1)]?.focus();
+                }}
+                ref={(element) => {
+                  options.current[index] = element;
                 }}
                 role="option"
-                tabIndex={0}
+                tabIndex={-1}
               >
                 {t("myGroups.person", { email: person.email, name: person.name })}
               </li>

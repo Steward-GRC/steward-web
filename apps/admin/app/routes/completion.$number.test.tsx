@@ -157,4 +157,29 @@ describe("Completion for one policy (A14)", () => {
     openCompletion({ activity: null, report: null, roster: null });
     expect(await screen.findByText("Nothing to report")).toBeInTheDocument();
   });
+
+  it("moves between 30 and 90 days with the arrow keys, one tab stop for the pair", async () => {
+    openCompletion();
+    const activity = await screen.findByRole("region", { name: "Activity over time" });
+    const thirty = within(activity).getByRole("radio", { name: "30 days" });
+    const ninety = within(activity).getByRole("radio", { name: "90 days" });
+    expect(thirty).toHaveAttribute("tabindex", "0");
+    expect(ninety).toHaveAttribute("tabindex", "-1");
+    thirty.focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(await within(activity).findByRole("radio", { name: "90 days" })).toBeChecked();
+    expect(within(activity).getByRole("radio", { name: "90 days" })).toHaveFocus();
+  });
+
+  it("moves between the roster's tabs with the arrow keys", async () => {
+    openCompletion();
+    const notYet = await screen.findByRole("tab", { name: "Not yet 2" });
+    expect(notYet).toHaveAttribute("aria-selected", "true");
+    notYet.focus();
+    await userEvent.keyboard("{ArrowLeft}");
+    const acked = screen.getByRole("tab", { name: "Acknowledged 2" });
+    expect(acked).toHaveFocus();
+    expect(acked).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Acknowledged 2" })).toBeInTheDocument();
+  });
 });

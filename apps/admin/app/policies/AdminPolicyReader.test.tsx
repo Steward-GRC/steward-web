@@ -335,4 +335,20 @@ describe("AdminPolicyReader (A11)", () => {
     ).toBeInTheDocument();
     expect(within(sheet).queryByRole("button", { name: /Create for/ })).toBeNull();
   });
+
+  it("picks the new author from the keyboard: Down to the matches, Enter to choose (D5)", async () => {
+    const posted = openReader(draft);
+    await chooseAction("Change author");
+    const dialog = await screen.findByRole("dialog", { name: "Change author" });
+    await userEvent.type(within(dialog).getByRole("combobox", { name: "New author" }), "car");
+    await within(dialog).findByRole("option", { name: /Carol/ });
+    await userEvent.keyboard("{ArrowDown}");
+    expect(within(dialog).getByRole("option", { name: /Carol/ })).toHaveFocus();
+    await userEvent.keyboard("{Enter}");
+    expect(within(dialog).getByRole("combobox", { name: "New author" })).toHaveValue("Carol");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Change author" }));
+    await waitFor(() =>
+      expect(posted).toEqual([{ intent: "changeAuthor", ownerUserId: "u-carol" }]),
+    );
+  });
 });
