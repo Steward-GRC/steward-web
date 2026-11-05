@@ -58,6 +58,17 @@ const group = (id: string, icon: LucideIcon, destinations: AdminDestination[]): 
   label: `shell:admin.groups.${id}`,
 });
 
+const shown = (show: boolean, entry: AdminDestination) => (show ? [entry] : []);
+
+export interface AdminNavInput {
+  /** Whether the signed-in person holds a permission; everything shows when it's left out. */
+  can?: (permission: string) => boolean;
+  /** Compliance reporting is on for this install (`STEWARD_REPORTING=true`). */
+  compliance: boolean;
+  /** The person manages at least one group, so My groups is theirs. */
+  groupManager?: boolean;
+}
+
 /**
  * The admin rail (H2, decisions 2-layout-and-navigation.s3 and s6): Overview, Categories,
  * Structure, Policies, Assurance, Compliance, Ethics, People and System, each with the 232 px
@@ -65,44 +76,56 @@ const group = (id: string, icon: LucideIcon, destinations: AdminDestination[]): 
  * "Assurance" replace the old "Access" and "Compliance" headings. Compliance holds the
  * reporting module's case settings and shows only while reporting is on; Ethics is a v0.2.0
  * module and never shows yet, which leaves 7 groups by default.
+ *
+ * Like the staff sidebar, a destination shows only to someone its page lets in (each one's
+ * `show` mirrors its route's guard), and a group with nothing left to show goes.
  */
-export const adminNav = ({ compliance }: { compliance: boolean }): AdminGroup[] => [
-  group("overview", LayoutGrid, [destination("overview", LayoutGrid, "/")]),
-  group("categories", Folder, [
-    destination("directory", FolderTree, "/groups"),
-    destination("access", ListChecks, "/access"),
-  ]),
-  group("structure", LayoutTemplate, [
-    destination("templates", LayoutTemplate, "/templates"),
-    destination("workflows", Workflow, "/workflows"),
-    destination("contactLibrary", Contact, "/contact-library"),
-    destination("references", Quote, "/references-library"),
-    destination("definitions", BookOpen, "/definitions-library"),
-  ]),
-  group("policies", FileText, [
-    destination("catalog", Files, "/policies"),
-    destination("procedures", Files, "/procedures"),
-    destination("magicLinks", Link, "/magic-links"),
-  ]),
-  group("assurance", ChartPie, [
-    destination("completion", ChartPie, "/completion"),
-    destination("auditLog", ScrollText, "/audit"),
-  ]),
-  ...(compliance
-    ? [
-        group("compliance", Flag, [
-          destination("caseSettings", Flag, ADMIN_COMING_SOON.caseSettings),
-        ]),
-      ]
-    : []),
-  // Ethics (the compass icon) joins here with its module in v0.2.0.
-  group("people", Users, [
-    destination("myGroups", Users, "/my-groups"),
-    destination("users", Users, "/users", ["/platform-groups"]),
-    destination("organizations", Building2, "/organisations"),
-  ]),
-  group("system", Settings2, [destination("settings", Settings2, "/settings")]),
-];
+export const adminNav = ({
+  can = () => true,
+  compliance,
+  groupManager = true,
+}: AdminNavInput): AdminGroup[] => {
+  const categories = can("group.manage");
+  return [
+    group("overview", LayoutGrid, [destination("overview", LayoutGrid, "/")]),
+    group("categories", Folder, [
+      ...shown(categories, destination("directory", FolderTree, "/groups")),
+      ...shown(categories || can("template.manage"), destination("access", ListChecks, "/access")),
+    ]),
+    group("structure", LayoutTemplate, [
+      ...shown(categories, destination("templates", LayoutTemplate, "/templates")),
+      ...shown(categories, destination("workflows", Workflow, "/workflows")),
+      destination("contactLibrary", Contact, "/contact-library"),
+      destination("references", Quote, "/references-library"),
+      destination("definitions", BookOpen, "/definitions-library"),
+    ]),
+    group("policies", FileText, [
+      destination("catalog", Files, "/policies"),
+      destination("procedures", Files, "/procedures"),
+      destination("magicLinks", Link, "/magic-links"),
+    ]),
+    group("assurance", ChartPie, [
+      destination("completion", ChartPie, "/completion"),
+      ...shown(can("audit.read"), destination("auditLog", ScrollText, "/audit")),
+    ]),
+    ...(compliance
+      ? [
+          group("compliance", Flag, [
+            destination("caseSettings", Flag, ADMIN_COMING_SOON.caseSettings),
+          ]),
+        ]
+      : []),
+    // Ethics (the compass icon) joins here with its module in v0.2.0.
+    group("people", Users, [
+      ...shown(groupManager, destination("myGroups", Users, "/my-groups")),
+      ...shown(can("user.manage"), destination("users", Users, "/users", ["/platform-groups"])),
+      ...shown(can("settings.manage"), destination("organizations", Building2, "/organisations")),
+    ]),
+    group("system", Settings2, [
+      ...shown(can("settings.manage"), destination("settings", Settings2, "/settings")),
+    ]),
+  ].filter((entry) => entry.destinations.length > 0);
+};
 
 /** A destination covers its own path and the pages below it; "/" covers only itself. */
 const covers = (path: string, pathname: string) =>

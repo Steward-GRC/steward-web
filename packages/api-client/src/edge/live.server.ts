@@ -64,6 +64,7 @@ import {
   ForceRotateSpCertificateDocument,
   GlobalSettingsDocument,
   GrantRoleDocument,
+  GrantRootDocument,
   GroupMappingsDocument,
   ImpersonationStatusDocument,
   IssueCollabTokenDocument,
@@ -93,15 +94,21 @@ import {
   PreviewUserDeletionDocument,
   PublishDraftDocument,
   PublishTemplateVersionDocument,
+  ReassignUserPoliciesDocument,
   RecordAckDocument,
   RecordRiskAssessmentDocument,
   ReferencesDocument,
   RemoveUserFromGroupDocument,
+  RemoveUserMfaFactorDocument,
   RenameCategoryDocument,
   RenameTemplateDocument,
+  RenameUserMfaFactorDocument,
   ReorderAppendicesDocument,
   ReportCaseDocument,
   ReportCasesDocument,
+  RequestStepUpOtpDocument,
+  ResendWelcomeEmailDocument,
+  ResetUserPasswordDocument,
   ResolveUserLabelsDocument,
   RetireTemplateDocument,
   RevokeRoleDocument,
@@ -119,10 +126,12 @@ import {
   SetEmailServiceConfigDocument,
   SetGlobalSettingsDocument,
   SetReferenceArchivedDocument,
+  SetUserPolicyOverrideDocument,
   SignalWorkflowDocument,
   SimulateCategoryDocument,
   SpCertificateDocument,
   StartDomainVerificationDocument,
+  StartImpersonationDocument,
   StopImpersonationDocument,
   SubmitDraftGenerationDocument,
   SubmitPolicyReviewDocument,
@@ -141,6 +150,7 @@ import {
   UpdateTemplateVersionSectionsDocument,
   UpdateUserProfileDocument,
   UpdateWorkflowDefDocument,
+  UserFactorsDocument,
   UsersDocument,
   VerifyAuditChainDocument,
   VerifyDomainDocument,
@@ -774,6 +784,10 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(GrantRoleDocument, { role, userId }, "GrantRole", { cookie });
     return data.grantRole;
   },
+  async grantRoot(userId, otp, cookie) {
+    const data = await gatewayFetch(GrantRootDocument, { otp, userId }, "GrantRoot", { cookie });
+    return data.grantRoot;
+  },
   async groupChildren(parentId, cookie) {
     return categoryChildren(parentId, cookie);
   },
@@ -998,6 +1012,15 @@ export const liveEdge: Edge = {
     );
     return data.publishTemplateVersion;
   },
+  async reassignUserPolicies(fromUserId, toUserId, cookie) {
+    const data = await gatewayFetch(
+      ReassignUserPoliciesDocument,
+      { fromUserId, toUserId },
+      "ReassignUserPolicies",
+      { cookie },
+    );
+    return data.reassignUserPolicies;
+  },
   async recordRiskAssessment(caseId, factors, decision, reason, cookie) {
     const data = await gatewayFetch(
       RecordRiskAssessmentDocument,
@@ -1022,6 +1045,15 @@ export const liveEdge: Edge = {
     );
     return data.removeUserFromGroup;
   },
+  async removeUserMfaFactor(userId, methodId, cookie) {
+    const data = await gatewayFetch(
+      RemoveUserMfaFactorDocument,
+      { methodId, userId },
+      "RemoveUserMfaFactor",
+      { cookie },
+    );
+    return data.removeUserMfaFactor;
+  },
   async renameGroup(id, name, slug, cookie) {
     const data = await gatewayFetch(RenameCategoryDocument, { id, name, slug }, "RenameCategory", {
       cookie,
@@ -1033,6 +1065,15 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.renameTemplate;
+  },
+  async renameUserMfaFactor(userId, methodId, label, cookie) {
+    const data = await gatewayFetch(
+      RenameUserMfaFactorDocument,
+      { label, methodId, userId },
+      "RenameUserMfaFactor",
+      { cookie },
+    );
+    return data.renameUserMfaFactor;
   },
   async reorderAppendices(policyVersionId, orderedIds, cookie) {
     const data = await gatewayFetch(
@@ -1055,6 +1096,25 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.reportCases;
+  },
+  async requestStepUpOtp(cookie) {
+    const data = await gatewayFetch(RequestStepUpOtpDocument, {}, "RequestStepUpOtp", { cookie });
+    return data.requestStepUpOtp;
+  },
+  async resendWelcomeEmail(userId, cookie) {
+    const data = await gatewayFetch(ResendWelcomeEmailDocument, { userId }, "ResendWelcomeEmail", {
+      cookie,
+    });
+    return data.resendWelcomeEmail;
+  },
+  async resetUserPassword(userId, newPassword, cookie) {
+    const data = await gatewayFetch(
+      ResetUserPasswordDocument,
+      { newPassword, userId },
+      "ResetUserPassword",
+      { cookie },
+    );
+    return data.resetUserPassword;
   },
   async resolveUserLabels(ids, cookie) {
     if (ids.length === 0) return [];
@@ -1178,6 +1238,15 @@ export const liveEdge: Edge = {
     );
     return data.setReferenceArchived;
   },
+  async setUserPolicyOverride(userId, policyNumber, effect, cookie) {
+    const data = await gatewayFetch(
+      SetUserPolicyOverrideDocument,
+      { effect, policyNumber, userId },
+      "SetUserPolicyOverride",
+      { cookie },
+    );
+    return data.setUserPolicyOverride;
+  },
   async signalWorkflow(policyVersionId, runId, taskId, signal, comment, cookie) {
     const data = await gatewayFetch(
       SignalWorkflowDocument,
@@ -1208,6 +1277,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.startDomainVerification;
+  },
+  async startImpersonation(userId, reason, cookie) {
+    const data = await gatewayFetch(
+      StartImpersonationDocument,
+      { reason, userId },
+      "StartImpersonation",
+      { cookie },
+    );
+    return data.startImpersonation;
   },
   async stopImpersonation(cookie) {
     const data = await gatewayFetch(StopImpersonationDocument, {}, "StopImpersonation", {
@@ -1422,6 +1500,10 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.updateWorkflowDef;
+  },
+  async userFactors(userId, cookie) {
+    const data = await gatewayFetch(UserFactorsDocument, { userId }, "UserFactors", { cookie });
+    return data.userFactors;
   },
   async users(input, cookie) {
     const data = await gatewayFetch(UsersDocument, input, "Users", { cookie });

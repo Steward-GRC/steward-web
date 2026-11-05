@@ -770,6 +770,23 @@ export type GroupUnitInput = {
   readonly memberUserIds: ReadonlyArray<Scalars["ID"]["input"]>;
 };
 
+export type HardResetRequest = {
+  readonly __typename?: "HardResetRequest";
+  readonly approvalExpiresAt?: Maybe<Scalars["String"]["output"]>;
+  readonly approvedAt?: Maybe<Scalars["String"]["output"]>;
+  readonly approvedBy?: Maybe<Scalars["ID"]["output"]>;
+  readonly cancelledAt?: Maybe<Scalars["String"]["output"]>;
+  readonly consumedAt?: Maybe<Scalars["String"]["output"]>;
+  readonly consumedBy?: Maybe<Scalars["String"]["output"]>;
+  readonly expiresAt: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly module: Scalars["String"]["output"];
+  readonly reason: Scalars["String"]["output"];
+  readonly requestedAt: Scalars["String"]["output"];
+  readonly requestedBy: Scalars["ID"]["output"];
+  readonly state: Scalars["String"]["output"];
+};
+
 export type HealthStatus = {
   readonly __typename?: "HealthStatus";
   readonly status: Scalars["String"]["output"];
@@ -930,6 +947,7 @@ export type Mutation = {
   readonly addGroupMapping: GroupMapping;
   readonly addOrganization: Organization;
   readonly addUserToGroup: User;
+  readonly approveHardReset: HardResetRequest;
   readonly archiveWorkflowDef: Scalars["Boolean"]["output"];
   readonly assignCase: ReportCase;
   readonly breakGlassReveal: BreakGlassResult;
@@ -940,6 +958,7 @@ export type Mutation = {
    * failed batch can be surfaced to the operator.
    */
   readonly bulkDecide: BulkDecideResult;
+  readonly cancelHardReset: HardResetRequest;
   readonly changeOrgProtocol: Organization;
   readonly checkReport: ReporterView;
   readonly closeCase: ReportCase;
@@ -976,6 +995,7 @@ export type Mutation = {
   readonly forceRotateSpCertificate: SpCertificate;
   readonly grantGroupManager: User;
   readonly grantRole: User;
+  readonly grantRoot: User;
   /**
    * Issue a short-lived websocket token for the Collaboration service.
    * The caller must be signed in and be able to edit the policy (collab checks
@@ -1007,6 +1027,7 @@ export type Mutation = {
   readonly reorderAppendices: ReadonlyArray<Appendix>;
   readonly replyToMyReport: ReporterView;
   readonly replyToReport: ReporterView;
+  readonly requestHardReset: HardResetRequest;
   readonly requestPDFExport: PdfExportJob;
   readonly requestStepUpOtp: Scalars["Boolean"]["output"];
   readonly resendWelcomeEmail: Scalars["Boolean"]["output"];
@@ -1017,6 +1038,7 @@ export type Mutation = {
   readonly revokeMagicLink: Scalars["Boolean"]["output"];
   readonly revokeMySessions: Scalars["Int"]["output"];
   readonly revokeRole: User;
+  readonly revokeRoot: User;
   readonly revokeUserSessions: Scalars["Int"]["output"];
   readonly saveDraft: PolicyVersion;
   readonly sendEnrollEmailOtp: Scalars["Boolean"]["output"];
@@ -1177,7 +1199,6 @@ export type Mutation = {
    * stored credential and reports the outcome.
    */
   readonly testAIProvider: AiProviderTestResult;
-  readonly transferRoot: User;
   readonly updateAppendix: Appendix;
   readonly updateCaseNotice: CaseNotice;
   readonly updateContactBlock: ContactBlock;
@@ -1237,6 +1258,10 @@ export type MutationAddUserToGroupArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationApproveHardResetArgs = {
+  requestId: Scalars["ID"]["input"];
+};
+
 export type MutationArchiveWorkflowDefArgs = {
   id: Scalars["ID"]["input"];
 };
@@ -1253,6 +1278,10 @@ export type MutationBreakGlassRevealArgs = {
 
 export type MutationBulkDecideArgs = {
   input: BulkDecideInput;
+};
+
+export type MutationCancelHardResetArgs = {
+  requestId: Scalars["ID"]["input"];
 };
 
 export type MutationChangeOrgProtocolArgs = {
@@ -1423,6 +1452,11 @@ export type MutationGrantRoleArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationGrantRootArgs = {
+  otp: Scalars["String"]["input"];
+  userId: Scalars["ID"]["input"];
+};
+
 export type MutationIssueCollabTokenArgs = {
   input: IssueCollabTokenInput;
 };
@@ -1550,6 +1584,11 @@ export type MutationReplyToReportArgs = {
   passphrase: Scalars["String"]["input"];
 };
 
+export type MutationRequestHardResetArgs = {
+  module: Scalars["String"]["input"];
+  reason: Scalars["String"]["input"];
+};
+
 export type MutationRequestPdfExportArgs = {
   policyVersionId: Scalars["ID"]["input"];
 };
@@ -1583,6 +1622,11 @@ export type MutationRevokeMagicLinkArgs = {
 export type MutationRevokeRoleArgs = {
   category?: InputMaybe<Scalars["String"]["input"]>;
   role: Scalars["String"]["input"];
+  userId: Scalars["ID"]["input"];
+};
+
+export type MutationRevokeRootArgs = {
+  otp: Scalars["String"]["input"];
   userId: Scalars["ID"]["input"];
 };
 
@@ -1800,11 +1844,6 @@ export type MutationSubmitWorkflowArgs = {
 
 export type MutationSwapAssigneeArgs = {
   input: SwapAssigneeInput;
-};
-
-export type MutationTransferRootArgs = {
-  otp: Scalars["String"]["input"];
-  toUserId: Scalars["ID"]["input"];
 };
 
 export type MutationUpdateAppendixArgs = {
@@ -2185,6 +2224,7 @@ export type Query = {
   readonly exportAcks: AckExport;
   readonly globalSettings: GlobalSettings;
   readonly groupMappings: ReadonlyArray<GroupMapping>;
+  readonly hardResetRequests: ReadonlyArray<HardResetRequest>;
   readonly health: HealthStatus;
   readonly impersonationStatus?: Maybe<ImpersonationSession>;
   readonly latestTemplateVersion?: Maybe<TemplateVersion>;
@@ -2313,6 +2353,12 @@ export type Query = {
    * Status of the approval saga for a policy version. Returns
    * APPROVAL_STATUS_UNSPECIFIED when the workflow service has no record (the
    * policy was published without going through an approval flow).
+   *
+   * Read under the same decision as policyVersion: an unknown version, a draft
+   * for anyone but an editor of the policy or the holder of a pending approval
+   * seat on that draft, or a denied read is NotFound, and workflow is not asked
+   * for the run. A reader who sees the policy obfuscated gets the run
+   * without the decision comments (stageAssignees.comment is null).
    */
   readonly workflowStatus: WorkflowStatus;
 };
@@ -2425,6 +2471,10 @@ export type QueryExportAcksArgs = {
 
 export type QueryGroupMappingsArgs = {
   connectionId: Scalars["ID"]["input"];
+};
+
+export type QueryHardResetRequestsArgs = {
+  module?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type QueryLatestTemplateVersionArgs = {

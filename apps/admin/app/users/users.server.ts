@@ -56,7 +56,7 @@ export const setUserGlobalRoles = async (
 ): Promise<User> => {
   await requirePermissionFromRequest(request, PERMISSIONS.UserManage, "/");
   const cookie = cookieOf(request);
-  const assignable = new Set<string>(GLOBAL_ROLES.map((r) => r.value));
+  const assignable = new Set<string>(GLOBAL_ROLES);
   const current = new Set(user.roles.filter((r) => assignable.has(r)));
   const next = new Set(nextRoles.filter((r) => assignable.has(r)));
 

@@ -67,6 +67,45 @@ describe("adminNav", () => {
   });
 });
 
+const visible = (permissions: string[], groupManager = false) =>
+  adminNav({
+    can: (permission) => permissions.includes(permission),
+    compliance: false,
+    groupManager,
+  }).map((group) => [
+    i18n.t(group.label),
+    group.destinations.map((destination) => i18n.t(destination.label)),
+  ]);
+
+describe("adminNav for what the person can use", () => {
+  it("gives a template admin Access but not Directory, and no People or System", () => {
+    expect(visible(["template.manage"])).toEqual([
+      ["Overview", ["Overview"]],
+      ["Categories", ["Access"]],
+      ["Structure", ["Contact library", "References", "Definitions"]],
+      ["Policies", ["Catalog", "Procedures", "Magic links"]],
+      ["Assurance", ["Completion"]],
+    ]);
+  });
+
+  it("gives a group manager My groups and nothing else in People", () => {
+    expect(visible([], true)).toContainEqual(["People", ["My groups"]]);
+  });
+
+  it("gives an auditor the audit log", () => {
+    expect(visible(["audit.read"])).toContainEqual(["Assurance", ["Completion", "Audit log"]]);
+  });
+
+  it("keeps every destination for a site admin", () => {
+    expect(
+      visible(
+        ["group.manage", "template.manage", "audit.read", "user.manage", "settings.manage"],
+        true,
+      ).flatMap(([, destinations]) => destinations),
+    ).toHaveLength(17);
+  });
+});
+
 describe("activeAdminGroup", () => {
   const groups = adminNav({ compliance: false });
   it.each([
