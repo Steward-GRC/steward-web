@@ -120,6 +120,11 @@ export const isPermissionDenied = (error: unknown): boolean =>
   error instanceof GatewayError &&
   error.code?.replaceAll("_", "").toUpperCase() === "PERMISSIONDENIED";
 
+/** True for the gateway's "no such thing" refusal, by its code alone: the gRPC status name
+ *  ("NotFound") or its symbol ("NOT_FOUND"). */
+export const isNotFound = (error: unknown): boolean =>
+  error instanceof GatewayError && error.code?.replaceAll("_", "").toUpperCase() === "NOTFOUND";
+
 /** One audit action's `type.verb` prefix the reader's history strips to a bare lifecycle
  *  kind (e.g. "policy.published" -> "published"), matching the short tokens the reader's
  *  event badges and translations key off. Any other action is kept as-is. */

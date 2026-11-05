@@ -143,6 +143,7 @@ import {
   type CategoryNode,
   historyFromAuditLog,
   historyFromVersions,
+  isNotFound,
   isPermissionDenied,
   isUnauthenticated,
   policyStatusOf,
@@ -857,9 +858,17 @@ export const liveEdge: Edge = {
     return data.policy ? policyView(data.policy, cookie) : null;
   },
   async policyDetail(documentType, number, cookie) {
-    const [index, { policyByNumber: found }] = await Promise.all([
+    // The gateway refuses a number the caller may not read with NotFound, the same as one
+    // that doesn't exist; both answer null so the reader can't tell the two apart.
+    const [index, found] = await Promise.all([
       categoryIndex(cookie),
-      gatewayFetch(PolicyByNumberDocument, { number }, "PolicyByNumber", { cookie }),
+      gatewayFetch(PolicyByNumberDocument, { number }, "PolicyByNumber", { cookie }).then(
+        (data) => data.policyByNumber,
+        (error: unknown) => {
+          if (isNotFound(error)) return null;
+          throw error;
+        },
+      ),
     ]);
     return found && found.documentType === documentType
       ? assembleDetail(found, index, cookie)

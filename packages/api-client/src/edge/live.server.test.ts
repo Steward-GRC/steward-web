@@ -354,6 +354,31 @@ describe("liveEdge.policyDetail", () => {
     routeGateway({ ...treeHandlers, PolicyByNumber: () => ({ policyByNumber: null }) });
     expect(await liveEdge.policyDetail(DocumentType.Policy, "NOPE-1")).toBeNull();
   });
+
+  it.each(["NotFound", "NOT_FOUND"])(
+    "answers null, as for a missing number, when the gateway refuses with %s",
+    async (code) => {
+      routeGateway({
+        ...treeHandlers,
+        PolicyByNumber: () => ({
+          errors: [{ extensions: { code }, message: "policy not found" }],
+        }),
+      });
+      expect(await liveEdge.policyDetail(DocumentType.Procedure, "FIN-001")).toBeNull();
+    },
+  );
+
+  it("still fails the read when the lookup is refused for any other reason", async () => {
+    routeGateway({
+      ...treeHandlers,
+      PolicyByNumber: () => ({
+        errors: [{ extensions: { code: "INTERNAL" }, message: "catalog unavailable" }],
+      }),
+    });
+    await expect(liveEdge.policyDetail(DocumentType.Policy, "FIN-001")).rejects.toThrow(
+      "catalog unavailable",
+    );
+  });
 });
 
 describe("liveEdge.acknowledgePolicy", () => {
