@@ -832,5 +832,123 @@
       "cancel": "Cancel",
       "failed": "Couldn't create this workflow"
     }
+  },
+  "templates": {
+    "title": "Templates",
+    "subtitle": "Reusable document skeletons.",
+    "new": "+ New template",
+    "columns": {
+      "id": "ID",
+      "name": "Name",
+      "category": "Category",
+      "versions": "Versions",
+      "latest": "Latest"
+    },
+    "latest": "v{{version}} · {{status}}",
+    "status": {
+      "draft": "draft",
+      "published": "published",
+      "superseded": "superseded",
+      "retired": "retired"
+    },
+    "retired": "Retired",
+    "none": "—",
+    "empty": {
+      "title": "No templates yet",
+      "description": "Create the first template to start building reusable document structures."
+    },
+    "detail": {
+      "eyebrow": "Templates",
+      "versions": "v{{active}} active · v{{draft}} draft",
+      "activeOnly": "v{{active}} active",
+      "draftOnly": "v{{draft}} draft",
+      "noVersions": "No versions yet",
+      "discard": "Discard draft",
+      "createVersion": "Create version",
+      "more": "More actions",
+      "rename": "Rename",
+      "retire": "Retire",
+      "delete": "Delete",
+      "steps": {
+        "label": "Draft steps",
+        "sections": "Sections",
+        "review": "Review",
+        "publish": "Publish"
+      },
+      "sections": {
+        "label": "Sections",
+        "move": "Move {{title}}",
+        "moveHint": "Up and down arrows move it; right and left arrows indent and outdent it.",
+        "title": "Section {{number}} title",
+        "untitled": "Untitled section",
+        "required": "Required",
+        "body": "Text for {{title}}",
+        "bodyPlaceholder": "Boilerplate for this section (optional)",
+        "editBody": "Text",
+        "remove": "Remove {{title}}",
+        "add": "+ Add section",
+        "hint": "Switch = required. Right and left arrows on a grip indent and outdent (H1–H5)."
+      },
+      "next": "Next: Review",
+      "nextPublish": "Next: Publish",
+      "back": "Back",
+      "review": {
+        "title": "Changes against v{{version}}",
+        "titleFirst": "Changes in this first version",
+        "none": "No changes to the sections.",
+        "added": "Added {{title}}",
+        "removed": "Removed {{title}}",
+        "renamed": "Renamed {{from}} to {{title}}",
+        "nowRequired": "{{title}} is now required",
+        "nowOptional": "{{title}} is now optional",
+        "level": "{{title}} is now H{{level}}",
+        "moved": "Moved {{title}}",
+        "text": "Changed the text of {{title}}"
+      },
+      "publish": {
+        "title": "Publish v{{version}}",
+        "description": "This becomes the active template version for new policies.",
+        "action": "Publish version"
+      },
+      "noDraft": {
+        "title": "No draft",
+        "description": "Create a version to change this template's sections."
+      },
+      "history": "Version history",
+      "historyItem": "v{{version}} · {{count}} sections",
+      "saveFailed": "Couldn't save these sections",
+      "failed": "Couldn't change this template",
+      "dialogs": {
+        "discardTitle": "Discard the v{{version}} draft?",
+        "discardDescription": "Its section changes are lost. The active version stays in use.",
+        "discardConfirm": "Discard draft",
+        "retireTitle": "Retire {{name}}?",
+        "retireDescription": "Policies pinned to it keep their structure. New policies can't choose it.",
+        "retireConfirm": "Retire template",
+        "deleteTitle": "Delete {{name}}?",
+        "deleteDescription": "This removes the template and its versions. It's refused while any policy uses it; retire it instead.",
+        "deleteConfirm": "Delete template",
+        "renameTitle": "Rename {{name}}",
+        "renameLabel": "Name",
+        "renameConfirm": "Rename",
+        "cancel": "Cancel"
+      },
+      "notFound": {
+        "title": "Template not found",
+        "description": "No template matches that code.",
+        "action": "Back to templates"
+      }
+    },
+    "add": {
+      "title": "New template",
+      "description": "Name it, and say which category owns it.",
+      "name": "Name",
+      "category": "Owning category",
+      "noCategory": "None",
+      "submit": "Create template",
+      "cancel": "Cancel",
+      "failed": "Couldn't create this template",
+      "required": "A name is required."
+    }
   }
 }
