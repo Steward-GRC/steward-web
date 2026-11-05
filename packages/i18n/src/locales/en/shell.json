@@ -223,6 +223,7 @@
   },
   "titles": {
     "admin": {
+      "access": "Category access",
       "audit": "Audit log",
       "catalog": "Catalog",
       "category": "Category",

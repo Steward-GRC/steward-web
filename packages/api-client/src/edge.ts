@@ -45,6 +45,9 @@ import type {
   PendingTask,
   PlatformGroup,
   PolicyVersion,
+  RaciDecision,
+  RaciRule,
+  RaciRuleInput,
   Reference,
   ReferenceInput,
   ReportCase,
@@ -128,6 +131,9 @@ export type {
   PendingTask,
   PlatformGroup,
   PolicyVersion,
+  RaciDecision,
+  RaciRule,
+  RaciRuleInput,
   Reference,
   ReferenceInput,
   RelatedPolicy,
@@ -162,6 +168,8 @@ export {
   MessageAuthor,
   NoticeRecipient,
   NoticeStatus,
+  RaciGrant,
+  RaciSubjectKind,
   ReferenceKind,
   ReportAnswer,
   ReportKind,
@@ -326,6 +334,9 @@ export interface Edge {
   breakGlassReveal(policyId: string, reason: string, cookie?: string): Promise<BreakGlassGrant>;
   /** The library's category tree. Rejects with `GatewayError` when signed out. */
   categories(cookie?: string): Promise<readonly Category[]>;
+  /** One category's own ordered access rules (A5); its ancestors' rules are read the same way.
+   *  Group managers and template admins. */
+  categoryRuleset(categoryId: string, cookie?: string): Promise<readonly RaciRule[]>;
   /** Changes an organisation's IdP protocol. Resets both gates and disables the connection.
    *  An OIDC target takes its client secret write-only (`clientSecret`) or as a pre-created
    *  key (`secretRef`). Site-admin only. */
@@ -565,6 +576,8 @@ export interface Edge {
     assigneeUserId?: string,
     cookie?: string,
   ): Promise<CaseQueue>;
+  /** Display names (and emails) for user ids, with no directory permission needed. */
+  resolveUserLabels(ids: readonly string[], cookie?: string): Promise<readonly UserLabel[]>;
   /** Retires (soft-deletes) a template: hidden from listings and pickers, but its versions keep
    *  working for policies that already pinned them. Site-admin only. */
   retireTemplate(id: string, cookie?: string): Promise<Template>;
@@ -586,6 +599,12 @@ export interface Edge {
   setCaseDiscoveryDate(caseId: string, discoveredOn: string, cookie?: string): Promise<ReportCase>;
   /** Any status but CLOSED; closing goes through `closeCase`. Officers only. */
   setCaseStatus(caseId: string, status: CaseStatus, cookie?: string): Promise<ReportCase>;
+  /** Replaces a category's own ordered access rules (A5). Group managers only. */
+  setCategoryRuleset(
+    categoryId: string,
+    rules: readonly RaciRuleInput[],
+    cookie?: string,
+  ): Promise<readonly RaciRule[]>;
   /** Archive (true) or restore (false) a contact-block library entry. */
   setContactBlockArchived(id: string, archived: boolean, cookie?: string): Promise<ContactBlock>;
   /** Archive (true) or restore (false) a definitions-library entry. */
@@ -613,6 +632,17 @@ export interface Edge {
     comment: string,
     cookie?: string,
   ): Promise<boolean>;
+  /**
+   * What one person (or, with an empty `userId`, everyone as a baseline) may do in a category,
+   * and why, with `draftRules` standing in for the category's own unsaved rules (the A5
+   * simulator). Group managers and template admins.
+   */
+  simulateCategory(
+    categoryId: string,
+    userId: string,
+    draftRules: null | readonly RaciRuleInput[],
+    cookie?: string,
+  ): Promise<RaciDecision>;
   /** The platform's active SP signing certificate. Site-admin only. */
   spCertificate(cookie?: string): Promise<SpCertificate>;
   /** Mints a DNS TXT domain-verification challenge. rotate revokes the prior verified proof. Site-admin only. */

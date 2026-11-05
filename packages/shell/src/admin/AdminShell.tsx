@@ -73,7 +73,13 @@ const panelRow = (current: boolean) =>
       "bg-primary-soft font-semibold text-on-primary-soft shadow-[inset_3px_0_0_var(--primary)] hover:bg-primary-soft hover:text-on-primary-soft",
   );
 
-/** Categories' two destinations as H2's segmented control. */
+/** The category a Directory or Access page is showing, if any. */
+const categoryIn = (pathname: string) => /^\/(?:access|groups)\/([^/]+)$/.exec(pathname)?.[1];
+
+/**
+ * Categories' two destinations as H2's segmented control. With a category open, each side
+ * opens that same category: its details on Directory, its rules on Access.
+ */
 const Segmented = ({
   current,
   destinations,
@@ -82,6 +88,8 @@ const Segmented = ({
   destinations: AdminDestination[];
 }) => {
   const { t } = useTranslation("shell");
+  const { pathname } = useLocation();
+  const category = categoryIn(pathname);
   return (
     <div className="flex gap-0.5 rounded-lg bg-sunken p-[3px]">
       {destinations.map((destination) => {
@@ -95,7 +103,11 @@ const Segmented = ({
                 "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgb(38_27_37/.1),inset_0_0_0_1px_var(--border)]",
             )}
             key={destination.id}
-            to={destination.to}
+            to={
+              category && category !== "new"
+                ? `${destination.to}/${encodeURIComponent(category)}`
+                : destination.to
+            }
           >
             {t(destination.label)}
           </Link>
@@ -134,7 +146,10 @@ const Panel = ({
       {group.id === "categories" ? (
         <>
           <Segmented current={current} destinations={group.destinations} />
-          <AdminCategoryTree categories={categories} />
+          <AdminCategoryTree
+            base={current?.id === "access" ? "/access" : "/groups"}
+            categories={categories}
+          />
           <Link
             className="mt-auto flex h-9 flex-none items-center justify-center rounded-md border border-dashed border-border-strong text-sm font-medium text-ink hover:bg-sunken hover:text-ink"
             to="/groups/new"

@@ -61,7 +61,8 @@ describe("adminNav", () => {
       users: "/users",
       workflows: "/workflows",
     });
-    expect(ADMIN_COMING_SOON_PATHS).toContain(links.access);
+    expect(links.access).toBe("/access");
+    expect(ADMIN_COMING_SOON_PATHS).not.toContain(links.access);
     expect(ADMIN_COMING_SOON_PATHS).toContain(links.caseSettings);
   });
 });
@@ -71,6 +72,7 @@ describe("activeAdminGroup", () => {
   it.each([
     ["/", "overview"],
     ["/groups/g-1", "categories"],
+    ["/access/g-1", "categories"],
     ["/templates/STD", "structure"],
     ["/policies/POL-1", "policies"],
     ["/completion/POL-1", "assurance"],

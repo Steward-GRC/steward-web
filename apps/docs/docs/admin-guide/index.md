@@ -46,6 +46,8 @@ policies, categories, templates and groups as you type.
   the site-admin role.
 - **[Groups](/admin-guide/groups)** — how to build the category tree and set each category's
   defaults.
+- **[Category access](/admin-guide/category-access)** — who can read, acknowledge, approve and
+  author in each category, and the simulator that checks it before you save.
 - **[Libraries](/admin-guide/libraries)** — the reusable contact blocks, references and
   definitions policy authors attach to a document.
 - **[Workflows](/admin-guide/workflows)** — how to build an approval chain and set which
