@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { formatNumber, formatPercent, useTranslation } from "@steward-web/i18n";
 import { ChevronRight } from "lucide-react";
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import { Link } from "react-router";
 
 import { cn } from "#ui/lib/cn";
@@ -13,27 +13,46 @@ import { cn } from "#ui/lib/cn";
  */
 export const StatCard = ({
   className,
+  icon,
   label,
+  size = "md",
   to,
   value,
 }: {
   className?: string;
+  /** An icon before the label, as My work's role cards have (U1). */
+  icon?: ReactNode;
   label: string;
+  /** "md" is the admin Overview's card (A1); "lg" is My work's role card (U1). */
+  size?: "lg" | "md";
   to: string;
   value: number;
 }) => (
   <Link
+    aria-label={`${label} ${formatNumber(value)}`}
     className={cn(
-      "flex flex-col gap-1 rounded-lg border border-border bg-surface px-3.5 py-3 text-ink no-underline transition-shadow hover:text-ink hover:shadow-[var(--shadow-2)]",
+      "flex flex-col rounded-lg border border-border bg-surface text-ink no-underline transition-shadow hover:text-ink hover:shadow-[var(--shadow-2)]",
+      size === "lg" ? "gap-1.5 px-[18px] py-4 shadow-[var(--shadow-1)]" : "gap-1 px-3.5 py-3",
       className,
     )}
+    data-stat-card={size}
     to={to}
   >
-    <span className="flex justify-between text-xs text-muted">
-      {label}
+    <span
+      className={cn(
+        "flex items-center justify-between text-muted",
+        size === "lg" ? "text-sm font-medium" : "text-xs",
+      )}
+    >
+      <span className="flex items-center gap-2">
+        {icon}
+        {label}
+      </span>
       <ChevronRight aria-hidden="true" className="size-[1.15em]" />
     </span>
-    <b className="text-2xl font-semibold">{formatNumber(value)}</b>
+    <b className={cn("font-semibold", size === "lg" ? "text-[30px] leading-tight" : "text-2xl")}>
+      {formatNumber(value)}
+    </b>
   </Link>
 );
 

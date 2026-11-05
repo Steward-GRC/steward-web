@@ -1,8 +1,8 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDate, useTranslation } from "@steward-web/i18n";
-import { ReachError } from "@steward-web/ui";
-import { Check, ChevronRight, CircleCheck, PencilLine, Stamp } from "lucide-react";
+import { ReachError, StatCard, UpdatedJustNow, useLiveList } from "@steward-web/ui";
+import { Check, CircleCheck, PencilLine, Stamp } from "lucide-react";
 import { type ReactNode, useId } from "react";
 import { Link } from "react-router";
 
@@ -27,40 +27,15 @@ const Heading = ({ email }: { email: string }) => {
   );
 };
 
-/** One role card (U1): an icon, what it counts and a chevron, over the count; a link. */
-const RoleCard = ({
-  count,
-  icon,
-  label,
-  to,
-}: {
-  count: number;
-  icon: ReactNode;
-  label: string;
-  to: string;
-}) => (
-  <Link
-    aria-label={`${label} ${count}`}
-    className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-surface px-[18px] py-4 text-ink shadow-1 hover:border-border-strong hover:text-ink"
-    to={to}
-  >
-    <span className="flex items-center justify-between text-sm font-medium text-muted">
-      <span className="flex items-center gap-2">
-        {icon}
-        {label}
-      </span>
-      <ChevronRight aria-hidden="true" className="size-[1.15em]" />
-    </span>
-    <span className="text-[30px] font-semibold">{count}</span>
-  </Link>
-);
-
 /** A titled card that names itself for screen readers. */
 const Card = ({
+  aside,
   children,
   className = "",
   title,
 }: {
+  /** Beside the title on the band: "Updated just now". */
+  aside?: ReactNode;
   children: ReactNode;
   className?: string;
   title: string;
@@ -68,9 +43,10 @@ const Card = ({
   const headingId = useId();
   return (
     <section aria-labelledby={headingId} className={`${card} ${className}`}>
-      <h2 className={cardHead} id={headingId}>
-        {title}
-      </h2>
+      <div className={`${cardHead} flex items-center justify-between gap-2`}>
+        <h2 id={headingId}>{title}</h2>
+        {aside}
+      </div>
       {children}
     </section>
   );
@@ -178,16 +154,21 @@ const Compliance = ({ ack }: { ack: { done: number; required: number } }) => {
 /** One row of a U1 list: the title over its mono line, and its action. */
 const ListRow = ({
   action,
+  flash = false,
   meta,
   primary,
   row,
 }: {
   action: string;
+  /** The live-update flash (6-states.s5), when this row changed since the page last loaded. */
+  flash?: boolean;
   meta: string;
   primary: boolean;
   row: WorkRow;
 }) => (
-  <li className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0">
+  <li
+    className={`flex items-center justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0 ${flash ? "stw-updated" : ""}`}
+  >
     <span className="flex min-w-0 flex-col">
       <b className="truncate font-semibold">{row.title}</b>
       <span className="font-mono text-xs text-muted">{meta}</span>
@@ -203,25 +184,32 @@ const ListRow = ({
   </li>
 );
 
+/**
+ * One of U1's lists. A row that's new or changed since the page last loaded flashes soft plum
+ * once, and the card's band says "Updated just now" (6-states.s5).
+ */
 const List = ({
   children,
   empty,
   rows,
   title,
 }: {
-  children: (row: WorkRow) => ReactNode;
+  children: (row: WorkRow, flash: boolean) => ReactNode;
   empty: string;
   rows: WorkRow[];
   title: string;
-}) => (
-  <Card title={title}>
-    {rows.length > 0 ? (
-      <ul>{rows.map((row) => children(row))}</ul>
-    ) : (
-      <p className="px-4 py-3 text-muted">{empty}</p>
-    )}
-  </Card>
-);
+}) => {
+  const live = useLiveList(rows.map((row) => [row.href, JSON.stringify(row)] as const));
+  return (
+    <Card aside={<UpdatedJustNow at={live.updatedAt} className="font-normal" />} title={title}>
+      {rows.length > 0 ? (
+        <ul>{rows.map((row) => children(row, live.flashing(row.href)))}</ul>
+      ) : (
+        <p className="px-4 py-3 text-muted">{empty}</p>
+      )}
+    </Card>
+  );
+};
 
 /** U1r: a reader's page is the ring, the next action and nothing for roles they don't have. */
 const ReaderCompliance = ({
@@ -296,27 +284,30 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
       <Heading email={data.email} />
       <div className="grid gap-3.5 sm:grid-cols-3">
         {drafts ? (
-          <RoleCard
-            count={drafts.length}
+          <StatCard
             icon={<PencilLine aria-hidden="true" className="size-[1.15em]" />}
             label={t("myWork.cards.drafts")}
+            size="lg"
             to="/drafts"
+            value={drafts.length}
           />
         ) : null}
         {approvals ? (
-          <RoleCard
-            count={approvals.length}
+          <StatCard
             icon={<Stamp aria-hidden="true" className="size-[1.15em]" />}
             label={t("myWork.cards.approvals")}
+            size="lg"
             to="/approvals"
+            value={approvals.length}
           />
         ) : null}
         {obligations ? (
-          <RoleCard
-            count={obligations.length}
+          <StatCard
             icon={<CircleCheck aria-hidden="true" className="size-[1.15em]" />}
             label={t("myWork.cards.toAcknowledge")}
+            size="lg"
             to="/acknowledge"
+            value={obligations.length}
           />
         ) : null}
       </div>
@@ -327,9 +318,10 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
       <div className="grid gap-4 lg:grid-cols-3">
         {drafts ? (
           <List empty={t("myWork.drafts.empty")} rows={drafts} title={t("myWork.drafts.title")}>
-            {(row) => (
+            {(row, flash) => (
               <ListRow
                 action={t("myWork.drafts.action")}
+                flash={flash}
                 key={row.href}
                 meta={t("myWork.drafts.meta", { version: row.version })}
                 primary={false}
@@ -344,9 +336,10 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
             rows={approvals}
             title={t("myWork.approvals.title")}
           >
-            {(row) => (
+            {(row, flash) => (
               <ListRow
                 action={t("myWork.approvals.action")}
+                flash={flash}
                 key={row.href}
                 meta={
                   row.dueAt
@@ -368,9 +361,10 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
             rows={obligations}
             title={t("myWork.acknowledge.title")}
           >
-            {(row) => (
+            {(row, flash) => (
               <ListRow
                 action={t("myWork.acknowledge.action")}
+                flash={flash}
                 key={row.href}
                 meta={t("myWork.approvals.noDue", { version: row.version })}
                 primary

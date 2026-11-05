@@ -3,9 +3,10 @@
 // My work (U1 for an author and approver, U1r for a reader) and To acknowledge (U2), as the
 // Home and Library canvas draws them.
 import { formatDate } from "@steward-web/i18n";
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
+import * as React from "react";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { MyWorkData, WorkRow } from "./myWork.server";
 
@@ -227,5 +228,40 @@ describe("U2: To acknowledge", () => {
   it("says it couldn't load the list when the read failed", async () => {
     inRouter(<ToAcknowledge obligations={null} />);
     expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't load");
+  });
+});
+
+describe("U1: the live-update cue (6-states.s5)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("uses the shared stat cards for the role cards", async () => {
+    inRouter(<MyWork data={bob} />);
+    const card = await screen.findByRole("link", { name: "Drafts in progress 2" });
+    expect(card).toHaveAttribute("data-stat-card", "lg");
+  });
+
+  it("flashes a row that changed since the page last loaded and says Updated just now", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const added = row("Lost Device Procedure", "POL-IT-000003", "1.3.0", "/drafts/p-lost");
+    let setData: ((data: MyWorkData) => void) | undefined;
+    const Live = () => {
+      const [data, set] = React.useState(bob);
+      setData = set;
+      return <MyWork data={data} />;
+    };
+    inRouter(<Live />);
+    const drafts = await screen.findByRole("region", { name: "My drafts" });
+    expect(within(drafts).queryByText("Updated just now")).toBeNull();
+    act(() => setData?.({ ...bob, drafts: [...bob.drafts!, added] }));
+    const rowOf = (title: string) =>
+      within(drafts)
+        .getAllByRole("listitem")
+        .find((item) => item.textContent?.includes(title))!;
+    const fresh = rowOf("Lost Device Procedure");
+    expect(fresh).toHaveClass("stw-updated");
+    expect(rowOf("Visitor Sign-in Policy")).not.toHaveClass("stw-updated");
+    expect(within(drafts).getByText("Updated just now")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1200));
+    expect(fresh).not.toHaveClass("stw-updated");
   });
 });

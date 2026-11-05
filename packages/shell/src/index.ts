@@ -50,3 +50,4 @@ export {
   type StatusGate,
   statusGateFor,
 } from "./StatusGates";
+export { useLiveRevalidation } from "./useLiveRevalidation";

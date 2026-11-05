@@ -118,7 +118,7 @@ export {
 } from "./feedback/DiagnosticsSlot";
 export { type Failure, toFailure } from "./feedback/failure";
 export { FailureDialog, type FailureDialogProps } from "./feedback/FailureDialog";
-export { LiveRow, UpdatedJustNow, useLiveUpdate } from "./feedback/LiveUpdate";
+export { LiveRow, UpdatedJustNow, useLiveList, useLiveUpdate } from "./feedback/LiveUpdate";
 export {
   EmptyState,
   NotFound,

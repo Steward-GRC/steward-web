@@ -34,6 +34,36 @@ export const useLiveUpdate = (value: unknown) => {
   return { flash, updatedAt };
 };
 
+/**
+ * The same for a list: each entry is its key and a signature of what it shows. An entry that's
+ * new or whose signature changed after the first render flashes (`flashing(key)`), and
+ * `updatedAt` is set for the card's "Updated just now".
+ */
+export const useLiveList = (entries: readonly (readonly [string, string])[]) => {
+  const current = new Map(entries);
+  const key = JSON.stringify(entries);
+  const [seen, setSeen] = useState(key);
+  const [last, setLast] = useState(current);
+  const [changed, setChanged] = useState<ReadonlySet<string>>(new Set());
+  const [updatedAt, setUpdatedAt] = useState<null | number>(null);
+  if (key !== seen) {
+    const fresh = new Set<string>();
+    for (const [id, signature] of current) if (last.get(id) !== signature) fresh.add(id);
+    setSeen(key);
+    setLast(current);
+    if (fresh.size > 0) {
+      setChanged(fresh);
+      setUpdatedAt(Date.now());
+    }
+  }
+  useEffect(() => {
+    if (changed.size === 0) return;
+    const timer = setTimeout(() => setChanged(new Set()), FLASH_MS);
+    return () => clearTimeout(timer);
+  }, [changed]);
+  return { flashing: (id: string) => changed.has(id), updatedAt };
+};
+
 /** A row that flashes soft plum once (1.2 s) when `flash` turns on; reduced motion stills it. */
 export const LiveRow = ({
   children,
