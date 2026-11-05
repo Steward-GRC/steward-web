@@ -86,6 +86,47 @@ const maskedAddress = (identifier: string): string | undefined => {
 /** The methods G6 lists: the authenticator app, an emailed code and a passkey. */
 const CHOOSABLE: ReadonlySet<SignInFactor> = new Set(["email", "passkey", "totp"]);
 
+/**
+ * G6 for a parked sign-in: "Choose a method" first when there are several, the authenticator
+ * app's code by default, and the masked address an emailed code goes to when it is known.
+ */
+const challengeState = (
+  pendingId: string,
+  factors: SignInFactor[],
+  sentTo?: string,
+): SignInState => {
+  const factor = factors.includes("totp") || !factors.includes("email") ? "totp" : "email";
+  const several = factors.filter((f) => CHOOSABLE.has(f)).length > 1;
+  return {
+    ...(several ? { choose: true } : {}),
+    factor,
+    factors,
+    pendingId,
+    ...(sentTo ? { sentTo } : {}),
+    view: "code",
+  };
+};
+
+const FACTORS: ReadonlySet<string> = new Set(["email", "passkey", "totp"]);
+
+/**
+ * Where the gateway's SSO callback sends someone back to (`/login`, forwarded here): the second
+ * factor it parked them for (`pendingMfa`, `mfaFactors`), or why SSO didn't finish (`error`).
+ */
+const ssoReturn = (query: URLSearchParams): SignInState | undefined => {
+  const pendingId = query.get("pendingMfa");
+  if (pendingId) {
+    const factors = (query.get("mfaFactors") ?? "")
+      .split(",")
+      .filter((f): f is SignInFactor => FACTORS.has(f));
+    return challengeState(pendingId, factors.length > 0 ? factors : ["totp"]);
+  }
+  const error = query.get("error");
+  if (error?.startsWith("sso"))
+    return { problem: error === "sso_not_active" ? "ssoNotActive" : "sso", view: "password" };
+  return undefined;
+};
+
 /** Where the password step leads: in, a code to ask for, an enrolment, or back with a reason. */
 const afterPassword = async (
   step: AuthStep,
@@ -95,18 +136,7 @@ const afterPassword = async (
 ) => {
   switch (step.kind) {
     case "challenge": {
-      const factor =
-        step.factors.includes("totp") || !step.factors.includes("email") ? "totp" : "email";
-      const sentTo = maskedAddress(identifier);
-      const several = step.factors.filter((f) => CHOOSABLE.has(f)).length > 1;
-      return state({
-        ...(several ? { choose: true } : {}),
-        factor,
-        factors: step.factors,
-        pendingId: step.pendingId,
-        ...(sentTo ? { sentTo } : {}),
-        view: "code",
-      });
+      return state(challengeState(step.pendingId, step.factors, maskedAddress(identifier)));
     }
     case "enrol": {
       const enrolment = await beginTotpEnrolment(step.pendingId, { incoming });
@@ -155,11 +185,12 @@ export const signInLoader = async (
   const capabilities = await fetchSignInCapabilities({ incoming: request });
   const step = url.searchParams.get("step");
   const opened: SignInState =
-    step === "sso"
+    ssoReturn(url.searchParams) ??
+    (step === "sso"
       ? { view: "sso" }
       : step === "reset" && capabilities.passwordReset
         ? { step: "request", view: "reset" }
-        : { view: "password" };
+        : { view: "password" });
   return { capabilities, next, quickLoginUsers: quickLogin, state: opened };
 };
 
@@ -212,7 +243,7 @@ export const signInAction = async (
     // browser leaves this app for it with a full page load.
     if (found.method === "sso")
       return redirectDocument(
-        `/auth/sso/start?${new URLSearchParams({ connection: found.connection })}`,
+        `/auth/sso/start?${new URLSearchParams({ connection: found.connection, identifier })}`,
       );
     if (found.method === "local") return state({ identifier, view: "password" });
     if (found.method === "missing") return state({ problem: "missing", view: "sso" }, 400);

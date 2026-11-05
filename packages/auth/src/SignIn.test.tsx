@@ -112,6 +112,11 @@ describe("G3: sign in with a password", () => {
     ["throttled", "Too many attempts. Wait a moment and try again."],
     ["expired", "Your sign-in timed out. Please start again."],
     ["passkey", "That passkey didn't work. Try again, or sign in with your password."],
+    ["sso", "Single sign-on didn't finish. Try again, or sign in with your password."],
+    [
+      "ssoNotActive",
+      "Your organization hasn't finished setting up single sign-on yet. Sign in with your password.",
+    ],
   ] as const)("says %s as the design words it", async (problem, text) => {
     renderSignIn({ state: { problem, view: "password" } });
     expect(await screen.findByRole("alert")).toHaveTextContent(text);

@@ -25,4 +25,5 @@ export {
   type SignInOptions,
   signOutAction,
 } from "./signIn.server";
+export { appReturnPath, ssoGatewayProxy } from "./sso.server";
 export { updateMyProfile, type UpdateMyProfileInput } from "./updateProfile.server";
