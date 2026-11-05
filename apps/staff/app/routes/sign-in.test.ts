@@ -11,15 +11,15 @@ import * as signIn from "./sign-in";
 const ORIGIN = "https://steward.example";
 
 const signedInMe = {
-  email: "ada@example.com",
-  firstName: "Ada",
-  lastName: "Lovelace",
+  email: "bob@example.org",
+  firstName: "Bob",
+  lastName: "Author",
   managedGroupIds: [],
-  name: "Ada Lovelace",
+  name: "Bob Author",
   permissions: [],
   roles: ["reader"],
-  userId: "u-ada",
-  username: "alovelace",
+  userId: "u-bob",
+  username: "bob",
 };
 
 /** A gateway that signs anyone in and knows the caller only when a session cookie is sent. */
@@ -78,7 +78,7 @@ describe("staff sign-in round trip", () => {
     stubGateway();
     const request = new Request(`${ORIGIN}/sign-in?next=%2Fpolicies%3Fq%3Dleave`, {
       body: new URLSearchParams({
-        identifier: "alovelace",
+        identifier: "bob",
         intent: "login",
         next: "/policies?q=leave",
         password: "any",

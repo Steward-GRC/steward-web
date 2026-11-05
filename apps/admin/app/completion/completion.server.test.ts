@@ -12,7 +12,7 @@ import {
 } from "./completion.server";
 
 const readerMe = {
-  email: "reader@example.com",
+  email: "reader@example.org",
   id: "u-reader",
   managedGroupIds: [],
   name: "Reader",
@@ -66,7 +66,7 @@ describe("getAckRoster", () => {
   it("returns the acked/pending roster", async () => {
     const roster: AckRoster = {
       acked: [
-        { ackedAt: "2026-09-01T00:00:00Z", email: "a@example.com", userId: "u-1", userName: "A" },
+        { ackedAt: "2026-09-01T00:00:00Z", email: "a@example.org", userId: "u-1", userName: "A" },
       ],
       pending: [],
     };

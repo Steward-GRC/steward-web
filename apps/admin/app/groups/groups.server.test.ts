@@ -25,7 +25,7 @@ import {
 } from "./groups.server";
 
 const siteAdminMe = {
-  email: "admin@example.com",
+  email: "admin@example.org",
   managedGroupIds: [],
   name: "Admin",
   permissions: ["group.manage"],
@@ -35,7 +35,7 @@ const siteAdminMe = {
 };
 
 const readerMe = {
-  email: "reader@example.com",
+  email: "reader@example.org",
   managedGroupIds: [],
   name: "Reader",
   permissions: [],

@@ -12,7 +12,7 @@ import {
 } from "./settings.server";
 
 const siteAdminMe = {
-  email: "admin@example.com",
+  email: "admin@example.org",
   id: "u-admin",
   managedGroupIds: [],
   name: "Admin",
@@ -22,7 +22,7 @@ const siteAdminMe = {
 };
 
 const readerMe = {
-  email: "reader@example.com",
+  email: "reader@example.org",
   id: "u-reader",
   managedGroupIds: [],
   name: "Reader",
@@ -87,9 +87,9 @@ describe("getEmailServiceConfig / saveEmailServiceConfig", () => {
   it("returns the presence-tracked status, never a key", async () => {
     const status: EmailServiceConfigStatus = {
       apiKeySet: true,
-      domain: "mg.example.com",
+      domain: "mg.example.org",
       enabled: true,
-      fromAddress: "notify@example.com",
+      fromAddress: "notify@example.org",
       provider: "mailgun",
       region: "EU",
     };
@@ -105,9 +105,9 @@ describe("getEmailServiceConfig / saveEmailServiceConfig", () => {
   it("posts the save mutation with the write-only key", async () => {
     const status: EmailServiceConfigStatus = {
       apiKeySet: true,
-      domain: "mg.example.com",
+      domain: "mg.example.org",
       enabled: true,
-      fromAddress: "notify@example.com",
+      fromAddress: "notify@example.org",
       provider: "mailgun",
       region: "EU",
     };
@@ -120,9 +120,9 @@ describe("getEmailServiceConfig / saveEmailServiceConfig", () => {
     expect(
       await saveEmailServiceConfig(request(), {
         apiKey: "new-key",
-        domain: "mg.example.com",
+        domain: "mg.example.org",
         enabled: true,
-        fromAddress: "notify@example.com",
+        fromAddress: "notify@example.org",
         provider: "mailgun",
         region: "EU",
       }),

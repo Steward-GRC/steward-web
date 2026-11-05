@@ -40,7 +40,7 @@ describe("shortId / displayLabel", () => {
   });
 
   it("prefers the resolved label, falling back to the shortened id on a miss", () => {
-    expect(displayLabel("Ada Lovelace", "u-3")).toBe("Ada Lovelace");
+    expect(displayLabel("Bob Author", "u-3")).toBe("Bob Author");
     expect(displayLabel(null, "a-very-long-opaque-id")).toBe("a-very-long-…");
   });
 });

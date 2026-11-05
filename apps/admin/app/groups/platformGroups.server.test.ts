@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createPlatformGroup, listPlatformGroups } from "./platformGroups.server";
 
 const siteAdminMe = {
-  email: "admin@example.com",
+  email: "admin@example.org",
   firstName: "",
   lastName: "",
   managedGroupIds: [],

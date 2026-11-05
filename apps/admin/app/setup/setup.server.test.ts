@@ -46,7 +46,7 @@ describe("bootstrapRoot", () => {
 
     const result = await bootstrapRoot(
       {
-        email: "root@example.com",
+        email: "root@example.org",
         name: "Root",
         password: "pw",
         setupToken: "tok",
@@ -91,7 +91,7 @@ describe("bootstrapRoot", () => {
 
     const result = await bootstrapRoot(
       {
-        email: "root@example.com",
+        email: "root@example.org",
         name: "Root",
         password: "pw",
         setupToken: "tok",
@@ -119,7 +119,7 @@ describe("bootstrapRoot", () => {
     );
 
     const result = await bootstrapRoot(
-      { email: "root@example.com", name: "", password: "pw", setupToken: "bad", username: "admin" },
+      { email: "root@example.org", name: "", password: "pw", setupToken: "bad", username: "admin" },
       config,
     );
 
@@ -131,7 +131,7 @@ describe("bootstrapRoot", () => {
 
     const result = await bootstrapRoot(
       {
-        email: "root@example.com",
+        email: "root@example.org",
         name: "Root",
         password: "pw",
         setupToken: "tok",
@@ -152,7 +152,7 @@ describe("setup API error reporting", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({}, { status: 503 })));
 
     await bootstrapRoot(
-      { email: "root@example.com", name: "", password: "pw", setupToken: "t", username: "admin" },
+      { email: "root@example.org", name: "", password: "pw", setupToken: "t", username: "admin" },
       config,
     );
     await fetchSetupState(config);

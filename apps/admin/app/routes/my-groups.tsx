@@ -121,7 +121,7 @@ export default function MyGroups({ actionData, loaderData }: Route.ComponentProp
               <input name="intent" type="hidden" value="add-member" />
               <input name="groupId" type="hidden" value={group.id} />
               <Field label="Add by email">
-                <Input name="email" placeholder="name@example.com" required type="email" />
+                <Input name="email" placeholder="name@example.org" required type="email" />
               </Field>
               <Button type="submit" variant="secondary">
                 Add
