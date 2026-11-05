@@ -53,6 +53,8 @@ these).
   defaults.
 - **[Category access](/admin-guide/category-access)** — who can read, acknowledge, approve and
   author in each category, and the simulator that checks it before you save.
+- **[Templates](/admin-guide/templates)** — the document skeletons new policies start from,
+  changed through a Sections, Review and Publish draft.
 - **[Libraries](/admin-guide/libraries)** — the reusable contact blocks, references and
   definitions policy authors attach to a document.
 - **[Workflows](/admin-guide/workflows)** — how to build an approval chain and set which

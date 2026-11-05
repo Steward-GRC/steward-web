@@ -1,17 +1,15 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { SectionInput, TemplateVersion } from "@steward-web/api-client";
+import type { SectionInput } from "@steward-web/api-client";
 
+import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
-  Badge,
   Banner,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
-  CardTitle,
+  cn,
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogFooter,
@@ -19,18 +17,20 @@ import {
   type Failure,
   Field,
   Input,
-  PageHeader,
-  Table,
-  TD,
-  TH,
-  THead,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuTrigger,
+  NotFound,
 } from "@steward-web/ui";
-import { useState } from "react";
-import { data, Form, Link, redirect } from "react-router";
+import { Check, MoreHorizontal } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { data, Link, redirect, useFetcher } from "react-router";
 
 import type { Route } from "./+types/templates.$code";
 
-import { SectionOutlineEditor } from "../templates/SectionOutlineEditor";
+import { sectionChanges } from "../templates/sectionChanges";
+import { outlineOf, SectionOutlineEditor } from "../templates/SectionOutlineEditor";
 import {
   createTemplateVersion,
   deleteTemplate,
@@ -45,7 +45,7 @@ import {
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const template = await findTemplateByCode(request, params.code);
-  if (!template) return { template: null, versions: [] };
+  if (!template) return data({ template: null, versions: [] }, { status: 404 });
   const versions = await listTemplateVersions(request, template.id);
   return { template, versions };
 };
@@ -102,346 +102,373 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
       }
     }
   } catch (error) {
+    if (error instanceof Response) throw error;
     return data({ failure: refusalOf(error), intent: String(intent), ok: false } as const, {
       status: 400,
     });
   }
 };
 
-interface DraftSectionsPanelProps {
-  onDiscard: () => void;
-  publishError?: Failure;
-  saved: boolean;
-  saveError?: Failure;
-  version: TemplateVersion;
-}
+type Result =
+  | { failure: Failure; intent: string; ok: false }
+  | { intent: string; ok: false; validationError: string }
+  | { intent: string; ok: true };
 
-/** Keyed on the draft's id by its caller, so a freshly created or discarded draft always
- *  starts from its own (server-given) sections rather than a stale edit. */
-const DraftSectionsPanel = ({
-  onDiscard,
-  publishError,
-  saved,
-  saveError,
-  version,
-}: DraftSectionsPanelProps) => {
-  const [sections, setSections] = useState<readonly SectionInput[]>(version.sections);
+const failureOf = (fetcher: { data?: Result; state: string }) =>
+  fetcher.state === "idle" && fetcher.data && !fetcher.data.ok && "failure" in fetcher.data
+    ? fetcher.data.failure
+    : undefined;
 
+const STEPS = ["sections", "review", "publish"] as const;
+type Step = (typeof STEPS)[number];
+
+/** A7's three steps: the step showing is plum, a passed one green with a check. */
+const DraftSteps = ({ onSelect, step }: { onSelect: (step: Step) => void; step: Step }) => {
+  const { t } = useTranslation("admin");
+  const at = STEPS.indexOf(step);
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted">
-        Use the arrows to reorder; indent/outdent sets the heading level (H1-H5); toggle required.
-        Each section can carry optional boilerplate body text.
-      </p>
-
-      <SectionOutlineEditor initialSections={version.sections} onChange={setSections} />
-
-      <Form className="flex items-center gap-3" method="post">
-        <input name="intent" type="hidden" value="save-sections" />
-        <input name="versionId" type="hidden" value={version.id} />
-        <input name="sectionsJson" type="hidden" value={JSON.stringify(sections)} />
-        {saveError ? (
-          <Banner failure={saveError} title="Couldn't save these sections" tone="danger" />
-        ) : null}
-        <Button size="sm" type="submit">
-          Save sections
-        </Button>
-        {saved ? <span className="text-sm text-ok">Saved.</span> : null}
-      </Form>
-
-      <div className="flex items-center gap-2 border-t border-border pt-4">
-        <Form method="post">
-          <input name="intent" type="hidden" value="publish" />
-          <input name="versionId" type="hidden" value={version.id} />
-          <Button size="sm" type="submit">
-            Publish version
-          </Button>
-        </Form>
-        <Button onClick={onDiscard} size="sm" variant="danger">
-          Discard draft
-        </Button>
-      </div>
-      {publishError ? (
-        <Banner failure={publishError} title="Couldn't publish this version" tone="danger" />
-      ) : null}
-    </div>
+    <ol
+      aria-label={t("templates.detail.steps.label")}
+      className="grid grid-cols-3 gap-1.5 text-sm font-semibold"
+    >
+      {STEPS.map((entry, index) => (
+        <li key={entry}>
+          <button
+            aria-current={entry === step ? "step" : undefined}
+            className={cn(
+              "flex w-full items-center gap-1.5 rounded-md px-2.5 py-[9px] text-left disabled:cursor-not-allowed",
+              entry === step
+                ? "bg-primary text-on-primary"
+                : index < at
+                  ? "bg-ok-soft text-ok"
+                  : "bg-surface text-muted shadow-[inset_0_0_0_1px_var(--border)]",
+            )}
+            disabled={index > at}
+            onClick={() => onSelect(entry)}
+            type="button"
+          >
+            {index < at ? <Check aria-hidden="true" className="size-4" /> : null}
+            {`${index + 1} ${t(`templates.detail.steps.${entry}`)}`}
+          </button>
+        </li>
+      ))}
+    </ol>
   );
 };
 
-export default function TemplateDetail({ actionData, loaderData }: Route.ComponentProps) {
+/** A confirm dialog that posts one intent: D30's discard, retire and delete. */
+const ConfirmDialog = ({
+  confirm,
+  description,
+  extra = {},
+  intent,
+  onOpenChange,
+  open,
+  title,
+}: {
+  confirm: string;
+  description: string;
+  extra?: Record<string, string>;
+  intent: string;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  title: string;
+}) => {
+  const { t } = useTranslation("admin");
+  const fetcher = useFetcher<Result>();
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent
+        busy={fetcher.state !== "idle"}
+        description={description}
+        title={title}
+        tone="danger"
+      >
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="secondary">{t("templates.detail.dialogs.cancel")}</Button>
+          </DialogClose>
+          <Button
+            busy={fetcher.state !== "idle"}
+            onClick={() => {
+              void fetcher.submit({ intent, ...extra }, { method: "post" });
+              onOpenChange(false);
+            }}
+            variant="danger"
+          >
+            {confirm}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+/**
+ * Template detail (A7): the name with its active and draft versions, then the draft wizard,
+ * Sections, Review (what changes against the published version) and Publish, and the version
+ * history. Rename, Retire and Delete sit in the actions menu.
+ */
+export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("admin");
   const { template, versions } = loaderData;
-  const [retireOpen, setRetireOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [discardOpen, setDiscardOpen] = useState(false);
+  const draft = versions.find((v) => v.status === "draft");
+  const active = versions.find((v) => v.status === "published");
+  const [sections, setSections] = useState<readonly SectionInput[]>(() =>
+    outlineOf(draft?.sections ?? []),
+  );
+  const [step, setStep] = useState<Step>("sections");
+  // A new or discarded draft starts the wizard again from its own sections.
+  const [draftId, setDraftId] = useState(draft?.id);
+  if (draft?.id !== draftId) {
+    setDraftId(draft?.id);
+    setSections(outlineOf(draft?.sections ?? []));
+    setStep("sections");
+  }
+  const [dialog, setDialog] = useState<"delete" | "discard" | "rename" | "retire" | null>(null);
+  const save = useFetcher<Result>();
+  const publish = useFetcher<Result>();
+  const create = useFetcher<Result>();
+  const rename = useFetcher<Result>();
+  const historyId = useId();
+
+  // A saved draft moves on to Review.
+  const saved = save.state === "idle" && save.data?.ok;
+  useEffect(() => {
+    if (saved) setStep("review");
+  }, [saved, save.data]);
 
   if (!template) {
     return (
-      <div className="flex w-full flex-col gap-6 p-6">
-        <EmptyState
+      <div className="flex w-full flex-col p-4 md:p-6">
+        <NotFound
           action={
-            <Button asChild>
-              <Link to="/templates">Back to templates</Link>
+            <Button asChild variant="secondary">
+              <Link to="/templates">{t("templates.detail.notFound.action")}</Link>
             </Button>
           }
-          description="No template matches that code."
-          title="Template not found"
+          description={t("templates.detail.notFound.description")}
+          title={t("templates.detail.notFound.title")}
         />
       </div>
     );
   }
 
-  const headVersion = versions[0] ?? null;
-  const hasDraftHead = headVersion?.status === "draft";
-
-  const errorFor = (intent: string) =>
-    actionData && !actionData.ok && actionData.intent === intent && "failure" in actionData
-      ? actionData.failure
-      : undefined;
-  const validationErrorFor = (intent: string) =>
-    actionData && !actionData.ok && actionData.intent === intent && "validationError" in actionData
-      ? actionData.validationError
-      : undefined;
-  const savedIntent = actionData?.ok ? actionData.intent : undefined;
+  const versionLine =
+    active && draft
+      ? t("templates.detail.versions", { active: active.versionNo, draft: draft.versionNo })
+      : active
+        ? t("templates.detail.activeOnly", { active: active.versionNo })
+        : draft
+          ? t("templates.detail.draftOnly", { draft: draft.versionNo })
+          : t("templates.detail.noVersions");
+  const changes = sectionChanges(active?.sections ?? [], sections);
+  const failure = [save, publish, create, rename]
+    .map((fetcher) => failureOf(fetcher))
+    .find(Boolean);
+  const statusLabel = (status: string) => t(`templates.status.${status}`, { defaultValue: status });
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <Button asChild className="self-start px-0" size="sm" variant="link">
-        <Link to="/templates">← Back to templates</Link>
-      </Button>
-
-      <PageHeader
-        actions={
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setRetireOpen(true)} size="sm" variant="secondary">
-              Retire
+    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
+      <header className="flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-muted">{t("templates.detail.eyebrow")}</p>
+          <h1 className="text-[26px] leading-[1.3] font-semibold">{template.name}</h1>
+          <p className="font-mono text-sm text-muted">{versionLine}</p>
+        </div>
+        {draft ? (
+          <Button
+            className="h-[34px] px-3"
+            onClick={() => setDialog("discard")}
+            variant="secondary"
+          >
+            {t("templates.detail.discard")}
+          </Button>
+        ) : (
+          <Button
+            busy={create.state !== "idle"}
+            onClick={() => void create.submit({ intent: "create-version" }, { method: "post" })}
+          >
+            {t("templates.detail.createVersion")}
+          </Button>
+        )}
+        <Menu>
+          <MenuTrigger asChild>
+            <Button aria-label={t("templates.detail.more")} size="icon" variant="secondary">
+              <MoreHorizontal aria-hidden="true" />
             </Button>
-            <Button onClick={() => setDeleteOpen(true)} size="sm" variant="danger">
-              Delete
-            </Button>
-          </div>
-        }
-        eyebrow="Structure"
-        subtitle={template.code}
-        title={
-          <span className="flex items-center gap-2">
-            {template.name}
-            {template.retiredAt ? <Badge tone="neutral">Retired</Badge> : null}
-          </span>
-        }
-      />
+          </MenuTrigger>
+          <MenuContent align="end">
+            <MenuItem onSelect={() => setDialog("rename")}>{t("templates.detail.rename")}</MenuItem>
+            <MenuItem onSelect={() => setDialog("retire")}>{t("templates.detail.retire")}</MenuItem>
+            <MenuItem onSelect={() => setDialog("delete")}>{t("templates.detail.delete")}</MenuItem>
+          </MenuContent>
+        </Menu>
+      </header>
 
-      <Dialog onOpenChange={setRetireOpen} open={retireOpen}>
-        <DialogContent
-          description="It will no longer be offered when creating new policies. Policies already using it keep working unchanged."
-          title={`Retire ${template.name}?`}
-          tone="danger"
-        >
-          <Form method="post">
-            <input name="intent" type="hidden" value="retire" />
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="secondary">Cancel</Button>
-              </DialogClose>
-              <Button type="submit" variant="danger">
-                Retire template
-              </Button>
-            </DialogFooter>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog onOpenChange={setDeleteOpen} open={deleteOpen}>
-        <DialogContent
-          description="Physically removes the template and its versions. Fails if any policy references it — retire it instead."
-          title={`Delete ${template.name}?`}
-          tone="danger"
-        >
-          <Form method="post">
-            <input name="intent" type="hidden" value="delete" />
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="secondary">Cancel</Button>
-              </DialogClose>
-              <Button type="submit" variant="danger">
-                Delete permanently
-              </Button>
-            </DialogFooter>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {errorFor("retire") ? (
-        <Banner failure={errorFor("retire")} title="Couldn't retire this template" tone="danger" />
-      ) : null}
-      {errorFor("delete") ? (
-        <Banner failure={errorFor("delete")} title="Couldn't delete this template" tone="danger" />
+      {failure ? (
+        <Banner failure={failure} title={t("templates.detail.failed")} tone="danger" />
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Rename</CardTitle>
-        </CardHeader>
-        <CardBody>
-          <Form className="flex flex-col gap-4" method="post">
-            <input name="intent" type="hidden" value="rename" />
-            <Field label="Name">
-              <Input defaultValue={template.name} name="name" required />
-            </Field>
-            {validationErrorFor("rename") ? (
-              <Banner title="Couldn't rename this template" tone="danger">
-                {validationErrorFor("rename")}
-              </Banner>
-            ) : null}
-            {errorFor("rename") ? (
-              <Banner
-                failure={errorFor("rename")}
-                title="Couldn't rename this template"
-                tone="danger"
-              />
-            ) : null}
-            <Button className="self-start" type="submit">
-              Rename
-            </Button>
-            {savedIntent === "rename" ? <p className="text-sm text-ok">Renamed.</p> : null}
-          </Form>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Overview</CardTitle>
-        </CardHeader>
-        <CardBody>
-          <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3">
-            <div className="flex flex-col gap-0.5">
-              <dt className="text-xs uppercase tracking-wide text-muted">Versions</dt>
-              <dd>
-                <Badge tone="neutral">{versions.length}</Badge>
-              </dd>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <dt className="text-xs uppercase tracking-wide text-muted">Latest status</dt>
-              <dd>
-                {headVersion ? (
-                  <Badge tone={headVersion.status === "published" ? "ok" : "neutral"}>
-                    {headVersion.status}
-                  </Badge>
-                ) : (
-                  <span className="text-muted">—</span>
-                )}
-              </dd>
-            </div>
-          </dl>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Current draft</CardTitle>
-          <Form method="post">
-            <input name="intent" type="hidden" value="create-version" />
-            <Button
-              disabled={hasDraftHead}
-              size="sm"
-              title={
-                hasDraftHead
-                  ? "Finish or discard the current draft first — only one draft at a time"
-                  : undefined
-              }
-              type="submit"
-              variant="secondary"
-            >
-              Create version
-            </Button>
-          </Form>
-        </CardHeader>
-        <CardBody>
-          {errorFor("create-version") ? (
-            <Banner
-              failure={errorFor("create-version")}
-              title="Couldn't start a new version"
-              tone="danger"
-            />
+      {draft ? (
+        <>
+          <DraftSteps onSelect={setStep} step={step} />
+          {step === "sections" ? (
+            <>
+              <SectionOutlineEditor onChange={setSections} sections={sections} />
+              <div className="flex justify-end">
+                <Button
+                  busy={save.state !== "idle"}
+                  className="h-[38px] px-4 text-base"
+                  onClick={() =>
+                    void save.submit(
+                      {
+                        intent: "save-sections",
+                        sectionsJson: JSON.stringify(sections),
+                        versionId: draft.id,
+                      },
+                      { method: "post" },
+                    )
+                  }
+                >
+                  {t("templates.detail.next")}
+                </Button>
+              </div>
+            </>
           ) : null}
+          {step === "review" ? (
+            <section className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface p-4">
+              <b>
+                {active
+                  ? t("templates.detail.review.title", { version: active.versionNo })
+                  : t("templates.detail.review.titleFirst")}
+              </b>
+              {changes.length === 0 ? (
+                <p className="text-sm text-muted">{t("templates.detail.review.none")}</p>
+              ) : (
+                <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">
+                  {changes.map((change, index) => (
+                    <li key={index}>{t(`templates.detail.review.${change.kind}`, change)}</li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button onClick={() => setStep("sections")} variant="secondary">
+                  {t("templates.detail.back")}
+                </Button>
+                <Button className="h-[38px] px-4 text-base" onClick={() => setStep("publish")}>
+                  {t("templates.detail.nextPublish")}
+                </Button>
+              </div>
+            </section>
+          ) : null}
+          {step === "publish" ? (
+            <section className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface p-4">
+              <b>{t("templates.detail.publish.title", { version: draft.versionNo })}</b>
+              <p className="text-sm text-muted">{t("templates.detail.publish.description")}</p>
+              <div className="flex justify-end gap-2">
+                <Button onClick={() => setStep("review")} variant="secondary">
+                  {t("templates.detail.back")}
+                </Button>
+                <Button
+                  busy={publish.state !== "idle"}
+                  className="h-[38px] px-4 text-base"
+                  onClick={() =>
+                    void publish.submit(
+                      { intent: "publish", versionId: draft.id },
+                      { method: "post" },
+                    )
+                  }
+                >
+                  {t("templates.detail.publish.action")}
+                </Button>
+              </div>
+            </section>
+          ) : null}
+        </>
+      ) : (
+        <EmptyState
+          description={t("templates.detail.noDraft.description")}
+          title={t("templates.detail.noDraft.title")}
+        />
+      )}
 
-          {!headVersion || !hasDraftHead ? (
-            <p className="text-sm text-muted">
-              No draft in progress. Click &quot;Create version&quot; to start one.
-            </p>
-          ) : (
-            <DraftSectionsPanel
-              key={headVersion.id}
-              onDiscard={() => setDiscardOpen(true)}
-              publishError={errorFor("publish")}
-              saved={savedIntent === "save-sections"}
-              saveError={errorFor("save-sections")}
-              version={headVersion}
-            />
-          )}
-        </CardBody>
-      </Card>
+      <section aria-labelledby={historyId} className="flex flex-col gap-2">
+        <h2 className="font-semibold" id={historyId}>
+          {t("templates.detail.history")}
+        </h2>
+        <ol aria-labelledby={historyId} className="flex flex-col border-l-2 border-border pl-4">
+          {versions.map((version) => (
+            <li className="relative flex items-center gap-2 py-1.5 text-sm" key={version.id}>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute -left-[21px] size-2.5 rounded-full",
+                  version.status === "published"
+                    ? "bg-ok"
+                    : version.status === "draft"
+                      ? "bg-primary"
+                      : "bg-border-strong",
+                )}
+              />
+              <span className="font-mono">
+                {t("templates.detail.historyItem", {
+                  count: version.sections.length,
+                  version: version.versionNo,
+                })}
+              </span>
+              <span className="text-muted">{statusLabel(version.status)}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-      <Dialog onOpenChange={setDiscardOpen} open={discardOpen}>
+      <ConfirmDialog
+        confirm={t("templates.detail.dialogs.discardConfirm")}
+        description={t("templates.detail.dialogs.discardDescription")}
+        extra={{ versionId: draft?.id ?? "" }}
+        intent="discard-draft"
+        onOpenChange={(next) => setDialog(next ? "discard" : null)}
+        open={dialog === "discard"}
+        title={t("templates.detail.dialogs.discardTitle", { version: draft?.versionNo ?? "" })}
+      />
+      <ConfirmDialog
+        confirm={t("templates.detail.dialogs.retireConfirm")}
+        description={t("templates.detail.dialogs.retireDescription")}
+        intent="retire"
+        onOpenChange={(next) => setDialog(next ? "retire" : null)}
+        open={dialog === "retire"}
+        title={t("templates.detail.dialogs.retireTitle", { name: template.name })}
+      />
+      <ConfirmDialog
+        confirm={t("templates.detail.dialogs.deleteConfirm")}
+        description={t("templates.detail.dialogs.deleteDescription")}
+        intent="delete"
+        onOpenChange={(next) => setDialog(next ? "delete" : null)}
+        open={dialog === "delete"}
+        title={t("templates.detail.dialogs.deleteTitle", { name: template.name })}
+      />
+      <Dialog onOpenChange={(next) => setDialog(next ? "rename" : null)} open={dialog === "rename"}>
         <DialogContent
-          description={`This permanently deletes the draft version of ${template.name}. Published versions are unaffected.`}
-          title="Discard this draft version?"
-          tone="danger"
+          hasInput
+          title={t("templates.detail.dialogs.renameTitle", { name: template.name })}
         >
-          <Form method="post">
-            <input name="intent" type="hidden" value="discard-draft" />
-            <input name="versionId" type="hidden" value={headVersion?.id ?? ""} />
+          <rename.Form method="post" onSubmit={() => setDialog(null)}>
+            <input name="intent" type="hidden" value="rename" />
+            <DialogBody>
+              <Field label={t("templates.detail.dialogs.renameLabel")}>
+                <Input defaultValue={template.name} name="name" required />
+              </Field>
+            </DialogBody>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="secondary">Keep draft</Button>
+                <Button variant="secondary">{t("templates.detail.dialogs.cancel")}</Button>
               </DialogClose>
-              <Button type="submit" variant="danger">
-                Discard draft
-              </Button>
+              <Button type="submit">{t("templates.detail.dialogs.renameConfirm")}</Button>
             </DialogFooter>
-          </Form>
+          </rename.Form>
         </DialogContent>
       </Dialog>
-      {errorFor("discard-draft") ? (
-        <Banner
-          failure={errorFor("discard-draft")}
-          title="Couldn't discard this draft"
-          tone="danger"
-        />
-      ) : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Version history</CardTitle>
-        </CardHeader>
-        <CardBody>
-          {versions.length === 0 ? (
-            <p className="text-sm text-muted">No versions yet.</p>
-          ) : (
-            <Table>
-              <THead>
-                <tr>
-                  <TH>Version</TH>
-                  <TH>Status</TH>
-                  <TH>Sections</TH>
-                </tr>
-              </THead>
-              <tbody>
-                {versions.map((version) => (
-                  <tr key={version.id}>
-                    <TD>{version.versionNo}</TD>
-                    <TD>
-                      <Badge tone={version.status === "published" ? "ok" : "neutral"}>
-                        {version.status}
-                      </Badge>
-                    </TD>
-                    <TD>{version.sections.length}</TD>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </CardBody>
-      </Card>
     </div>
   );
 }

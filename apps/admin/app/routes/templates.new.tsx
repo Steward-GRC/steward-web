@@ -1,15 +1,15 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import { Banner, Button, Field, Input, PageHeader, Select } from "@steward-web/ui";
+import { Banner, Button } from "@steward-web/ui";
 import { data, Form, Link, redirect } from "react-router";
 
 import type { Route } from "./+types/templates.new";
 
 import { listGroups } from "../groups/groups.server";
+import { NewTemplateFields, NO_CATEGORY } from "../templates/NewTemplateForm";
 import { createTemplate } from "../templates/templates.server";
-
-const NO_CATEGORY = "__no_category__";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const groups = await listGroups(request);
@@ -34,57 +34,42 @@ export const action = async ({ request }: Route.ActionArgs) => {
     );
     return redirect(`/templates/${created.code}`);
   } catch (error) {
+    if (error instanceof Response) throw error;
     return data({ failure: refusalOf(error), ok: false } as const, { status: 400 });
   }
 };
 
+/** New template (D25) as a page, for a direct link; the list opens the same fields in a dialog. */
 export default function NewTemplate({ actionData, loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("admin");
   const { categories } = loaderData;
-
   return (
-    <div className="flex w-full max-w-xl flex-col gap-6 p-6">
-      <PageHeader
-        eyebrow="Structure"
-        subtitle="Start a reusable document skeleton."
-        title="New template"
-      />
-
-      <Form className="flex flex-col gap-4" method="post">
-        <Field label="Name">
-          <Input name="name" required />
-        </Field>
-        <Field
-          hint="Templates have no category of their own yet; choose one, or leave it unset."
-          label="Category"
-        >
-          <Select
-            defaultValue={NO_CATEGORY}
-            name="ownerCategoryId"
-            options={[
-              { label: "No category", value: NO_CATEGORY },
-              ...categories.map((c) => ({ label: c.name, value: c.id })),
-            ]}
-          />
-        </Field>
-
-        {actionData && !actionData.ok && "validationError" in actionData ? (
-          <Banner title="Couldn't create this template" tone="danger">
-            {actionData.validationError}
+    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
+      <header>
+        <p className="text-xs font-medium text-muted">{t("templates.detail.eyebrow")}</p>
+        <h1 className="text-[26px] leading-[1.3] font-semibold">{t("templates.add.title")}</h1>
+        <p className="text-base text-muted">{t("templates.add.description")}</p>
+      </header>
+      <Form
+        className="grid gap-3 rounded-[10px] border border-border bg-surface p-4 md:grid-cols-2"
+        method="post"
+      >
+        <NewTemplateFields categories={categories} />
+        {actionData && !actionData.ok ? (
+          <Banner
+            className="md:col-span-2"
+            failure={"failure" in actionData ? actionData.failure : undefined}
+            title={t("templates.add.failed")}
+            tone="danger"
+          >
+            {"validationError" in actionData ? t("templates.add.required") : null}
           </Banner>
         ) : null}
-        {actionData && !actionData.ok && "failure" in actionData ? (
-          <Banner
-            failure={actionData.failure}
-            title="Couldn't create this template"
-            tone="danger"
-          />
-        ) : null}
-
-        <div className="flex items-center gap-2">
-          <Button type="submit">Create template</Button>
+        <div className="flex items-center justify-end gap-2 md:col-span-2">
           <Button asChild variant="secondary">
-            <Link to="/templates">Cancel</Link>
+            <Link to="/templates">{t("templates.add.cancel")}</Link>
           </Button>
+          <Button type="submit">{t("templates.add.submit")}</Button>
         </div>
       </Form>
     </div>

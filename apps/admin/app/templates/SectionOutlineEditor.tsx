@@ -1,215 +1,175 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-// An outline editor for a draft template version's sections: reorder with the up/down buttons,
-// change depth with indent/outdent, toggle required, and expand a section to write its
-// boilerplate body with the same editor the policy drafts use. Presentational only: the host
-// route owns the save action (a hidden `sectionsJson` field mirrors `onChange`'s latest value).
+// A draft template version's sections as A7's rows: a grip, the outline number, the title, the
+// heading level and the required switch. Presentational: the route owns the save, and this
+// reports every edit through `onChange` with the outline normalised.
 import type { SectionInput } from "@steward-web/api-client";
 
 import { hasText, parseDocument, serializeDocument } from "@steward-web/editor-steward/document";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-  Badge,
-  Button,
-  Input,
-  Switch,
-} from "@steward-web/ui";
-import { useState } from "react";
+import { useTranslation } from "@steward-web/i18n";
+import { Button, Switch } from "@steward-web/ui";
+import { GripVertical, X } from "lucide-react";
+import { type KeyboardEvent, useId, useState } from "react";
 
 import { SectionBodyEditor } from "./SectionBodyEditor";
-import { newSection, normalizeOutline, outlineNumbers } from "./sectionOutline";
+import { clampLevel, newSection, normalizeOutline, outlineNumbers } from "./sectionOutline";
 
 export interface SectionOutlineEditorProps {
-  initialSections: readonly SectionInput[];
-  /** Fires on every edit (not on the initial mount — the host already has `initialSections`)
-   *  with the current, normalized outline. */
   onChange: (sections: readonly SectionInput[]) => void;
+  sections: readonly SectionInput[];
 }
 
-export const SectionOutlineEditor = ({ initialSections, onChange }: SectionOutlineEditorProps) => {
-  const [sections, setSections] = useState<SectionInput[]>(() =>
-    normalizeOutline(initialSections.toSorted((a, b) => a.order - b.order)),
-  );
+/** Sorts and normalises the server's sections for the editor's first render. */
+export const outlineOf = (sections: readonly SectionInput[]): SectionInput[] =>
+  normalizeOutline(sections.toSorted((a, b) => a.order - b.order));
 
-  const commit = (next: SectionInput[]) => {
-    const normalized = normalizeOutline(next);
-    setSections(normalized);
-    onChange(normalized);
-  };
-
-  const updateSection = (key: string, patch: Partial<SectionInput>) =>
-    commit(sections.map((s) => (s.key === key ? { ...s, ...patch } : s)));
-
-  const moveUp = (index: number) => {
-    if (index === 0) return;
-    const next = [...sections];
-    [next[index - 1], next[index]] = [next[index]!, next[index - 1]!];
-    commit(next);
-  };
-
-  const moveDown = (index: number) => {
-    if (index === sections.length - 1) return;
-    const next = [...sections];
-    [next[index], next[index + 1]] = [next[index + 1]!, next[index]!];
-    commit(next);
-  };
-
-  const indentSection = (index: number) => {
-    if (index === 0) return;
-    commit(
-      sections.map((s, index_) => (index_ === index ? { ...s, level: (s.level ?? 1) + 1 } : s)),
-    );
-  };
-
-  const outdentSection = (index: number) =>
-    commit(
-      sections.map((s, index_) => (index_ === index ? { ...s, level: (s.level ?? 1) - 1 } : s)),
-    );
-
-  const removeSection = (key: string) => commit(sections.filter((s) => s.key !== key));
-
-  const addSection = () => commit([...sections, newSection(sections)]);
-
-  const setSectionBody = (key: string, documentJson: string) => {
-    const document = parseDocument(documentJson);
-    const blocks =
-      document && hasText(document.root)
-        ? [{ contentJson: serializeDocument(document), type: "doc" }]
-        : [];
-    updateSection(key, { blocks });
-  };
-
+/**
+ * The Sections step (A7): drag a row by its grip, or focus the grip and use the arrow keys (up
+ * and down move it, right and left indent and outdent it, H1–H5). Each row's switch makes the
+ * section required, "Text" opens its boilerplate, and the cross removes it.
+ */
+export const SectionOutlineEditor = ({ onChange, sections }: SectionOutlineEditorProps) => {
+  const { t } = useTranslation("admin");
+  const listId = useId();
+  const hintId = useId();
+  const [dragging, setDragging] = useState<null | number>(null);
+  const [open, setOpen] = useState<null | string>(null);
   const numbers = outlineNumbers(sections);
 
+  const commit = (next: readonly SectionInput[]) => onChange(normalizeOutline(next));
+  const update = (key: string, patch: Partial<SectionInput>) =>
+    commit(sections.map((s) => (s.key === key ? { ...s, ...patch } : s)));
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= sections.length || from === to) return;
+    const next = [...sections];
+    const [moving] = next.splice(from, 1);
+    next.splice(to, 0, moving!);
+    commit(next);
+  };
+  const shift = (index: number, delta: -1 | 1) => {
+    const section = sections[index]!;
+    update(section.key, { level: clampLevel((section.level ?? 1) + delta) });
+  };
+  const onGripKey = (index: number) => (event: KeyboardEvent) => {
+    const keys: Record<string, () => void> = {
+      ArrowDown: () => move(index, index + 1),
+      ArrowLeft: () => shift(index, -1),
+      ArrowRight: () => shift(index, 1),
+      ArrowUp: () => move(index, index - 1),
+    };
+    const run = keys[event.key];
+    if (run) {
+      event.preventDefault();
+      run();
+    }
+  };
+  const setBody = (key: string, documentJson: string) => {
+    const document = parseDocument(documentJson);
+    update(key, {
+      blocks:
+        document && hasText(document.root)
+          ? [{ contentJson: serializeDocument(document), type: "doc" }]
+          : [],
+    });
+  };
+
   return (
-    <div className="flex flex-col gap-4">
-      <Accordion type="multiple">
-        {sections.map((section, index) => (
-          <AccordionItem key={section.key} value={section.key}>
-            <div className="flex items-center gap-2 py-1">
-              <Badge className="shrink-0 font-mono" tone="neutral">
-                H{section.level ?? 1}
-              </Badge>
-              <div className="flex shrink-0 items-center gap-1">
-                <Button
-                  aria-label="Move up"
-                  disabled={index === 0}
-                  onClick={() => moveUp(index)}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  ↑
-                </Button>
-                <Button
-                  aria-label="Move down"
-                  disabled={index === sections.length - 1}
-                  onClick={() => moveDown(index)}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  ↓
-                </Button>
-                <Button
-                  aria-label="Outdent (decrease level)"
-                  disabled={(section.level ?? 1) <= 1}
-                  onClick={() => outdentSection(index)}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  ←
-                </Button>
-                <Button
-                  aria-label="Indent (increase level)"
-                  disabled={index === 0 || (section.level ?? 1) >= 5}
-                  onClick={() => indentSection(index)}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  →
-                </Button>
-              </div>
-
-              <Input
-                aria-label={`Section ${index + 1} title`}
-                className="flex-1"
-                onChange={(event) => updateSection(section.key, { title: event.target.value })}
-                placeholder="Section title"
-                value={section.title}
-              />
-
-              <div className="flex shrink-0 items-center gap-1.5">
-                <Switch
-                  aria-label="Required"
-                  checked={section.required ?? false}
-                  onCheckedChange={(checked) => updateSection(section.key, { required: checked })}
-                />
-                <span className="w-14 text-xs text-muted">
-                  {section.required ? "required" : "optional"}
-                </span>
-              </div>
-
-              <Button
-                aria-label="Remove section"
-                disabled={sections.length === 1}
-                onClick={() => removeSection(section.key)}
-                size="icon"
-                type="button"
-                variant="ghost"
+    <div className="flex flex-col gap-2">
+      <span className="sr-only" id={hintId}>
+        {t("templates.detail.sections.moveHint")}
+      </span>
+      <ul
+        aria-label={t("templates.detail.sections.label")}
+        className="flex flex-col rounded-[10px] border border-border bg-surface p-1.5"
+        id={listId}
+      >
+        {sections.map((section, index) => {
+          const title = section.title || t("templates.detail.sections.untitled");
+          return (
+            <li
+              className="flex flex-col"
+              key={section.key}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                if (dragging !== null) move(dragging, index);
+                setDragging(null);
+              }}
+            >
+              <div
+                className="flex items-center gap-2 rounded-md p-2"
+                style={{ marginLeft: `${((section.level ?? 1) - 1) * 24}px` }}
               >
-                ×
-              </Button>
-
-              <AccordionTrigger className="shrink-0">Body</AccordionTrigger>
-            </div>
-            <AccordionContent>
-              <SectionBodyEditor
-                initialDocument={parseDocument(section.blocks[0]?.contentJson)}
-                key={section.key}
-                onChange={(document) => setSectionBody(section.key, serializeDocument(document))}
-                placeholder="Boilerplate for this section (optional)"
-              />
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-
+                <button
+                  aria-describedby={hintId}
+                  aria-label={t("templates.detail.sections.move", { title })}
+                  className="flex cursor-grab text-muted hover:text-ink"
+                  draggable
+                  onDragStart={() => setDragging(index)}
+                  onKeyDown={onGripKey(index)}
+                  type="button"
+                >
+                  <GripVertical aria-hidden="true" className="size-4" />
+                </button>
+                <span className="w-7 flex-none font-mono text-xs font-medium text-muted">
+                  {numbers[index]}
+                </span>
+                <input
+                  aria-label={t("templates.detail.sections.title", { number: numbers[index] })}
+                  className="min-w-0 flex-1 rounded-sm bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]"
+                  onChange={(event) => update(section.key, { title: event.target.value })}
+                  placeholder={t("templates.detail.sections.untitled")}
+                  value={section.title}
+                />
+                <span className="font-mono text-2xs font-medium text-muted">
+                  H{section.level ?? 1}
+                </span>
+                <Switch
+                  aria-label={t("templates.detail.sections.required")}
+                  checked={section.required ?? false}
+                  onCheckedChange={(checked) => update(section.key, { required: checked })}
+                />
+                <button
+                  aria-expanded={open === section.key}
+                  aria-label={t("templates.detail.sections.body", { title })}
+                  className="text-xs font-semibold text-primary hover:underline"
+                  onClick={() => setOpen(open === section.key ? null : section.key)}
+                  type="button"
+                >
+                  {t("templates.detail.sections.editBody")}
+                </button>
+                <button
+                  aria-label={t("templates.detail.sections.remove", { title })}
+                  className="flex size-6 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink disabled:opacity-40"
+                  disabled={sections.length === 1}
+                  onClick={() => commit(sections.filter((s) => s.key !== section.key))}
+                  type="button"
+                >
+                  <X aria-hidden="true" className="size-4" />
+                </button>
+              </div>
+              {open === section.key ? (
+                <div className="px-2 pb-2">
+                  <SectionBodyEditor
+                    initialDocument={parseDocument(section.blocks[0]?.contentJson)}
+                    key={section.key}
+                    onChange={(document) => setBody(section.key, serializeDocument(document))}
+                    placeholder={t("templates.detail.sections.bodyPlaceholder")}
+                  />
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
       <Button
         className="self-start"
-        onClick={addSection}
+        onClick={() => commit([...sections, newSection(sections)])}
         size="sm"
-        type="button"
         variant="secondary"
       >
-        Add section
+        {t("templates.detail.sections.add")}
       </Button>
-
-      {sections.length > 0 ? (
-        <div className="rounded-md border border-border bg-muted/30 p-3">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
-            Outline preview
-          </p>
-          <ol className="flex flex-col gap-0.5 font-mono text-xs">
-            {sections.map((section, index) => (
-              <li
-                key={section.key}
-                style={{ marginLeft: `${((section.level ?? 1) - 1) * 1.25}rem` }}
-              >
-                <span className="text-muted">{numbers[index]}</span>
-                {"  "}
-                {section.title || <span className="italic text-muted">(untitled)</span>}
-                {section.required ? <span className="text-muted">{"  "}(required)</span> : null}
-              </li>
-            ))}
-          </ol>
-        </div>
-      ) : null}
+      <span className="text-xs text-muted">{t("templates.detail.sections.hint")}</span>
     </div>
   );
 };
