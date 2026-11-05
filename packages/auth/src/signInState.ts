@@ -50,6 +50,30 @@ export interface SignInLoaderData {
  */
 export type SignInState =
   | {
+      /** A refused quick login's error code from the mock, when it gave no message. */
+      code?: string;
+      identifier?: string;
+      /** The mock's own words for a refused quick login (`quickLoginRefused`). */
+      message?: string;
+      /** Who a refused quick login was for, when the mock gave no message. */
+      name?: string;
+      notice?: "passwordReset";
+      problem?:
+        | "disabled"
+        | "expired"
+        | "invalid"
+        | "missing"
+        | "passkey"
+        | "quickLoginRefused"
+        | "quickLoginUnavailable"
+        | "sso"
+        | "ssoNotActive"
+        | "throttled"
+        | "unavailable"
+        | "unreachable";
+      view: "password";
+    }
+  | {
       /** G6's "Choose a method": shown once, right after the password, when there are several. */
       choose?: boolean;
       emailSent?: "sent" | "wait";
@@ -66,26 +90,6 @@ export type SignInState =
       problem?: "code" | "missing" | "unavailable";
       step: "confirm" | "request";
       view: "reset";
-    }
-  | {
-      identifier?: string;
-      /** The mock's own words for a refused quick login (`quickLoginRefused`). */
-      message?: string;
-      notice?: "passwordReset";
-      problem?:
-        | "disabled"
-        | "expired"
-        | "invalid"
-        | "missing"
-        | "passkey"
-        | "quickLoginRefused"
-        | "quickLoginUnavailable"
-        | "sso"
-        | "ssoNotActive"
-        | "throttled"
-        | "unavailable"
-        | "unreachable";
-      view: "password";
     }
   | {
       identifier?: string;

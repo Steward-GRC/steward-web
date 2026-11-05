@@ -227,8 +227,8 @@ const PasswordGate = ({
         ) : null}
         {problem ? (
           <GateAlert id={problemId}>
-            {problem === "quickLoginRefused" && state.message
-              ? state.message
+            {problem === "quickLoginRefused"
+              ? refusalMessage(t, state)
               : t(`signIn.problem.${problem}`)}
           </GateAlert>
         ) : null}
@@ -717,6 +717,25 @@ const SigningInGate = () => {
       </GateCard>
     </GatePage>
   );
+};
+
+/** The mock's refusal codes the page has friendly words for. */
+const REFUSAL_CODES = new Set(["account_disabled", "no_password", "unknown_person"]);
+
+/**
+ * A refused dev quick login, in words: the mock's own message when it gave one, else "Couldn't
+ * sign in as {name}." with what its error code means.
+ */
+const refusalMessage = (
+  t: (key: string, values?: Record<string, string>) => string,
+  state: { code?: string; message?: string; name?: string },
+): string => {
+  if (state.message) return state.message;
+  if (!state.name) return t("signIn.problem.quickLoginRefused");
+  const lead = t("signIn.refused.lead", { name: state.name });
+  return state.code && REFUSAL_CODES.has(state.code)
+    ? `${lead} ${t(`signIn.refused.code.${state.code}`)}`
+    : lead;
 };
 
 /**

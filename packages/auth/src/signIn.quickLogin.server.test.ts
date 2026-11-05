@@ -129,6 +129,7 @@ describe("dev quick login against the mock's managed people", () => {
           JSON.stringify([
             { id: "user-bob", name: "Bob Author", username: "bob" },
             { disabled: true, id: "user-frank", name: "Frank Disabled", username: "frank" },
+            { id: "user-gone", name: "Gina Gone", username: "gina" },
           ]),
         );
         return;
@@ -137,6 +138,12 @@ describe("dev quick login against the mock's managed people", () => {
       request.on("data", (chunk: Buffer) => chunks.push(chunk));
       request.on("end", () => {
         const { personId } = JSON.parse(Buffer.concat(chunks).toString()) as { personId: string };
+        if (personId === "user-gone") {
+          // The mock refuses a person it no longer has with a code and no message.
+          response.writeHead(404, { "content-type": "application/json" });
+          response.end(JSON.stringify({ error: "unknown_person" }));
+          return;
+        }
         if (personId === "user-frank") {
           response.writeHead(403, { "content-type": "application/json" });
           response.end(
@@ -155,6 +162,7 @@ describe("dev quick login against the mock's managed people", () => {
       expect(page.quickLoginUsers.map((user) => user.label)).toEqual([
         "Bob Author",
         "Frank Disabled",
+        "Gina Gone",
       ]);
 
       const signedIn = (await signInAction(pick("bob"))) as Response;
@@ -165,6 +173,15 @@ describe("dev quick login against the mock's managed people", () => {
       const refused = (await signInAction(pick("frank"))) as { data: unknown };
       expect(refused.data).toEqual({
         message: "Frank is disabled.",
+        problem: "quickLoginRefused",
+        view: "password",
+      });
+
+      // Not "Couldn't reach Steward": the mock answered, so say who and why.
+      const gone = (await signInAction(pick("gina"))) as { data: unknown };
+      expect(gone.data).toEqual({
+        code: "unknown_person",
+        name: "Gina Gone",
         problem: "quickLoginRefused",
         view: "password",
       });

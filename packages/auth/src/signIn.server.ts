@@ -246,8 +246,10 @@ export const signInAction = async (
       return state({ problem: "quickLoginUnavailable", view: "password" }, 404);
     }
     // The mock's own refusal ("This person is disabled."), shown as it says it.
-    if (step.kind === "refused")
-      return state({ message: step.message, problem: "quickLoginRefused", view: "password" }, 409);
+    if (step.kind === "refused") {
+      const { kind: _kind, ...refusal } = step;
+      return state({ ...refusal, problem: "quickLoginRefused", view: "password" }, 409);
+    }
     return afterPassword(step, username, next, request);
   }
 
