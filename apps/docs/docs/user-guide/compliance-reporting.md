@@ -5,6 +5,10 @@ title: Compliance reporting
 
 # Compliance reporting
 
+:::note
+Compliance reporting comes in a later release. In this release the case pages are turned off unless the install sets `STEWARD_REPORTING=true`, and their redesign is still to come.
+:::
+
 This page is for reporting officers — the people who triage and work compliance cases, such as a
 possible data incident. It shows how to move a case from intake to close.
 

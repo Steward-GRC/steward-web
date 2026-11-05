@@ -9,6 +9,7 @@ import { Link, useSearchParams } from "react-router";
 import type { Route } from "./+types/reporting.cases";
 
 import { sortQueueByUrgency, statusLabelKey, statusTone } from "../reporting/caseStatus";
+import { requireReporting } from "../reporting/enabled.server";
 import { listReportCases } from "../reporting/reporting.server";
 
 const FILTERS = ["all", "open", "mine"] as const;
@@ -18,6 +19,7 @@ const isFilter = (value: null | string): value is Filter =>
   (FILTERS as readonly string[]).includes(value ?? "");
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
+  requireReporting();
   const requested = new URL(request.url).searchParams.get("filter");
   const filter: Filter = isFilter(requested) ? requested : "open";
   const statuses =
