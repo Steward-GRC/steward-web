@@ -53,5 +53,17 @@ Some entries are still being built. They open a **Coming soon** page until they'
 
 ## ♿ Accessibility
 
-The round button at the bottom right of every page opens **Accessibility options**, where you can
-choose a light, dark or high-contrast theme.
+The round button at the bottom right of every page, including sign-in, opens **Accessibility
+options**:
+
+- **Text size** — Small, Default, Large or X-Large, for every page.
+- **Display** — **High contrast** (black and white with a yellow accent), **Reduce motion**
+  (stops animations and smooth scrolling; Steward also follows your system's reduced-motion
+  setting), **Readable spacing** (more room between letters, words and lines) and **Underline
+  links**.
+- **Read aloud** — **Read** reads the page's main content aloud with your browser's voice;
+  **Pause**, **Resume** and **Stop** control it, and you can change the **Speed** and the
+  **Voice**. Some browsers can't read aloud, and the panel says so.
+
+Your choices save to this browser and apply straight away. **Reset** puts them all back. The
+light or dark theme is under **Your profile** → **Preferences**.
