@@ -23,6 +23,8 @@ export interface MarkProps {
   size?: number;
   /** A text alternative; omit it when the mark sits next to the word "Steward". */
   title?: string;
+  /** "on-dark" is the lilac page for the ink admin header (assets/steward-mark-on-dark.svg). */
+  tone?: "default" | "on-dark";
   /**
    * "small" drops the text lines. By default that happens below 40 px (Brand Guide, small
    * sizes); the shell headers (H1, H2, H3) keep the full mark at 24 and 26 px.
@@ -34,7 +36,7 @@ export interface MarkProps {
  * The Bookmark mark: a plum page with a saffron ribbon and two text lines cut out of it.
  * The page takes the theme's primary colour, so it follows light, dark and high contrast.
  */
-export const Mark = ({ className, size = 32, title, variant }: MarkProps) => {
+export const Mark = ({ className, size = 32, title, tone, variant }: MarkProps) => {
   const px = Math.max(16, size);
   const small = variant ? variant === "small" : px < SMALL_MARK_PX;
   return (
@@ -51,7 +53,7 @@ export const Mark = ({ className, size = 32, title, variant }: MarkProps) => {
       <path
         className="hc:hidden"
         d={small ? PAGE : `${PAGE}${LINES}`}
-        fill="var(--primary)"
+        fill={tone === "on-dark" ? "#d9a6d2" : "var(--primary)"}
         fillRule={small ? undefined : "evenodd"}
       />
       <path
@@ -74,20 +76,22 @@ export const Lockup = ({
   className,
   fontSize,
   size = 26,
+  tone,
 }: {
   className?: string;
   /** The wordmark's type size; by default it scales with the mark (20 px beside 26 px). */
   fontSize?: number;
   size?: number;
+  tone?: MarkProps["tone"];
 }) => {
   const { t } = useTranslation("shell");
   return (
     <span
       aria-label={t("brand.name")}
-      className={cn("inline-flex items-center gap-2 text-ink", className)}
+      className={cn("inline-flex items-center gap-2", tone !== "on-dark" && "text-ink", className)}
       role="img"
     >
-      <Mark size={size} variant="full" />
+      <Mark size={size} tone={tone} variant="full" />
       <Wordmark fontSize={fontSize ?? (size * 20) / 26} />
     </span>
   );

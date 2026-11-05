@@ -120,7 +120,7 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
   return (
     <div className="flex w-full max-w-xl flex-col gap-6 p-6">
       <PageHeader
-        eyebrow="Access"
+        eyebrow="People"
         subtitle="A SAML/OIDC connection is scoped to one domain. It needs domain ownership and a passing IdP login test before it can be activated."
         title="New organisation"
       />

@@ -83,7 +83,7 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
   return (
     <div className="flex w-full flex-col gap-6 p-6">
       <PageHeader
-        eyebrow="Access"
+        eyebrow="People"
         subtitle="Move one user's policies, acknowledgements and grants onto another, then close the source account."
         title="Merge accounts"
       />

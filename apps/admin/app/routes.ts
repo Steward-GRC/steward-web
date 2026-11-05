@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { index, route, type RouteConfig } from "@react-router/dev/routes";
+import { ADMIN_COMING_SOON_PATHS } from "@steward-web/shell/admin-coming-soon";
 
 /**
  * The admin feature areas (users, groups, organisations, SSO, setup, audit)
@@ -47,4 +48,9 @@ export default [
   route("settings", "routes/settings.tsx"),
   route("setup", "routes/setup.tsx"),
   route("audit", "routes/audit.tsx"),
+  // The shell's designed destinations that aren't built yet (H2, H14): each answers "Coming
+  // soon" until its feature PR replaces the route.
+  ...ADMIN_COMING_SOON_PATHS.map((path) =>
+    route(path.slice(1), "routes/coming-soon.tsx", { id: `coming-soon${path}` }),
+  ),
 ] satisfies RouteConfig;

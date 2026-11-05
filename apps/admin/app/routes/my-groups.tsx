@@ -89,7 +89,7 @@ export default function MyGroups({ actionData, loaderData }: Route.ComponentProp
     return (
       <div className="flex w-full flex-col gap-6 p-6">
         <PageHeader
-          eyebrow="Access"
+          eyebrow="People"
           subtitle="Add or remove the members of the groups you manage."
           title="My groups"
         />
@@ -104,7 +104,7 @@ export default function MyGroups({ actionData, loaderData }: Route.ComponentProp
   return (
     <div className="flex w-full flex-col gap-6 p-6">
       <PageHeader
-        eyebrow="Access"
+        eyebrow="People"
         subtitle="Add or remove the members of the groups you manage. Memberships synced from your identity provider are read-only."
         title="My groups"
       />

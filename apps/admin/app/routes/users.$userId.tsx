@@ -105,7 +105,7 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
   if (!user) {
     return (
       <div className="flex w-full flex-col gap-6 p-6">
-        <PageHeader eyebrow="Access" subtitle="No user matches that id." title="User not found" />
+        <PageHeader eyebrow="People" subtitle="No user matches that id." title="User not found" />
         <Button asChild className="self-start" variant="secondary">
           <Link to="/users">Back to users</Link>
         </Button>
@@ -120,7 +120,7 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader eyebrow="Access" subtitle={user.email} title={user.name} />
+      <PageHeader eyebrow="People" subtitle={user.email} title={user.name} />
 
       <Tabs defaultValue="profile">
         <TabsList>

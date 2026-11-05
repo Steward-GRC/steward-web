@@ -123,7 +123,7 @@ export default function PlatformGroups({ actionData, loaderData }: Route.Compone
   return (
     <div className="flex w-full flex-col gap-6 p-6">
       <PageHeader
-        eyebrow="Access"
+        eyebrow="People"
         subtitle="The identity groups people are members of. Reporting's officer setting, SSO group mappings and group managers name these by id. Categories are on the Groups page."
         title="Platform groups"
       />

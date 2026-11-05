@@ -64,7 +64,7 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
   return (
     <div className="flex w-full flex-col gap-6 p-6">
       <PageHeader
-        eyebrow="Compliance"
+        eyebrow="Assurance"
         subtitle="Acknowledgement coverage across every policy that requires acknowledgement."
         title="Completion"
       />

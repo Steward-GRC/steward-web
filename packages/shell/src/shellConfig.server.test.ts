@@ -12,12 +12,14 @@ describe("shellConfigFromEnvironment", () => {
         STEWARD_DOCS_URL: "https://docs.steward.example",
         STEWARD_ENVIRONMENT: "test",
         STEWARD_ORGANISATION: " Example Organisation ",
+        STEWARD_STAFF_URL: "https://steward.example/",
       }),
     ).toEqual({
       adminUrl: "https://steward.example/admin",
       docsUrl: "https://docs.steward.example",
       environment: "test",
       organisation: "Example Organisation",
+      staffUrl: "https://steward.example/",
     });
   });
 
@@ -27,6 +29,7 @@ describe("shellConfigFromEnvironment", () => {
       docsUrl: "https://steward-grc.com",
       environment: null,
       organisation: null,
+      staffUrl: "/",
     });
     expect(
       shellConfigFromEnvironment({ STEWARD_ENVIRONMENT: "Production" }).environment,

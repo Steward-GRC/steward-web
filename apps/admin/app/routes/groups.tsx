@@ -28,7 +28,7 @@ export default function Groups({ loaderData }: Route.ComponentProps) {
             </Button>
           </>
         }
-        eyebrow="Access"
+        eyebrow="Categories"
         subtitle="The org hierarchy: review cadence, owners and inherited defaults."
         title="Groups"
       />

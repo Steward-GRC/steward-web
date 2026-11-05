@@ -49,6 +49,7 @@ const CONFIG: ShellConfig = {
   docsUrl: "https://steward-grc.com",
   environment: "test",
   organisation: "Example Organisation",
+  staffUrl: "/",
 };
 
 const renderShell = (

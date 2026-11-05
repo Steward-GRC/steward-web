@@ -109,6 +109,9 @@ SPDX-License-Identifier: Apache-2.0
 }
 
 :root {
+  /* The admin header (H2): ink, and black in high contrast with a white rule. */
+  --admin-head: #261b25;
+  --admin-head-border: transparent;
   --radius: 6px;
   --dur-fast: 120ms;
   --dur-base: 180ms;
@@ -246,6 +249,8 @@ SPDX-License-Identifier: Apache-2.0
   color-scheme: light;
 }
 .dark {
+  --admin-head: #120c16;
+  --admin-head-border: transparent;
   --background: #170f19;
   --surface: #2a1f2e;
   --sunken: #100a12;
@@ -367,6 +372,8 @@ SPDX-License-Identifier: Apache-2.0
   color-scheme: dark;
 }
 .hc {
+  --admin-head: #000000;
+  --admin-head-border: #ffffff;
   --background: #000000;
   --surface: #000000;
   --sunken: #111111;
@@ -489,6 +496,7 @@ SPDX-License-Identifier: Apache-2.0
 }
 @media (prefers-color-scheme: dark) {
   .system:not(.hc) {
+    --admin-head: #120c16;
     --background: #170f19;
     --surface: #2a1f2e;
     --sunken: #100a12;

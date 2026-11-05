@@ -32,7 +32,7 @@ export default function Users({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader eyebrow="Access" subtitle="Platform users and roles." title="Users" />
+      <PageHeader eyebrow="People" subtitle="Platform users and roles." title="Users" />
 
       <Form className="flex flex-wrap items-end gap-4" method="get">
         <Field label="Email">

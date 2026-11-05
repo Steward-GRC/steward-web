@@ -61,7 +61,7 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
   return (
     <div className="flex w-full flex-col gap-6 p-6">
       <PageHeader
-        eyebrow="Compliance"
+        eyebrow="Assurance"
         subtitle="A tamper-evident record of every consequential action."
         title="Audit log"
       />

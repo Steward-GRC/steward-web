@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 export { AboutDiagnostics } from "./AboutDiagnostics";
 export { AccountMenu } from "./AccountMenu";
-export { AppShell } from "./AppShell";
+export { ADMIN_COMING_SOON, ADMIN_COMING_SOON_PATHS } from "./admin/adminComingSoon";
+export { AdminShell, type AdminShellProps } from "./admin/AdminShell";
+export { ComingSoonPage } from "./ComingSoonPage";
 export { CopyDiagnostics } from "./CopyDiagnostics";
 export { DiagnosticsProvider } from "./DiagnosticsProvider";
 export {
