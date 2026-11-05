@@ -118,7 +118,10 @@ export const CheckingGate = () => {
       className="stw-appear-late"
       testId="gate-card"
       visual={<Loader label={t("gates.checking")} size={56} />}
-    />
+    >
+      {/* The frame shows only the mark; the page still needs a name for a screen reader. */}
+      <h1 className="sr-only">{t("gates.checking")}</h1>
+    </StatusCard>
   );
 };
 

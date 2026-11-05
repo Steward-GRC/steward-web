@@ -146,6 +146,13 @@ describe("G1 and G2: checking the instance, not set up yet", () => {
     expect(screen.getByTestId("gate-card")).toHaveClass("stw-appear-late");
   });
 
+  it("G1 still names the page with a level-one heading, for screen readers", () => {
+    render(<CheckingGate />);
+    expect(screen.getByRole("heading", { level: 1, name: "Checking this Steward…" })).toHaveClass(
+      "sr-only",
+    );
+  });
+
   it("G2 says the instance isn't ready, with no form", () => {
     render(<NotSetUpGate />);
     expect(screen.getByRole("heading", { name: "Not set up yet" })).toBeInTheDocument();

@@ -129,7 +129,8 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
     <div className="flex w-full flex-col gap-3 p-6">
       <PageHeader subtitle={t("subtitleEmpty")} title={t("title")} />
       <form
-        className="flex h-11 items-center gap-2.5 rounded-[8px] border-2 border-primary bg-surface px-3 shadow-[0_0_0_3px_var(--primary-soft)]"
+        // The plum ring shows while the field has focus, so focus can be seen (WCAG 2.4.7).
+        className="flex h-11 items-center gap-2.5 rounded-[8px] border border-control bg-surface px-[13px] focus-within:border-2 focus-within:border-primary focus-within:px-3 focus-within:shadow-[0_0_0_3px_var(--primary-soft)]"
         onSubmit={(event) => event.preventDefault()}
         role="search"
       >

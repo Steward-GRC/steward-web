@@ -214,12 +214,16 @@ export const StaffShell = ({
           />
         ) : null}
         <div className="flex min-w-0 flex-1 flex-col">
-          <SiteBanners settings={banners} />
-          {signedIn ? <ConnectionLostBanner /> : null}
-          {signedIn && secondFactorNudge ? (
-            <SecondFactorNudge setUpUrl={ACCOUNT_PATHS.security} />
-          ) : null}
-          <MainContent className="flex-1 outline-none">{children}</MainContent>
+          {/* The notices open the main landmark, so every word on the page sits in one and the
+              skip link lands on them first. */}
+          <MainContent className="flex flex-1 flex-col outline-none">
+            <SiteBanners settings={banners} />
+            {signedIn ? <ConnectionLostBanner /> : null}
+            {signedIn && secondFactorNudge ? (
+              <SecondFactorNudge setUpUrl={ACCOUNT_PATHS.security} />
+            ) : null}
+            <div className="flex-1">{children}</div>
+          </MainContent>
           <ShellFooter organisation={config.organisation} />
         </div>
       </div>
