@@ -100,6 +100,8 @@ export interface Me {
   /** Platform group ids the caller is a LOCAL group-manager of; empty for everyone else. */
   readonly managedGroupIds: readonly string[];
   readonly name: string;
+  /** True until the person finishes first-run onboarding (G10, the welcome page). */
+  readonly needsOnboarding: boolean;
   readonly permissions: readonly string[];
   readonly roles: readonly string[];
   readonly username: string;

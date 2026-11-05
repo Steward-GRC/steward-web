@@ -10,6 +10,7 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/drafts.$policyId": "shell:titles.staff.draft",
   "routes/drafts.new": "shell:titles.staff.newDraft",
   "routes/home": "shell:titles.staff.myWork",
+  "routes/not-set-up": "shell:titles.staff.notSetUp",
   "routes/policies": "shell:titles.staff.policies",
   "routes/policy": "shell:titles.staff.policy",
   "routes/procedure": "shell:titles.staff.procedure",
@@ -20,6 +21,7 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/search": "shell:titles.staff.search",
   "routes/sign-in": "shell:titles.staff.signIn",
   "routes/sign-out": "shell:titles.staff.signOut",
+  "routes/welcome": "shell:titles.staff.welcome",
   ...Object.fromEntries(
     COMING_SOON_PATHS.map((path) => [`coming-soon${path}`, "shell:titles.staff.comingSoon"]),
   ),

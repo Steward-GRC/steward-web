@@ -169,3 +169,36 @@ describe("the staff shell's data", () => {
     vi.unstubAllEnvs();
   });
 });
+
+/** The root loader for someone signed in who still owes first-run onboarding. */
+const owing = (path: string) => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((_url: string, init: RequestInit) => {
+      const body = String(init.body);
+      if (body.includes("globalSettings")) return answer({ globalSettings: settings });
+      if (body.includes("query Me"))
+        return answer({ me: { ...me(["policy.read"]), needsOnboarding: true } });
+      return answer({ categoryTree: [], pendingTasks: [] });
+    }),
+  );
+  return loader({
+    request: new Request(`https://staff.steward.example${path}`, {
+      headers: { cookie: "steward_sid=abc" },
+    }),
+  } as unknown as LoaderArguments);
+};
+
+describe("first-run onboarding", () => {
+  it("sends someone who still owes it to the welcome page first", async () => {
+    const thrown = await owing("/policies?q=desk").catch((error: unknown) => error);
+    expect((thrown as Response).headers.get("location")).toBe(
+      "/welcome?next=%2Fpolicies%3Fq%3Ddesk",
+    );
+  });
+
+  it("lets them reach the welcome page and sign out", async () => {
+    await expect(owing("/welcome")).resolves.toMatchObject({ identity: { id: "user-alice" } });
+    await expect(owing("/sign-out")).resolves.toMatchObject({ identity: { id: "user-alice" } });
+  });
+});

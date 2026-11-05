@@ -25,6 +25,15 @@ lives.
 
 Steward shows **Signing in…** for a moment while it opens your session.
 
+The first time you sign in through your organisation's SSO, Steward asks you to finish setting up
+your account: check your **first name**, **last name** and **username** (it shows how you'll
+appear as you type), see the **email** your sign-in sent, accept the **Terms of Service** and
+select **Get started**.
+
+If you open the admin console without admin rights, Steward says **"Admins only"** and offers
+**Go back to the staff home**. During maintenance, Steward shows a maintenance screen instead of
+the app and comes back by itself when maintenance is over.
+
 Once you are in, you land on your [home dashboard](/user-guide/your-dashboard). To sign out, open
 the account menu at the top right and choose **Sign out**.
 

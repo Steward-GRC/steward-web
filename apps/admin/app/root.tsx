@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 import { IdentityProvider } from "@steward-web/auth";
 import { identityFromRequest } from "@steward-web/auth/server";
+import { statusGatePreview } from "@steward-web/dev-gate-preview.server";
 import { QuickLoginBar } from "@steward-web/dev-quick-login";
 import { quickLoginUsers } from "@steward-web/dev-quick-login.server";
 import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
 import { DEFAULT_LOCALE } from "@steward-web/i18n";
 import {
   AdminShell,
+  AdminsOnlyGate,
   DiagnosticsProvider,
   GateShell,
+  MaintenanceGate,
   PageTitle,
+  statusGateFor,
   useIsGate,
 } from "@steward-web/shell";
 import { siteSettingsFromRequest } from "@steward-web/shell/server";
@@ -45,6 +49,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     siteSettingsFromRequest(request),
   ]);
   return {
+    // A dev build's `?gate=G11` or `?gate=G12` holds that gate on screen; never in a release.
+    gatePreview: statusGatePreview(new URL(request.url)),
     devUiIssueCopy: process.env.STEWARD_DEV_UI_ISSUE_COPY === "true",
     identity,
     // Reused, not re-checked: quickLoginUsers() is already both build- and runtime-gated (empty
@@ -91,9 +97,40 @@ export const Layout = ({ children }: { children: ReactNode }) => (
   </html>
 );
 
+/** G12's sample person for the dev preview. */
+const PREVIEW_NAME = "Erin Reader";
+
 export default function App({ loaderData }: Route.ComponentProps) {
   // Sign-in and the other gates sit outside the shell as a centred card (2-layout-and-navigation.s5).
   const gate = useIsGate();
+  const { identity, shell, siteSettings } = loaderData;
+  const preview = loaderData.gatePreview;
+  // The console stays open to site admins during maintenance so they can lift it (G11), and
+  // turns away anyone signed in with no way into it (G12).
+  const status =
+    preview === "G11"
+      ? "maintenance"
+      : preview === "G12"
+        ? "adminsOnly"
+        : statusGateFor({ app: "admin", identity, settings: siteSettings });
+  if (status) {
+    return (
+      <IdentityProvider identity={identity}>
+        <GateShell environment={shell.config.environment}>
+          <QuickLoginBar enabled={loaderData.quickLoginOn} />
+          <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
+          {status === "maintenance" ? (
+            <MaintenanceGate message={siteSettings?.maintenance.message ?? ""} />
+          ) : (
+            <AdminsOnlyGate
+              name={preview === "G12" ? PREVIEW_NAME : identity.name}
+              staffUrl={shell.config.staffUrl}
+            />
+          )}
+        </GateShell>
+      </IdentityProvider>
+    );
+  }
   if (gate) {
     return (
       <IdentityProvider identity={loaderData.identity}>

@@ -589,6 +589,29 @@ export type CloseCaseMutation = {
   };
 };
 
+export type CompleteOnboardingMutationVariables = Exact<{
+  acceptTerms: boolean;
+  username?: string | null | undefined;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  email?: string | null | undefined;
+}>;
+
+export type CompleteOnboardingMutation = {
+  readonly completeOnboarding: {
+    readonly userId: string;
+    readonly username: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly roles: ReadonlyArray<string>;
+    readonly permissions: ReadonlyArray<string>;
+    readonly managedGroupIds: ReadonlyArray<string>;
+    readonly needsOnboarding: boolean;
+  };
+};
+
 export type CompletionReportQueryVariables = Exact<{
   policyVersionId: string | number;
   groupId?: string | number | null | undefined;
@@ -1210,6 +1233,7 @@ export type MeQuery = {
     readonly roles: ReadonlyArray<string>;
     readonly permissions: ReadonlyArray<string>;
     readonly managedGroupIds: ReadonlyArray<string>;
+    readonly needsOnboarding: boolean;
     readonly scopes: { readonly author: ReadonlyArray<string> };
   };
 };
@@ -5240,6 +5264,97 @@ export const CloseCaseDocument = {
     },
   ],
 } as unknown as DocumentNode<CloseCaseMutation, CloseCaseMutationVariables>;
+export const CompleteOnboardingDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CompleteOnboarding" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "acceptTerms" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "username" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "firstName" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "lastName" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "email" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "completeOnboarding" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "acceptTerms" },
+                value: { kind: "Variable", name: { kind: "Name", value: "acceptTerms" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "username" },
+                value: { kind: "Variable", name: { kind: "Name", value: "username" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "firstName" },
+                value: { kind: "Variable", name: { kind: "Name", value: "firstName" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "lastName" },
+                value: { kind: "Variable", name: { kind: "Name", value: "lastName" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "email" },
+                value: { kind: "Variable", name: { kind: "Name", value: "email" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "username" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "firstName" } },
+                { kind: "Field", name: { kind: "Name", value: "lastName" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "roles" } },
+                { kind: "Field", name: { kind: "Name", value: "permissions" } },
+                { kind: "Field", name: { kind: "Name", value: "managedGroupIds" } },
+                { kind: "Field", name: { kind: "Name", value: "needsOnboarding" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CompleteOnboardingMutation, CompleteOnboardingMutationVariables>;
 export const CompletionReportDocument = {
   kind: "Document",
   definitions: [
@@ -7477,6 +7592,7 @@ export const MeDocument = {
                 { kind: "Field", name: { kind: "Name", value: "roles" } },
                 { kind: "Field", name: { kind: "Name", value: "permissions" } },
                 { kind: "Field", name: { kind: "Name", value: "managedGroupIds" } },
+                { kind: "Field", name: { kind: "Name", value: "needsOnboarding" } },
                 {
                   kind: "Field",
                   name: { kind: "Name", value: "scopes" },

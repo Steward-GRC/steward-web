@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import type { SignInCapabilities, SignInState } from "./signInState";
+import type { WelcomePerson } from "./welcomeState";
 
 /**
  * The dev gate preview: `?gate=<frame id>` on the sign-in page shows that gate with sample
@@ -74,3 +75,21 @@ export const signInPreview = (url: URL): SignInPreview | undefined => {
   const capabilities = gate === "G3m" ? NO_SSO_YET : EVERYTHING;
   return { capabilities, gate, marker: DEV_GATE_PREVIEW_MARKER, state };
 };
+
+/** The status gates `?gate=` can hold on screen, wherever they render. */
+const STATUS_GATES = new Set(["G1", "G10", "G11", "G12", "G2"]);
+
+/** The status gate `?gate=` names (G1, G2, G10, G11 or G12); undefined for anything else. */
+export const statusGatePreview = (url: URL): string | undefined => {
+  const gate = url.searchParams.get("gate") ?? "";
+  return STATUS_GATES.has(gate) ? gate : undefined;
+};
+
+/**
+ * G10's sample person: a first SSO sign-in whose identity provider sent the email address but
+ * no names, so the names start empty and the email is read-only.
+ */
+export const welcomePreview = (url: URL): undefined | WelcomePerson =>
+  url.searchParams.get("gate") === "G10"
+    ? { email: "erin@example.org", firstName: "", lastName: "", username: "erin" }
+    : undefined;

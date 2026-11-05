@@ -16,8 +16,16 @@ install time, not here. This page has no module on/off switches.
 ## 📣 Announcement and maintenance
 
 An **announcement** is a short, leveled (info or warning) message shown as a banner across
-every app. A **maintenance notice** is a second, separate banner for a planned outage. Both are
-off until you turn them on, and both can carry an empty message to simply hide the banner again.
+every app. Both are off until you turn them on, and both can carry an empty message to simply
+hide the banner again.
+
+**Maintenance** locks Steward down. While it is on, everyone who opens the staff app sees a
+calm full-page **"SYSTEM DOWN FOR SCHEDULED MAINTENANCE"** screen with your message (or "The
+system is temporarily unavailable for scheduled maintenance." when you leave it empty), and the
+page reconnects by itself once maintenance ends. Site admins also get **Go to admin portal →**:
+the admin console stays open to them, with the maintenance banner at the top, so they can turn
+maintenance off again. Anyone else signed in to the admin console sees the same lockdown
+screen.
 
 ## ✉️ Outbound email
 

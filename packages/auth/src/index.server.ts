@@ -27,3 +27,4 @@ export {
 } from "./signIn.server";
 export { appReturnPath, ssoGatewayProxy } from "./sso.server";
 export { updateMyProfile, type UpdateMyProfileInput } from "./updateProfile.server";
+export { welcomeAction, welcomeLoader } from "./welcome.server";

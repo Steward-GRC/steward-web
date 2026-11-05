@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { Category, GlobalSettings } from "@steward-web/api-client";
 
-import { type Identity, useIdentity } from "@steward-web/auth";
+import { canOpenAdmin, useIdentity } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
 import { Lockup, Tooltip } from "@steward-web/ui";
 import { Bell, Search } from "lucide-react";
@@ -30,20 +30,6 @@ import { StaffSidebar } from "./StaffSidebar";
 
 const COLLAPSED_KEY = "steward.sidebar.collapsed";
 const RAIL_WIDTHS = "(min-width: 64rem) and (max-width: 79.98rem)";
-
-/** Anyone with a way into the admin console: its permissions, or a group they manage. */
-const ADMIN_PERMISSIONS = [
-  "admin.manage",
-  "audit.read",
-  "group.manage",
-  "settings.manage",
-  "template.manage",
-  "user.manage",
-];
-const opensAdmin = (identity: Identity) =>
-  identity.isSiteAdmin ||
-  identity.isGroupManager ||
-  ADMIN_PERMISSIONS.some((permission) => identity.permissions.has(permission));
 
 const useMediaQuery = (query: string) => {
   const [matches, setMatches] = useState(false);
@@ -122,7 +108,7 @@ export const StaffShell = ({
       }),
     [identity, counts, reporting],
   );
-  const adminUrl = signedIn && opensAdmin(identity) ? config.adminUrl : undefined;
+  const adminUrl = signedIn && canOpenAdmin(identity) ? config.adminUrl : undefined;
   // The canvas frames size boxes content-box: a 56 px header plus its 1 px rule is 57 px.
   const style = { "--shell-top": config.environment ? "85px" : "57px" } as CSSProperties;
 

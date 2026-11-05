@@ -24,3 +24,13 @@ export { ShellFooter } from "./ShellFooter";
 export { SiteBanners } from "./SiteBanners";
 export { COMING_SOON, COMING_SOON_PATHS } from "./staff/comingSoon";
 export { StaffShell, type StaffShellProps } from "./staff/StaffShell";
+export { type InstanceState, type InstanceStatus, STATUS_PATH } from "./status";
+export {
+  AdminsOnlyGate,
+  CheckingGate,
+  InstanceGate,
+  MaintenanceGate,
+  NotSetUpGate,
+  type StatusGate,
+  statusGateFor,
+} from "./StatusGates";

@@ -232,6 +232,15 @@ export interface CategoryApproversInput {
   categoryId: string;
 }
 
+/** What the welcome page (G10) sends; accepting the terms is implied by sending it. */
+export interface CompleteOnboardingInput {
+  /** Only when the sign-in sent no email address; otherwise it stays the sign-in's. */
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+}
+
 export interface CreateGroupInput {
   name: string;
   parentId: null | string;
@@ -329,6 +338,11 @@ export interface Edge {
     closingMessage?: string,
     cookie?: string,
   ): Promise<ReportCase>;
+  /**
+   * Finishes the CALLING person's first-run onboarding (G10): accepts the Terms of Service and
+   * sets the profile fields they confirmed. The actor is the session's own cookie.
+   */
+  completeOnboarding(input: CompleteOnboardingInput, cookie?: string): Promise<Me>;
   /** Acknowledgement coverage for a published policy version, optionally scoped to one
    *  group's subtree. */
   completionReport(

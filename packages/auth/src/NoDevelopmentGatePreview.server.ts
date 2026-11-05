@@ -1,6 +1,10 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { signInPreview as RealSignInPreview } from "./developmentGatePreview.server";
+import type {
+  signInPreview as RealSignInPreview,
+  statusGatePreview as RealStatusGatePreview,
+  welcomePreview as RealWelcomePreview,
+} from "./developmentGatePreview.server";
 
 /**
  * The release build's half of the dev gate preview swap: no previews, ever.
@@ -9,3 +13,7 @@ import type { signInPreview as RealSignInPreview } from "./developmentGatePrevie
  * the preview's sample gates never reach a release build.
  */
 export const signInPreview: typeof RealSignInPreview = () => {};
+
+export const statusGatePreview: typeof RealStatusGatePreview = () => {};
+
+export const welcomePreview: typeof RealWelcomePreview = () => {};
