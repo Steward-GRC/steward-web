@@ -24,7 +24,7 @@ interface SheetLink extends IssuedLink {
   revoked: boolean;
 }
 
-/** The link as the frame prints it: no scheme ("policies.example.org/s/7c1e04b2"). */
+/** The link as the frame prints it, without the scheme ("policies.example.org/share/7c1e04b2"). */
 const shown = (url: string) => url.replace(/^https?:\/\//, "");
 
 /**

@@ -29,7 +29,7 @@ A policy (or procedure) opened from the admin console reads exactly as it does f
 | **Delete**          | Permanently removes a policy that was never published, with its draft and appendices. Published policies can't be deleted: retire them instead.                |
 
 :::note
-A sensitive policy's magic link asks the reader for their email first and watermarks what they
-see. The manager shows the links you make while the policy is open; links issued earlier aren't
-listed there yet.
+A magic link opens the policy in the staff app's shared reader. A sensitive policy's link asks the
+reader for their email first and watermarks what they see. The manager shows the links you make
+while the policy is open; links issued earlier aren't listed there yet.
 :::

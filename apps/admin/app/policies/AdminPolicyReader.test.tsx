@@ -262,7 +262,7 @@ describe("AdminPolicyReader (A11)", () => {
               intent: "createMagicLink",
               ok: true,
               token: "7c1e04b2",
-              url: "https://policies.example.org/s/7c1e04b2",
+              url: "https://policies.example.org/share/7c1e04b2",
             }
           : { intent: "revokeMagicLink", ok: true, token: "7c1e04b2" },
     });
@@ -278,14 +278,14 @@ describe("AdminPolicyReader (A11)", () => {
     ).toBeInTheDocument();
 
     await userEvent.click(within(sheet).getByRole("button", { name: "Create for v1.0.0" }));
-    expect(await within(sheet).findByText("policies.example.org/s/7c1e04b2")).toHaveClass(
+    expect(await within(sheet).findByText("policies.example.org/share/7c1e04b2")).toHaveClass(
       "font-mono",
     );
     expect(within(sheet).getByRole("img", { name: "QR code for the v1.0.0 link" })).toBeVisible();
     expect(within(sheet).getByText(/^Active · by Alice · /)).toBeInTheDocument();
 
     await userEvent.click(within(sheet).getByRole("button", { name: "Copy" }));
-    expect(writeText).toHaveBeenCalledWith("https://policies.example.org/s/7c1e04b2");
+    expect(writeText).toHaveBeenCalledWith("https://policies.example.org/share/7c1e04b2");
 
     await userEvent.click(within(sheet).getByRole("button", { name: "Revoke" }));
     expect(await within(sheet).findByText(/^Revoked · by Alice · /)).toBeInTheDocument();
@@ -308,7 +308,7 @@ describe("AdminPolicyReader (A11)", () => {
           ok: true,
           ...(fields["intent"] === "reissueMagicLink" ? { replaced: fields["token"] } : {}),
           token,
-          url: `https://policies.example.org/s/${token}`,
+          url: `https://policies.example.org/share/${token}`,
         };
       },
     });
@@ -316,8 +316,10 @@ describe("AdminPolicyReader (A11)", () => {
     const sheet = await screen.findByRole("dialog", { name: "Magic links" });
     await userEvent.click(within(sheet).getByRole("button", { name: "Create for v1.0.0" }));
     await userEvent.click(await within(sheet).findByRole("button", { name: "Re-issue" }));
-    expect(await within(sheet).findByText("policies.example.org/s/9f20aa31")).toBeInTheDocument();
-    expect(within(sheet).queryByText("policies.example.org/s/7c1e04b2")).toBeNull();
+    expect(
+      await within(sheet).findByText("policies.example.org/share/9f20aa31"),
+    ).toBeInTheDocument();
+    expect(within(sheet).queryByText("policies.example.org/share/7c1e04b2")).toBeNull();
   });
 
   it("offers no link or export before the first publish", async () => {
