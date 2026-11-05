@@ -10,6 +10,7 @@ import {
   Banner,
   Button,
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogFooter,
@@ -282,59 +283,60 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
         <DialogContent hasInput title={editing ? "Edit reference" : "New reference"}>
-          <saveFetcher.Form className="flex flex-col gap-4" method="post">
+          <saveFetcher.Form method="post">
             <input name="intent" type="hidden" value="save" />
             <input name="id" type="hidden" value={editing?.id ?? ""} />
-            <Field label="Label">
-              <Input defaultValue={form.label} name="label" required />
-            </Field>
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-ink">Kind</span>
-              <RadioGroup
-                name="kind"
-                onValueChange={(v) => setKind(v as ReferenceKind)}
-                value={kind}
-              >
-                {KINDS.map((k) => (
-                  <RadioItem key={k} value={k}>
-                    <div className="flex flex-col">
-                      <span>{KIND_LABEL[k]}</span>
-                      <span className="text-sm text-muted">{KIND_DESCRIPTION[k]}</span>
-                    </div>
-                  </RadioItem>
-                ))}
-              </RadioGroup>
-            </div>
+            <DialogBody>
+              <Field label="Label">
+                <Input defaultValue={form.label} name="label" required />
+              </Field>
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-ink">Kind</span>
+                <RadioGroup
+                  name="kind"
+                  onValueChange={(v) => setKind(v as ReferenceKind)}
+                  value={kind}
+                >
+                  {KINDS.map((k) => (
+                    <RadioItem key={k} value={k}>
+                      <div className="flex flex-col">
+                        <span>{KIND_LABEL[k]}</span>
+                        <span className="text-sm text-muted">{KIND_DESCRIPTION[k]}</span>
+                      </div>
+                    </RadioItem>
+                  ))}
+                </RadioGroup>
+              </div>
 
-            {kind === ReferenceKind.Standard ? (
-              <>
-                <Field label="Clause">
-                  <Input defaultValue={form.clause} name="clause" />
+              {kind === ReferenceKind.Standard ? (
+                <>
+                  <Field label="Clause">
+                    <Input defaultValue={form.clause} name="clause" />
+                  </Field>
+                  <Field label="Link (optional)">
+                    <Input defaultValue={form.url} name="url" />
+                  </Field>
+                </>
+              ) : null}
+              {kind === ReferenceKind.Text ? (
+                <Field label="Reference text">
+                  <Input defaultValue={form.body} name="body" />
                 </Field>
-                <Field label="Link (optional)">
+              ) : null}
+              {kind === ReferenceKind.Link ? (
+                <Field label="Link">
                   <Input defaultValue={form.url} name="url" />
                 </Field>
-              </>
-            ) : null}
-            {kind === ReferenceKind.Text ? (
-              <Field label="Reference text">
-                <Input defaultValue={form.body} name="body" />
-              </Field>
-            ) : null}
-            {kind === ReferenceKind.Link ? (
-              <Field label="Link">
-                <Input defaultValue={form.url} name="url" />
-              </Field>
-            ) : null}
+              ) : null}
 
-            {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
-              <Banner
-                failure={saveFetcher.data.error}
-                title="Couldn't save this reference"
-                tone="danger"
-              />
-            ) : null}
-
+              {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
+                <Banner
+                  failure={saveFetcher.data.error}
+                  title="Couldn't save this reference"
+                  tone="danger"
+                />
+              ) : null}
+            </DialogBody>
             <DialogFooter>
               <Button onClick={() => setDialogOpen(false)} type="button" variant="secondary">
                 Cancel
@@ -351,6 +353,7 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
         <DialogContent
           description={`"${deleteTarget?.label}" will be permanently deleted. This can't be undone.`}
           title="Delete reference?"
+          tone="danger"
         >
           <deleteFetcher.Form method="post">
             <input name="intent" type="hidden" value="delete" />
@@ -358,11 +361,13 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
             {deleteFetcher.data &&
             !deleteFetcher.data.ok &&
             deleteFetcher.data.intent === "delete" ? (
-              <Banner
-                failure={deleteFetcher.data.error}
-                title="Couldn't delete this reference"
-                tone="danger"
-              />
+              <DialogBody>
+                <Banner
+                  failure={deleteFetcher.data.error}
+                  title="Couldn't delete this reference"
+                  tone="danger"
+                />
+              </DialogBody>
             ) : null}
             <DialogFooter>
               <DialogClose asChild>

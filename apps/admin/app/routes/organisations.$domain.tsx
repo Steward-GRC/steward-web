@@ -617,7 +617,11 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
                 Delete organisation...
               </Button>
             </DialogTrigger>
-            <DialogContent description="This can't be undone." title={`Delete ${org.orgName}?`}>
+            <DialogContent
+              description="This can't be undone."
+              title={`Delete ${org.orgName}?`}
+              tone="danger"
+            >
               <Form method="post">
                 <input name="intent" type="hidden" value="delete" />
                 <DialogFooter>

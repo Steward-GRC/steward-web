@@ -135,6 +135,7 @@ export default function WorkflowDetail({ actionData, loaderData }: Route.Compone
         <DialogContent
           description="Groups using it as their default keep that reference; archiving only hides it from new selection."
           title={`Archive ${workflow.name}?`}
+          tone="danger"
         >
           <Form method="post">
             <input name="intent" type="hidden" value="archive" />

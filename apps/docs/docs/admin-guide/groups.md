@@ -28,7 +28,7 @@ levels deep**. Open **Groups** under `/admin` to see the tree.
      its **default workflow**, and its **review cadence** (none, annual, every two years, or a
      specific date).
    - **Danger zone** — delete the group. This is blocked while the group or any of its subgroups
-     still holds documents.
+     still holds documents. To confirm, type the group's name exactly as shown.
 
 ## 🔀 Move a group
 

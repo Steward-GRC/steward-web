@@ -24,6 +24,7 @@ import { Field } from "#ui/components/Field";
 import { Textarea } from "#ui/components/Input";
 import {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogFooter,
@@ -78,20 +79,23 @@ const AcknowledgeDialog = ({ currentVersionId }: { currentVersionId: string }) =
         busy={busy}
         description={t("reader.dialogs.acknowledge.description")}
         title={t("reader.dialogs.acknowledge.title")}
+        tone="primary"
       >
         {fetcher.data?.error ? (
-          <Banner
-            failure={fetcher.data.error}
-            title={t("reader.dialogs.acknowledge.title")}
-            tone="danger"
-          />
+          <DialogBody>
+            <Banner
+              failure={fetcher.data.error}
+              title={t("reader.dialogs.acknowledge.title")}
+              tone="danger"
+            />
+          </DialogBody>
         ) : null}
         <fetcher.Form method="post">
           <input name="intent" type="hidden" value="acknowledge" />
           <input name="policyVersionId" type="hidden" value={currentVersionId} />
           <DialogFooter>
             <DialogClose asChild>
-              <Button disabled={busy} type="button" variant="ghost">
+              <Button disabled={busy} type="button" variant="secondary">
                 {t("actions.cancel", { ns: "common" })}
               </Button>
             </DialogClose>
@@ -130,23 +134,26 @@ const BreakGlassDialog = ({ policyId }: { policyId: string }) => {
         description={t("reader.dialogs.breakGlass.description")}
         hasInput
         title={t("reader.dialogs.breakGlass.title")}
+        tone="danger"
       >
-        {fetcher.data?.error ? (
-          <Banner
-            failure={fetcher.data.error}
-            title={t("reader.dialogs.breakGlass.title")}
-            tone="danger"
-          />
-        ) : null}
-        <fetcher.Form className="grid gap-4" method="post">
+        <fetcher.Form method="post">
           <input name="intent" type="hidden" value="breakGlass" />
           <input name="policyId" type="hidden" value={policyId} />
-          <Field label={t("reader.dialogs.breakGlass.reasonLabel")}>
-            <Textarea name="reason" required />
-          </Field>
+          <DialogBody>
+            {fetcher.data?.error ? (
+              <Banner
+                failure={fetcher.data.error}
+                title={t("reader.dialogs.breakGlass.title")}
+                tone="danger"
+              />
+            ) : null}
+            <Field label={t("reader.dialogs.breakGlass.reasonLabel")}>
+              <Textarea className="min-h-20" name="reason" required />
+            </Field>
+          </DialogBody>
           <DialogFooter>
             <DialogClose asChild>
-              <Button disabled={busy} type="button" variant="ghost">
+              <Button disabled={busy} type="button" variant="secondary">
                 {t("actions.cancel", { ns: "common" })}
               </Button>
             </DialogClose>

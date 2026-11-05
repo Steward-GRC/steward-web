@@ -1,7 +1,14 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { Dialog, DialogContent, DialogFooter } from "@steward-web/ui";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+} from "@steward-web/ui";
 
 import { CopyDiagnostics } from "./CopyDiagnostics";
 
@@ -20,13 +27,18 @@ export const AboutDiagnostics = ({
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) => {
-  const { t } = useTranslation("shell");
+  const { t } = useTranslation(["shell", "common"]);
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent title={t("about.title")}>
-        <p className="text-base text-muted">{t("about.version", { commit, version })}</p>
+        <DialogBody>
+          <p className="text-base text-muted">{t("about.version", { commit, version })}</p>
+        </DialogBody>
         <DialogFooter>
           <CopyDiagnostics />
+          <DialogClose asChild>
+            <Button variant="secondary">{t("actions.close", { ns: "common" })}</Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

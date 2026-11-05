@@ -30,3 +30,12 @@ describe("the stored component recipes", () => {
     expect(rule(".env-banner")).toContain("color: #f3ecf2");
   });
 });
+
+describe("the dialog scrim", () => {
+  it("is night plum at 45% in light and black at 65% in dark and high contrast", () => {
+    expect(rule(":root")).toContain("--scrim: rgb(29 21 32 / 0.45)");
+    expect(rule(".dark")).toContain("--scrim: rgb(0 0 0 / 0.65)");
+    expect(rule(".hc")).toContain("--scrim: rgb(0 0 0 / 0.65)");
+    expect(css).toMatch(/\.system:not\(\.hc\)\s*\{[^}]*--scrim: rgb\(0 0 0 \/ 0\.65\)/);
+  });
+});

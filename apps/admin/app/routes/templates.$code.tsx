@@ -234,6 +234,7 @@ export default function TemplateDetail({ actionData, loaderData }: Route.Compone
         <DialogContent
           description="It will no longer be offered when creating new policies. Policies already using it keep working unchanged."
           title={`Retire ${template.name}?`}
+          tone="danger"
         >
           <Form method="post">
             <input name="intent" type="hidden" value="retire" />
@@ -253,6 +254,7 @@ export default function TemplateDetail({ actionData, loaderData }: Route.Compone
         <DialogContent
           description="Physically removes the template and its versions. Fails if any policy references it — retire it instead."
           title={`Delete ${template.name}?`}
+          tone="danger"
         >
           <Form method="post">
             <input name="intent" type="hidden" value="delete" />
@@ -383,6 +385,7 @@ export default function TemplateDetail({ actionData, loaderData }: Route.Compone
         <DialogContent
           description={`This permanently deletes the draft version of ${template.name}. Published versions are unaffected.`}
           title="Discard this draft version?"
+          tone="danger"
         >
           <Form method="post">
             <input name="intent" type="hidden" value="discard-draft" />

@@ -15,6 +15,7 @@ import {
   Banner,
   Button,
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogFooter,
@@ -396,43 +397,50 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
                 <DialogTrigger asChild>
                   <Button variant="secondary">{tAi("generate.title")}</Button>
                 </DialogTrigger>
-                <DialogContent title={tAi("generate.title")}>
+                <DialogContent hasInput title={tAi("generate.title")}>
                   <generateFetcher.Form method="post">
                     <input name="intent" type="hidden" value="generate" />
                     <input name="sectionsJson" type="hidden" value={sectionsJson} />
-                    <Field label={tAi("generate.brief")}>
-                      <Textarea name="brief" required />
-                    </Field>
+                    <DialogBody>
+                      <Field label={tAi("generate.brief")}>
+                        <Textarea name="brief" required />
+                      </Field>
+                      {generateJobId && generateJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
+                        <Progress value={generateJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
+                      ) : null}
+                      {generateResult ? (
+                        <div className="grid gap-2">
+                          {generateResult.sections.map((generated) => (
+                            <div
+                              className="rounded-md border border-border p-2 text-sm"
+                              key={generated.sectionKey}
+                            >
+                              {generated.text}
+                            </div>
+                          ))}
+                          <Button
+                            onClick={() => {
+                              replaceDocument(
+                                fillGenerated(content, outline, generateResult.sections),
+                              );
+                              setAppliedGenerateJobId(generateJobId);
+                            }}
+                            type="button"
+                          >
+                            {tAi("assist.apply")}
+                          </Button>
+                        </div>
+                      ) : null}
+                    </DialogBody>
                     <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="secondary">{tCommon("actions.close")}</Button>
+                      </DialogClose>
                       <Button disabled={generateFetcher.state !== "idle"} type="submit">
                         {tAi("generate.start")}
                       </Button>
                     </DialogFooter>
                   </generateFetcher.Form>
-                  {generateJobId && generateJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
-                    <Progress value={generateJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
-                  ) : null}
-                  {generateResult ? (
-                    <div className="grid gap-2">
-                      {generateResult.sections.map((generated) => (
-                        <div
-                          className="rounded-md border border-border p-2 text-sm"
-                          key={generated.sectionKey}
-                        >
-                          {generated.text}
-                        </div>
-                      ))}
-                      <Button
-                        onClick={() => {
-                          replaceDocument(fillGenerated(content, outline, generateResult.sections));
-                          setAppliedGenerateJobId(generateJobId);
-                        }}
-                        type="button"
-                      >
-                        {tAi("assist.apply")}
-                      </Button>
-                    </div>
-                  ) : null}
                 </DialogContent>
               </Dialog>
 
@@ -445,40 +453,45 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
                     <input name="intent" type="hidden" value="review" />
                     <input name="versionId" type="hidden" value={draft?.id ?? ""} />
                     <input name="sectionsJson" type="hidden" value={sectionsJson} />
+                    <DialogBody>
+                      {reviewJobId && reviewJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
+                        <Progress value={reviewJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
+                      ) : null}
+                      {reviewResult ? (
+                        reviewResult.findings.length === 0 ? (
+                          <p className="text-sm text-muted">{tAi("review.empty")}</p>
+                        ) : (
+                          <ul className="grid gap-2">
+                            {reviewResult.findings.map((finding) => (
+                              <li
+                                className="grid gap-1 rounded-md border border-border p-2"
+                                key={finding.sectionKey}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <FindingBadge severity={finding.severity} />
+                                  <span className="text-sm font-medium">{finding.sectionKey}</span>
+                                </div>
+                                <p className="text-sm text-muted">{finding.finding}</p>
+                                {finding.suggestion ? (
+                                  <p className="text-sm">
+                                    {tAi("review.suggestion", { suggestion: finding.suggestion })}
+                                  </p>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ul>
+                        )
+                      ) : null}
+                    </DialogBody>
                     <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="secondary">{tCommon("actions.close")}</Button>
+                      </DialogClose>
                       <Button disabled={reviewFetcher.state !== "idle"} type="submit">
                         {tAi("review.start")}
                       </Button>
                     </DialogFooter>
                   </reviewFetcher.Form>
-                  {reviewJobId && reviewJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
-                    <Progress value={reviewJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
-                  ) : null}
-                  {reviewResult ? (
-                    reviewResult.findings.length === 0 ? (
-                      <p className="text-sm text-muted">{tAi("review.empty")}</p>
-                    ) : (
-                      <ul className="grid gap-2">
-                        {reviewResult.findings.map((finding) => (
-                          <li
-                            className="grid gap-1 rounded-md border border-border p-2"
-                            key={finding.sectionKey}
-                          >
-                            <div className="flex items-center gap-2">
-                              <FindingBadge severity={finding.severity} />
-                              <span className="text-sm font-medium">{finding.sectionKey}</span>
-                            </div>
-                            <p className="text-sm text-muted">{finding.finding}</p>
-                            {finding.suggestion ? (
-                              <p className="text-sm">
-                                {tAi("review.suggestion", { suggestion: finding.suggestion })}
-                              </p>
-                            ) : null}
-                          </li>
-                        ))}
-                      </ul>
-                    )
-                  ) : null}
                 </DialogContent>
               </Dialog>
             </>
@@ -500,6 +513,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
             <DialogContent
               description={t("editor.actions.discardConfirm")}
               title={t("editor.actions.discard")}
+              tone="danger"
             >
               <Form method="post">
                 <input name="intent" type="hidden" value="discard" />

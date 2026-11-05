@@ -6,7 +6,16 @@ import {
   gatewayFetch,
 } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
-import { Button, Dialog, DialogContent, type Failure, Textarea } from "@steward-web/ui";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  type Failure,
+  Textarea,
+} from "@steward-web/ui";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 
@@ -57,7 +66,7 @@ const readSteward = async (): Promise<{
  * About and diagnostics entry can use the same button with nothing to report.
  */
 export const CopyDiagnostics = ({ failure }: { failure?: Failure }) => {
-  const { t } = useTranslation("shell");
+  const { t } = useTranslation(["shell", "common"]);
   const location = useLocation();
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -109,8 +118,15 @@ export const CopyDiagnostics = ({ failure }: { failure?: Failure }) => {
         open={fallbackText != undefined}
       >
         <DialogContent title={t("copyDiagnostics.fallbackTitle")}>
-          <p className="text-base text-muted">{t("copyDiagnostics.fallbackHint")}</p>
-          <Textarea defaultValue={fallbackText} readOnly ref={fallbackRef} rows={12} />
+          <DialogBody>
+            <p className="text-base text-muted">{t("copyDiagnostics.fallbackHint")}</p>
+            <Textarea defaultValue={fallbackText} readOnly ref={fallbackRef} rows={12} />
+          </DialogBody>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">{t("actions.close", { ns: "common" })}</Button>
+            </DialogClose>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

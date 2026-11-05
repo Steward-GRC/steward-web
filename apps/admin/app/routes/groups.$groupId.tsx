@@ -21,6 +21,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  TypeToConfirm,
 } from "@steward-web/ui";
 import { data, Form, Link, redirect } from "react-router";
 
@@ -448,18 +449,24 @@ export default function GroupEdit({ actionData, loaderData }: Route.ComponentPro
             </DialogTrigger>
             <DialogContent
               description="This can't be undone, and is blocked if the group or a subgroup has policies."
+              hasInput
               title={`Delete ${group.name}?`}
+              tone="danger"
             >
               <Form method="post">
                 <input name="intent" type="hidden" value="delete" />
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="secondary">Cancel</Button>
-                  </DialogClose>
-                  <Button type="submit" variant="danger">
-                    Delete group
-                  </Button>
-                </DialogFooter>
+                <TypeToConfirm phrase={group.name}>
+                  {(confirmed) => (
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="secondary">Cancel</Button>
+                      </DialogClose>
+                      <Button disabled={!confirmed} type="submit" variant="danger">
+                        Delete group
+                      </Button>
+                    </DialogFooter>
+                  )}
+                </TypeToConfirm>
               </Form>
             </DialogContent>
           </Dialog>
