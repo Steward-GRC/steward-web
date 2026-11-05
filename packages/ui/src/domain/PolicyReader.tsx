@@ -39,6 +39,7 @@ import { type Failure } from "#ui/feedback/failure";
 import { EmptyState } from "#ui/feedback/States";
 import { notify } from "#ui/feedback/Toast";
 import { cn } from "#ui/lib/cn";
+import { scrollBehavior } from "#ui/lib/motion";
 
 import { AckBanner } from "./AckBanner";
 import { AiSummaryCard } from "./AiSummaryCard";
@@ -607,7 +608,9 @@ export const PolicyReader = ({
             </MenuItem>
             <MenuItem
               onSelect={() =>
-                document.querySelector(`#${HISTORY_ID}`)?.scrollIntoView({ behavior: "smooth" })
+                document
+                  .querySelector(`#${HISTORY_ID}`)
+                  ?.scrollIntoView({ behavior: scrollBehavior() })
               }
             >
               <History aria-hidden="true" className="size-4" />

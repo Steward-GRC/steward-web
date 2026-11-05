@@ -255,7 +255,10 @@ describe("StaffShell banners and footer", () => {
       `© ${year} Example Organisation · Steward`,
     );
     await userEvent.click(screen.getByRole("button", { name: "Accessibility options" }));
-    expect(await screen.findByRole("radiogroup", { name: "Theme" })).toBeInTheDocument();
+    // The full Accessibility options panel (H12), closed again from its own button.
+    expect(await screen.findByRole("radiogroup", { name: "Text size" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Close accessibility options" }));
+    expect(screen.queryByRole("radiogroup", { name: "Text size" })).toBeNull();
   });
 });
 

@@ -15,7 +15,7 @@ import {
 } from "@steward-web/editor-steward";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import { Banner, Button, StatusPill } from "@steward-web/ui";
+import { Banner, Button, scrollBehavior, StatusPill } from "@steward-web/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, useFetcher, useLocation, useNavigate } from "react-router";
 
@@ -402,7 +402,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     const heading = [
       ...document.querySelectorAll<HTMLElement>("[contenteditable] :is(h1,h2,h3,h4,h5,h6)"),
     ].find((element) => element.textContent?.trim().toLowerCase() === title.trim().toLowerCase());
-    heading?.scrollIntoView({ block: "start", behavior: "smooth" });
+    heading?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
   };
 
   const firstPublish = !policy.currentPublishedVersionId;

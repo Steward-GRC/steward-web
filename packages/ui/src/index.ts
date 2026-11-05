@@ -141,6 +141,7 @@ export {
 export { QrCode } from "./gate/QrCode";
 export { PageHeader, type PageHeaderProps } from "./layout/PageHeader";
 export { cn } from "./lib/cn";
+export { scrollBehavior } from "./lib/motion";
 export {
   applyPreferences,
   DEFAULT_PREFERENCES,

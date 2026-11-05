@@ -6,8 +6,34 @@
   },
   "accessibility": {
     "button": "Accessibility options",
+    "close": "Close accessibility options",
+    "display": "Display",
+    "highContrast": "High contrast",
+    "read": {
+      "pause": "Pause",
+      "read": "Read",
+      "resume": "Resume",
+      "speed": "Speed",
+      "speedValue": "{{rate}}× speed",
+      "stop": "Stop",
+      "systemVoice": "System default",
+      "title": "Read aloud",
+      "unavailable": "Read aloud isn't available in this browser.",
+      "voice": "Voice"
+    },
+    "readableSpacing": "Readable spacing",
+    "reduceMotion": "Reduce motion",
+    "reset": "Reset",
     "saved": "Preferences save to this browser.",
-    "title": "Accessibility options"
+    "textSize": {
+      "default": "Default",
+      "large": "Large",
+      "small": "Small",
+      "title": "Text size",
+      "x-large": "X-Large"
+    },
+    "title": "Accessibility options",
+    "underlineLinks": "Underline links"
   },
   "account": {
     "logOutEverywhere": "Log out everywhere",
