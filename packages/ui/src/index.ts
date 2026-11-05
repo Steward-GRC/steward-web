@@ -30,6 +30,12 @@ export {
   CommandList,
 } from "./components/Command";
 export {
+  CommandPalette,
+  type CommandPaletteProps,
+  type PaletteGroup,
+  type PaletteItem,
+} from "./components/CommandPalette";
+export {
   Checkbox,
   RadioGroup,
   RadioItem,
@@ -65,6 +71,14 @@ export {
 export { Field, type FieldProps } from "./components/Field";
 export { Input, Textarea } from "./components/Input";
 export {
+  type CategoryTile,
+  CategoryTiles,
+  FilterBar,
+  type FilterChip,
+  Pager,
+  SortHeader,
+} from "./components/LibraryControls";
+export {
   Dialog,
   DialogBody,
   DialogClose,
@@ -95,6 +109,7 @@ export {
   type TypeToConfirmProps,
 } from "./components/Overlays";
 export { Spinner } from "./components/Spinner";
+export { AckSnapshot, StatCard } from "./components/StatCards";
 export { Banner, type BannerProps, type BannerTone } from "./feedback/Banner";
 export {
   type DiagnosticsRenderer,
@@ -103,7 +118,14 @@ export {
 } from "./feedback/DiagnosticsSlot";
 export { type Failure, toFailure } from "./feedback/failure";
 export { FailureDialog, type FailureDialogProps } from "./feedback/FailureDialog";
-export { EmptyState, NotFound, ReachError, type ReachErrorProps } from "./feedback/States";
+export { LiveRow, UpdatedJustNow, useLiveUpdate } from "./feedback/LiveUpdate";
+export {
+  EmptyState,
+  NotFound,
+  PageSkeleton,
+  ReachError,
+  type ReachErrorProps,
+} from "./feedback/States";
 export { notify, type NotifyOptions, ToastCard, Toaster, type ToastTone } from "./feedback/Toast";
 export { CodeBoxes, type CodeBoxesProps } from "./gate/CodeBoxes";
 export {

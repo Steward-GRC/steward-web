@@ -1,4 +1,9 @@
 {
+  "ackSnapshot": {
+    "caption": "{{acknowledged}} of {{audience}} acknowledged · {{percent}}",
+    "of": "{{acknowledged}} of {{audience}}",
+    "title": "Acknowledgement snapshot"
+  },
   "actions": {
     "cancel": "Cancel",
     "close": "Close",
@@ -19,8 +24,30 @@
     },
     "typeToConfirm": "Type {{phrase}} to confirm"
   },
+  "filters": {
+    "clear": "Clear",
+    "filteredBy": "Filtered by",
+    "remove": "Remove {{label}}",
+    "results_one": "· {{count}} result",
+    "results_other": "· {{count}} results"
+  },
+  "pager": {
+    "label": "Pages",
+    "next": "Next page",
+    "page": "Page {{page}}",
+    "previous": "Previous page",
+    "range": "{{first}}–{{last}} of {{total}}"
+  },
+  "palette": {
+    "empty": "Nothing matches “{{query}}”.",
+    "esc": "esc",
+    "placeholder": "Search policies, templates…",
+    "seeAll": "See all results for “{{query}}”",
+    "title": "Search Steward"
+  },
   "status": {
     "loading": "Loading…",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "updatedJustNow": "Updated just now"
   }
 }

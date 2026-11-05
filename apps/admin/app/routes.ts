@@ -44,6 +44,7 @@ export default [
   route("resources/idp-metadata", "routes/resources.idp-metadata.tsx"),
   route("resources/sso-test-link", "routes/resources.sso-test-link.tsx"),
   route("resources/acks-export", "routes/resources.acks-export.tsx"),
+  route("resources/command-palette", "routes/resources.command-palette.tsx"),
   route("templates", "routes/templates.tsx"),
   route("templates/new", "routes/templates.new.tsx"),
   route("templates/:code", "routes/templates.$code.tsx"),

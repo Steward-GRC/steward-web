@@ -15,9 +15,11 @@ export {
 } from "./diagnosticsText";
 export { EnvironmentBanner } from "./EnvironmentBanner";
 export { GATE_HANDLE, GateShell, type GateShellProps, useIsGate } from "./GateShell";
+export { browserName, PageError } from "./PageError";
 export { PageTitle, pageTitle } from "./pageTitle";
 export { refusalOf, useRefusalMessage } from "./refusal";
-export { RouteErrorBoundary } from "./RouteErrorBoundary";
+export { type NotFoundData, RouteErrorBoundary } from "./RouteErrorBoundary";
+export { RoutePending } from "./RoutePending";
 export { SearchField } from "./SearchField";
 export {
   SharedEmailPrompt,
@@ -28,6 +30,11 @@ export {
   SsoTestResult,
   SsoTestUnavailable,
 } from "./SharedGates";
+export {
+  COMMAND_PALETTE_PATH,
+  type CommandPaletteResults,
+  ShellCommandPalette,
+} from "./ShellCommandPalette";
 export type { ShellConfig } from "./shellConfig";
 export { ShellFooter } from "./ShellFooter";
 export { SiteBanners } from "./SiteBanners";

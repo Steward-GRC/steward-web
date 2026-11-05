@@ -16,7 +16,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requireIdentityFromRequest(request);
   const cookie = request.headers.get("cookie") ?? undefined;
   const detail = await getPolicyDetail(DocumentType.Procedure, params.number, cookie);
-  if (!detail) throw new Response("Not Found", { status: 404 });
+  if (!detail) throw data({ kind: "procedure", number: params.number }, { status: 404 });
   return data({ detail });
 };
 

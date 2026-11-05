@@ -7,6 +7,22 @@
       "title": "Merge these accounts?"
     }
   },
+  "overview": {
+    "activity": {
+      "emptyDescription": "Nothing recorded yet, or you don't have audit.read.",
+      "emptyTitle": "No recent activity",
+      "title": "Recent activity"
+    },
+    "cards": {
+      "groups": "Groups",
+      "inProgress": "In progress",
+      "policies": "Policies",
+      "published": "Published",
+      "templates": "Templates"
+    },
+    "subtitle": "Policy platform at a glance.",
+    "title": "Overview"
+  },
   "settings": {
     "saved": {
       "banners": "Banners saved",

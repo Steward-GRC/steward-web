@@ -1,4 +1,39 @@
 {
+  "notFound": {
+    "page": {
+      "back": "Back to the home page",
+      "description": "There's nothing at {{path}}.",
+      "title": "Page not found"
+    },
+    "policy": {
+      "back": "Back to policies",
+      "description": "No policy matches {{number}}.",
+      "title": "Policy not found"
+    },
+    "procedure": {
+      "back": "Back to procedures",
+      "description": "No procedure matches {{number}}.",
+      "title": "Procedure not found"
+    }
+  },
+  "page": {
+    "back": "Back to policies",
+    "copied": "Copied",
+    "copy": "Copy for support",
+    "description": "The page hit an unexpected error and couldn't render…",
+    "reference": "Reference {{reference}}",
+    "report": "Error report",
+    "retry": "Retry",
+    "steward": "Steward {{version}}",
+    "title": "Something went wrong on this page"
+  },
+  "reach": {
+    "description": "Something went wrong on our end. Try again in a moment — if it keeps happening, contact support.",
+    "reference": "Reference: {{reference}}",
+    "retry": "Try again",
+    "retrying": "Retrying…",
+    "title": "Couldn't {{action}}"
+  },
   "refusal": {
     "forbidden": "You don't have permission to do that.",
     "generic": "Something went wrong on our end.",
@@ -7,12 +42,5 @@
   },
   "route": {
     "action": "load this page"
-  },
-  "reach": {
-    "description": "Something went wrong on our end. Try again in a moment — if it keeps happening, contact support.",
-    "reference": "Reference: {{reference}}",
-    "retry": "Try again",
-    "retrying": "Retrying…",
-    "title": "Couldn't {{action}}"
   }
 }

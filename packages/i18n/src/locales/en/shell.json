@@ -162,6 +162,17 @@
     "showSubcategories": "Show {{category}}'s subcategories"
   },
   "pageTitle": "{{page}} · {{brand}}",
+  "palette": {
+    "action": "search",
+    "groups": {
+      "categories": "Categories",
+      "groups": "Groups",
+      "policies": "Policies",
+      "procedures": "Procedures",
+      "recent": "Recent",
+      "templates": "Templates"
+    }
+  },
   "shared": {
     "email": {
       "body": "This is a sensitive policy. Your email is recorded with this view, and the copy is watermarked.",

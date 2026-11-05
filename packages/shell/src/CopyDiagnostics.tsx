@@ -23,7 +23,7 @@ import { buildDiagnosticsText, type StewardFacts } from "./diagnosticsText";
 
 const READ_BUDGET_MS = 3000;
 
-const buildInfo = () => ({
+export const buildInfo = () => ({
   commit: typeof __STEWARD_COMMIT__ === "string" ? __STEWARD_COMMIT__ : "unknown",
   version: typeof __STEWARD_VERSION__ === "string" ? __STEWARD_VERSION__ : "dev",
 });
@@ -60,12 +60,11 @@ const readSteward = async (): Promise<{
 };
 
 /**
- * The one Copy diagnostics button, registered into every warning, danger and failure
- * treatment the kit draws (`@steward-web/ui`'s `DiagnosticsSlot`) by `DiagnosticsProvider`.
- * `failure` is whatever that treatment is reporting; it is optional, so the shell's own
- * About and diagnostics entry can use the same button with nothing to report.
+ * Copying the diagnostics report: `copy()` builds it (with the gateway's facts when it answers
+ * in time) and writes it to the clipboard; if the browser refuses, `fallback` is a dialog with
+ * the text to copy by hand. Shared by Copy diagnostics and the page error's Copy for support.
  */
-export const CopyDiagnostics = ({ failure }: { failure?: Failure }) => {
+export const useCopyDiagnostics = (failure?: Failure) => {
   const { t } = useTranslation(["shell", "common"]);
   const location = useLocation();
   const [busy, setBusy] = useState(false);
@@ -79,7 +78,7 @@ export const CopyDiagnostics = ({ failure }: { failure?: Failure }) => {
     if (fallbackText != undefined) fallbackRef.current?.select();
   }, [fallbackText]);
 
-  const onClick = async () => {
+  const copy = async () => {
     setBusy(true);
     setCopied(false);
     try {
@@ -105,30 +104,46 @@ export const CopyDiagnostics = ({ failure }: { failure?: Failure }) => {
     }
   };
 
+  const fallback = (
+    <Dialog
+      onOpenChange={(open) => !open && setFallbackText(undefined)}
+      open={fallbackText != undefined}
+    >
+      <DialogContent title={t("copyDiagnostics.fallbackTitle")}>
+        <DialogBody>
+          <p className="text-base text-muted">{t("copyDiagnostics.fallbackHint")}</p>
+          <Textarea defaultValue={fallbackText} readOnly ref={fallbackRef} rows={12} />
+        </DialogBody>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="secondary">{t("actions.close", { ns: "common" })}</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  return { busy, copied, copy, fallback };
+};
+
+/**
+ * The one Copy diagnostics button, registered into every warning, danger and failure
+ * treatment the kit draws (`@steward-web/ui`'s `DiagnosticsSlot`) by `DiagnosticsProvider`.
+ * `failure` is whatever that treatment is reporting; it is optional, so the shell's own
+ * About and diagnostics entry can use the same button with nothing to report.
+ */
+export const CopyDiagnostics = ({ failure }: { failure?: Failure }) => {
+  const { t } = useTranslation(["shell", "common"]);
+  const { busy, copied, copy, fallback } = useCopyDiagnostics(failure);
   return (
     <>
-      <Button busy={busy} onClick={() => void onClick()} size="sm" variant="secondary">
+      <Button busy={busy} onClick={() => void copy()} size="sm" variant="secondary">
         {copied ? t("copyDiagnostics.copied") : t("copyDiagnostics.action")}
       </Button>
       <span aria-live="polite" className="sr-only" role="status">
         {copied ? t("copyDiagnostics.announced") : null}
       </span>
-      <Dialog
-        onOpenChange={(open) => !open && setFallbackText(undefined)}
-        open={fallbackText != undefined}
-      >
-        <DialogContent title={t("copyDiagnostics.fallbackTitle")}>
-          <DialogBody>
-            <p className="text-base text-muted">{t("copyDiagnostics.fallbackHint")}</p>
-            <Textarea defaultValue={fallbackText} readOnly ref={fallbackRef} rows={12} />
-          </DialogBody>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="secondary">{t("actions.close", { ns: "common" })}</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {fallback}
     </>
   );
 };

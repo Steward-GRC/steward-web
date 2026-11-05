@@ -5,17 +5,13 @@
     "minor": "Minor"
   },
   "library": {
-    "categoryCount": "{{count}} {{noun}}",
     "empty": {
       "description": "Try a different category, or clear the filters.",
       "title": "No {{noun}} match these filters."
     },
     "filters": {
-      "category": "Category",
-      "clear": "Clear filters",
-      "search": "Search",
       "starred": "Starred",
-      "subcategory": "Subcategory"
+      "inProgress": "In progress"
     },
     "policies": {
       "subtitle": "Draft, publish, and manage your group's policies.",

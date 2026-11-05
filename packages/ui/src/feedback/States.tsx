@@ -1,9 +1,12 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
+import { FileQuestion } from "lucide-react";
 import { type ReactNode } from "react";
+import { Link } from "react-router";
 
 import { Button } from "#ui/components/Button";
+import { Skeleton } from "#ui/components/Display";
 import { cn } from "#ui/lib/cn";
 
 import type { Failure } from "./failure";
@@ -68,13 +71,64 @@ export const ReachError = ({ action, className, failure, onRetry, retrying }: Re
   );
 };
 
-/** "Policy not found" and the like, with a way back. */
+/**
+ * Not found (U7s; decision 6-states.s3): a file icon, "Policy not found", "No policy matches
+ * {number}." and the way back, "← Back to policies", on a surface card.
+ */
 export const NotFound = ({
   action,
+  back,
+  className,
   description,
   title,
 }: {
   action?: ReactNode;
+  back?: { label: string; to: string };
+  className?: string;
   description?: ReactNode;
   title: ReactNode;
-}) => <EmptyState action={action} description={description} title={title} />;
+}) => (
+  <div
+    className={cn(
+      "flex flex-col items-center justify-center gap-2.5 rounded-lg border border-border bg-surface px-5 py-7 text-center text-ink",
+      className,
+    )}
+  >
+    <FileQuestion aria-hidden="true" className="size-[26px] text-muted" />
+    <h1 className="text-md font-semibold">{title}</h1>
+    {description ? <p className="text-base text-muted">{description}</p> : null}
+    {back ? (
+      <Link
+        className="flex h-9 items-center rounded-md px-3.5 text-sm font-semibold text-ink no-underline shadow-[inset_0_0_0_1px_var(--border-strong)] hover:bg-sunken hover:text-ink"
+        to={back.to}
+      >
+        ← {back.label}
+      </Link>
+    ) : null}
+    {action}
+  </div>
+);
+
+/**
+ * Skeleton loading (U7s; decision 6-states.s1): sunken bars in the shape of a page, busy, with
+ * the screen-reader text ("Loading policy…"). The shimmer stops with reduced motion.
+ */
+export const PageSkeleton = ({ className, label }: { className?: string; label: string }) => (
+  <div
+    aria-busy="true"
+    className={cn(
+      "flex flex-col gap-2.5 rounded-lg border border-border bg-surface p-5",
+      className,
+    )}
+    role="status"
+  >
+    <span className="sr-only">{label}</span>
+    <Skeleton className="h-3 w-2/5 rounded-sm" />
+    <Skeleton className="h-[26px] w-4/5 rounded-sm" />
+    <Skeleton className="h-3 w-1/2 rounded-sm" />
+    <Skeleton className="mt-1.5 h-[60px] rounded-[8px]" />
+    <Skeleton className="h-2.5 w-[95%] rounded-sm" />
+    <Skeleton className="h-2.5 w-[90%] rounded-sm" />
+    <Skeleton className="h-2.5 w-[70%] rounded-sm" />
+  </div>
+);

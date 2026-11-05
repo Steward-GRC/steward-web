@@ -32,6 +32,12 @@ turned on. Choose a group and the panel beside it lists its pages:
 
 On a narrower screen the panel is hidden; the rail takes you to each group's first page.
 
+The **Overview** page counts the policies, those published and those still in progress, the
+groups and the templates; select a count to open the list behind it. Beside **Recent activity**,
+the **Acknowledgement snapshot** shows how many people have acknowledged the policies that ask
+them to, across all of them. The search box in the header (or ⌘K, Ctrl+K on Windows) searches
+policies, categories, templates and groups as you type.
+
 ## 🧭 What you will learn here
 
 - **[First-run setup](/admin-guide/first-run-setup)** — how to create the very first administrator
