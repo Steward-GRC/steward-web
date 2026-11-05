@@ -13,7 +13,7 @@ import {
 } from "./myGroups.server";
 
 const managerMe = {
-  email: "manager@example.com",
+  email: "manager@example.org",
   id: "u-manager",
   managedGroupIds: ["g-2"],
   name: "Manager",
@@ -23,7 +23,7 @@ const managerMe = {
 };
 
 const nonManagerMe = {
-  email: "reader@example.com",
+  email: "reader@example.org",
   id: "u-reader",
   managedGroupIds: [],
   name: "Reader",
@@ -34,19 +34,19 @@ const nonManagerMe = {
 
 const makeUser = (overrides: Partial<User>): User => ({
   deletedAt: null,
-  email: "ada@example.com",
+  email: "bob@example.org",
   enabled: true,
-  firstName: "Ada",
+  firstName: "Bob",
   idpGroups: [],
   isRoot: false,
-  lastName: "Lovelace",
+  lastName: "Author",
   localAccount: true,
   memberships: [],
   mergedIntoUserId: null,
-  name: "Ada Lovelace",
+  name: "Bob Author",
   roles: [],
-  userId: "u-ada",
-  username: "alovelace",
+  userId: "u-bob",
+  username: "bob",
   ...overrides,
 });
 
@@ -90,13 +90,13 @@ describe("listManagedGroups", () => {
 describe("listManagedGroupMembers", () => {
   it("marks each member's source from their memberships", async () => {
     const grace = makeUser({
-      email: "grace@example.com",
+      email: "charlie@example.org",
       memberships: [{ groupId: "g-2", source: "manual" }],
-      name: "Grace",
-      userId: "u-grace",
+      name: "Charlie",
+      userId: "u-charlie",
     });
     const margaret = makeUser({
-      email: "margaret@example.com",
+      email: "margaret@example.org",
       memberships: [{ groupId: "g-2", source: "idp-sync" }],
       name: "Margaret",
       userId: "u-margaret",
@@ -120,20 +120,20 @@ describe("findUserByEmail", () => {
       "fetch",
       vi.fn().mockResolvedValue(
         jsonOnce({
-          searchUsers: [{ email: "grace@example.com", id: "u-grace", name: "Grace" }],
+          searchUsers: [{ email: "charlie@example.org", id: "u-charlie", name: "Charlie" }],
         }),
       ),
     );
-    expect(await findUserByEmail(request(), "grace@example.com")).toEqual({
-      email: "grace@example.com",
-      id: "u-grace",
-      name: "Grace",
+    expect(await findUserByEmail(request(), "charlie@example.org")).toEqual({
+      email: "charlie@example.org",
+      id: "u-charlie",
+      name: "Charlie",
     });
   });
 
   it("returns undefined when nothing matches exactly", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonOnce({ searchUsers: [] })));
-    expect(await findUserByEmail(request(), "nobody@example.com")).toBeUndefined();
+    expect(await findUserByEmail(request(), "nobody@example.org")).toBeUndefined();
   });
 });
 
@@ -141,14 +141,14 @@ describe("addUserToGroup", () => {
   it("calls the gateway's addUserToGroup mutation", async () => {
     const fetchSpy = vi
       .fn()
-      .mockResolvedValue(jsonOnce({ addUserToGroup: makeUser({ userId: "u-grace" }) }));
+      .mockResolvedValue(jsonOnce({ addUserToGroup: makeUser({ userId: "u-charlie" }) }));
     vi.stubGlobal("fetch", fetchSpy);
 
-    await addUserToGroup(request(), "u-grace", "g-2");
+    await addUserToGroup(request(), "u-charlie", "g-2");
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(init.body as string).variables).toMatchObject({
       groupId: "g-2",
-      userId: "u-grace",
+      userId: "u-charlie",
     });
   });
 });
@@ -157,14 +157,14 @@ describe("removeUserFromGroup", () => {
   it("calls the gateway's removeUserFromGroup mutation", async () => {
     const fetchSpy = vi
       .fn()
-      .mockResolvedValue(jsonOnce({ removeUserFromGroup: makeUser({ userId: "u-grace" }) }));
+      .mockResolvedValue(jsonOnce({ removeUserFromGroup: makeUser({ userId: "u-charlie" }) }));
     vi.stubGlobal("fetch", fetchSpy);
 
-    await removeUserFromGroup(request(), "u-grace", "g-2");
+    await removeUserFromGroup(request(), "u-charlie", "g-2");
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(init.body as string).variables).toMatchObject({
       groupId: "g-2",
-      userId: "u-grace",
+      userId: "u-charlie",
     });
   });
 });

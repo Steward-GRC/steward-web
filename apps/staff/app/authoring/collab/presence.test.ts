@@ -14,8 +14,8 @@ const state = (uid: string, name: string, color: string): AwarenessState => ({
 
 describe("presence", () => {
   it("reads the server's identity block in boundUserOf", () => {
-    const who = boundUserOf(state("u1", "Ada Lovelace", "#0091FF"));
-    expect(who).toEqual({ color: "#0091FF", name: "Ada Lovelace", uid: "u1" });
+    const who = boundUserOf(state("u1", "Bob Author", "#0091FF"));
+    expect(who).toEqual({ color: "#0091FF", name: "Bob Author", uid: "u1" });
   });
 
   it("ignores states without a usable server identity in boundUserOf", () => {
@@ -78,10 +78,10 @@ describe("presence", () => {
   it("recovers the server-assigned colour in selfIdentityFrom", () => {
     // The only way to learn our own server-assigned colour is to read our awareness state
     // back out of the relay's echo.
-    const states = new Map<number, AwarenessState>([[4, state("me", "Ada Lovelace", "#F76B15")]]);
+    const states = new Map<number, AwarenessState>([[4, state("me", "Bob Author", "#F76B15")]]);
     expect(selfIdentityFrom(states, 4)).toEqual({
       color: "#F76B15",
-      name: "Ada Lovelace",
+      name: "Bob Author",
       uid: "me",
     });
     expect(selfIdentityFrom(states, 5)).toBeUndefined();

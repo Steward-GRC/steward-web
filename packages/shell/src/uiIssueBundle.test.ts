@@ -187,9 +187,9 @@ describe("redactMessage", () => {
     ],
     [
       "URL userinfo",
-      `fetch https://alice:${fakeCookieValue}@db.example.com/x failed`,
+      `fetch https://alice:${fakeCookieValue}@db.example.org/x failed`,
       "https://[host]",
-      ["alice", fakeCookieValue, "db.example.com"],
+      ["alice", fakeCookieValue, "db.example.org"],
     ],
     [
       "a URL fragment",
@@ -205,7 +205,7 @@ describe("redactMessage", () => {
       "[pem]",
       ["BEGIN", "MIIE"],
     ],
-    ["a bare FQDN", "connect to db01.corp.example.com refused", "[host]", ["db01", "corp.example"]],
+    ["a bare FQDN", "connect to db01.corp.example.org refused", "[host]", ["db01", "corp.example"]],
     ["an IPv4 address", "connect to 192.0.2.10:5432 refused", "[ip]", ["192.0.2.10"]],
     [
       "an IPv6 address",

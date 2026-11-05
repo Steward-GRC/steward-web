@@ -15,9 +15,9 @@ describe("identityFromRequest", () => {
   it("resolves the identity from the request's own cookie", async () => {
     const fetchSpy = vi.fn().mockResolvedValue(
       meResponse({
-        email: "a@example.com",
+        email: "a@example.org",
         managedGroupIds: [],
-        name: "Ada",
+        name: "Bob",
         permissions: ["policy.read"],
         roles: ["reader"],
         userId: "u-1",
@@ -74,9 +74,9 @@ describe("requirePermissionFromRequest", () => {
       "fetch",
       vi.fn().mockResolvedValue(
         meResponse({
-          email: "a@example.com",
+          email: "a@example.org",
           managedGroupIds: [],
-          name: "Ada",
+          name: "Bob",
           permissions: [],
           roles: ["reader"],
           userId: "u-1",
@@ -99,9 +99,9 @@ describe("requirePermissionFromRequest", () => {
       "fetch",
       vi.fn().mockResolvedValue(
         meResponse({
-          email: "a@example.com",
+          email: "a@example.org",
           managedGroupIds: [],
-          name: "Ada",
+          name: "Bob",
           permissions: ["admin.manage"],
           roles: ["site-admin"],
           userId: "u-1",

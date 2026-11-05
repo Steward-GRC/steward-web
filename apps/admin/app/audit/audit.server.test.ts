@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { listAuditLog, verifyAuditChain } from "./audit.server";
 
 const siteAdminMe = {
-  email: "admin@example.com",
+  email: "admin@example.org",
   id: "u-admin",
   managedGroupIds: [],
   name: "Admin",
@@ -17,7 +17,7 @@ const siteAdminMe = {
 };
 
 const readerMe = {
-  email: "reader@example.com",
+  email: "reader@example.org",
   id: "u-reader",
   managedGroupIds: [],
   name: "Reader",

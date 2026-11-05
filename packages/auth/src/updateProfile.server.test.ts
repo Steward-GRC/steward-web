@@ -14,11 +14,11 @@ describe("updateMyProfile", () => {
       Response.json({
         data: {
           updateMyProfile: {
-            email: "a@example.com",
-            firstName: "Ada",
-            lastName: "Lovelace",
+            email: "a@example.org",
+            firstName: "Bob",
+            lastName: "Author",
             managedGroupIds: [],
-            name: "Ada Lovelace",
+            name: "Bob Author",
             permissions: ["policy.read"],
             roles: ["reader"],
             userId: "u-1",
@@ -32,9 +32,9 @@ describe("updateMyProfile", () => {
     const request = new Request("https://staff.steward.example/profile", {
       headers: { cookie: "steward_session=abc" },
     });
-    const identity = await updateMyProfile(request, { firstName: "Ada", lastName: "Lovelace" });
+    const identity = await updateMyProfile(request, { firstName: "Bob", lastName: "Author" });
 
-    expect(identity).toMatchObject({ firstName: "Ada", id: "u-1", lastName: "Lovelace" });
+    expect(identity).toMatchObject({ firstName: "Bob", id: "u-1", lastName: "Author" });
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect((init.headers as Record<string, string>).cookie).toBe("steward_session=abc");
   });
@@ -51,8 +51,8 @@ describe("updateMyProfile", () => {
 
     await expect(
       updateMyProfile(new Request("https://staff.steward.example/profile"), {
-        firstName: "Ada",
-        lastName: "Lovelace",
+        firstName: "Bob",
+        lastName: "Author",
       }),
     ).rejects.toMatchObject({ code: "UNAUTHENTICATED", name: "GatewayError" });
   });

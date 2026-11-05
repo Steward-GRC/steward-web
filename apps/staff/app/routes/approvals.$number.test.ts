@@ -24,16 +24,16 @@ const routeGateway = (handlers: Record<string, Handler>) => {
 };
 
 const approver = {
-  email: "grace@example.com",
-  firstName: "Grace",
-  lastName: "Hopper",
+  email: "charlie@example.org",
+  firstName: "Charlie",
+  lastName: "Approver",
   managedGroupIds: [],
-  name: "Grace Hopper",
+  name: "Charlie Approver",
   permissions: ["policy.read", "policy.approve"],
   roles: ["approver"],
   scopes: { author: [] },
   userId: "u-2",
-  username: "ghopper",
+  username: "charlie",
 };
 
 const inReview = {
@@ -41,7 +41,7 @@ const inReview = {
     currentStageIdx: 0,
     runId: "run-1",
     stageAssignees: [
-      [{ comment: null, decidedAt: null, name: "Grace", state: "pending", userId: "u-2" }],
+      [{ comment: null, decidedAt: null, name: "Charlie", state: "pending", userId: "u-2" }],
     ],
     stageNames: ["Approval"],
     stageUnitProgress: [[]],

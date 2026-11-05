@@ -8,15 +8,15 @@ import * as policy from "./policy";
 import * as procedure from "./procedure";
 
 const me = {
-  email: "ada@example.com",
-  firstName: "Ada",
-  lastName: "Lovelace",
+  email: "bob@example.org",
+  firstName: "Bob",
+  lastName: "Author",
   managedGroupIds: [],
-  name: "Ada Lovelace",
+  name: "Bob Author",
   permissions: ["policy.read"],
   roles: ["reader"],
-  userId: "u-ada",
-  username: "alovelace",
+  userId: "u-bob",
+  username: "bob",
 };
 
 /** A gateway that knows the caller and answers the number lookup with `byNumber`. */

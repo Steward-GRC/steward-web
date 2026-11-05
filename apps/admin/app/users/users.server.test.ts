@@ -14,7 +14,7 @@ import {
 } from "./users.server";
 
 const siteAdminMe = {
-  email: "admin@example.com",
+  email: "admin@example.org",
   id: "u-admin",
   managedGroupIds: [],
   name: "Admin",
@@ -24,7 +24,7 @@ const siteAdminMe = {
 };
 
 const readerMe = {
-  email: "reader@example.com",
+  email: "reader@example.org",
   id: "u-reader",
   managedGroupIds: [],
   name: "Reader",
@@ -37,19 +37,19 @@ const jsonOnce = (data: unknown) => Response.json({ data });
 
 const testUser: User = {
   deletedAt: null,
-  email: "ada@example.com",
+  email: "bob@example.org",
   enabled: true,
-  firstName: "Ada",
+  firstName: "Bob",
   idpGroups: [],
   isRoot: false,
-  lastName: "Lovelace",
+  lastName: "Author",
   localAccount: true,
   memberships: [],
   mergedIntoUserId: null,
-  name: "Ada Lovelace",
+  name: "Bob Author",
   roles: [],
-  userId: "u-ada",
-  username: "alovelace",
+  userId: "u-bob",
+  username: "bob",
 };
 
 const request = () => new Request("https://admin.steward.example/users");
@@ -88,7 +88,7 @@ describe("findUser", () => {
       .mockResolvedValueOnce(jsonOnce({ users: { nextPageToken: "", users: [testUser] } }));
     vi.stubGlobal("fetch", fetchSpy);
 
-    const found = await findUser(request(), "u-ada");
+    const found = await findUser(request(), "u-bob");
     expect(found).toEqual(testUser);
     const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
     expect(JSON.parse(init.body as string).variables).toMatchObject({ includeDeleted: true });
@@ -103,7 +103,7 @@ describe("setUserEnabled", () => {
       .mockResolvedValueOnce(jsonOnce({ disableUser: { ...testUser, enabled: false } }));
     vi.stubGlobal("fetch", fetchSpy);
 
-    const updated = await setUserEnabled(request(), "u-ada", false);
+    const updated = await setUserEnabled(request(), "u-bob", false);
     expect(updated.enabled).toBe(false);
     expect(JSON.parse((fetchSpy.mock.calls[1]![1] as RequestInit).body as string).query).toContain(
       "disableUser",
@@ -153,7 +153,7 @@ describe("revokeUserSessions", () => {
   it("requires session.manage, not just user.manage", async () => {
     const limitedMe = { ...siteAdminMe, permissions: ["user.manage"] };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonOnce({ me: limitedMe })));
-    const thrown: unknown = await revokeUserSessions(request(), "u-ada").catch(
+    const thrown: unknown = await revokeUserSessions(request(), "u-bob").catch(
       (error: unknown) => error,
     );
     expect(thrown).toBeInstanceOf(Response);
@@ -165,10 +165,10 @@ describe("deleteUser", () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ deleteUser: { revokedSessions: 2, userId: "u-ada" } }));
+      .mockResolvedValueOnce(jsonOnce({ deleteUser: { revokedSessions: 2, userId: "u-bob" } }));
     vi.stubGlobal("fetch", fetchSpy);
 
-    const result = await deleteUser(request(), "u-ada");
-    expect(result).toEqual({ revokedSessions: 2, userId: "u-ada" });
+    const result = await deleteUser(request(), "u-bob");
+    expect(result).toEqual({ revokedSessions: 2, userId: "u-bob" });
   });
 });

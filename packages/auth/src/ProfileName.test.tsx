@@ -10,7 +10,7 @@ import { ProfileName } from "./ProfileName";
 
 const identity = (overrides: Partial<Identity> = {}): Identity => ({
   ...NO_ACCESS,
-  email: "ada@example.com",
+  email: "bob@example.org",
   id: "u-1",
   username: "ada",
   ...overrides,
@@ -34,10 +34,10 @@ const renderAt = (identityValue: Identity, props: Parameters<typeof ProfileName>
 
 describe("ProfileName", () => {
   it("prefills the first and last name fields from the signed-in identity", () => {
-    renderAt(identity({ firstName: "Ada", lastName: "Lovelace" }));
-    expect(screen.getByLabelText("First name")).toHaveValue("Ada");
-    expect(screen.getByLabelText("Last name")).toHaveValue("Lovelace");
-    expect(screen.getByText(/Ada Lovelace/)).toBeInTheDocument();
+    renderAt(identity({ firstName: "Bob", lastName: "Author" }));
+    expect(screen.getByLabelText("First name")).toHaveValue("Bob");
+    expect(screen.getByLabelText("Last name")).toHaveValue("Author");
+    expect(screen.getByText(/Bob Author/)).toBeInTheDocument();
   });
 
   it("shows the empty-state preview when neither name part is set yet", () => {
@@ -46,7 +46,7 @@ describe("ProfileName", () => {
   });
 
   it("shows the save error banner the route's action reported", () => {
-    renderAt(identity({ firstName: "Ada", lastName: "Lovelace" }), { error: { status: 400 } });
+    renderAt(identity({ firstName: "Bob", lastName: "Author" }), { error: { status: 400 } });
     expect(screen.getByText("We couldn't save your name. Please try again.")).toBeInTheDocument();
   });
 });
