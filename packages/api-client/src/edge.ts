@@ -404,6 +404,13 @@ export interface Edge {
   createDefinition(input: DefinitionEntryInput, cookie?: string): Promise<DefinitionEntry>;
   /** Creates a taxonomy group. Site-admin only. */
   createGroup(input: CreateGroupInput, cookie?: string): Promise<Group>;
+  /** Issues a read-only share link for one policy version (D31); a sensitive one asks the reader
+   *  for an email first. The link's path is `/s/{token}`. */
+  createMagicLink(
+    policyVersionId: string,
+    sensitive: boolean,
+    cookie?: string,
+  ): Promise<{ expiresAt: string; token: string }>;
   /** Creates an identity platform group under parentId (a root group when null): the
    *  groups memberships, group managers, SSO mappings and reporting's officer setting name by
    *  id, not a category. Site-admin only. */
@@ -449,6 +456,8 @@ export interface Edge {
   deleteGroupMapping(mappingId: string, cookie?: string): Promise<boolean>;
   /** Removes an organisation's SSO connection. Irreversible. Site-admin only. */
   deleteOrganization(domain: string, cookie?: string): Promise<boolean>;
+  /** Deletes a never-published policy (D4). Published policies can't be deleted. */
+  deletePolicy(id: string, cookie?: string): Promise<boolean>;
   /** Hard-deletes a reference/standard entry. The gateway refuses while anything attaches it
    *  (archive instead). */
   deleteReference(id: string, cookie?: string): Promise<boolean>;
@@ -547,6 +556,12 @@ export interface Edge {
   mintSsoTestLink(input: MintSsoTestLinkInput, cookie?: string): Promise<MintedSsoTestLink>;
   /** Re-parents a group (and its subtree). A null newParentId promotes it to a root. */
   moveGroup(groupId: string, newParentId: null | string, cookie?: string): Promise<Group>;
+  /** Moves a policy to another category, which renumbers it (D6). */
+  movePolicy(
+    policyId: string,
+    homeCategoryId: string,
+    cookie?: string,
+  ): Promise<{ id: string; number: string }>;
   /** The caller's mandatory reads and how many are done (My work's compliance card). */
   myAckSummary(cookie?: string): Promise<AckSummary>;
   /** The CALLING user's own policies with a working draft. */
@@ -564,6 +579,11 @@ export interface Edge {
    *  the same fields `importIdpMetadata` extracts. No network fetch, so no SSRF surface.
    *  Site-admin only. */
   parseIdpMetadata(metadata: string, cookie?: string): Promise<ImportedIdpMetadata>;
+  /** The signed download link for a finished PDF export (D16). */
+  pdfDownloadLink(
+    jobId: string,
+    cookie?: string,
+  ): Promise<{ expiresAt: string; signedUrl: string }>;
   /** Pending approval tasks awaiting the calling user. The approver id is bound server-side. */
   pendingTasks(cookie?: string): Promise<readonly PendingTask[]>;
   /** The identity platform groups directly under parentId (the roots when null). Site-admin
@@ -644,6 +664,8 @@ export interface Edge {
     assigneeUserId?: string,
     cookie?: string,
   ): Promise<CaseQueue>;
+  /** Starts rendering a policy version to PDF (D16); poll `pdfDownloadLink` with the job id. */
+  requestPdfExport(policyVersionId: string, cookie?: string): Promise<{ jobId: string }>;
   /** Emails the signed-in admin a step-up code (D18) for a high-risk action. */
   requestStepUpOtp(cookie?: string): Promise<boolean>;
   /** Sends a user's welcome (onboarding) email again. Site-admin only. */
@@ -652,9 +674,13 @@ export interface Edge {
   resetUserPassword(userId: string, newPassword: string, cookie?: string): Promise<boolean>;
   /** Display names (and emails) for user ids, with no directory permission needed. */
   resolveUserLabels(ids: readonly string[], cookie?: string): Promise<readonly UserLabel[]>;
+  /** Retires a policy: hidden from the catalog, outstanding acknowledgements cancelled (D10). */
+  retirePolicy(id: string, cookie?: string): Promise<{ id: string }>;
   /** Retires (soft-deletes) a template: hidden from listings and pickers, but its versions keep
    *  working for policies that already pinned them. Site-admin only. */
   retireTemplate(id: string, cookie?: string): Promise<Template>;
+  /** Revokes a magic link: anyone holding its URL can no longer reach the policy (D31). */
+  revokeMagicLink(token: string, cookie?: string): Promise<boolean>;
   /** Revokes a GLOBAL role (no category). Site-admin only. */
   revokeRole(userId: string, role: string, cookie?: string): Promise<User>;
   /** Revokes every active session for a user. Returns how many were revoked. */
@@ -703,6 +729,8 @@ export interface Edge {
   ): Promise<EmailServiceConfigStatus>;
   /** Sets the cross-app announcement and maintenance banners. Site-admin only. */
   setGlobalSettings(input: GlobalSettingsInput, cookie?: string): Promise<GlobalSettings>;
+  /** Makes another user a policy's author (D5). Site-admin only. */
+  setPolicyOwner(policyId: string, ownerUserId: string, cookie?: string): Promise<{ id: string }>;
   /** Archive (true) or restore (false) a references-library entry. */
   setReferenceArchived(id: string, archived: boolean, cookie?: string): Promise<Reference>;
   /** Sets (ALLOW or DENY) or clears (null) one per-policy exception for a user (A19). */

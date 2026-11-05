@@ -32,6 +32,11 @@ export interface PolicyLibraryProps {
   categories: readonly Category[];
   documentType: DocumentType;
   policies: readonly Policy[];
+  /** The header's line under the title; the staff library's own when it's left out. */
+  subtitle?: ReactNode;
+  /** The header's title; the staff library's own when it's left out. The admin catalog (A10)
+   *  says "Catalog". */
+  title?: ReactNode;
 }
 
 type SortKey = "category" | "number" | "status" | "subcategory" | "title" | "updated" | "version";
@@ -71,6 +76,8 @@ export const PolicyLibrary = ({
   categories,
   documentType,
   policies,
+  subtitle,
+  title,
 }: PolicyLibraryProps) => {
   const { t } = useTranslation(["policy", "common"]);
   const { isFavorite, toggle } = useFavorites();
@@ -182,8 +189,8 @@ export const PolicyLibrary = ({
             {actions}
           </>
         }
-        subtitle={t(`library.${copy.nounPlural}.subtitle`)}
-        title={t(`library.${copy.nounPlural}.title`)}
+        subtitle={subtitle ?? t(`library.${copy.nounPlural}.subtitle`)}
+        title={title ?? t(`library.${copy.nounPlural}.title`)}
       />
 
       {chips.length === 0 ? (

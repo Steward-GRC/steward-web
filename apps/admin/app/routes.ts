@@ -59,6 +59,7 @@ export default [
   route("access", "routes/access.tsx"),
   route("access/:categoryId", "routes/access.$categoryId.tsx"),
   route("resources/access-simulate", "routes/resources.access-simulate.tsx"),
+  route("resources/sections", "routes/resources.sections.tsx"),
   route("resources/user-search", "routes/resources.user-search.tsx"),
   route("audit", "routes/audit.tsx"),
   // The shell's designed destinations that aren't built yet (H2, H14): each answers "Coming

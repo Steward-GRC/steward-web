@@ -31,6 +31,7 @@ import {
   Menu,
   MenuContent,
   MenuItem,
+  MenuSeparator,
   MenuTrigger,
 } from "#ui/components/Overlays";
 import { Banner } from "#ui/feedback/Banner";
@@ -428,6 +429,9 @@ const tab =
 
 export interface PolicyReaderProps {
   detail: PolicyDetail;
+  /** The admin console's governance items (A11), drawn in the Actions menu after a separator.
+   *  The staff reader leaves it out. */
+  governance?: ReactNode;
   /** The organisation's name, for the printed page's running header (R1). */
   organisation?: null | string;
   /** The signed-in person's name, for D1's record box and the printed footer. */
@@ -461,7 +465,12 @@ const usePrinting = (): Date | null => {
  * summary toggle, the document in the reading style beside the "On this page" outline, and the
  * history at the foot. It reads at full width (decision 2-layout-and-navigation.s9).
  */
-export const PolicyReader = ({ detail, organisation, viewerName }: PolicyReaderProps) => {
+export const PolicyReader = ({
+  detail,
+  governance,
+  organisation,
+  viewerName,
+}: PolicyReaderProps) => {
   const { t } = useTranslation("policy");
   const printedAt = usePrinting();
   const favorites = useFavorites();
@@ -604,6 +613,12 @@ export const PolicyReader = ({ detail, organisation, viewerName }: PolicyReaderP
               <History aria-hidden="true" className="size-4" />
               {t("reader.actions.history")}
             </MenuItem>
+            {governance ? (
+              <>
+                <MenuSeparator />
+                {governance}
+              </>
+            ) : null}
           </MenuContent>
         </Menu>
       </div>

@@ -67,7 +67,11 @@ const policies: Policy[] = [
   },
 ];
 
-const renderAt = (initialEntries: string[] = ["/policies"], actions?: React.ReactNode) => {
+const renderAt = (
+  initialEntries: string[] = ["/policies"],
+  actions?: React.ReactNode,
+  heading: { subtitle?: string; title?: string } = {},
+) => {
   const Stub = createRoutesStub([
     {
       Component: () => (
@@ -76,6 +80,8 @@ const renderAt = (initialEntries: string[] = ["/policies"], actions?: React.Reac
           categories={categories}
           documentType={DocumentType.Policy}
           policies={policies}
+          subtitle={heading.subtitle}
+          title={heading.title}
         />
       ),
       path: "/policies",
@@ -91,6 +97,20 @@ const rowTitles = () =>
     .map((row) => within(row).getAllByRole("cell")[2]!.textContent);
 
 describe("PolicyLibrary", () => {
+  it("keeps the staff library's own heading by default", () => {
+    renderAt();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Policies");
+  });
+
+  it("takes another title and subtitle, as the admin catalog does (A10)", () => {
+    renderAt(["/policies"], undefined, {
+      subtitle: "Every policy across the org.",
+      title: "Catalog",
+    });
+    expect(screen.getByRole("heading", { level: 1, name: "Catalog" })).toBeInTheDocument();
+    expect(screen.getByText("Every policy across the org.")).toBeInTheDocument();
+  });
+
   it("shows only the category tiles until something is filtered (U3)", () => {
     renderAt();
     expect(screen.getByRole("listitem", { name: "Finance" })).toBeInTheDocument();
