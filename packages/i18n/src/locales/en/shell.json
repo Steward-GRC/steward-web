@@ -23,5 +23,9 @@
   },
   "mockBanner": {
     "title": "Mock data"
+  },
+  "siteBanners": {
+    "announcement": "Announcement",
+    "maintenance": "Scheduled maintenance"
   }
 }

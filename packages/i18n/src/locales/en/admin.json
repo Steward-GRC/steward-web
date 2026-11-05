@@ -1,1 +1,9 @@
-{}
+{
+  "settings": {
+    "saved": {
+      "banners": "Banners saved",
+      "bannersDetail": "They now show across both apps, on every page and at sign-in.",
+      "email": "Email settings saved"
+    }
+  }
+}

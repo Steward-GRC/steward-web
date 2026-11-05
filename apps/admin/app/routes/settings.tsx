@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
   Banner,
@@ -76,6 +77,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 export default function Settings({ loaderData }: Route.ComponentProps) {
   const { emailServiceConfig, globalSettings } = loaderData;
+  const { t } = useTranslation("admin");
   const globalFetcher = useFetcher<typeof action>();
   const emailFetcher = useFetcher<typeof action>();
 
@@ -87,6 +89,15 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
     emailFetcher.data && !emailFetcher.data.ok && emailFetcher.data.intent === "save-email"
       ? emailFetcher.data.error
       : undefined;
+  // Each confirmation holds until that form is submitted again (#112).
+  const globalSaved =
+    globalFetcher.state === "idle" &&
+    globalFetcher.data?.ok === true &&
+    globalFetcher.data.intent === "save-global";
+  const emailSaved =
+    emailFetcher.state === "idle" &&
+    emailFetcher.data?.ok === true &&
+    emailFetcher.data.intent === "save-email";
 
   return (
     <div className="flex w-full max-w-2xl flex-col gap-6 p-6">
@@ -135,6 +146,11 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
 
             {globalFailure ? (
               <Banner failure={globalFailure} title="Couldn't save these banners" tone="danger" />
+            ) : null}
+            {globalSaved ? (
+              <Banner title={t("settings.saved.banners")} tone="ok">
+                {t("settings.saved.bannersDetail")}
+              </Banner>
             ) : null}
 
             <Button className="self-start" disabled={globalFetcher.state !== "idle"} type="submit">
@@ -185,6 +201,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
                 tone="danger"
               />
             ) : null}
+            {emailSaved ? <Banner title={t("settings.saved.email")} tone="ok" /> : null}
 
             <Button className="self-start" disabled={emailFetcher.state !== "idle"} type="submit">
               {emailFetcher.state === "idle" ? "Save" : "Saving…"}

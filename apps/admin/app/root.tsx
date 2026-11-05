@@ -6,6 +6,7 @@ import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
 import { DEFAULT_LOCALE } from "@steward-web/i18n";
 import { MockBanner } from "@steward-web/mock-banner";
 import { AppShell, DiagnosticsProvider } from "@steward-web/shell";
+import { siteSettingsFromRequest } from "@steward-web/shell/server";
 import { Toaster } from "@steward-web/ui";
 import stewardCss from "@steward-web/ui/steward.css?url";
 import { type ReactNode } from "react";
@@ -15,14 +16,21 @@ import type { Route } from "./+types/root";
 
 export const links: Route.LinksFunction = () => [{ href: stewardCss, rel: "stylesheet" }];
 
-export const loader = async ({ request }: Route.LoaderArgs) => ({
-  devUiIssueCopy: process.env.STEWARD_DEV_UI_ISSUE_COPY === "true",
-  identity: await identityFromRequest(request),
-});
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const [identity, siteSettings] = await Promise.all([
+    identityFromRequest(request),
+    siteSettingsFromRequest(request),
+  ]);
+  return {
+    devUiIssueCopy: process.env.STEWARD_DEV_UI_ISSUE_COPY === "true",
+    identity,
+    siteSettings,
+  };
+};
 
-// The identity never changes within one request/response cycle; re-running the root
-// loader on every link click would be a wasted round trip to the gateway on each
-// navigation.
+// The identity and the site banners never change within one request/response cycle;
+// re-running the root loader on every link click would be a wasted round trip to the gateway
+// on each navigation. A form action (saving the banners in admin settings, too) reruns it.
 export const shouldRevalidate = ({ formAction }: ShouldRevalidateFunctionArgs) =>
   formAction != undefined;
 
@@ -50,7 +58,7 @@ export const Layout = ({ children }: { children: ReactNode }) => (
 export default function App({ loaderData }: Route.ComponentProps) {
   return (
     <IdentityProvider identity={loaderData.identity}>
-      <AppShell>
+      <AppShell banners={loaderData.siteSettings}>
         <MockBanner />
         <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
         <Outlet />

@@ -1,11 +1,14 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { GlobalSettings } from "@steward-web/api-client";
+
 import { useTranslation } from "@steward-web/i18n";
 import { Lockup, Menu, MenuContent, MenuItem, MenuTrigger } from "@steward-web/ui";
 import { type ReactNode, useState } from "react";
 import { Link, useHref } from "react-router";
 
 import { AboutDiagnostics } from "./AboutDiagnostics";
+import { SiteBanners } from "./SiteBanners";
 
 /**
  * The header, account menu (Your profile, About and diagnostics, Sign out) and main content
@@ -33,12 +36,19 @@ const SignOutItem = () => {
   );
 };
 
-export const AppShell = ({ children }: { children: ReactNode }) => {
+export const AppShell = ({
+  banners,
+  children,
+}: {
+  /** The site's announcement and maintenance settings, from the app's root loader. */
+  banners?: GlobalSettings | null;
+  children: ReactNode;
+}) => {
   const { t } = useTranslation("shell");
   const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
-    <div className="grid min-h-screen grid-rows-[auto_1fr]">
+    <div className="grid min-h-screen grid-rows-[auto_auto_1fr]">
       <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-3">
         <Lockup />
         <Menu>
@@ -60,6 +70,9 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
           </MenuContent>
         </Menu>
       </header>
+      <div>
+        <SiteBanners settings={banners} />
+      </div>
       <main>{children}</main>
       <AboutDiagnostics onOpenChange={setAboutOpen} open={aboutOpen} />
     </div>

@@ -52,4 +52,28 @@ describe("AppShell", () => {
     expect(form).toHaveAttribute("method", "post");
     expect(form).toHaveAttribute("action", "/admin/sign-out");
   });
+
+  it("puts the site's banners above every page", () => {
+    render(
+      <MemoryRouter>
+        <AppShell
+          banners={{
+            announcement: { enabled: true, level: "info", message: "Welcome to Steward." },
+            maintenance: { enabled: true, message: "Read-only tonight." },
+          }}
+        >
+          <p>page content</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Welcome to Steward.")).toBeInTheDocument();
+    expect(screen.getByText("Read-only tonight.")).toBeInTheDocument();
+    expect(
+      screen
+        .getByText("Read-only tonight.")
+        .compareDocumentPosition(screen.getByText("page content")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });
