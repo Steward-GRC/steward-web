@@ -9,6 +9,16 @@
   "breadcrumb": {
     "aria": "Breadcrumb"
   },
+  "dialog": {
+    "stepUp": {
+      "code": "Code",
+      "confirm": "Confirm",
+      "description": "Enter the 6-digit code sent to your email",
+      "resend": "Resend",
+      "title": "Confirm it's you"
+    },
+    "typeToConfirm": "Type {{phrase}} to confirm"
+  },
   "status": {
     "loading": "Loading…",
     "saving": "Saving…"

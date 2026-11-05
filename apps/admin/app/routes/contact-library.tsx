@@ -9,6 +9,7 @@ import {
   Banner,
   Button,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   EmptyState,
@@ -224,49 +225,50 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
         <DialogContent hasInput title={editing ? "Edit contact block" : "New contact block"}>
-          <saveFetcher.Form className="flex flex-col gap-3" method="post">
+          <saveFetcher.Form method="post">
             <input name="intent" type="hidden" value="save" />
             <input name="id" type="hidden" value={editing?.id ?? ""} />
-            <Field label="Label">
-              <Input defaultValue={form.label} name="label" required />
-            </Field>
-            <div className="flex gap-3">
-              <Field className="flex-1" label="Email">
-                <Input defaultValue={form.email} name="email" type="email" />
+            <DialogBody>
+              <Field label="Label">
+                <Input defaultValue={form.label} name="label" required />
               </Field>
-              <Field className="flex-1" label="Phone">
-                <Input defaultValue={form.phone} name="phone" />
+              <div className="flex gap-3">
+                <Field className="flex-1" label="Email">
+                  <Input defaultValue={form.email} name="email" type="email" />
+                </Field>
+                <Field className="flex-1" label="Phone">
+                  <Input defaultValue={form.phone} name="phone" />
+                </Field>
+              </div>
+              <p className="text-sm text-muted">At least one of email or phone is required.</p>
+              <div className="flex gap-3">
+                <Field className="flex-1" label="Name / role heading">
+                  <Input defaultValue={form.name} name="name" />
+                </Field>
+                <Field className="flex-1" label="Role">
+                  <Input defaultValue={form.role} name="role" />
+                </Field>
+              </div>
+              <div className="flex gap-3">
+                <Field className="flex-1" label="Department">
+                  <Input defaultValue={form.department} name="department" />
+                </Field>
+                <Field className="flex-1" label="Hours">
+                  <Input defaultValue={form.hours} name="hours" />
+                </Field>
+              </div>
+              <Field label="Notes">
+                <Input defaultValue={form.notes} name="notes" />
               </Field>
-            </div>
-            <p className="text-sm text-muted">At least one of email or phone is required.</p>
-            <div className="flex gap-3">
-              <Field className="flex-1" label="Name / role heading">
-                <Input defaultValue={form.name} name="name" />
-              </Field>
-              <Field className="flex-1" label="Role">
-                <Input defaultValue={form.role} name="role" />
-              </Field>
-            </div>
-            <div className="flex gap-3">
-              <Field className="flex-1" label="Department">
-                <Input defaultValue={form.department} name="department" />
-              </Field>
-              <Field className="flex-1" label="Hours">
-                <Input defaultValue={form.hours} name="hours" />
-              </Field>
-            </div>
-            <Field label="Notes">
-              <Input defaultValue={form.notes} name="notes" />
-            </Field>
 
-            {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
-              <Banner
-                failure={saveFetcher.data.error}
-                title="Couldn't save this block"
-                tone="danger"
-              />
-            ) : null}
-
+              {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
+                <Banner
+                  failure={saveFetcher.data.error}
+                  title="Couldn't save this block"
+                  tone="danger"
+                />
+              ) : null}
+            </DialogBody>
             <DialogFooter>
               <Button onClick={() => setDialogOpen(false)} type="button" variant="secondary">
                 Cancel

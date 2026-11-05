@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { AccountMergePreview } from "@steward-web/api-client";
 
+import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
   Badge,
@@ -13,6 +14,7 @@ import {
   DialogClose,
   DialogContent,
   DialogFooter,
+  DialogNote,
   DialogTrigger,
   type Failure,
   Field,
@@ -22,6 +24,7 @@ import {
   TD,
   TH,
   THead,
+  TypeToConfirm,
 } from "@steward-web/ui";
 import { data, Form, Link, redirect } from "react-router";
 
@@ -77,7 +80,9 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
   const { preview, previewError, sourceUserId, targetUserId, users } = loaderData;
 
   const userOptions = users.map((u) => ({ label: `${u.name} (${u.email})`, value: u.userId }));
+  const { t } = useTranslation(["admin", "common"]);
   const sourceUser = users.find((u) => u.userId === sourceUserId);
+  const targetUser = users.find((u) => u.userId === targetUserId);
   const sameUser = sourceUserId !== "" && sourceUserId === targetUserId;
 
   return (
@@ -174,8 +179,11 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
                 <Button variant="danger">Merge accounts…</Button>
               </DialogTrigger>
               <DialogContent
-                description="Every record the source account owns moves to the target. The source account is then closed: it can no longer sign in, and it stays on record permanently marked as merged. This can't be undone."
-                title={`Merge ${sourceUser?.name ?? sourceUserId} into the target?`}
+                className="sm:max-w-[560px]"
+                hasInput
+                size="wide"
+                title={t("merge.confirm.title")}
+                tone="danger"
               >
                 <Form method="post">
                   <input name="sourceUserId" type="hidden" value={sourceUserId} />
@@ -185,19 +193,46 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
                     type="hidden"
                     value={String(preview.requiresPrivilegedConfirm)}
                   />
-                  {preview.requiresPrivilegedConfirm ? (
-                    <p className="pb-4 text-sm text-danger">
-                      This merge affects privileged records and requires an elevated confirmation.
-                    </p>
-                  ) : null}
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="secondary">Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit" variant="danger">
-                      Merge accounts
-                    </Button>
-                  </DialogFooter>
+                  <TypeToConfirm
+                    before={
+                      <>
+                        <div className="grid gap-2.5 sm:grid-cols-2">
+                          <MergeAccountCard
+                            email={sourceUser?.email}
+                            label={t("merge.confirm.source")}
+                            name={sourceUser?.name ?? sourceUserId}
+                            tone="danger"
+                          />
+                          <MergeAccountCard
+                            email={targetUser?.email}
+                            label={t("merge.confirm.target")}
+                            name={targetUser?.name ?? targetUserId}
+                            tone="ok"
+                          />
+                        </div>
+                        {preview.requiresPrivilegedConfirm ? (
+                          <DialogNote tone="danger">
+                            This merge affects privileged records and requires an elevated
+                            confirmation.
+                          </DialogNote>
+                        ) : null}
+                      </>
+                    }
+                    phrase={sourceUser?.email ?? sourceUserId}
+                  >
+                    {(confirmed) => (
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button variant="secondary">
+                            {t("actions.cancel", { ns: "common" })}
+                          </Button>
+                        </DialogClose>
+                        <Button disabled={!confirmed} type="submit" variant="danger">
+                          {t("merge.confirm.submit")}
+                        </Button>
+                      </DialogFooter>
+                    )}
+                  </TypeToConfirm>
                 </Form>
               </DialogContent>
             </Dialog>
@@ -211,3 +246,36 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
     </div>
   );
 }
+
+/** One side of the merge confirm (D21): the source closes, the target keeps the records. */
+const MergeAccountCard = ({
+  email,
+  label,
+  name,
+  tone,
+}: {
+  email?: string;
+  label: string;
+  name: string;
+  tone: "danger" | "ok";
+}) => (
+  <div
+    className={
+      tone === "danger"
+        ? "rounded-[8px] p-3 shadow-[inset_0_0_0_1.5px_var(--danger)]"
+        : "rounded-[8px] p-3 shadow-[inset_0_0_0_1.5px_var(--ok)]"
+    }
+  >
+    <span
+      className={
+        tone === "danger"
+          ? "block text-[10px] font-semibold tracking-[.06em] text-danger uppercase"
+          : "block text-[10px] font-semibold tracking-[.06em] text-ok uppercase"
+      }
+    >
+      {label}
+    </span>
+    <b className="block">{name}</b>
+    {email ? <span className="block text-sm text-muted">{email}</span> : null}
+  </div>
+);

@@ -66,10 +66,14 @@ export { Field, type FieldProps } from "./components/Field";
 export { Input, Textarea } from "./components/Input";
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   type DialogContentProps,
   DialogFooter,
+  DialogNote,
+  type DialogSize,
+  type DialogTone,
   DialogTrigger,
   Menu,
   MenuContent,
@@ -81,7 +85,14 @@ export {
   PopoverContent,
   PopoverTrigger,
   SheetContent,
+  SideSheetBody,
+  SideSheetContent,
+  type SideSheetContentProps,
+  StepUpDialog,
+  type StepUpDialogProps,
   Tooltip,
+  TypeToConfirm,
+  type TypeToConfirmProps,
 } from "./components/Overlays";
 export { Spinner } from "./components/Spinner";
 export { Banner, type BannerProps, type BannerTone } from "./feedback/Banner";

@@ -24,6 +24,7 @@ import {
   TD,
   TH,
   THead,
+  TypeToConfirm,
 } from "@steward-web/ui";
 import { data, Form, Link, redirect } from "react-router";
 
@@ -252,9 +253,7 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
                         <DialogClose asChild>
                           <Button variant="secondary">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit" variant="danger">
-                          Log out everywhere
-                        </Button>
+                        <Button type="submit">Log out everywhere</Button>
                       </DialogFooter>
                     </Form>
                   </DialogContent>
@@ -350,18 +349,24 @@ export default function UserEdit({ actionData, loaderData }: Route.ComponentProp
                 </DialogTrigger>
                 <DialogContent
                   description="This can't be undone from here."
+                  hasInput
                   title={`Delete ${user.name}?`}
+                  tone="danger"
                 >
                   <Form method="post">
                     <input name="intent" type="hidden" value="delete" />
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="secondary">Cancel</Button>
-                      </DialogClose>
-                      <Button type="submit" variant="danger">
-                        Delete user
-                      </Button>
-                    </DialogFooter>
+                    <TypeToConfirm phrase={user.email}>
+                      {(confirmed) => (
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button variant="secondary">Cancel</Button>
+                          </DialogClose>
+                          <Button disabled={!confirmed} type="submit" variant="danger">
+                            Delete user
+                          </Button>
+                        </DialogFooter>
+                      )}
+                    </TypeToConfirm>
                   </Form>
                 </DialogContent>
               </Dialog>

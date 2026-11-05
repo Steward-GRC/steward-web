@@ -9,6 +9,7 @@ import {
   Banner,
   Button,
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogFooter,
@@ -247,37 +248,38 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
         <DialogContent hasInput title={editing ? "Edit definition" : "New definition"}>
-          <saveFetcher.Form className="flex flex-col gap-4" method="post">
+          <saveFetcher.Form method="post">
             <input name="intent" type="hidden" value="save" />
             <input name="id" type="hidden" value={editing?.id ?? ""} />
-            <Field label="Category">
-              <Select
-                defaultValue={form.categoryId}
-                name="categoryId"
-                options={categoryOptions}
-                placeholder="Select a category…"
-              />
-            </Field>
-            <Field label="Term">
-              <Input defaultValue={form.term} name="term" placeholder="e.g. RTO" required />
-            </Field>
-            <Field label="Definition">
-              <Textarea
-                defaultValue={form.definition}
-                name="definition"
-                placeholder="What the term means"
-                required
-              />
-            </Field>
+            <DialogBody>
+              <Field label="Category">
+                <Select
+                  defaultValue={form.categoryId}
+                  name="categoryId"
+                  options={categoryOptions}
+                  placeholder="Select a category…"
+                />
+              </Field>
+              <Field label="Term">
+                <Input defaultValue={form.term} name="term" placeholder="e.g. RTO" required />
+              </Field>
+              <Field label="Definition">
+                <Textarea
+                  defaultValue={form.definition}
+                  name="definition"
+                  placeholder="What the term means"
+                  required
+                />
+              </Field>
 
-            {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
-              <Banner
-                failure={saveFetcher.data.error}
-                title="Couldn't save this definition"
-                tone="danger"
-              />
-            ) : null}
-
+              {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
+                <Banner
+                  failure={saveFetcher.data.error}
+                  title="Couldn't save this definition"
+                  tone="danger"
+                />
+              ) : null}
+            </DialogBody>
             <DialogFooter>
               <Button onClick={() => setDialogOpen(false)} type="button" variant="secondary">
                 Cancel
@@ -294,6 +296,7 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
         <DialogContent
           description={`"${deleteTarget?.term}" will be permanently deleted. This can't be undone.`}
           title="Delete definition?"
+          tone="danger"
         >
           <deleteFetcher.Form method="post">
             <input name="intent" type="hidden" value="delete" />
@@ -301,11 +304,13 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
             {deleteFetcher.data &&
             !deleteFetcher.data.ok &&
             deleteFetcher.data.intent === "delete" ? (
-              <Banner
-                failure={deleteFetcher.data.error}
-                title="Couldn't delete this definition"
-                tone="danger"
-              />
+              <DialogBody>
+                <Banner
+                  failure={deleteFetcher.data.error}
+                  title="Couldn't delete this definition"
+                  tone="danger"
+                />
+              </DialogBody>
             ) : null}
             <DialogFooter>
               <DialogClose asChild>

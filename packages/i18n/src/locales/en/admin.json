@@ -1,4 +1,12 @@
 {
+  "merge": {
+    "confirm": {
+      "source": "Source — closed after merge",
+      "submit": "Merge accounts",
+      "target": "Target — keeps the records",
+      "title": "Merge these accounts?"
+    }
+  },
   "settings": {
     "saved": {
       "banners": "Banners saved",

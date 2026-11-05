@@ -22,6 +22,7 @@ import {
   CardBody,
   Checkbox,
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogFooter,
@@ -609,30 +610,37 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
               </DialogTrigger>
               <DialogContent
                 description={t("detail.close.confirmDescription")}
+                hasInput
                 title={t("detail.close.confirmTitle")}
+                tone="danger"
               >
-                <closeFetcher.Form className="grid gap-3" method="post">
+                <closeFetcher.Form method="post">
                   <input name="intent" type="hidden" value="close-case" />
-                  {closeFailure ? <Banner title={closeRefusal} tone="danger" /> : null}
-                  <Field label={t("detail.close.outcome")}>
-                    <Select
-                      name="outcome"
-                      options={Object.values(CaseOutcome).map((v) => ({
-                        label: t(enumLabelKey("outcome", v)),
-                        value: v,
-                      }))}
-                      required
-                    />
-                  </Field>
-                  <Field
-                    label={t("detail.close.correctiveAction")}
-                    optional={t("detail.close.correctiveActionHint")}
-                  >
-                    <Input name="correctiveAction" />
-                  </Field>
-                  <Field label={t("detail.close.message")} optional={t("detail.close.messageHint")}>
-                    <Textarea name="closingMessage" rows={2} />
-                  </Field>
+                  <DialogBody>
+                    {closeFailure ? <Banner title={closeRefusal} tone="danger" /> : null}
+                    <Field label={t("detail.close.outcome")}>
+                      <Select
+                        name="outcome"
+                        options={Object.values(CaseOutcome).map((v) => ({
+                          label: t(enumLabelKey("outcome", v)),
+                          value: v,
+                        }))}
+                        required
+                      />
+                    </Field>
+                    <Field
+                      label={t("detail.close.correctiveAction")}
+                      optional={t("detail.close.correctiveActionHint")}
+                    >
+                      <Input name="correctiveAction" />
+                    </Field>
+                    <Field
+                      label={t("detail.close.message")}
+                      optional={t("detail.close.messageHint")}
+                    >
+                      <Textarea name="closingMessage" rows={2} />
+                    </Field>
+                  </DialogBody>
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button variant="secondary">{t("detail.close.cancel")}</Button>

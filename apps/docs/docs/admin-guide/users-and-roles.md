@@ -24,7 +24,7 @@ The **Users** page lists everyone's status and roles. Open a user to:
   device's IP address.
 - **Revoke their active sessions**, signing them out everywhere.
 - **Delete the account.** Steward previews what the deletion would affect before you confirm, so
-  you can see the impact first.
+  you can see the impact first. To confirm, type the user's email exactly as shown.
 
 :::note
 The **root** administrator created at first-run setup cannot be disabled, have its roles changed,
@@ -45,7 +45,8 @@ When the same person ends up with two accounts (a common SSO-onboarding mishap),
 accounts** on the Users page moves everything the duplicate owns onto the one you want to keep,
 then closes the duplicate. Pick the **source** (closed afterward) and the **target** (keeps the
 records), then **Preview merge** to see exactly what would move before anything changes. Merging
-is irreversible.
+is irreversible, so the confirmation shows both accounts and asks you to type the source
+account's email before **Merge accounts** turns on.
 
 ## 👪 My groups, for group-managers
 

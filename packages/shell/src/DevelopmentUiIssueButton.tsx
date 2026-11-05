@@ -5,7 +5,10 @@ import { useLocale, useTranslation } from "@steward-web/i18n";
 import {
   Button,
   Dialog,
+  DialogBody,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   parsePreferences,
   PREFERENCES_STORAGE_KEY,
   Textarea,
@@ -41,7 +44,7 @@ const readTheme = (): string =>
  * `enabled` is the second, independent gate, read from the server env by the root loader.
  */
 export const DevelopmentUiIssueButton = ({ app, enabled }: DevelopmentUiIssueButtonProps) => {
-  const { t } = useTranslation("shell");
+  const { t } = useTranslation(["shell", "common"]);
   const identity = useIdentity();
   const { locale } = useLocale();
   const matches = useMatches();
@@ -117,8 +120,15 @@ export const DevelopmentUiIssueButton = ({ app, enabled }: DevelopmentUiIssueBut
           data-steward-dev-ui-issue={DEV_UI_ISSUE_MARKER}
           title={t("devUiIssue.fallbackTitle")}
         >
-          <p className="text-base text-muted">{t("devUiIssue.fallbackHint")}</p>
-          <Textarea defaultValue={fallbackText} readOnly ref={fallbackRef} rows={6} />
+          <DialogBody>
+            <p className="text-base text-muted">{t("devUiIssue.fallbackHint")}</p>
+            <Textarea defaultValue={fallbackText} readOnly ref={fallbackRef} rows={6} />
+          </DialogBody>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">{t("actions.close", { ns: "common" })}</Button>
+            </DialogClose>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

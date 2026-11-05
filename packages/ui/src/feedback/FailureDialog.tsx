@@ -4,7 +4,7 @@ import { useTranslation } from "@steward-web/i18n";
 import { type ReactNode } from "react";
 
 import { Button } from "#ui/components/Button";
-import { Dialog, DialogContent, DialogFooter } from "#ui/components/Overlays";
+import { Dialog, DialogBody, DialogContent, DialogFooter } from "#ui/components/Overlays";
 
 import type { Failure } from "./failure";
 
@@ -29,9 +29,9 @@ export const FailureDialog = ({
   const { t } = useTranslation("common");
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent role="alertdialog" size="sm" title={title}>
-        {children ? <div className="text-base text-ink">{children}</div> : null}
-        <DialogFooter className="justify-between">
+      <DialogContent role="alertdialog" title={title}>
+        {children ? <DialogBody>{children}</DialogBody> : null}
+        <DialogFooter className="sm:justify-between">
           <DiagnosticsSlot failure={failure} />
           <Button onClick={() => onOpenChange(false)} variant="secondary">
             {t("actions.close")}
