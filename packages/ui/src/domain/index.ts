@@ -33,6 +33,7 @@ export {
   PolicyStatus,
   Sensitivity,
 } from "./policy";
+export { PolicyDocument, type PolicyDocumentProps } from "./PolicyDocument";
 export { PolicyLibrary, type PolicyLibraryProps } from "./PolicyLibrary";
 export { PolicyReader, type PolicyReaderProps } from "./PolicyReader";
 export { PolicyReaderHistory } from "./PolicyReaderHistory";
@@ -57,6 +58,12 @@ export {
   type RevisionNoticeKind,
   revisionNoticeOf,
 } from "./policyReaderModel";
+export {
+  type ReassignCandidate,
+  type ReassignChoice,
+  ReassignDialog,
+  type ReassignDialogProps,
+} from "./ReassignDialog";
 export {
   DiffCounts,
   DiffLegend,

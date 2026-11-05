@@ -755,3 +755,54 @@ describe("liveEdge.versionDiff", () => {
     ]);
   });
 });
+
+describe("liveEdge.versionDocument", () => {
+  it("reads one version's body and appendices as the reader draws them (U25)", async () => {
+    const calls = routeGateway({
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [
+            {
+              contentJson: JSON.stringify({ text: "Rates" }),
+              id: "a-1",
+              letter: "A",
+              orderIndex: 0,
+              policyVersionId: "v-3",
+              title: "Rates",
+            },
+          ],
+          contentJson: JSON.stringify({
+            root: {
+              children: [
+                { children: [{ text: "Receipts", type: "text" }], tag: "h2", type: "heading" },
+                { children: [{ text: "A photo is enough.", type: "text" }], type: "paragraph" },
+              ],
+              type: "root",
+            },
+          }),
+          createdAt: null,
+          id: "v-3",
+          policyId: "p-1",
+          publishedAt: null,
+          status: "in_review",
+          templateVersionId: "",
+          versionNo: 3,
+        },
+      }),
+    });
+    expect(await liveEdge.versionDocument("v-3")).toEqual({
+      appendices: [{ id: "a-1", letter: "A", text: "Rates", title: "Rates" }],
+      blocks: [
+        { depth: 1, kind: "heading", sectionKey: "receipts", text: "Receipts" },
+        { kind: "paragraph", runs: [{ text: "A photo is enough." }] },
+      ],
+      version: "3",
+    });
+    expect(calls).toEqual([{ operation: "PolicyVersion", variables: { id: "v-3" } }]);
+  });
+
+  it("is null for a version the caller can't read", async () => {
+    routeGateway({ PolicyVersion: () => ({ policyVersion: null }) });
+    expect(await liveEdge.versionDocument("v-9")).toBeNull();
+  });
+});

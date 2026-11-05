@@ -5,29 +5,46 @@
     "rejected": "Rejected"
   },
   "inbox": {
+    "cardDue": "{{stage}} · {{n}} of {{total}} · due {{date}}",
+    "columns": {
+      "decision": "Your decision",
+      "due": "Due",
+      "nowAt": "Now at",
+      "policy": "Policy",
+      "stage": "Stage",
+      "submitted": "Submitted"
+    },
     "empty": {
       "description": "When a draft is submitted for approval, it will appear here.",
       "title": "No pending approvals"
     },
-    "nav": "Approvals",
-    "review": "Review",
-    "subtitle": "Drafts awaiting your decision.",
-    "table": {
-      "category": "Category",
-      "due": "Due",
-      "number": "Number",
-      "stage": "Stage",
-      "title": "Policy"
+    "eyebrow": "Workflow",
+    "inProgress": {
+      "approved": "You approved · {{date}}",
+      "description": "You've already decided — these runs are still moving through their remaining stages.",
+      "rejected": "You rejected · {{date}}",
+      "title": "In progress",
+      "view": "View"
     },
+    "nav": "Approvals",
+    "overdue_one": "Overdue {{count}} day",
+    "overdue_other": "Overdue {{count}} days",
+    "pending": {
+      "title": "Pending"
+    },
+    "phoneGroup": "{{title}} · {{count}}",
+    "review": "Review",
+    "stageN": "Stage {{n}} of {{total}}",
+    "stageOf": "{{stage}} · {{n}} of {{total}}",
+    "submittedBy": "{{name}} · {{date}}",
+    "subtitle": "Drafts awaiting your decision.",
     "title": "Approvals",
     "untitled": "(untitled policy)",
     "upcoming": {
-      "description": "You're an approver on a later stage. You'll be notified when it's your turn to decide.",
-      "table": {
-        "stage": "Your stage"
-      },
-      "title": "Coming to you",
-      "upcomingBadge": "Upcoming"
+      "badge": "Upcoming",
+      "description": "You're an approver on a later stage. Preview it now — you'll be notified when it's your turn to decide.",
+      "preview": "Preview",
+      "title": "Coming to you"
     }
   },
   "myWork": {
@@ -77,8 +94,35 @@
     "subtitle": "Everything waiting on you, across your roles.",
     "title": "My work"
   },
+  "reassign": {
+    "cancel": "Cancel",
+    "confirm": "Reassign",
+    "current": "Current",
+    "description": "Hands the pending {{stage}} seat to someone else…",
+    "eligible": "Eligible approvers",
+    "outside": "+ Someone outside the list (site admins only)",
+    "outsideAcknowledge": "I understand this person isn't on the stage's approver list, and this is recorded.",
+    "outsideWho": "Username or email",
+    "reason": "Reason (required)",
+    "refused": "Refused",
+    "title": "Reassign approver"
+  },
   "review": {
     "back": "Back to approvals",
+    "changes": {
+      "first": "This is the first version, so there's nothing to compare yet.",
+      "unknown": "The changes can't be shown: this draft isn't listed in your library."
+    },
+    "decided": {
+      "approved": {
+        "body": "Your decision and comment are recorded, and the run moves on.",
+        "title": "Approved."
+      },
+      "rejected": {
+        "body": "Your decision and comment are recorded. The author is told changes were requested.",
+        "title": "Rejected."
+      }
+    },
     "decision": {
       "approve": "Approve",
       "comment": "Decision comment",
@@ -90,15 +134,38 @@
       "reject": "Reject",
       "title": "Your decision"
     },
+    "due": "Due {{date}} · {{stage}}",
+    "inReview": "in review · stage {{n}} of {{total}}",
     "notFound": {
       "description": "It may have been withdrawn, or you may not have access to it.",
       "title": "Approval not found"
+    },
+    "states": {
+      "done": {
+        "body": "There is nothing to decide.",
+        "title": "No longer in review"
+      },
+      "outOfScope": {
+        "body": "You can read this draft, but you're not an approver on its workflow.",
+        "title": "Not in your approval scope"
+      },
+      "preview": {
+        "body": "{{stage}} is still deciding. You'll be notified when it's your turn.",
+        "title": "Preview · you decide at stage {{n}}"
+      }
     },
     "stepper": {
       "awaiting": "Awaiting a decision",
       "title": "Approval stages"
     },
-    "viewFull": "View the full document"
+    "tabs": {
+      "changes": "Changes vs the current published version",
+      "history": "History",
+      "upcoming": "Upcoming version (under review)"
+    },
+    "upcoming": {
+      "unavailable": "The version under review couldn't be loaded."
+    }
   },
   "stepper": {
     "approvedBy": "Approved by {{names}} · {{date}}",

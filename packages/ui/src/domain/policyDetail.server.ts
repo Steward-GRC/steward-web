@@ -6,6 +6,7 @@ import type {
   DocumentType,
   PolicyDetail,
   PolicySectionDiff,
+  VersionDocument,
 } from "@steward-web/api-client";
 
 import edge from "@steward-web/edge.server";
@@ -34,3 +35,9 @@ export const getVersionDiff = (
   toVersionId: string,
   cookie?: string,
 ): Promise<readonly PolicySectionDiff[]> => edge.versionDiff(fromVersionId, toVersionId, cookie);
+
+/** One version's body and appendices, for the review page's "Upcoming version" (U25). */
+export const getVersionDocument = (
+  versionId: string,
+  cookie?: string,
+): Promise<null | VersionDocument> => edge.versionDocument(versionId, cookie);
