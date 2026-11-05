@@ -6,6 +6,7 @@ import {
   clearFormatCache,
   formatDate,
   formatDateTime,
+  formatDayMonth,
   formatHour,
   formatList,
   formatNumber,
@@ -130,5 +131,19 @@ describe("formatList", () => {
 
   it("supports a disjunction", () => {
     expect(formatList(["A", "B"], { locale: "en", type: "disjunction" })).toBe("A or B");
+  });
+});
+
+describe("formatDayMonth", () => {
+  it("is the day and short month, without the year", () => {
+    expect(formatDayMonth("2026-10-02T10:00:00Z", { locale: "en-GB" })).toBe("2 Oct");
+    expect(formatDayMonth("2026-10-02T10:00:00Z", { locale: "en" })).toBe("Oct 2");
+    expect(formatDayMonth(undefined, { locale: "en" })).toBe("—");
+  });
+});
+
+describe("formatList as a unit list", () => {
+  it("joins names with the locale's separator and no conjunction", () => {
+    expect(formatList(["Carol", "Grace"], { locale: "en", type: "unit" })).toBe("Carol, Grace");
   });
 });

@@ -61,13 +61,16 @@ describe("policyPath", () => {
 });
 
 describe("documentStatusOf", () => {
-  it("maps every gateway PolicyStatus onto the kit's status-pill vocabulary", () => {
+  it("maps the gateway's PolicyStatus onto the five status pills", () => {
     expect(documentStatusOf(PolicyStatus.Draft)).toBe("draft");
     expect(documentStatusOf(PolicyStatus.InReview)).toBe("in-review");
     expect(documentStatusOf(PolicyStatus.Published)).toBe("published");
-    expect(documentStatusOf(PolicyStatus.Rejected)).toBe("rejected");
-    expect(documentStatusOf(PolicyStatus.Superseded)).toBe("superseded");
-    expect(documentStatusOf(PolicyStatus.Withdrawn)).toBe("withdrawn");
+  });
+
+  it("gives no pill for the statuses that are history events only (4-components.s8)", () => {
+    expect(documentStatusOf(PolicyStatus.Rejected)).toBeNull();
+    expect(documentStatusOf(PolicyStatus.Superseded)).toBeNull();
+    expect(documentStatusOf(PolicyStatus.Withdrawn)).toBeNull();
   });
 });
 

@@ -45,6 +45,16 @@ export type FormatOptions = {
   locale?: string;
 };
 
+/** Day and short month, e.g. "2 Oct" / "Oct 2": the stepper's decision dates. */
+export const formatDayMonth = (
+  value: Date | null | number | string | undefined,
+  { fallback = "—", locale = currentLocale() }: FormatOptions = {},
+): string => {
+  const date = toDate(value);
+  if (!date) return fallback;
+  return dateTimeFormat(locale, { day: "numeric", month: "short" }).format(date);
+};
+
 /** Medium date, e.g. "24 Aug 2026" / "Aug 24, 2026" depending on locale. */
 export const formatDate = (
   value: Date | null | number | string | undefined,
@@ -159,14 +169,21 @@ export const formatRelativeTime = (
 };
 
 /** "A, B and C" with the locale's own separators and conjunction. Replaces the
- *  hand-rolled `slice(0,-1).join(", ") + " and " + last` joins. */
+ *  hand-rolled `slice(0,-1).join(", ") + " and " + last` joins. `unit` drops the
+ *  conjunction ("Carol, Grace"), as the approval stepper's name lists do. */
 export const formatList = (
   items: readonly string[],
   {
     locale = currentLocale(),
     type = "conjunction",
-  }: { type?: "conjunction" | "disjunction" } & FormatOptions = {},
-): string => memo("l", locale, { type }, () => new Intl.ListFormat(locale, { type })).format(items);
+  }: { type?: "conjunction" | "disjunction" | "unit" } & FormatOptions = {},
+): string =>
+  memo(
+    "l",
+    locale,
+    { type },
+    () => new Intl.ListFormat(locale, type === "unit" ? { style: "short", type } : { type }),
+  ).format(items);
 
 /** Exported for tests: the memo cache is process-global, so a test that varies
  *  locales must be able to reset it. */

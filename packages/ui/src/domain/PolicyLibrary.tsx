@@ -5,7 +5,7 @@ import { Star } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
 
-import { SensitivityBadge, StatusPill } from "#ui/components/Badges";
+import { SensitivityBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Select } from "#ui/components/Controls";
 import { Card, CardBody, Table, TD, TH, THead } from "#ui/components/Display";
@@ -16,8 +16,9 @@ import { cn } from "#ui/lib/cn";
 
 import type { Category, DocumentType, Policy } from "./policy";
 
+import { DocumentStatusPill } from "./DocumentStatusPill";
 import { useFavorites } from "./favorites";
-import { documentStatusOf, documentTypeCopy, policyPath } from "./policy";
+import { documentTypeCopy, policyPath } from "./policy";
 
 export interface PolicyLibraryProps {
   categories: readonly Category[];
@@ -188,7 +189,7 @@ export const PolicyLibrary = ({ categories, documentType, policies }: PolicyLibr
                   <SensitivityBadge sensitive={policy.sensitivity === "SENSITIVE"} />
                 </TD>
                 <TD>
-                  <StatusPill status={documentStatusOf(policy.status)} />
+                  <DocumentStatusPill status={policy.status} />
                 </TD>
                 <TD className="font-mono text-sm">{policy.version}</TD>
                 <TD>{policy.updated ?? "—"}</TD>

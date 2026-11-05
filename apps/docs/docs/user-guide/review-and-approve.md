@@ -19,12 +19,17 @@ its category, and which stage it is at.
 
 ## 👀 Review a draft
 
-1. **Open the item.** Read the submitted version in full.
-2. **Compare, if it is an update.** When the document already had a published version, the
-   changes view highlights what is different, word by word, so small edits stand out.
-3. **Decide.**
+1. **Open the item.** The stepper across the top shows every stage: who has approved (with their
+   comment), who is still pending, and which stage is deciding now. A workflow with more than four
+   stages shows them as a list you can open one at a time.
+2. **Read it, and compare if it is an update.** When the document already had a published
+   version, its **Changes** tab marks what is different, word by word: added words are green and
+   underlined, removed words are red and struck through. **Side by side** shows the old and new
+   text next to each other.
+3. **Decide.** Write a **Decision comment** first; **Approve** and **Reject** stay off until you
+   do, because the comment is recorded with your decision.
    - **Approve** — the draft passes your stage.
-   - **Request changes** — the draft is sent back to the author instead of moving on.
+   - **Reject** — the draft is sent back to the author instead of moving on.
 
 ## ✅ What your decision does
 
@@ -33,7 +38,7 @@ all of them — before it passes.
 
 - When a stage still needs more approvals, your approval moves it toward its quorum.
 - When you complete the **last** stage's quorum, the document is **published** automatically.
-- If you request changes, the draft goes back to the author to revise and resubmit.
+- If you reject it, the draft goes back to the author to revise and resubmit.
 
 ## ➡️ What comes next
 

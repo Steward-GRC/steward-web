@@ -44,17 +44,20 @@ export const policyPath = (
 ): string =>
   `${documentTypeBasePath(policy.documentType ?? DocumentType.Policy)}/${encodeURIComponent(policy.number)}`;
 
-const STATUS_TO_DOCUMENT_STATUS: Record<PolicyStatus, DocumentStatus> = {
+const STATUS_TO_DOCUMENT_STATUS: Record<PolicyStatus, DocumentStatus | null> = {
   DRAFT: "draft",
   IN_REVIEW: "in-review",
   PUBLISHED: "published",
-  REJECTED: "rejected",
-  SUPERSEDED: "superseded",
-  WITHDRAWN: "withdrawn",
+  REJECTED: null,
+  SUPERSEDED: null,
+  WITHDRAWN: null,
 };
 
-/** Maps the gateway's `PolicyStatus` onto the kit's one status-pill vocabulary. */
-export const documentStatusOf = (status: PolicyStatus): DocumentStatus =>
+/**
+ * Maps the gateway's `PolicyStatus` onto the five status pills. Rejected, superseded and
+ * withdrawn are history events (4-components.s8), so they get no pill: null.
+ */
+export const documentStatusOf = (status: PolicyStatus): DocumentStatus | null =>
   STATUS_TO_DOCUMENT_STATUS[status];
 
 /** True when a row is a Procedure: drives the PRC- number label and ack-UI suppression. */

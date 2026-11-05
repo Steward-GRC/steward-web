@@ -1,32 +1,15 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { useTranslation } from "@steward-web/i18n";
-import { ArrowUp, Check, Dot, Hourglass, type LucideIcon, RotateCcw, X } from "lucide-react";
+import { formatDateTime, useTranslation } from "@steward-web/i18n";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { useId, useState } from "react";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "#ui/components/Display";
 import { EmptyState } from "#ui/feedback/States";
 
 import type { HistoryEntry, PolicyVersionSummary } from "./policyReaderModel";
 
-import { groupHistoryByVersion, plainTextOf } from "./policyReaderModel";
-
-const EVENT_BADGE: Readonly<Record<string, LucideIcon>> = {
-  approved: Check,
-  changesRequested: X,
-  decided: Check,
-  inReview: Hourglass,
-  published: Check,
-  rejected: X,
-  retired: RotateCcw,
-  submitted: ArrowUp,
-  superseded: RotateCcw,
-  withdrawn: RotateCcw,
-};
+import { groupHistoryByVersion } from "./policyReaderModel";
+import { DiffView } from "./WordDiff";
 
 /** A kind with no label yet, in words: "workflowStageEscalated" -> "Workflow stage escalated". */
 const spelledOut = (kind: string): string => {
@@ -34,57 +17,194 @@ const spelledOut = (kind: string): string => {
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
+/** The history's status words: the five pills plus the three that are history events only. */
+type HistoryStatus =
+  | "approved"
+  | "draft"
+  | "in-review"
+  | "published"
+  | "rejected"
+  | "retired"
+  | "superseded"
+  | "withdrawn";
+
+const STATUS_OF_EVENT: Readonly<Record<string, HistoryStatus>> = {
+  approved: "in-review",
+  changesRequested: "rejected",
+  decided: "in-review",
+  inReview: "in-review",
+  published: "published",
+  rejected: "rejected",
+  retired: "retired",
+  submitted: "in-review",
+  superseded: "superseded",
+  withdrawn: "withdrawn",
+};
+
+type DotTone =
+  | "danger"
+  | "info"
+  | "neutral"
+  | "ok"
+  | "published"
+  | "retired"
+  | "superseded"
+  | "withdrawn";
+
+const TONE_OF_EVENT: Readonly<Record<string, DotTone>> = {
+  ackRecorded: "ok",
+  approved: "ok",
+  changesRequested: "danger",
+  decided: "ok",
+  inReview: "info",
+  published: "published",
+  rejected: "danger",
+  retired: "retired",
+  superseded: "superseded",
+  withdrawn: "withdrawn",
+  workflowSignalApprove: "ok",
+  workflowSignalReject: "danger",
+};
+
+const DOT_COLOUR: Readonly<Record<DotTone, string>> = {
+  danger: "var(--danger)",
+  info: "var(--info)",
+  neutral: "var(--neutral)",
+  ok: "var(--ok)",
+  published: "var(--status-published)",
+  retired: "var(--status-retired)",
+  superseded: "var(--status-superseded)",
+  withdrawn: "var(--status-withdrawn)",
+};
+
+const withV = (version: string) => (version.startsWith("v") ? version : `v${version}`);
+
+/** A version's status in the history: its newest event that says one, else draft. */
+const statusOfVersion = (events: readonly HistoryEntry[]): HistoryStatus => {
+  for (const event of events.toReversed()) {
+    const status = STATUS_OF_EVENT[event.kind];
+    if (status) return status;
+  }
+  return "draft";
+};
+
+const VersionGroup = ({
+  current,
+  events,
+  version,
+}: {
+  current: boolean;
+  events: readonly HistoryEntry[];
+  version: string;
+}) => {
+  const { t } = useTranslation("policy");
+  const [open, setOpen] = useState(current);
+  const panelId = useId();
+  const label = withV(version);
+  const status = statusOfVersion(events);
+  const Chevron = open ? ChevronDown : ChevronRight;
+  return (
+    <div className="border-b border-border last:border-b-0">
+      <button
+        aria-controls={panelId}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 px-5 py-3 text-left text-base font-semibold"
+        onClick={() => setOpen((value) => !value)}
+        type="button"
+      >
+        <Chevron aria-hidden="true" className="size-4 shrink-0" />
+        <span className="font-mono">{label}</span>
+        <span
+          className="rounded-full px-2 py-0.5 text-xs font-semibold hc:outline hc:outline-1"
+          style={{ background: `var(--status-${status}-soft)`, color: `var(--status-${status})` }}
+        >
+          {t(`status.${status}`)}
+        </span>
+        {current ? (
+          <span className="font-normal text-muted">{t("reader.history.current")}</span>
+        ) : null}
+      </button>
+      {open ? (
+        <ol
+          aria-label={label}
+          className="flex flex-col border-t border-border pt-4 pr-5 pb-[18px] pl-[46px] text-base leading-[1.45]"
+          id={panelId}
+        >
+          {events.toReversed().map((event, index) => {
+            const tone = TONE_OF_EVENT[event.kind] ?? "neutral";
+            const detail = [event.actorName, event.comment ? `“${event.comment}”` : null]
+              .filter(Boolean)
+              .join(" · ");
+            return (
+              <li
+                className="grid grid-cols-[20px_1fr] gap-3 pb-3.5 sm:grid-cols-[20px_1fr_140px]"
+                data-tone={tone}
+                key={index}
+              >
+                <span
+                  aria-hidden="true"
+                  className="mt-1 size-3 rounded-full"
+                  style={{
+                    background: DOT_COLOUR[tone],
+                    boxShadow: `0 0 0 3px var(--surface), 0 0 0 4px ${DOT_COLOUR[tone]}`,
+                  }}
+                />
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-semibold" data-testid="history-event-title">
+                    {t(`reader.history.events.${event.kind}`, {
+                      defaultValue: spelledOut(event.kind),
+                      stage: event.stage ?? "",
+                      version: label.slice(1),
+                    })}
+                  </span>
+                  {detail ? <span className="text-muted">{detail}</span> : null}
+                </div>
+                <span className="col-start-2 font-mono text-xs text-muted sm:col-start-3 sm:text-right">
+                  {formatDateTime(event.at)}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      ) : null}
+    </div>
+  );
+};
+
 /**
- * The history & approvals accordion (U18): one section per version, newest (current)
- * version open by default, each an append-only timeline of that version's events.
+ * History & approvals (U18): one group per version, the current one first and open, each a
+ * timeline of that version's events, newest first, with a dot coloured by status and the time
+ * in mono. It's the append-only record, separate from the approval stepper.
  */
 export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntry[] }) => {
   const { t } = useTranslation("policy");
   const groups = groupHistoryByVersion(history);
-
-  if (groups.length === 0) {
-    return <EmptyState title={t("reader.history.empty")} />;
-  }
+  const titleId = useId();
 
   return (
-    <Accordion defaultValue={groups[0]!.version} type="single">
-      {groups.map((group) => (
-        <AccordionItem key={group.version} value={group.version}>
-          <AccordionTrigger>{group.version}</AccordionTrigger>
-          <AccordionContent>
-            <ol className="grid gap-2">
-              {group.events.map((event, index) => {
-                const Badge = EVENT_BADGE[event.kind] ?? Dot;
-                return (
-                  <li className="flex items-start gap-2 text-sm" key={index}>
-                    <span
-                      aria-hidden="true"
-                      className="mt-0.5 text-muted"
-                      data-testid="history-event-badge"
-                    >
-                      <Badge className="size-4" />
-                    </span>
-                    <div>
-                      <p className="text-ink">
-                        {t(`reader.history.events.${event.kind}`, {
-                          defaultValue: spelledOut(event.kind),
-                          stage: event.stage ?? "",
-                          version: group.version,
-                        })}
-                      </p>
-                      <p className="text-muted">
-                        {[event.actorName, event.at].filter(Boolean).join(" · ")}
-                      </p>
-                      {event.comment ? <p className="text-muted italic">{event.comment}</p> : null}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <section
+      aria-labelledby={titleId}
+      className="overflow-hidden rounded-lg border border-border bg-surface text-ink"
+    >
+      <h2
+        className="border-b border-border-strong bg-sunken px-5 py-3 text-[15px] font-semibold"
+        id={titleId}
+      >
+        {t("reader.history.title")}
+      </h2>
+      {groups.length === 0 ? (
+        <EmptyState title={t("reader.history.empty")} />
+      ) : (
+        groups.map((group, index) => (
+          <VersionGroup
+            current={index === 0}
+            events={group.events}
+            key={group.version}
+            version={group.version}
+          />
+        ))
+      )}
+    </section>
   );
 };
 
@@ -105,19 +225,7 @@ export const PolicyReaderChanges = ({
       <p className="text-sm text-muted">
         {t("reader.changes.versusPrior", { version: priorVersion.version })}
       </p>
-      <ul className="grid gap-3">
-        {priorVersion.diff.map((section) => (
-          <li className="grid gap-1" key={section.sectionKey}>
-            <p className="font-semibold text-ink">{section.sectionTitle}</p>
-            {section.wordDiffHtml ? (
-              <p className="text-base text-ink">{plainTextOf(section.wordDiffHtml)}</p>
-            ) : (
-              <p className="text-base text-muted">{section.changeType}</p>
-            )}
-          </li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted">{t("reader.changes.legend")}</p>
+      <DiffView sections={priorVersion.diff} />
     </div>
   );
 };

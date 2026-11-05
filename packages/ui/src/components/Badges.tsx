@@ -9,9 +9,7 @@ import {
   type LucideIcon,
   Pencil,
   ShieldAlert,
-  Undo2,
   X,
-  XCircle,
 } from "lucide-react";
 import { type ComponentProps, type ReactNode } from "react";
 
@@ -41,27 +39,16 @@ export const Badge = ({
 
 /**
  * The one document status vocabulary: Draft, In review, Approved, Published and Retired.
- * Rejected, Superseded and Withdrawn are history events; they get a pill in history only.
+ * Rejected, Superseded and Withdrawn are history events, never pills (4-components.s8).
  */
-export type DocumentStatus =
-  | "approved"
-  | "draft"
-  | "in-review"
-  | "published"
-  | "rejected"
-  | "retired"
-  | "superseded"
-  | "withdrawn";
+export type DocumentStatus = "approved" | "draft" | "in-review" | "published" | "retired";
 
 const statusIcons: Record<DocumentStatus, LucideIcon> = {
   approved: Check,
   draft: Pencil,
   "in-review": Clock,
   published: CheckCircle2,
-  rejected: XCircle,
   retired: Archive,
-  superseded: Archive,
-  withdrawn: Undo2,
 };
 
 /** A status pill: an icon plus a word, never colour alone. */
@@ -86,8 +73,11 @@ export const StatusPill = ({
   );
 };
 
-/** The workflow's status values, mapped onto the one vocabulary. Scheduled reads as Approved. */
-export const documentStatusOf = (approvalStatus: string): DocumentStatus => {
+/**
+ * The workflow's status values, mapped onto the five pills. Scheduled reads as Approved;
+ * rejected, superseded and withdrawn get no pill (null), because they're history events.
+ */
+export const documentStatusOf = (approvalStatus: string): DocumentStatus | null => {
   switch (approvalStatus.replace(/^APPROVAL_STATUS_/, "")) {
     case "APPROVED":
     case "SCHEDULED": {
@@ -102,14 +92,10 @@ export const documentStatusOf = (approvalStatus: string): DocumentStatus => {
     case "PUBLISHED": {
       return "published";
     }
-    case "REJECTED": {
-      return "rejected";
-    }
-    case "SUPERSEDED": {
-      return "superseded";
-    }
+    case "REJECTED":
+    case "SUPERSEDED":
     case "WITHDRAWN": {
-      return "withdrawn";
+      return null;
     }
     default: {
       return "draft";

@@ -6,7 +6,6 @@ import { describe, expect, it } from "vitest";
 import {
   ackBannerState,
   groupHistoryByVersion,
-  plainTextOf,
   redactionState,
   revisionNoticeOf,
 } from "./policyReaderModel";
@@ -111,17 +110,5 @@ describe("groupHistoryByVersion", () => {
 
   it("answers no groups for an empty history", () => {
     expect(groupHistoryByVersion([])).toEqual([]);
-  });
-});
-
-describe("plainTextOf", () => {
-  it("strips the diff's ins/del markup down to plain text", () => {
-    expect(plainTextOf("Rates were <del>USD-only</del> <ins>reviewed per country</ins>.")).toBe(
-      "Rates were USD-only reviewed per country.",
-    );
-  });
-
-  it("leaves plain text alone", () => {
-    expect(plainTextOf("No markup here")).toBe("No markup here");
   });
 });

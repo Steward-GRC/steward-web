@@ -11,6 +11,7 @@ export {
   clearFormatCache,
   formatDate,
   formatDateTime,
+  formatDayMonth,
   formatHour,
   formatList,
   formatNumber,

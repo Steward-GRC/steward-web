@@ -3,7 +3,20 @@
 // The policy/procedure domain surface, imported as `@steward-web/ui/domain`: client-safe
 // components and logic both apps' library screens share. Server-only data fetching is the
 // separate `@steward-web/ui/domain/server` entry (see index.server.ts).
+export { AckBanner, type AckBannerProps } from "./AckBanner";
+export {
+  ApprovalStepper,
+  type ApprovalStepperProps,
+  type StepperApprover,
+  type StepperApproverState,
+  type StepperGroup,
+  type StepperRule,
+  type StepperStage,
+} from "./ApprovalStepper";
+export { DecisionPanel, type DecisionPanelProps } from "./DecisionPanel";
+export { DocumentStatusPill } from "./DocumentStatusPill";
 export { type FavoritesStore, useFavorites } from "./favorites";
+export { OutlineCard, type OutlineCardProps, type OutlineItem } from "./OutlineCard";
 export {
   type Category,
   DOCUMENT_TYPE_LABEL,
@@ -20,6 +33,7 @@ export {
 } from "./policy";
 export { PolicyLibrary, type PolicyLibraryProps } from "./PolicyLibrary";
 export { PolicyReader, type PolicyReaderProps } from "./PolicyReader";
+export { PolicyReaderChanges, PolicyReaderHistory } from "./PolicyReaderHistory";
 export {
   ackBannerState,
   type AckBannerState,
@@ -41,3 +55,16 @@ export {
   type RevisionNoticeKind,
   revisionNoticeOf,
 } from "./policyReaderModel";
+export {
+  DiffCounts,
+  DiffLegend,
+  type DiffRun,
+  type DiffRunKind,
+  type DiffSection,
+  DiffView,
+  type DiffViewProps,
+  FoldedRun,
+  parseWordDiff,
+  WordDiff,
+  type WordDiffProps,
+} from "./WordDiff";

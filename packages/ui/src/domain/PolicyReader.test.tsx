@@ -77,7 +77,8 @@ describe("PolicyReader", () => {
       ...baseDetail,
       ack: { ackedAt: "2026-08-13T00:00:00Z", acknowledged: true, required: true },
     });
-    expect(screen.getByText("Acknowledged")).toBeInTheDocument();
+    expect(screen.getByTestId("ack-banner")).toHaveAttribute("data-state", "done");
+    expect(screen.getByRole("status")).toHaveTextContent("Acknowledged");
     expect(screen.queryByRole("button", { name: "Acknowledge" })).not.toBeInTheDocument();
   });
 
@@ -113,10 +114,38 @@ describe("PolicyReader", () => {
     expect(screen.getByText(/Appendices A: Per-diem rates/)).toBeInTheDocument();
   });
 
-  it("shows the history accordion grouped by version", () => {
+  it("shows the history timeline grouped by version", () => {
     renderAt(baseDetail);
-    expect(screen.getByText("History & approvals")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "2.0.0" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "History & approvals" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /v2\.0\.0/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+  });
+
+  it("shows the changes as a word-level diff, not plain text", async () => {
+    renderAt({
+      ...baseDetail,
+      priorVersion: {
+        diff: [
+          {
+            changeType: "modified",
+            sectionKey: "claim",
+            sectionTitle: "2. Making a claim",
+            wordDiffHtml: "File within <del>60</del> <ins>30</ins> days.",
+          },
+        ],
+        version: "1.0.0",
+      },
+    });
+    await userEvent.click(screen.getByRole("tab", { name: "Changes" }));
+    expect(screen.getByText("30").tagName).toBe("INS");
+    expect(screen.getByText("60").tagName).toBe("DEL");
+  });
+
+  it("uses the soft plum acknowledgement banner, not a warning", () => {
+    renderAt(baseDetail);
+    expect(screen.getByTestId("ack-banner")).toHaveClass("bg-primary-soft");
   });
 
   it("names the version a published event published", () => {
@@ -125,14 +154,11 @@ describe("PolicyReader", () => {
     expect(screen.queryByText(/\{\{version\}\}/)).not.toBeInTheDocument();
   });
 
-  it("marks each history event with an icon, not a text glyph", () => {
+  it("marks each history event with a status dot, not a text glyph", () => {
     renderAt(baseDetail);
-    const badges = screen.getAllByTestId("history-event-badge");
-    expect(badges.length).toBeGreaterThan(0);
-    for (const badge of badges) {
-      expect(badge.innerHTML).toMatch(/^<svg\b/);
-      expect(badge.textContent).toBe("");
-    }
+    const events = within(screen.getByRole("list", { name: "v2.0.0" })).getAllByRole("listitem");
+    expect(events.length).toBeGreaterThan(0);
+    for (const event of events) expect(event).toHaveAttribute("data-tone");
   });
 
   it("submits the acknowledge dialog's form with the current version id", async () => {
