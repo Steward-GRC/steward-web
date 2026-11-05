@@ -106,7 +106,7 @@ export const OutlineCard = ({ footer, items, onCollapsedChange }: OutlineCardPro
   }
 
   return (
-    <aside className="lg:sticky lg:top-4">
+    <aside aria-label={t("reader.outline.title")} className="lg:sticky lg:top-4">
       <button
         aria-controls={navId}
         aria-expanded={menuOpen}

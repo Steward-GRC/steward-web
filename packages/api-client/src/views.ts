@@ -60,6 +60,25 @@ export interface Category {
 }
 
 /**
+ * One block of a version's body as the reader draws it (U7): a heading at its depth below the
+ * document's top level (1 is a numbered section, 2 its sub-section), a paragraph, a list, a
+ * quote or a table.
+ */
+export type DocumentBlock =
+  | { readonly depth: 1 | 2 | 3; readonly kind: "heading"; readonly text: string }
+  | {
+      readonly items: readonly (readonly InlineRun[])[];
+      readonly kind: "list";
+      readonly ordered: boolean;
+    }
+  | { readonly kind: "paragraph"; readonly runs: readonly InlineRun[] }
+  | { readonly kind: "quote"; readonly runs: readonly InlineRun[] }
+  | {
+      readonly kind: "table";
+      readonly rows: readonly { readonly cells: readonly string[]; readonly header: boolean }[];
+    };
+
+/**
  * A node of the category tree, as the admin groups directory and the new-draft picker read
  * it. The gateway calls these categories; the original UI called them groups.
  */
@@ -95,6 +114,17 @@ export interface HistoryEntry {
   readonly kind: string;
   readonly stage?: null | string;
   readonly versionLabel: string;
+}
+
+/** One run of inline text in a document block, with its marks and link. */
+export interface InlineRun {
+  readonly bold?: boolean;
+  readonly code?: boolean;
+  readonly href?: string;
+  readonly italic?: boolean;
+  readonly strike?: boolean;
+  readonly text: string;
+  readonly underline?: boolean;
 }
 
 /** The signed-in user, as the shell's identity and permission checks read it. */
@@ -184,7 +214,11 @@ export interface PolicyDefinition {
 export interface PolicyDetail {
   readonly ack?: AckStatus | null;
   readonly appendices: readonly PolicyAppendix[];
+  /** The body as the reader draws it: numbered sections, paragraphs, lists, tables. */
+  readonly body: readonly DocumentBlock[];
   readonly bodyText: string;
+  /** True when the version has content the reader couldn't read ("couldn't be displayed"). */
+  readonly bodyUnreadable: boolean;
   readonly canBreakGlass: boolean;
   readonly category: string;
   readonly contacts: readonly PolicyContact[];
@@ -201,9 +235,13 @@ export interface PolicyDetail {
   readonly published?: null | string;
   readonly references: readonly PolicyReference[];
   readonly related: readonly RelatedPolicy[];
+  /** A newer version being worked on beside the published one, for the revision notice (U10). */
+  readonly revision?: { readonly status: PolicyStatus; readonly version: string } | null;
   readonly sensitivity: Sensitivity;
   readonly status: PolicyStatus;
   readonly subcategory: string;
+  /** The stored publish-time AI summary of the published version, when there is one. */
+  readonly summary?: { readonly generatedAt: string; readonly text: string } | null;
   readonly title: string;
   readonly updated: null | string;
   readonly version: string;

@@ -84,6 +84,7 @@ import {
   PolicyDocument,
   PolicyVersionDocument,
   PolicyVersionsDocument,
+  PolicyVersionSummaryDocument,
   PostCaseMessageDocument,
   PreviewAccountMergeDocument,
   PreviewUserDeletionDocument,
@@ -145,12 +146,14 @@ import {
   bodyTextFromContent,
   categoryNames,
   type CategoryNode,
+  documentBlocksFromContent,
   historyFromAuditLog,
   historyFromVersions,
   isNotFound,
   isPermissionDenied,
   isUnauthenticated,
   policyStatusOf,
+  readableContent,
   toPolicyView,
 } from "./assemble";
 
@@ -253,7 +256,7 @@ const assembleDetail = async (
   const publishedId = policy.currentPublishedVersionId ?? null;
   const versionId = publishedId ?? policy.currentDraftVersionId ?? null;
   const acks = policy.documentType === DocumentType.Policy && publishedId !== null;
-  const [version, attachments, versions, ack, auditPage] = await Promise.all([
+  const [version, attachments, versions, ack, auditPage, summary] = await Promise.all([
     versionId
       ? gatewayFetch(PolicyVersionDocument, { id: versionId }, "PolicyVersion", { cookie }).then(
           (d) => d.policyVersion ?? null,
@@ -278,6 +281,18 @@ const assembleDetail = async (
       if (isPermissionDenied(error)) return null;
       throw error;
     }),
+    // A missing or unreadable summary just leaves the AI summary toggle out.
+    publishedId
+      ? gatewayFetch(
+          PolicyVersionSummaryDocument,
+          { versionId: publishedId },
+          "PolicyVersionSummary",
+          { cookie },
+        ).then(
+          (d) => d.policyVersionSummary ?? null,
+          () => null,
+        )
+      : null,
   ]);
   const history = auditPage
     ? historyFromAuditLog(auditPage.auditLog.records, version ? String(version.versionNo) : "")
@@ -296,6 +311,12 @@ const assembleDetail = async (
     diff = data.diffVersions;
   }
   const names = categoryNames(index, policy.homeCategoryId);
+  const draftId = policy.currentDraftVersionId ?? null;
+  const draft =
+    publishedId && draftId && draftId !== publishedId
+      ? versions.find((v) => v.id === draftId)
+      : undefined;
+  const body = version ? documentBlocksFromContent(version.contentJson) : [];
 
   return {
     ack: acks
@@ -311,7 +332,9 @@ const assembleDetail = async (
       text: appendixText(a.contentJson),
       title: a.title,
     })),
+    body,
     bodyText: version ? bodyTextFromContent(version.contentJson) : "",
+    bodyUnreadable: version ? !readableContent(version.contentJson) : false,
     canBreakGlass: policy.viewerCan.canBreakGlass,
     category: names.category,
     contacts: attachments.policyContactBlocks,
@@ -327,9 +350,13 @@ const assembleDetail = async (
     published: publishedId ? (version?.publishedAt ?? null) : null,
     references: attachments.policyReferences,
     related: attachments.relatedPolicies,
+    revision: draft
+      ? { status: policyStatusOf(false, draft.status), version: String(draft.versionNo) }
+      : null,
     sensitivity: policy.sensitivity,
     status: policyStatusOf(publishedId !== null, version?.status),
     subcategory: names.subcategory,
+    summary: summary ? { generatedAt: summary.generatedAt, text: summary.summaryText } : null,
     title: policy.title,
     updated: policy.updatedAt,
     version: version ? String(version.versionNo) : "",

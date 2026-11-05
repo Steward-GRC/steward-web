@@ -1601,6 +1601,17 @@ export type PolicyVersionFieldsFragment = {
   }>;
 };
 
+export type PolicyVersionSummaryQueryVariables = Exact<{
+  versionId: string | number;
+}>;
+
+export type PolicyVersionSummaryQuery = {
+  readonly policyVersionSummary: {
+    readonly summaryText: string;
+    readonly generatedAt: string;
+  } | null;
+};
+
 export type PolicyVersionsQueryVariables = Exact<{
   policyId: string | number;
 }>;
@@ -8546,6 +8557,49 @@ export const PolicyVersionDocument = {
     },
   ],
 } as unknown as DocumentNode<PolicyVersionQuery, PolicyVersionQueryVariables>;
+export const PolicyVersionSummaryDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PolicyVersionSummary" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "versionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyVersionSummary" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "versionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "versionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "summaryText" } },
+                { kind: "Field", name: { kind: "Name", value: "generatedAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PolicyVersionSummaryQuery, PolicyVersionSummaryQueryVariables>;
 export const PolicyVersionsDocument = {
   kind: "Document",
   definitions: [
