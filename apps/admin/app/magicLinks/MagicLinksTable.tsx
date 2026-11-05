@@ -27,10 +27,11 @@ export interface MagicLinkRow {
 // The frame's columns (A12): Policy, Version, Link, Status, Created by, and the action.
 const GRID = "md:grid md:grid-cols-[1.4fr_70px_1fr_90px_1fr_110px] md:items-center md:gap-x-2";
 
-/** "…/s/7c1e": the path's first four characters, enough to tell links apart. */
+/** "…/share/7c1e": the token's first four characters, enough to tell links apart. A link opens
+ *  the staff app's shared reader (G16) at `/share/{token}`. */
 const shortLink = (url: string) => {
-  const match = /\/s\/([^/?#]+)/.exec(url);
-  return match ? `…/s/${match[1]!.slice(0, 4)}` : url;
+  const match = /\/share\/([^/?#]+)/.exec(url);
+  return match ? `…/share/${match[1]!.slice(0, 4)}` : url;
 };
 
 /**

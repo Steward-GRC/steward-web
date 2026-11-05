@@ -3,6 +3,7 @@
 import type { DefinitionEntry, DefinitionEntryInput } from "@steward-web/api-client";
 
 import { PERMISSIONS, useCan, useIdentity } from "@steward-web/auth";
+import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
   Badge,
@@ -16,13 +17,9 @@ import {
   EmptyState,
   Field,
   Input,
-  PageHeader,
   Select,
   Table,
-  Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
   TD,
   Textarea,
   TH,
@@ -47,6 +44,13 @@ import {
   setDefinitionArchived,
   updateDefinition,
 } from "../libraries/libraries.server";
+import {
+  DeleteButton,
+  LibraryHeader,
+  LibraryTabs,
+  TableCard,
+  UsedBy,
+} from "../libraries/LibraryParts";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [defs, groups] = await Promise.all([listDefinitions(request), listGroups(request)]);
@@ -97,6 +101,7 @@ const emptyForm = { categoryId: "", definition: "", term: "" };
 
 export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps) {
   const { categories, defs } = loaderData;
+  const { t } = useTranslation("admin");
   const identity = useIdentity();
   const canTemplateManage = useCan(PERMISSIONS.TemplateManage);
   const canComplianceManage = useCan(PERMISSIONS.ComplianceManage);
@@ -141,151 +146,140 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader
-        actions={
-          isAdmin ? (
-            <Button disabled={!category} onClick={openCreate} size="sm">
-              New definition
-            </Button>
-          ) : undefined
-        }
-        eyebrow="Structure"
-        subtitle="Reusable, category-scoped glossary terms attached by policy authors."
-        title="Definitions"
+      <LibraryHeader
+        newLabel={t("libraries.definitions.new")}
+        onNew={isAdmin && category ? openCreate : undefined}
+        subtitle={t("libraries.definitions.subtitle")}
+        title={t("libraries.definitions.title")}
       />
 
-      <Field label="Category">
+      <Field className="w-72" label={t("libraries.definitions.category")}>
         <Select
           onValueChange={setCategory}
           options={categoryOptions}
-          placeholder="Select a category…"
+          placeholder={t("libraries.definitions.chooseCategory")}
           value={category}
         />
       </Field>
 
-      <Tabs onValueChange={(v) => setTab(v as LibraryTab)} value={tab}>
-        <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="archived">Archived</TabsTrigger>
-        </TabsList>
+      <LibraryTabs onTab={setTab} tab={tab}>
         <TabsContent value={tab}>
           {rows.length === 0 ? (
             <EmptyState
-              description={
-                tab === "archived"
-                  ? "Archived definitions appear here and can be restored."
-                  : "Create a reusable glossary term that authors can attach to policies in this category."
-              }
-              title={tab === "archived" ? "No archived definitions" : "No definitions yet"}
+              description={t(`libraries.definitions.empty.${tab}Description`)}
+              title={t(`libraries.definitions.empty.${tab}`)}
             />
           ) : (
-            <Table>
-              <THead>
-                <tr>
-                  <TH>Term</TH>
-                  <TH>Definition</TH>
-                  <TH>Used by</TH>
-                  <TH>Actions</TH>
-                </tr>
-              </THead>
-              <tbody>
-                {rows.map((entry) => {
-                  const deletable = isDeletable(entry.usedByCount);
-                  const curatable = canCurateEntry(entry);
-                  return (
-                    <tr key={entry.id}>
-                      <TD className="font-medium">{entry.term}</TD>
-                      <TD className="max-w-lg text-muted" title={entry.definition}>
-                        <span className="line-clamp-2">{entry.definition}</span>
-                      </TD>
-                      <TD className="text-muted">
-                        {entry.usedByCount} {entry.usedByCount === 1 ? "policy" : "policies"}
-                      </TD>
-                      <TD>
-                        {curatable ? (
-                          <div className="flex items-center justify-end gap-2">
-                            {entry.archived ? (
-                              <Badge tone="neutral">Archived</Badge>
-                            ) : (
-                              <Button onClick={() => openEdit(entry)} size="sm" variant="ghost">
-                                Edit
-                              </Button>
-                            )}
-                            <saveFetcher.Form method="post">
-                              <input name="intent" type="hidden" value="archive" />
-                              <input name="id" type="hidden" value={entry.id} />
-                              <input
-                                name="archived"
-                                type="hidden"
-                                value={String(!entry.archived)}
+            <TableCard>
+              <Table>
+                <THead>
+                  <tr>
+                    <TH>{t("libraries.definitions.columns.term")}</TH>
+                    <TH>{t("libraries.definitions.columns.definition")}</TH>
+                    <TH>{t("libraries.definitions.columns.usedBy")}</TH>
+                    <TH>
+                      <span className="sr-only">{t("libraries.actions.label")}</span>
+                    </TH>
+                  </tr>
+                </THead>
+                <tbody>
+                  {rows.map((entry) => {
+                    const deletable = isDeletable(entry.usedByCount);
+                    const curatable = canCurateEntry(entry);
+                    return (
+                      <tr key={entry.id}>
+                        <TD className="font-medium">{entry.term}</TD>
+                        <TD className="max-w-lg text-muted" title={entry.definition}>
+                          <span className="line-clamp-2">{entry.definition}</span>
+                        </TD>
+                        <TD className="text-muted">
+                          <UsedBy count={entry.usedByCount} />
+                        </TD>
+                        <TD>
+                          {curatable ? (
+                            <div className="flex items-center justify-end gap-2">
+                              {entry.archived ? (
+                                <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
+                              ) : (
+                                <Button onClick={() => openEdit(entry)} size="sm" variant="ghost">
+                                  {t("libraries.actions.edit")}
+                                </Button>
+                              )}
+                              <saveFetcher.Form method="post">
+                                <input name="intent" type="hidden" value="archive" />
+                                <input name="id" type="hidden" value={entry.id} />
+                                <input
+                                  name="archived"
+                                  type="hidden"
+                                  value={String(!entry.archived)}
+                                />
+                                <Button size="sm" type="submit" variant="secondary">
+                                  {entry.archived
+                                    ? t("libraries.actions.restore")
+                                    : t("libraries.actions.archive")}
+                                </Button>
+                              </saveFetcher.Form>
+                              <DeleteButton
+                                inUse={!deletable}
+                                onDelete={() => setDeleteTarget(entry)}
                               />
-                              <Button size="sm" type="submit" variant="secondary">
-                                {entry.archived ? "Restore" : "Archive"}
-                              </Button>
-                            </saveFetcher.Form>
-                            <Button
-                              disabled={!deletable}
-                              onClick={() => setDeleteTarget(entry)}
-                              size="sm"
-                              title={
-                                deletable ? undefined : "In use — archive instead of deleting."
-                              }
-                              variant="ghost"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        ) : null}
-                      </TD>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
+                            </div>
+                          ) : null}
+                        </TD>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </TableCard>
           )}
         </TabsContent>
-      </Tabs>
+      </LibraryTabs>
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
-        <DialogContent hasInput title={editing ? "Edit definition" : "New definition"}>
+        <DialogContent
+          hasInput
+          title={
+            editing
+              ? t("libraries.definitions.dialog.editTitle")
+              : t("libraries.definitions.dialog.newTitle")
+          }
+        >
           <saveFetcher.Form method="post">
             <input name="intent" type="hidden" value="save" />
             <input name="id" type="hidden" value={editing?.id ?? ""} />
             <DialogBody>
-              <Field label="Category">
+              <Field label={t("libraries.definitions.dialog.category")}>
                 <Select
                   defaultValue={form.categoryId}
                   name="categoryId"
                   options={categoryOptions}
-                  placeholder="Select a category…"
+                  placeholder={t("libraries.definitions.chooseCategory")}
                 />
               </Field>
-              <Field label="Term">
-                <Input defaultValue={form.term} name="term" placeholder="e.g. RTO" required />
+              <Field label={t("libraries.definitions.dialog.term")}>
+                <Input defaultValue={form.term} name="term" required />
               </Field>
-              <Field label="Definition">
-                <Textarea
-                  defaultValue={form.definition}
-                  name="definition"
-                  placeholder="What the term means"
-                  required
-                />
+              <Field label={t("libraries.definitions.dialog.definition")}>
+                <Textarea defaultValue={form.definition} name="definition" required />
               </Field>
 
               {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
                 <Banner
                   failure={saveFetcher.data.error}
-                  title="Couldn't save this definition"
+                  title={t("libraries.definitions.dialog.failed")}
                   tone="danger"
                 />
               ) : null}
             </DialogBody>
             <DialogFooter>
               <Button onClick={() => setDialogOpen(false)} type="button" variant="secondary">
-                Cancel
+                {t("libraries.cancel")}
               </Button>
-              <Button disabled={saveFetcher.state !== "idle"} type="submit">
-                {saveFetcher.state === "idle" ? (editing ? "Save changes" : "Create") : "Saving…"}
+              <Button busy={saveFetcher.state !== "idle"} type="submit">
+                {editing
+                  ? t("libraries.definitions.dialog.save")
+                  : t("libraries.definitions.dialog.create")}
               </Button>
             </DialogFooter>
           </saveFetcher.Form>
@@ -294,8 +288,10 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
 
       <Dialog onOpenChange={(open) => !open && setDeleteTarget(null)} open={deleteTarget !== null}>
         <DialogContent
-          description={`"${deleteTarget?.term}" will be permanently deleted. This can't be undone.`}
-          title="Delete definition?"
+          description={t("libraries.definitions.delete.description", {
+            term: deleteTarget?.term,
+          })}
+          title={t("libraries.definitions.delete.title")}
           tone="danger"
         >
           <deleteFetcher.Form method="post">
@@ -307,17 +303,17 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
               <DialogBody>
                 <Banner
                   failure={deleteFetcher.data.error}
-                  title="Couldn't delete this definition"
+                  title={t("libraries.definitions.delete.failed")}
                   tone="danger"
                 />
               </DialogBody>
             ) : null}
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="secondary">Cancel</Button>
+                <Button variant="secondary">{t("libraries.cancel")}</Button>
               </DialogClose>
-              <Button disabled={deleteFetcher.state !== "idle"} type="submit" variant="danger">
-                Delete
+              <Button busy={deleteFetcher.state !== "idle"} type="submit" variant="danger">
+                {t("libraries.definitions.delete.cta")}
               </Button>
             </DialogFooter>
           </deleteFetcher.Form>

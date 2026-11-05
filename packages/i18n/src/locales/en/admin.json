@@ -1190,5 +1190,147 @@
         "emptyNotYet": "Everyone has acknowledged it."
       }
     }
+  },
+  "libraries": {
+    "tabs": {
+      "label": "Show",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "usedBy_one": "{{count}} policy",
+    "usedBy_other": "{{count}} policies",
+    "actions": {
+      "label": "Actions",
+      "edit": "Edit",
+      "archive": "Archive",
+      "restore": "Restore",
+      "delete": "Delete",
+      "archived": "Archived"
+    },
+    "inUse": "In use — archive instead of deleting.",
+    "none": "—",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "contacts": {
+      "title": "Contact library",
+      "subtitle": "Reusable contact blocks referenced by policies.",
+      "new": "New contact block",
+      "columns": {
+        "label": "Label",
+        "who": "Name · Role",
+        "department": "Department",
+        "email": "Email",
+        "phone": "Phone",
+        "usedBy": "Used by"
+      },
+      "empty": {
+        "active": "No contact blocks yet",
+        "activeDescription": "Create a reusable contact block that authors can attach to policies.",
+        "archived": "No archived contact blocks",
+        "archivedDescription": "Archived contact blocks appear here and can be restored."
+      },
+      "dialog": {
+        "newTitle": "New contact block",
+        "editTitle": "Edit contact block",
+        "editDescription": "Policies that reference it update everywhere.",
+        "label": "Label",
+        "name": "Name",
+        "role": "Role",
+        "email": "Email",
+        "phone": "Phone",
+        "emailOrPhone": "At least one of email or phone is required.",
+        "department": "Department",
+        "hours": "Hours",
+        "notes": "Notes",
+        "create": "Create contact block",
+        "save": "Save contact",
+        "failed": "Couldn't save this contact block"
+      }
+    },
+    "references": {
+      "title": "References & standards",
+      "subtitle": "Reusable standards, reference text, and links attached by policy authors.",
+      "new": "New reference",
+      "columns": {
+        "label": "Label",
+        "kind": "Kind",
+        "text": "Text",
+        "usedBy": "Used by"
+      },
+      "kinds": {
+        "STANDARD": "Standard",
+        "TEXT": "Text",
+        "LINK": "Link"
+      },
+      "kindDescriptions": {
+        "STANDARD": "A governing standard or clause, with an optional link.",
+        "TEXT": "Reference text shown on the policy.",
+        "LINK": "A link to a document or resource."
+      },
+      "empty": {
+        "active": "No references yet",
+        "activeDescription": "Create a reusable standard, reference text or link that authors can attach to policies.",
+        "archived": "No archived references",
+        "archivedDescription": "Archived references appear here and can be restored."
+      },
+      "dialog": {
+        "newTitle": "New reference",
+        "editTitle": "Edit reference",
+        "label": "Label",
+        "kind": "Kind",
+        "clause": "Clause",
+        "link": "Link",
+        "linkOptional": "Link (optional)",
+        "body": "Reference text",
+        "create": "Create reference",
+        "save": "Save reference",
+        "failed": "Couldn't save this reference"
+      },
+      "archive": {
+        "title": "Archive this reference?",
+        "description": "Policies that already reference it keep showing it.",
+        "cta": "Archive reference"
+      },
+      "delete": {
+        "title": "Delete this reference?",
+        "description": "“{{label}}” will be deleted. This can't be undone.",
+        "cta": "Delete reference",
+        "failed": "Couldn't delete this reference"
+      }
+    },
+    "definitions": {
+      "title": "Definitions",
+      "subtitle": "Reusable, category-scoped glossary terms attached by policy authors.",
+      "new": "New definition",
+      "category": "Category",
+      "chooseCategory": "Choose a category",
+      "columns": {
+        "term": "Term",
+        "definition": "Definition",
+        "usedBy": "Used by"
+      },
+      "empty": {
+        "active": "No definitions in this category yet",
+        "activeDescription": "Create a reusable glossary term that authors can attach to policies in this category.",
+        "archived": "No archived definitions",
+        "archivedDescription": "Archived definitions appear here and can be restored."
+      },
+      "dialog": {
+        "newTitle": "New definition",
+        "editTitle": "Edit definition",
+        "term": "Term",
+        "definition": "Definition",
+        "category": "Category",
+        "create": "Create definition",
+        "save": "Save definition",
+        "failed": "Couldn't save this definition"
+      },
+      "delete": {
+        "title": "Delete this definition?",
+        "description": "“{{term}}” will be deleted. This can't be undone.",
+        "cta": "Delete definition",
+        "failed": "Couldn't delete this definition"
+      }
+    }
   }
 }

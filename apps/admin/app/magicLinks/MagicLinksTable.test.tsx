@@ -13,7 +13,7 @@ const LINKS: MagicLinkRow[] = [
     id: "l-1",
     policyTitle: "Desk Booking Policy",
     status: "active",
-    url: "https://policies.example.org/s/7c1e04b2",
+    url: "https://policies.example.org/share/7c1e04b2",
     version: "v1.0.0",
   },
   {
@@ -22,7 +22,7 @@ const LINKS: MagicLinkRow[] = [
     id: "l-2",
     policyTitle: "Travel Booking Procedure",
     status: "revoked",
-    url: "https://policies.example.org/s/a90b11c3",
+    url: "https://policies.example.org/share/a90b11c3",
     version: "v2.0.0",
   },
 ];
@@ -39,7 +39,7 @@ describe("the magic links table (A12)", () => {
       "Actions",
     ]);
     const [, active, revoked] = screen.getAllByRole("row");
-    expect(within(active!).getByText("…/s/7c1e")).toBeInTheDocument();
+    expect(within(active!).getByText("…/share/7c1e")).toBeInTheDocument();
     expect(within(active!).getByText("Active")).toBeInTheDocument();
     expect(within(active!).getByText("Bob · 2 Oct")).toBeInTheDocument();
     expect(within(revoked!).getByText("Revoked")).toBeInTheDocument();

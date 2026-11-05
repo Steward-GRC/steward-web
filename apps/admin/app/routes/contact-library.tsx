@@ -3,6 +3,7 @@
 import type { ContactBlock, ContactBlockInput } from "@steward-web/api-client";
 
 import { PERMISSIONS, useCan, useIdentity } from "@steward-web/auth";
+import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
   Badge,
@@ -15,12 +16,8 @@ import {
   EmptyState,
   Field,
   Input,
-  PageHeader,
   Table,
-  Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
   TD,
   TH,
   THead,
@@ -37,6 +34,7 @@ import {
   setContactBlockArchived,
   updateContactBlock,
 } from "../libraries/libraries.server";
+import { LibraryHeader, LibraryTabs, TableCard, UsedBy } from "../libraries/LibraryParts";
 
 export const loader = async ({ request }: Route.LoaderArgs) => ({
   blocks: await listContactBlocks(request),
@@ -95,6 +93,7 @@ const emptyForm = {
 
 export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
   const { blocks } = loaderData;
+  const { t } = useTranslation("admin");
   const identity = useIdentity();
   const canTemplateManage = useCan(PERMISSIONS.TemplateManage);
   const canComplianceManage = useCan(PERMISSIONS.ComplianceManage);
@@ -135,146 +134,151 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader
-        actions={
-          canManage ? (
-            <Button onClick={openCreate} size="sm">
-              New contact block
-            </Button>
-          ) : undefined
-        }
-        eyebrow="Structure"
-        subtitle="Reusable contact blocks referenced by policies."
-        title="Contact library"
+      <LibraryHeader
+        newLabel={t("libraries.contacts.new")}
+        onNew={canManage ? openCreate : undefined}
+        subtitle={t("libraries.contacts.subtitle")}
+        title={t("libraries.contacts.title")}
       />
 
-      <Tabs onValueChange={(v) => setTab(v as LibraryTab)} value={tab}>
-        <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="archived">Archived</TabsTrigger>
-        </TabsList>
+      <LibraryTabs onTab={setTab} tab={tab}>
         <TabsContent value={tab}>
           {rows.length === 0 ? (
             <EmptyState
-              description={
-                tab === "archived"
-                  ? "Archived blocks appear here and can be restored."
-                  : "Create a reusable contact block that authors can attach to policies."
-              }
-              title={tab === "archived" ? "No archived blocks" : "No contact blocks yet"}
+              description={t(`libraries.contacts.empty.${tab}Description`)}
+              title={t(`libraries.contacts.empty.${tab}`)}
             />
           ) : (
-            <Table>
-              <THead>
-                <tr>
-                  <TH>Label</TH>
-                  <TH>Name / role</TH>
-                  <TH>Department</TH>
-                  <TH>Email</TH>
-                  <TH>Phone</TH>
-                  <TH>Used by</TH>
-                  {canManage ? <TH>Actions</TH> : null}
-                </tr>
-              </THead>
-              <tbody>
-                {rows.map((block) => {
-                  const who = [block.name, block.role].filter(Boolean).join(" — ");
-                  return (
-                    <tr key={block.id}>
-                      <TD className="font-medium">{block.label}</TD>
-                      <TD className="text-muted">{who || "—"}</TD>
-                      <TD className="text-muted">{block.department ?? "—"}</TD>
-                      <TD className="text-muted">{block.email ?? "—"}</TD>
-                      <TD className="text-muted">{block.phone ?? "—"}</TD>
-                      <TD className="text-muted">
-                        {block.usedByCount} {block.usedByCount === 1 ? "policy" : "policies"}
-                      </TD>
-                      {canManage ? (
-                        <TD>
-                          <div className="flex items-center justify-end gap-2">
-                            {block.archived ? (
-                              <Badge tone="neutral">Archived</Badge>
-                            ) : (
-                              <Button onClick={() => openEdit(block)} size="sm" variant="ghost">
-                                Edit
-                              </Button>
-                            )}
-                            <saveFetcher.Form method="post">
-                              <input name="intent" type="hidden" value="archive" />
-                              <input name="id" type="hidden" value={block.id} />
-                              <input
-                                name="archived"
-                                type="hidden"
-                                value={String(!block.archived)}
-                              />
-                              <Button size="sm" type="submit" variant="secondary">
-                                {block.archived ? "Restore" : "Archive"}
-                              </Button>
-                            </saveFetcher.Form>
-                          </div>
+            <TableCard>
+              <Table>
+                <THead>
+                  <tr>
+                    <TH>{t("libraries.contacts.columns.label")}</TH>
+                    <TH>{t("libraries.contacts.columns.who")}</TH>
+                    <TH>{t("libraries.contacts.columns.department")}</TH>
+                    <TH>{t("libraries.contacts.columns.email")}</TH>
+                    <TH>{t("libraries.contacts.columns.phone")}</TH>
+                    <TH>{t("libraries.contacts.columns.usedBy")}</TH>
+                    {canManage ? (
+                      <TH>
+                        <span className="sr-only">{t("libraries.actions.label")}</span>
+                      </TH>
+                    ) : null}
+                  </tr>
+                </THead>
+                <tbody>
+                  {rows.map((block) => {
+                    const who = [block.name, block.role].filter(Boolean).join(" · ");
+                    const none = t("libraries.none");
+                    return (
+                      <tr key={block.id}>
+                        <TD className="font-medium">{block.label}</TD>
+                        <TD className="text-muted">{who || none}</TD>
+                        <TD className="text-muted">{block.department ?? none}</TD>
+                        <TD className="text-muted">{block.email ?? none}</TD>
+                        <TD className="text-muted">{block.phone ?? none}</TD>
+                        <TD className="text-muted">
+                          <UsedBy count={block.usedByCount} />
                         </TD>
-                      ) : null}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
+                        {canManage ? (
+                          <TD>
+                            <div className="flex items-center justify-end gap-2">
+                              {block.archived ? (
+                                <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
+                              ) : (
+                                <Button onClick={() => openEdit(block)} size="sm" variant="ghost">
+                                  {t("libraries.actions.edit")}
+                                </Button>
+                              )}
+                              <saveFetcher.Form method="post">
+                                <input name="intent" type="hidden" value="archive" />
+                                <input name="id" type="hidden" value={block.id} />
+                                <input
+                                  name="archived"
+                                  type="hidden"
+                                  value={String(!block.archived)}
+                                />
+                                <Button size="sm" type="submit" variant="secondary">
+                                  {block.archived
+                                    ? t("libraries.actions.restore")
+                                    : t("libraries.actions.archive")}
+                                </Button>
+                              </saveFetcher.Form>
+                            </div>
+                          </TD>
+                        ) : null}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </TableCard>
           )}
         </TabsContent>
-      </Tabs>
+      </LibraryTabs>
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
-        <DialogContent hasInput title={editing ? "Edit contact block" : "New contact block"}>
+        <DialogContent
+          description={editing ? t("libraries.contacts.dialog.editDescription") : undefined}
+          hasInput
+          title={
+            editing
+              ? t("libraries.contacts.dialog.editTitle")
+              : t("libraries.contacts.dialog.newTitle")
+          }
+        >
           <saveFetcher.Form method="post">
             <input name="intent" type="hidden" value="save" />
             <input name="id" type="hidden" value={editing?.id ?? ""} />
             <DialogBody>
-              <Field label="Label">
+              <Field label={t("libraries.contacts.dialog.label")}>
                 <Input defaultValue={form.label} name="label" required />
               </Field>
               <div className="flex gap-3">
-                <Field className="flex-1" label="Email">
+                <Field className="flex-1" label={t("libraries.contacts.dialog.email")}>
                   <Input defaultValue={form.email} name="email" type="email" />
                 </Field>
-                <Field className="flex-1" label="Phone">
+                <Field className="flex-1" label={t("libraries.contacts.dialog.phone")}>
                   <Input defaultValue={form.phone} name="phone" />
                 </Field>
               </div>
-              <p className="text-sm text-muted">At least one of email or phone is required.</p>
+              <p className="text-sm text-muted">{t("libraries.contacts.dialog.emailOrPhone")}</p>
               <div className="flex gap-3">
-                <Field className="flex-1" label="Name / role heading">
+                <Field className="flex-1" label={t("libraries.contacts.dialog.name")}>
                   <Input defaultValue={form.name} name="name" />
                 </Field>
-                <Field className="flex-1" label="Role">
+                <Field className="flex-1" label={t("libraries.contacts.dialog.role")}>
                   <Input defaultValue={form.role} name="role" />
                 </Field>
               </div>
               <div className="flex gap-3">
-                <Field className="flex-1" label="Department">
+                <Field className="flex-1" label={t("libraries.contacts.dialog.department")}>
                   <Input defaultValue={form.department} name="department" />
                 </Field>
-                <Field className="flex-1" label="Hours">
+                <Field className="flex-1" label={t("libraries.contacts.dialog.hours")}>
                   <Input defaultValue={form.hours} name="hours" />
                 </Field>
               </div>
-              <Field label="Notes">
+              <Field label={t("libraries.contacts.dialog.notes")}>
                 <Input defaultValue={form.notes} name="notes" />
               </Field>
 
               {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
                 <Banner
                   failure={saveFetcher.data.error}
-                  title="Couldn't save this block"
+                  title={t("libraries.contacts.dialog.failed")}
                   tone="danger"
                 />
               ) : null}
             </DialogBody>
             <DialogFooter>
               <Button onClick={() => setDialogOpen(false)} type="button" variant="secondary">
-                Cancel
+                {t("libraries.cancel")}
               </Button>
-              <Button disabled={saveFetcher.state !== "idle"} type="submit">
-                {saveFetcher.state === "idle" ? (editing ? "Save changes" : "Create") : "Saving…"}
+              <Button busy={saveFetcher.state !== "idle"} type="submit">
+                {editing
+                  ? t("libraries.contacts.dialog.save")
+                  : t("libraries.contacts.dialog.create")}
               </Button>
             </DialogFooter>
           </saveFetcher.Form>
