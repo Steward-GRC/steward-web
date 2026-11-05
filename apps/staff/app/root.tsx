@@ -16,6 +16,7 @@ import {
   RoutePending,
   StaffShell,
   statusGateFor,
+  useAccessRevalidation,
   useIsGate,
 } from "@steward-web/shell";
 import { siteSettingsFromRequest } from "@steward-web/shell/server";
@@ -28,15 +29,7 @@ import {
 } from "@steward-web/ui";
 import stewardCss from "@steward-web/ui/steward.css?url";
 import { type ReactNode } from "react";
-import {
-  Links,
-  Meta,
-  Outlet,
-  redirect,
-  Scripts,
-  type ShouldRevalidateFunctionArgs,
-  useRouteLoaderData,
-} from "react-router";
+import { Links, Meta, Outlet, redirect, Scripts, useRouteLoaderData } from "react-router";
 
 import type { Route } from "./+types/root";
 
@@ -89,11 +82,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   };
 };
 
-// The identity and the site banners never change within one request/response cycle;
-// re-running the root loader on every link click would be a wasted round trip to the gateway
-// on each navigation. A form action (saving the banners in admin settings, too) reruns it.
-export const shouldRevalidate = ({ formAction }: ShouldRevalidateFunctionArgs) =>
-  formAction != undefined;
+// Following a link keeps the identity and the site banners; a form action reloads them, and so
+// does a change to the signed-in person's access or the tab regaining focus (#7).
+export { shouldRevalidateShell as shouldRevalidate } from "@steward-web/shell";
 
 // DiagnosticsProvider lives here, not inside the default App component: Layout wraps both
 // the normal route tree AND the route error boundary, so Copy diagnostics is live even on a
@@ -129,6 +120,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
   // Sign-in and the other gates sit outside the shell as a centred card (2-layout-and-navigation.s5).
   const gate = useIsGate();
   const { identity, shell, siteSettings } = loaderData;
+  useAccessRevalidation(identity.id !== "");
   const preview = loaderData.gatePreview === "G11";
   // Maintenance closes the whole staff app (G11); site admins get the way to the admin portal.
   if (preview || statusGateFor({ app: "staff", identity, settings: siteSettings })) {

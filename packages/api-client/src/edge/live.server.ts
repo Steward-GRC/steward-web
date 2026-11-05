@@ -180,6 +180,7 @@ import {
   readableContent,
   toPolicyView,
 } from "./assemble";
+import { watchLiveEvents } from "./liveEvents.server";
 
 const categoryChildren = async (
   parentId: null | string,
@@ -859,6 +860,9 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.listUserSessions;
+  },
+  liveEvents(topics, cookie, onEvent, signal) {
+    return watchLiveEvents(topics, cookie, onEvent, signal);
   },
   async managedGroupMembers(groupId, cookie) {
     const data = await gatewayFetch(

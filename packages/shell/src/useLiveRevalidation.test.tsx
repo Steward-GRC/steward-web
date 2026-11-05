@@ -8,16 +8,16 @@ import { useLiveRevalidation } from "./useLiveRevalidation";
 
 afterEach(() => vi.useRealTimers());
 
-const Page = () => {
-  useLiveRevalidation(60_000);
+const Page = ({ every }: { every?: number }) => {
+  useLiveRevalidation(every);
   return <p>loads {useLoaderData<number>()}</p>;
 };
 
-const mount = () => {
+const mount = (every: number | undefined = 60_000) => {
   let loads = 0;
   const Stub = createRoutesStub([
     {
-      Component: Page,
+      Component: () => <Page every={every} />,
       loader: () => {
         loads += 1;
         return loads;
@@ -47,5 +47,13 @@ describe("useLiveRevalidation", () => {
     expect(await screen.findByText("loads 1")).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(60_000));
     expect(await screen.findByText("loads 2")).toBeInTheDocument();
+  });
+
+  it("reloads only on focus when there's no interval", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mount();
+    expect(await screen.findByText("loads 1")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(600_000));
+    expect(screen.getByText("loads 1")).toBeInTheDocument();
   });
 });

@@ -51,4 +51,9 @@ export {
   type StatusGate,
   statusGateFor,
 } from "./StatusGates";
+export {
+  LIVE_ACCESS_PATH,
+  shouldRevalidateShell,
+  useAccessRevalidation,
+} from "./useAccessRevalidation";
 export { useLiveRevalidation } from "./useLiveRevalidation";
