@@ -8,17 +8,12 @@ import {
   Badge,
   Banner,
   Button,
-  Card,
-  CardBody,
   Dialog,
   DialogClose,
   DialogContent,
   DialogFooter,
   DialogNote,
-  DialogTrigger,
   type Failure,
-  Field,
-  PageHeader,
   Select,
   Table,
   TD,
@@ -26,21 +21,13 @@ import {
   THead,
   TypeToConfirm,
 } from "@steward-web/ui";
-import { data, Form, Link, redirect } from "react-router";
+import { useState } from "react";
+import { data, Form, redirect } from "react-router";
 
 import type { Route } from "./+types/users.merge";
 
 import { mergeAccounts, previewAccountMerge } from "../users/merge.server";
 import { listUsers } from "../users/users.server";
-
-const COUNT_FIELDS: { key: keyof AccountMergePreview["counts"]; label: string }[] = [
-  { key: "policiesOwned", label: "Policies owned" },
-  { key: "raciGrants", label: "RACI grants" },
-  { key: "acknowledgmentsMoved", label: "Acks moved" },
-  { key: "acknowledgmentsDeduped", label: "Acks deduped" },
-  { key: "workflowItems", label: "Workflow items" },
-  { key: "preferences", label: "Preferences" },
-];
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
@@ -76,94 +63,137 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 };
 
+const COUNTS = [
+  "policiesOwned",
+  "raciGrants",
+  "acknowledgmentsMoved",
+  "acknowledgmentsDeduped",
+  "workflowItems",
+  "preferences",
+] as const satisfies readonly (keyof AccountMergePreview["counts"])[];
+
+const KINDS = new Set([
+  "ACKNOWLEDGMENT",
+  "POLICY_OWNER",
+  "PREFERENCE",
+  "RACI_GRANT",
+  "WORKFLOW_ITEM",
+]);
+
+/**
+ * Merge accounts (A21): the red irreversibility note, source → target on one line, "Preview
+ * merge" beside "Merge accounts", then the six counts, the warnings and the records that move.
+ * "Merge accounts" turns on once a preview has run and opens the confirm (D21).
+ */
 export default function MergeAccounts({ actionData, loaderData }: Route.ComponentProps) {
   const { preview, previewError, sourceUserId, targetUserId, users } = loaderData;
+  const { t } = useTranslation("admin");
+  const [open, setOpen] = useState(false);
 
-  const userOptions = users.map((u) => ({ label: `${u.name} (${u.email})`, value: u.userId }));
-  const { t } = useTranslation(["admin", "common"]);
+  const options = users.map((u) => ({
+    label: t("merge.person", { email: u.email, name: u.name }),
+    value: u.userId,
+  }));
   const sourceUser = users.find((u) => u.userId === sourceUserId);
   const targetUser = users.find((u) => u.userId === targetUserId);
   const sameUser = sourceUserId !== "" && sourceUserId === targetUserId;
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader
-        eyebrow="People"
-        subtitle="Move one user's policies, acknowledgements and grants onto another, then close the source account."
-        title="Merge accounts"
-      />
+    <div className="flex w-full flex-col gap-3 p-4 md:p-6">
+      <header>
+        <h1 className="text-[26px] leading-[1.3] font-semibold">{t("merge.title")}</h1>
+        <p className="text-base text-muted">{t("merge.subtitle")}</p>
+      </header>
+      <p className="rounded-lg bg-danger-soft px-3.5 py-2.5 font-semibold text-danger">
+        {t("merge.irreversible")}
+      </p>
 
-      <Banner title="Merging is irreversible" tone="warn">
-        Once its records move to the target, the source account is closed: it can no longer sign in
-        and stays on record marked as merged. Preview the change first.
-      </Banner>
-
-      <Form className="flex flex-wrap items-end gap-4" method="get">
-        <Field label="Source (closed after merge)">
+      <Form className="flex flex-col gap-3" method="get">
+        <div className="grid items-center gap-2 md:grid-cols-[1fr_30px_1fr]">
           <Select
+            aria-label={t("merge.source")}
+            className="h-10 px-2.5"
             defaultValue={sourceUserId || undefined}
             name="sourceUserId"
-            options={userOptions}
-            placeholder="Select the source user…"
+            options={options}
+            placeholder={t("merge.chooseSource")}
           />
-        </Field>
-        <Field label="Target (keeps the records)">
+          <span aria-hidden="true" className="text-center text-muted max-md:rotate-90">
+            →
+          </span>
           <Select
+            aria-label={t("merge.target")}
+            className="h-10 px-2.5"
             defaultValue={targetUserId || undefined}
             name="targetUserId"
-            options={userOptions}
-            placeholder="Select the target user…"
+            options={options}
+            placeholder={t("merge.chooseTarget")}
           />
-        </Field>
-        <Button type="submit">Preview merge</Button>
+        </div>
+        {sameUser ? <p className="text-sm text-danger">{t("merge.sameUser")}</p> : null}
+        {previewError ? (
+          <Banner failure={previewError} title={t("merge.previewFailed")} tone="danger" />
+        ) : null}
+        {actionData && !actionData.ok ? (
+          <Banner failure={actionData.error} title={t("merge.failed")} tone="danger" />
+        ) : null}
+
+        {preview ? (
+          <ul
+            aria-label={t("merge.counts.label")}
+            className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"
+          >
+            {COUNTS.map((key) => (
+              <li
+                className="flex flex-col gap-0.5 rounded-lg border border-border bg-surface p-2.5"
+                key={key}
+              >
+                <b className="text-xl tabular-nums">{preview.counts[key]}</b>
+                <span className="text-2xs text-muted">{t(`merge.counts.${key}`)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        <div className="flex justify-end gap-2">
+          <Button className="h-[38px] px-3.5 text-base" type="submit" variant="secondary">
+            {t("merge.preview")}
+          </Button>
+          <Button
+            className="h-[38px] px-3.5 text-base"
+            disabled={!preview}
+            onClick={() => setOpen(true)}
+            variant="danger"
+          >
+            {t("merge.confirm.submit")}
+          </Button>
+        </div>
       </Form>
-      {sameUser ? (
-        <p className="text-sm text-danger">Source and target must be different users.</p>
-      ) : null}
-      {previewError ? (
-        <Banner failure={previewError} title="Couldn't preview this merge" tone="danger" />
-      ) : null}
-      {actionData && !actionData.ok ? (
-        <Banner failure={actionData.error} title="Couldn't merge these accounts" tone="danger" />
-      ) : null}
 
       {preview ? (
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {COUNT_FIELDS.map((f) => (
-              <Card key={f.key}>
-                <CardBody className="flex flex-col gap-1">
-                  <span className="text-2xl font-semibold tabular-nums text-ink">
-                    {preview.counts[f.key]}
-                  </span>
-                  <span className="text-sm text-muted">{f.label}</span>
-                </CardBody>
-              </Card>
-            ))}
-          </div>
-
+        <>
           {preview.warnings.map((warning) => (
             <Banner key={warning.code} title={warning.message} tone="warn" />
           ))}
-
           {preview.items.length === 0 ? (
-            <p className="text-sm text-muted">
-              Nothing to move — the source account owns no records.
-            </p>
+            <p className="text-sm text-muted">{t("merge.nothing")}</p>
           ) : (
             <Table>
+              <caption className="sr-only">{t("merge.items.label")}</caption>
               <THead>
                 <tr>
-                  <TH>Kind</TH>
-                  <TH>Record</TH>
-                  <TH>Detail</TH>
+                  <TH>{t("merge.items.kind")}</TH>
+                  <TH>{t("merge.items.record")}</TH>
+                  <TH>{t("merge.items.detail")}</TH>
                 </tr>
               </THead>
               <tbody>
                 {preview.items.map((item) => (
                   <tr key={`${item.refId}:${item.kind}`}>
                     <TD>
-                      <Badge tone="neutral">{item.kind}</Badge>
+                      <Badge tone="neutral">
+                        {KINDS.has(item.kind) ? t(`merge.items.kinds.${item.kind}`) : item.kind}
+                      </Badge>
                     </TD>
                     <TD>{item.label}</TD>
                     <TD className="text-muted">{item.detail}</TD>
@@ -173,76 +203,62 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
             </Table>
           )}
 
-          <div className="flex items-center justify-end">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="danger">Merge accounts…</Button>
-              </DialogTrigger>
-              <DialogContent
-                className="sm:max-w-[560px]"
-                hasInput
-                size="wide"
-                title={t("merge.confirm.title")}
-                tone="danger"
-              >
-                <Form method="post">
-                  <input name="sourceUserId" type="hidden" value={sourceUserId} />
-                  <input name="targetUserId" type="hidden" value={targetUserId} />
-                  <input
-                    name="confirmPrivileged"
-                    type="hidden"
-                    value={String(preview.requiresPrivilegedConfirm)}
-                  />
-                  <TypeToConfirm
-                    before={
-                      <>
-                        <div className="grid gap-2.5 sm:grid-cols-2">
-                          <MergeAccountCard
-                            email={sourceUser?.email}
-                            label={t("merge.confirm.source")}
-                            name={sourceUser?.name ?? sourceUserId}
-                            tone="danger"
-                          />
-                          <MergeAccountCard
-                            email={targetUser?.email}
-                            label={t("merge.confirm.target")}
-                            name={targetUser?.name ?? targetUserId}
-                            tone="ok"
-                          />
-                        </div>
-                        {preview.requiresPrivilegedConfirm ? (
-                          <DialogNote tone="danger">
-                            This merge affects privileged records and requires an elevated
-                            confirmation.
-                          </DialogNote>
-                        ) : null}
-                      </>
-                    }
-                    phrase={sourceUser?.email ?? sourceUserId}
-                  >
-                    {(confirmed) => (
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button variant="secondary">
-                            {t("actions.cancel", { ns: "common" })}
-                          </Button>
-                        </DialogClose>
-                        <Button disabled={!confirmed} type="submit" variant="danger">
-                          {t("merge.confirm.submit")}
-                        </Button>
-                      </DialogFooter>
-                    )}
-                  </TypeToConfirm>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+          <Dialog onOpenChange={setOpen} open={open}>
+            <DialogContent
+              className="sm:max-w-[560px]"
+              hasInput
+              size="wide"
+              title={t("merge.confirm.title")}
+              tone="danger"
+            >
+              <Form method="post">
+                <input name="sourceUserId" type="hidden" value={sourceUserId} />
+                <input name="targetUserId" type="hidden" value={targetUserId} />
+                <input
+                  name="confirmPrivileged"
+                  type="hidden"
+                  value={String(preview.requiresPrivilegedConfirm)}
+                />
+                <TypeToConfirm
+                  before={
+                    <>
+                      <div className="grid gap-2.5 sm:grid-cols-2">
+                        <MergeAccountCard
+                          email={sourceUser?.email}
+                          label={t("merge.confirm.source")}
+                          name={sourceUser?.name ?? sourceUserId}
+                          tone="danger"
+                        />
+                        <MergeAccountCard
+                          email={targetUser?.email}
+                          label={t("merge.confirm.target")}
+                          name={targetUser?.name ?? targetUserId}
+                          tone="ok"
+                        />
+                      </div>
+                      {preview.requiresPrivilegedConfirm ? (
+                        <DialogNote tone="danger">{t("merge.privileged")}</DialogNote>
+                      ) : null}
+                    </>
+                  }
+                  phrase={sourceUser?.email ?? sourceUserId}
+                >
+                  {(confirmed) => (
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="secondary">{t("merge.cancel")}</Button>
+                      </DialogClose>
+                      <Button disabled={!confirmed} type="submit" variant="danger">
+                        {t("merge.confirm.submit")}
+                      </Button>
+                    </DialogFooter>
+                  )}
+                </TypeToConfirm>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </>
       ) : null}
-
-      <Button asChild className="self-start" variant="secondary">
-        <Link to="/users">Back to users</Link>
-      </Button>
     </div>
   );
 }

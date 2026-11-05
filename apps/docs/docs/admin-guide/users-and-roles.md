@@ -53,22 +53,24 @@ choose a group's owner.
 ## 🔀 Merging duplicate accounts
 
 When the same person ends up with two accounts (a common SSO-onboarding mishap), **Merge
-accounts** on the Users page moves everything the duplicate owns onto the one you want to keep,
-then closes the duplicate. Pick the **source** (closed afterward) and the **target** (keeps the
-records), then **Preview merge** to see exactly what would move before anything changes. Merging
-is irreversible, so the confirmation shows both accounts and asks you to type the source
-account's email before **Merge accounts** turns on.
+accounts** on Users & roles moves everything the duplicate owns onto the one you want to keep,
+then closes the duplicate. Choose the **source** (closed afterward) on the left and the
+**target** (keeps the records) on the right, then **Preview merge** to see what would move: six
+counts, any warnings and the records themselves. Merging can't be undone, so **Merge accounts**
+only turns on after a preview, and its confirmation shows both accounts and asks you to type the
+source account's email.
 
 ## 👪 My groups, for group-managers
 
 A user can be made a **local group-manager** of one or more
 [platform groups](/admin-guide/groups#-platform-groups-are-something-else) without holding the
-site-admin role. A group-manager sees **My groups**, scoped to only the platform groups they
-manage (not categories), and can add or remove manual members there. Memberships synced from your identity provider stay
-read-only, the same as on the Users page.
+site-admin role. A group-manager sees **My groups**: one section per platform group they manage
+(not categories), with its members as chips. The cross on a chip removes that member, and **Add
+member…** finds a person by their email and adds them. Members synced from your identity
+provider show a lock and **Synced**, and can only change there.
 
 :::note
-Granting someone the local group-manager role isn't exposed on the Users page yet.
+Granting someone the local group-manager role isn't exposed on Users & roles yet.
 :::
 
 ## ➡️ What comes next

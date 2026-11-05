@@ -75,3 +75,16 @@ export const removeUserFromGroup = async (
 ): Promise<void> => {
   await edge.removeUserFromGroup(userId, groupId, cookieOf(request));
 };
+
+/** A few people whose email contains `query`, for the "Add member…" picker. Any signed-in
+ *  caller may search, as the gateway's `searchUsers` allows; a blank query asks for nothing. */
+export const searchPeople = async (
+  request: Request,
+  query: string,
+): Promise<{ email: string; id: string; name: string }[]> => {
+  await requireIdentityFromRequest(request);
+  const needle = query.trim();
+  if (needle.length < 2) return [];
+  const matches = await edge.searchUsers(needle, 8, cookieOf(request));
+  return matches.map((m) => ({ email: m.email ?? "", id: m.id, name: m.name }));
+};

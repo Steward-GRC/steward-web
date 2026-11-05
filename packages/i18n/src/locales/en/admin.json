@@ -139,7 +139,44 @@
       "submit": "Merge accounts",
       "target": "Target — keeps the records",
       "title": "Merge these accounts?"
-    }
+    },
+    "title": "Merge accounts",
+    "subtitle": "Move one user's policies, acknowledgments, and grants onto another, then close the source account.",
+    "irreversible": "This can't be undone. The source account is closed after the merge.",
+    "source": "Source (closed after merge)",
+    "target": "Target (keeps the records)",
+    "chooseSource": "Choose the source account",
+    "chooseTarget": "Choose the target account",
+    "person": "{{name}} · {{email}}",
+    "preview": "Preview merge",
+    "counts": {
+      "label": "What moves",
+      "policiesOwned": "Policies owned",
+      "raciGrants": "RACI grants",
+      "acknowledgmentsMoved": "Acks moved",
+      "acknowledgmentsDeduped": "Acks deduped",
+      "workflowItems": "Workflow items",
+      "preferences": "Preferences"
+    },
+    "items": {
+      "label": "Records that move",
+      "kind": "Kind",
+      "record": "Record",
+      "detail": "Detail",
+      "kinds": {
+        "POLICY_OWNER": "Policy owner",
+        "RACI_GRANT": "RACI grant",
+        "ACKNOWLEDGMENT": "Acknowledgment",
+        "WORKFLOW_ITEM": "Workflow item",
+        "PREFERENCE": "Preference"
+      }
+    },
+    "nothing": "Nothing to move — the source account owns no records.",
+    "sameUser": "Source and target must be different users.",
+    "previewFailed": "Couldn't preview this merge",
+    "failed": "Couldn't merge these accounts",
+    "privileged": "This merge affects privileged records and requires an elevated confirmation.",
+    "cancel": "Cancel"
   },
   "overview": {
     "activity": {
@@ -427,5 +464,25 @@
       "confirm": "Delete user",
       "failed": "Couldn't delete this user"
     }
+  },
+  "myGroups": {
+    "title": "My groups",
+    "subtitle": "Add or remove the members of the groups you manage. Memberships synced from your identity provider are read-only.",
+    "count_one": "{{count}} member",
+    "count_other": "{{count}} members",
+    "heading": "{{name}} · {{count}}",
+    "members": "{{name}} members",
+    "synced": "{{name}} · Synced",
+    "remove": "Remove {{member}} from {{group}}",
+    "add": "Add member…",
+    "find": "Find a person",
+    "findPlaceholder": "Email address",
+    "person": "{{name}} · {{email}}",
+    "noMatches": "No one matches.",
+    "empty": {
+      "title": "No managed groups",
+      "description": "You don't manage any groups. Ask a site administrator to make you a group manager."
+    },
+    "failed": "Couldn't update this group"
   }
 }
