@@ -1,6 +1,6 @@
-import { useTranslation } from "@steward-web/i18n";
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Field, Input, Select, Textarea } from "@steward-web/ui";
 import { useState } from "react";

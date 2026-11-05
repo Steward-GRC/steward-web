@@ -680,5 +680,77 @@
       "submit": "Add organization",
       "cancel": "Cancel"
     }
+  },
+  "categories": {
+    "subtitle": "Org hierarchy, review cadence, and inherited defaults.",
+    "detailsLabel": "Details & Defaults",
+    "name": "Name",
+    "slug": "Slug",
+    "slugHint": "Sets the POL-{{prefix}}- prefix. Renaming does not renumber existing policies…",
+    "slugInvalid": "Use lowercase letters, numbers and single hyphens.",
+    "moveTo": "Move to",
+    "topLevel": "None (top level)",
+    "reviewCadence": "Review cadence",
+    "cadence": {
+      "NONE": "None",
+      "ANNUAL": "Annual",
+      "BIENNIAL": "Every 2 years",
+      "ON_DATE": "On a specific date"
+    },
+    "reviewDate": "Review date",
+    "defaultTemplate": "Default template",
+    "noTemplate": "No template (freeform)",
+    "defaultWorkflow": "Default workflow",
+    "noWorkflow": "None",
+    "owners": "Owners",
+    "noOwners": "No owners",
+    "ownersInherited": "{{name}} · Inherited from {{from}} (read-only).",
+    "removeOwner": "Remove {{name}} as an owner",
+    "addOwner": "Add owner…",
+    "save": "Save",
+    "saved": "Saved!",
+    "failed": "Couldn't save this category",
+    "required": "A name and a valid slug are required.",
+    "audience": {
+      "title": "Acknowledgement audience",
+      "everyone": "Everyone",
+      "specific": "Specific IdP groups",
+      "idpGroups": "IdP groups",
+      "idpGroupsHint": "Comma-separated group claim values.",
+      "excluded": "Excluded IdP groups",
+      "excludedHint": "Comma-separated group claim values left out of the audience.",
+      "save": "Save audience"
+    },
+    "danger": {
+      "title": "Danger zone",
+      "description": "Blocked if the group or any subgroup has policies.",
+      "delete": "Delete group",
+      "dialogTitle": "Delete the {{name}} category?",
+      "dialogDescription": "This is blocked if the group or any subgroup has policies.",
+      "confirm": "Delete category",
+      "cancel": "Cancel",
+      "failed": "Couldn't delete this category"
+    },
+    "none": {
+      "title": "No category selected",
+      "description": "Select a category from the sidebar.",
+      "list": "Categories",
+      "new": "+ New category",
+      "platformGroups": "Platform groups"
+    },
+    "notFound": {
+      "title": "Category not found",
+      "description": "No category matches that address.",
+      "action": "Back to the directory"
+    },
+    "add": {
+      "title": "New category",
+      "parent": "Parent",
+      "noParent": "None (new top-level site)",
+      "slugHint": "Filled in from the name. It sets the policy-number prefix.",
+      "submit": "Create category",
+      "cancel": "Cancel",
+      "failed": "Couldn't create this category"
+    }
   }
 }
