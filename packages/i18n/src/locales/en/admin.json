@@ -1009,5 +1009,41 @@
       "failed": "Couldn't create this template",
       "required": "A name is required."
     }
+  },
+  "magicLinks": {
+    "title": "Magic links",
+    "subtitle": "Every read-only share link issued across the org.",
+    "columns": {
+      "policy": "Policy",
+      "version": "Version",
+      "link": "Link",
+      "status": "Status",
+      "createdBy": "Created by",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "revoked": "Revoked",
+      "expired": "Expired"
+    },
+    "createdBy": "{{name}} · {{date}}",
+    "copy": "Copy the link to {{policy}}",
+    "copied": "Link copied",
+    "revoke": "Revoke",
+    "remove": "Remove",
+    "revokeLabel": "Revoke the link to {{policy}}",
+    "removeLabel": "Remove the link to {{policy}}",
+    "removeTitle": "Remove this magic link?",
+    "removeDescription": "Anyone holding the URL will no longer be able to reach it.",
+    "removeConfirm": "Remove link",
+    "cancel": "Cancel",
+    "empty": {
+      "title": "No magic links",
+      "description": "Links shared from a policy appear here."
+    },
+    "unavailable": {
+      "title": "The list isn't available yet",
+      "description": "Magic links are made and revoked from the policy they share. This page lists them once the gateway can."
+    }
   }
 }
