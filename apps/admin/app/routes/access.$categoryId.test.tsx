@@ -155,12 +155,15 @@ describe("the category access page (A5)", () => {
     expect(within(first!).getByText("Finance team")).toBeInTheDocument();
     expect(
       within(first!).getByRole("button", { name: "Read for Finance team: Allow" }),
-    ).toHaveTextContent("✓ Allow");
+    ).toHaveTextContent("Allow");
+    expect(
+      within(first!).getByRole("button", { name: "Read for Finance team: Allow" }),
+    ).toContainElement(within(first!).getAllByTestId("grant-allow")[0]!);
     expect(within(second!).getByText("Person")).toBeInTheDocument();
     expect(within(second!).getByText("Erin")).toBeInTheDocument();
     expect(
       within(second!).getByRole("button", { name: "Approve for Erin: Deny" }),
-    ).toHaveTextContent("✗ Deny");
+    ).toHaveTextContent("Deny");
     expect(within(second!).getByRole("button", { name: "Read for Erin: Blank" })).toHaveTextContent(
       "·",
     );
@@ -176,7 +179,9 @@ describe("the category access page (A5)", () => {
         "Default: deny anything left blank · rules inherit down; own rules override ancestor rules.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("click or Space cycles · → ✓ → ✗")).toBeInTheDocument();
+    const legend = screen.getByRole("note", { name: "Legend" });
+    expect(legend).toHaveTextContent("click or Space cycles · → →");
+    expect(within(legend).getAllByTestId("grant-allow")).toHaveLength(2);
   });
 
   it("keeps the cells still until editing starts", async () => {
@@ -282,10 +287,12 @@ describe("the simulator (A5)", () => {
     );
 
     const read = await within(simulator).findByRole("group", { name: "Read / view" });
-    expect(within(read).getByText("✓ Yes")).toBeInTheDocument();
+    expect(within(read).getByText("Yes")).toBeInTheDocument();
+    expect(within(read).getByTestId("grant-allow")).toBeInTheDocument();
     expect(within(read).getByText("via membership in Finance team · rule #1")).toBeInTheDocument();
     const approve = within(simulator).getByRole("group", { name: "Can approve" });
-    expect(within(approve).getByText("✗ No")).toBeInTheDocument();
+    expect(within(approve).getByText("No")).toBeInTheDocument();
+    expect(within(approve).getByTestId("grant-deny")).toBeInTheDocument();
     expect(within(approve).getByText("Finance rule #1 · Erin")).toBeInTheDocument();
     const author = within(simulator).getByRole("group", { name: "Can author" });
     expect(within(author).getByText("owner-granted")).toBeInTheDocument();

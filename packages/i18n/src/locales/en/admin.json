@@ -87,7 +87,7 @@
         "deny": "deny",
         "blank": "blank",
         "inherited": "inherited",
-        "cycle": "click or Space cycles · → ✓ → ✗"
+        "cycle": "click or Space cycles · → <allow/> → <deny/>"
       }
     },
     "addRule": {

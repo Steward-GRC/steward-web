@@ -1,7 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { RaciDecision, RaciRuleInput } from "@steward-web/api-client";
-
+import { type RaciDecision, RaciGrant, type RaciRuleInput } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { Banner, cn, type Failure, Select } from "@steward-web/ui";
 import { useEffect, useId, useState } from "react";
@@ -10,6 +9,7 @@ import { useFetcher } from "react-router";
 import type { AccessPerson } from "./access.server";
 
 import { type AccessAction, ACTIONS, parseReason, type Reason } from "./accessModel";
+import { GrantIcon } from "./RuleTable";
 
 /** Radix's Select can't hold an empty value, so the baseline has a stand-in of its own. */
 const BASELINE = "__everyone__";
@@ -102,8 +102,9 @@ export const AccessSimulator = ({ categoryId, draft, names, people }: AccessSimu
       >
         <div className="flex items-center justify-between">
           <span className="font-semibold">{name}</span>
-          <b className="text-[var(--verdict)]">
-            {allowed ? `✓ ${t("access.simulator.yes")}` : `✗ ${t("access.simulator.no")}`}
+          <b className="flex items-center gap-1 text-[var(--verdict)]">
+            <GrantIcon grant={allowed ? RaciGrant.Allow : RaciGrant.Deny} />
+            <span>{allowed ? t("access.simulator.yes") : t("access.simulator.no")}</span>
           </b>
         </div>
         <span className="text-xs text-muted">{why(reason)}</span>

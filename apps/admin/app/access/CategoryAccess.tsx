@@ -5,7 +5,7 @@ import type { RaciRule } from "@steward-web/api-client";
 import { AckTrigger } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { Badge, Banner, Button, cn, type Failure, notify } from "@steward-web/ui";
-import { Lock, X } from "lucide-react";
+import { Check, Lock, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 
@@ -107,7 +107,7 @@ export const CategoryAccess = ({ view }: { view: AccessView }) => {
                 onClick={() => setEditing(false)}
                 variant="secondary"
               >
-                <span aria-hidden="true">✓</span>
+                <Check aria-hidden="true" />
                 {t("access.done")}
               </Button>
             ) : (

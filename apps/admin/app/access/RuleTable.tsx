@@ -6,9 +6,9 @@ import {
   type RaciRuleInput,
   RaciSubjectKind,
 } from "@steward-web/api-client";
-import { useTranslation } from "@steward-web/i18n";
+import { Trans, useTranslation } from "@steward-web/i18n";
 import { cn } from "@steward-web/ui";
-import { ChevronDown, ChevronUp, Lock, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Lock, X } from "lucide-react";
 import { useId } from "react";
 
 import { type AccessAction, ACTIONS, type DraftRule } from "./accessModel";
@@ -18,11 +18,23 @@ import { type AccessAction, ACTIONS, type DraftRule } from "./accessModel";
 const ROW =
   "grid grid-cols-[44px_40px_minmax(0,1fr)] items-center border-b border-border md:grid-cols-[44px_40px_minmax(0,1fr)_repeat(4,80px)] xl:grid-cols-[44px_40px_minmax(0,1fr)_repeat(4,96px)]";
 
-const GLYPH: Record<RaciGrant, string> = {
-  [RaciGrant.Allow]: "✓",
-  [RaciGrant.Blank]: "·",
-  [RaciGrant.Deny]: "✗",
-};
+/** The icon beside a grant's word: a check for allow, a cross for deny (never colour alone). */
+export const GrantIcon = ({ grant }: { grant: RaciGrant.Allow | RaciGrant.Deny }) =>
+  grant === RaciGrant.Allow ? (
+    <Check
+      aria-hidden="true"
+      className="inline size-3.5 align-[-2px]"
+      data-testid="grant-allow"
+      strokeWidth={3}
+    />
+  ) : (
+    <X
+      aria-hidden="true"
+      className="inline size-3.5 align-[-2px]"
+      data-testid="grant-deny"
+      strokeWidth={3}
+    />
+  );
 
 // A cell is a word and an icon, so it never relies on colour: 80 × 30 px, tinted with its
 // grant's access token and ringed in the same colour; a blank cell is a muted dot in a border.
@@ -40,14 +52,19 @@ const INHERITED_CELL: Record<RaciGrant, string> = {
   [RaciGrant.Deny]: "text-[var(--access-deny)]",
 };
 
-/** A cell's word: "✓ Allow", "✗ Deny", or just the dot for blank. Laptops show the icon only. */
+/** A cell's face: a check and "Allow", a cross and "Deny", or a dot for blank. Laptops show
+ *  the icon only. */
 const CellFace = ({ grant }: { grant: RaciGrant }) => {
   const { t } = useTranslation("admin");
   return (
     <span aria-hidden="true">
-      {GLYPH[grant]}
-      {grant === RaciGrant.Blank ? null : (
-        <span className="md:max-xl:hidden"> {t(`access.rules.grants.${grant}`)}</span>
+      {grant === RaciGrant.Blank ? (
+        "·"
+      ) : (
+        <>
+          <GrantIcon grant={grant} />
+          <span className="md:max-xl:hidden"> {t(`access.rules.grants.${grant}`)}</span>
+        </>
       )}
     </span>
   );
@@ -274,15 +291,15 @@ export const RuleTable = ({
           role="note"
         >
           <span>
-            <b aria-hidden="true" className="text-[var(--access-allow)]">
-              ✓
-            </b>{" "}
+            <span className="text-[var(--access-allow)]">
+              <GrantIcon grant={RaciGrant.Allow} />
+            </span>{" "}
             {t("access.rules.legend.allow")}
           </span>
           <span>
-            <b aria-hidden="true" className="text-[var(--access-deny)]">
-              ✗
-            </b>{" "}
+            <span className="text-[var(--access-deny)]">
+              <GrantIcon grant={RaciGrant.Deny} />
+            </span>{" "}
             {t("access.rules.legend.deny")}
           </span>
           <span>
@@ -292,7 +309,16 @@ export const RuleTable = ({
             <Lock aria-hidden="true" className="size-3.5" />
             {t("access.rules.legend.inherited")}
           </span>
-          <span>{t("access.rules.legend.cycle")}</span>
+          <span>
+            <Trans
+              components={{
+                allow: <GrantIcon grant={RaciGrant.Allow} />,
+                deny: <GrantIcon grant={RaciGrant.Deny} />,
+              }}
+              i18nKey="access.rules.legend.cycle"
+              ns="admin"
+            />
+          </span>
         </span>
       </div>
     </>
