@@ -195,10 +195,69 @@
     "title": "Overview"
   },
   "settings": {
-    "saved": {
-      "banners": "Banners saved",
-      "bannersDetail": "They now show across both apps, on every page and at sign-in.",
-      "email": "Email settings saved"
+    "saved": "Saved!",
+    "title": "Settings",
+    "pills": {
+      "set": "Set",
+      "notSet": "Not set",
+      "on": "On",
+      "off": "Off",
+      "results": "{{count}} results",
+      "smtp": "SMTP fallback",
+      "announcement": "On · {{level}}"
+    },
+    "levels": {
+      "info": "info",
+      "warning": "warning"
+    },
+    "save": "Save",
+    "failed": "Couldn't save these settings",
+    "cancel": "Cancel",
+    "token": {
+      "title": "AI provider token",
+      "description": "The token is stored securely and cannot be retrieved — you can only replace it.",
+      "stored": "A token ending {{last4}} is stored.",
+      "label": "New token",
+      "replace": "Replace token",
+      "clear": "Clear token",
+      "confirm": "Clear the token? This disables the AI integration for everyone until a new token is set."
+    },
+    "ai": {
+      "title": "AI features",
+      "description": "Site-admins always keep AI available regardless of this switch… Model: {{model}}.",
+      "switch": "AI features on for everyone"
+    },
+    "retrieval": {
+      "title": "AI retrieval",
+      "description": "Results retrieved per question (top-k)",
+      "label": "Results per question"
+    },
+    "email": {
+      "title": "Outbound email",
+      "description": "Off → email falls back to the SMTP relay.",
+      "switch": "Send email through this service",
+      "key": "Sending key",
+      "keyStored": "A sending key is stored and can't be shown. Leave this blank to keep it.",
+      "provider": "Provider",
+      "domain": "Domain",
+      "region": "Region",
+      "from": "From address",
+      "clear": "Clear key",
+      "confirm": "Clear the key? Outbound email falls back to the SMTP relay until a new key is set."
+    },
+    "announcement": {
+      "title": "Global announcement",
+      "description": "Shown in both apps and on sign-in.",
+      "switch": "Show the announcement",
+      "message": "Message",
+      "level": "Level",
+      "preview": "Global announcement · live preview"
+    },
+    "maintenance": {
+      "title": "Maintenance notice",
+      "description": "Locks the staff app behind the maintenance screen with your message. Site admins keep the admin console, so they can turn it off.",
+      "switch": "Turn maintenance on",
+      "message": "Message"
     }
   },
   "setup": {

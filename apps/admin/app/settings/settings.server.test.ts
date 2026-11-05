@@ -5,10 +5,14 @@ import type { EmailServiceConfigStatus, GlobalSettings } from "@steward-web/api-
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  getAiSettings,
   getEmailServiceConfig,
   getGlobalSettings,
   saveEmailServiceConfig,
   saveGlobalSettings,
+  setAiEnabled,
+  setAiToken,
+  setAiTopK,
 } from "./settings.server";
 
 const siteAdminMe = {
@@ -129,5 +133,65 @@ describe("getEmailServiceConfig / saveEmailServiceConfig", () => {
     ).toEqual(status);
     const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
     expect(JSON.parse(init.body as string).variables.input.apiKey).toBe("new-key");
+  });
+});
+
+const calls = () => {
+  const sent: { operation: string; variables: Record<string, unknown> }[] = [];
+  const answers: Record<string, unknown> = {
+    AiConfig: {
+      aiConfig: {
+        credentialLast4: "9f2c",
+        credentialSet: true,
+        enabled: true,
+        model: "default",
+        provider: "ANTHROPIC",
+        topK: 8,
+      },
+    },
+    Me: { me: siteAdminMe },
+    SetAiEnabled: { setAIEnabled: false },
+    SetAiProviderCredential: {
+      setAIProviderCredential: { credentialLast4: "", credentialSet: false },
+    },
+    SetAiRetrievalConfig: { setAIRetrievalConfig: { topK: 12 } },
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as {
+        query: string;
+        variables: Record<string, unknown>;
+      };
+      const operation = /(?:query|mutation) (\w+)/.exec(body.query)![1]!;
+      if (operation !== "Me") sent.push({ operation, variables: body.variables });
+      return jsonOnce(answers[operation]);
+    }),
+  );
+  return sent;
+};
+
+describe("the AI settings (A28)", () => {
+  it("reads the AI settings, never the token itself", async () => {
+    calls();
+    expect(await getAiSettings(request())).toMatchObject({
+      credentialSet: true,
+      enabled: true,
+      topK: 8,
+    });
+  });
+
+  it("turns AI off, stores and clears the token, and sets top-k", async () => {
+    const sent = calls();
+    await setAiEnabled(request(), false);
+    await setAiToken(request(), "  sk-live-key  ");
+    await setAiToken(request(), "");
+    expect(await setAiTopK(request(), 12)).toBe(12);
+    expect(sent.map((call) => call.variables)).toEqual([
+      { enabled: false },
+      { credential: "sk-live-key" },
+      { credential: "" },
+      { topK: 12 },
+    ]);
   });
 });

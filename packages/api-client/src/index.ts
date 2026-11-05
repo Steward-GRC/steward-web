@@ -18,6 +18,7 @@ export type {
   AiJobResult,
   AIJobResultContent,
   AiJobStatus,
+  AiSettings,
   Appendix,
   AskAnswer,
   AuditChainVerification,

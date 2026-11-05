@@ -174,6 +174,19 @@ export type AddUserToGroupMutation = {
   };
 };
 
+export type AiConfigQueryVariables = Exact<{ [key: string]: never }>;
+
+export type AiConfigQuery = {
+  readonly aiConfig: {
+    readonly enabled: boolean;
+    readonly provider: Types.AiProvider | null;
+    readonly model: string;
+    readonly credentialSet: boolean;
+    readonly credentialLast4: string;
+    readonly topK: number;
+  };
+};
+
 export type AiHealthQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AiHealthQuery = {
@@ -2311,6 +2324,31 @@ export type SearchUsersQuery = {
     readonly name: string;
     readonly email: string | null;
   }>;
+};
+
+export type SetAiEnabledMutationVariables = Exact<{
+  enabled: boolean;
+}>;
+
+export type SetAiEnabledMutation = { readonly setAIEnabled: boolean };
+
+export type SetAiProviderCredentialMutationVariables = Exact<{
+  credential: string;
+}>;
+
+export type SetAiProviderCredentialMutation = {
+  readonly setAIProviderCredential: {
+    readonly credentialSet: boolean;
+    readonly credentialLast4: string;
+  };
+};
+
+export type SetAiRetrievalConfigMutationVariables = Exact<{
+  topK: number;
+}>;
+
+export type SetAiRetrievalConfigMutation = {
+  readonly setAIRetrievalConfig: { readonly topK: number };
 };
 
 export type SetCaseDiscoveryDateMutationVariables = Exact<{
@@ -4528,6 +4566,36 @@ export const AddUserToGroupDocument = {
     },
   ],
 } as unknown as DocumentNode<AddUserToGroupMutation, AddUserToGroupMutationVariables>;
+export const AiConfigDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AiConfig" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "aiConfig" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "enabled" } },
+                { kind: "Field", name: { kind: "Name", value: "provider" } },
+                { kind: "Field", name: { kind: "Name", value: "model" } },
+                { kind: "Field", name: { kind: "Name", value: "credentialSet" } },
+                { kind: "Field", name: { kind: "Name", value: "credentialLast4" } },
+                { kind: "Field", name: { kind: "Name", value: "topK" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AiConfigQuery, AiConfigQueryVariables>;
 export const AiHealthDocument = {
   kind: "Document",
   definitions: [
@@ -11231,6 +11299,128 @@ export const SearchUsersDocument = {
     },
   ],
 } as unknown as DocumentNode<SearchUsersQuery, SearchUsersQueryVariables>;
+export const SetAiEnabledDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetAiEnabled" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "enabled" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setAIEnabled" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "enabled" },
+                value: { kind: "Variable", name: { kind: "Name", value: "enabled" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetAiEnabledMutation, SetAiEnabledMutationVariables>;
+export const SetAiProviderCredentialDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetAiProviderCredential" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "credential" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setAIProviderCredential" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "credential" },
+                value: { kind: "Variable", name: { kind: "Name", value: "credential" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "credentialSet" } },
+                { kind: "Field", name: { kind: "Name", value: "credentialLast4" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SetAiProviderCredentialMutation,
+  SetAiProviderCredentialMutationVariables
+>;
+export const SetAiRetrievalConfigDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetAiRetrievalConfig" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "topK" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setAIRetrievalConfig" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "topK" },
+                value: { kind: "Variable", name: { kind: "Name", value: "topK" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "topK" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetAiRetrievalConfigMutation, SetAiRetrievalConfigMutationVariables>;
 export const SetCaseDiscoveryDateDocument = {
   kind: "Document",
   definitions: [
