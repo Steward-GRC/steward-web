@@ -5,6 +5,19 @@ import { describe, expect, it } from "vitest";
 import { hasDisabledApprover, notUsable } from "./workflowRules";
 
 describe("notUsable", () => {
+  it("counts a group of approvers as an approver (A9's group units)", () => {
+    expect(
+      notUsable({
+        stages: [
+          {
+            approvers: [],
+            groupUnits: [{ groupId: "g-1", internalQuorum: "one", memberUserIds: ["u-1"] }],
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+
   it("flags a workflow with no stages", () => {
     expect(notUsable({ stages: [] })).toBe(true);
   });
