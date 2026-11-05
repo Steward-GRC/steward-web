@@ -16,9 +16,10 @@ import { defineConfig } from "vite";
 import { BASENAME } from "./app/basename";
 
 export default defineConfig(({ command }) => ({
-  // Matches react-router.config.ts's `basename`, so the built HTML references
-  // /admin/assets/... (the ingress and the server both route and resolve assets on that prefix).
-  base: `${BASENAME}/`,
+  // The build's HTML references /admin/assets/..., where the ingress and the server route and
+  // resolve them. Build only: React Router's dev server refuses to start unless its `basename`
+  // (/admin) begins with `base`, and it serves /admin itself (#45).
+  base: command === "build" ? `${BASENAME}/` : undefined,
   define: buildInfoDefines(),
   plugins: [tailwindcss(), reactRouter(), ...editorPlugins()],
   publicDir: brandPublicDirectory(),
