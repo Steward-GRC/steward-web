@@ -4,6 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { asPhone } from "../test/phone";
 import { type MagicLinkRow, MagicLinksTable } from "./MagicLinksTable";
 
 const LINKS: MagicLinkRow[] = [
@@ -77,5 +78,32 @@ describe("the magic links table (A12)", () => {
   it("says when there are no links", () => {
     render(<MagicLinksTable links={[]} onRemove={vi.fn()} onRevoke={vi.fn()} />);
     expect(screen.getByText("No magic links")).toBeInTheDocument();
+  });
+});
+
+describe("the magic links table on a phone (7-responsive.s3)", () => {
+  it("lists each link as a card with Revoke or Remove along its foot", async () => {
+    asPhone();
+    const onRevoke = vi.fn();
+    render(<MagicLinksTable links={LINKS} onRemove={vi.fn()} onRevoke={onRevoke} />);
+    expect(screen.queryByRole("table")).toBeNull();
+    const [active, revoked] = within(
+      screen.getByRole("list", { name: "Magic links" }),
+    ).getAllByRole("listitem");
+    // The title, the muted line, the status, then the action.
+    expect(active!.textContent).toBe(
+      ["Desk Booking Policy", "v1.0.0 · …/share/7c1e · Bob · 2 Oct", "Active", "Revoke"].join(""),
+    );
+    expect(revoked).toHaveClass("text-muted");
+    expect(within(revoked!).getByRole("button", { name: /Remove the link/ })).toBeInTheDocument();
+    // The actions are reachable from the keyboard: Copy, then Revoke.
+    await userEvent.type(screen.getByRole("searchbox", { name: "Search links" }), "desk");
+    await userEvent.tab();
+    expect(
+      screen.getByRole("button", { name: "Copy the link to Desk Booking Policy" }),
+    ).toHaveFocus();
+    await userEvent.tab();
+    await userEvent.keyboard("{Enter}");
+    expect(onRevoke).toHaveBeenCalledWith("l-1");
   });
 });

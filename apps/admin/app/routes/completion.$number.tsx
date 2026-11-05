@@ -3,7 +3,16 @@
 import type { AckRosterEntry } from "@steward-web/api-client";
 
 import { formatDate, formatNumber, formatPercent, useTranslation } from "@steward-web/i18n";
-import { Button, cn, EmptyState, Tabs, TabsContent, TabsList, TabsTrigger } from "@steward-web/ui";
+import {
+  Button,
+  cn,
+  EmptyState,
+  ResponsiveTable,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@steward-web/ui";
 import { Clock, Download } from "lucide-react";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -43,8 +52,8 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return { activity, days, policy, report, roster };
 };
 
-const ROW =
-  "grid grid-cols-[1fr_1fr_140px] items-center border-b border-border px-3.5 py-2.5 text-[13px] last:border-b-0";
+// The roster's rows (A14): 10 × 14 px padding, 13 px type, the columns 1fr, 1fr and 140 px.
+const CELL = "px-3.5 py-2.5 align-middle text-[13px]";
 
 /**
  * Completion for one policy (A14): the policy's serif title under "Completion", its number and
@@ -184,19 +193,29 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
                   </TabsTrigger>
                 ))}
               </TabsList>
-              <TabsContent className="pt-0" value={tab}>
-                {entries.length === 0 ? (
-                  <p className="px-3.5 py-2.5 text-[13px] text-muted">
-                    {tab === "acked"
-                      ? t("completion.detail.roster.emptyAcknowledged")
-                      : t("completion.detail.roster.emptyNotYet")}
-                  </p>
-                ) : (
-                  <ul>
-                    {entries.map((entry) => (
-                      <li className={ROW} key={entry.userId}>
+              {/* On a phone the roster's cards sit inside the panel, so they get its padding. */}
+              <TabsContent className="pt-0 max-md:p-3" value={tab}>
+                <ResponsiveTable
+                  columns={[
+                    {
+                      card: "title",
+                      cell: (entry) => (
                         <b className="font-semibold">{entry.userName ?? entry.email}</b>
-                        <span className="text-muted">{entry.email}</span>
+                      ),
+                      className: CELL,
+                      header: t("completion.detail.roster.columns.name"),
+                      key: "name",
+                    },
+                    {
+                      card: "meta",
+                      cell: (entry) => entry.email,
+                      className: cn(CELL, "text-muted"),
+                      header: t("completion.detail.roster.columns.email"),
+                      key: "email",
+                    },
+                    {
+                      card: "status",
+                      cell: (entry) => (
                         <span
                           className={cn(
                             tab === "pending" && overdueIds.has(entry.userId) && "text-danger",
@@ -204,10 +223,34 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
                         >
                           {status(entry)}
                         </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                      ),
+                      className: cn(CELL, "w-[140px]"),
+                      header: t("completion.detail.roster.columns.status"),
+                      key: "status",
+                    },
+                  ]}
+                  empty={
+                    <p className="px-3.5 py-2.5 text-[13px] text-muted">
+                      {tab === "acked"
+                        ? t("completion.detail.roster.emptyAcknowledged")
+                        : t("completion.detail.roster.emptyNotYet")}
+                    </p>
+                  }
+                  hideHeader
+                  label={
+                    tab === "acked"
+                      ? t("completion.detail.roster.acknowledged", { count: roster.acked.length })
+                      : t("completion.detail.roster.notYet", { count: roster.pending.length })
+                  }
+                  rowClassName={() => "[&:last-child>td]:border-b-0"}
+                  rowKey={(entry) => entry.userId}
+                  rows={entries}
+                  search={{
+                    label: t("completion.detail.roster.search"),
+                    placeholder: t("completion.detail.roster.search"),
+                    text: (entry) => `${entry.userName ?? ""} ${entry.email}`,
+                  }}
+                />
               </TabsContent>
             </Tabs>
           </section>

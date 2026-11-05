@@ -17,13 +17,10 @@ import {
   EmptyState,
   Field,
   Input,
+  ResponsiveTable,
   Select,
-  Table,
   TabsContent,
-  TD,
   Textarea,
-  TH,
-  THead,
 } from "@steward-web/ui";
 import { useState } from "react";
 import { data, useFetcher } from "react-router";
@@ -44,13 +41,7 @@ import {
   setDefinitionArchived,
   updateDefinition,
 } from "../libraries/libraries.server";
-import {
-  DeleteButton,
-  LibraryHeader,
-  LibraryTabs,
-  TableCard,
-  UsedBy,
-} from "../libraries/LibraryParts";
+import { DeleteButton, LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [defs, groups] = await Promise.all([listDefinitions(request), listGroups(request)]);
@@ -164,75 +155,81 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
 
       <LibraryTabs onTab={setTab} tab={tab}>
         <TabsContent value={tab}>
-          {rows.length === 0 ? (
-            <EmptyState
-              description={t(`libraries.definitions.empty.${tab}Description`)}
-              title={t(`libraries.definitions.empty.${tab}`)}
-            />
-          ) : (
-            <TableCard>
-              <Table>
-                <THead>
-                  <tr>
-                    <TH>{t("libraries.definitions.columns.term")}</TH>
-                    <TH>{t("libraries.definitions.columns.definition")}</TH>
-                    <TH>{t("libraries.definitions.columns.usedBy")}</TH>
-                    <TH>
-                      <span className="sr-only">{t("libraries.actions.label")}</span>
-                    </TH>
-                  </tr>
-                </THead>
-                <tbody>
-                  {rows.map((entry) => {
-                    const deletable = isDeletable(entry.usedByCount);
-                    const curatable = canCurateEntry(entry);
-                    return (
-                      <tr key={entry.id}>
-                        <TD className="font-medium">{entry.term}</TD>
-                        <TD className="max-w-lg text-muted" title={entry.definition}>
-                          <span className="line-clamp-2">{entry.definition}</span>
-                        </TD>
-                        <TD className="text-muted">
-                          <UsedBy count={entry.usedByCount} />
-                        </TD>
-                        <TD>
-                          {curatable ? (
-                            <div className="flex items-center justify-end gap-2">
-                              {entry.archived ? (
-                                <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
-                              ) : (
-                                <Button onClick={() => openEdit(entry)} size="sm" variant="ghost">
-                                  {t("libraries.actions.edit")}
-                                </Button>
-                              )}
-                              <saveFetcher.Form method="post">
-                                <input name="intent" type="hidden" value="archive" />
-                                <input name="id" type="hidden" value={entry.id} />
-                                <input
-                                  name="archived"
-                                  type="hidden"
-                                  value={String(!entry.archived)}
-                                />
-                                <Button size="sm" type="submit" variant="secondary">
-                                  {entry.archived
-                                    ? t("libraries.actions.restore")
-                                    : t("libraries.actions.archive")}
-                                </Button>
-                              </saveFetcher.Form>
-                              <DeleteButton
-                                inUse={!deletable}
-                                onDelete={() => setDeleteTarget(entry)}
-                              />
-                            </div>
-                          ) : null}
-                        </TD>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </TableCard>
-          )}
+          <ResponsiveTable
+            columns={[
+              {
+                card: "title",
+                cell: (entry) => entry.term,
+                className: "font-medium",
+                header: t("libraries.definitions.columns.term"),
+                key: "term",
+              },
+              {
+                card: "meta",
+                cell: (entry) => (
+                  <span className="line-clamp-2" title={entry.definition}>
+                    {entry.definition}
+                  </span>
+                ),
+                className: "max-w-lg text-muted",
+                header: t("libraries.definitions.columns.definition"),
+                key: "definition",
+              },
+              {
+                card: "meta",
+                cell: (entry) => <UsedBy count={entry.usedByCount} />,
+                className: "text-muted",
+                header: t("libraries.definitions.columns.usedBy"),
+                key: "usedBy",
+              },
+              {
+                card: "action",
+                cell: (entry) =>
+                  canCurateEntry(entry) ? (
+                    <div className="flex items-center justify-end gap-2">
+                      {entry.archived ? (
+                        <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
+                      ) : (
+                        <Button onClick={() => openEdit(entry)} size="sm" variant="ghost">
+                          {t("libraries.actions.edit")}
+                        </Button>
+                      )}
+                      <saveFetcher.Form method="post">
+                        <input name="intent" type="hidden" value="archive" />
+                        <input name="id" type="hidden" value={entry.id} />
+                        <input name="archived" type="hidden" value={String(!entry.archived)} />
+                        <Button size="sm" type="submit" variant="secondary">
+                          {entry.archived
+                            ? t("libraries.actions.restore")
+                            : t("libraries.actions.archive")}
+                        </Button>
+                      </saveFetcher.Form>
+                      <DeleteButton
+                        inUse={!isDeletable(entry.usedByCount)}
+                        onDelete={() => setDeleteTarget(entry)}
+                      />
+                    </div>
+                  ) : null,
+                header: <span className="sr-only">{t("libraries.actions.label")}</span>,
+                key: "actions",
+              },
+            ]}
+            empty={
+              <EmptyState
+                description={t(`libraries.definitions.empty.${tab}Description`)}
+                title={t(`libraries.definitions.empty.${tab}`)}
+              />
+            }
+            framed
+            label={t("libraries.definitions.title")}
+            rowKey={(entry) => entry.id}
+            rows={rows}
+            search={{
+              label: t("libraries.definitions.search"),
+              placeholder: t("libraries.definitions.search"),
+              text: (entry) => `${entry.term} ${entry.definition}`,
+            }}
+          />
         </TabsContent>
       </LibraryTabs>
 

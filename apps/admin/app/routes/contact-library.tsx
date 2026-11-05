@@ -16,11 +16,8 @@ import {
   EmptyState,
   Field,
   Input,
-  Table,
+  ResponsiveTable,
   TabsContent,
-  TD,
-  TH,
-  THead,
 } from "@steward-web/ui";
 import { useState } from "react";
 import { data, useFetcher } from "react-router";
@@ -34,7 +31,7 @@ import {
   setContactBlockArchived,
   updateContactBlock,
 } from "../libraries/libraries.server";
-import { LibraryHeader, LibraryTabs, TableCard, UsedBy } from "../libraries/LibraryParts";
+import { LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
 export const loader = async ({ request }: Route.LoaderArgs) => ({
   blocks: await listContactBlocks(request),
@@ -101,6 +98,7 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
 
   const [tab, setTab] = useState<LibraryTab>("active");
   const rows = visibleByTab(blocks, tab);
+  const none = t("libraries.none");
 
   const saveFetcher = useFetcher<typeof action>();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -143,77 +141,100 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
 
       <LibraryTabs onTab={setTab} tab={tab}>
         <TabsContent value={tab}>
-          {rows.length === 0 ? (
-            <EmptyState
-              description={t(`libraries.contacts.empty.${tab}Description`)}
-              title={t(`libraries.contacts.empty.${tab}`)}
-            />
-          ) : (
-            <TableCard>
-              <Table>
-                <THead>
-                  <tr>
-                    <TH>{t("libraries.contacts.columns.label")}</TH>
-                    <TH>{t("libraries.contacts.columns.who")}</TH>
-                    <TH>{t("libraries.contacts.columns.department")}</TH>
-                    <TH>{t("libraries.contacts.columns.email")}</TH>
-                    <TH>{t("libraries.contacts.columns.phone")}</TH>
-                    <TH>{t("libraries.contacts.columns.usedBy")}</TH>
-                    {canManage ? (
-                      <TH>
-                        <span className="sr-only">{t("libraries.actions.label")}</span>
-                      </TH>
-                    ) : null}
-                  </tr>
-                </THead>
-                <tbody>
-                  {rows.map((block) => {
-                    const who = [block.name, block.role].filter(Boolean).join(" · ");
-                    const none = t("libraries.none");
-                    return (
-                      <tr key={block.id}>
-                        <TD className="font-medium">{block.label}</TD>
-                        <TD className="text-muted">{who || none}</TD>
-                        <TD className="text-muted">{block.department ?? none}</TD>
-                        <TD className="text-muted">{block.email ?? none}</TD>
-                        <TD className="text-muted">{block.phone ?? none}</TD>
-                        <TD className="text-muted">
-                          <UsedBy count={block.usedByCount} />
-                        </TD>
-                        {canManage ? (
-                          <TD>
-                            <div className="flex items-center justify-end gap-2">
-                              {block.archived ? (
-                                <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
-                              ) : (
-                                <Button onClick={() => openEdit(block)} size="sm" variant="ghost">
-                                  {t("libraries.actions.edit")}
-                                </Button>
-                              )}
-                              <saveFetcher.Form method="post">
-                                <input name="intent" type="hidden" value="archive" />
-                                <input name="id" type="hidden" value={block.id} />
-                                <input
-                                  name="archived"
-                                  type="hidden"
-                                  value={String(!block.archived)}
-                                />
-                                <Button size="sm" type="submit" variant="secondary">
-                                  {block.archived
-                                    ? t("libraries.actions.restore")
-                                    : t("libraries.actions.archive")}
-                                </Button>
-                              </saveFetcher.Form>
-                            </div>
-                          </TD>
-                        ) : null}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </TableCard>
-          )}
+          <ResponsiveTable
+            columns={[
+              {
+                card: "title",
+                cell: (block) => block.label,
+                className: "font-medium",
+                header: t("libraries.contacts.columns.label"),
+                key: "label",
+              },
+              {
+                card: "meta",
+                cell: (block) => [block.name, block.role].filter(Boolean).join(" · ") || none,
+                className: "text-muted",
+                header: t("libraries.contacts.columns.who"),
+                key: "who",
+              },
+              {
+                card: "meta",
+                cell: (block) => block.department ?? none,
+                className: "text-muted",
+                header: t("libraries.contacts.columns.department"),
+                key: "department",
+              },
+              {
+                card: "meta",
+                cell: (block) => block.email ?? none,
+                className: "text-muted",
+                header: t("libraries.contacts.columns.email"),
+                key: "email",
+              },
+              {
+                card: "meta",
+                cell: (block) => block.phone ?? none,
+                className: "text-muted",
+                header: t("libraries.contacts.columns.phone"),
+                key: "phone",
+              },
+              {
+                card: "meta",
+                cell: (block) => <UsedBy count={block.usedByCount} />,
+                className: "text-muted",
+                header: t("libraries.contacts.columns.usedBy"),
+                key: "usedBy",
+              },
+              ...(canManage
+                ? [
+                    {
+                      card: "action" as const,
+                      cell: (block: ContactBlock) => (
+                        <div className="flex items-center justify-end gap-2">
+                          {block.archived ? (
+                            <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
+                          ) : (
+                            <Button onClick={() => openEdit(block)} size="sm" variant="ghost">
+                              {t("libraries.actions.edit")}
+                            </Button>
+                          )}
+                          <saveFetcher.Form method="post">
+                            <input name="intent" type="hidden" value="archive" />
+                            <input name="id" type="hidden" value={block.id} />
+                            <input name="archived" type="hidden" value={String(!block.archived)} />
+                            <Button size="sm" type="submit" variant="secondary">
+                              {block.archived
+                                ? t("libraries.actions.restore")
+                                : t("libraries.actions.archive")}
+                            </Button>
+                          </saveFetcher.Form>
+                        </div>
+                      ),
+                      header: <span className="sr-only">{t("libraries.actions.label")}</span>,
+                      key: "actions",
+                    },
+                  ]
+                : []),
+            ]}
+            empty={
+              <EmptyState
+                description={t(`libraries.contacts.empty.${tab}Description`)}
+                title={t(`libraries.contacts.empty.${tab}`)}
+              />
+            }
+            framed
+            label={t("libraries.contacts.title")}
+            rowKey={(block) => block.id}
+            rows={rows}
+            search={{
+              label: t("libraries.contacts.search"),
+              placeholder: t("libraries.contacts.search"),
+              text: (block) =>
+                [block.label, block.name, block.role, block.department, block.email, block.phone]
+                  .filter(Boolean)
+                  .join(" "),
+            }}
+          />
         </TabsContent>
       </LibraryTabs>
 

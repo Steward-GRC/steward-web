@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogFooter,
   EmptyState,
+  ResponsiveTable,
 } from "@steward-web/ui";
 import { Copy } from "lucide-react";
 import { useState } from "react";
@@ -23,9 +24,6 @@ export interface MagicLinkRow {
   url: string;
   version: string;
 }
-
-// The frame's columns (A12): Policy, Version, Link, Status, Created by, and the action.
-const GRID = "md:grid md:grid-cols-[1.4fr_70px_1fr_90px_1fr_110px] md:items-center md:gap-x-2";
 
 /** "…/share/7c1e": the token's first four characters, enough to tell links apart. A link opens
  *  the staff app's shared reader (G16) at `/share/{token}`. */
@@ -50,59 +48,34 @@ export const MagicLinksTable = ({
   const { t } = useTranslation("admin");
   const [removing, setRemoving] = useState<MagicLinkRow | null>(null);
 
-  if (links.length === 0) {
-    return (
-      <EmptyState
-        description={t("magicLinks.empty.description")}
-        title={t("magicLinks.empty.title")}
-      />
-    );
-  }
+  const live = (link: MagicLinkRow) => link.status === "active";
 
   return (
     <>
-      <div
-        className="overflow-hidden rounded-[10px] border border-border bg-surface text-sm"
-        role="table"
-      >
-        <div
-          className={cn(
-            GRID,
-            "hidden border-b border-border-strong bg-sunken px-3 py-[9px] font-semibold text-muted",
-          )}
-          role="row"
-        >
-          {(["policy", "version", "link", "status", "createdBy", "actions"] as const).map(
-            (column) => (
-              <span
-                className={column === "actions" ? "sr-only" : undefined}
-                key={column}
-                role="columnheader"
-              >
-                {t(`magicLinks.columns.${column}`)}
-              </span>
-            ),
-          )}
-        </div>
-        {links.map((link) => {
-          const live = link.status === "active";
-          return (
-            <div
-              className={cn(
-                GRID,
-                "flex flex-col gap-1 border-b border-border px-3 py-2.5 last:border-b-0",
-                !live && "text-muted",
-              )}
-              key={link.id}
-              role="row"
-            >
-              <span role="cell">{link.policyTitle}</span>
-              <span className="font-mono" role="cell">
-                {link.version}
-              </span>
-              <span className="flex items-center gap-1 font-mono text-xs" role="cell">
-                <span className={cn(live && "text-primary")}>{shortLink(link.url)}</span>
-                {live ? (
+      {/* The frame's columns (A12): Policy, a 70 px Version, Link, a 90 px Status, Created by,
+          and a 110 px action. */}
+      <ResponsiveTable
+        className="text-sm"
+        columns={[
+          {
+            card: "title",
+            cell: (link) => link.policyTitle,
+            header: t("magicLinks.columns.policy"),
+            key: "policy",
+          },
+          {
+            card: "meta",
+            cell: (link) => link.version,
+            className: "w-[70px] font-mono",
+            header: t("magicLinks.columns.version"),
+            key: "version",
+          },
+          {
+            card: "meta",
+            cell: (link) => (
+              <span className="inline-flex items-center gap-1 font-mono text-xs">
+                <span className={cn(live(link) && "text-primary")}>{shortLink(link.url)}</span>
+                {live(link) ? (
                   <button
                     aria-label={t("magicLinks.copy", { policy: link.policyTitle })}
                     className="flex text-primary"
@@ -113,40 +86,75 @@ export const MagicLinksTable = ({
                   </button>
                 ) : null}
               </span>
-              <span className={cn("font-semibold", live && "text-ok")} role="cell">
+            ),
+            header: t("magicLinks.columns.link"),
+            key: "link",
+          },
+          {
+            card: "status",
+            cell: (link) => (
+              <span className={cn("font-semibold", live(link) && "text-ok")}>
                 {t(`magicLinks.status.${link.status}`)}
               </span>
-              <span role="cell">
-                {t("magicLinks.createdBy", {
-                  date: formatDayMonth(link.createdAt),
-                  name: link.createdBy,
-                })}
-              </span>
-              <span role="cell">
-                {live ? (
-                  <button
-                    aria-label={t("magicLinks.revokeLabel", { policy: link.policyTitle })}
-                    className="font-semibold text-danger hover:underline"
-                    onClick={() => onRevoke(link.id)}
-                    type="button"
-                  >
-                    {t("magicLinks.revoke")}
-                  </button>
-                ) : (
-                  <button
-                    aria-label={t("magicLinks.removeLabel", { policy: link.policyTitle })}
-                    className="font-semibold text-ink hover:underline"
-                    onClick={() => setRemoving(link)}
-                    type="button"
-                  >
-                    {t("magicLinks.remove")}
-                  </button>
-                )}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            ),
+            className: "w-[90px]",
+            header: t("magicLinks.columns.status"),
+            key: "status",
+          },
+          {
+            card: "meta",
+            cell: (link) =>
+              t("magicLinks.createdBy", {
+                date: formatDayMonth(link.createdAt),
+                name: link.createdBy,
+              }),
+            header: t("magicLinks.columns.createdBy"),
+            key: "createdBy",
+          },
+          {
+            card: "action",
+            cell: (link) =>
+              live(link) ? (
+                <button
+                  aria-label={t("magicLinks.revokeLabel", { policy: link.policyTitle })}
+                  className="font-semibold text-danger hover:underline"
+                  onClick={() => onRevoke(link.id)}
+                  type="button"
+                >
+                  {t("magicLinks.revoke")}
+                </button>
+              ) : (
+                <button
+                  aria-label={t("magicLinks.removeLabel", { policy: link.policyTitle })}
+                  className="font-semibold text-ink hover:underline"
+                  onClick={() => setRemoving(link)}
+                  type="button"
+                >
+                  {t("magicLinks.remove")}
+                </button>
+              ),
+            className: "w-[110px]",
+            header: <span className="sr-only">{t("magicLinks.columns.actions")}</span>,
+            key: "actions",
+          },
+        ]}
+        empty={
+          <EmptyState
+            description={t("magicLinks.empty.description")}
+            title={t("magicLinks.empty.title")}
+          />
+        }
+        framed
+        label={t("magicLinks.title")}
+        rowClassName={(link) => (live(link) ? undefined : "text-muted")}
+        rowKey={(link) => link.id}
+        rows={links}
+        search={{
+          label: t("magicLinks.search"),
+          placeholder: t("magicLinks.search"),
+          text: (link) => `${link.policyTitle} ${link.version} ${link.createdBy}`,
+        }}
+      />
       <Dialog
         onOpenChange={(open) => (open ? undefined : setRemoving(null))}
         open={removing !== null}

@@ -8,11 +8,8 @@ import {
   Field,
   PageHeader,
   Progress,
+  ResponsiveTable,
   Select,
-  Table,
-  TD,
-  TH,
-  THead,
 } from "@steward-web/ui";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -112,63 +109,83 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
           description={t("completion.empty.description")}
           title={t("completion.empty.title")}
         />
-      ) : shown.length === 0 ? (
-        <p className="text-muted">{t("completion.empty.filtered")}</p>
       ) : (
-        <div className="overflow-hidden rounded-[10px] border border-border bg-surface">
-          <Table aria-label={t("completion.table.label")}>
-            <THead>
-              <tr>
-                <TH>{t("completion.table.policy")}</TH>
-                <TH>{t("completion.table.category")}</TH>
-                <TH>{t("completion.table.acknowledged")}</TH>
-                <TH>{t("completion.table.completion")}</TH>
-                <TH>{t("completion.table.overdue")}</TH>
-              </tr>
-            </THead>
-            <tbody>
-              {shown.map((row) => (
-                <tr key={row.number}>
-                  <TD>
-                    <Link
-                      className="font-semibold text-primary hover:text-primary-hover"
-                      to={`/completion/${encodeURIComponent(row.number)}`}
-                    >
-                      {row.title}
-                    </Link>
-                    <div className="font-mono text-xs text-muted">{row.number}</div>
-                  </TD>
-                  <TD className="text-muted">{row.category}</TD>
-                  <TD className="tabular-nums">
-                    {t("completion.table.ackedOf", {
-                      acked: formatNumber(row.totalAcked),
-                      audience: formatNumber(row.totalAudience),
-                    })}
-                  </TD>
-                  <TD>
-                    <div className="flex min-w-36 items-center gap-2">
-                      <Progress
-                        aria-label={t("completion.table.completion")}
-                        className="w-24"
-                        value={Math.round(row.completionPct)}
-                      />
-                      <span className="text-sm tabular-nums">
-                        {formatPercent(row.completionPct / 100)}
-                      </span>
-                    </div>
-                  </TD>
-                  <TD>
-                    {row.overdue > 0 ? (
-                      <Badge tone="danger">
-                        {t("completion.table.overdueBadge", { count: row.overdue })}
-                      </Badge>
-                    ) : null}
-                  </TD>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </div>
+        <ResponsiveTable
+          columns={[
+            {
+              card: "title",
+              cell: (row) => (
+                <>
+                  <Link
+                    className="font-semibold text-primary hover:text-primary-hover"
+                    to={`/completion/${encodeURIComponent(row.number)}`}
+                  >
+                    {row.title}
+                  </Link>
+                  <div className="font-mono text-xs font-normal text-muted">{row.number}</div>
+                </>
+              ),
+              header: t("completion.table.policy"),
+              key: "policy",
+            },
+            {
+              card: "meta",
+              cell: (row) => row.category,
+              className: "text-muted",
+              header: t("completion.table.category"),
+              key: "category",
+            },
+            {
+              card: "meta",
+              cell: (row) =>
+                t("completion.table.ackedOf", {
+                  acked: formatNumber(row.totalAcked),
+                  audience: formatNumber(row.totalAudience),
+                }),
+              className: "tabular-nums",
+              header: t("completion.table.acknowledged"),
+              key: "acknowledged",
+            },
+            {
+              card: "status",
+              cell: (row) => (
+                <div className="flex min-w-36 items-center gap-2">
+                  <Progress
+                    aria-label={t("completion.table.completion")}
+                    className="w-24"
+                    value={Math.round(row.completionPct)}
+                  />
+                  <span className="text-sm tabular-nums">
+                    {formatPercent(row.completionPct / 100)}
+                  </span>
+                </div>
+              ),
+              header: t("completion.table.completion"),
+              key: "completion",
+            },
+            {
+              card: "status",
+              cell: (row) =>
+                row.overdue > 0 ? (
+                  <Badge tone="danger">
+                    {t("completion.table.overdueBadge", { count: row.overdue })}
+                  </Badge>
+                ) : null,
+              header: t("completion.table.overdue"),
+              key: "overdue",
+            },
+          ]}
+          empty={<p className="text-muted">{t("completion.empty.filtered")}</p>}
+          framed
+          label={t("completion.table.label")}
+          rowKey={(row) => row.number}
+          rows={shown}
+          search={{
+            label: t("completion.search"),
+            placeholder: t("completion.search"),
+            text: (row) => `${row.title} ${row.number} ${row.category}`,
+          }}
+        />
       )}
     </div>
   );

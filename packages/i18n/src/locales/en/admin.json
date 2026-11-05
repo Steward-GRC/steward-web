@@ -548,6 +548,7 @@
     "title": "Organizations",
     "subtitle": "SAML/OIDC single sign-on connections, one per domain.",
     "new": "+ New organization",
+    "search": "Search organizations",
     "columns": {
       "domain": "Domain",
       "organization": "Organization",
@@ -896,6 +897,7 @@
     "title": "Templates",
     "subtitle": "Reusable document skeletons.",
     "new": "+ New template",
+    "search": "Search templates",
     "columns": {
       "id": "ID",
       "name": "Name",
@@ -1013,6 +1015,7 @@
   "magicLinks": {
     "title": "Magic links",
     "subtitle": "Every read-only share link issued across the org.",
+    "search": "Search links",
     "columns": {
       "policy": "Policy",
       "version": "Version",
@@ -1142,6 +1145,7 @@
       "allCategories": "All categories",
       "overdueOnly": "Overdue only"
     },
+    "search": "Search policies",
     "table": {
       "label": "Obligating policies",
       "policy": "Policy",
@@ -1181,6 +1185,12 @@
       "overdue_other": "{{count}} users are overdue for acknowledgement.",
       "roster": {
         "label": "Audience",
+        "columns": {
+          "name": "Name",
+          "email": "Email",
+          "status": "Status"
+        },
+        "search": "Search people",
         "acknowledged": "Acknowledged {{count}}",
         "notYet": "Not yet {{count}}",
         "ackedOn": "Acknowledged {{date}}",
@@ -1215,6 +1225,7 @@
       "title": "Contact library",
       "subtitle": "Reusable contact blocks referenced by policies.",
       "new": "New contact block",
+      "search": "Search contacts",
       "columns": {
         "label": "Label",
         "who": "Name · Role",
@@ -1251,6 +1262,7 @@
       "title": "References & standards",
       "subtitle": "Reusable standards, reference text, and links attached by policy authors.",
       "new": "New reference",
+      "search": "Search references",
       "columns": {
         "label": "Label",
         "kind": "Kind",
@@ -1302,6 +1314,7 @@
       "title": "Definitions",
       "subtitle": "Reusable, category-scoped glossary terms attached by policy authors.",
       "new": "New definition",
+      "search": "Search definitions",
       "category": "Category",
       "chooseCategory": "Choose a category",
       "columns": {

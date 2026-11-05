@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useLoaderData } from "react-router";
 import { describe, expect, it } from "vitest";
 
+import { asPhone } from "../test/phone";
 import PolicyCompletion from "./completion.$number";
 
 const POLICY = {
@@ -139,7 +140,10 @@ describe("Completion for one policy (A14)", () => {
     const notYet = await screen.findByRole("tab", { name: "Not yet 2" });
     await userEvent.click(notYet);
     const panel = screen.getByRole("tabpanel");
-    const rows = within(panel).getAllByRole("listitem");
+    // The header row is there for screen readers only; A14 draws the roster without one.
+    const [head] = within(panel).getAllByRole("rowgroup");
+    expect(head).toHaveClass("sr-only");
+    const [, ...rows] = within(panel).getAllByRole("row");
     // Each row: the name, the email, then where they stand.
     expect(rows.map((row) => within(row).getByText(/^(Carol|Heidi)$/).textContent)).toEqual([
       "Carol",
@@ -181,5 +185,27 @@ describe("Completion for one policy (A14)", () => {
     expect(acked).toHaveFocus();
     expect(acked).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Acknowledged 2" })).toBeInTheDocument();
+  });
+});
+
+describe("Completion for one policy on a phone (7-responsive.s3)", () => {
+  it("lists the roster as cards, overdue first, with a search", async () => {
+    asPhone();
+    openCompletion();
+    await screen.findByRole("tab", { name: "Not yet 2" });
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).queryByRole("table")).toBeNull();
+    const cards = within(within(panel).getByRole("list", { name: "Not yet 2" })).getAllByRole(
+      "listitem",
+    );
+    // Each card: the name, the email, then where they stand.
+    expect(cards.map((card) => card.textContent)).toEqual([
+      ["Carol", "carol@example.org", "Overdue"].join(""),
+      ["Heidi", "heidi@example.org", "Not yet"].join(""),
+    ]);
+    expect(within(cards[0]!).getByText("Overdue")).toHaveClass("text-danger");
+    await userEvent.type(within(panel).getByRole("searchbox", { name: "Search people" }), "hei");
+    expect(within(panel).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(panel).getByRole("listitem")).toHaveTextContent("Heidi");
   });
 });

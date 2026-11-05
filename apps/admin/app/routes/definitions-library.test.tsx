@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
+import { asPhone } from "../test/phone";
 import DefinitionsLibrary from "./definitions-library";
 
 const ADMIN: Identity = { ...NO_ACCESS, id: "u-alice", isSiteAdmin: true, name: "Alice" };
@@ -75,5 +76,28 @@ describe("Definitions (A27)", () => {
     expect(within(perDiem).getByRole("button", { name: "Delete" })).toHaveAccessibleDescription(
       "In use — archive instead of deleting.",
     );
+  });
+});
+
+describe("Definitions on a phone (7-responsive.s3)", () => {
+  it("lists each term as a card, its definition and use on one line, its actions below", () => {
+    asPhone();
+    openDefinitions();
+    expect(screen.queryByRole("table")).toBeNull();
+    const [perDiem] = within(screen.getByRole("list", { name: "Definitions" })).getAllByRole(
+      "listitem",
+    );
+    expect(perDiem!.textContent).toBe(
+      [
+        "Per diem",
+        "Per diem means something. · 2 policies",
+        // Delete's reason is there for screen readers.
+        "EditArchiveDeleteIn use — archive instead of deleting.",
+      ].join(""),
+    );
+    expect(within(perDiem!).getByRole("button", { name: "Delete" })).toHaveAccessibleDescription(
+      "In use — archive instead of deleting.",
+    );
+    expect(screen.getByRole("searchbox", { name: "Search definitions" })).toBeInTheDocument();
   });
 });

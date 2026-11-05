@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
+import { asPhone } from "../test/phone";
 import Completion from "./completion";
 
 const ROWS = [
@@ -102,5 +103,31 @@ describe("Completion (A13)", () => {
   it("says when nothing asks for acknowledgement", () => {
     openCompletion([]);
     expect(screen.getByText("No obligating policies")).toBeInTheDocument();
+  });
+});
+
+describe("Completion on a phone (7-responsive.s3)", () => {
+  it("lists each policy as a card with its progress and overdue badge", async () => {
+    asPhone();
+    openCompletion();
+    expect(screen.queryByRole("table")).toBeNull();
+    const [expenses] = within(
+      screen.getByRole("list", { name: "Obligating policies" }),
+    ).getAllByRole("listitem");
+    expect(within(expenses!).getByRole("link", { name: "Expense Claims Policy" })).toHaveAttribute(
+      "href",
+      "/completion/POL-EXPENSES-000002",
+    );
+    expect(expenses).toHaveTextContent(
+      /^Expense Claims PolicyPOL-EXPENSES-000002Finance · 167 of 214/,
+    );
+    expect(within(expenses!).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "78");
+    expect(within(expenses!).getByText("9 overdue")).toBeInTheDocument();
+    await userEvent.type(screen.getByRole("searchbox", { name: "Search policies" }), "desk");
+    const cards = within(screen.getByRole("list", { name: "Obligating policies" })).getAllByRole(
+      "listitem",
+    );
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toHaveTextContent("Desk Booking Policy");
   });
 });

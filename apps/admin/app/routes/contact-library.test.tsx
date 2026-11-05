@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
+import { asPhone } from "../test/phone";
 import ContactLibrary from "./contact-library";
 
 const ADMIN: Identity = { ...NO_ACCESS, id: "u-alice", isSiteAdmin: true, name: "Alice" };
@@ -91,5 +92,34 @@ describe("Contact library (A25)", () => {
     ).toBeInTheDocument();
     expect(within(dialog).getByRole("textbox", { name: "Label" })).toHaveValue("Facilities help");
     expect(within(dialog).getByRole("button", { name: "Save contact" })).toBeInTheDocument();
+  });
+});
+
+describe("Contact library on a phone (7-responsive.s3)", () => {
+  it("lists each block as a card with Edit and Archive along its foot", async () => {
+    asPhone();
+    openContacts();
+    expect(screen.queryByRole("table")).toBeNull();
+    const [help] = within(screen.getByRole("list", { name: "Contact library" })).getAllByRole(
+      "listitem",
+    );
+    // The label, then who, department, email, phone and use on one line, then the actions.
+    expect(help!.textContent).toBe(
+      [
+        "Facilities help",
+        "Dave · Category owner · Facilities · help@example.org · — · 1 policy",
+        "EditArchive",
+      ].join(""),
+    );
+    await userEvent.click(within(help!).getByRole("button", { name: "Edit" }));
+    expect(await screen.findByRole("dialog", { name: "Edit contact block" })).toBeInTheDocument();
+  });
+
+  it("narrows the cards from the search", async () => {
+    asPhone();
+    openContacts();
+    await userEvent.type(screen.getByRole("searchbox", { name: "Search contacts" }), "nobody");
+    expect(screen.queryByRole("list", { name: "Contact library" })).toBeNull();
+    expect(screen.getByText("Nothing matches “nobody”.")).toBeInTheDocument();
   });
 });

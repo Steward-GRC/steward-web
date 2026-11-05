@@ -11,10 +11,7 @@ import {
   DialogFooter,
   DialogTrigger,
   EmptyState,
-  Table,
-  TD,
-  TH,
-  THead,
+  ResponsiveTable,
 } from "@steward-web/ui";
 import { Link, useFetcher } from "react-router";
 
@@ -87,60 +84,84 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
         </Dialog>
       </header>
 
-      {rows.length === 0 ? (
-        <EmptyState
-          description={t("templates.empty.description")}
-          title={t("templates.empty.title")}
-        />
-      ) : (
-        <Table>
-          <THead>
-            <tr>
-              <TH>{t("templates.columns.id")}</TH>
-              <TH>{t("templates.columns.name")}</TH>
-              <TH>{t("templates.columns.category")}</TH>
-              <TH>{t("templates.columns.versions")}</TH>
-              <TH>{t("templates.columns.latest")}</TH>
-            </tr>
-          </THead>
-          <tbody>
-            {rows.map(({ categoryName, latest, template, versionCount }) => (
-              <tr key={template.id}>
-                <TD className="font-mono text-sm text-muted">{template.code}</TD>
-                <TD>
-                  <Link
-                    className="font-medium text-primary hover:underline"
-                    to={`/templates/${template.code}`}
-                  >
-                    {template.name}
-                  </Link>
-                  {template.retiredAt ? (
-                    <Badge className="ml-2" tone="neutral">
-                      {t("templates.retired")}
-                    </Badge>
-                  ) : null}
-                </TD>
-                <TD>{categoryName ?? <span className="text-muted">{t("templates.none")}</span>}</TD>
-                <TD>{versionCount}</TD>
-                <TD>
-                  {latest ? (
-                    <span className="font-mono text-sm">
-                      {t("templates.latest", {
-                        status: t(`templates.status.${latest.status}`, {
-                          defaultValue: latest.status,
-                        }),
-                        version: latest.versionNo,
-                      })}
-                    </span>
-                  ) : (
-                    <span className="text-muted">{t("templates.none")}</span>
-                  )}
-                </TD>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+      <ResponsiveTable
+        columns={[
+          {
+            card: "meta",
+            cell: ({ template }) => template.code,
+            className: "font-mono text-sm text-muted",
+            header: t("templates.columns.id"),
+            key: "id",
+          },
+          {
+            card: "title",
+            cell: ({ template }) => (
+              <>
+                <Link
+                  className="font-medium text-primary hover:underline"
+                  to={`/templates/${template.code}`}
+                >
+                  {template.name}
+                </Link>
+                {template.retiredAt ? (
+                  <Badge className="ml-2" tone="neutral">
+                    {t("templates.retired")}
+                  </Badge>
+                ) : null}
+              </>
+            ),
+            header: t("templates.columns.name"),
+            key: "name",
+          },
+          {
+            card: "meta",
+            cell: ({ categoryName }) =>
+              categoryName ?? <span className="text-muted">{t("templates.none")}</span>,
+            header: t("templates.columns.category"),
+            key: "category",
+          },
+          {
+            // The card's Latest line already names the newest version.
+            card: "hidden",
+            cell: ({ versionCount }) => versionCount,
+            header: t("templates.columns.versions"),
+            key: "versions",
+          },
+          {
+            card: "meta",
+            cell: ({ latest }) =>
+              latest ? (
+                <span className="font-mono text-sm">
+                  {t("templates.latest", {
+                    status: t(`templates.status.${latest.status}`, {
+                      defaultValue: latest.status,
+                    }),
+                    version: latest.versionNo,
+                  })}
+                </span>
+              ) : (
+                <span className="text-muted">{t("templates.none")}</span>
+              ),
+            header: t("templates.columns.latest"),
+            key: "latest",
+          },
+        ]}
+        empty={
+          <EmptyState
+            description={t("templates.empty.description")}
+            title={t("templates.empty.title")}
+          />
+        }
+        label={t("templates.title")}
+        rowKey={({ template }) => template.id}
+        rows={rows}
+        search={{
+          label: t("templates.search"),
+          placeholder: t("templates.search"),
+          text: ({ categoryName, template }) =>
+            `${template.code} ${template.name} ${categoryName ?? ""}`,
+        }}
+      />
     </div>
   );
 }
