@@ -320,6 +320,7 @@
       "drafts": "Drafts",
       "generateDraft": "Generate with AI",
       "inbox": "Inbox",
+      "importPolicies": "Import from CSV",
       "myWork": "My work",
       "newDraft": "New draft",
       "notSetUp": "Not set up yet",
@@ -339,6 +340,8 @@
       "signOut": "Sign out",
       "ssoTest": "Test sign-in",
       "ssoTestResult": "Test result",
+      "template": "Template",
+      "templates": "Templates",
       "toAcknowledge": "To acknowledge",
       "welcome": "Welcome"
     }

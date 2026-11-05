@@ -100,7 +100,7 @@ export const staffNav = ({ can, counts, reporting }: StaffNavInput): NavSection[
         icon: LayoutTemplate,
         id: "templates",
         show: can("policy.author"),
-        to: COMING_SOON.templates,
+        to: "/templates",
       }),
     ]),
     section("workflow", 3, [

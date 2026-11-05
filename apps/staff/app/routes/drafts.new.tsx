@@ -80,8 +80,8 @@ const Labelled = ({ children, id, label }: { children: ReactNode; id: string; la
 /**
  * New policy or New procedure (U20): the type as radio cards with their hints, the title, the
  * category and subcategory, the template and the sensitivity, then Cancel and Create. It opens
- * on the type the command bar asked for (`?type=PROCEDURE`), and keeps an unsent form in this
- * browser so it can be resumed.
+ * on the type the command bar asked for (`?type=PROCEDURE`) and the template Use this template
+ * chose (`?template=`), and keeps an unsent form in this browser so it can be resumed.
  */
 export default function NewDraft({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("authoring");
@@ -89,11 +89,17 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const [parameters] = useSearchParams();
   const asked = parameters.get("type");
+  // "Use this template" (U23) opens the form with that template chosen.
+  const askedTemplate = parameters.get("template");
   const [draft, setDraft] = useState<NewPolicyDraft>(() => {
     const saved = readLocalDraft<NewPolicyDraft>() ?? emptyNewPolicyDraft();
-    return asked === DocumentType.Procedure || asked === DocumentType.Policy
-      ? { ...saved, documentType: asked }
-      : saved;
+    const typed =
+      asked === DocumentType.Procedure || asked === DocumentType.Policy
+        ? { ...saved, documentType: asked }
+        : saved;
+    return askedTemplate && loaderData.templates.some((template) => template.id === askedTemplate)
+      ? { ...typed, templateId: askedTemplate }
+      : typed;
   });
   const ids = { category: useId(), subcategory: useId(), template: useId(), title: useId() };
 

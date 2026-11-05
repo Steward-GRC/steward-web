@@ -4,8 +4,6 @@
 // page; where that page isn't built yet, its address answers Coming soon until it is.
 import { PERMISSIONS } from "@steward-web/auth";
 
-import { COMING_SOON } from "./staff/comingSoon";
-
 export interface CreateAction {
   id: string;
   /** The i18n key of "New policy" and the like. */
@@ -27,7 +25,7 @@ export const staffCreates = (can: Can): CreateAction[] =>
     ? [
         create("policy", "/drafts/new?type=POLICY"),
         create("procedure", "/drafts/new?type=PROCEDURE"),
-        create("fromTemplate", COMING_SOON.templates),
+        create("fromTemplate", "/templates"),
       ]
     : [];
 
