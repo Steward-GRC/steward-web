@@ -5,13 +5,23 @@
     "minor": "Minor"
   },
   "library": {
+    "actions": {
+      "import": "Import",
+      "newPolicy": "New policy",
+      "newProcedure": "New procedure"
+    },
     "empty": {
       "description": "Try a different category, or clear the filters.",
       "title": "No {{noun}} match these filters."
     },
     "filters": {
       "starred": "Starred",
-      "inProgress": "In progress"
+      "inProgress": "In progress",
+      "all": {
+        "policies": "All policies",
+        "procedures": "All procedures"
+      },
+      "status": "Status"
     },
     "policies": {
       "subtitle": "Draft, publish, and manage your group's policies.",

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type {
   LatestTemplateVersionQuery,
+  SearchAndAnswerQuery,
   SearchUsersQuery,
   UserFieldsFragment,
   WorkflowDefQuery,
@@ -46,6 +47,9 @@ export interface AckSummary {
   readonly done: number;
   readonly required: number;
 }
+
+/** Ask's answer (U6): the text, its citations, and which spans of the text each one backs. */
+export type AskAnswer = SearchAndAnswerQuery["searchAndAnswer"];
 
 export interface BreakGlassGrant {
   readonly grantedUntil: string;

@@ -8,9 +8,10 @@
  * Plain data with no imports: the app's `routes.ts` reads it at config time.
  */
 export const COMING_SOON = {
-  ask: "/ask",
   auditLog: "/audit",
   feedback: "/feedback",
+  // U21 (CSV import) lands with the editor and new-draft issue (#15).
+  importPolicies: "/drafts/import",
   inbox: "/inbox",
   logOutEverywhere: "/log-out-everywhere",
   myReports: "/compliance/reports",

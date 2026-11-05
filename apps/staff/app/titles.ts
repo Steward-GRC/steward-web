@@ -6,6 +6,7 @@ import { COMING_SOON_PATHS } from "@steward-web/shell/coming-soon";
 export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/acknowledge": "shell:titles.staff.toAcknowledge",
   "routes/approvals": "shell:titles.staff.approvals",
+  "routes/ask": "shell:titles.staff.ask",
   "routes/approvals.$number": "shell:titles.staff.review",
   "routes/drafts": "shell:titles.staff.drafts",
   "routes/drafts.$policyId": "shell:titles.staff.draft",

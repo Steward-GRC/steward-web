@@ -105,6 +105,7 @@ import {
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
   SaveDraftDocument,
+  SearchAndAnswerDocument,
   SearchUsersDocument,
   SetCaseDiscoveryDateDocument,
   SetCaseStatusDocument,
@@ -125,6 +126,7 @@ import {
   SubmitWorkflowDocument,
   TemplatesDocument,
   TemplateVersionsDocument,
+  TopPolicyQuestionsDocument,
   UpcomingApprovalsDocument,
   UpdateAppendixDocument,
   UpdateCaseNoticeDocument,
@@ -1079,6 +1081,15 @@ export const liveEdge: Edge = {
     );
     return data.saveDraft;
   },
+  async searchAndAnswer(question, cookie) {
+    const data = await gatewayFetch(
+      SearchAndAnswerDocument,
+      { categoryId: null, question },
+      "SearchAndAnswer",
+      { cookie },
+    );
+    return data.searchAndAnswer;
+  },
   async searchUsers(query, limit, cookie) {
     const data = await gatewayFetch(
       SearchUsersDocument,
@@ -1227,6 +1238,15 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.templateVersions;
+  },
+  async topPolicyQuestions(limit, cookie) {
+    const data = await gatewayFetch(
+      TopPolicyQuestionsDocument,
+      { limit: limit ?? null },
+      "TopPolicyQuestions",
+      { cookie },
+    );
+    return data.topPolicyQuestions;
   },
   async upcomingApprovals(cookie) {
     const data = await gatewayFetch(UpcomingApprovalsDocument, {}, "UpcomingApprovals", {

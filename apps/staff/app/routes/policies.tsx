@@ -7,6 +7,8 @@ import { data } from "react-router";
 
 import type { Route } from "./+types/policies";
 
+import { LibraryActions } from "../library/LibraryActions";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await requireIdentityFromRequest(request);
   const cookie = request.headers.get("cookie") ?? undefined;
@@ -20,6 +22,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function PoliciesRoute({ loaderData }: Route.ComponentProps) {
   return (
     <PolicyLibrary
+      actions={<LibraryActions documentType={DocumentType.Policy} />}
       categories={loaderData.categories}
       documentType={DocumentType.Policy}
       policies={loaderData.policies}

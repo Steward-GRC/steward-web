@@ -27,6 +27,7 @@ export default [
   route("profile", "routes/profile.tsx"),
   route("acknowledge", "routes/acknowledge.tsx"),
   route("search", "routes/search.tsx"),
+  route("ask", "routes/ask.tsx"),
   route("policies", "routes/policies.tsx"),
   route("policies/:number", "routes/policy.tsx"),
   route("procedures", "routes/procedures.tsx"),

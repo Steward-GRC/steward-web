@@ -95,7 +95,7 @@ export const staffNav = ({ can, counts, reporting }: StaffNavInput): NavSection[
       item({ icon: PencilLine, id: "myAttestations", show: false, to: "/" }),
     ]),
     section("assist", 2, [
-      item({ icon: MessageCircleQuestion, id: "ask", show: read, to: COMING_SOON.ask }),
+      item({ icon: MessageCircleQuestion, id: "ask", show: read, to: "/ask" }),
       item({
         icon: LayoutTemplate,
         id: "templates",
