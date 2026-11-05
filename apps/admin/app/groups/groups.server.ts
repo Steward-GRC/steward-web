@@ -12,16 +12,7 @@ const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefine
  *  doomed move targets in the picker — the gateway enforces it regardless. */
 export const MAX_GROUP_DEPTH = 3;
 
-const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-
-export const isValidSlug = (slug: string): boolean => SLUG_PATTERN.test(slug);
-
-export const slugify = (name: string): string =>
-  name
-    .toLowerCase()
-    .trim()
-    .replaceAll(/[^a-z0-9]+/g, "-")
-    .replaceAll(/^-+|-+$/g, "");
+export { isValidSlug, slugify } from "./slug";
 
 /** Depth of a group within a flat group list (a root is depth 1). */
 export const depthOf = (groups: readonly Group[], groupId: string): number => {

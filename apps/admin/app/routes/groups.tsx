@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Button, EmptyState, PageHeader, Table, TD, TH, THead } from "@steward-web/ui";
+import { useTranslation } from "@steward-web/i18n";
+import { Button, EmptyState } from "@steward-web/ui";
 import { Link } from "react-router";
 
 import type { Route } from "./+types/groups";
@@ -12,55 +13,45 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return { rows: orderedWithPaths(groups) };
 };
 
-export default function Groups({ loaderData }: Route.ComponentProps) {
+/**
+ * The category directory before a category is picked (A3): "No category selected / Select a
+ * category from the sidebar." Below 1280 px, where the panel and its tree are hidden, the
+ * categories are listed here instead.
+ */
+export default function Directory({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("admin");
   const { rows } = loaderData;
-
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader
-        actions={
-          <>
-            <Button asChild size="sm" variant="secondary">
-              <Link to="/platform-groups">Platform groups</Link>
+    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
+      <EmptyState
+        action={
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button asChild>
+              <Link to="/groups/new">{t("categories.none.new")}</Link>
             </Button>
-            <Button asChild size="sm">
-              <Link to="/groups/new">New group</Link>
+            <Button asChild variant="secondary">
+              <Link to="/platform-groups">{t("categories.none.platformGroups")}</Link>
             </Button>
-          </>
+          </div>
         }
-        eyebrow="Categories"
-        subtitle="The org hierarchy: review cadence, owners and inherited defaults."
-        title="Groups"
+        description={t("categories.none.description")}
+        title={t("categories.none.title")}
       />
-
-      {rows.length === 0 ? (
-        <EmptyState
-          description="Create the first group to start the org hierarchy."
-          title="No groups yet"
-        />
-      ) : (
-        <Table>
-          <THead>
-            <tr>
-              <TH>Group</TH>
-            </tr>
-          </THead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <TD>
-                  <Link
-                    className="font-medium text-primary hover:underline"
-                    to={`/groups/${row.id}`}
-                  >
-                    {row.path}
-                  </Link>
-                </TD>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+      <ul
+        aria-label={t("categories.none.list")}
+        className="flex flex-col overflow-hidden rounded-[10px] border border-border bg-surface xl:hidden"
+      >
+        {rows.map((row) => (
+          <li className="border-b border-border last:border-b-0" key={row.id}>
+            <Link
+              className="block px-4 py-2.5 text-ink hover:bg-sunken hover:text-ink"
+              to={`/groups/${row.id}`}
+            >
+              {row.path}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
