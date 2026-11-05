@@ -41,7 +41,7 @@ export interface NavSection {
 
 export interface StaffNavInput {
   can: (permission: string) => boolean;
-  counts: { approvals?: number };
+  counts: { acknowledge?: number; approvals?: number };
   /** Compliance reporting is on for this install (`STEWARD_REPORTING=true`). */
   reporting: boolean;
 }
@@ -74,7 +74,13 @@ export const staffNav = ({ can, counts, reporting }: StaffNavInput): NavSection[
     section("overview", 0, [item({ icon: House, id: "myWork", show: true, to: "/" })]),
     section("policies", 1, [
       item({ icon: FileText, id: "policies", show: read, to: "/policies" }),
-      item({ icon: CircleCheck, id: "toAcknowledge", show: read, to: COMING_SOON.toAcknowledge }),
+      item({
+        badge: badge(counts.acknowledge),
+        icon: CircleCheck,
+        id: "toAcknowledge",
+        show: read,
+        to: "/acknowledge",
+      }),
     ]),
     section("procedures", 1, [
       item({ icon: ListOrdered, id: "procedures", show: read, to: "/procedures" }),

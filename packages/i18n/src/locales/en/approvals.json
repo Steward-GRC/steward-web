@@ -30,6 +30,53 @@
       "upcomingBadge": "Upcoming"
     }
   },
+  "myWork": {
+    "acknowledge": {
+      "action": "Read & acknowledge",
+      "empty": "You're all caught up.",
+      "title": "To acknowledge"
+    },
+    "approvals": {
+      "action": "Review",
+      "due": "v{{version}} · due {{date}}",
+      "empty": "Nothing to review right now.",
+      "noDue": "v{{version}}",
+      "title": "Awaiting my approval"
+    },
+    "cards": {
+      "approvals": "Awaiting my approval",
+      "drafts": "Drafts in progress",
+      "toAcknowledge": "To acknowledge"
+    },
+    "compliance": {
+      "acknowledged": "acknowledged",
+      "empty": "No policies require your acknowledgement right now.",
+      "next": "Read & acknowledge {{title}}",
+      "percent": "{{percent}}%",
+      "ringLabel": "{{percent}}% acknowledged",
+      "summary": "{{done}} of {{required}} mandatory-read policies acknowledged · {{waiting}} waiting on you",
+      "title": "Acknowledgement compliance"
+    },
+    "drafts": {
+      "action": "Continue →",
+      "empty": "No drafts in progress.",
+      "meta": "v{{version}} · draft",
+      "title": "My drafts"
+    },
+    "eyebrow": "Signed in as {{email}}",
+    "library": {
+      "byCategory": "By category",
+      "drafts": "Drafts",
+      "inReview": "In review",
+      "policies": "Policies",
+      "published": "Published",
+      "sensitive": "Sensitive",
+      "sensitiveNote": "watermarked on export",
+      "title": "Library overview"
+    },
+    "subtitle": "Everything waiting on you, across your roles.",
+    "title": "My work"
+  },
   "review": {
     "back": "Back to approvals",
     "decision": {
@@ -95,5 +142,17 @@
     "submitted": "Submitted",
     "submittedBy": "{{name}} · {{date}}",
     "you": "· you"
+  },
+  "toAcknowledge": {
+    "action": "Read & acknowledge",
+    "empty": {
+      "body": "You have no policies awaiting your acknowledgement.",
+      "title": "You're all caught up"
+    },
+    "list": "Pending acknowledgements ({{count}})",
+    "loadAction": "load what you have to acknowledge",
+    "meta": "{{number}} · v{{version}}",
+    "subtitle": "Published policies you must confirm you have read.",
+    "title": "To acknowledge"
   }
 }

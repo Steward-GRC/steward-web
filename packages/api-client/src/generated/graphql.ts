@@ -1291,6 +1291,12 @@ export type MoveCategoryMutation = {
   };
 };
 
+export type MyAckSummaryQueryVariables = Exact<{ [key: string]: never }>;
+
+export type MyAckSummaryQuery = {
+  readonly myAckSummary: { readonly required: number; readonly done: number };
+};
+
 export type MyDraftsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type MyDraftsQuery = {
@@ -1332,6 +1338,18 @@ export type MyManagedGroupsQuery = {
     readonly id: string;
     readonly name: string;
     readonly parentId: string | null;
+  }>;
+};
+
+export type MyObligationsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type MyObligationsQuery = {
+  readonly myObligations: ReadonlyArray<{
+    readonly policyId: string;
+    readonly number: string;
+    readonly title: string;
+    readonly version: string;
+    readonly policyVersionId: string;
   }>;
 };
 
@@ -7790,6 +7808,32 @@ export const MoveCategoryDocument = {
     },
   ],
 } as unknown as DocumentNode<MoveCategoryMutation, MoveCategoryMutationVariables>;
+export const MyAckSummaryDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "MyAckSummary" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "myAckSummary" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "required" } },
+                { kind: "Field", name: { kind: "Name", value: "done" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MyAckSummaryQuery, MyAckSummaryQueryVariables>;
 export const MyDraftsDocument = {
   kind: "Document",
   definitions: [
@@ -7886,6 +7930,35 @@ export const MyManagedGroupsDocument = {
     },
   ],
 } as unknown as DocumentNode<MyManagedGroupsQuery, MyManagedGroupsQueryVariables>;
+export const MyObligationsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "MyObligations" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "myObligations" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "version" } },
+                { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MyObligationsQuery, MyObligationsQueryVariables>;
 export const OrganizationsDocument = {
   kind: "Document",
   definitions: [

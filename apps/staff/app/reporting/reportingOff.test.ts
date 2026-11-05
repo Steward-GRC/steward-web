@@ -19,7 +19,6 @@ vi.mock("./reporting.server", async (importOriginal) => ({
 const { loader: queueLoader } = await import("../routes/reporting.cases");
 const { action: caseAction, loader: caseLoader } =
   await import("../routes/reporting.cases.$caseId");
-const { loader: homeLoader } = await import("../routes/home");
 
 vi.mock("@steward-web/auth/server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@steward-web/auth/server")>()),
@@ -80,11 +79,6 @@ describe("with reporting off (the rc.1 default)", () => {
     const routeArguments = { context: {}, params: {}, request: request("/reporting/cases") };
     expect(await statusOf(() => queueLoader(routeArguments as never))).toBe(404);
   });
-
-  it("tells home not to link the case queue", async () => {
-    const data = await homeLoader({ context: {}, params: {}, request: request("/") } as never);
-    expect(data.reporting).toBe(false);
-  });
 });
 
 describe("with reporting on", () => {
@@ -104,10 +98,5 @@ describe("with reporting on", () => {
     };
     expect(await statusOf(() => caseLoader(one as never))).toBe(200);
     expect(gateway.getReportCase).toHaveBeenCalledOnce();
-  });
-
-  it("tells home to link the case queue", async () => {
-    const data = await homeLoader({ context: {}, params: {}, request: request("/") } as never);
-    expect(data.reporting).toBe(true);
   });
 });

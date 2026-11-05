@@ -71,8 +71,10 @@ import {
   MeDocument,
   MergeAccountsDocument,
   MoveCategoryDocument,
+  MyAckSummaryDocument,
   MyDraftsDocument,
   MyManagedGroupsDocument,
+  MyObligationsDocument,
   OrganizationsDocument,
   PendingTasksDocument,
   PlatformGroupsDocument,
@@ -833,12 +835,30 @@ export const liveEdge: Edge = {
     );
     return data.moveCategory;
   },
+  async myAckSummary(cookie) {
+    const { myAckSummary } = await gatewayFetch(MyAckSummaryDocument, {}, "MyAckSummary", {
+      cookie,
+    });
+    return { done: myAckSummary.done, required: myAckSummary.required };
+  },
   async myDraftPolicies(cookie) {
     const [{ myDrafts }, index] = await Promise.all([
       gatewayFetch(MyDraftsDocument, {}, "MyDrafts", { cookie }),
       categoryIndex(cookie),
     ]);
     return Promise.all(myDrafts.map((p) => policyView(p, cookie, index)));
+  },
+  async myObligations(cookie) {
+    const { myObligations } = await gatewayFetch(MyObligationsDocument, {}, "MyObligations", {
+      cookie,
+    });
+    return myObligations.map(({ number, policyId, policyVersionId, title, version }) => ({
+      number,
+      policyId,
+      policyVersionId,
+      title,
+      version,
+    }));
   },
   async myManagedGroups(cookie) {
     const data = await gatewayFetch(MyManagedGroupsDocument, {}, "MyManagedGroups", { cookie });

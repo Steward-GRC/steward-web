@@ -62,10 +62,12 @@ import type {
 } from "./generated/schema";
 import type {
   AckStatus,
+  AckSummary,
   BreakGlassGrant,
   Category,
   Group,
   Me,
+  Obligation,
   Policy,
   PolicyDetail,
   Template,
@@ -174,11 +176,13 @@ export {
 export type { UserLabel } from "./views";
 export type {
   AckStatus,
+  AckSummary,
   BreakGlassGrant,
   Category,
   Group,
   HistoryEntry,
   Me,
+  Obligation,
   Policy,
   PolicyAppendix,
   PolicyContact,
@@ -479,11 +483,15 @@ export interface Edge {
   mintSsoTestLink(input: MintSsoTestLinkInput, cookie?: string): Promise<MintedSsoTestLink>;
   /** Re-parents a group (and its subtree). A null newParentId promotes it to a root. */
   moveGroup(groupId: string, newParentId: null | string, cookie?: string): Promise<Group>;
+  /** The caller's mandatory reads and how many are done (My work's compliance card). */
+  myAckSummary(cookie?: string): Promise<AckSummary>;
   /** The CALLING user's own policies with a working draft. */
   myDraftPolicies(cookie?: string): Promise<readonly Policy[]>;
   /** The platform groups the signed-in caller is a LOCAL group-manager of, sorted by name, for
    *  the "My groups" editor. Any signed-in caller; only their own grants are read. */
   myManagedGroups(cookie?: string): Promise<readonly PlatformGroup[]>;
+  /** The published versions the caller still has to acknowledge (To acknowledge, U2). */
+  myObligations(cookie?: string): Promise<readonly Obligation[]>;
   /** Every configured organisation SSO connection. Site-admin only. */
   organizations(cookie?: string): Promise<readonly Organization[]>;
   /** Parses a SAML IdP metadata XML document — e.g. a file downloaded from the IdP — into
