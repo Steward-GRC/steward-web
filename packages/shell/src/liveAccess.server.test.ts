@@ -45,11 +45,13 @@ describe("isOwnAccessChange", () => {
     expect(isOwnAccessChange(event("role.granted", `user:${ME}`), ME)).toBe(true);
     expect(isOwnAccessChange(event("role.revoked", `user:${ME}`), ME)).toBe(true);
     expect(isOwnAccessChange(event("user.policy_override_set", `user:${ME}`), ME)).toBe(true);
+    expect(isOwnAccessChange(event("user.permissions_changed", `user:${ME}`), ME)).toBe(true);
   });
 
   it("is false for someone else's change", () => {
     expect(isOwnAccessChange(event("group.member_added", "user:u-2"), ME)).toBe(false);
     expect(isOwnAccessChange(event("role.granted", "user:u-2"), ME)).toBe(false);
+    expect(isOwnAccessChange(event("user.permissions_changed", "user:u-2"), ME)).toBe(false);
   });
 
   it("is true for a group being deleted or moved, which can change anyone's scope", () => {
@@ -59,7 +61,12 @@ describe("isOwnAccessChange", () => {
   });
 
   it("asks the gateway only for the topics it acts on", () => {
-    for (const type of ["group.member_added", "role.revoked", "group.deleted"]) {
+    for (const type of [
+      "group.member_added",
+      "role.revoked",
+      "group.deleted",
+      "user.permissions_changed",
+    ]) {
       expect(ACCESS_TOPICS.some((topic) => type.startsWith(topic))).toBe(true);
     }
     expect(ACCESS_TOPICS.some((topic) => "policy.published".startsWith(topic))).toBe(false);

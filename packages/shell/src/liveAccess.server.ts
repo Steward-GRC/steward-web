@@ -8,7 +8,11 @@ import type { LiveEvent } from "@steward-web/api-client";
 
 import edge from "@steward-web/edge.server";
 
-/** The audit actions that can change what someone may see or do. */
+/**
+ * The audit actions that can change what someone may see or do. `user.permissions_changed`
+ * is the one event steward-mock-server publishes for any change to a person's roles, groups,
+ * password or disabled state.
+ */
 export const ACCESS_TOPICS: readonly string[] = [
   "group.member_",
   "group.deleted",
@@ -17,6 +21,7 @@ export const ACCESS_TOPICS: readonly string[] = [
   "user.policy_override",
   "user.category_rules",
   "user.accounts_merged",
+  "user.permissions_changed",
 ];
 
 // Deleting or moving a group changes the scope of everyone in it, and the event names the

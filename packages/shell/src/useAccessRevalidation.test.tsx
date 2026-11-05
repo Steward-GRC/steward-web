@@ -104,6 +104,18 @@ describe("useAccessRevalidation", () => {
     expect(source.closed).toBe(true);
   });
 
+  it("still reloads the identity on focus after the gateway refuses the stream", async () => {
+    mount();
+    expect(await screen.findByText("identity 1")).toBeInTheDocument();
+    act(() => FakeEventSource.latest().emit("unsupported", "refused"));
+    await vi.waitFor(() => {
+      act(() => {
+        globalThis.dispatchEvent(new Event("focus"));
+      });
+      expect(screen.getByText(/^identity [2-9]$/)).toBeInTheDocument();
+    });
+  });
+
   it("reloads the identity when the tab comes back into focus", async () => {
     mount();
     expect(await screen.findByText("identity 1")).toBeInTheDocument();
