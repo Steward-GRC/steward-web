@@ -6,7 +6,6 @@ import {
   buildInfoDefines,
   chooseDevelopmentQuickLogin,
   chooseDevelopmentUiIssueButton,
-  editorPlugins,
   sharedAliases,
   testConfig,
 } from "@steward-web/vite-config";
@@ -21,7 +20,7 @@ export default defineConfig(({ command }) => ({
   // (/admin) begins with `base`, and it serves /admin itself (#45).
   base: command === "build" ? `${BASENAME}/` : undefined,
   define: buildInfoDefines(),
-  plugins: [tailwindcss(), reactRouter(), ...editorPlugins()],
+  plugins: [tailwindcss(), reactRouter()],
   publicDir: brandPublicDirectory(),
   resolve: {
     alias: sharedAliases(chooseDevelopmentUiIssueButton(), chooseDevelopmentQuickLogin(command)),

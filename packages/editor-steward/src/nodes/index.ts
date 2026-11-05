@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { DEFAULT_NODES } from "@steward-web/editor";
+import { DEFAULT_NODES } from "node-koenig-editor";
 import { createElement } from "react";
 
 import { nodeText, type SerializedNode } from "../document/tree";

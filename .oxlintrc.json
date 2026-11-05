@@ -13,11 +13,7 @@
     "**/coverage/**",
     "**/node_modules/**",
     "**/generated/**",
-    ".schemas/**",
-    "packages/editor/src/koenig-lexical/**",
-    "packages/editor/src/kg-default-nodes/**",
-    "packages/editor/src/kg-default-transforms/**",
-    "packages/editor/tailwind.config.cjs"
+    ".schemas/**"
   ],
   "settings": {
     "react": {
@@ -78,7 +74,6 @@
         "packages/api-client/codegen.ts",
         "packages/api-client/src/edge/live.server.ts",
         "packages/editor-steward/src/client.ts",
-        "packages/editor/src/additions/table/TablePlugin.tsx",
         "packages/i18n/eslint-guard.js"
       ],
       "rules": {
@@ -89,22 +84,6 @@
       "files": ["packages/i18n/src/I18nProvider.test.tsx"],
       "rules": {
         "testing-library/no-manual-cleanup": "off"
-      }
-    },
-    {
-      "files": ["packages/editor/**/*.{ts,tsx,mjs,js}"],
-      "rules": {
-        "eslint/no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": ["@steward-web/*"],
-                "message": "The editor core stands alone: Steward code belongs in @steward-web/editor-steward."
-              }
-            ]
-          }
-        ]
       }
     }
   ]
