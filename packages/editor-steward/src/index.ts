@@ -9,4 +9,5 @@ export {
 } from "./collab/stewardCollaboration";
 export * from "./document";
 export { LexicalDocumentView, type LexicalDocumentViewProps } from "./LexicalDocumentView";
+export type { ReworkChoice, ReworkRequest } from "./ReworkSelection";
 export type { StewardEditorHandle, StewardEditorProps } from "./StewardEditor";

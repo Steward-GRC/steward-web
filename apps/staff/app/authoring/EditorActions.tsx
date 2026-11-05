@@ -17,11 +17,15 @@ import {
   Menu,
   MenuContent,
   MenuItem,
+  MenuSeparator,
   MenuTrigger,
+  Spinner,
 } from "@steward-web/ui";
 import { Check, ChevronDown, CircleX, Dot, FileText, PencilLine, Sparkles, X } from "lucide-react";
 import { useId, useState } from "react";
 import { useFetcher } from "react-router";
+
+import { aiOffReason } from "./ai/aiOff";
 
 const headerButton = "h-[38px] px-3";
 
@@ -269,26 +273,29 @@ export const ActionsMenu = ({
   );
 };
 
-export type AiChoice = "improve" | "review" | "rewrite";
+export type AiChoice = "generate" | "improve" | "result" | "review" | "rewrite";
 
-const AI_ITEMS: { choice: AiChoice; icon: typeof FileText }[] = [
-  { choice: "improve", icon: FileText },
-  { choice: "rewrite", icon: PencilLine },
-  { choice: "review", icon: Check },
-];
+/** "working" while an AI task runs, "ready" when its result waits to be looked at. */
+export type AiStatus = "idle" | "ready" | "working";
 
 /**
- * AI ▾ (U27): Improve draft…, Rewrite a section…, Review draft. Off, it's a disabled button
- * that says why on hover and focus ("AI turned off by an administrator").
+ * The AI menu (U27): Generate a draft… on an empty draft or Improve draft…, then Rewrite a section…
+ * and Review draft. It spins while a task runs and pulses with a saffron dot when a result is
+ * ready, adding "AI result ready to review". With AI off it's a disabled button that says why
+ * on hover and focus.
  */
 export const AiMenu = ({
   available,
+  emptyDraft = false,
   onChoose,
   reason,
+  status = "idle",
 }: {
   available: boolean;
+  emptyDraft?: boolean;
   onChoose: (choice: AiChoice) => void;
   reason?: null | string;
+  status?: AiStatus;
 }) => {
   const { t } = useTranslation("authoring");
   const reasonId = useId();
@@ -298,7 +305,7 @@ export const AiMenu = ({
         <Button
           aria-describedby={reasonId}
           aria-disabled="true"
-          className={headerButton}
+          className={cn(headerButton, "opacity-55")}
           onClick={(event) => event.preventDefault()}
           variant="secondary"
         >
@@ -310,27 +317,61 @@ export const AiMenu = ({
           id={reasonId}
           role="tooltip"
         >
-          {t(reason === "disabled_by_admin" ? "editor.aiMenu.offByAdmin" : "editor.aiMenu.unavailable")}
+          {t(aiOffReason(reason))}
         </span>
       </span>
     );
   }
+  const items: { choice: AiChoice; icon: typeof FileText }[] = [
+    { choice: emptyDraft ? "generate" : "improve", icon: FileText },
+    { choice: "rewrite", icon: PencilLine },
+    { choice: "review", icon: Check },
+  ];
+  const ready = status === "ready";
   return (
     <Menu>
       <MenuTrigger asChild>
-        <Button className={headerButton} variant="secondary">
+        <Button
+          aria-busy={status === "working" || undefined}
+          aria-label={
+            status === "idle"
+              ? undefined
+              : t(ready ? "editor.aiMenu.labelReady" : "editor.aiMenu.labelWorking")
+          }
+          className={cn(
+            headerButton,
+            ready && "motion-safe:animate-[pulse_1.6s_ease-in-out_infinite]",
+          )}
+          data-ready={ready || undefined}
+          variant="secondary"
+        >
           <Sparkles aria-hidden="true" />
           {t("editor.aiMenu.label")}
-          <ChevronDown aria-hidden="true" />
+          {status === "working" ? (
+            <Spinner aria-hidden="true" className="size-3.5" />
+          ) : ready ? (
+            <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
+          ) : (
+            <ChevronDown aria-hidden="true" />
+          )}
         </Button>
       </MenuTrigger>
       <MenuContent>
-        {AI_ITEMS.map(({ choice, icon: Icon }) => (
+        {items.map(({ choice, icon: Icon }) => (
           <MenuItem key={choice} onSelect={() => onChoose(choice)}>
             <Icon aria-hidden="true" />
             {t(`editor.aiMenu.${choice}`)}
           </MenuItem>
         ))}
+        {ready ? (
+          <>
+            <MenuSeparator />
+            <MenuItem className="font-semibold text-primary" onSelect={() => onChoose("result")}>
+              <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
+              {t("editor.aiMenu.result")}
+            </MenuItem>
+          </>
+        ) : null}
       </MenuContent>
     </Menu>
   );

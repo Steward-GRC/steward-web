@@ -37,6 +37,8 @@ export default [
   route("drafts", "routes/drafts.tsx"),
   route("drafts/new", "routes/drafts.new.tsx"),
   route("drafts/:policyId", "routes/drafts.$policyId.tsx"),
+  route("drafts/:policyId/generate", "routes/drafts.$policyId.generate.tsx"),
+  route("drafts/:policyId/revise", "routes/drafts.$policyId.revise.tsx"),
   route("approvals", "routes/approvals.tsx"),
   route("approvals/:number", "routes/approvals.$number.tsx"),
   route("resources/ai-health", "routes/resources.ai-health.tsx"),
@@ -44,6 +46,8 @@ export default [
   route("resources/command-palette", "routes/resources.command-palette.tsx"),
   route("resources/impersonation", "routes/resources.impersonation.tsx"),
   route("resources/ai-jobs/:jobId", "routes/resources.ai-jobs.$jobId.tsx"),
+  route("resources/documents/extract", "routes/resources.documents.extract.tsx"),
+  route("resources/documents/validate-url", "routes/resources.documents.validate-url.tsx"),
   route("reporting/cases", "routes/reporting.cases.tsx"),
   route("reporting/cases/:caseId", "routes/reporting.cases.$caseId.tsx"),
   // The shell's designed destinations that aren't built yet (H1): each answers "Coming soon"

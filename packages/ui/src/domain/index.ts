@@ -4,6 +4,7 @@
 // components and logic both apps' library screens share. Server-only data fetching is the
 // separate `@steward-web/ui/domain/server` entry (see index.server.ts).
 export { AckBanner, type AckBannerProps } from "./AckBanner";
+export { AiJobProgress, type AiJobProgressProps, type AiJobStage } from "./AiJobProgress";
 export { AiSummaryCard, type AiSummaryCardProps } from "./AiSummaryCard";
 export {
   ApprovalStepper,
@@ -76,4 +77,5 @@ export {
   parseWordDiff,
   WordDiff,
   type WordDiffProps,
+  wordDiffRuns,
 } from "./WordDiff";

@@ -476,6 +476,12 @@ export interface Edge {
   /** The acknowledgement roster for a policy version, as a downloadable export (CSV today;
    *  `format` is forwarded to the gateway as-is). */
   exportAcks(policyVersionId: string, format: string, cookie?: string): Promise<AckExport>;
+  /** Reads an uploaded reference document (PDF, Word, RTF, Markdown or text) as plain text
+   *  for AI drafting. Refused with the gateway's reason ("Unsupported file type: …"). */
+  extractDocument(
+    file: { name?: string } & Blob,
+    cookie?: string,
+  ): Promise<{ content: string; title: string }>;
   /** Fetches an IdP signing certificate by URL (SSRF-guarded) and returns it as PEM. Site-admin only. */
   fetchIdpCert(url: string, cookie?: string): Promise<string>;
   /** Mints a new SP signing certificate and activates it, superseding the previous one. Site-admin only. */
@@ -753,6 +759,12 @@ export interface Edge {
   ): Promise<{ jobId: string }>;
   /** Submit review & gap-analysis of an existing draft as an async job; the result is a findings list, never an edit applied to the policy. */
   submitPolicyReview(input: SubmitPolicyReviewInput, cookie?: string): Promise<{ jobId: string }>;
+  /** Submit a targeted revision of the whole draft as an async job; the result is a change
+   *  set for the author to review, never applied by itself. */
+  submitPolicyRevision(
+    input: SubmitPolicyRevisionInput,
+    cookie?: string,
+  ): Promise<{ jobId: string }>;
   /**
    * Sends a policy's working draft for review: starts the approval run of the workflow
    * attached to (or inherited by) the policy's category. The submitter is bound server-side,
@@ -835,6 +847,8 @@ export interface Edge {
   userFactors(userId: string, cookie?: string): Promise<readonly MfaFactor[]>;
   /** The platform's users, site-admin only. */
   users(input: ListUsersInput, cookie?: string): Promise<UserPage>;
+  /** Checks that a reference URL for AI drafting can be read (SSRF-guarded at the gateway). */
+  validateReferenceUrl(url: string, cookie?: string): Promise<ReferenceUrlCheck>;
   /** Recomputes the hash chain across a record range and reports whether it still holds. Site-admin only. */
   verifyAuditChain(
     fromRecordId: string,
@@ -915,6 +929,14 @@ export interface OrgClientSecret {
   secretRef?: string;
 }
 
+/** `POST /documents/validate-url`: whether a reference URL can be read. */
+export interface ReferenceUrlCheck {
+  finalUrl?: string;
+  readable: boolean;
+  reason?: string;
+  title?: string;
+}
+
 /** One section of a template version's outline: `key` is the stable identifier the authoring
  *  side matches a document's headings against; `level` is the heading depth (H1-H5), `order`
  *  its position, and `blocks` its boilerplate content (optional, empty when the section has
@@ -931,6 +953,10 @@ export interface SectionInput {
 export interface SubmitDraftGenerationInput {
   brief: string;
   homeGroupId?: null | string;
+  /** Uploaded reference documents, as text (`extractDocument`). */
+  referenceDocuments?: readonly { content: string; title: string }[];
+  /** Reference URLs and titles of policies to model on. */
+  referenceHints?: readonly string[];
   sections: readonly { key: string; order: number; title: string }[];
   title?: null | string;
 }
@@ -939,6 +965,15 @@ export interface SubmitPolicyReviewInput {
   policyId: string;
   sections: readonly { content: string; key: string; title: string }[];
   /** The draft version under review. */
+  versionId: string;
+}
+
+export interface SubmitPolicyRevisionInput {
+  /** The change, in the author's own words. */
+  instruction: string;
+  policyId: string;
+  /** Every section's current content, in order, so the model sees the whole policy. */
+  sections: readonly { content: string; key: string; order: number; title: string }[];
   versionId: string;
 }
 

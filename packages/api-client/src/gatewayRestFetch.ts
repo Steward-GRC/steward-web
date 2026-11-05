@@ -32,16 +32,39 @@ export const gatewayRestFetch = async <TResult>(
   }
 };
 
+/**
+ * POST one file to a gateway REST endpoint as `multipart/form-data` under the `file` field
+ * (the AI drafting flow's `POST /documents/extract`), with the same error contract as
+ * `gatewayRestFetch`.
+ */
+export const gatewayRestUpload = async <TResult>(
+  path: string,
+  file: { name?: string } & Blob,
+  operation: string,
+  request: GatewayRequest = {},
+): Promise<TResult> => {
+  const form = new FormData();
+  form.set("file", file, file.name ?? "upload");
+  try {
+    return await callRest<TResult>(path, form, operation, request);
+  } catch (error) {
+    reportApiError(operation, apiErrorMessage(error));
+    throw error;
+  }
+};
+
 const callRest = async <TResult>(
   path: string,
-  body: Record<string, unknown>,
+  body: FormData | Record<string, unknown>,
   operation: string,
   request: GatewayRequest,
 ): Promise<TResult> => {
+  const form = body instanceof FormData;
   const response = await fetch(request.url ?? restUrl(path), {
-    body: JSON.stringify(body),
+    body: form ? body : JSON.stringify(body),
     headers: {
-      "content-type": "application/json",
+      // A multipart body sets its own content type, with the boundary.
+      ...(form ? {} : { "content-type": "application/json" }),
       ...(await sessionHeaders(request.cookie, defaultUrl())),
     },
     method: "POST",

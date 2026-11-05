@@ -4,7 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import { DiffCounts, DiffView, FoldedRun, parseWordDiff, WordDiff } from "./WordDiff";
+import { DiffCounts, DiffView, FoldedRun, parseWordDiff, WordDiff, wordDiffRuns } from "./WordDiff";
 
 const claim =
   "File your claim within <del>60</del> <ins>30</ins> days of spending the money, using the expenses page.";
@@ -111,5 +111,35 @@ describe("the changes view", () => {
   it("folds unchanged sections between the changes", () => {
     render(<DiffView sections={sections} unchangedBefore={{ receipts: 4 }} />);
     expect(screen.getByText("4 unchanged paragraphs")).toBeInTheDocument();
+  });
+});
+
+describe("wordDiffRuns", () => {
+  it("marks the words added and removed between two texts", () => {
+    expect(
+      wordDiffRuns(
+        "Tell the service desk within one hour.",
+        "Tell the service desk within one hour, then follow section 5.",
+      ),
+    ).toEqual([
+      { kind: "same", text: "Tell the service desk within one " },
+      { kind: "removed", text: "hour." },
+      { kind: "added", text: "hour, then follow section 5." },
+    ]);
+  });
+
+  it("is all same for identical text, and all added from nothing", () => {
+    expect(wordDiffRuns("Same text", "Same text")).toEqual([{ kind: "same", text: "Same text" }]);
+    expect(wordDiffRuns("", "New")).toEqual([{ kind: "added", text: "New" }]);
+  });
+
+  it("renders as the diff when handed straight to WordDiff", () => {
+    render(
+      <p>
+        <WordDiff runs={wordDiffRuns("Keep old", "Keep new")} />
+      </p>,
+    );
+    expect(screen.getByRole("deletion")).toHaveTextContent("old");
+    expect(screen.getByRole("insertion")).toHaveTextContent("new");
   });
 });

@@ -214,6 +214,27 @@ describe("drafts.$policyId action: publish", () => {
   });
 });
 
+describe("drafts.$policyId action: reorder-appendices", () => {
+  it("sends the appendices in their new order", async () => {
+    const calls = routeGateway({
+      ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+      ReorderAppendices: () => ({ reorderAppendices: [] }),
+    });
+
+    const result = await runAction({
+      intent: "reorder-appendices",
+      orderedIds: "a2,a1",
+      policyVersionId: "v-9",
+    });
+
+    expect(result.data).toMatchObject({ intent: "reorder-appendices", ok: true });
+    expect(calls).toContainEqual({
+      operation: "ReorderAppendices",
+      variables: { orderedIds: ["a2", "a1"], policyVersionId: "v-9" },
+    });
+  });
+});
+
 describe("drafts.$policyId loader: review state", () => {
   it("reports a draft whose approval run is open as in review", async () => {
     routeGateway(editorHandlers("draft", "APPROVAL_STATUS_IN_REVIEW"));

@@ -3,10 +3,27 @@
 // The editor's surroundings (U11, U17): the header, the save state, presence, and the right
 // rail's required sections, appendices and next version.
 import { useTranslation } from "@steward-web/i18n";
-import { Button, cn, StatusPill } from "@steward-web/ui";
-import { Check, ChevronDown, ChevronRight, CircleCheck, CircleX, GripVertical } from "lucide-react";
+import {
+  Button,
+  cn,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  StatusPill,
+} from "@steward-web/ui";
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  CircleCheck,
+  CircleX,
+  GripVertical,
+} from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
-import { Form } from "react-router";
+import { Form, useFetcher } from "react-router";
 
 import type { Collaborator } from "./collab/presence";
 
@@ -261,13 +278,51 @@ export interface AppendixRow {
   title: string;
 }
 
-const AppendixItem = ({ appendix }: { appendix: AppendixRow }) => {
+type Move = "down" | "up";
+
+const AppendixItem = ({
+  appendix,
+  dragging,
+  first,
+  last,
+  onDragEnd,
+  onDragStart,
+  onDrop,
+  onMove,
+}: {
+  appendix: AppendixRow;
+  dragging: boolean;
+  first: boolean;
+  last: boolean;
+  onDragEnd: () => void;
+  onDragStart: () => void;
+  onDrop: () => void;
+  onMove: (move: Move) => void;
+}) => {
   const { t } = useTranslation(["authoring", "common"]);
   const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const panelId = useId();
   const Chevron = open ? ChevronDown : ChevronRight;
+  const name = t("editor.appendices.name", { letter: appendix.letter, title: appendix.title });
   return (
-    <li className="flex flex-col rounded-md shadow-[inset_0_0_0_1px_var(--border)]">
+    <li
+      className={cn(
+        "flex flex-col rounded-md shadow-[inset_0_0_0_1px_var(--border)]",
+        dragging && "opacity-50",
+      )}
+      draggable
+      onDragEnd={onDragEnd}
+      onDragOver={(event) => event.preventDefault()}
+      onDragStart={(event) => {
+        event.dataTransfer?.setData("text/plain", appendix.id);
+        onDragStart();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        onDrop();
+      }}
+    >
       <button
         aria-controls={panelId}
         aria-expanded={open}
@@ -275,7 +330,7 @@ const AppendixItem = ({ appendix }: { appendix: AppendixRow }) => {
         onClick={() => setOpen((value) => !value)}
         type="button"
       >
-        <GripVertical aria-hidden="true" className="size-4 shrink-0 text-muted" />
+        <GripVertical aria-hidden="true" className="size-4 shrink-0 cursor-grab text-muted" />
         <b className="font-semibold">{appendix.letter}</b>
         <span className="min-w-0 flex-1 truncate">{appendix.title}</span>
         <Chevron aria-hidden="true" className="size-4 shrink-0 text-muted" />
@@ -303,17 +358,58 @@ const AppendixItem = ({ appendix }: { appendix: AppendixRow }) => {
               </Button>
             </div>
           </Form>
-          <Form method="post">
-            <input name="intent" type="hidden" value="delete-appendix" />
-            <input name="appendixId" type="hidden" value={appendix.id} />
-            <Button size="sm" type="submit" variant="ghost">
+          <div className="flex items-center gap-1">
+            {(["up", "down"] as const).map((move) => {
+              const Arrow = move === "up" ? ArrowUp : ArrowDown;
+              return (
+                <Button
+                  aria-label={t(`editor.appendices.move.${move}`, { letter: appendix.letter })}
+                  disabled={move === "up" ? first : last}
+                  key={move}
+                  onClick={() => onMove(move)}
+                  size="icon"
+                  variant="ghost"
+                >
+                  <Arrow aria-hidden="true" />
+                </Button>
+              );
+            })}
+            <Button className="ml-auto" onClick={() => setDeleting(true)} size="sm" variant="ghost">
               {t("editor.appendices.delete")}
             </Button>
-          </Form>
+          </div>
         </div>
       ) : null}
+      <Dialog onOpenChange={setDeleting} open={deleting}>
+        <DialogContent
+          description={t("editor.appendices.deleteDescription", { name })}
+          title={t("editor.appendices.deleteTitle")}
+          tone="danger"
+        >
+          <Form method="post" onSubmit={() => setDeleting(false)}>
+            <input name="intent" type="hidden" value="delete-appendix" />
+            <input name="appendixId" type="hidden" value={appendix.id} />
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="secondary">{t("editor.appendices.keep")}</Button>
+              </DialogClose>
+              <Button type="submit" variant="danger">
+                {t("editor.appendices.delete")}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </li>
   );
+};
+
+/** `ids` with the one at `from` moved to `to`. */
+const moved = (ids: readonly string[], from: number, to: number): string[] => {
+  const next = [...ids];
+  const [id] = next.splice(from, 1);
+  if (id !== undefined) next.splice(to, 0, id);
+  return next;
 };
 
 /** Appendices (U17): an accordion by letter, with Add appendix on the band. */
@@ -325,6 +421,19 @@ export const AppendicesPanel = ({
   draftId: string;
 }) => {
   const { t } = useTranslation("authoring");
+  const reorder = useFetcher();
+  const [dragged, setDragged] = useState<null | string>(null);
+  // While a reorder is on its way, show the order it asked for.
+  const pending = reorder.formData?.get("orderedIds");
+  const ids = typeof pending === "string" ? pending.split(",") : appendices.map((a) => a.id);
+  const ordered = ids
+    .map((id) => appendices.find((appendix) => appendix.id === id))
+    .filter((appendix): appendix is AppendixRow => appendix !== undefined);
+  const send = (next: readonly string[]) =>
+    void reorder.submit(
+      { intent: "reorder-appendices", orderedIds: next.join(","), policyVersionId: draftId },
+      { method: "post" },
+    );
   return (
     <RailCard
       aside={
@@ -342,8 +451,37 @@ export const AppendicesPanel = ({
         <p className="px-4 py-3 text-sm text-muted">{t("editor.appendices.empty")}</p>
       ) : (
         <ul className="flex flex-col gap-1.5 px-2.5 py-2">
-          {appendices.map((appendix) => (
-            <AppendixItem appendix={appendix} key={appendix.id} />
+          {ordered.map((appendix, index) => (
+            <AppendixItem
+              appendix={appendix}
+              dragging={dragged === appendix.id}
+              first={index === 0}
+              key={appendix.id}
+              last={index === ordered.length - 1}
+              onDragEnd={() => setDragged(null)}
+              onDragStart={() => setDragged(appendix.id)}
+              onDrop={() => {
+                const from = ordered.findIndex((row) => row.id === dragged);
+                setDragged(null);
+                if (from === -1 || from === index) return;
+                send(
+                  moved(
+                    ordered.map((row) => row.id),
+                    from,
+                    index,
+                  ),
+                );
+              }}
+              onMove={(move) =>
+                send(
+                  moved(
+                    ordered.map((row) => row.id),
+                    index,
+                    move === "up" ? index - 1 : index + 1,
+                  ),
+                )
+              }
+            />
           ))}
         </ul>
       )}

@@ -806,3 +806,88 @@ describe("liveEdge.versionDocument", () => {
     expect(await liveEdge.versionDocument("v-9")).toBeNull();
   });
 });
+
+describe("liveEdge: AI drafting", () => {
+  it("passes the reference documents and hints on to draft generation", async () => {
+    const calls = routeGateway({
+      SubmitDraftGeneration: () => ({ submitDraftGeneration: { jobId: "job-1" } }),
+    });
+    await liveEdge.submitDraftGeneration({
+      brief: "How visitors sign in",
+      referenceDocuments: [{ content: "Notes", title: "visitor-notes.pdf" }],
+      referenceHints: ["https://policies.example.org/old"],
+      sections: [{ key: "purpose", order: 0, title: "Purpose" }],
+      title: "Visitor Sign-in Policy",
+    });
+    expect(calls[0]?.variables).toEqual({
+      input: {
+        brief: "How visitors sign in",
+        categoryId: undefined,
+        referenceDocuments: [{ content: "Notes", title: "visitor-notes.pdf" }],
+        referenceHints: ["https://policies.example.org/old"],
+        sections: [{ key: "purpose", order: 0, title: "Purpose" }],
+        title: "Visitor Sign-in Policy",
+      },
+    });
+  });
+
+  it("submits a revision of every section with the author's instruction", async () => {
+    const calls = routeGateway({
+      SubmitPolicyRevision: () => ({ submitPolicyRevision: { jobId: "job-2" } }),
+    });
+    const input = {
+      instruction: "add a rollback section",
+      policyId: "p-1",
+      sections: [{ content: "Tell the desk.", key: "report", order: 0, title: "Report it" }],
+      versionId: "v-9",
+    };
+    expect(await liveEdge.submitPolicyRevision(input)).toEqual({ jobId: "job-2" });
+    expect(calls[0]).toEqual({ operation: "SubmitPolicyRevision", variables: { input } });
+  });
+});
+
+describe("liveEdge: reference material for AI drafting", () => {
+  it("uploads a reference document and answers its text", async () => {
+    const fetchSpy = vi.fn((_url: string, _init: RequestInit) =>
+      Promise.resolve(Response.json({ content: "Visitors sign in.", title: "notes.pdf" })),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+    const file = new File(["%PDF"], "notes.pdf", { type: "application/pdf" });
+
+    expect(await liveEdge.extractDocument(file, "steward_sid=abc")).toEqual({
+      content: "Visitors sign in.",
+      title: "notes.pdf",
+    });
+    const [url, init] = fetchSpy.mock.calls.at(-1)!;
+    expect(url).toMatch(/\/documents\/extract$/);
+    expect((init.body as FormData).get("file")).toBeInstanceOf(File);
+  });
+
+  it("answers the gateway's reason when a document can't be read", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(Response.json({ error: "Unsupported file type: .exe" }, { status: 400 })),
+      ),
+    );
+    await expect(liveEdge.extractDocument(new File(["x"], "tool.exe"))).rejects.toMatchObject({
+      message: "Unsupported file type: .exe",
+      status: 400,
+    });
+  });
+
+  it("checks that a reference URL is readable", async () => {
+    const fetchSpy = vi.fn((_url: string, _init: RequestInit) =>
+      Promise.resolve(Response.json({ reason: "not reachable", readable: false })),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    expect(await liveEdge.validateReferenceUrl("https://policies.example.org/old")).toEqual({
+      reason: "not reachable",
+      readable: false,
+    });
+    const [url, init] = fetchSpy.mock.calls.at(-1)!;
+    expect(url).toMatch(/\/documents\/validate-url$/);
+    expect(JSON.parse(init.body as string)).toEqual({ url: "https://policies.example.org/old" });
+  });
+});

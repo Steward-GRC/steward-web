@@ -7,6 +7,7 @@ import {
   ensureTemplateSections,
   extractSections,
   fillEmptySections,
+  insertSectionAfter,
   missingRequiredSections,
   scaffoldFromTemplate,
   type TemplateSectionOutline,
@@ -169,5 +170,36 @@ describe("fillEmptySections", () => {
       { key: "purpose", text: "Keep me", title: "Purpose" },
       { key: "scope", text: "Generated scope", title: "Scope" },
     ]);
+  });
+});
+
+describe("insertSectionAfter", () => {
+  it("puts a new section after the one it follows, at that section's level", () => {
+    const document = wrapRoot([
+      heading("Purpose"),
+      paragraph("Why"),
+      heading("Detail", 2),
+      paragraph("More"),
+      heading("Scope"),
+      paragraph("Who"),
+    ]);
+    const result = insertSectionAfter(document, outline, "purpose", "Rolling back", "Go back.");
+    expect(result.root.children).toEqual([
+      heading("Purpose"),
+      paragraph("Why"),
+      heading("Detail", 2),
+      paragraph("More"),
+      heading("Rolling back"),
+      paragraph("Go back."),
+      heading("Scope"),
+      paragraph("Who"),
+    ]);
+  });
+
+  it("puts it at the end when it follows nothing known", () => {
+    const document = wrapRoot([heading("Purpose"), paragraph("Why")]);
+    const result = insertSectionAfter(document, outline, undefined, "Annex", "Extra.");
+    expect(headings(result)).toEqual(["Purpose", "Annex"]);
+    expect(result.root.children.at(-1)).toEqual(paragraph("Extra."));
   });
 });

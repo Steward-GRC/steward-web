@@ -86,16 +86,75 @@ const Run = ({ run }: { run: DiffRun }) => {
   return <>{run.text}</>;
 };
 
+// Past this many words a side, a passage reads as wholly removed and wholly added rather than
+// paying for the comparison.
+const MAX_DIFF_WORDS = 2000;
+
+const words = (text: string): string[] => text.split(/(?<=\s)/).filter(Boolean);
+
+/**
+ * A word-level diff of two plain texts, for changes the gateway hasn't diffed (an AI
+ * suggestion against the draft): runs of same, added and removed words, in reading order.
+ */
+export const wordDiffRuns = (before: string, after: string): DiffRun[] => {
+  const a = words(before);
+  const b = words(after);
+  const runs: DiffRun[] = [];
+  const push = (kind: DiffRunKind, text: string) => {
+    const last = runs.at(-1);
+    if (last?.kind === kind) last.text += text;
+    else runs.push({ kind, text });
+  };
+  if (a.length > MAX_DIFF_WORDS || b.length > MAX_DIFF_WORDS) {
+    if (before) push("removed", before);
+    if (after) push("added", after);
+    return runs;
+  }
+  // Longest common subsequence of words, filled from the end so the walk reads forwards.
+  const lcs = Array.from({ length: a.length + 1 }, () =>
+    Array.from({ length: b.length + 1 }, () => 0),
+  );
+  for (let row = a.length - 1; row >= 0; row--) {
+    for (let column = b.length - 1; column >= 0; column--) {
+      lcs[row]![column] =
+        a[row] === b[column]
+          ? lcs[row + 1]![column + 1]! + 1
+          : Math.max(lcs[row + 1]![column]!, lcs[row]![column + 1]!);
+    }
+  }
+  let row = 0;
+  let column = 0;
+  while (row < a.length && column < b.length) {
+    if (a[row] === b[column]) {
+      push("same", a[row]!);
+      row++;
+      column++;
+    } else if (lcs[row + 1]![column]! >= lcs[row]![column + 1]!) {
+      push("removed", a[row]!);
+      row++;
+    } else {
+      push("added", b[column]!);
+      column++;
+    }
+  }
+  while (row < a.length) push("removed", a[row++]!);
+  while (column < b.length) push("added", b[column++]!);
+  return runs;
+};
+
 export interface WordDiffProps {
-  html: string;
+  /** The gateway's word diff, as HTML with `<ins>` and `<del>`. */
+  html?: string;
+  /** Runs already worked out, such as `wordDiffRuns`' (in place of `html`). */
+  runs?: readonly DiffRun[];
   /** Unified shows both; the older side drops the added runs and the newer the removed. */
   side?: "newer" | "older" | "unified";
 }
 
 /** The word-level diff of one passage, rendered as text with `<ins>` and `<del>`. */
-export const WordDiff = ({ html, side = "unified" }: WordDiffProps) => (
+export const WordDiff = ({ html = "", runs, side = "unified" }: WordDiffProps) => (
   <>
-    {parseWordDiff(html)
+    {(runs ?? parseWordDiff(html))
       .filter(
         (run) =>
           side === "unified" || (side === "older" ? run.kind !== "added" : run.kind !== "removed"),

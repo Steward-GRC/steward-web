@@ -6,8 +6,10 @@ import type {
   AIJobResultContent,
   AssistOperation,
   AuthoringAssistResult,
+  ReferenceUrlCheck,
   SubmitDraftGenerationInput,
   SubmitPolicyReviewInput,
+  SubmitPolicyRevisionInput,
 } from "@steward-web/api-client";
 
 import edge from "@steward-web/edge.server";
@@ -38,6 +40,21 @@ export const submitDraftGeneration = (
   request: Request,
   input: SubmitDraftGenerationInput,
 ): Promise<{ jobId: string }> => edge.submitDraftGeneration(input, cookieOf(request));
+
+export const submitPolicyRevision = (
+  request: Request,
+  input: SubmitPolicyRevisionInput,
+): Promise<{ jobId: string }> => edge.submitPolicyRevision(input, cookieOf(request));
+
+/** A reference document's text, read by the gateway (PDF, Word, RTF, Markdown or text). */
+export const extractDocument = (
+  request: Request,
+  file: File,
+): Promise<{ content: string; title: string }> => edge.extractDocument(file, cookieOf(request));
+
+/** Whether the gateway can read a reference URL. */
+export const validateReferenceUrl = (request: Request, url: string): Promise<ReferenceUrlCheck> =>
+  edge.validateReferenceUrl(url, cookieOf(request));
 
 export const submitPolicyReview = (
   request: Request,

@@ -1,44 +1,30 @@
+import type { AiJobStage } from "@steward-web/ui/domain";
+
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { AssistOperation, reportApiError } from "@steward-web/api-client";
+import { AssistOperation } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import {
   parseDocument,
+  type ReworkChoice,
+  type ReworkRequest,
   type SerializedDocument,
   serializeDocument,
   type StewardEditorHandle,
 } from "@steward-web/editor-steward";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import {
-  Banner,
-  Button,
-  Dialog,
-  DialogBody,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  Field,
-  FindingBadge,
-  type FindingSeverity,
-  Input,
-  Progress,
-  Select,
-  StatusPill,
-  Textarea,
-} from "@steward-web/ui";
+import { Banner, Button, StatusPill } from "@steward-web/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { data, useFetcher } from "react-router";
+import { data, useFetcher, useLocation, useNavigate } from "react-router";
 
 import type { Route } from "./+types/drafts.$policyId";
 
-import {
-  authoringAssist,
-  getAiHealth,
-  submitDraftGeneration,
-  submitPolicyReview,
-} from "../authoring/ai.server";
+import { authoringAssist, getAiHealth, submitPolicyReview } from "../authoring/ai.server";
+import { AiReviewSheet, RewriteSectionDialog, SuggestionSheet } from "../authoring/ai/AiOverlays";
+import { type ChangeEntry, parseReviewResult } from "../authoring/ai/results";
+import { useAiJob } from "../authoring/ai/useAiJob";
 import {
   addAppendix,
   deleteAppendix,
@@ -47,6 +33,7 @@ import {
   getLatestTemplateVersion,
   getPolicy,
   isDraftInReview,
+  reorderAppendices,
   saveDraft,
   submitDraftForReview,
   updateAppendix,
@@ -67,8 +54,8 @@ import {
 import {
   aiSections,
   applyAiText,
+  applyChangeSet,
   draftDocument,
-  fillGenerated,
   missingRequiredSections,
 } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
@@ -141,17 +128,12 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         await discardDraft(request, policyId);
         return data({ intent, ok: true } as const);
       }
-      case "generate": {
-        const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as SectionPayload[];
-        const { jobId } = await submitDraftGeneration(request, {
-          brief: String(form.get("brief") ?? ""),
-          sections: sections.map((s, index) => ({
-            key: s.sectionKey,
-            order: index,
-            title: s.title,
-          })),
-        });
-        return data({ intent, jobId, ok: true } as const);
+      case "reorder-appendices": {
+        const orderedIds = String(form.get("orderedIds") ?? "")
+          .split(",")
+          .filter(Boolean);
+        await reorderAppendices(request, String(form.get("policyVersionId") ?? ""), orderedIds);
+        return data({ intent, ok: true } as const);
       }
       case "review": {
         const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as SectionPayload[];
@@ -190,42 +172,11 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
   }
 };
 
-interface AiJobPoll {
-  error: null | string;
-  phase: string;
-  resultJson: null | string;
-}
-
-/** Opens `resources/ai-jobs/:jobId` as a server-sent-events stream and resolves once its one
- *  terminal message arrives — the gateway's `aiJobResult` subscription carries only the
- *  job's completion, never an intermediate phase, so there is nothing to poll any more. */
-const useAiJobStream = (jobId: null | string): AiJobPoll | null => {
-  const [poll, setPoll] = useState<AiJobPoll | null>(null);
-
-  useEffect(() => {
-    if (!jobId) return;
-    const source = new EventSource(`/resources/ai-jobs/${jobId}`);
-    const onMessage = (event: MessageEvent<string>) => {
-      setPoll(JSON.parse(event.data) as AiJobPoll);
-      source.close();
-    };
-    const onError = () => {
-      reportApiError("AiJobStream", "ai job stream failed");
-      setPoll({ error: "ai job stream failed", phase: "AI_JOB_PHASE_FAILED", resultJson: null });
-      source.close();
-    };
-    source.addEventListener("message", onMessage);
-    source.addEventListener("error", onError);
-    return () => source.close();
-  }, [jobId]);
-
-  return poll;
-};
-
 export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("authoring");
   const { t: tAi } = useTranslation("ai");
-  const { t: tCommon } = useTranslation("common");
+  const location = useLocation();
+  const navigate = useNavigate();
   const { draft, inReview, policy, templateVersion } = loaderData;
   const aiHealth = useAiHealth({
     available: loaderData.aiHealth.available,
@@ -240,15 +191,18 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const [content, setContent] = useState<SerializedDocument>(initialDocument);
   const contentRef = useRef(initialDocument);
   const editorRef = useRef<null | StewardEditorHandle>(null);
-  const [assistOpen, setAssistOpen] = useState(false);
-  const [aiDialog, setAiDialog] = useState<"generate" | "review" | null>(null);
+  const [rewriteOpen, setRewriteOpen] = useState(false);
+  // What the open suggestion is about: one section, or the selection in the editor.
+  const [suggestionFor, setSuggestionFor] = useState<
+    | { key: string; kind: "section"; original: string }
+    | { kind: "selection"; original: string }
+    | null
+  >(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewSeen, setReviewSeen] = useState<null | string>(null);
+  const [aiNotice, setAiNotice] = useState<null | string>(null);
   // What the page last saved, to tell "Saved" from "Unsaved changes" (U11).
   const [lastSaved, setLastSaved] = useState(() => serializeDocument(initialDocument));
-  const [assistSectionKey, setAssistSectionKey] = useState<string>(
-    () => aiSections(initialDocument, outline)[0]?.key ?? "",
-  );
-  const [appliedGenerateJobId, setAppliedGenerateJobId] = useState<null | string>(null);
-
   const saveFetcher = useFetcher<typeof action>();
   // A successful save makes what it sent the saved content. Adjusted during render on the
   // response the page hasn't seen yet, not in an effect.
@@ -259,18 +213,10 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     if (saveFetcher.data?.ok && typeof sent === "string") setLastSaved(sent);
   }
   const assistFetcher = useFetcher<typeof action>();
-  const generateFetcher = useFetcher<typeof action>();
   const reviewFetcher = useFetcher<typeof action>();
-
-  // Derived straight from the submission's own result, not mirrored into separate state: a
-  // fetcher already holds its last response for as long as the dialog needs it.
-  const generateJobId =
-    generateFetcher.data?.ok && "jobId" in generateFetcher.data ? generateFetcher.data.jobId : null;
   const reviewJobId =
     reviewFetcher.data?.ok && "jobId" in reviewFetcher.data ? reviewFetcher.data.jobId : null;
-
-  const generateJob = useAiJobStream(generateJobId);
-  const reviewJob = useAiJobStream(reviewJobId);
+  const reviewJob = useAiJob(reviewJobId, reviewFetcher.state !== "idle");
 
   const collabFetcher = useFetcher<typeof action>();
   const collabResolvers = useRef<
@@ -348,6 +294,19 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     [touchCollab],
   );
 
+  // A result handed back from Generate (U30) or Revise (U31): applied once the editor is up,
+  // through it so a live room syncs it, then dropped from the history entry.
+  const [editorReady, setEditorReady] = useState(false);
+  const handedOver = (location.state as { aiApply?: { entries: ChangeEntry[] } } | null)?.aiApply;
+  useEffect(() => {
+    if (!handedOver || !editorReady) return;
+    const next = applyChangeSet(contentRef.current, outline, handedOver.entries);
+    if (editorRef.current) editorRef.current.setDocument(next);
+    else onDocumentChange(next);
+    void navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per handed-over result
+  }, [editorReady, handedOver]);
+
   if (!draft) {
     return (
       <div className="p-6">
@@ -370,27 +329,81 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const sectionsJson = JSON.stringify(
     sectionTexts.map((s) => ({ sectionKey: s.key, text: s.text, title: s.title })),
   );
-  const assistSection = sectionTexts.find((s) => s.key === assistSectionKey) ?? sectionTexts[0];
-  const assistSuggestion =
-    assistFetcher.data?.ok && "sectionKey" in assistFetcher.data ? assistFetcher.data : null;
+  const emptyDraft = sectionTexts.every((section) => section.text.trim() === "");
 
-  const generateResult =
-    generateJob?.phase === "AI_JOB_PHASE_SUCCEEDED" &&
-    generateJob.resultJson &&
-    generateJobId !== appliedGenerateJobId
-      ? (JSON.parse(generateJob.resultJson) as { sections: { sectionKey: string; text: string }[] })
+  const assistAnswer =
+    assistFetcher.data?.ok && "suggestion" in assistFetcher.data
+      ? assistFetcher.data.suggestion
       : null;
-  const reviewResult =
-    reviewJob?.phase === "AI_JOB_PHASE_SUCCEEDED" && reviewJob.resultJson
-      ? (JSON.parse(reviewJob.resultJson) as {
-          findings: {
-            finding: string;
-            sectionKey: string;
-            severity: FindingSeverity;
-            suggestion: string;
-          }[];
-        })
-      : null;
+  const assistStage: AiJobStage =
+    assistFetcher.state === "idle"
+      ? assistFetcher.data && !assistFetcher.data.ok
+        ? "failed"
+        : "done"
+      : "generating";
+
+  const ask = (operation: ReworkChoice, sectionKey: string, text: string, instruction = "") =>
+    void assistFetcher.submit(
+      {
+        editableContent: text,
+        instruction,
+        intent: "assist",
+        operation:
+          operation === "clarify"
+            ? AssistOperation.AssistOperationClarify
+            : AssistOperation.AssistOperationRewrite,
+        sectionKey,
+        versionId: draft.id,
+      },
+      { method: "post" },
+    );
+
+  const onRework = ({ choice, text }: ReworkRequest) => {
+    // The section the selection sits in, for the AI's context; the first one otherwise.
+    const holder = sectionTexts.find((section) => section.text.includes(text)) ?? sectionTexts[0];
+    setAiNotice(null);
+    setSuggestionFor({ kind: "selection", original: text });
+    ask(choice, holder?.key ?? "content", text);
+  };
+
+  const applySuggestion = () => {
+    if (!suggestionFor || assistAnswer === null) return;
+    if (suggestionFor.kind === "section") {
+      replaceDocument(applyAiText(content, outline, suggestionFor.key, assistAnswer));
+    } else if (!editorRef.current?.replaceSelection(assistAnswer)) {
+      setAiNotice(tAi("suggestion.stale"));
+    }
+    setSuggestionFor(null);
+  };
+
+  const startReview = () => {
+    setReviewOpen(true);
+    void reviewFetcher.submit(
+      { intent: "review", sectionsJson, versionId: draft.id },
+      { method: "post" },
+    );
+  };
+  const findings = reviewJob.stage === "done" ? parseReviewResult(reviewJob.resultJson) : [];
+  // A finished review the author hasn't looked at makes the AI menu pulse.
+  const reviewReady = reviewJob.stage === "done" && !reviewOpen && reviewSeen !== reviewJobId;
+  const aiStatus =
+    reviewJob.stage === "queued" ||
+    reviewJob.stage === "generating" ||
+    assistFetcher.state !== "idle"
+      ? "working"
+      : reviewReady
+        ? "ready"
+        : "idle";
+
+  const jumpTo = (sectionKey: string) => {
+    setReviewOpen(false);
+    const title = sectionTexts.find((section) => section.key === sectionKey)?.title;
+    if (!title) return;
+    const heading = [
+      ...document.querySelectorAll<HTMLElement>("[contenteditable] :is(h1,h2,h3,h4,h5,h6)"),
+    ].find((element) => element.textContent?.trim().toLowerCase() === title.trim().toLowerCase());
+    heading?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
 
   const firstPublish = !policy.currentPublishedVersionId;
   const outlineRequired = outline.filter((section) => section.required);
@@ -416,13 +429,21 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         actions={
           <>
             <AiMenu
-              available={aiHealth.available}
+              available={aiHealth.available && !inReview}
+              emptyDraft={emptyDraft}
               onChoose={(choice) => {
-                if (choice === "improve") setAiDialog("generate");
-                if (choice === "review") setAiDialog("review");
-                if (choice === "rewrite") setAssistOpen(true);
+                const handOver = { state: { sections: sectionTexts } };
+                if (choice === "generate") void navigate(`/drafts/${policy.id}/generate`, handOver);
+                if (choice === "improve") void navigate(`/drafts/${policy.id}/revise`, handOver);
+                if (choice === "rewrite") setRewriteOpen(true);
+                if (choice === "review") startReview();
+                if (choice === "result") {
+                  setReviewSeen(reviewJobId);
+                  setReviewOpen(true);
+                }
               }}
               reason={aiHealth.reason}
+              status={aiStatus}
             />
             <Button
               className="h-[38px] px-3.5"
@@ -465,6 +486,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
       />
 
       {inReview ? <p className="text-sm text-muted">{t("editor.review.inReview")}</p> : null}
+      {aiNotice ? <Banner title={aiNotice} tone="warn" /> : null}
       {collabNotice ? (
         <Banner title={collabNotice} tone={collabReadOnly ? "info" : "warn"} />
       ) : null}
@@ -479,70 +501,13 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               onChange={onDocumentChange}
               onReady={(handle) => {
                 editorRef.current = handle;
+                setEditorReady(true);
               }}
+              onRework={aiHealth.available && !collabReadOnly && !inReview ? onRework : undefined}
               readOnly={collabReadOnly}
               ready={collabSession.mode !== "pending"}
             />
           </div>
-          {assistOpen && aiHealth.available && assistSection ? (
-            <assistFetcher.Form
-              className="grid gap-2 rounded-md border border-border p-3"
-              method="post"
-            >
-              <input name="intent" type="hidden" value="assist" />
-              <input name="versionId" type="hidden" value={draft.id} />
-              <input name="sectionKey" type="hidden" value={assistSection.key} />
-              <input name="editableContent" type="hidden" value={assistSection.text} />
-              {sectionTexts.length > 1 ? (
-                <Field label={tAi("assist.section")}>
-                  <Select
-                    onValueChange={setAssistSectionKey}
-                    options={sectionTexts.map((section) => ({
-                      label: section.title,
-                      value: section.key,
-                    }))}
-                    value={assistSection.key}
-                  />
-                </Field>
-              ) : null}
-              <Field label={tAi("assist.operationLabel")}>
-                <Select
-                  name="operation"
-                  options={Object.values(AssistOperation).map((operation) => ({
-                    label: tAi(`assist.operation.${operation}`),
-                    value: operation,
-                  }))}
-                />
-              </Field>
-              <Field label={tAi("assist.instruction")}>
-                <Input name="instruction" />
-              </Field>
-              <Button disabled={assistFetcher.state !== "idle"} type="submit">
-                {tAi("assist.ask")}
-              </Button>
-              {assistSuggestion && assistSuggestion.sectionKey === assistSection.key ? (
-                <div className="grid gap-2">
-                  <p className="text-sm">{assistSuggestion.suggestion}</p>
-                  <Button
-                    onClick={() => {
-                      replaceDocument(
-                        applyAiText(
-                          content,
-                          outline,
-                          assistSection.key,
-                          assistSuggestion.suggestion,
-                        ),
-                      );
-                      setAssistOpen(false);
-                    }}
-                    type="button"
-                  >
-                    {tAi("assist.apply")}
-                  </Button>
-                </div>
-              ) : null}
-            </assistFetcher.Form>
-          ) : null}
         </div>
 
         <div className="flex flex-col gap-3.5">
@@ -570,108 +535,41 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
-      {aiHealth.available ? (
-        <>
-          <Dialog
-            onOpenChange={(open) => setAiDialog(open ? "generate" : null)}
-            open={aiDialog === "generate"}
-          >
-            <DialogContent hasInput title={tAi("generate.title")}>
-              <generateFetcher.Form method="post">
-                <input name="intent" type="hidden" value="generate" />
-                <input name="sectionsJson" type="hidden" value={sectionsJson} />
-                <DialogBody>
-                  <Field label={tAi("generate.brief")}>
-                    <Textarea name="brief" required />
-                  </Field>
-                  {generateJobId && generateJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
-                    <Progress value={generateJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
-                  ) : null}
-                  {generateResult ? (
-                    <div className="grid gap-2">
-                      {generateResult.sections.map((generated) => (
-                        <div
-                          className="rounded-md border border-border p-2 text-sm"
-                          key={generated.sectionKey}
-                        >
-                          {generated.text}
-                        </div>
-                      ))}
-                      <Button
-                        onClick={() => {
-                          replaceDocument(fillGenerated(content, outline, generateResult.sections));
-                          setAppliedGenerateJobId(generateJobId);
-                        }}
-                        type="button"
-                      >
-                        {tAi("assist.apply")}
-                      </Button>
-                    </div>
-                  ) : null}
-                </DialogBody>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="secondary">{tCommon("actions.close")}</Button>
-                  </DialogClose>
-                  <Button disabled={generateFetcher.state !== "idle"} type="submit">
-                    {tAi("generate.start")}
-                  </Button>
-                </DialogFooter>
-              </generateFetcher.Form>
-            </DialogContent>
-          </Dialog>
-          <Dialog
-            onOpenChange={(open) => setAiDialog(open ? "review" : null)}
-            open={aiDialog === "review"}
-          >
-            <DialogContent title={tAi("review.title")}>
-              <reviewFetcher.Form method="post">
-                <input name="intent" type="hidden" value="review" />
-                <input name="versionId" type="hidden" value={draft?.id ?? ""} />
-                <input name="sectionsJson" type="hidden" value={sectionsJson} />
-                <DialogBody>
-                  {reviewJobId && reviewJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
-                    <Progress value={reviewJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
-                  ) : null}
-                  {reviewResult ? (
-                    reviewResult.findings.length === 0 ? (
-                      <p className="text-sm text-muted">{tAi("review.empty")}</p>
-                    ) : (
-                      <ul className="grid gap-2">
-                        {reviewResult.findings.map((finding) => (
-                          <li
-                            className="grid gap-1 rounded-md border border-border p-2"
-                            key={finding.sectionKey}
-                          >
-                            <div className="flex items-center gap-2">
-                              <FindingBadge severity={finding.severity} />
-                              <span className="text-sm font-medium">{finding.sectionKey}</span>
-                            </div>
-                            <p className="text-sm text-muted">{finding.finding}</p>
-                            {finding.suggestion ? (
-                              <p className="text-sm">
-                                {tAi("review.suggestion", { suggestion: finding.suggestion })}
-                              </p>
-                            ) : null}
-                          </li>
-                        ))}
-                      </ul>
-                    )
-                  ) : null}
-                </DialogBody>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="secondary">{tCommon("actions.close")}</Button>
-                  </DialogClose>
-                  <Button disabled={reviewFetcher.state !== "idle"} type="submit">
-                    {tAi("review.start")}
-                  </Button>
-                </DialogFooter>
-              </reviewFetcher.Form>
-            </DialogContent>
-          </Dialog>
-        </>
-      ) : null}
+      <RewriteSectionDialog
+        busy={assistFetcher.state !== "idle"}
+        onOpenChange={setRewriteOpen}
+        onSuggest={({ choice, instruction, sectionKey }) => {
+          const section = sectionTexts.find((candidate) => candidate.key === sectionKey);
+          setRewriteOpen(false);
+          setSuggestionFor({ key: sectionKey, kind: "section", original: section?.text ?? "" });
+          ask(choice, sectionKey, section?.text ?? "", instruction);
+        }}
+        open={rewriteOpen}
+        sections={sectionTexts}
+      />
+      <SuggestionSheet
+        onApply={applySuggestion}
+        onOpenChange={(open) => {
+          if (!open) setSuggestionFor(null);
+        }}
+        open={suggestionFor !== null}
+        original={suggestionFor?.original ?? ""}
+        stage={assistStage}
+        suggested={assistAnswer}
+      />
+      <AiReviewSheet
+        error={reviewJob.error}
+        findings={findings}
+        onJump={jumpTo}
+        onOpenChange={(open) => {
+          setReviewOpen(open);
+          if (open) setReviewSeen(reviewJobId);
+        }}
+        onRerun={startReview}
+        open={reviewOpen}
+        sections={sectionTexts}
+        stage={reviewJob.stage ?? "queued"}
+      />
     </div>
   );
 }

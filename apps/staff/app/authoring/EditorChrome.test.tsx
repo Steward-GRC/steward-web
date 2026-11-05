@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -174,6 +174,52 @@ describe("appendices (U17)", () => {
         text: "Visitor, contractor and delivery.",
         title: "Badge types",
       }),
+    );
+  });
+
+  it("moves an appendix down, keeping the first from moving up", async () => {
+    const action = inRouter(<AppendicesPanel appendices={appendices} draftId="d1" />);
+    await userEvent.click(screen.getByRole("button", { name: /Visitor badge types/ }));
+    expect(screen.getByRole("button", { name: "Move appendix A up" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: "Move appendix A down" }));
+    await vi.waitFor(() =>
+      expect(action).toHaveBeenCalledWith({
+        intent: "reorder-appendices",
+        orderedIds: "a2,a1",
+        policyVersionId: "d1",
+      }),
+    );
+  });
+
+  it("reorders by dragging one onto another", async () => {
+    const action = inRouter(<AppendicesPanel appendices={appendices} draftId="d1" />);
+    const [first, second] = within(screen.getByRole("region", { name: "Appendices" })).getAllByRole(
+      "listitem",
+    );
+    fireEvent.dragStart(second!);
+    fireEvent.dragOver(first!);
+    fireEvent.drop(first!);
+    await vi.waitFor(() =>
+      expect(action).toHaveBeenCalledWith({
+        intent: "reorder-appendices",
+        orderedIds: "a2,a1",
+        policyVersionId: "d1",
+      }),
+    );
+  });
+
+  it("asks before deleting one (D15)", async () => {
+    const action = inRouter(<AppendicesPanel appendices={appendices} draftId="d1" />);
+    await userEvent.click(screen.getByRole("button", { name: /Reception hours/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete appendix" }));
+    const dialog = screen.getByRole("dialog", { name: "Delete this appendix?" });
+    expect(dialog).toHaveAccessibleDescription(
+      "Appendix B: Reception hours and its content will be removed from this draft.",
+    );
+    expect(action).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete appendix" }));
+    await vi.waitFor(() =>
+      expect(action).toHaveBeenCalledWith({ appendixId: "a2", intent: "delete-appendix" }),
     );
   });
 
