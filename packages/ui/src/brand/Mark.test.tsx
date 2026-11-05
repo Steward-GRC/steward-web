@@ -53,6 +53,17 @@ describe("Loader", () => {
     render(<Loader />);
     expect(screen.getByRole("status")).toHaveTextContent("Loading…");
   });
+
+  it("is only drawn when the words beside it already say what's loading", () => {
+    render(
+      <div data-testid="beside">
+        <Loader decorative />
+      </div>,
+    );
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByTestId("beside")).toContainHTML('aria-hidden="true"');
+    expect(screen.getByTestId("beside")).not.toHaveTextContent("Loading…");
+  });
 });
 
 describe("Lockup", () => {

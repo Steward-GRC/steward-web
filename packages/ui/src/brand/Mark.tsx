@@ -103,10 +103,16 @@ export const Lockup = ({
  */
 export const Loader = ({
   className,
+  decorative = false,
   label,
   size = 64,
 }: {
   className?: string;
+  /**
+   * The words beside it already say what's loading (G9's "Signing in…"), so the mark is only
+   * drawn: no status role and no text, even with reduced motion.
+   */
+  decorative?: boolean;
   /** What's loading, for screen readers: "Loading your work…". */
   label?: string;
   size?: number;
@@ -115,7 +121,11 @@ export const Loader = ({
   const clip = useId();
   const text = label ?? t("status.loading");
   return (
-    <div className={cn("grid justify-items-center gap-3", className)} role="status">
+    <div
+      aria-hidden={decorative || undefined}
+      className={cn("grid justify-items-center gap-3", className)}
+      role={decorative ? undefined : "status"}
+    >
       <svg
         aria-hidden="true"
         className="motion-reduce:hidden"
@@ -128,10 +138,18 @@ export const Loader = ({
             <path d={PAGE} />
           </clipPath>
         </defs>
-        <path d={PAGE} fill="none" stroke="var(--primary)" strokeOpacity=".35" strokeWidth="1.5" />
+        {/* High contrast draws the loading page white, as the Brand Guide's hc mark is. */}
+        <path
+          className="hc:stroke-white"
+          d={PAGE}
+          fill="none"
+          stroke="var(--primary)"
+          strokeOpacity=".35"
+          strokeWidth="1.5"
+        />
         <g className="stw-loader-g" clipPath={`url(#${clip})`}>
           <rect
-            className="stw-loader-fill"
+            className="stw-loader-fill hc:fill-white"
             fill="var(--primary)"
             height="40"
             width="48"
@@ -162,7 +180,7 @@ export const Loader = ({
       <span className="hidden motion-reduce:inline">
         <Mark size={size} />
       </span>
-      <span className="text-sm text-muted motion-safe:sr-only">{text}</span>
+      {decorative ? null : <span className="text-sm text-muted motion-safe:sr-only">{text}</span>}
     </div>
   );
 };

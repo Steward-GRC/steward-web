@@ -1,18 +1,27 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { signInPreview } from "@steward-web/dev-gate-preview.server";
 import { quickLoginAccount, quickLoginUsers } from "@steward-web/dev-quick-login.server";
-import { data, redirect } from "react-router";
+import { data, redirect, redirectDocument } from "react-router";
 
-import type { SignInLoaderData, SignInState } from "./signInState";
+import type { PasskeyChallenge, SignInFactor, SignInLoaderData, SignInState } from "./signInState";
 
 import {
   type AuthStep,
+  beginPasskeyFactor,
+  beginPasskeyLogin,
   beginTotpEnrolment,
+  confirmPasswordReset,
   confirmTotpEnrolment,
+  discover,
+  fetchSignInCapabilities,
+  finishPasskeyLogin,
   login,
   logout,
+  requestPasswordReset,
   sendLoginCode,
   verifyCode,
+  verifyPasskey,
 } from "./gatewayAuth.server";
 import { identityFromRequest } from "./requestIdentity.server";
 
@@ -64,6 +73,19 @@ const signedIn = (setCookie: readonly string[], next: string): Response =>
 
 const state = (value: SignInState, status = 200) => data<SignInState>(value, { status });
 
+/**
+ * The address an emailed code goes to, masked ("e•••@example.org"), when the name typed in is
+ * an email address. The gateway doesn't say where it sends the code, so a username gives none.
+ */
+const maskedAddress = (identifier: string): string | undefined => {
+  const at = identifier.lastIndexOf("@");
+  if (at < 1 || at === identifier.length - 1) return undefined;
+  return `${identifier.charAt(0)}•••${identifier.slice(at)}`;
+};
+
+/** The methods G6 lists: the authenticator app, an emailed code and a passkey. */
+const CHOOSABLE: ReadonlySet<SignInFactor> = new Set(["email", "passkey", "totp"]);
+
 /** Where the password step leads: in, a code to ask for, an enrolment, or back with a reason. */
 const afterPassword = async (
   step: AuthStep,
@@ -75,7 +97,16 @@ const afterPassword = async (
     case "challenge": {
       const factor =
         step.factors.includes("totp") || !step.factors.includes("email") ? "totp" : "email";
-      return state({ factor, factors: step.factors, pendingId: step.pendingId, view: "code" });
+      const sentTo = maskedAddress(identifier);
+      const several = step.factors.filter((f) => CHOOSABLE.has(f)).length > 1;
+      return state({
+        ...(several ? { choose: true } : {}),
+        factor,
+        factors: step.factors,
+        pendingId: step.pendingId,
+        ...(sentTo ? { sentTo } : {}),
+        view: "code",
+      });
     }
     case "enrol": {
       const enrolment = await beginTotpEnrolment(step.pendingId, { incoming });
@@ -83,7 +114,10 @@ const afterPassword = async (
       return state({ ...enrolment, pendingId: step.pendingId, view: "enrol" });
     }
     case "rejected": {
-      return state({ identifier, problem: step.reason, view: "password" }, 401);
+      return state(
+        { identifier, problem: step.reason, view: "password" },
+        step.reason === "throttled" ? 429 : 401,
+      );
     }
     case "session": {
       return signedIn(step.setCookie, next);
@@ -94,16 +128,43 @@ const afterPassword = async (
   }
 };
 
-/** A signed-in visitor goes straight on; everyone else gets the password step. */
+/**
+ * A signed-in visitor goes straight on; everyone else gets the password step, or the SSO or
+ * reset step its link opened (`?step=sso`, `?step=reset`). The page offers what the gateway's
+ * sign-in settings allow. In a dev build, `?gate=<frame id>` previews a gate with sample data.
+ */
 export const signInLoader = async (
   request: Request,
   { basename }: SignInOptions = {},
 ): Promise<SignInLoaderData> => {
-  const next = safeNext(new URL(request.url).searchParams.get("next"), basename);
+  const url = new URL(request.url);
+  const next = safeNext(url.searchParams.get("next"), basename);
   const identity = await identityFromRequest(request);
   if (identity.id !== "") throw redirect(next);
-  return { next, quickLoginUsers: quickLoginUsers(), state: { view: "password" } };
+  const quickLogin = quickLoginUsers();
+  const preview = signInPreview(url);
+  if (preview) {
+    return {
+      capabilities: preview.capabilities,
+      next,
+      preview: preview.gate,
+      quickLoginUsers: quickLogin,
+      state: preview.state,
+    };
+  }
+  const capabilities = await fetchSignInCapabilities({ incoming: request });
+  const step = url.searchParams.get("step");
+  const opened: SignInState =
+    step === "sso"
+      ? { view: "sso" }
+      : step === "reset" && capabilities.passwordReset
+        ? { step: "request", view: "reset" }
+        : { view: "password" };
+  return { capabilities, next, quickLoginUsers: quickLogin, state: opened };
 };
+
+const passkeyChallenge = (passkey: PasskeyChallenge["passkey"]) =>
+  data<PasskeyChallenge>({ passkey });
 
 /**
  * One step of signing in, chosen by the form's `intent`: the password, a second-factor code,
@@ -143,18 +204,100 @@ export const signInAction = async (
     );
   }
 
+  if (intent === "sso") {
+    const identifier = field(body, "identifier");
+    if (!identifier) return state({ problem: "missing", view: "sso" }, 400);
+    const found = await discover(identifier, options);
+    // The gateway's SSO start runs on the app's own origin (its SSO_REDIRECT_BASE), so the
+    // browser leaves this app for it with a full page load.
+    if (found.method === "sso")
+      return redirectDocument(
+        `/auth/sso/start?${new URLSearchParams({ connection: found.connection })}`,
+      );
+    if (found.method === "local") return state({ identifier, view: "password" });
+    if (found.method === "missing") return state({ problem: "missing", view: "sso" }, 400);
+    return state({ identifier, problem: "unavailable", view: "sso" }, 502);
+  }
+
+  if (intent === "reset-request") {
+    const email = field(body, "email");
+    if (!email) return state({ problem: "missing", step: "request", view: "reset" }, 400);
+    const sent = await requestPasswordReset(email, options);
+    if (sent === "sent") return state({ email, step: "confirm", view: "reset" });
+    if (sent === "missing")
+      return state({ problem: "missing", step: "request", view: "reset" }, 400);
+    return state({ email, problem: "unavailable", step: "request", view: "reset" }, 502);
+  }
+
+  if (intent === "reset-confirm") {
+    const email = field(body, "email");
+    const value = codeOf(body);
+    const newPassword = String(body.get("newPassword") ?? "");
+    const confirm = { email, step: "confirm", view: "reset" } as const;
+    if (!value || !newPassword) return state({ ...confirm, problem: "missing" }, 400);
+    const result = await confirmPasswordReset(email, value, newPassword, options);
+    if (result === "set")
+      return state({ identifier: email, notice: "passwordReset", view: "password" });
+    if (result === "code") return state({ ...confirm, problem: "code" }, 400);
+    return state({ ...confirm, problem: "unavailable" }, 502);
+  }
+
+  if (intent === "passkey-begin") {
+    const challenge = await beginPasskeyLogin(options);
+    if (!challenge) return state({ problem: "unavailable", view: "password" }, 502);
+    return passkeyChallenge(challenge);
+  }
+
+  if (intent === "passkey-finish") {
+    const step = await finishPasskeyLogin(
+      field(body, "flowId"),
+      String(body.get("credentialJson") ?? ""),
+      options,
+    );
+    if (step.kind === "session") return signedIn(step.setCookie, next);
+    if (step.kind === "rejected") return state({ problem: "passkey", view: "password" }, 401);
+    return state({ problem: "unavailable", view: "password" }, 502);
+  }
+
   const pendingId = field(body, "pendingId");
   const factors = field(body, "factors")
     .split(",")
-    .filter((f): f is "email" | "passkey" | "totp" => ["email", "passkey", "totp"].includes(f));
+    .filter((f): f is SignInFactor => ["email", "passkey", "totp"].includes(f));
   const factor = field(body, "factor") === "email" ? "email" : "totp";
-  const code: SignInState = { factor, factors, pendingId, view: "code" };
+  const sentTo = field(body, "sentTo");
+  const code: SignInState = {
+    factor,
+    factors,
+    pendingId,
+    ...(sentTo ? { sentTo } : {}),
+    view: "code",
+  };
+
+  if (intent === "choose") return state(code);
+  if (intent === "method") return state({ ...code, choose: true });
+
+  if (intent === "mfa-passkey-begin") {
+    const challenge = await beginPasskeyFactor(pendingId, options);
+    if (challenge === "expired") return state({ problem: "expired", view: "password" }, 401);
+    if (!challenge) return state({ ...code, problem: "unavailable" }, 502);
+    return passkeyChallenge(challenge);
+  }
 
   if (intent === "email") {
     const sent = await sendLoginCode(pendingId, options);
     if (sent === "expired") return state({ problem: "expired", view: "password" }, 401);
     if (sent === "failed") return state({ ...code, factor: "email", problem: "send" }, 502);
     return state({ ...code, emailSent: sent, factor: "email" });
+  }
+
+  if (intent === "verify" && field(body, "factor") === "passkey") {
+    const step = await verifyPasskey(pendingId, String(body.get("credentialJson") ?? ""), options);
+    if (step.kind === "session") return signedIn(step.setCookie, next);
+    if (step.kind === "rejected" && step.reason === "expired") {
+      return state({ problem: "expired", view: "password" }, 401);
+    }
+    if (step.kind === "rejected") return state({ ...code, problem: "wrong" }, 401);
+    return state({ ...code, problem: "unavailable" }, 502);
   }
 
   if (intent === "verify") {

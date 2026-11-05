@@ -39,6 +39,8 @@ export interface DevelopmentQuickLoginChoice {
   /** The client picker every sign-in route imports as `@steward-web/dev-quick-login`. */
   component: string;
   enabled: boolean;
+  /** The dev gate preview (`?gate=`) imported as `@steward-web/dev-gate-preview.server`. */
+  gatePreview: string;
   /** The server accounts reader imported as `@steward-web/dev-quick-login.server`. */
   module: string;
 }
@@ -48,7 +50,8 @@ export interface DevelopmentQuickLoginChoice {
  * (`command === "serve"`) and for a build with `STEWARD_DEV_QUICK_LOGIN_BUILD=true` (the
  * `DEV_QUICK_LOGIN` Dockerfile build argument). Anything else aliases in the no-ops, so the users-file reader and the picker never
  * reach a release build. The server still has to turn it on at runtime
- * (`STEWARD_DEV_QUICK_LOGIN=true`).
+ * (`STEWARD_DEV_QUICK_LOGIN=true`). The dev gate preview (`?gate=` on the gates) comes and
+ * goes with it, under the same build allowance.
  */
 export const chooseDevelopmentQuickLogin = (
   command: "build" | "serve",
@@ -60,6 +63,9 @@ export const chooseDevelopmentQuickLogin = (
       ? path.join(source("auth"), "QuickLogin.tsx")
       : path.join(source("auth"), "NoQuickLogin.tsx"),
     enabled,
+    gatePreview: enabled
+      ? path.join(source("auth"), "developmentGatePreview.server.ts")
+      : path.join(source("auth"), "NoDevelopmentGatePreview.server.ts"),
     module: enabled
       ? path.join(source("auth"), "developmentQuickLogin.server.ts")
       : path.join(source("auth"), "NoDevelopmentQuickLogin.server.ts"),
@@ -103,6 +109,7 @@ export const sharedAliases = (
   developmentUiIssue: DevelopmentUiIssueChoice = chooseDevelopmentUiIssueButton({}),
   developmentQuickLogin: DevelopmentQuickLoginChoice = chooseDevelopmentQuickLogin("build", {}),
 ): Record<string, string> => ({
+  "@steward-web/dev-gate-preview.server": developmentQuickLogin.gatePreview,
   "@steward-web/dev-quick-login": developmentQuickLogin.component,
   "@steward-web/dev-quick-login.server": developmentQuickLogin.module,
   "@steward-web/dev-ui-issue-button": developmentUiIssue.module,

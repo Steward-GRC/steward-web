@@ -30,10 +30,11 @@ describe("findDevelopmentQuickLoginLeaks", () => {
     expect(findDevelopmentQuickLoginLeaks(root)).toEqual([]);
   });
 
-  it("flags the picker's marker and the users-file variable", () => {
+  it("flags the picker's marker, the users-file variable and the gate preview's marker", () => {
+    expect(TELLS).toContain("steward-dev-gate-preview");
     root = mkdtempSync(path.join(tmpdir(), "dev-quick-login-leak-"));
     const files = TELLS.map((tell, index) => {
-      const file = path.join(appBuild(index === 0 ? "staff" : "admin"), "index.js");
+      const file = path.join(appBuild(index === 0 ? "staff" : "admin"), `chunk-${index}.js`);
       writeFileSync(file, `const x = "${tell}";`);
       return file;
     });

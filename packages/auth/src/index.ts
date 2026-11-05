@@ -9,4 +9,11 @@ export { type Identity, identityFromMe, type Me, NO_ACCESS } from "./identity";
 export { IdentityProvider, useCan, useIdentity } from "./IdentityContext";
 export { ProfileName, type ProfileNameProps } from "./ProfileName";
 export { SignIn, type SignInProps } from "./SignIn";
-export type { QuickLoginUser, SignInFactor, SignInLoaderData, SignInState } from "./signInState";
+export type {
+  PasskeyChallenge,
+  QuickLoginUser,
+  SignInCapabilities,
+  SignInFactor,
+  SignInLoaderData,
+  SignInState,
+} from "./signInState";

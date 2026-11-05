@@ -61,6 +61,19 @@ describe("chooseDevelopmentQuickLogin", () => {
       chooseDevelopmentQuickLogin("build", { STEWARD_DEV_QUICK_LOGIN_BUILD: "1" }).enabled,
     ).toBe(false);
   });
+
+  it("brings the dev gate preview in and out with the quick login", () => {
+    expect(chooseDevelopmentQuickLogin("serve", {}).gatePreview).toMatch(
+      /auth.*developmentGatePreview\.server\.ts$/,
+    );
+    expect(chooseDevelopmentQuickLogin("build", {}).gatePreview).toMatch(
+      /NoDevelopmentGatePreview\.server\.ts$/,
+    );
+    const aliases = sharedAliases(undefined, chooseDevelopmentQuickLogin("build", {}));
+    expect(aliases["@steward-web/dev-gate-preview.server"]).toMatch(
+      /NoDevelopmentGatePreview\.server\.ts$/,
+    );
+  });
 });
 
 describe("buildInfo commit fallback", () => {

@@ -193,6 +193,44 @@ request) fails if a release build under `apps/*/build` carries the picker's mark
 users-file variable name, or if the Dockerfile's `DEV_QUICK_LOGIN` defaults to anything but
 `false`.
 
+## Reaching each gate
+
+Sign-in and the other gates (the Gates design frames) render outside the app shell as one
+centred card. Each one can be reached against the mock, so it can be checked and screenshotted.
+Where the mock can produce the real state, use it:
+
+| Gate                              | How to reach it against the mock                                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| G3 sign in, G3m on a phone        | Open `/sign-in` signed out (`/admin/sign-in` for admin). With `STEWARD_ORGANISATION` set, the organisation slot leads the card. |
+| G3 error state                    | Sign in with the password `wrong-password`.                                                                                     |
+| G6 choose a method, then the code | Sign in as `alice` (any password): she has an authenticator app and email codes. A wrong code is `000000`.                      |
+| G7 set up a second factor         | Sign in as `dave` (any password): he must enrol an authenticator first.                                                         |
+| G9 signing in                     | Shows for a moment after any sign-in succeeds.                                                                                  |
+
+The mock doesn't answer the gateway's sign-in settings (`GET /auth/config`), SSO discovery, the
+password reset or passkey sign-in, so the page offers none of those against it. For those, and
+for any state you want to hold still, the dev server takes `?gate=<frame id>` on the sign-in page
+and shows that gate with sample data and every option on:
+
+| `?gate=`        | Shows                                                                             |
+| --------------- | --------------------------------------------------------------------------------- |
+| `G3`            | The password card in its error state, with Forgot password?, SSO and the passkey. |
+| `G3m`           | The password card as the phone frame draws it, with SSO turned off.               |
+| `G4`            | The SSO identifier step.                                                          |
+| `G6`            | Choose a method (authenticator app, email code, passkey).                         |
+| `G6-code`       | The six-box code after an emailed code, with the wrong-code error.                |
+| `G7`            | Set up an authenticator app, with its QR code.                                    |
+| `G8`, `G8-code` | The password reset: the email step, then the code and new password.               |
+| `G9`            | Signing in.                                                                       |
+
+For example <http://localhost:5173/sign-in?gate=G6> or
+<http://localhost:5174/admin/sign-in?gate=G4>. The forms on a previewed gate still post to the
+gateway, which refuses the sample references. The preview comes and goes with the dev quick
+login's build allowance (`packages/vite-config`'s `chooseDevelopmentQuickLogin`): the dev server
+always has it, a build only with `DEV_QUICK_LOGIN=true`, and a release build aliases in
+`NoDevelopmentGatePreview.server.ts`, so `?gate=` does nothing there.
+`pnpm run check:no-dev-quick-login-leak` fails if the preview's marker reaches a release build.
+
 ## Tests
 
 Vitest, colocated `*.test.ts`/`*.test.tsx` files, Testing Library for components. No

@@ -58,7 +58,8 @@
     "tag": "Admin"
   },
   "brand": {
-    "name": "Steward"
+    "name": "Steward",
+    "tagline": "Rules kept. Voices heard.™"
   },
   "comingSoon": {
     "description": "This part of Steward is still being built. It will appear here when it's ready.",

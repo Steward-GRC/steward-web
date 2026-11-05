@@ -6,7 +6,13 @@ import { QuickLoginBar } from "@steward-web/dev-quick-login";
 import { quickLoginUsers } from "@steward-web/dev-quick-login.server";
 import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
 import { DEFAULT_LOCALE } from "@steward-web/i18n";
-import { AdminShell, DiagnosticsProvider, PageTitle } from "@steward-web/shell";
+import {
+  AdminShell,
+  DiagnosticsProvider,
+  GateShell,
+  PageTitle,
+  useIsGate,
+} from "@steward-web/shell";
 import { siteSettingsFromRequest } from "@steward-web/shell/server";
 import {
   brandLinks,
@@ -86,6 +92,22 @@ export const Layout = ({ children }: { children: ReactNode }) => (
 );
 
 export default function App({ loaderData }: Route.ComponentProps) {
+  // Sign-in and the other gates sit outside the shell as a centred card (2-layout-and-navigation.s5).
+  const gate = useIsGate();
+  if (gate) {
+    return (
+      <IdentityProvider identity={loaderData.identity}>
+        <GateShell
+          banners={loaderData.siteSettings}
+          environment={loaderData.shell.config.environment}
+        >
+          <QuickLoginBar enabled={loaderData.quickLoginOn} />
+          <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
+          <Outlet />
+        </GateShell>
+      </IdentityProvider>
+    );
+  }
   return (
     <IdentityProvider identity={loaderData.identity}>
       <AdminShell

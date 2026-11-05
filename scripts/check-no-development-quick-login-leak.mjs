@@ -3,7 +3,8 @@
 // Fails if a release-configuration app build (apps/*/build/, built without the DEV_QUICK_LOGIN
 // build argument) carries the dev quick login: the picker's marker
 // (@steward-web/auth's DEV_QUICK_LOGIN_MARKER) or the users-file variable its server reader
-// reads. Also fails if the Dockerfile's DEV_QUICK_LOGIN build argument defaults to anything but
+// reads, or the dev gate preview that rides on the same allowance (its
+// DEV_GATE_PREVIEW_MARKER). Also fails if the Dockerfile's DEV_QUICK_LOGIN build argument defaults to anything but
 // false, since that default is what keeps a release image's build from allowing it. A release
 // build should never reach the first state at all: packages/vite-config's
 // chooseDevelopmentQuickLogin aliases the real modules in only when the build allows them.
@@ -12,7 +13,11 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
-export const TELLS = ["steward-dev-quick-login", "STEWARD_DEV_QUICK_LOGIN_USERS"];
+export const TELLS = [
+  "steward-dev-quick-login",
+  "STEWARD_DEV_QUICK_LOGIN_USERS",
+  "steward-dev-gate-preview",
+];
 const TEXT_EXTENSIONS = new Set([".css", ".js", ".mjs"]);
 
 const walk = (directory) => {

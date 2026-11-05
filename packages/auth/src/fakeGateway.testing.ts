@@ -4,11 +4,15 @@
 // /auth/login mints the `steward_sid` cookie and a CSRF token, or parks the sign-in for a
 // second factor; GET /auth/session reports the token; POST /query answers only with the
 // cookie AND the matching `X-CSRF-Token` (401 without a session, 403 on a CSRF mismatch);
-// POST /auth/logout drops the session and clears the cookie. Tests only.
+// POST /auth/logout drops the session and clears the cookie. The sign-in helpers answer as the
+// gateway's do: GET /auth/config, POST /auth/discover, the password reset by emailed code and
+// passkey sign-in (`internal/passwordreset`, `internal/bff`). Tests only.
 import { randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
 export interface FakeAccount {
+  /** The factors a challenge offers; ["totp", "email"] by default. */
+  factors?: string[];
   /** "challenge": a TOTP code is owed; "enrol": no factor yet, enrolment is owed. */
   mfa?: "challenge" | "enrol";
   password: string;
@@ -19,6 +23,15 @@ export interface FakeAccount {
 /** The one code the fake accepts for any second-factor step. */
 export const FAKE_CODE = "123456";
 
+/** The one passkey assertion the fake accepts, for sign-in and as a second factor. */
+export const FAKE_CREDENTIAL = '{"id":"cred-1","type":"public-key"}';
+
+/** The username the fake's passkey signs in as. */
+export const FAKE_PASSKEY_USER = "passkey.sample";
+
+/** The password the fake answers 429 for, as the gateway's rate limit does. */
+export const THROTTLED_PASSWORD = "too-many";
+
 export interface FakeGateway {
   close: () => Promise<void>;
   /** The `/query` URL, as `GATEWAY_URL` would name it. */
@@ -26,6 +39,13 @@ export interface FakeGateway {
   /** Every request seen, for asserting what reached the gateway. */
   requests: { headers: IncomingMessage["headers"]; method: string; path: string }[];
   sessions: Map<string, { csrf: string; userId: string }>;
+}
+
+export interface FakeGatewayOptions {
+  /** GET /auth/config's answer; undefined answers 404, like a gateway without the helpers. */
+  authConfig?: Record<string, unknown>;
+  /** POST /auth/discover: the identifiers that sign in through SSO, with their connection. */
+  sso?: Record<string, string>;
 }
 
 const readBody = async (request: IncomingMessage): Promise<Record<string, unknown>> => {
@@ -50,7 +70,10 @@ const sidOf = (request: IncomingMessage): string | undefined => {
   return undefined;
 };
 
-export const startFakeGateway = async (accounts: FakeAccount[]): Promise<FakeGateway> => {
+export const startFakeGateway = async (
+  accounts: FakeAccount[],
+  options: FakeGatewayOptions = {},
+): Promise<FakeGateway> => {
   const sessions = new Map<string, { csrf: string; userId: string }>();
   const pending = new Map<string, { account: FakeAccount; enrol: boolean }>();
   const requests: FakeGateway["requests"] = [];
@@ -75,6 +98,8 @@ export const startFakeGateway = async (accounts: FakeAccount[]): Promise<FakeGat
       const body = method === "POST" ? await readBody(request) : {};
 
       if (method === "POST" && path === "/auth/login") {
+        if (body.password === THROTTLED_PASSWORD)
+          return json(response, 429, { error: "rate_limited" });
         const account = accounts.find(
           (a) => a.username === body.username && a.password === body.password,
         );
@@ -87,7 +112,7 @@ export const startFakeGateway = async (accounts: FakeAccount[]): Promise<FakeGat
             200,
             account.mfa === "enrol"
               ? { enrollmentRequired: true, mfaRequired: true, pendingId }
-              : { factors: ["totp", "email"], mfaRequired: true, pendingId },
+              : { factors: account.factors ?? ["totp", "email"], mfaRequired: true, pendingId },
           );
         }
         return issue(response, account.userId);
@@ -106,6 +131,65 @@ export const startFakeGateway = async (accounts: FakeAccount[]): Promise<FakeGat
           otpauthUri: "otpauth://totp/Steward:sample",
           secret: "ABCD****",
         });
+      }
+
+      if (method === "GET" && path === "/auth/config") {
+        if (!options.authConfig) return json(response, 404, { error: "not_found" });
+        return json(response, 200, options.authConfig);
+      }
+
+      if (method === "POST" && path === "/auth/discover") {
+        const identifier = String(body.identifier ?? "");
+        if (!identifier) return json(response, 400, { error: "invalid_request" });
+        const alias = options.sso?.[identifier];
+        return json(
+          response,
+          200,
+          alias
+            ? { allowLocal: false, connectionAlias: alias, method: "sso" }
+            : { allowLocal: true, connectionAlias: "", method: "local" },
+        );
+      }
+
+      if (method === "POST" && path === "/auth/password-reset/request") {
+        if (!body.email) return json(response, 400, { error: "Enter your email address." });
+        return json(response, 200, { ok: true });
+      }
+
+      if (method === "POST" && path === "/auth/password-reset/confirm") {
+        if (body.code !== FAKE_CODE)
+          return json(response, 400, { error: "That code is invalid or has expired." });
+        return json(response, 200, { ok: true });
+      }
+
+      if (method === "POST" && path === "/auth/passkey/login/begin") {
+        return json(response, 200, {
+          flowId: "flow-1",
+          optionsJson: '{"publicKey":{"challenge":"Y2hhbGxlbmdl"}}',
+        });
+      }
+
+      if (method === "POST" && path === "/auth/passkey/login/finish") {
+        if (body.flowId !== "flow-1") return json(response, 400, { error: "invalid_request" });
+        if (body.credentialJson !== FAKE_CREDENTIAL)
+          return json(response, 401, { error: "invalid_credentials" });
+        const account = accounts.find((a) => a.username === FAKE_PASSKEY_USER);
+        return issue(response, account?.userId ?? "");
+      }
+
+      if (method === "POST" && path === "/auth/mfa/webauthn/begin") {
+        if (!pending.has(String(body.pendingId)))
+          return json(response, 401, { error: "invalid_pending" });
+        return json(response, 200, { optionsJson: '{"publicKey":{"challenge":"bWZh"}}' });
+      }
+
+      if (method === "POST" && path === "/auth/mfa/verify" && body.kind === "passkey") {
+        const parked = pending.get(String(body.pendingId));
+        if (!parked) return json(response, 401, { error: "invalid_pending" });
+        if (body.credentialJson !== FAKE_CREDENTIAL)
+          return json(response, 401, { error: "invalid_code" });
+        pending.delete(String(body.pendingId));
+        return issue(response, parked.account.userId);
       }
 
       const finishing =
