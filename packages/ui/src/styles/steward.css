@@ -181,6 +181,7 @@ SPDX-License-Identifier: Apache-2.0
   --sensitivity-standard-soft: #ede7e8;
   --sensitivity-sensitive: #7a3a00;
   --sensitivity-sensitive-soft: #fbe6cf;
+  --redact: #c9bcc6;
   --access-blank: #665967;
   --access-blank-soft: #ffffff;
   --access-allow: #2c6a34;
@@ -305,6 +306,7 @@ SPDX-License-Identifier: Apache-2.0
   --sensitivity-standard-soft: #332936;
   --sensitivity-sensitive: #f4b98a;
   --sensitivity-sensitive-soft: #3d2615;
+  --redact: #65536b;
   --access-blank: #b9a7b8;
   --access-blank-soft: #261c2a;
   --access-allow: #8fd19a;
@@ -429,6 +431,7 @@ SPDX-License-Identifier: Apache-2.0
   --sensitivity-standard-soft: #000000;
   --sensitivity-sensitive: #ffc266;
   --sensitivity-sensitive-soft: #000000;
+  --redact: #8a8a8a;
   --access-blank: #e8e8e8;
   --access-blank-soft: #000000;
   --access-allow: #7cf08a;
@@ -553,6 +556,7 @@ SPDX-License-Identifier: Apache-2.0
     --sensitivity-standard-soft: #332936;
     --sensitivity-sensitive: #f4b98a;
     --sensitivity-sensitive-soft: #3d2615;
+    --redact: #65536b;
     --access-blank: #b9a7b8;
     --access-blank-soft: #261c2a;
     --access-allow: #8fd19a;

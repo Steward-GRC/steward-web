@@ -83,3 +83,44 @@ describe.each([
     expect(await answer(loader, path)).toEqual(hidden);
   });
 });
+
+describe.each([
+  ["policy", policy.action, "/policies/SEC-009"],
+  ["procedure", procedure.action, "/procedures/SEC-009"],
+])("breaking the glass on a staff %s", (_name, action, path) => {
+  it("hands the reader when the grant ends, so it can count down (U9r)", async () => {
+    const grantedUntil = "2026-11-05T15:30:00Z";
+    const asked: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        const { query, variables } = JSON.parse(init.body as string) as {
+          query: string;
+          variables: unknown;
+        };
+        const operation = /^(?:query|mutation) (\w+)/m.exec(query)?.[1];
+        if (operation === "Me") return Response.json({ data: { me } });
+        if (operation === "BreakGlassReveal") {
+          asked.push(variables);
+          return Response.json({ data: { breakGlassReveal: { grantedUntil } } });
+        }
+        return Response.json({ errors: [{ message: `unexpected ${operation}` }] });
+      }),
+    );
+    const body = new URLSearchParams({
+      intent: "breakGlass",
+      policyId: "policy-9",
+      reason: "Lost laptop.",
+    });
+    const result = (await action({
+      params: { number: "SEC-009" },
+      request: new Request(`https://steward.example${path}`, {
+        body,
+        headers: { cookie: "steward_sid=sid-1" },
+        method: "POST",
+      }),
+    } as never)) as { data?: unknown };
+    expect(asked).toEqual([{ policyId: "policy-9", reason: "Lost laptop." }]);
+    expect(result.data).toEqual({ grantedUntil, ok: true });
+  });
+});

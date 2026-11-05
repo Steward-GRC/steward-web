@@ -1,10 +1,19 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { DocumentType, PolicyStatus } from "@steward-web/api-client";
+import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
 import { formatDate, formatDateTime, formatTime, useTranslation } from "@steward-web/i18n";
-import { ChevronDown, ChevronLeft, History, Printer, Sparkles, Star } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
-import { Link, useFetcher } from "react-router";
+import {
+  ChevronDown,
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  History,
+  Printer,
+  Sparkles,
+  Star,
+} from "lucide-react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { Link, useFetcher, useRevalidator } from "react-router";
 
 import { Button } from "#ui/components/Button";
 import { Switch } from "#ui/components/Controls";
@@ -34,7 +43,7 @@ import { DocumentStatusPill } from "./DocumentStatusPill";
 import { useFavorites } from "./favorites";
 import { OutlineCard } from "./OutlineCard";
 import { documentTypeBasePath } from "./policy";
-import { outlineItems, PolicyDocument } from "./PolicyDocument";
+import { bodyShape, outlineItems, PolicyDocument, RedactedDocument } from "./PolicyDocument";
 import { PolicyReaderChanges, PolicyReaderHistory } from "./PolicyReaderHistory";
 import {
   ackBannerState,
@@ -53,6 +62,8 @@ import { type ReaderNotice, ReaderNotices } from "./ReaderNotices";
 
 interface ActionResult {
   error?: Failure;
+  /** When a break-glass grant ends (ISO 8601), on a successful reveal. */
+  grantedUntil?: string;
   ok?: boolean;
 }
 
@@ -162,46 +173,65 @@ const AcknowledgeDialog = ({
   );
 };
 
-/** The break-glass dialog (D2): a required reason, then submits `breakGlassReveal` through the route's action. */
-const BreakGlassDialog = ({ policyId }: { policyId: string }) => {
+/** The fetcher key the break-glass dialog submits on, so the reader can still read the grant
+ *  after the dialog unmounts with the redaction it sat in. */
+const BREAK_GLASS = "break-glass";
+
+/** The break-glass dialog (D2): names the policy, asks why, and only then lets the person
+ *  reveal it through the route's `breakGlass` action. An outside click doesn't close it. */
+const BreakGlassDialog = ({ detail }: { detail: PolicyDetail }) => {
   const { t } = useTranslation(["policy", "common"]);
-  const fetcher = useFetcher<ActionResult>();
+  const fetcher = useFetcher<ActionResult>({ key: BREAK_GLASS });
   const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
   const busy = fetcher.state !== "idle";
 
-  // See the matching comment in AcknowledgeDialog: closes on the render that first sees
-  // a successful submission, rather than in a later effect.
-  const [seenData, setSeenData] = useState(fetcher.data);
-  if (fetcher.data !== seenData) {
-    setSeenData(fetcher.data);
-    if (fetcher.data?.ok) setOpen(false);
-  }
-
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
+    <Dialog
+      onOpenChange={(next) => {
+        if (next) setReason("");
+        setOpen(next);
+      }}
+      open={open}
+    >
       <DialogTrigger asChild>
-        <Button variant="secondary">{t("reader.redacted.breakGlass")}</Button>
+        <Button
+          className="h-9 border-0 bg-transparent px-3.5 text-[13px] text-danger shadow-[inset_0_0_0_1.5px_var(--danger)] hover:bg-danger-soft hc:border-[1.5px] hc:border-danger"
+          variant="secondary"
+        >
+          {t("reader.redacted.breakGlass")}
+        </Button>
       </DialogTrigger>
       <DialogContent
         busy={busy}
-        description={t("reader.dialogs.breakGlass.description")}
+        description={t("reader.dialogs.breakGlass.description", {
+          number: detail.number,
+          title: detail.title,
+        })}
         hasInput
         title={t("reader.dialogs.breakGlass.title")}
         tone="danger"
       >
         <fetcher.Form method="post">
           <input name="intent" type="hidden" value="breakGlass" />
-          <input name="policyId" type="hidden" value={policyId} />
+          <input name="policyId" type="hidden" value={detail.id} />
           <DialogBody>
             {fetcher.data?.error ? (
               <Banner
+                className="mb-3"
                 failure={fetcher.data.error}
                 title={t("reader.dialogs.breakGlass.title")}
                 tone="danger"
               />
             ) : null}
             <Field label={t("reader.dialogs.breakGlass.reasonLabel")}>
-              <Textarea className="min-h-20" name="reason" required />
+              <Textarea
+                className="min-h-20"
+                name="reason"
+                onChange={(event) => setReason(event.target.value)}
+                required
+                value={reason}
+              />
             </Field>
           </DialogBody>
           <DialogFooter>
@@ -210,13 +240,95 @@ const BreakGlassDialog = ({ policyId }: { policyId: string }) => {
                 {t("actions.cancel", { ns: "common" })}
               </Button>
             </DialogClose>
-            <Button busy={busy} type="submit" variant="danger">
+            <Button busy={busy} disabled={reason.trim() === ""} type="submit" variant="danger">
               {t("reader.dialogs.breakGlass.confirm")}
             </Button>
           </DialogFooter>
         </fetcher.Form>
       </DialogContent>
     </Dialog>
+  );
+};
+
+/** The redaction notice (U9): why the body is hidden, then either the break-glass action or
+ *  who to ask. */
+const RedactionNotice = ({ canReveal, detail }: { canReveal: boolean; detail: PolicyDetail }) => {
+  const { t } = useTranslation("policy");
+  return (
+    <div
+      className="flex items-start gap-3.5 rounded-[10px] bg-surface px-[18px] py-4 shadow-[inset_0_0_0_1px_var(--border-strong)] hc:border hc:border-border-strong"
+      role="alert"
+    >
+      <EyeOff
+        aria-hidden="true"
+        className="size-5 flex-none"
+        style={{ color: "var(--sensitivity-sensitive)" }}
+      />
+      <div className="flex flex-1 flex-col gap-1.5">
+        <span className="text-[15px] font-semibold">{t("reader.redacted.title")}</span>
+        <span className="text-sm leading-[1.5] text-muted">{t("reader.redacted.body")} </span>
+        <span className="text-sm leading-[1.5]">
+          {canReveal ? t("reader.redacted.canReveal") : t("reader.redacted.noPermission")}
+        </span>
+        {canReveal ? (
+          <div className="mt-1">
+            <BreakGlassDialog detail={detail} />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
+/** "29:59": the minutes and seconds left on a grant. */
+const countdown = (milliseconds: number) => {
+  const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+};
+
+/** The revealed bar (U9r): until when the person may read the content, that it's on record,
+ *  the time left, and Hide now. When the time runs out it reloads, so the redaction returns. */
+const RevealedBar = ({ onHide, until }: { onHide: () => void; until: string }) => {
+  const { t } = useTranslation("policy");
+  const revalidator = useRevalidator();
+  const label = useId();
+  const end = new Date(until).getTime();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const left = end - now;
+  useEffect(() => {
+    if (left <= 0) void revalidator.revalidate();
+    // Only the moment the grant runs out matters, not every tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [left <= 0]);
+  if (left <= 0) return null;
+  return (
+    <div
+      aria-labelledby={label}
+      className="flex flex-wrap items-center gap-3 rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger"
+      role="status"
+    >
+      <Eye aria-hidden="true" className="size-[18px] flex-none" />
+      <span className="flex-1">
+        <strong className="font-semibold" id={label}>
+          {t("reader.revealed.until", { time: formatTime(until) })}
+        </strong>{" "}
+        {t("reader.revealed.recorded")}
+      </span>
+      <span aria-hidden="true" className="font-mono text-[13px] font-medium">
+        {countdown(left)}
+      </span>
+      <button
+        className="font-semibold text-danger underline underline-offset-2"
+        onClick={onHide}
+        type="button"
+      >
+        {t("reader.revealed.hide")}
+      </button>
+    </div>
   );
 };
 
@@ -329,6 +441,15 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
   const [outlineCollapsed, setOutlineCollapsed] = useState(false);
   const ackState = ackBannerState(detail.ack);
   const redaction = redactionState(detail);
+  // The grant the break-glass dialog won, while it lasts; the gateway can't yet say after a
+  // reload when a grant ends (steward-gateway#58), so the bar shows only after a reveal here.
+  const grant = useFetcher<ActionResult>({ key: BREAK_GLASS }).data?.grantedUntil;
+  const [hiddenGrant, setHiddenGrant] = useState<string>();
+  useEffect(() => {
+    if (grant) notify.info(t("reader.revealed.toast"));
+  }, [grant, t]);
+  const revealed = redaction === "visible" && grant !== undefined && hiddenGrant !== grant;
+  const reading = redaction === "visible" && (grant === undefined || hiddenGrant !== grant);
   const notices = noticesFor(detail, t);
   const procedure = detail.documentType === DocumentType.Procedure;
   const starred = favorites.isFavorite(detail.number);
@@ -352,13 +473,20 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
     related: detail.related.length,
   };
   const hasBody = detail.body.length > 0 || detail.appendices.length > 0;
+  const shape = bodyShape(detail.body);
+  const redactedLabel = t("reader.redacted.label", {
+    parts: [
+      t("reader.redacted.sections", { count: shape.sections }),
+      ...(shape.tables > 0 ? [t("reader.redacted.tables", { count: shape.tables })] : []),
+    ].join(", "),
+  });
 
   return (
     // The pending acknowledgement is pinned to the bottom on a phone; keep the page clear of it.
     <div
       className={cn(
         "flex flex-col gap-[18px] px-4 pt-[22px] pb-10 text-base text-ink sm:px-9",
-        ackState === "pending" && "max-md:pb-48",
+        redaction === "visible" && ackState === "pending" && "max-md:pb-48",
       )}
     >
       <Link
@@ -377,8 +505,22 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
           <h1 className="font-serif text-[26px] leading-8 font-semibold sm:text-[34px] sm:leading-[42px]">
             {detail.title}
           </h1>
-          <span className="font-mono text-[13px] text-muted">
-            {t("reader.versionLine", { number: detail.number, version: detail.version })}
+          <span className="flex flex-wrap items-center gap-2.5">
+            <span className="font-mono text-[13px] text-muted">
+              {t("reader.versionLine", { number: detail.number, version: detail.version })}
+            </span>
+            {detail.sensitivity === Sensitivity.Sensitive ? (
+              <span
+                className="inline-flex items-center gap-[5px] rounded-full px-2 py-0.5 text-xs font-semibold hc:outline hc:outline-1"
+                style={{
+                  background: "var(--sensitivity-sensitive-soft)",
+                  color: "var(--sensitivity-sensitive)",
+                }}
+              >
+                <EyeOff aria-hidden="true" className="size-3" />
+                {t("sensitivity.sensitive")}
+              </span>
+            ) : null}
           </span>
         </div>
         <button
@@ -420,13 +562,14 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
         </Menu>
       </div>
 
-      {ackState === "pending" && detail.currentVersionId ? (
+      {/* Nobody can acknowledge what they can't read (U9). */}
+      {redaction === "visible" && ackState === "pending" && detail.currentVersionId ? (
         <AckBanner
           action={<AcknowledgeDialog detail={detail} viewerName={viewerName} />}
           state="pending"
         />
       ) : null}
-      {ackState === "done" ? <AckBanner ackedAt={detail.ack?.ackedAt} state="done" /> : null}
+      {redaction === "visible" && ackState === "done" ? <AckBanner ackedAt={detail.ack?.ackedAt} state="done" /> : null}
 
       <ul
         aria-label={t("reader.metadata.label")}
@@ -454,7 +597,11 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
 
       <ReaderNotices notices={notices} />
 
-      {redaction === "visible" ? (
+      {revealed ? (
+        <RevealedBar onHide={() => setHiddenGrant(grant)} until={grant!} />
+      ) : null}
+
+      {reading ? (
         <Tabs onValueChange={setView} value={view}>
           <div className="flex flex-wrap items-center gap-1 border-b border-border-strong">
             <TabsList className="h-auto gap-1 rounded-none bg-transparent p-0">
@@ -569,16 +716,18 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
           </TabsContent>
         </Tabs>
       ) : (
-        <Banner
-          actions={
-            redaction === "redacted-reveal" ? <BreakGlassDialog policyId={detail.id} /> : null
-          }
-          title={t("reader.redacted.title")}
-          tone="warn"
-        >
-          {t("reader.redacted.body")}
-          {redaction === "redacted-no-permission" ? ` ${t("reader.redacted.noPermission")}` : ""}
-        </Banner>
+        <>
+          {redaction === "visible" ? null : (
+            <RedactionNotice canReveal={redaction === "redacted-reveal"} detail={detail} />
+          )}
+          {hasBody ? (
+            <RedactedDocument
+              appendices={detail.appendices}
+              blocks={detail.body}
+              label={redactedLabel}
+            />
+          ) : null}
+        </>
       )}
 
       <div id="history">

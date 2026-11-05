@@ -119,10 +119,10 @@
         "title": "Acknowledge this policy?"
       },
       "breakGlass": {
-        "confirm": "Break glass to reveal",
-        "description": "This access is recorded for audit. Give a reason for revealing this policy's real content.",
-        "reasonLabel": "Reason",
-        "title": "Break glass to reveal"
+        "confirm": "Reveal content",
+        "description": "Revealing the content of {{title}} ({{number}}) is recorded against your name with the reason you give below. Only break the glass when you have a legitimate need.",
+        "reasonLabel": "Reason (required)",
+        "title": "Reveal sensitive content?"
       }
     },
     "history": {
@@ -222,7 +222,13 @@
     "redacted": {
       "body": "You're outside this sensitive policy's read audience, so its content is obfuscated.",
       "breakGlass": "Break glass to reveal",
+      "canReveal": "You may break the glass to reveal it — this access is recorded for audit.",
+      "label": "Redacted policy content: {{parts}}",
       "noPermission": "You don't have permission to reveal it. Contact a compliance admin if you need access.",
+      "sections_one": "{{count}} section",
+      "sections_other": "{{count}} sections",
+      "tables_one": "{{count}} table",
+      "tables_other": "{{count}} tables",
       "title": "Sensitive content is hidden"
     },
     "references": {
@@ -237,6 +243,12 @@
     "related": {
       "empty": "No related policies.",
       "title": "Related"
+    },
+    "revealed": {
+      "hide": "Hide now",
+      "recorded": "· recorded with your reason",
+      "toast": "Content revealed — this access is recorded.",
+      "until": "Revealed for you until {{time}}"
     },
     "star": {
       "label": "Star"
