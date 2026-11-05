@@ -35,6 +35,9 @@
 - name: documentation
   color: "0075ca"
   description: "Documentation only (docs)."
+- name: design
+  color: "9c27b0"
+  description: "UI or visual design work."
 - name: dependencies
   color: "0366d6"
   description: "Dependency updates."

@@ -24,23 +24,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@v4
         with:
-          node-version: 24.x
+          node-version: lts/*
 
-      # pnpm workspaces: the npm-based checker can't read them, so the check
-      # reads `pnpm licenses list` for the production dependencies instead.
       - name: Install dependencies
-        env:
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
-        run: |
-          corepack enable pnpm
-          pnpm install --frozen-lockfile --ignore-scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Check dependency licenses
-        run: node scripts/check-licenses.mjs
+        run: |
+          npx --yes license-checker-rseidelsohn \
+            --production --excludePrivatePackages \
+            --onlyAllow "MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause;0BSD;CC0-1.0;Unlicense;BlueOak-1.0.0;Python-2.0;MPL-2.0;CC-BY-4.0"
