@@ -13,13 +13,21 @@ it. To acknowledge means to confirm you have read and understood it.
 
 ## ✅ How it works
 
-1. **Open the document.** Find it through your dashboard, or through
+1. **Open the document.** Find it through **To acknowledge**, your dashboard, or
    [search](/user-guide/search).
-2. **Read it.** Read it from start to finish, not just the title.
+2. **Read it.** Read it from start to finish, not just the title. The **On this page** card beside
+   the document lists its numbered sections and appendices and shows how far you've read; select
+   a section to jump to it. A word underlined with dots is a defined term: select it to read its
+   definition. If the document comes with an AI summary, the **AI summary** switch shows it above the
+   text, but always check it against the policy itself.
 3. **Confirm.** Select **Acknowledge** on the plum "Please review and confirm" banner (at the
-   bottom of the screen on a phone) and confirm in the dialog. This means "I have read and
-   understood this document." Steward records your name and the date, and the banner changes to
-   "Acknowledged" with the date you did it.
+   bottom of the screen on a phone). The dialog names the policy and shows what's recorded: your
+   name, the version and the time. Select **Acknowledge** to confirm. This means "I have read and
+   understood this document." Steward confirms it with "Acknowledged · recorded" with the time, and the
+   banner changes to "Acknowledged" with the date you did it.
+
+Use the star beside the title to keep a document in your starred list, and **Actions** to print it
+or jump to its **History & approvals**.
 
 That is all it takes. Your organisation now has a clear record that you did your part.
 

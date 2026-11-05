@@ -12,6 +12,7 @@ import {
   formatNumber,
   formatPercent,
   formatRelativeTime,
+  formatTime,
   formatWeekday,
 } from "./formats";
 
@@ -46,6 +47,15 @@ describe("formatDate / formatDateTime", () => {
     const iso = "2026-08-24T14:30:00.000Z";
     expect(formatDateTime(iso, { locale: "en" })).toMatch(/\d{1,2}:\d{2}/);
     expect(formatDate(iso, { locale: "en" })).not.toMatch(/\d{1,2}:\d{2}/);
+  });
+});
+
+describe("formatTime", () => {
+  it("is the time of day alone, hours and minutes", () => {
+    const iso = "2026-10-03T09:12:00.000Z";
+    expect(formatTime(iso, { locale: "en" })).toMatch(/^\d{1,2}:\d{2}/);
+    expect(formatTime(iso, { locale: "en" })).not.toContain("2026");
+    expect(formatTime(null, { locale: "en" })).toBe("—");
   });
 });
 

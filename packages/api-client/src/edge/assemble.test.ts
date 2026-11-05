@@ -15,6 +15,7 @@ import {
   bodyTextFromContent,
   categoryNames,
   type CategoryNode,
+  documentBlocksFromContent,
   historyFromAuditLog,
   isPermissionDenied,
   isUnauthenticated,
@@ -55,6 +56,90 @@ describe("bodyTextFromContent", () => {
   it("returns an empty body for unparseable content or content in neither format", () => {
     expect(bodyTextFromContent("not json")).toBe("");
     expect(bodyTextFromContent('{"text":"x"}')).toBe("");
+  });
+});
+
+const text = (value: string, format = 0) => ({ format, text: value, type: "text" });
+const node = (type: string, children: object[], extra: object = {}) => ({
+  children,
+  type,
+  ...extra,
+});
+const stored = (...children: object[]) => JSON.stringify({ root: { children, type: "root" } });
+
+describe("documentBlocksFromContent", () => {
+  it("reads the editor's tree as the reader's blocks, sections at depth 1", () => {
+    const blocks = documentBlocksFromContent(
+      stored(
+        node("heading", [text("Purpose")], { tag: "h1" }),
+        node("paragraph", [text("Book a "), text("shared desk", 1), text(" early.")]),
+        node("heading", [text("Changing a booking")], { tag: "h2" }),
+        node("list", [node("listitem", [text("Cancel")]), node("listitem", [text("Rebook")])], {
+          listType: "bullet",
+        }),
+        node("paragraph", [
+          node("link", [text("the booking page")], { url: "https://example.org/b" }),
+        ]),
+        node("table", [
+          node("tablerow", [
+            node("tablecell", [node("paragraph", [text("Role")])], { headerState: 1 }),
+            node("tablecell", [node("paragraph", [text("Responsibility")])], { headerState: 1 }),
+          ]),
+          node("tablerow", [
+            node("tablecell", [node("paragraph", [text("Staff")])]),
+            node("tablecell", [node("paragraph", [text("Book ahead.")])]),
+          ]),
+        ]),
+        node("quote", [text("Be kind.")]),
+        node("paragraph", []),
+      ),
+    );
+    expect(blocks).toEqual([
+      { depth: 1, kind: "heading", text: "Purpose" },
+      {
+        kind: "paragraph",
+        runs: [{ text: "Book a " }, { bold: true, text: "shared desk" }, { text: " early." }],
+      },
+      { depth: 2, kind: "heading", text: "Changing a booking" },
+      { items: [[{ text: "Cancel" }], [{ text: "Rebook" }]], kind: "list", ordered: false },
+      { kind: "paragraph", runs: [{ href: "https://example.org/b", text: "the booking page" }] },
+      {
+        kind: "table",
+        rows: [
+          { cells: ["Role", "Responsibility"], header: true },
+          { cells: ["Staff", "Book ahead."], header: false },
+        ],
+      },
+      { kind: "quote", runs: [{ text: "Be kind." }] },
+    ]);
+  });
+
+  it("measures heading depth from the document's own top level", () => {
+    const blocks = documentBlocksFromContent(
+      stored(
+        node("heading", [text("Scope")], { tag: "h2" }),
+        node("heading", [text("Exceptions")], { tag: "h3" }),
+      ),
+    );
+    expect(blocks).toEqual([
+      { depth: 1, kind: "heading", text: "Scope" },
+      { depth: 2, kind: "heading", text: "Exceptions" },
+    ]);
+  });
+
+  it("reads the older section array as a heading and paragraphs per section", () => {
+    const blocks = documentBlocksFromContent(
+      JSON.stringify([{ sectionKey: "purpose", text: "One.\n\nTwo.", title: "Purpose" }]),
+    );
+    expect(blocks).toEqual([
+      { depth: 1, kind: "heading", text: "Purpose" },
+      { kind: "paragraph", runs: [{ text: "One." }] },
+      { kind: "paragraph", runs: [{ text: "Two." }] },
+    ]);
+  });
+
+  it("answers no blocks for content it can't read", () => {
+    expect(documentBlocksFromContent("not json")).toEqual([]);
   });
 });
 

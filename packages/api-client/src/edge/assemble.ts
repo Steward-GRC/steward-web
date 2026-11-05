@@ -1,11 +1,22 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { documentText, parseDocument } from "@steward-web/editor-steward/document";
+import {
+  documentText,
+  nodeText,
+  parseDocument,
+  type SerializedNode,
+} from "@steward-web/editor-steward/document";
 
 import type { AuthoringPolicyFieldsFragment } from "../generated/graphql";
 
 import { GatewayError } from "../gatewayFetch";
-import { type HistoryEntry, type Policy, PolicyStatus } from "../views";
+import {
+  type DocumentBlock,
+  type HistoryEntry,
+  type InlineRun,
+  type Policy,
+  PolicyStatus,
+} from "../views";
 
 /** The part of a gateway `Category` the library's names are built from. */
 export interface CategoryNode {
@@ -39,6 +50,131 @@ export const bodyTextFromContent = (contentJson: string): string => {
     .filter((s) => typeof s.text === "string" && s.text.trim() !== "")
     .map((s) => `${typeof s.title === "string" ? s.title : ""}\n\n${String(s.text)}`)
     .join("\n\n");
+};
+
+// Lexical's text format bits.
+const BOLD = 1;
+const ITALIC = 2;
+const STRIKE = 4;
+const UNDERLINE = 8;
+const CODE = 16;
+
+const runsOf = (node: SerializedNode, href?: string): InlineRun[] =>
+  (node.children ?? []).flatMap((child): InlineRun[] => {
+    if (child.type === "link" || child.type === "autolink") {
+      const url = typeof child.url === "string" ? child.url : undefined;
+      return runsOf(child, url);
+    }
+    if (child.type === "linebreak") return [{ text: "\n" }];
+    if (typeof child.text === "string") {
+      if (child.text === "") return [];
+      const format = typeof child.format === "number" ? child.format : 0;
+      const marks: Partial<InlineRun> = {};
+      if (format & BOLD) Object.assign(marks, { bold: true });
+      if (format & CODE) Object.assign(marks, { code: true });
+      if (href) Object.assign(marks, { href });
+      if (format & ITALIC) Object.assign(marks, { italic: true });
+      if (format & STRIKE) Object.assign(marks, { strike: true });
+      if (format & UNDERLINE) Object.assign(marks, { underline: true });
+      return [{ ...marks, text: child.text }];
+    }
+    return runsOf(child, href);
+  });
+
+const headingLevel = (node: SerializedNode): number =>
+  Number.parseInt(String(node.tag ?? "h1").replace(/^h/i, ""), 10) || 1;
+
+const blockOf = (node: SerializedNode, top: number): DocumentBlock | undefined => {
+  switch (node.type) {
+    case "heading": {
+      const text = nodeText(node).trim();
+      if (!text) return undefined;
+      const depth = Math.min(3, Math.max(1, headingLevel(node) - top + 1)) as 1 | 2 | 3;
+      return { depth, kind: "heading", text };
+    }
+    case "list": {
+      const items = (node.children ?? [])
+        .filter((item) => item.type === "listitem")
+        .map((item) => runsOf(item))
+        .filter((runs) => runs.length > 0);
+      return items.length > 0
+        ? { items, kind: "list", ordered: node.listType === "number" }
+        : undefined;
+    }
+    case "quote": {
+      const runs = runsOf(node);
+      return runs.length > 0 ? { kind: "quote", runs } : undefined;
+    }
+    case "table": {
+      const rows = (node.children ?? [])
+        .filter((row) => row.type === "tablerow")
+        .map((row) => {
+          const cells = (row.children ?? []).filter((cell) => cell.type === "tablecell");
+          return {
+            cells: cells.map((cell) => nodeText(cell).replaceAll(/\s+/g, " ").trim()),
+            header: cells.length > 0 && cells.every((cell) => Number(cell.headerState ?? 0) !== 0),
+          };
+        });
+      return rows.length > 0 ? { kind: "table", rows } : undefined;
+    }
+    default: {
+      const runs = runsOf(node);
+      if (runs.length === 0 && typeof node.text !== "string") {
+        const plain = nodeText(node).trim();
+        return plain ? { kind: "paragraph", runs: [{ text: plain }] } : undefined;
+      }
+      return runs.length > 0 ? { kind: "paragraph", runs } : undefined;
+    }
+  }
+};
+
+/**
+ * A version's `contentJson` as the reader's blocks (U7). Heading depth is measured from the
+ * document's own top heading level, so its sections number "1.", "2." and their sub-sections
+ * "1.1". The older section array reads as each section's heading and its paragraphs. Content
+ * that can't be read answers no blocks.
+ */
+export const documentBlocksFromContent = (contentJson: string): DocumentBlock[] => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(contentJson);
+  } catch {
+    return [];
+  }
+  if (Array.isArray(parsed)) {
+    return (parsed as StoredSection[]).flatMap((section): DocumentBlock[] => {
+      const title = typeof section.title === "string" ? section.title.trim() : "";
+      const body = typeof section.text === "string" ? section.text : "";
+      const paragraphs = body
+        .split(/\n{2,}/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean)
+        .map((paragraph): DocumentBlock => ({ kind: "paragraph", runs: [{ text: paragraph }] }));
+      return [
+        ...(title ? [{ depth: 1, kind: "heading", text: title } as const] : []),
+        ...paragraphs,
+      ];
+    });
+  }
+  const document = parseDocument(contentJson);
+  if (!document) return [];
+  const headings = document.root.children.filter((node) => node.type === "heading");
+  const top = headings.length > 0 ? Math.min(...headings.map((node) => headingLevel(node))) : 1;
+  return document.root.children
+    .map((node) => blockOf(node, top))
+    .filter((block): block is DocumentBlock => block !== undefined);
+};
+
+/** True for stored content the reader can read: blank, the older section array, or a tree. */
+export const readableContent = (contentJson: string): boolean => {
+  if (!contentJson.trim()) return true;
+  try {
+    const parsed = JSON.parse(contentJson) as unknown;
+    if (Array.isArray(parsed)) return true;
+  } catch {
+    return false;
+  }
+  return parseDocument(contentJson) !== undefined;
 };
 
 /** An appendix's `contentJson` (the editor's `{ text }`) as plain text. */

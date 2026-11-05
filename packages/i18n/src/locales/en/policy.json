@@ -41,11 +41,27 @@
       "pendingBody": "Please take a moment to read this policy, then confirm you've reviewed it.",
       "pendingTitle": "Please review and confirm"
     },
+    "actions": {
+      "history": "History & approvals",
+      "menu": "Actions",
+      "print": "Print / Export"
+    },
     "appendices": {
       "empty": "No appendices.",
+      "heading": "Appendix {{letter}}: {{title}}",
       "title": "Appendices"
     },
-    "back": "Back to the library",
+    "back": {
+      "policies": "Policies",
+      "procedures": "Procedures"
+    },
+    "body": {
+      "empty": "No rendered content",
+      "unreadable": {
+        "body": "The rest of the page is unaffected…",
+        "title": "This document's content couldn't be displayed"
+      }
+    },
     "changes": {
       "added": "added: {{text}}",
       "counts": "{{added}} added, {{removed}} removed",
@@ -82,8 +98,15 @@
     "dialogs": {
       "acknowledge": {
         "confirm": "Acknowledge",
-        "description": "This confirms you've read and understood this policy. Your name and the time are recorded.",
-        "title": "Acknowledge this policy"
+        "description": "You're confirming you've read and understood {{title}} ({{number}}). This is recorded against your name with a timestamp.",
+        "done": "Acknowledged · recorded {{time}}",
+        "record": {
+          "label": "What's recorded",
+          "name": "Name",
+          "time": "Time",
+          "version": "Version"
+        },
+        "title": "Acknowledge this policy?"
       },
       "breakGlass": {
         "confirm": "Break glass to reveal",
@@ -144,6 +167,8 @@
       "title": "History & approvals"
     },
     "metadata": {
+      "label": "Details",
+      "none": "—",
       "owner": "Owner",
       "published": "Published",
       "sensitivity": "Sensitivity",
@@ -152,10 +177,30 @@
       "version": "Version"
     },
     "notices": {
-      "inReview": "A new version is in review.",
-      "rejected": "An approver returned this draft. Address the feedback and resubmit.",
-      "superseded": "This version has been superseded.",
-      "withdrawn": "This version was withdrawn."
+      "changesRequested": {
+        "body": "An approver returned this draft. Address the feedback and resubmit.",
+        "title": "Changes requested"
+      },
+      "draftRevision": {
+        "body": "A newer version, v{{revision}}, is being drafted. You're reading the published v{{version}}.",
+        "title": "A draft revision is in progress"
+      },
+      "inReview": {
+        "body": "This version is waiting on approval.",
+        "title": "This version is in review"
+      },
+      "inReviewRevision": {
+        "body": "v{{revision}} is waiting on approval. You're reading the published v{{version}}.",
+        "title": "A new version is in review"
+      },
+      "more_one": "+{{count}} more notice",
+      "more_other": "+{{count}} more notices",
+      "superseded": {
+        "title": "This version has been superseded"
+      },
+      "withdrawn": {
+        "title": "This version was withdrawn"
+      }
     },
     "outline": {
       "collapse": "Collapse outline",
@@ -183,6 +228,14 @@
       "empty": "No related policies.",
       "title": "Related"
     },
+    "star": {
+      "label": "Star"
+    },
+    "summary": {
+      "disclaimer": "AI-generated summary — always check it against the policy text before relying on it.",
+      "title": "Summary",
+      "toggle": "AI summary"
+    },
     "tabs": {
       "changes": "Changes",
       "contacts": "Contacts",
@@ -190,7 +243,9 @@
       "references": "References",
       "related": "Related",
       "view": "View"
-    }
+    },
+    "versionLine": "{{number}} · v{{version}}",
+    "versionValue": "v{{version}}"
   },
   "sensitivity": {
     "sensitive": "Sensitive",

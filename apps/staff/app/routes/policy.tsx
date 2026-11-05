@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { useIdentity } from "@steward-web/auth";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { refusalOf } from "@steward-web/shell";
 import { DocumentType, PolicyReader } from "@steward-web/ui/domain";
@@ -45,5 +46,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export default function PolicyRoute({ loaderData }: Route.ComponentProps) {
-  return <PolicyReader detail={loaderData.detail} />;
+  const identity = useIdentity();
+  return <PolicyReader detail={loaderData.detail} viewerName={identity.name || undefined} />;
 }

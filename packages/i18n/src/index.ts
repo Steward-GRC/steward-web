@@ -18,6 +18,7 @@ export {
   type FormatOptions,
   formatPercent,
   formatRelativeTime,
+  formatTime,
   formatWeekday,
 } from "./formats";
 

@@ -334,7 +334,12 @@ describe("liveEdge.policyDetail", () => {
     expect(detail).toMatchObject({
       ack: { acknowledged: true, required: true },
       appendices: [{ id: "a-1", letter: "A", text: "Rates", title: "Rates" }],
+      body: [
+        { depth: 1, kind: "heading", text: "Purpose" },
+        { kind: "paragraph", runs: [{ text: "Why." }] },
+      ],
       bodyText: "Purpose\n\nWhy.",
+      bodyUnreadable: false,
       category: "Finance",
       currentVersionId: "v-2",
       definitions: [{ term: "Travel" }],
@@ -345,8 +350,10 @@ describe("liveEdge.policyDetail", () => {
       id: "p-1",
       priorVersion: { diff: [{ changeType: "MODIFIED" }], version: "1" },
       published: "2026-08-12T00:00:00Z",
+      revision: null,
       status: PolicyStatus.Published,
       subcategory: "Travel",
+      summary: null,
       version: "2",
     });
     expect(calls.find((c) => c.operation === "PolicyByNumber")?.variables).toEqual({
@@ -355,6 +362,51 @@ describe("liveEdge.policyDetail", () => {
     expect(calls.find((c) => c.operation === "AuditLog")?.variables).toEqual({
       subject: "policy:p-1",
     });
+  });
+
+  it("names a revision in review beside the published version, and reads its stored summary", async () => {
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      PolicyByNumber: () => ({ policyByNumber: policy({ currentDraftVersionId: "v-3" }) }),
+      PolicyVersions: () => ({
+        policyVersions: [
+          { id: "v-2", status: "published", versionNo: 2 },
+          { id: "v-3", status: "in_review", versionNo: 3 },
+        ],
+      }),
+      PolicyVersionSummary: (v) => ({
+        policyVersionSummary:
+          v.versionId === "v-2"
+            ? { generatedAt: "2026-08-12T00:00:00Z", summaryText: "Book ahead; cancel early." }
+            : null,
+      }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail).toMatchObject({
+      revision: { status: PolicyStatus.InReview, version: "3" },
+      summary: { generatedAt: "2026-08-12T00:00:00Z", text: "Book ahead; cancel early." },
+    });
+  });
+
+  it("flags a body it couldn't read, so the reader can say so", async () => {
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          contentJson: "{ broken",
+          createdAt: "2026-08-05T00:00:00Z",
+          id: "v-2",
+          policyId: "p-1",
+          publishedAt: "2026-08-12T00:00:00Z",
+          status: "published",
+          templateVersionId: "",
+          versionNo: 2,
+        },
+      }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail).toMatchObject({ body: [], bodyUnreadable: true });
   });
 
   it("builds a caller without audit.read the history from the versions they can read", async () => {

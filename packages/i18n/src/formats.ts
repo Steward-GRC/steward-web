@@ -93,6 +93,16 @@ export const formatDateTime = (
   }).format(date);
 };
 
+/** The time of day, hours and minutes ("09:12"), for a moment already dated nearby. */
+export const formatTime = (
+  value: Date | null | number | string | undefined,
+  { fallback = "—", locale = currentLocale() }: FormatOptions = {},
+): string => {
+  const date = toDate(value);
+  if (!date) return fallback;
+  return dateTimeFormat(dateLocale(locale), { hour: "2-digit", minute: "2-digit" }).format(date);
+};
+
 /** An hour-of-day label for the digest-window pickers. Replaces the hardcoded
  *  24-hour `HH:00`, which reads wrong to a US audience expecting "2 PM". */
 export const formatHour = (

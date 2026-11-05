@@ -15,20 +15,43 @@ import type {
 import { policyPath } from "./policy";
 import { ReferenceKind } from "./policyReaderModel";
 
-/** The definitions panel (U13): this policy's attached glossary entries, read-only. */
-export const DefinitionsPanel = ({ definitions }: { definitions: readonly PolicyDefinition[] }) => {
+/**
+ * The definitions panel (U13): this policy's attached glossary entries, read-only. A term
+ * opened from the body is highlighted in soft plum for two seconds.
+ */
+export const DefinitionsPanel = ({
+  definitions,
+  highlighted,
+}: {
+  definitions: readonly PolicyDefinition[];
+  /** The definition a term link just opened. */
+  highlighted?: string;
+}) => {
   const { t } = useTranslation("policy");
   if (definitions.length === 0) {
     return <EmptyState title={t("reader.definitions.empty")} />;
   }
   return (
-    <dl className="grid gap-4">
-      {definitions.map((definition) => (
-        <div id={`def-${definition.id}`} key={definition.id}>
-          <dt className="font-semibold text-ink">{definition.term}</dt>
-          <dd className="text-base text-muted">{definition.definition}</dd>
-        </div>
-      ))}
+    <dl className="grid gap-3">
+      {definitions.map((definition) => {
+        const on = definition.id === highlighted;
+        return (
+          <div
+            className={
+              on
+                ? "flex flex-col gap-1 rounded-lg bg-primary-soft p-3 shadow-[inset_0_0_0_1.5px_var(--primary)]"
+                : "flex flex-col gap-1 rounded-lg p-3 shadow-[inset_0_0_0_1px_var(--border)]"
+            }
+            data-highlighted={on ? "true" : undefined}
+            data-testid={`definition-${definition.id}`}
+            id={`def-${definition.id}`}
+            key={definition.id}
+          >
+            <dt className="font-serif text-[15px] font-semibold text-ink">{definition.term}</dt>
+            <dd className="text-base leading-normal text-ink">{definition.definition}</dd>
+          </div>
+        );
+      })}
     </dl>
   );
 };
