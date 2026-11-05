@@ -7,6 +7,20 @@ export type Incremental<T> =
 import type * as Types from "./schema";
 
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
+export type AckActivityQueryVariables = Exact<{
+  policyVersionId: string | number;
+  groupId?: string | number | null | undefined;
+  days: number;
+}>;
+
+export type AckActivityQuery = {
+  readonly ackActivity: ReadonlyArray<{
+    readonly date: string;
+    readonly acks: number;
+    readonly views: number;
+  }>;
+};
+
 export type AckRosterQueryVariables = Exact<{
   policyVersionId: string | number;
   groupId?: string | number | null | undefined;
@@ -4273,6 +4287,73 @@ export const WorkflowDefFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<WorkflowDefFieldsFragment, unknown>;
+export const AckActivityDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AckActivity" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "days" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "ackActivity" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "groupId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "groupId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "days" },
+                value: { kind: "Variable", name: { kind: "Name", value: "days" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "date" } },
+                { kind: "Field", name: { kind: "Name", value: "acks" } },
+                { kind: "Field", name: { kind: "Name", value: "views" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AckActivityQuery, AckActivityQueryVariables>;
 export const AckRosterDocument = {
   kind: "Document",
   definitions: [

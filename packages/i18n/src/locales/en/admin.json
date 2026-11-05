@@ -1124,5 +1124,71 @@
       "done": "{{title}} is deleted."
     },
     "failed": "That didn't go through."
+  },
+  "completion": {
+    "title": "Completion",
+    "subtitle": "Acknowledgement coverage across every policy that requires acknowledgement.",
+    "stats": {
+      "obligating": "Obligating policies",
+      "audience": "Audience",
+      "acknowledged": "Acknowledged",
+      "completion": "Completion",
+      "avgDays": "Avg days to ack",
+      "viewedNotAcked": "Viewed not acked",
+      "label": "Completion summary"
+    },
+    "filters": {
+      "category": "Category",
+      "allCategories": "All categories",
+      "overdueOnly": "Overdue only"
+    },
+    "table": {
+      "label": "Obligating policies",
+      "policy": "Policy",
+      "category": "Category",
+      "acknowledged": "Acknowledged",
+      "completion": "Completion",
+      "overdue": "Overdue",
+      "ackedOf": "{{acked}} of {{audience}}",
+      "overdueBadge": "{{count}} overdue"
+    },
+    "empty": {
+      "title": "No obligating policies",
+      "description": "Completion shows here once a published policy asks people to acknowledge it.",
+      "filtered": "No obligating policies match these filters."
+    },
+    "detail": {
+      "versionLine": "{{number}} · v{{version}}",
+      "export": "Export CSV",
+      "unpublishedTitle": "Nothing to report",
+      "unpublished": "This policy has no published version, so there's no audience yet.",
+      "donut": {
+        "title": "Acknowledged vs not yet",
+        "of": "{{acked}} of {{audience}}",
+        "acknowledged": "Acknowledged",
+        "notYet": "Not yet"
+      },
+      "activity": {
+        "title": "Activity over time",
+        "days": "{{count}} days",
+        "period": "Period",
+        "bar": "{{date}}: {{count}}",
+        "label": "Acknowledgements per day",
+        "empty": "No acknowledgements in this period.",
+        "unavailable": "Activity isn't available right now."
+      },
+      "overdue_one": "{{count}} user is overdue for acknowledgement.",
+      "overdue_other": "{{count}} users are overdue for acknowledgement.",
+      "roster": {
+        "label": "Audience",
+        "acknowledged": "Acknowledged {{count}}",
+        "notYet": "Not yet {{count}}",
+        "ackedOn": "Acknowledged {{date}}",
+        "overdue": "Overdue",
+        "pending": "Not yet",
+        "emptyAcknowledged": "No one has acknowledged it yet.",
+        "emptyNotYet": "Everyone has acknowledged it."
+      }
+    }
   }
 }

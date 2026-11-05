@@ -8,6 +8,7 @@ export {
 } from "./apiErrorReporter";
 export type {
   AccountMergePreview,
+  AckActivityDay,
   AckExport,
   AckRoster,
   AckRosterEntry,

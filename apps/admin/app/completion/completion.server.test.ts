@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ackExportDownload,
   exportAcks,
+  getAckActivity,
   getAckRoster,
   getCompletionReport,
 } from "./completion.server";
@@ -135,5 +136,38 @@ describe("ackExportDownload", () => {
       exportRequest(`policyVersionId=pv-1&number=${encodeURIComponent('x"\r\nSet-Cookie: a=b')}`),
     ).catch((error: unknown) => error);
     expect(thrown).toMatchObject({ init: { status: 400 } });
+  });
+});
+
+describe("getAckActivity", () => {
+  it("asks for the days chosen and answers acknowledgements per day (A14)", async () => {
+    const days = [
+      { acks: 3, date: "2026-11-01", views: 5 },
+      { acks: 0, date: "2026-11-02", views: 1 },
+    ];
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: readerMe }))
+      .mockResolvedValueOnce(jsonOnce({ ackActivity: days }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    expect(await getAckActivity(request(), "pv-1", 90)).toEqual(days);
+    const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(init.body as string).variables).toEqual({
+      days: 90,
+      groupId: null,
+      policyVersionId: "pv-1",
+    });
+  });
+
+  it("answers null when the gateway can't say, so the rest of the page still shows", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonOnce({ me: readerMe }))
+        .mockResolvedValueOnce(Response.json({ errors: [{ message: "unavailable" }] })),
+    );
+    expect(await getAckActivity(request(), "pv-1", 30)).toBeNull();
   });
 });

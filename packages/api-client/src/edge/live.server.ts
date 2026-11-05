@@ -6,6 +6,7 @@ import type { Me, Policy, PolicyDetail, PolicySectionDiff } from "../views";
 import { GatewayError, gatewayFetch } from "../gatewayFetch";
 import { gatewayRestFetch, gatewayRestUpload } from "../gatewayRestFetch";
 import {
+  AckActivityDocument,
   AckRosterDocument,
   AckStatusDocument,
   ActivateOrganizationDocument,
@@ -432,6 +433,15 @@ const assembleDetail = async (
 
 /** The live edge: every call is a real POST to `GATEWAY_URL`, cookie forwarded. */
 export const liveEdge: Edge = {
+  async ackActivity(policyVersionId, groupId, days, cookie) {
+    const data = await gatewayFetch(
+      AckActivityDocument,
+      { days, groupId, policyVersionId },
+      "AckActivity",
+      { cookie },
+    );
+    return data.ackActivity;
+  },
   async acknowledgePolicy(policyVersionId, cookie) {
     const data = await gatewayFetch(RecordAckDocument, { policyVersionId }, "RecordAck", {
       cookie,

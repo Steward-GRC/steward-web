@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type {
   AccountMergePreview,
+  AckActivityDay,
   AckExport,
   AckRoster,
   AckTrigger,
@@ -101,6 +102,7 @@ import { DocumentType } from "./generated/schema";
 
 export type {
   AccountMergePreview,
+  AckActivityDay,
   AckExport,
   AckRoster,
   AckRosterEntry,
@@ -305,6 +307,14 @@ export interface CreatePolicyInput {
 }
 
 export interface Edge {
+  /** Acknowledgements and views per day over the last `days` days for one version (A14's
+   *  "Activity over time"), optionally within one group. */
+  ackActivity(
+    policyVersionId: string,
+    groupId: null | string | undefined,
+    days: number,
+    cookie?: string,
+  ): Promise<readonly AckActivityDay[]>;
   /** Records the CALLING user's acknowledgement of a published policy version. Rejects with `GatewayError` when signed out or not in the ack audience. */
   acknowledgePolicy(policyVersionId: string, cookie?: string): Promise<AckStatus>;
   /** The acknowledgement roster for a published policy version: who has acked and who is

@@ -1,86 +1,100 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import {
-  Button,
-  Card,
-  CardBody,
-  EmptyState,
-  Field,
-  PageHeader,
-  Progress,
-  Select,
-  Table,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  TD,
-  TH,
-  THead,
-} from "@steward-web/ui";
+import type { AckRosterEntry } from "@steward-web/api-client";
+
+import { formatDate, formatNumber, formatPercent, useTranslation } from "@steward-web/i18n";
+import { Button, cn, EmptyState } from "@steward-web/ui";
+import { Clock, Download } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/completion.$number";
 
 import {
+  getAckActivity,
   getAckRoster,
   getCompletionReport,
   listAllPolicies,
 } from "../completion/completion.server";
-import { listGroups, orderedWithPaths } from "../groups/groups.server";
+import { ACTIVITY_DAYS, ActivityBars, CompletionDonut } from "../completion/CompletionCharts";
+import { StatTiles } from "../completion/StatTiles";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const url = new URL(request.url);
-  const groupId = url.searchParams.get("groupId") || undefined;
+  const asked = Number(new URL(request.url).searchParams.get("days"));
+  const days = ACTIVITY_DAYS.find((option) => option === asked) ?? ACTIVITY_DAYS[0];
 
-  const [policies, groups] = await Promise.all([listAllPolicies(request), listGroups(request)]);
-  const policy = policies.find((p) => p.number === params.number);
-  if (!policy) throw new Response("Not Found", { status: 404 });
+  const policies = await listAllPolicies(request);
+  const found = policies.find((p) => p.number === params.number);
+  if (!found) throw new Response("Not Found", { status: 404 });
+  const policy = {
+    currentPublishedVersionId: found.currentPublishedVersionId ?? null,
+    number: found.number,
+    title: found.title,
+    version: found.version,
+  };
 
-  const versionId = policy.currentPublishedVersionId;
-  if (!versionId) {
-    return { categories: orderedWithPaths(groups), groupId, policy, report: null, roster: null };
-  }
-  const [report, roster] = await Promise.all([
-    getCompletionReport(request, versionId, groupId),
-    getAckRoster(request, versionId, groupId),
+  const versionId = found.currentPublishedVersionId;
+  if (!versionId) return { activity: null, days, policy, report: null, roster: null };
+  const [report, roster, activity] = await Promise.all([
+    getCompletionReport(request, versionId),
+    getAckRoster(request, versionId),
+    getAckActivity(request, versionId, days),
   ]);
-  return { categories: orderedWithPaths(groups), groupId, policy, report, roster };
+  return { activity, days, policy, report, roster };
 };
 
-export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
-  const { categories, groupId, policy, report, roster } = loaderData;
-  const [tab, setTab] = useState<"acked" | "pending">("acked");
+const ROW =
+  "grid grid-cols-[1fr_1fr_140px] items-center border-b border-border px-3.5 py-2.5 text-[13px] last:border-b-0";
 
-  const categoryOptions = [
-    { label: "All groups", value: "" },
-    ...categories.map((c) => ({ label: c.path, value: c.id })),
-  ];
+/**
+ * Completion for one policy (A14): the policy's serif title under "Completion", its number and
+ * version in mono, Export CSV; five stat cards; the "Acknowledged vs not yet" donut beside
+ * "Activity over time"; how many people are overdue; then the roster's two tabs.
+ */
+export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
+  const { activity, days, policy, report, roster } = loaderData;
+  const { t } = useTranslation("admin");
+  const [, setParameters] = useSearchParams();
+  const [tab, setTab] = useState<"acked" | "pending">("pending");
+
+  const overdueIds = new Set(report?.overdue.map((entry) => entry.userId));
+  // The people who are overdue lead the "Not yet" tab.
+  const pending = roster
+    ? roster.pending.toSorted(
+        (a, b) => Number(overdueIds.has(b.userId)) - Number(overdueIds.has(a.userId)),
+      )
+    : [];
+  const entries: readonly AckRosterEntry[] = tab === "acked" ? (roster?.acked ?? []) : pending;
+
+  const status = (entry: AckRosterEntry) => {
+    if (tab === "acked") {
+      return t("completion.detail.roster.ackedOn", { date: formatDate(entry.ackedAt) });
+    }
+    return overdueIds.has(entry.userId)
+      ? t("completion.detail.roster.overdue")
+      : t("completion.detail.roster.pending");
+  };
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <Button asChild className="w-fit px-0" variant="link">
-        <Link to="/completion">← Back to overview</Link>
-      </Button>
-
-      <PageHeader
-        eyebrow="Assurance"
-        subtitle="Who has acknowledged this policy, who hasn't, and when."
-        title={policy.title}
-      />
-
-      <div className="flex flex-wrap items-end gap-3">
-        <form className="flex flex-wrap items-end gap-3" method="get">
-          <Field label="Group">
-            <Select defaultValue={groupId ?? ""} name="groupId" options={categoryOptions} />
-          </Field>
-          <Button type="submit" variant="secondary">
-            Apply
-          </Button>
-        </form>
+    <div className="flex w-full flex-col gap-3.5 p-6">
+      <header className="flex flex-wrap items-end gap-2.5">
+        <div className="flex flex-1 flex-col">
+          <Link
+            className="self-start text-xs font-medium text-muted hover:text-ink"
+            to="/completion"
+          >
+            {t("completion.title")}
+          </Link>
+          <h1 className="font-serif text-[26px] leading-tight font-semibold">{policy.title}</h1>
+          <span className="font-mono text-[13px] text-muted">
+            {t("completion.detail.versionLine", {
+              number: policy.number,
+              version: policy.version,
+            })}
+          </span>
+        </div>
         {report && policy.currentPublishedVersionId ? (
-          <Button asChild variant="secondary">
+          <Button asChild className="h-9 px-3" variant="secondary">
             <Link
               reloadDocument
               to={`/resources/acks-export?${new URLSearchParams({
@@ -88,122 +102,122 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
                 policyVersionId: policy.currentPublishedVersionId,
               }).toString()}`}
             >
-              Export CSV
+              <Download aria-hidden="true" className="size-4" />
+              {t("completion.detail.export")}
             </Link>
           </Button>
         ) : null}
-      </div>
+      </header>
 
       {!report || !roster ? (
         <EmptyState
-          description="This policy has no published version, so there is no acknowledgement audience yet."
-          title="Nothing to report"
+          description={t("completion.detail.unpublished")}
+          title={t("completion.detail.unpublishedTitle")}
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-            <Card>
-              <CardBody className="flex flex-col gap-1">
-                <span className="text-2xl font-semibold tabular-nums text-ink">
-                  {report.totalAudience}
-                </span>
-                <span className="text-sm text-muted">Audience</span>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="flex flex-col gap-1">
-                <span className="text-2xl font-semibold tabular-nums text-ink">
-                  {report.totalAcked}
-                </span>
-                <span className="text-sm text-muted">Acknowledged</span>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="flex flex-col gap-1">
-                <span className="text-2xl font-semibold tabular-nums text-ink">
-                  {report.completionPct}%
-                </span>
-                <span className="text-sm text-muted">Completion</span>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="flex flex-col gap-1">
-                <span className="text-2xl font-semibold tabular-nums text-ink">
-                  {report.avgDaysToAck}d
-                </span>
-                <span className="text-sm text-muted">Avg days to ack</span>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="flex flex-col gap-1">
-                <span className="text-2xl font-semibold tabular-nums text-ink">
-                  {report.viewedNotAckedCount}
-                </span>
-                <span className="text-sm text-muted">Viewed, not acked</span>
-              </CardBody>
-            </Card>
+          <StatTiles
+            className="grid-cols-2 sm:grid-cols-5"
+            label={t("completion.stats.label")}
+            tiles={[
+              { label: t("completion.stats.audience"), value: formatNumber(report.totalAudience) },
+              { label: t("completion.stats.acknowledged"), value: formatNumber(report.totalAcked) },
+              {
+                label: t("completion.stats.completion"),
+                value: formatPercent(report.completionPct / 100),
+              },
+              {
+                label: t("completion.stats.avgDays"),
+                value: formatNumber(report.avgDaysToAck, { maximumFractionDigits: 1 }),
+              },
+              {
+                label: t("completion.stats.viewedNotAcked"),
+                value: formatNumber(report.viewedNotAckedCount),
+              },
+            ]}
+          />
+
+          <div className="grid gap-3.5 md:grid-cols-[240px_1fr]">
+            <CompletionDonut
+              acked={report.totalAcked}
+              audience={report.totalAudience}
+              completionPct={report.completionPct}
+            />
+            <ActivityBars
+              activity={activity}
+              days={days}
+              onDaysChange={(next) =>
+                setParameters(
+                  (current) => {
+                    const updated = new URLSearchParams(current);
+                    updated.set("days", String(next));
+                    return updated;
+                  },
+                  { preventScrollReset: true, replace: true },
+                )
+              }
+            />
           </div>
 
-          <Card>
-            <CardBody className="flex flex-col gap-2">
-              <div className="flex justify-between text-sm text-muted">
-                <span>Completion progress</span>
-                <span>
-                  {report.totalAcked} / {report.totalAudience}
-                </span>
-              </div>
-              <Progress value={report.completionPct} />
-            </CardBody>
-          </Card>
-
           {report.overdue.length > 0 ? (
-            <div className="flex items-center gap-2 rounded-md border border-danger/30 bg-danger/5 px-4 py-2.5 text-sm">
-              <strong>{report.overdue.length}</strong>{" "}
-              {report.overdue.length === 1 ? "user is" : "users are"} overdue for acknowledgement.
-            </div>
+            <p className="flex items-center gap-2 rounded-lg bg-danger-soft px-3.5 py-2.5 text-danger">
+              <Clock aria-hidden="true" className="size-4" />
+              <b>{t("completion.detail.overdue", { count: report.overdue.length })}</b>
+            </p>
           ) : null}
 
-          <Tabs onValueChange={(v) => setTab(v as "acked" | "pending")} value={tab}>
-            <TabsList>
-              <TabsTrigger value="acked">Acknowledged ({roster.acked.length})</TabsTrigger>
-              <TabsTrigger value="pending">Not yet ({roster.pending.length})</TabsTrigger>
-            </TabsList>
-            <TabsContent value={tab}>
-              {(tab === "acked" ? roster.acked : roster.pending).length === 0 ? (
-                <EmptyState
-                  description={
-                    tab === "acked"
-                      ? "No one in this audience has acknowledged the policy yet."
-                      : "Everyone in this audience has acknowledged the policy."
-                  }
-                  title={tab === "acked" ? "No acknowledgements yet" : "No pending users"}
-                />
+          <section
+            aria-label={t("completion.detail.roster.label")}
+            className="overflow-hidden rounded-[10px] border border-border bg-surface"
+          >
+            <div
+              className="flex gap-1 border-b border-border-strong bg-sunken px-2.5 py-1.5"
+              role="tablist"
+            >
+              {(["acked", "pending"] as const).map((key) => (
+                <button
+                  aria-selected={tab === key}
+                  className={cn(
+                    "rounded-md px-2.5 py-1.5",
+                    tab === key && "bg-surface font-semibold shadow-[var(--shadow-1)]",
+                  )}
+                  key={key}
+                  onClick={() => setTab(key)}
+                  role="tab"
+                  type="button"
+                >
+                  {key === "acked"
+                    ? t("completion.detail.roster.acknowledged", { count: roster.acked.length })
+                    : t("completion.detail.roster.notYet", { count: roster.pending.length })}
+                </button>
+              ))}
+            </div>
+            <div role="tabpanel">
+              {entries.length === 0 ? (
+                <p className="px-3.5 py-2.5 text-[13px] text-muted">
+                  {tab === "acked"
+                    ? t("completion.detail.roster.emptyAcknowledged")
+                    : t("completion.detail.roster.emptyNotYet")}
+                </p>
               ) : (
-                <Table>
-                  <THead>
-                    <tr>
-                      <TH>User</TH>
-                      <TH>Email</TH>
-                      {tab === "acked" ? <TH>Acknowledged</TH> : null}
-                    </tr>
-                  </THead>
-                  <tbody>
-                    {(tab === "acked" ? roster.acked : roster.pending).map((entry) => (
-                      <tr key={entry.userId}>
-                        <TD>{entry.userName ?? entry.email}</TD>
-                        <TD className="text-muted">{entry.email}</TD>
-                        {tab === "acked" ? (
-                          <TD className="text-muted">
-                            {entry.ackedAt ? new Date(entry.ackedAt).toLocaleDateString() : "—"}
-                          </TD>
-                        ) : null}
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
+                <ul>
+                  {entries.map((entry) => (
+                    <li className={ROW} key={entry.userId}>
+                      <b className="font-semibold">{entry.userName ?? entry.email}</b>
+                      <span className="text-muted">{entry.email}</span>
+                      <span
+                        className={cn(
+                          tab === "pending" && overdueIds.has(entry.userId) && "text-danger",
+                        )}
+                      >
+                        {status(entry)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </TabsContent>
-          </Tabs>
+            </div>
+          </section>
         </>
       )}
     </div>

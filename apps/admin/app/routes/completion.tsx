@@ -1,12 +1,14 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { formatNumber, formatPercent, useTranslation } from "@steward-web/i18n";
 import {
   Badge,
-  Card,
-  CardBody,
+  Button,
   EmptyState,
+  Field,
   PageHeader,
   Progress,
+  Select,
   Table,
   TD,
   TH,
@@ -18,17 +20,18 @@ import { Link } from "react-router";
 import type { Route } from "./+types/completion";
 
 import { getCompletionReport, listObligatingPolicies } from "../completion/completion.server";
+import { StatTiles } from "../completion/StatTiles";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const obligating = await listObligatingPolicies(request);
   const rows = await Promise.all(
-    obligating.map(async ({ group, policy }) => {
+    obligating.map(async ({ policy }) => {
       const versionId = policy.currentPublishedVersionId;
       // requiresAck already guarantees a published version for every obligating policy.
       const report = versionId ? await getCompletionReport(request, versionId) : null;
       return {
+        category: policy.category,
         completionPct: report?.completionPct ?? 0,
-        groupName: group?.name ?? "—",
         number: policy.number,
         overdue: report?.overdue.length ?? 0,
         title: policy.title,
@@ -40,126 +43,132 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return { rows };
 };
 
+const ALL = "all";
+
+/**
+ * Completion (A13): "Acknowledgement coverage across every policy that requires
+ * acknowledgement." Four stat cards over what's shown, a category filter and "Overdue only",
+ * then each obligating policy with its progress bar and an overdue badge.
+ */
 export default function Completion({ loaderData }: Route.ComponentProps) {
   const { rows } = loaderData;
+  const { t } = useTranslation("admin");
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [category, setCategory] = useState(ALL);
 
-  const filtered = useMemo(
-    () => (overdueOnly ? rows.filter((r) => r.overdue > 0) : rows),
-    [rows, overdueOnly],
+  const categories = useMemo(
+    () => [...new Set(rows.map((row) => row.category))].toSorted((a, b) => a.localeCompare(b)),
+    [rows],
   );
+  const shown = rows
+    .filter((row) => (overdueOnly ? row.overdue > 0 : true))
+    .filter((row) => (category === ALL ? true : row.category === category));
 
-  const totals = useMemo(() => {
-    const sums = { acked: 0, audience: 0, overdue: 0 };
-    for (const row of filtered) {
-      sums.acked += row.totalAcked;
-      sums.audience += row.totalAudience;
-      sums.overdue += row.overdue;
-    }
-    return sums;
-  }, [filtered]);
-  const overallPct =
-    totals.audience === 0 ? null : Math.round((totals.acked / totals.audience) * 100);
+  const audience = shown.reduce((sum, row) => sum + row.totalAudience, 0);
+  const acknowledged = shown.reduce((sum, row) => sum + row.totalAcked, 0);
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader
-        eyebrow="Assurance"
-        subtitle="Acknowledgement coverage across every policy that requires acknowledgement."
-        title="Completion"
+    <div className="flex w-full flex-col gap-[18px] p-6">
+      <PageHeader subtitle={t("completion.subtitle")} title={t("completion.title")} />
+
+      <StatTiles
+        className="grid-cols-2 sm:grid-cols-4"
+        label={t("completion.stats.label")}
+        tiles={[
+          { label: t("completion.stats.obligating"), value: formatNumber(shown.length) },
+          { label: t("completion.stats.audience"), value: formatNumber(audience) },
+          { label: t("completion.stats.acknowledged"), value: formatNumber(acknowledged) },
+          {
+            label: t("completion.stats.completion"),
+            value: audience > 0 ? formatPercent(acknowledged / audience) : "—",
+          },
+        ]}
       />
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card>
-          <CardBody className="flex flex-col gap-1">
-            <span className="text-2xl font-semibold tabular-nums text-ink">{filtered.length}</span>
-            <span className="text-sm text-muted">Obligating policies</span>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="flex flex-col gap-1">
-            <span className="text-2xl font-semibold tabular-nums text-ink">
-              {overallPct === null ? "—" : `${overallPct}%`}
-            </span>
-            <span className="text-sm text-muted">Overall completion</span>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="flex flex-col gap-1">
-            <span className="text-2xl font-semibold tabular-nums text-ink">
-              {totals.audience - totals.acked}
-            </span>
-            <span className="text-sm text-muted">Pending</span>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="flex flex-col gap-1">
-            <span className="text-2xl font-semibold tabular-nums text-ink">{totals.overdue}</span>
-            <span className="text-sm text-muted">Overdue</span>
-          </CardBody>
-        </Card>
+      <div className="flex flex-wrap items-end gap-3">
+        <Field className="w-56" label={t("completion.filters.category")}>
+          <Select
+            className="h-[38px]"
+            onValueChange={setCategory}
+            options={[
+              { label: t("completion.filters.allCategories"), value: ALL },
+              ...categories.map((name) => ({ label: name, value: name })),
+            ]}
+            value={category}
+          />
+        </Field>
+        <Button
+          aria-pressed={overdueOnly}
+          className="h-[38px] px-3"
+          onClick={() => setOverdueOnly((on) => !on)}
+          variant={overdueOnly ? "primary" : "secondary"}
+        >
+          {t("completion.filters.overdueOnly")}
+        </Button>
       </div>
 
-      <label className="flex w-fit items-center gap-2 text-sm text-ink">
-        <input
-          checked={overdueOnly}
-          onChange={(event) => setOverdueOnly(event.target.checked)}
-          type="checkbox"
-        />
-        Overdue only
-      </label>
-
-      {filtered.length === 0 ? (
+      {rows.length === 0 ? (
         <EmptyState
-          description="Completion coverage appears once a published policy has an acknowledgement trigger."
-          title="No policies to report on"
+          description={t("completion.empty.description")}
+          title={t("completion.empty.title")}
         />
+      ) : shown.length === 0 ? (
+        <p className="text-muted">{t("completion.empty.filtered")}</p>
       ) : (
-        <Table>
-          <THead>
-            <tr>
-              <TH>Policy</TH>
-              <TH>Owning group</TH>
-              <TH>Acked</TH>
-              <TH>Total</TH>
-              <TH>Completion</TH>
-              <TH>Overdue</TH>
-            </tr>
-          </THead>
-          <tbody>
-            {filtered.map((row) => (
-              <tr key={row.number}>
-                <TD>
-                  <Link
-                    className="font-medium text-primary hover:underline"
-                    to={`/completion/${encodeURIComponent(row.number)}`}
-                  >
-                    {row.title}
-                  </Link>
-                  <div className="font-mono text-xs text-muted">{row.number}</div>
-                </TD>
-                <TD>
-                  <Badge tone="neutral">{row.groupName}</Badge>
-                </TD>
-                <TD className="tabular-nums">{row.totalAcked}</TD>
-                <TD className="tabular-nums">{row.totalAudience}</TD>
-                <TD>
-                  <div className="flex min-w-32 items-center gap-2">
-                    <Progress className="w-20" value={row.completionPct} />
-                    <span className="text-sm tabular-nums">{row.completionPct}%</span>
-                  </div>
-                </TD>
-                <TD>
-                  {row.overdue > 0 ? (
-                    <Badge tone="danger">{row.overdue}</Badge>
-                  ) : (
-                    <span className="text-muted">—</span>
-                  )}
-                </TD>
+        <div className="overflow-hidden rounded-[10px] border border-border bg-surface">
+          <Table aria-label={t("completion.table.label")}>
+            <THead>
+              <tr>
+                <TH>{t("completion.table.policy")}</TH>
+                <TH>{t("completion.table.category")}</TH>
+                <TH>{t("completion.table.acknowledged")}</TH>
+                <TH>{t("completion.table.completion")}</TH>
+                <TH>{t("completion.table.overdue")}</TH>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </THead>
+            <tbody>
+              {shown.map((row) => (
+                <tr key={row.number}>
+                  <TD>
+                    <Link
+                      className="font-semibold text-primary hover:text-primary-hover"
+                      to={`/completion/${encodeURIComponent(row.number)}`}
+                    >
+                      {row.title}
+                    </Link>
+                    <div className="font-mono text-xs text-muted">{row.number}</div>
+                  </TD>
+                  <TD className="text-muted">{row.category}</TD>
+                  <TD className="tabular-nums">
+                    {t("completion.table.ackedOf", {
+                      acked: formatNumber(row.totalAcked),
+                      audience: formatNumber(row.totalAudience),
+                    })}
+                  </TD>
+                  <TD>
+                    <div className="flex min-w-36 items-center gap-2">
+                      <Progress
+                        aria-label={t("completion.table.completion")}
+                        className="w-24"
+                        value={Math.round(row.completionPct)}
+                      />
+                      <span className="text-sm tabular-nums">
+                        {formatPercent(row.completionPct / 100)}
+                      </span>
+                    </div>
+                  </TD>
+                  <TD>
+                    {row.overdue > 0 ? (
+                      <Badge tone="danger">
+                        {t("completion.table.overdueBadge", { count: row.overdue })}
+                      </Badge>
+                    ) : null}
+                  </TD>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
       )}
     </div>
   );
