@@ -64,6 +64,15 @@ const Shell = ({ signedIn }: { signedIn: boolean }) => {
   );
 };
 
+// A full check runs many suites at once; every wait gets room for that rather than a race.
+const WAIT = { timeout: 5000 };
+
+/**
+ * The stream the shell opened. The page can show its data before React has run the effect that
+ * opens the stream, so wait for the stream itself rather than for the page.
+ */
+const opened = () => vi.waitFor(() => FakeEventSource.latest(), WAIT);
+
 const mount = (signedIn = true) => {
   let loads = 0;
   const Stub = createRoutesStub([
@@ -87,18 +96,18 @@ const mount = (signedIn = true) => {
 describe("useAccessRevalidation", () => {
   it("reloads the identity when the signed-in person's access changes", async () => {
     mount();
-    expect(await screen.findByText("identity 1")).toBeInTheDocument();
-    const source = FakeEventSource.latest();
+    expect(await screen.findByText("identity 1", {}, WAIT)).toBeInTheDocument();
+    const source = await opened();
     expect(source.url).toBe("/resources/live-access");
 
     act(() => source.emit("message", "access-changed"));
-    expect(await screen.findByText("identity 2")).toBeInTheDocument();
+    expect(await screen.findByText("identity 2", {}, WAIT)).toBeInTheDocument();
   });
 
   it("stops listening when the gateway won't stream to this person", async () => {
     mount();
-    expect(await screen.findByText("identity 1")).toBeInTheDocument();
-    const source = FakeEventSource.latest();
+    expect(await screen.findByText("identity 1", {}, WAIT)).toBeInTheDocument();
+    const source = await opened();
 
     act(() => source.emit("unsupported", "refused"));
     expect(source.closed).toBe(true);
@@ -106,37 +115,38 @@ describe("useAccessRevalidation", () => {
 
   it("still reloads the identity on focus after the gateway refuses the stream", async () => {
     mount();
-    expect(await screen.findByText("identity 1")).toBeInTheDocument();
-    act(() => FakeEventSource.latest().emit("unsupported", "refused"));
+    expect(await screen.findByText("identity 1", {}, WAIT)).toBeInTheDocument();
+    const source = await opened();
+    act(() => source.emit("unsupported", "refused"));
     await vi.waitFor(() => {
       act(() => {
         globalThis.dispatchEvent(new Event("focus"));
       });
       expect(screen.getByText(/^identity [2-9]$/)).toBeInTheDocument();
-    });
+    }, WAIT);
   });
 
   it("reloads the identity when the tab comes back into focus", async () => {
     mount();
-    expect(await screen.findByText("identity 1")).toBeInTheDocument();
+    expect(await screen.findByText("identity 1", {}, WAIT)).toBeInTheDocument();
     await vi.waitFor(() => {
       act(() => {
         globalThis.dispatchEvent(new Event("focus"));
       });
       expect(screen.getByText(/^identity [2-9]$/)).toBeInTheDocument();
-    });
+    }, WAIT);
   });
 
   it("opens no stream for a signed-out page", async () => {
     mount(false);
-    expect(await screen.findByText("identity 1")).toBeInTheDocument();
+    expect(await screen.findByText("identity 1", {}, WAIT)).toBeInTheDocument();
     expect(FakeEventSource.instances).toHaveLength(0);
   });
 
   it("closes the stream when the shell goes away", async () => {
     const { unmount } = mount();
-    expect(await screen.findByText("identity 1")).toBeInTheDocument();
-    const source = FakeEventSource.latest();
+    expect(await screen.findByText("identity 1", {}, WAIT)).toBeInTheDocument();
+    const source = await opened();
     unmount();
     expect(source.closed).toBe(true);
   });
@@ -145,9 +155,9 @@ describe("useAccessRevalidation", () => {
 describe("shouldRevalidateShell", () => {
   it("keeps the identity as it is when following a link", async () => {
     mount();
-    expect(await screen.findByText("identity 1")).toBeInTheDocument();
+    expect(await screen.findByText("identity 1", {}, WAIT)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("link", { name: "Other page" }));
-    expect(await screen.findByText("other")).toBeInTheDocument();
+    expect(await screen.findByText("other", {}, WAIT)).toBeInTheDocument();
     expect(screen.getByText("identity 1")).toBeInTheDocument();
   });
 
