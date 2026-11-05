@@ -13,7 +13,7 @@ import {
   Star,
 } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
-import { Link, useFetcher, useRevalidator } from "react-router";
+import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
 
 import { Button } from "#ui/components/Button";
 import { Switch } from "#ui/components/Controls";
@@ -39,12 +39,14 @@ import { notify } from "#ui/feedback/Toast";
 import { cn } from "#ui/lib/cn";
 
 import { AckBanner } from "./AckBanner";
+import { AiSummaryCard } from "./AiSummaryCard";
+import { CompareVersions } from "./CompareVersions";
 import { DocumentStatusPill } from "./DocumentStatusPill";
 import { useFavorites } from "./favorites";
 import { OutlineCard } from "./OutlineCard";
 import { documentTypeBasePath } from "./policy";
 import { bodyShape, outlineItems, PolicyDocument, RedactedDocument } from "./PolicyDocument";
-import { PolicyReaderChanges, PolicyReaderHistory } from "./PolicyReaderHistory";
+import { PolicyReaderHistory } from "./PolicyReaderHistory";
 import {
   ackBannerState,
   type PolicyAppendix,
@@ -416,6 +418,9 @@ const TabLabel = ({ count, label }: { count?: number; label: string }) => (
   </>
 );
 
+/** The history's anchor, named so no section key (a slug of a heading) can take it. */
+const HISTORY_ID = "reader-history";
+
 const tab =
   "-mb-px rounded-none border-0 bg-transparent px-3 py-2.5 text-base font-medium text-muted shadow-none data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-[inset_0_-2px_var(--primary)]";
 
@@ -453,6 +458,22 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
   const notices = noticesFor(detail, t);
   const procedure = detail.documentType === DocumentType.Procedure;
   const starred = favorites.isFavorite(detail.number);
+  // An administrator's switch removes every AI control; any other outage says so where the
+  // AI would answer (BRIEF P3).
+  const health = detail["ai"];
+  const aiOff = health?.reason === "disabled_by_admin";
+  const aiDown = health ? !health.available : false;
+  // The summary is written at publish, so every published document offers it (U7).
+  const offerSummary =
+    !aiOff && detail.status === PolicyStatus.Published && Boolean(detail.currentVersionId);
+  const { hash } = useLocation();
+  // A citation links to "#<sectionKey>"; the page is drawn by then, so bring that section in.
+  useEffect(() => {
+    if (!hash) return;
+    // An attribute match, not "#id": a section key can start with a digit ("1").
+    const id = decodeURIComponent(hash.slice(1)).replaceAll(/["\\]/g, String.raw`\$&`);
+    document.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView();
+  }, [hash]);
   const appendixLabel = (appendix: PolicyAppendix) =>
     t("reader.appendices.heading", { letter: appendix.letter, title: appendix.title });
 
@@ -552,7 +573,7 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
             </MenuItem>
             <MenuItem
               onSelect={() =>
-                document.querySelector("#history")?.scrollIntoView({ behavior: "smooth" })
+                document.querySelector(`#${HISTORY_ID}`)?.scrollIntoView({ behavior: "smooth" })
               }
             >
               <History aria-hidden="true" className="size-4" />
@@ -569,7 +590,9 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
           state="pending"
         />
       ) : null}
-      {redaction === "visible" && ackState === "done" ? <AckBanner ackedAt={detail.ack?.ackedAt} state="done" /> : null}
+      {redaction === "visible" && ackState === "done" ? (
+        <AckBanner ackedAt={detail.ack?.ackedAt} state="done" />
+      ) : null}
 
       <ul
         aria-label={t("reader.metadata.label")}
@@ -597,9 +620,7 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
 
       <ReaderNotices notices={notices} />
 
-      {revealed ? (
-        <RevealedBar onHide={() => setHiddenGrant(grant)} until={grant!} />
-      ) : null}
+      {revealed ? <RevealedBar onHide={() => setHiddenGrant(grant)} until={grant!} /> : null}
 
       {reading ? (
         <Tabs onValueChange={setView} value={view}>
@@ -621,8 +642,8 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
                 </TabsTrigger>
               ) : null}
             </TabsList>
-            {detail.summary ? (
-              <label className="ml-auto flex items-center gap-2 py-2 text-sm font-medium text-muted">
+            {offerSummary ? (
+              <label className="ml-auto flex items-center gap-2 py-2 text-[13px] font-medium text-muted">
                 <Sparkles aria-hidden="true" className="size-4" />
                 {t("reader.summary.toggle")}
                 <Switch checked={summaryOn} onCheckedChange={setSummaryOn} />
@@ -631,17 +652,20 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
           </div>
           <TabsContent className="mt-[18px]" value="view">
             <div className="flex flex-col gap-4">
-              {summaryOn && detail.summary ? (
-                <section className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface px-5 py-4">
-                  <span className="flex items-center gap-2.5 text-[15px] font-semibold">
-                    <Sparkles aria-hidden="true" className="size-4 text-primary" />
-                    {t("reader.summary.title")}
-                  </span>
-                  <p className="text-[15px] leading-[1.6] whitespace-pre-line">
-                    {detail.summary.text}
-                  </p>
-                  <span className="text-xs text-muted">{t("reader.summary.disclaimer")}</span>
-                </section>
+              {offerSummary && summaryOn ? (
+                <AiSummaryCard
+                  badge={
+                    detail.summary
+                      ? t("reader.summary.generated", {
+                          date: formatDate(detail.summary.generatedAt),
+                        })
+                      : undefined
+                  }
+                  text={detail.summary?.text}
+                  title={t("reader.summary.title")}
+                >
+                  {aiDown ? t("reader.summary.unavailable") : t("reader.summary.empty")}
+                </AiSummaryCard>
               ) : null}
               <div
                 className={cn(
@@ -677,7 +701,7 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
                     <OutlineCard
                       footer={
                         <>
-                          <a href="#history">
+                          <a href={`#${HISTORY_ID}`}>
                             <History aria-hidden="true" className="size-4" />
                             {t("reader.actions.history")}
                           </a>
@@ -712,7 +736,14 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
             <ContactsPanel contacts={detail.contacts} />
           </TabsContent>
           <TabsContent className="mt-[18px]" value="changes">
-            <PolicyReaderChanges priorVersion={detail.priorVersion} />
+            {detail.priorVersion ? (
+              <CompareVersions
+                aiDown={aiDown && !aiOff}
+                documentType={detail.documentType}
+                initial={detail.priorVersion}
+                versions={detail.versions ?? []}
+              />
+            ) : null}
           </TabsContent>
         </Tabs>
       ) : (
@@ -730,7 +761,7 @@ export const PolicyReader = ({ detail, viewerName }: PolicyReaderProps) => {
         </>
       )}
 
-      <div id="history">
+      <div id={HISTORY_ID}>
         <PolicyReaderHistory history={detail.history} />
       </div>
     </div>

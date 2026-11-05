@@ -71,7 +71,14 @@ export interface Category {
  * quote or a table.
  */
 export type DocumentBlock =
-  | { readonly depth: 1 | 2 | 3; readonly kind: "heading"; readonly text: string }
+  | {
+      readonly depth: 1 | 2 | 3;
+      readonly kind: "heading";
+      /** The key steward-core gives the section this heading starts, which an AI citation
+       *  links to (`#<sectionKey>`). */
+      readonly sectionKey?: string;
+      readonly text: string;
+    }
   | {
       readonly items: readonly (readonly InlineRun[])[];
       readonly kind: "list";
@@ -222,6 +229,9 @@ export interface PolicyDefinition {
 /** The reader's full view of one policy or procedure. */
 export interface PolicyDetail {
   readonly ack?: AckStatus | null;
+  /** Whether AI is usable for the caller (`aiHealth`); `reason` says why not. Absent reads as
+   *  available. */
+  readonly ai?: { readonly available: boolean; readonly reason?: null | string } | null;
   readonly appendices: readonly PolicyAppendix[];
   /** The body as the reader draws it: numbered sections, paragraphs, lists, tables. */
   readonly body: readonly DocumentBlock[];
@@ -254,6 +264,8 @@ export interface PolicyDetail {
   readonly title: string;
   readonly updated: null | string;
   readonly version: string;
+  /** Every version the caller can read, oldest first, for the compare pickers (U19). */
+  readonly versions?: readonly PolicyVersionOption[];
 }
 
 export interface PolicyReference {
@@ -272,9 +284,20 @@ export interface PolicySectionDiff {
   readonly wordDiffHtml?: null | string;
 }
 
+/** One version as the compare pickers list it (U19): "v2 · published". */
+export interface PolicyVersionOption {
+  readonly id: string;
+  /** The gateway's status word ("published", "superseded", "draft", "in_review"). */
+  readonly status: string;
+  readonly version: string;
+}
+
 /** The current version against the one it superseded. */
 export interface PolicyVersionSummary {
   readonly diff: readonly PolicySectionDiff[];
+  /** The two versions the diff runs between, as the compare pickers start (U19). */
+  readonly fromVersionId?: string;
+  readonly toVersionId?: string;
   readonly version: string;
 }
 

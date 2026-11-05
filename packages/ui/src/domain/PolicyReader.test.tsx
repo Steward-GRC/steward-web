@@ -1,8 +1,8 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
+import { DocumentType, PolicyStatus, ReferenceKind, Sensitivity } from "@steward-web/api-client";
 import { formatDate, formatTime } from "@steward-web/i18n";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useLoaderData } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -18,7 +18,7 @@ const baseDetail: PolicyDetail = {
   ack: { ackedAt: null, acknowledged: false, required: true },
   appendices: [{ id: "appendix-1", letter: "A", text: "Per-diem rates.", title: "Per-diem rates" }],
   body: [
-    { depth: 1, kind: "heading", text: "Purpose" },
+    { depth: 1, kind: "heading", sectionKey: "purpose", text: "Purpose" },
     {
       kind: "paragraph",
       runs: [
@@ -27,8 +27,8 @@ const baseDetail: PolicyDetail = {
         { text: " expects of a shared desk." },
       ],
     },
-    { depth: 2, kind: "heading", text: "Exceptions" },
-    { depth: 1, kind: "heading", text: "Responsibilities" },
+    { depth: 2, kind: "heading", sectionKey: "exceptions", text: "Exceptions" },
+    { depth: 1, kind: "heading", sectionKey: "responsibilities", text: "Responsibilities" },
     {
       kind: "table",
       rows: [
@@ -74,6 +74,37 @@ const baseDetail: PolicyDetail = {
   updated: "2026-08-14T00:00:00Z",
   version: "2.0.0",
 };
+
+/** A third version, published, with two earlier ones to compare against. */
+const compared: PolicyDetail = {
+  ...baseDetail,
+  priorVersion: {
+    diff: [
+      {
+        changeType: "modified",
+        sectionKey: "claim",
+        sectionTitle: "2. Making a claim",
+        wordDiffHtml: "File within <del>60</del> <ins>30</ins> days.",
+      },
+    ],
+    fromVersionId: "version-v2",
+    toVersionId: "version-v3",
+    version: "2",
+  },
+  versions: [
+    { id: "version-v1", status: "superseded", version: "1" },
+    { id: "version-v2", status: "superseded", version: "2" },
+    { id: "version-v3", status: "published", version: "3" },
+  ],
+};
+
+/** One section of a version diff, titled with its key in capitals. */
+const section = (sectionKey: string, changeType: string, wordDiffHtml = "") => ({
+  changeType,
+  sectionKey,
+  sectionTitle: sectionKey.toUpperCase(),
+  wordDiffHtml,
+});
 
 const renderAt = (detail: PolicyDetail, action?: (arguments_: { request: Request }) => unknown) => {
   const Stub = createRoutesStub([
@@ -199,9 +230,74 @@ describe("PolicyReader", () => {
     ).toBeVisible();
   });
 
-  it("leaves the AI summary toggle out when there is no summary", () => {
+  it("dates the stored summary in its badge", async () => {
+    renderAt({
+      ...baseDetail,
+      summary: { generatedAt: "2026-08-12T00:00:00Z", text: "Book ahead." },
+    });
+    await userEvent.click(screen.getByRole("switch", { name: "AI summary" }));
+    const card = screen.getByRole("region", { name: "AI summary" });
+    expect(card).toHaveTextContent(`Generated ${formatDate("2026-08-12T00:00:00Z")}`);
+  });
+
+  it("offers the AI summary on every published document, saying when there isn't one yet", async () => {
     renderAt(baseDetail);
+    await userEvent.click(screen.getByRole("switch", { name: "AI summary" }));
+    expect(screen.getByRole("region", { name: "AI summary" })).toHaveTextContent(
+      "Summary will appear after the next publish.",
+    );
+  });
+
+  it("says the AI summary is unavailable while AI is down and nothing is stored", async () => {
+    renderAt({ ...baseDetail, ai: { available: false, reason: "provider_unavailable" } });
+    await userEvent.click(screen.getByRole("switch", { name: "AI summary" }));
+    expect(screen.getByRole("region", { name: "AI summary" })).toHaveTextContent(
+      "AI summaries are temporarily unavailable. Everything else in the app keeps working as usual.",
+    );
+  });
+
+  it("still shows a stored summary while AI is down", async () => {
+    renderAt({
+      ...baseDetail,
+      ai: { available: false, reason: "ai_service_unavailable" },
+      summary: { generatedAt: "2026-08-12T00:00:00Z", text: "Cancel early." },
+    });
+    await userEvent.click(screen.getByRole("switch", { name: "AI summary" }));
+    expect(screen.getByText("Cancel early.")).toBeVisible();
+  });
+
+  it("removes every AI control when an administrator has turned AI off", () => {
+    renderAt({ ...baseDetail, ai: { available: false, reason: "disabled_by_admin" } });
     expect(screen.queryByRole("switch", { name: "AI summary" })).toBeNull();
+  });
+
+  it("leaves the AI summary out of a document that isn't published", () => {
+    renderAt({ ...baseDetail, currentVersionId: null, status: PolicyStatus.Draft });
+    expect(screen.queryByRole("switch", { name: "AI summary" })).toBeNull();
+  });
+
+  it("gives each section the anchor an AI citation links to (#sectionKey)", () => {
+    renderAt(baseDetail);
+    expect(screen.getByRole("heading", { level: 2, name: "1. Purpose" })).toHaveAttribute(
+      "id",
+      "purpose",
+    );
+    const outline = screen.getByRole("complementary", { name: "On this page" });
+    expect(within(outline).getByRole("link", { name: /Responsibilities/ })).toHaveAttribute(
+      "href",
+      "#responsibilities",
+    );
+  });
+
+  it("scrolls to the section a citation names when the reader opens", async () => {
+    const scroll = vi.spyOn(Element.prototype, "scrollIntoView");
+    const Stub = createRoutesStub([
+      { Component: () => <PolicyReader detail={baseDetail} />, path: "/policies/:number" },
+    ]);
+    render(<Stub initialEntries={["/policies/POL-FINANCE-001#responsibilities"]} />);
+    const heading = await screen.findByRole("heading", { level: 2, name: "2. Responsibilities" });
+    await waitFor(() => expect(scroll.mock.contexts).toContain(heading));
+    scroll.mockRestore();
   });
 
   it("shows the pending acknowledgement banner when the caller owes an ack", () => {
@@ -360,23 +456,182 @@ describe("PolicyReader", () => {
   });
 
   it("shows the changes as a word-level diff, not plain text", async () => {
-    renderAt({
-      ...baseDetail,
-      priorVersion: {
-        diff: [
-          {
-            changeType: "modified",
-            sectionKey: "claim",
-            sectionTitle: "2. Making a claim",
-            wordDiffHtml: "File within <del>60</del> <ins>30</ins> days.",
-          },
-        ],
-        version: "1.0.0",
-      },
-    });
+    renderAt(compared);
     await userEvent.click(screen.getByRole("tab", { name: "Changes" }));
     expect(screen.getByText("30").tagName).toBe("INS");
     expect(screen.getByText("60").tagName).toBe("DEL");
+  });
+
+  it("compares any two versions (U19), from the one before the current to the current", async () => {
+    renderAt(compared);
+    await userEvent.click(screen.getByRole("tab", { name: "Changes" }));
+    expect(screen.getByRole("heading", { level: 2, name: "Compare versions" })).toBeVisible();
+    expect(
+      screen.getByText("Diff any two versions of this policy — from v1 to present."),
+    ).toBeVisible();
+    expect(screen.getByRole("combobox", { name: "From version" })).toHaveTextContent(
+      "v2 · superseded",
+    );
+    expect(screen.getByRole("combobox", { name: "To version" })).toHaveTextContent(
+      "v3 · published",
+    );
+  });
+
+  it("loads the diff between the versions picked", async () => {
+    const asked: string[] = [];
+    const Stub = createRoutesStub([
+      { Component: () => <PolicyReader detail={compared} />, path: "/policies/:number" },
+      {
+        loader: ({ request }) => {
+          asked.push(new URL(request.url).search);
+          return {
+            diff: [
+              {
+                changeType: "modified",
+                sectionKey: "receipts",
+                sectionTitle: "3. Receipts",
+                wordDiffHtml: "Attach <del>originals</del> <ins>photos</ins>.",
+              },
+            ],
+          };
+        },
+        path: "/resources/version-diff",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
+    await userEvent.click(await screen.findByRole("tab", { name: "Changes" }));
+    await userEvent.click(screen.getByRole("combobox", { name: "From version" }));
+    await userEvent.click(screen.getByRole("option", { name: "v1 · superseded" }));
+    expect(await screen.findByText("photos")).toHaveProperty("tagName", "INS");
+    expect(asked).toEqual(["?from=version-v1&to=version-v3"]);
+  });
+
+  it("says when the picked versions' diff couldn't be loaded, keeping the page", async () => {
+    const Stub = createRoutesStub([
+      { Component: () => <PolicyReader detail={compared} />, path: "/policies/:number" },
+      {
+        loader: () => ({ diff: [], failure: { code: "INTERNAL", operation: "DiffVersions" } }),
+        path: "/resources/version-diff",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
+    await userEvent.click(await screen.findByRole("tab", { name: "Changes" }));
+    await userEvent.click(screen.getByRole("combobox", { name: "From version" }));
+    await userEvent.click(screen.getByRole("option", { name: "v1 · superseded" }));
+    expect(await screen.findByText("These versions couldn't be compared")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 1, name: "Expense Claims" })).toBeVisible();
+  });
+
+  it("folds the sections that didn't change into one line each run", async () => {
+    renderAt({
+      ...compared,
+      priorVersion: {
+        ...compared.priorVersion!,
+        diff: [
+          section("scope", "unchanged"),
+          section("audience", "unchanged"),
+          section("claim", "changed", "File within <del>60</del> <ins>30</ins> days."),
+          section("rates", "unchanged"),
+        ],
+      },
+    });
+    await userEvent.click(screen.getByRole("tab", { name: "Changes" }));
+    expect(screen.getByText("2 unchanged sections")).toBeVisible();
+    expect(screen.getByText("1 unchanged section")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 3, name: "CLAIM" })).toBeVisible();
+    expect(screen.queryByRole("heading", { level: 3, name: "SCOPE" })).toBeNull();
+  });
+
+  it("says when two versions have no differences", async () => {
+    renderAt({ ...compared, priorVersion: { ...compared.priorVersion!, diff: [] } });
+    await userEvent.click(screen.getByRole("tab", { name: "Changes" }));
+    expect(screen.getByText("No changes between these versions.")).toBeVisible();
+  });
+
+  it("says so when every section is unchanged", async () => {
+    renderAt({
+      ...compared,
+      priorVersion: { ...compared.priorVersion!, diff: [section("scope", "unchanged")] },
+    });
+    await userEvent.click(screen.getByRole("tab", { name: "Changes" }));
+    expect(screen.getByText("No changes between these versions.")).toBeVisible();
+  });
+
+  it("says the change summary is unavailable while AI is down (U12)", async () => {
+    renderAt({ ...compared, ai: { available: false, reason: "provider_unavailable" } });
+    await userEvent.click(screen.getByRole("tab", { name: "Changes" }));
+    const panel = screen.getByRole("region", { name: "Summarise changes" });
+    expect(panel).toHaveTextContent(
+      "AI summaries are temporarily unavailable. Everything else in the app keeps working as usual.",
+    );
+  });
+
+  it("restyles Related, References and Contacts to their panels (U14–U16)", async () => {
+    renderAt({
+      ...baseDetail,
+      contacts: [
+        {
+          department: "Facilities",
+          email: "dave@example.org",
+          hours: "Mon–Fri, 09:00–17:00",
+          id: "c-1",
+          label: "Facilities help",
+          name: "Dave",
+          phone: "+44 0000 000000",
+          role: "Category owner",
+        },
+      ],
+      references: [
+        {
+          clause: "§4.2",
+          id: "r-1",
+          kind: ReferenceKind.Standard,
+          label: "Workplace health standard",
+        },
+        {
+          id: "r-2",
+          kind: ReferenceKind.Link,
+          label: "Desk booking page",
+          url: "https://example.org/desks",
+        },
+      ],
+      related: [
+        { number: "POL-FACILITIES-000004", policyId: "p-4", title: "Visitor Sign-in Policy" },
+      ],
+    });
+
+    await userEvent.click(screen.getByRole("tab", { name: "Related 1" }));
+    const related = screen.getByRole("region", { name: "Related" });
+    expect(within(related).getByRole("link", { name: /Visitor Sign-in Policy/ })).toHaveAttribute(
+      "href",
+      "/policies/POL-FACILITIES-000004",
+    );
+    expect(within(related).getByText("POL-FACILITIES-000004")).toHaveClass("font-mono");
+
+    await userEvent.click(screen.getByRole("tab", { name: "References 2" }));
+    const references = screen.getByRole("region", { name: "References" });
+    expect(within(references).getByText("Standard")).toBeVisible();
+    expect(within(references).getByText("§4.2")).toHaveClass("font-mono");
+    expect(within(references).getByRole("link", { name: "Desk booking page" })).toHaveAttribute(
+      "href",
+      "https://example.org/desks",
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Contacts 1" }));
+    const contacts = screen.getByRole("region", { name: "Contacts" });
+    const card = within(contacts).getByRole("group", { name: "Facilities help" });
+    expect(within(card).getByText("Dave")).toBeVisible();
+    for (const [term, value] of [
+      ["Role", "Category owner"],
+      ["Department", "Facilities"],
+      ["Hours", "Mon–Fri, 09:00–17:00"],
+    ])
+      expect(card).toHaveTextContent(`${term}${value}`);
+    expect(within(card).getByRole("link", { name: "dave@example.org" })).toHaveAttribute(
+      "href",
+      "mailto:dave@example.org",
+    );
+    expect(within(card).getByText("+44 0000 000000")).toHaveClass("font-mono");
   });
 
   it("uses the soft plum acknowledgement banner, not a warning", () => {

@@ -25,7 +25,8 @@ const slug = (text: string) =>
 /** A heading the author already numbered ("3. Scope", "3.1 …") keeps its own number. */
 const ALREADY_NUMBERED = /^\d+(?:\.\d+)*\.?\s/;
 
-/** The body's headings, numbered "1.", "2." and their sub-sections "1.1", with stable ids. */
+/** The body's headings, numbered "1.", "2." and their sub-sections "1.1", each with the id a
+ *  link to it uses: its section key when it has one, else one made from its place and text. */
 export const numberHeadings = (blocks: readonly DocumentBlock[]): Map<number, Numbered> => {
   const numbered = new Map<number, Numbered>();
   let section = 0;
@@ -44,7 +45,8 @@ export const numberHeadings = (blocks: readonly DocumentBlock[]): Map<number, Nu
     const own = ALREADY_NUMBERED.test(block.text);
     numbered.set(index, {
       depth: block.depth,
-      id: `section-${index}-${slug(block.text)}`,
+      // The key steward-core gives the section, so an AI citation's "#<sectionKey>" lands here.
+      id: block.sectionKey ?? `section-${index}-${slug(block.text)}`,
       number: own ? "" : number,
       text: block.text,
     });
@@ -170,7 +172,11 @@ export const PolicyDocument = ({
 }: PolicyDocumentProps) => {
   const numbered = numberHeadings(blocks);
   return (
-    <article className="relative rounded-[10px] border border-border bg-surface px-5 pt-8 pb-10 font-serif text-[17px] leading-[28px] text-ink sm:px-14 sm:pt-10 sm:pb-12 sm:text-[18px] sm:leading-[30px]">
+    // "body" is core's key for text before the first heading, so a citation to it opens here.
+    <article
+      className="relative scroll-mt-4 rounded-[10px] border border-border bg-surface px-5 pt-8 pb-10 font-serif text-[17px] leading-[28px] text-ink sm:px-14 sm:pt-10 sm:pb-12 sm:text-[18px] sm:leading-[30px]"
+      id="body"
+    >
       {blocks.map((block, index) => {
         switch (block.kind) {
           case "heading": {
@@ -305,11 +311,14 @@ const paragraphBars = (length: number): number[] => {
   const lines = Math.max(1, Math.ceil(length / LINE));
   const widths = [96, 92, 88, 94, 90];
   return Array.from({ length: Math.min(lines, 6) }, (_, line) =>
-    line === lines - 1 ? Math.max(30, Math.round(((length % LINE || LINE) / LINE) * 90)) : widths[line % widths.length]!,
+    line === lines - 1
+      ? Math.max(30, Math.round(((length % LINE || LINE) / LINE) * 90))
+      : widths[line % widths.length]!,
   );
 };
 
-const runsLength = (runs: readonly InlineRun[]) => runs.reduce((sum, run) => sum + run.text.length, 0);
+const runsLength = (runs: readonly InlineRun[]) =>
+  runs.reduce((sum, run) => sum + run.text.length, 0);
 
 /** One redacted line, `width` per cent of the measure. */
 // Full lines read as words (a run of blocks, then a gap); a paragraph's last line is solid.
@@ -412,7 +421,10 @@ export const RedactedDocument = ({
         }
       })}
       {appendices.map((appendix) => (
-        <div className="mt-2.5 flex flex-col gap-2.5 border-t border-border-strong pt-4" key={appendix.id}>
+        <div
+          className="mt-2.5 flex flex-col gap-2.5 border-t border-border-strong pt-4"
+          key={appendix.id}
+        >
           <span className="text-xl font-semibold">
             {appendix.letter}. {blockedWords(appendix.title)}
           </span>

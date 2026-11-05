@@ -18,8 +18,10 @@ it. To acknowledge means to confirm you have read and understood it.
 2. **Read it.** Read it from start to finish, not just the title. The **On this page** card beside
    the document lists its numbered sections and appendices and shows how far you've read; select
    a section to jump to it. A word underlined with dots is a defined term: select it to read its
-   definition. If the document comes with an AI summary, the **AI summary** switch shows it above the
-   text, but always check it against the policy itself.
+   definition. On a published document, the **AI summary** switch shows a short summary written
+   when it was published, with the date it was made. Always check it against the policy itself.
+   If no summary has been written yet, it says one will appear after the next publish, and while
+   AI is down it says so; the rest of the page works as usual.
 3. **Confirm.** Select **Acknowledge** on the plum "Please review and confirm" banner (at the
    bottom of the screen on a phone). The dialog names the policy and shows what's recorded: your
    name, the version and the time. Select **Acknowledge** to confirm. This means "I have read and
@@ -30,6 +32,21 @@ Use the star beside the title to keep a document in your starred list, and **Act
 or jump to its **History & approvals**.
 
 That is all it takes. Your organisation now has a clear record that you did your part.
+
+## 🔎 More about the document
+
+The tabs above the document show what else it carries, each only when there is something in it:
+
+- **Definitions:** the terms it defines.
+- **Related:** other policies and procedures it links to; select one to open it.
+- **References:** the standards, texts and links it cites, each with its kind and any clause.
+- **Contacts:** who to ask, with their role, email, phone and hours.
+- **Changes:** what changed between versions. It starts with the version before the current one
+  against the current one; use the two pickers under **Compare versions** to compare any two
+  versions. Added words are green and underlined, removed words red and struck through.
+
+A link to a section of a document, such as a source in an
+[answer from Ask](/user-guide/search), opens the document at that section.
 
 ## 🧾 Your record
 

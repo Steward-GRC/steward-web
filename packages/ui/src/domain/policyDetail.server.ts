@@ -5,6 +5,7 @@ import type {
   BreakGlassGrant,
   DocumentType,
   PolicyDetail,
+  PolicySectionDiff,
 } from "@steward-web/api-client";
 
 import edge from "@steward-web/edge.server";
@@ -26,3 +27,10 @@ export const breakGlassReveal = (
   reason: string,
   cookie?: string,
 ): Promise<BreakGlassGrant> => edge.breakGlassReveal(policyId, reason, cookie);
+
+/** The word-level diff between any two versions, for the compare pickers (U19). */
+export const getVersionDiff = (
+  fromVersionId: string,
+  toVersionId: string,
+  cookie?: string,
+): Promise<readonly PolicySectionDiff[]> => edge.versionDiff(fromVersionId, toVersionId, cookie);

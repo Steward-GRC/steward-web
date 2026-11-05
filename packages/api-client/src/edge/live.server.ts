@@ -275,7 +275,7 @@ const assembleDetail = async (
   const publishedId = policy.currentPublishedVersionId ?? null;
   const versionId = publishedId ?? policy.currentDraftVersionId ?? null;
   const acks = policy.documentType === DocumentType.Policy && publishedId !== null;
-  const [version, attachments, versions, ack, auditPage, summary] = await Promise.all([
+  const [version, attachments, versions, ack, auditPage, summary, ai] = await Promise.all([
     versionId
       ? gatewayFetch(PolicyVersionDocument, { id: versionId }, "PolicyVersion", { cookie }).then(
           (d) => d.policyVersion ?? null,
@@ -312,6 +312,12 @@ const assembleDetail = async (
           () => null,
         )
       : null,
+    // aiHealth answers a down service as unavailable rather than failing; a failed call reads
+    // the same way, so the reader's AI pieces say so instead of breaking the page.
+    gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie }).then(
+      (d) => ({ available: d.aiHealth.available, reason: d.aiHealth.reason ?? null }),
+      () => ({ available: false, reason: "ai_service_unavailable" }),
+    ),
   ]);
   const history = auditPage
     ? historyFromAuditLog(auditPage.auditLog.records, version ? String(version.versionNo) : "")
@@ -338,6 +344,7 @@ const assembleDetail = async (
   const body = version ? documentBlocksFromContent(version.contentJson) : [];
 
   return {
+    ai,
     ack: acks
       ? {
           ackedAt: ack?.ackedAt ?? null,
@@ -365,7 +372,15 @@ const assembleDetail = async (
     id: policy.id,
     number: policy.number,
     ownerName: policy.ownerName ?? null,
-    priorVersion: prior ? { diff, version: String(prior.versionNo) } : null,
+    priorVersion:
+      prior && publishedId
+        ? {
+            diff,
+            fromVersionId: prior.id,
+            toVersionId: publishedId,
+            version: String(prior.versionNo),
+          }
+        : null,
     published: publishedId ? (version?.publishedAt ?? null) : null,
     references: attachments.policyReferences,
     related: attachments.relatedPolicies,
@@ -379,6 +394,7 @@ const assembleDetail = async (
     title: policy.title,
     updated: policy.updatedAt,
     version: version ? String(version.versionNo) : "",
+    versions: versions.map((v) => ({ id: v.id, status: v.status, version: String(v.versionNo) })),
   };
 };
 
@@ -972,6 +988,15 @@ export const liveEdge: Edge = {
     return found && found.documentType === documentType
       ? assembleDetail(found, index, cookie)
       : null;
+  },
+  async versionDiff(fromVersionId, toVersionId, cookie) {
+    const data = await gatewayFetch(
+      DiffVersionsDocument,
+      { fromVersionId, toVersionId },
+      "DiffVersions",
+      { cookie },
+    );
+    return data.diffVersions;
   },
   async postCaseMessage(caseId, body, cookie) {
     const data = await gatewayFetch(PostCaseMessageDocument, { body, caseId }, "PostCaseMessage", {

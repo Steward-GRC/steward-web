@@ -75,7 +75,7 @@
     "changes": {
       "added": "added: {{text}}",
       "counts": "{{added}} added, {{removed}} removed",
-      "empty": "No changes from the version it superseded.",
+      "empty": "No changes between these versions.",
       "legend": "Added in the newer version is underlined; removed from the older version is struck through.",
       "legendAdded": "added in the newer version",
       "legendNew": "new",
@@ -87,18 +87,48 @@
       "show": "Show",
       "showUnchanged_one": "Show {{count}} unchanged paragraph",
       "showUnchanged_other": "Show {{count}} unchanged paragraphs",
+      "summarise": "Summarise changes",
       "title": "Changes",
+      "unchangedSections_one": "{{count}} unchanged section",
+      "unchangedSections_other": "{{count}} unchanged sections",
       "unchanged_one": "{{count}} unchanged paragraph",
       "unchanged_other": "{{count}} unchanged paragraphs",
-      "versusPrior": "Changes vs. version {{version}}",
       "view": {
         "label": "Diff layout",
         "sideBySide": "Side by side",
         "unified": "Unified"
       }
     },
+    "compare": {
+      "description": {
+        "policy": "Diff any two versions of this policy — from v{{first}} to present.",
+        "procedure": "Diff any two versions of this procedure — from v{{first}} to present."
+      },
+      "failed": "These versions couldn't be compared",
+      "from": "From version",
+      "option": "v{{version}} · {{status}}",
+      "status": {
+        "approved": "approved",
+        "archived": "archived",
+        "draft": "draft",
+        "inReview": "in review",
+        "published": "published",
+        "rejected": "rejected",
+        "retired": "retired",
+        "superseded": "superseded",
+        "withdrawn": "withdrawn"
+      },
+      "title": "Compare versions",
+      "to": "To version"
+    },
     "contacts": {
+      "department": "Department",
+      "email": "Email",
       "empty": "No contacts attached.",
+      "hours": "Hours",
+      "notes": "Notes",
+      "phone": "Phone",
+      "role": "Role",
       "title": "Contacts"
     },
     "definitions": {
@@ -241,7 +271,7 @@
       "title": "References"
     },
     "related": {
-      "empty": "No related policies.",
+      "empty": "No related policies yet.",
       "title": "Related"
     },
     "revealed": {
@@ -255,8 +285,11 @@
     },
     "summary": {
       "disclaimer": "AI-generated summary — always check it against the policy text before relying on it.",
-      "title": "Summary",
-      "toggle": "AI summary"
+      "empty": "Summary will appear after the next publish.",
+      "generated": "Generated {{date}}",
+      "title": "AI summary",
+      "toggle": "AI summary",
+      "unavailable": "AI summaries are temporarily unavailable. Everything else in the app keeps working as usual."
     },
     "tabs": {
       "changes": "Changes",

@@ -6,10 +6,9 @@ import { useId, useState } from "react";
 
 import { EmptyState } from "#ui/feedback/States";
 
-import type { HistoryEntry, PolicyVersionSummary } from "./policyReaderModel";
+import type { HistoryEntry } from "./policyReaderModel";
 
 import { groupHistoryByVersion } from "./policyReaderModel";
-import { DiffView } from "./WordDiff";
 
 /** A kind with no label yet, in words: "workflowStageEscalated" -> "Workflow stage escalated". */
 const spelledOut = (kind: string): string => {
@@ -205,27 +204,5 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
         ))
       )}
     </section>
-  );
-};
-
-/** The changes/compare panel (U12/U19): the current version's diff against the one it superseded. */
-export const PolicyReaderChanges = ({
-  priorVersion,
-}: {
-  priorVersion: null | PolicyVersionSummary | undefined;
-}) => {
-  const { t } = useTranslation("policy");
-
-  if (!priorVersion || priorVersion.diff.length === 0) {
-    return <EmptyState title={t("reader.changes.empty")} />;
-  }
-
-  return (
-    <div className="grid gap-4">
-      <p className="text-sm text-muted">
-        {t("reader.changes.versusPrior", { version: priorVersion.version })}
-      </p>
-      <DiffView sections={priorVersion.diff} />
-    </div>
   );
 };
