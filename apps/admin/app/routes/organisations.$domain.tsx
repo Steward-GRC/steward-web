@@ -25,7 +25,7 @@ import {
   THead,
 } from "@steward-web/ui";
 import { useEffect, useRef, useState } from "react";
-import { data, Form, Link, redirect, useFetcher, useRevalidator } from "react-router";
+import { data, Form, Link, redirect, useFetcher, useHref, useRevalidator } from "react-router";
 
 import type { Route } from "./+types/organisations.$domain";
 
@@ -46,6 +46,7 @@ import {
   updateIdPConnection,
   verifyDomain,
 } from "../organisations/organisations.server";
+import { ssoTestLinkPath } from "../organisations/ssoTestLink";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const domain = params.domain;
@@ -240,6 +241,9 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [testPending]);
 
+  // window.open bypasses the router, so the basename is added to the test link by hand.
+  const basename = useHref("/");
+
   if (!loaderData.organisation) {
     return (
       <div className="flex w-full flex-col gap-6 p-6">
@@ -257,12 +261,7 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
 
   const { canActivateNow, canDeleteNow, groupOptions, mappings, organisation: org } = loaderData;
 
-  const ssoTestUrl = `/resources/sso-test-link?${new URLSearchParams({
-    alias: org.connectionAlias,
-    connectionId: org.connectionId,
-    returnPath: `/organisations/${encodeURIComponent(org.domain)}`,
-    tenant: org.domain,
-  }).toString()}`;
+  const ssoTestUrl = ssoTestLinkPath(basename, org);
 
   const errorFor = (intent: string) =>
     actionData && !actionData.ok && actionData.intent === intent && "failure" in actionData

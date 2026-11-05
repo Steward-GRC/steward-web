@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Banner, Button, Field, Input, Select, Textarea } from "@steward-web/ui";
 import { type FormEvent, useState } from "react";
-import { data, Form, redirect } from "react-router";
+import { data, Form, Link, redirect } from "react-router";
 
 import type { Route } from "./+types/setup";
 
@@ -167,7 +167,9 @@ const Done = ({ sso }: { sso?: SsoBootstrapResult }) => {
         </div>
       ) : null}
       <Button asChild className="justify-self-center">
-        <a href="/sign-in">Go to sign in</a>
+        <Link reloadDocument to="/sign-in">
+          Go to sign in
+        </Link>
       </Button>
     </div>
   );

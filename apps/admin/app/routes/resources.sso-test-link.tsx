@@ -10,14 +10,9 @@ import { redirect } from "react-router";
 import type { Route } from "./+types/resources.sso-test-link";
 
 import { mintSsoTestLink } from "../organisations/organisations.server";
+import { ssoTestLinkQuery } from "../organisations/ssoTestLink";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const parameters = new URL(request.url).searchParams;
-  const link = await mintSsoTestLink(request, {
-    alias: parameters.get("alias") ?? "",
-    connectionId: parameters.get("connectionId") ?? "",
-    returnPath: parameters.get("returnPath") ?? undefined,
-    tenant: parameters.get("tenant") ?? undefined,
-  });
+  const link = await mintSsoTestLink(request, ssoTestLinkQuery(new URL(request.url).searchParams));
   return redirect(link.url);
 };
