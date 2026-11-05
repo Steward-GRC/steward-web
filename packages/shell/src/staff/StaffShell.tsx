@@ -21,6 +21,7 @@ import type { ShellConfig } from "../shellConfig";
 import { AccountMenu } from "../AccountMenu";
 import { EnvironmentBanner } from "../EnvironmentBanner";
 import { SearchField } from "../SearchField";
+import { ActingAsBanner, ConnectionLostBanner, SecondFactorNudge } from "../ShellBanners";
 import { ShellFooter } from "../ShellFooter";
 import { SiteBanners } from "../SiteBanners";
 import { COMING_SOON } from "./comingSoon";
@@ -76,8 +77,12 @@ export interface StaffShellProps {
   children: ReactNode;
   config: ShellConfig;
   counts?: { approvals?: number };
+  /** An active "act as" session (H9): the acting-as banner sits above everything. */
+  impersonation?: { expiresAt: string; targetName: string } | null;
   /** Compliance reporting is on for this install (`STEWARD_REPORTING=true`). */
   reporting?: boolean;
+  /** The person signs in with email codes only: nudge towards a stronger second factor (H8). */
+  secondFactorNudge?: boolean;
 }
 
 /**
@@ -92,7 +97,9 @@ export const StaffShell = ({
   children,
   config,
   counts = {},
+  impersonation = null,
   reporting = false,
+  secondFactorNudge = false,
 }: StaffShellProps) => {
   const { t } = useTranslation("shell");
   const identity = useIdentity();
@@ -110,11 +117,14 @@ export const StaffShell = ({
   );
   const adminUrl = signedIn && canOpenAdmin(identity) ? config.adminUrl : undefined;
   // The canvas frames size boxes content-box: a 56 px header plus its 1 px rule is 57 px.
-  const style = { "--shell-top": config.environment ? "85px" : "57px" } as CSSProperties;
+  // The acting-as banner adds its 44 px.
+  const top = 57 + (config.environment ? 28 : 0) + (impersonation ? 44 : 0);
+  const style = { "--shell-top": `${top}px` } as CSSProperties;
 
   return (
     <div className="flex min-h-dvh flex-col" style={style}>
       <div className="sticky top-0 z-[var(--z-header)]">
+        {impersonation ? <ActingAsBanner session={impersonation} /> : null}
         <EnvironmentBanner name={config.environment} />
         <header className="flex h-[57px] items-center gap-1.5 border-b border-border-strong bg-surface px-1.5 lg:gap-3 lg:px-[14px] xl:gap-[14px] xl:px-4">
           {signedIn ? (
@@ -193,6 +203,10 @@ export const StaffShell = ({
         ) : null}
         <div className="flex min-w-0 flex-1 flex-col">
           <SiteBanners settings={banners} />
+          {signedIn ? <ConnectionLostBanner /> : null}
+          {signedIn && secondFactorNudge ? (
+            <SecondFactorNudge setUpUrl={COMING_SOON.security} />
+          ) : null}
           <main className="flex-1">{children}</main>
           <ShellFooter organisation={config.organisation} />
         </div>

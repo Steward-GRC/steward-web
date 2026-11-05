@@ -70,10 +70,12 @@ import type {
   BreakGlassGrant,
   Category,
   Group,
+  ImpersonationStatus,
   Me,
   Obligation,
   Policy,
   PolicyDetail,
+  SecondFactor,
   Template,
   TemplateVersion,
   User,
@@ -192,6 +194,7 @@ export type {
   DocumentBlock,
   Group,
   HistoryEntry,
+  ImpersonationStatus,
   InlineRun,
   Me,
   Obligation,
@@ -203,6 +206,7 @@ export type {
   PolicyReference,
   PolicySectionDiff,
   PolicyVersionSummary,
+  SecondFactor,
   Template,
   TemplateVersion,
   User,
@@ -461,6 +465,8 @@ export interface Edge {
   groupChildren(parentId: null | string, cookie?: string): Promise<readonly Group[]>;
   /** An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only. */
   groupMappings(connectionId: string, cookie?: string): Promise<readonly GroupMapping[]>;
+  /** The caller's active "act as" session (H9), or null. Drives the acting-as banner. */
+  impersonationStatus(cookie?: string): Promise<ImpersonationStatus>;
   /** Fetches a SAML IdP's metadata document by URL (SSRF-guarded) and extracts the fields
    *  needed to prefill a connection form. Site-admin only. */
   importIdpMetadata(url: string, cookie?: string): Promise<ImportedIdpMetadata>;
@@ -502,6 +508,8 @@ export interface Edge {
   myAckSummary(cookie?: string): Promise<AckSummary>;
   /** The CALLING user's own policies with a working draft. */
   myDraftPolicies(cookie?: string): Promise<readonly Policy[]>;
+  /** The caller's enrolled second factors ("totp", "email", "passkey"). */
+  myFactors(cookie?: string): Promise<readonly SecondFactor[]>;
   /** The platform groups the signed-in caller is a LOCAL group-manager of, sorted by name, for
    *  the "My groups" editor. Any signed-in caller; only their own grants are read. */
   myManagedGroups(cookie?: string): Promise<readonly PlatformGroup[]>;
@@ -656,6 +664,8 @@ export interface Edge {
     rotate?: boolean,
     cookie?: string,
   ): Promise<DomainVerification>;
+  /** Stops the caller's "act as" session. */
+  stopImpersonation(cookie?: string): Promise<boolean>;
   /** Submit whole-draft generation as an async job; poll `aiJob(jobId)` for the result. */
   submitDraftGeneration(
     input: SubmitDraftGenerationInput,

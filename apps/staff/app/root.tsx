@@ -165,7 +165,9 @@ export default function App({ loaderData }: Route.ComponentProps) {
         categories={loaderData.shell.categories}
         config={loaderData.shell.config}
         counts={loaderData.shell.counts}
+        impersonation={loaderData.shell.impersonation}
         reporting={loaderData.shell.reporting}
+        secondFactorNudge={loaderData.shell.secondFactorNudge}
       >
         <QuickLoginBar enabled={loaderData.quickLoginOn} />
         <DevelopmentUiIssueButton app="staff" enabled={loaderData.devUiIssueCopy} />
@@ -199,7 +201,9 @@ export const ErrorBoundary = () => {
         categories={loaderData.shell.categories}
         config={loaderData.shell.config}
         counts={loaderData.shell.counts}
+        impersonation={loaderData.shell.impersonation}
         reporting={loaderData.shell.reporting}
+        secondFactorNudge={loaderData.shell.secondFactorNudge}
       >
         <RouteErrorBoundary />
       </StaffShell>

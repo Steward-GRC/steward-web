@@ -17,6 +17,8 @@ export const COMING_SOON = {
   myReports: "/compliance/reports",
   notifications: "/notifications",
   reportConcern: "/compliance/report",
+  // U33, the security page, lands with the profile issue (#17).
+  security: "/profile/security",
   templates: "/templates",
 } as const;
 
