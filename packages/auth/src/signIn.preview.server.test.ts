@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { type FakeGateway, startFakeGateway } from "./fakeGateway.testing";
 import { signInLoader } from "./signIn.server";
+import { welcomeLoader } from "./welcome.server";
 
 vi.mock("@steward-web/dev-gate-preview.server", () => import("./developmentGatePreview.server"));
 
@@ -75,5 +76,23 @@ describe("the dev gate preview", () => {
     const page = await preview("G99");
     expect(page.state).toEqual({ view: "password" });
     expect(page.preview).toBeUndefined();
+  });
+});
+
+describe("the dev gate preview for the status gates", () => {
+  it("names the status gates it can hold on screen, and nothing else", async () => {
+    const { statusGatePreview } = await import("@steward-web/dev-gate-preview.server");
+    for (const gate of ["G1", "G2", "G10", "G11", "G12"])
+      expect(statusGatePreview(new URL(`${ORIGIN}/?gate=${gate}`))).toBe(gate);
+    expect(statusGatePreview(new URL(`${ORIGIN}/?gate=G3`))).toBeUndefined();
+  });
+
+  it("shows G10 with a sample first SSO sign-in, signed in or not", async () => {
+    const page = await welcomeLoader(new Request(`${ORIGIN}/welcome?gate=G10`));
+    expect(page).toEqual({
+      next: "/",
+      person: { email: "erin@example.org", firstName: "", lastName: "", username: "erin" },
+      preview: "G10",
+    });
   });
 });

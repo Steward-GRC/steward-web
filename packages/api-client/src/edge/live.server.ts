@@ -30,6 +30,7 @@ import {
   CategoryTreeDocument,
   ChangeOrgProtocolDocument,
   CloseCaseDocument,
+  CompleteOnboardingDocument,
   CompletionReportDocument,
   ContactBlocksDocument,
   CreateCategoryDocument,
@@ -220,6 +221,7 @@ const toMe = (user: {
   lastName: string;
   managedGroupIds: readonly string[];
   name: string;
+  needsOnboarding?: boolean;
   permissions: readonly string[];
   roles: readonly string[];
   userId: string;
@@ -231,6 +233,7 @@ const toMe = (user: {
   lastName: user.lastName,
   managedGroupIds: user.managedGroupIds,
   name: user.name,
+  needsOnboarding: user.needsOnboarding ?? false,
   permissions: user.permissions,
   roles: user.roles,
   username: user.username,
@@ -775,6 +778,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.managedGroupMembers;
+  },
+  async completeOnboarding(input, cookie) {
+    const data = await gatewayFetch(
+      CompleteOnboardingDocument,
+      { acceptTerms: true, ...input },
+      "CompleteOnboarding",
+      { cookie },
+    );
+    return toMe(data.completeOnboarding);
   },
   async me(cookie) {
     try {

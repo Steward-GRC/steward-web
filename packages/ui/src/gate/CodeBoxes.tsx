@@ -45,9 +45,7 @@ export const CodeBoxes = ({
           <span
             className={cn(
               "flex h-10 items-center justify-center rounded-md font-mono text-lg font-medium text-ink",
-              focused && index === current
-                ? "border-2 border-primary"
-                : "border border-control",
+              focused && index === current ? "border-2 border-primary" : "border border-control",
             )}
             data-testid="code-box"
             key={index}

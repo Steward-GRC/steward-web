@@ -17,6 +17,7 @@ export default [
   route("auth/sso/*", "routes/resources.sso.tsx"),
   route("home", "routes/resources.gateway-home.tsx"),
   route("login", "routes/resources.gateway-login.tsx"),
+  route("resources/status", "routes/resources.status.tsx"),
   route("profile", "routes/profile.tsx"),
   route("search", "routes/search.tsx"),
   route("policies", "routes/policies.tsx"),

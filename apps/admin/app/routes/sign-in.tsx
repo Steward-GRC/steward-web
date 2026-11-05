@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { SignIn } from "@steward-web/auth";
 import { signInAction, signInLoader } from "@steward-web/auth/server";
+import { statusGatePreview } from "@steward-web/dev-gate-preview.server";
 import { QuickLogin } from "@steward-web/dev-quick-login";
 import { redirect, useRouteLoaderData } from "react-router";
 
@@ -15,9 +16,12 @@ import { fetchSetupState } from "../setup/setup.server";
 export { GATE_HANDLE as handle } from "@steward-web/shell";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  // Nobody can sign in before first-run setup has made the root administrator.
-  const setup = await fetchSetupState();
-  if (setup.needsSetup) throw redirect("/setup");
+  // Nobody can sign in before first-run setup has made the root administrator. A dev build's
+  // `?gate=G11` or `?gate=G12` previews that gate here, so it skips the check.
+  if (statusGatePreview(new URL(request.url)) === undefined) {
+    const setup = await fetchSetupState();
+    if (setup.needsSetup) throw redirect("/setup");
+  }
   return signInLoader(request, { basename: BASENAME });
 };
 

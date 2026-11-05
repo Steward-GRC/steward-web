@@ -207,11 +207,14 @@ Where the mock can produce the real state, use it:
 | G7 set up a second factor         | Sign in as `dave` (any password): he must enrol an authenticator first.                                                                         |
 | G9 signing in                     | Shows for a moment after any sign-in succeeds.                                                                                                  |
 | G4 SSO, then home or G6           | Select "Sign in with SSO →", enter `erin` (signs straight in) or `alice` (goes on to her second factor). The mock's SSO is a pass-through test. |
+| G2 not set up yet                 | Start the mock as a new install ("Start as a new install" on `/_mock`), then open `/sign-in`: it goes to `/not-set-up`.         |
+| G1 checking the instance          | `/not-set-up` while the gateway can't answer `GET /setup/state`, such as during mock maintenance.                               |
+| G11 maintenance lockdown          | `POST /_mock/controls` with `{"kind":"maintenance-start"}`, then any staff page. End it with `{"kind":"maintenance-end"}`.      |
+| G12 admins only                   | Sign in to `/admin` as `erin` (a reader).                                                                                       |
+| G10 welcome                       | A first SSO sign-in whose gateway user has `needsOnboarding`. The mock never sets it, so use the preview below.                 |
 
-The mock doesn't answer the gateway's sign-in settings (`GET /auth/config`), SSO discovery, the
-password reset or passkey sign-in, so the page offers none of those against it. For those, and
-for any state you want to hold still, the dev server takes `?gate=<frame id>` on the sign-in page
-and shows that gate with sample data and every option on:
+For any state you want to hold still, such as an error, the dev server takes `?gate=<frame id>`
+on the sign-in page and shows that gate with sample data and every option on:
 
 | `?gate=`        | Shows                                                                             |
 | --------------- | --------------------------------------------------------------------------------- |
@@ -223,6 +226,19 @@ and shows that gate with sample data and every option on:
 | `G7`            | Set up an authenticator app, with its QR code.                                    |
 | `G8`, `G8-code` | The password reset: the email step, then the code and new password.               |
 | `G9`            | Signing in.                                                                       |
+
+The status gates take the same parameter where they render:
+
+| URL                                            | Shows                                                   |
+| ---------------------------------------------- | ------------------------------------------------------- |
+| `/not-set-up?gate=G1`, `/not-set-up?gate=G2`   | Checking the instance; not set up yet.                  |
+| `/welcome?gate=G10`                            | The welcome page with a sample first SSO sign-in.       |
+| `/sign-in?gate=G11`, `/admin/sign-in?gate=G11` | The maintenance lockdown (staff with the admin portal). |
+| `/admin/sign-in?gate=G12`                      | Admins only, signed in as a sample reader.              |
+
+The welcome page keeps a slot for a "How do you like to navigate?" step (left sidebar or top
+nav). It stays hidden while `NAV_CHOICE_ENABLED` (`packages/auth/src/navigationChoice.ts`) is
+`false`, until the top nav is designed and built.
 
 For example <http://localhost:5173/sign-in?gate=G6> or
 <http://localhost:5174/admin/sign-in?gate=G4>. The forms on a previewed gate still post to the

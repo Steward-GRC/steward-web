@@ -13,7 +13,9 @@ accounts yet, so Steward gives you a special screen to create one.
 ## 👀 What staff see before setup
 
 Until setup is done, anyone who visits the site sees a **"Not set up yet"** message. They cannot
-sign in because no accounts exist yet. This clears as soon as you finish the steps below.
+sign in because no accounts exist yet. The message checks again every few seconds and switches
+to the sign-in screen by itself as soon as you finish the steps below. While Steward can't be
+reached at all, the page shows only the Steward loading mark until it can tell.
 
 ## 🛠️ Create the first administrator
 

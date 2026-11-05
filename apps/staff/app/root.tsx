@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { IdentityProvider } from "@steward-web/auth";
 import { identityFromRequest } from "@steward-web/auth/server";
+import { statusGatePreview } from "@steward-web/dev-gate-preview.server";
 import { QuickLoginBar } from "@steward-web/dev-quick-login";
 import { quickLoginUsers } from "@steward-web/dev-quick-login.server";
 import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
@@ -9,8 +10,10 @@ import { DEFAULT_LOCALE } from "@steward-web/i18n";
 import {
   DiagnosticsProvider,
   GateShell,
+  MaintenanceGate,
   PageTitle,
   StaffShell,
+  statusGateFor,
   useIsGate,
 } from "@steward-web/shell";
 import { siteSettingsFromRequest } from "@steward-web/shell/server";
@@ -23,7 +26,14 @@ import {
 } from "@steward-web/ui";
 import stewardCss from "@steward-web/ui/steward.css?url";
 import { type ReactNode } from "react";
-import { Links, Meta, Outlet, Scripts, type ShouldRevalidateFunctionArgs } from "react-router";
+import {
+  Links,
+  Meta,
+  Outlet,
+  redirect,
+  Scripts,
+  type ShouldRevalidateFunctionArgs,
+} from "react-router";
 
 import type { Route } from "./+types/root";
 
@@ -39,12 +49,32 @@ export const links: Route.LinksFunction = () => [
 // `PageTitle` in Layout's head.
 export const meta: Route.MetaFunction = () => brandMeta();
 
+/** The pages someone who still owes first-run onboarding (G10) may open. */
+const ONBOARDING_OPEN = new Set(["/resources/status", "/sign-in", "/sign-out", "/welcome"]);
+
+/** The page's own path and query, from a document or a data request. */
+const pagePath = (url: URL): string => {
+  const path = url.pathname.replace(/\/_\.data$/, "/").replace(/\.data$/, "") || "/";
+  const query = new URLSearchParams(url.search);
+  query.delete("_routes");
+  const search = query.toString();
+  return search ? `${path}?${search}` : path;
+};
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [identity, siteSettings] = await Promise.all([
     identityFromRequest(request),
     siteSettingsFromRequest(request),
   ]);
+  const url = new URL(request.url);
+  // A first SSO sign-in finishes setting up the account before anything else (G10).
+  const page = pagePath(url);
+  if (identity.needsOnboarding && !ONBOARDING_OPEN.has(page.split("?", 1)[0] ?? page)) {
+    throw redirect(`/welcome?next=${encodeURIComponent(page)}`);
+  }
   return {
+    // A dev build's `?gate=G11` holds the maintenance lockdown on screen; never in a release.
+    gatePreview: statusGatePreview(url),
     devUiIssueCopy: process.env.STEWARD_DEV_UI_ISSUE_COPY === "true",
     identity,
     // Reused, not re-checked: quickLoginUsers() is already both build- and runtime-gated (empty
@@ -94,6 +124,23 @@ export const Layout = ({ children }: { children: ReactNode }) => (
 export default function App({ loaderData }: Route.ComponentProps) {
   // Sign-in and the other gates sit outside the shell as a centred card (2-layout-and-navigation.s5).
   const gate = useIsGate();
+  const { identity, shell, siteSettings } = loaderData;
+  const preview = loaderData.gatePreview === "G11";
+  // Maintenance closes the whole staff app (G11); site admins get the way to the admin portal.
+  if (preview || statusGateFor({ app: "staff", identity, settings: siteSettings })) {
+    return (
+      <IdentityProvider identity={identity}>
+        <GateShell environment={shell.config.environment}>
+          <QuickLoginBar enabled={loaderData.quickLoginOn} />
+          <DevelopmentUiIssueButton app="staff" enabled={loaderData.devUiIssueCopy} />
+          <MaintenanceGate
+            adminUrl={preview || identity.isSiteAdmin ? shell.config.adminUrl : undefined}
+            message={siteSettings?.maintenance.message ?? ""}
+          />
+        </GateShell>
+      </IdentityProvider>
+    );
+  }
   if (gate) {
     return (
       <IdentityProvider identity={loaderData.identity}>

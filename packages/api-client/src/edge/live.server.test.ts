@@ -104,6 +104,12 @@ describe("liveEdge: me", () => {
     expect(await readMe("c=1")).toMatchObject({ id: "u-1", username: "ada" });
   });
 
+  it("says whether the person still has to finish first-run onboarding", async () => {
+    routeGateway({ Me: () => ({ me: { ...me, needsOnboarding: true } }) });
+    const { me: readMe } = liveEdge;
+    expect(await readMe("c=1")).toMatchObject({ needsOnboarding: true });
+  });
+
   it("answers null for a signed-out caller", async () => {
     routeGateway({
       Me: () => ({
@@ -112,6 +118,28 @@ describe("liveEdge: me", () => {
     });
     const { me: readMe } = liveEdge;
     expect(await readMe()).toBeNull();
+  });
+});
+
+describe("liveEdge.completeOnboarding", () => {
+  it("accepts the terms with the confirmed profile and answers the onboarded person", async () => {
+    const calls = routeGateway({
+      CompleteOnboarding: () => ({
+        completeOnboarding: { ...me, firstName: "Erin", needsOnboarding: false },
+      }),
+    });
+    const { completeOnboarding } = liveEdge;
+    const person = await completeOnboarding(
+      { firstName: "Erin", lastName: "Example", username: "erin" },
+      "c=1",
+    );
+    expect(calls).toEqual([
+      {
+        operation: "CompleteOnboarding",
+        variables: { acceptTerms: true, firstName: "Erin", lastName: "Example", username: "erin" },
+      },
+    ]);
+    expect(person).toMatchObject({ firstName: "Erin", needsOnboarding: false });
   });
 });
 

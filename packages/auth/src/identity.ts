@@ -24,6 +24,8 @@ export interface Identity {
   /** Platform group ids this user is a LOCAL group-manager of, for the "My groups" editor. */
   managedGroupIds: readonly string[];
   name: string;
+  /** True until the person finishes first-run onboarding on the welcome page (G10). */
+  needsOnboarding: boolean;
   permissions: ReadonlySet<string>;
   roles: readonly string[];
   username: string;
@@ -36,6 +38,8 @@ export interface Me {
   lastName: string;
   managedGroupIds: readonly string[];
   name: string;
+  /** The gateway's flag; an older wire shape without it means onboarded. */
+  needsOnboarding?: boolean;
   permissions: readonly string[];
   roles: readonly string[];
   username: string;
@@ -50,6 +54,7 @@ export const NO_ACCESS: Identity = {
   lastName: "",
   managedGroupIds: [],
   name: "",
+  needsOnboarding: false,
   permissions: new Set(),
   roles: [],
   username: "",
@@ -60,5 +65,6 @@ export const identityFromMe = (me: Me): Identity => ({
   ...me,
   isGroupManager: me.managedGroupIds.length > 0,
   isSiteAdmin: me.roles.includes("site-admin"),
+  needsOnboarding: me.needsOnboarding ?? false,
   permissions: new Set(me.permissions),
 });

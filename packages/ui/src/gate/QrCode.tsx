@@ -21,10 +21,7 @@ export const QrCode = ({
 }) => (
   <span
     aria-label={label}
-    className={cn(
-      "inline-flex rounded-[4px] border border-border bg-white p-1.5",
-      className,
-    )}
+    className={cn("inline-flex rounded-[4px] border border-border bg-white p-1.5", className)}
     role="img"
   >
     <QRCodeSVG aria-hidden="true" bgColor="#ffffff" fgColor="#261b25" size={size} value={value} />
