@@ -34,12 +34,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
     if (intent === "acknowledge") {
       const policyVersionId = String(form.get("policyVersionId") ?? "");
       await acknowledgePolicy(policyVersionId, cookie);
-    } else {
-      const policyId = String(form.get("policyId") ?? "");
-      const reason = String(form.get("reason") ?? "");
-      await breakGlassReveal(policyId, reason, cookie);
+      return data({ ok: true });
     }
-    return data({ ok: true });
+    const policyId = String(form.get("policyId") ?? "");
+    const reason = String(form.get("reason") ?? "");
+    // When the grant ends, so the reader can count down to it (U9r).
+    const { grantedUntil } = await breakGlassReveal(policyId, reason, cookie);
+    return data({ grantedUntil, ok: true });
   } catch (error) {
     return data({ error: refusalOf(error) }, { status: 400 });
   }

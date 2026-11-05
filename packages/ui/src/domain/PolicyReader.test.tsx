@@ -1,10 +1,10 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
-import { formatDate } from "@steward-web/i18n";
+import { formatDate, formatTime } from "@steward-web/i18n";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createRoutesStub } from "react-router";
+import { createRoutesStub, useLoaderData } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { Toaster } from "#ui/feedback/Toast";
@@ -226,17 +226,107 @@ describe("PolicyReader", () => {
     expect(screen.queryByText("Acknowledged")).not.toBeInTheDocument();
   });
 
-  it("hides the tabs and offers a break-glass reveal for redacted, breakable content", () => {
+  it("redacts a sensitive policy's body but keeps its shape (U9)", () => {
+    renderAt({
+      ...baseDetail,
+      canBreakGlass: true,
+      contentObfuscated: true,
+      sensitivity: Sensitivity.Sensitive,
+      summary: { generatedAt: "2026-08-12T00:00:00Z", text: "Book ahead." },
+    });
+    // Once in the detail strip, once as the pill beside the number.
+    expect(screen.getAllByText("Sensitive")).toHaveLength(2);
+    const redacted = screen.getByRole("img", {
+      name: "Redacted policy content: 2 sections, 1 table",
+    });
+    expect(within(redacted).getByText(/^1\. /)).toBeInTheDocument();
+    expect(within(redacted).queryByText(/Purpose/)).toBeNull();
+    expect(screen.queryByRole("tab", { name: "View" })).toBeNull();
+    expect(screen.queryByTestId("ack-banner")).toBeNull();
+    expect(screen.queryByRole("switch", { name: "AI summary" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "shared desk" })).toBeNull();
+  });
+
+  it("offers the break-glass reveal to someone who may use it", () => {
     renderAt({ ...baseDetail, canBreakGlass: true, contentObfuscated: true });
-    expect(screen.getByText("Sensitive content is hidden")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Break glass to reveal" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "View" })).not.toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Sensitive content is hidden");
+    expect(alert).toHaveTextContent(
+      "You're outside this sensitive policy's read audience, so its content is obfuscated.",
+    );
+    expect(alert).toHaveTextContent(
+      "You may break the glass to reveal it — this access is recorded for audit.",
+    );
+    expect(within(alert).getByRole("button", { name: "Break glass to reveal" })).toBeVisible();
   });
 
   it("hides the reveal action when the caller cannot break glass", () => {
     renderAt({ ...baseDetail, canBreakGlass: false, contentObfuscated: true });
-    expect(screen.getByText(/You don't have permission to reveal it/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Break glass to reveal" })).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "You don't have permission to reveal it. Contact a compliance admin if you need access.",
+    );
+    expect(screen.queryByRole("button", { name: "Break glass to reveal" })).toBeNull();
+  });
+
+  it("asks why before revealing (D2), naming the policy", async () => {
+    renderAt({ ...baseDetail, canBreakGlass: true, contentObfuscated: true });
+    await userEvent.click(screen.getByRole("button", { name: "Break glass to reveal" }));
+    const dialog = screen.getByRole("dialog", { name: "Reveal sensitive content?" });
+    expect(dialog).toHaveAccessibleDescription(
+      "Revealing the content of Expense Claims (POL-FINANCE-001) is recorded against your name with the reason you give below. Only break the glass when you have a legitimate need.",
+    );
+    const reveal = within(dialog).getByRole("button", { name: "Reveal content" });
+    expect(reveal).toBeDisabled();
+    await userEvent.type(within(dialog).getByLabelText("Reason (required)"), "Lost laptop.");
+    expect(reveal).toBeEnabled();
+  });
+
+  it("reveals for the time the grant allows, then hides again on request (U9r)", async () => {
+    const until = new Date(Date.now() + 30 * 60_000).toISOString();
+    let revealed = false;
+    const Stub = createRoutesStub([
+      {
+        action: async ({ request }) => {
+          const form = await request.formData();
+          expect(form.get("intent")).toBe("breakGlass");
+          expect(form.get("policyId")).toBe("policy-1");
+          expect(form.get("reason")).toBe("Lost laptop.");
+          revealed = true;
+          return { grantedUntil: until, ok: true };
+        },
+        Component: () => {
+          const { detail } = useLoaderData() as { detail: PolicyDetail };
+          return (
+            <>
+              <PolicyReader detail={detail} />
+              <Toaster />
+            </>
+          );
+        },
+        loader: () => ({
+          detail: { ...baseDetail, canBreakGlass: !revealed, contentObfuscated: !revealed },
+        }),
+        path: "/policies/:number",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Break glass to reveal" }));
+    await userEvent.type(screen.getByLabelText("Reason (required)"), "Lost laptop.");
+    await userEvent.click(screen.getByRole("button", { name: "Reveal content" }));
+
+    const bar = await screen.findByRole("status", { name: /Revealed for you until/ });
+    expect(bar).toHaveTextContent(`Revealed for you until ${formatTime(until)}`);
+    expect(bar).toHaveTextContent("· recorded with your reason");
+    expect(within(bar).getByText(/^\d{1,2}:\d{2}$/)).toHaveClass("font-mono");
+    expect(
+      await screen.findByText("Content revealed — this access is recorded."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "1. Purpose" })).toBeVisible();
+
+    await userEvent.click(within(bar).getByRole("button", { name: "Hide now" }));
+    expect(screen.queryByRole("heading", { level: 2, name: "1. Purpose" })).toBeNull();
+    expect(screen.getByRole("img", { name: /^Redacted policy content/ })).toBeVisible();
+    expect(screen.queryByRole("status", { name: /Revealed for you until/ })).toBeNull();
   });
 
   it("says a new version is in review beside the published one", () => {

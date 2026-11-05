@@ -285,3 +285,148 @@ export const PolicyDocument = ({
     </article>
   );
 };
+
+/** A run of redaction blocks standing in for a word: "▇▇▇▇", as long as the word, up to 10. */
+const blockedWords = (text: string) =>
+  text
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => "▇".repeat(Math.min(10, Math.max(2, word.length))))
+    .join(" ");
+
+/** The word widths a full redacted line cycles through, in pixels, so lines don't look ruled. */
+const WORD_WIDTHS = [60, 44, 52];
+
+/** About how many characters fill one line of the reading measure. */
+const LINE = 90;
+
+/** The bars standing in for a paragraph: one per line its text would take, the last one shorter. */
+const paragraphBars = (length: number): number[] => {
+  const lines = Math.max(1, Math.ceil(length / LINE));
+  const widths = [96, 92, 88, 94, 90];
+  return Array.from({ length: Math.min(lines, 6) }, (_, line) =>
+    line === lines - 1 ? Math.max(30, Math.round(((length % LINE || LINE) / LINE) * 90)) : widths[line % widths.length]!,
+  );
+};
+
+const runsLength = (runs: readonly InlineRun[]) => runs.reduce((sum, run) => sum + run.text.length, 0);
+
+/** One redacted line, `width` per cent of the measure. */
+// Full lines read as words (a run of blocks, then a gap); a paragraph's last line is solid.
+const redactedLine = (width: number, key: number | string, stripes = true) => {
+  const word = WORD_WIDTHS[(typeof key === "number" ? key : 0) % WORD_WIDTHS.length]!;
+  return (
+    <span
+      className="block h-3 rounded-[3px]"
+      key={key}
+      style={{
+        background: stripes
+          ? `repeating-linear-gradient(90deg, var(--redact) 0 ${word}px, transparent ${word}px ${word + 6}px)`
+          : "var(--redact)",
+        width: `${width}%`,
+      }}
+    />
+  );
+};
+
+/**
+ * The redacted body (U9): the document's shape without its words. Section numbers stay
+ * readable, the words of headings are blocked, each paragraph becomes bars as long as its lines
+ * and each table a grid of its cells, so a reader can see how long the document is. A screen
+ * reader hears only "Redacted policy content: {n} sections, {m} tables".
+ */
+export const RedactedDocument = ({
+  appendices,
+  blocks,
+  label,
+}: {
+  appendices: readonly PolicyAppendix[];
+  blocks: readonly DocumentBlock[];
+  /** The accessible summary: "Redacted policy content: 2 sections, 1 table". */
+  label: string;
+}) => {
+  const numbered = numberHeadings(blocks);
+  return (
+    <div
+      aria-label={label}
+      className="flex flex-col gap-2.5 rounded-[10px] border border-border bg-surface px-5 py-7 font-serif text-ink select-none sm:px-9"
+      role="img"
+    >
+      {blocks.map((block, index) => {
+        switch (block.kind) {
+          case "heading": {
+            const heading = numbered.get(index)!;
+            return (
+              <span
+                className={`font-semibold first:mt-0 ${block.depth === 1 ? "mt-2.5 text-xl" : "text-[17px]"}`}
+                key={index}
+              >
+                {heading.number ? `${heading.number} ` : ""}
+                {blockedWords(block.text)}
+              </span>
+            );
+          }
+          case "list": {
+            return (
+              <div className="flex flex-col gap-2.5 pl-5" key={index}>
+                {block.items.map((runs, item) =>
+                  redactedLine(Math.min(90, Math.max(30, runsLength(runs))), item, false),
+                )}
+              </div>
+            );
+          }
+          case "paragraph":
+          case "quote": {
+            return (
+              <div className="flex flex-col gap-2.5" key={index}>
+                {paragraphBars(runsLength(block.runs)).map((width, line, all) =>
+                  redactedLine(width, line, line < all.length - 1),
+                )}
+              </div>
+            );
+          }
+          case "table": {
+            const columns = Math.max(1, block.rows[0]?.cells.length ?? 1);
+            return (
+              <div
+                className="mt-1.5 grid gap-1.5"
+                key={index}
+                // The first column is the narrow one (a label), as in most policy tables.
+                style={{
+                  gridTemplateColumns:
+                    columns === 1 ? "1fr" : `1fr repeat(${columns - 1}, minmax(0, 2fr))`,
+                }}
+              >
+                {block.rows.flatMap((row, rowIndex) =>
+                  row.cells.map((_, column) => (
+                    <span
+                      className="h-[26px] rounded-[3px]"
+                      key={`${rowIndex}-${column}`}
+                      style={{ background: "var(--redact)", opacity: row.header ? 1 : 0.6 }}
+                    />
+                  )),
+                )}
+              </div>
+            );
+          }
+        }
+      })}
+      {appendices.map((appendix) => (
+        <div className="mt-2.5 flex flex-col gap-2.5 border-t border-border-strong pt-4" key={appendix.id}>
+          <span className="text-xl font-semibold">
+            {appendix.letter}. {blockedWords(appendix.title)}
+          </span>
+          {paragraphBars(appendix.text.length).map((width, line, all) =>
+            redactedLine(width, line, line < all.length - 1),
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/** How many numbered sections and tables a body has, for the redaction's spoken summary. */
+export const bodyShape = (blocks: readonly DocumentBlock[]) => ({
+  sections: blocks.filter((block) => block.kind === "heading" && block.depth === 1).length,
+  tables: blocks.filter((block) => block.kind === "table").length,
+});

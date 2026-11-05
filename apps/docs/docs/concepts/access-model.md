@@ -58,6 +58,18 @@ otherwise have read access, so oversight does not mean everyone sees restricted 
 with the right permission can **break glass** — a time-boxed reveal that is recorded, with a
 reason, in the audit log.
 
+When the content is hidden, the reader says so and shows the document's shape instead of its
+words: the section numbers stay readable, each line becomes a bar about as long as the text, and
+each table a grid of its cells, so you can still see how long the document is. The AI summary,
+the term links and the acknowledgement banner are hidden too, because there is nothing you can
+read yet.
+
+If you may break the glass, the notice offers **Break glass to reveal**. Steward asks for your
+reason before anything is shown, and records it against your name. Once revealed, a bar above the
+document says until when the content stays visible for you and counts down; **Hide now** puts the
+redaction back straight away. When the time runs out, the page reloads with the content hidden
+again. If you may not break the glass, the notice says to contact a compliance admin.
+
 ## ➡️ What comes next
 
 If you cannot access a document you expect to see, contact your administrator — they can check
