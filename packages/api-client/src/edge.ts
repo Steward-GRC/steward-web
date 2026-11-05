@@ -38,6 +38,7 @@ import type {
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
+  LiveEvent,
   MergeAccountsResult,
   MfaFactor,
   NoticeRecipient,
@@ -128,6 +129,7 @@ export type {
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
+  LiveEvent,
   MergeAccountsResult,
   MergeCounts,
   MergePreviewItem,
@@ -500,6 +502,17 @@ export interface Edge {
   latestTemplateVersion(templateId: string, cookie?: string): Promise<null | TemplateVersion>;
   /** A user's sessions, site-admin only. */
   listUserSessions(userId: string, cookie?: string): Promise<readonly Session[]>;
+  /**
+   * Hands every live event whose type starts with one of `topics` to `onEvent` until `signal`
+   * aborts or the gateway ends the stream. Needs `audit.read`; a refusal rejects with the
+   * gateway's code.
+   */
+  liveEvents(
+    topics: readonly string[],
+    cookie: string | undefined,
+    onEvent: (event: LiveEvent) => void,
+    signal: AbortSignal,
+  ): Promise<void>;
   /** The DIRECT members of a platform group, for the group-manager "My groups" editor.
    *  Authorized for site-admins AND for a LOCAL group-manager of groupId (unlike the
    *  site-admin-only `users` query). Each `User` carries `memberships` so the caller can mark

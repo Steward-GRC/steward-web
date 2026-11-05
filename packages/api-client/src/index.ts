@@ -64,6 +64,7 @@ export type {
   IssueCollabTokenPayload,
   KeyValueInput,
   ListUsersInput,
+  LiveEvent,
   Me,
   MergeAccountsResult,
   MergeCounts,

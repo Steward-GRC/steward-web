@@ -1288,6 +1288,20 @@ export type ListUserSessionsQuery = {
   }>;
 };
 
+export type LiveEventsSubscriptionVariables = Exact<{
+  topics?: ReadonlyArray<string> | string | null | undefined;
+}>;
+
+export type LiveEventsSubscription = {
+  readonly liveEvents: {
+    readonly type: string;
+    readonly entityId: string | null;
+    readonly groupId: string | null;
+    readonly actorUserId: string | null;
+    readonly at: string;
+  };
+};
+
 export type ManagedGroupMembersQueryVariables = Exact<{
   groupId: string | number;
 }>;
@@ -8175,6 +8189,55 @@ export const ListUserSessionsDocument = {
     },
   ],
 } as unknown as DocumentNode<ListUserSessionsQuery, ListUserSessionsQueryVariables>;
+export const LiveEventsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "subscription",
+      name: { kind: "Name", value: "LiveEvents" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "topics" } },
+          type: {
+            kind: "ListType",
+            type: {
+              kind: "NonNullType",
+              type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "liveEvents" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "topics" },
+                value: { kind: "Variable", name: { kind: "Name", value: "topics" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "type" } },
+                { kind: "Field", name: { kind: "Name", value: "entityId" } },
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "actorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "at" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<LiveEventsSubscription, LiveEventsSubscriptionVariables>;
 export const ManagedGroupMembersDocument = {
   kind: "Document",
   definitions: [

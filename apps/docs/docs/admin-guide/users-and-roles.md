@@ -42,6 +42,14 @@ followed by how many policies an exception takes away or adds. Open a user to se
 The **root** administrator can't be disabled, have its roles changed, or be deleted.
 :::
 
+### When a change reaches the person
+
+A change to someone's roles, groups or policy access shows up in Steward without them signing
+in again. Their menus, sidebar and pages update the next time they come back to the Steward
+tab. When your gateway streams live changes to them, the update arrives while they're looking.
+Groups that come from your directory (SSO) are read when they sign in, so a directory change
+reaches them at their next sign-in.
+
 ## 🗃️ Deleted and merged accounts
 
 A deleted account is closed, not erased — Steward keeps it so audit history still shows who did
