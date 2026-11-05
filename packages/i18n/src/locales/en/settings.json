@@ -1,8 +1,12 @@
 {
   "language": {
     "browserOption": "Match my browser",
+    "browserOptionWith": "Match my browser · {{language}}",
     "description": "Choose the language Steward uses for menus, labels, and messages. Documents themselves are always shown in the language they were authored in.",
     "label": "Display language",
+    "names": {
+      "en": "English"
+    },
     "saveError": "We couldn't save your language preference to your account. It still applies on this device.",
     "saving": "Saving…",
     "sourceBrowser": "Matching your browser's preferred language.",
@@ -10,6 +14,37 @@
     "sourceStored": "Saved on this device.",
     "sourceUser": "Saved to your account.",
     "title": "Language"
+  },
+  "notifications": {
+    "about": "What you’re notified about",
+    "cadence": {
+      "DAILY": "Daily digest",
+      "IMMEDIATE": "Immediate",
+      "OFF": "Off",
+      "WEEKLY": "Weekly digest"
+    },
+    "cadenceFor": "How often: {{name}}",
+    "channels": {
+      "email": "Email",
+      "inApp": "In-app",
+      "push": "Push"
+    },
+    "custom": "Custom",
+    "description": "Choose how often you hear from Steward. Some notices are required for auditability and can’t be turned off.",
+    "digest": "Daily digest at {{time}} · Weekly digest on {{day}}",
+    "fineTune_one": "Fine-tune {{count}} notification",
+    "fineTune_other": "Fine-tune {{count}} notifications",
+    "groups": {
+      "COMPLIANCE": "Compliance",
+      "INFORMATIONAL": "Updates & digests",
+      "SECURITY": "Security",
+      "TRANSACTIONAL": "Account & sign-in",
+      "WORKFLOW": "Approvals & workflow"
+    },
+    "reached": "How you’re reached",
+    "required": "Required",
+    "title": "Notifications",
+    "unavailable": "Notification preferences aren't available right now. Try again in a moment."
   },
   "profile": {
     "name": {
@@ -24,11 +59,60 @@
       "title": "Your name"
     },
     "tabs": {
+      "name": "Name",
+      "notifications": "Notifications",
       "preferences": "Preferences",
-      "profile": "Profile",
       "security": "Security"
     },
+    "tabsLabel": "Profile",
     "title": "Your profile"
+  },
+  "security": {
+    "email": {
+      "detail": "Baseline · can't be removed",
+      "locked": "Can't be removed",
+      "name": "Email code"
+    },
+    "nameLabel": "Name",
+    "passkey": {
+      "cancelled": "Passkey registration was cancelled.",
+      "detail": "Passkey · added {{date}}",
+      "failed": "The passkey couldn't be registered. Try again.",
+      "name": "Passkey",
+      "register": "Register a passkey",
+      "registered": "Passkey registered. Choose “Sign in with a passkey” the next time you sign in.",
+      "unsupported": "This browser can't create a passkey."
+    },
+    "passwordless": {
+      "detail": "Register a passkey to sign in without a password.",
+      "name": "Passwordless sign-in"
+    },
+    "remove": "Remove",
+    "removeDescription": "You'll no longer be able to sign in with it. The email code always stays.",
+    "removeTitle": "Remove {{name}}?",
+    "rename": "Rename",
+    "renameConfirm": "Save name",
+    "renameTitle": "Rename {{name}}",
+    "sessions": {
+      "detail": "Signed in somewhere you don't recognise? Sign out of every session except this one.",
+      "done_one": "Signed out of {{count}} other session.",
+      "done_other": "Signed out of {{count}} other sessions.",
+      "failed": "Couldn't sign out the other sessions",
+      "signOut": "Sign out everywhere else",
+      "title": "Sessions"
+    },
+    "title": "Security methods",
+    "totp": {
+      "add": "Add an authenticator app for stronger sign-in.",
+      "code": "6-digit code",
+      "confirm": "Add the app",
+      "detail": "Authenticator app · added {{date}}",
+      "name": "Authenticator app",
+      "qrLabel": "QR code for your authenticator app",
+      "scan": "Scan this with your authenticator app, then enter the 6-digit code it shows.",
+      "setUp": "Set up",
+      "wrongCode": "That code didn't work. Try again."
+    }
   },
   "theme": {
     "description": "Choose how Steward looks. Preferences save to this browser.",

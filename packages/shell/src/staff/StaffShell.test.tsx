@@ -317,6 +317,16 @@ describe("the staff shell's banners (H7, H8, H9)", () => {
     );
   });
 
+  it("rings the bell to the inbox, and the account menu to the notification settings", async () => {
+    renderShell(bob);
+    expect(screen.getByRole("link", { name: "Notifications" })).toHaveAttribute("href", "/inbox");
+    await userEvent.click(screen.getByRole("button", { name: /Account/ }));
+    expect(screen.getByRole("menuitem", { name: "Notifications" })).toHaveAttribute(
+      "href",
+      "/notifications",
+    );
+  });
+
   it("has no acting-as banner or nudge by default", () => {
     renderShell(bob);
     expect(screen.queryByTestId("acting-as-banner")).toBeNull();

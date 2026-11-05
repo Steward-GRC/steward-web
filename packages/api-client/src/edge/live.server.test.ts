@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DocumentType } from "../generated/schema";
+import { DocumentType, NotifCadence, NotifCategory } from "../generated/schema";
 import { PolicyStatus } from "../views";
 import { liveEdge } from "./live.server";
 
@@ -889,5 +889,73 @@ describe("liveEdge: reference material for AI drafting", () => {
     const [url, init] = fetchSpy.mock.calls.at(-1)!;
     expect(url).toMatch(/\/documents\/validate-url$/);
     expect(JSON.parse(init.body as string)).toEqual({ url: "https://policies.example.org/old" });
+  });
+});
+
+describe("liveEdge: the caller's own account (U33, U35)", () => {
+  const settings = {
+    categories: [{ cadence: "IMMEDIATE", category: "COMPLIANCE", mandatory: true }],
+    channels: { email: true, inApp: true, push: false },
+    digest: { dailyHour: 8, weeklyDow: 1 },
+    overrides: [],
+  };
+
+  it("reads the notification settings with the type catalog they're chosen from", async () => {
+    routeGateway({
+      NotificationSettings: () => ({
+        notificationSettings: settings,
+        notificationTypeCatalog: [
+          {
+            category: "COMPLIANCE",
+            delivery: "REMINDER_SCHEDULE",
+            kind: "ack_reminder",
+            mandatory: true,
+          },
+        ],
+      }),
+    });
+    expect(await liveEdge.notificationPreferences()).toEqual({
+      catalog: [
+        {
+          category: "COMPLIANCE",
+          delivery: "REMINDER_SCHEDULE",
+          kind: "ack_reminder",
+          mandatory: true,
+        },
+      ],
+      settings,
+    });
+  });
+
+  it("sets a category's cadence and answers the settings it leaves", async () => {
+    const calls = routeGateway({ SetCategoryCadence: () => ({ setCategoryCadence: settings }) });
+    expect(await liveEdge.setCategoryCadence(NotifCategory.Workflow, NotifCadence.Daily)).toEqual(
+      settings,
+    );
+    expect(calls).toEqual([
+      { operation: "SetCategoryCadence", variables: { cadence: "DAILY", category: "WORKFLOW" } },
+    ]);
+  });
+
+  it("lists the caller's passkeys and renames or removes one", async () => {
+    const calls = routeGateway({
+      MyWebauthnCredentials: () => ({
+        myWebauthnCredentials: [
+          { createdAt: "2026-10-03T00:00:00Z", id: "cred-1", label: "Laptop", lastUsedAt: null },
+        ],
+      }),
+      RemoveWebauthnCredential: () => ({ removeWebauthnCredential: true }),
+      RenameMfaMethod: () => ({ renameMfaMethod: true }),
+    });
+    expect(await liveEdge.myPasskeys()).toEqual([
+      { createdAt: "2026-10-03T00:00:00Z", id: "cred-1", label: "Laptop", lastUsedAt: null },
+    ]);
+    expect(await liveEdge.renameMyMethod("cred-1", "Work laptop")).toBe(true);
+    expect(await liveEdge.removeMyPasskey("cred-1")).toBe(true);
+    expect(calls.map((c) => c.operation)).toEqual([
+      "MyWebauthnCredentials",
+      "RenameMfaMethod",
+      "RemoveWebauthnCredential",
+    ]);
   });
 });

@@ -149,6 +149,28 @@
       "shortcut": "⌘K"
     }
   },
+  "inbox": {
+    "empty": {
+      "body": "When something needs you, it shows up here.",
+      "title": "No notifications"
+    },
+    "filter": {
+      "action": "Needs action",
+      "all": "All",
+      "updates": "Updates"
+    },
+    "filters": "Show",
+    "markAllRead": "Mark all read",
+    "settings": "Notification settings",
+    "title": "Notifications",
+    "unavailable": {
+      "body": "The inbox isn't available yet. Until it is, approvals and acknowledgements still reach you by email, and My work lists what's waiting on you.",
+      "title": "Notifications"
+    },
+    "unread": "Unread",
+    "unreadCount_one": "{{count}} unread",
+    "unreadCount_other": "{{count}} unread"
+  },
   "nav": {
     "badge": "{{label}}, {{count}} waiting",
     "browseAll": "Browse by category",
@@ -297,17 +319,21 @@
       "draft": "Edit draft",
       "drafts": "Drafts",
       "generateDraft": "Generate with AI",
+      "inbox": "Inbox",
       "myWork": "My work",
       "newDraft": "New draft",
       "notSetUp": "Not set up yet",
+      "notifications": "Notifications",
       "policies": "Policies",
       "policy": "Policy",
+      "preferences": "Preferences",
       "procedure": "Procedure",
       "procedures": "Procedures",
       "profile": "Your profile",
       "review": "Review",
       "reviseDraft": "Improve with AI",
       "search": "Search",
+      "security": "Security",
       "shared": "Shared policy",
       "signIn": "Sign in",
       "signOut": "Sign out",
