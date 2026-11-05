@@ -1,9 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { ChevronDown, Star } from "lucide-react";
-import { Fragment, type ReactNode, useMemo } from "react";
-import { useSearchParams } from "react-router";
+import { ChevronDown, ChevronRight, Star } from "lucide-react";
+import { Fragment, type ReactNode, useId, useMemo } from "react";
+import { Link, useSearchParams } from "react-router";
 
 import { Button } from "#ui/components/Button";
 import { Table, TD, TH, THead } from "#ui/components/Display";
@@ -18,9 +18,11 @@ import {
 import { EmptyState } from "#ui/feedback/States";
 import { PageHeader } from "#ui/layout/PageHeader";
 import { cn } from "#ui/lib/cn";
+import { PHONE, useMediaQuery } from "#ui/lib/media";
 
 import type { Category, DocumentType, Policy } from "./policy";
 
+import { DocumentStatusPill } from "./DocumentStatusPill";
 import { useFavorites } from "./favorites";
 import {
   CELL_CLASS,
@@ -31,7 +33,16 @@ import {
   matchesColumnFilters,
   useColumnPreferences,
 } from "./libraryColumns";
-import { documentTypeCopy } from "./policy";
+import { documentTypeCopy, policyPath } from "./policy";
+
+/** A category chip on a phone (U3m): plum when it's the one shown. */
+const chip = (active: boolean) =>
+  cn(
+    "flex h-9 flex-none items-center rounded-full px-3",
+    active
+      ? "bg-primary font-semibold text-on-primary"
+      : "bg-surface shadow-[inset_0_0_0_1px_var(--border-strong)]",
+  );
 
 export interface PolicyLibraryProps {
   /** The header's own actions after Starred and Status: Import and New policy for an author. */
@@ -95,6 +106,8 @@ export const PolicyLibrary = ({
   const columns = useColumnPreferences(documentType);
   // Without column options the table keeps the staff library's columns, in its order.
   const visibleColumns = columnOptions ? columns.visible : LIBRARY_COLUMNS;
+  const phone = useMediaQuery(PHONE);
+  const headingId = useId();
   const [parameters, setParameters] = useSearchParams();
 
   const category = parameters.get("category") ?? "";
@@ -196,6 +209,80 @@ export const PolicyLibrary = ({
     />
   );
 
+  const heading = title ?? t(`library.${copy.nounPlural}.title`);
+  if (phone) {
+    return (
+      // U3m: the title, a row of category chips, then every document as a card.
+      <div className="flex flex-col gap-3 px-4 py-[18px] text-base text-ink">
+        <h1 className="text-[26px] font-semibold" id={headingId}>
+          {heading}
+        </h1>
+        <div
+          aria-label={t("library.phone.category")}
+          className="-mx-4 flex gap-2 overflow-x-auto px-4"
+          role="group"
+        >
+          <button
+            aria-pressed={!category}
+            className={chip(!category)}
+            onClick={() => update({ category: "", subcategory: "" })}
+            type="button"
+          >
+            {t("library.phone.all")}
+          </button>
+          {categories.map((c) => (
+            <button
+              aria-pressed={category === c.name}
+              className={chip(category === c.name)}
+              key={c.id}
+              onClick={() => update({ category: c.name, subcategory: "" })}
+              type="button"
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+        {filtered.length === 0 ? (
+          <EmptyState
+            description={t("library.empty.description")}
+            title={t("library.empty.title", { noun: copy.nounPlural })}
+          />
+        ) : (
+          <ul aria-labelledby={headingId} className="flex flex-col gap-3">
+            {shown.map((policy) => (
+              <li key={policy.id}>
+                <Link
+                  className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-surface px-3.5 py-3 text-ink hover:bg-sunken"
+                  to={policyPath(policy)}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <b className="font-semibold">{policy.title}</b>
+                    <ChevronRight aria-hidden="true" className="size-4 flex-none text-muted" />
+                  </span>
+                  <span className="font-mono text-xs text-muted">
+                    {policy.number} · v{policy.version}
+                  </span>
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <DocumentStatusPill status={policy.status} />
+                    <span className="text-xs text-muted">
+                      {[policy.category, policy.subcategory].filter(Boolean).join(" · ")}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Pager
+          onPage={(next) => update({ page: next > 1 ? String(next) : "" })}
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={filtered.length}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-[18px] p-6">
       <PageHeader
@@ -242,7 +329,7 @@ export const PolicyLibrary = ({
           </>
         }
         subtitle={subtitle ?? t(`library.${copy.nounPlural}.subtitle`)}
-        title={title ?? t(`library.${copy.nounPlural}.title`)}
+        title={heading}
       />
 
       {chips.length === 0 ? (

@@ -262,6 +262,29 @@ describe("StaffShell banners and footer", () => {
   });
 });
 
+describe("StaffShell keyboard and focus (WCAG 2.4.1, 2.4.3)", () => {
+  it("skips to the main content from the first link on the page", async () => {
+    renderShell(bob);
+    await userEvent.tab();
+    const skip = screen.getByRole("link", { name: "Skip to main content" });
+    expect(skip).toHaveFocus();
+    expect(skip).toHaveAttribute("href", "#main");
+    expect(screen.getByRole("main")).toHaveAttribute("id", "main");
+    expect(screen.getByRole("main")).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("moves focus to the new page's content when a link changes the page", async () => {
+    renderShell(bob);
+    await userEvent.click(within(sidebar()).getByRole("link", { name: /To acknowledge/ }));
+    expect(screen.getByRole("main")).toHaveFocus();
+  });
+
+  it("leaves focus alone on the first page", () => {
+    renderShell(bob);
+    expect(screen.getByRole("main")).not.toHaveFocus();
+  });
+});
+
 describe("StaffShell on a phone (H3, H3o)", () => {
   it("opens the drawer from the menu button and closes it", async () => {
     renderShell(bob);
