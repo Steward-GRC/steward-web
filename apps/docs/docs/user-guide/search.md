@@ -9,11 +9,17 @@ This page shows you how to find the policy or procedure you need and open it to 
 
 ## 🔎 Ways to find a document
 
-- **Search** — Type a word or phrase into the search box. Steward shows you policies and
-  categories that match, grouped by type. This is the fastest way when you know part of the name
-  or a keyword — for example, typing `leave` to find the annual-leave policy.
-- **Browse the library** — Open the Policies or Procedures list to see every document you can
-  read, or open a category to narrow down to its documents and its sub-categories.
+- **Search** — Click the search box in the header, or press ⌘K (Ctrl+K on Windows), and type a
+  word or phrase. The panel shows matching policies, procedures and categories as you type, with
+  the matching words underlined. Use the arrow keys and Enter, or click, to open one; **See all
+  results** opens the full search page. With nothing typed, the panel lists what you opened from
+  it recently. This is the fastest way when you know part of the name or a keyword — for
+  example, typing `leave` to find the annual-leave policy.
+- **Browse the library** — The Policies and Procedures pages show a tile for each category. Pick
+  a category, or one of its subcategories, to narrow the list. Each filter shows in the
+  **Filtered by** bar with the number of results; remove one with its ×, or **Clear** them all.
+  Select a column heading to sort by it, and use the page numbers under the list to move through
+  a long one. **Starred** shows only the documents you've starred.
 
 :::tip
 Browse to the right part of the tree first, then search within it — handy when a common word
@@ -29,7 +35,14 @@ document is marked sensitive.
 ### History and changes
 
 If a document has been published more than once, its **history** lists every version as a
-timeline of submit, review, decision and publish events. A **changes** view highlights what was
+timeline of submit, review, decision and publish events.
+
+### When something can't be shown
+
+A link to a document that doesn't exist (or that you can't see) shows **Policy not found** with a
+way back to the library, and an address that doesn't exist shows **Page not found**. If a page
+fails to load, it says **Something went wrong on this page** with an error report: **Copy for
+support** copies the details to send to your administrator, and **Retry** loads the page again. A **changes** view highlights what was
 added or changed, word by word, so even a small edit is easy to spot.
 
 :::note

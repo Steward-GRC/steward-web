@@ -83,3 +83,27 @@ export const ackExportDownload = async (request: Request): Promise<Response> => 
     },
   });
 };
+
+/**
+ * The admin Overview's acknowledgement snapshot (A1): acknowledged against the audience,
+ * summed over every policy that requires acknowledgement, from each one's published version.
+ */
+export const acknowledgementSnapshot = async (
+  request: Request,
+): Promise<{ acknowledged: number; audience: number }> => {
+  const obligating = await listObligatingPolicies(request);
+  const reports = await Promise.all(
+    obligating.map(({ policy }) =>
+      policy.currentPublishedVersionId
+        ? getCompletionReport(request, policy.currentPublishedVersionId)
+        : null,
+    ),
+  );
+  let acknowledged = 0;
+  let audience = 0;
+  for (const report of reports) {
+    acknowledged += report?.totalAcked ?? 0;
+    audience += report?.totalAudience ?? 0;
+  }
+  return { acknowledged, audience };
+};

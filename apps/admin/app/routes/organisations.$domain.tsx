@@ -12,6 +12,7 @@ import {
   DialogTrigger,
   Field,
   Input,
+  LiveRow,
   PageHeader,
   Select,
   Switch,
@@ -23,6 +24,8 @@ import {
   TD,
   TH,
   THead,
+  UpdatedJustNow,
+  useLiveUpdate,
 } from "@steward-web/ui";
 import { useEffect, useRef, useState } from "react";
 import { data, Form, Link, redirect, useFetcher, useHref, useRevalidator } from "react-router";
@@ -178,6 +181,17 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
 
 export default function OrganisationManage({ actionData, loaderData }: Route.ComponentProps) {
   const revalidator = useRevalidator();
+  // The IdP test's result arrives without a reload (the popup posts back, then this revalidates):
+  // the status row flashes once and says "Updated just now" (decision 6-states.s5).
+  const orgLive = useLiveUpdate(
+    loaderData.organisation
+      ? [
+          loaderData.organisation.verified,
+          loaderData.organisation.testPassed,
+          loaderData.organisation.enabled,
+        ]
+      : null,
+  );
 
   // "Copy test link" mints the link through this route's own action (a server-side call,
   // same as every other mutation here) and copies the result once it lands. Applying it
@@ -288,7 +302,7 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
         </TabsList>
 
         <TabsContent className="flex flex-col gap-6" value="activation">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <LiveRow className="flex flex-wrap items-center gap-1.5 rounded-md" flash={orgLive.flash}>
             <Badge tone={org.verified ? "ok" : "neutral"}>
               {org.verified ? "Verified" : "Not verified"}
             </Badge>
@@ -298,7 +312,8 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
             <Badge tone={org.enabled ? "primary" : "danger"}>
               {org.enabled ? "Active" : "Disabled"}
             </Badge>
-          </div>
+            <UpdatedJustNow at={orgLive.updatedAt} />
+          </LiveRow>
 
           <div className="flex flex-col gap-3 border-t border-border pt-6">
             <p className="text-sm font-semibold text-ink">Domain verification</p>

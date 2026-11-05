@@ -1,121 +1,125 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
-import { Badge, Card, CardBody, EmptyState, PageHeader } from "@steward-web/ui";
+import { formatRelativeTime, useTranslation } from "@steward-web/i18n";
+import { AckSnapshot, EmptyState, PageHeader, StatCard } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
-import { listCategories, listPolicies } from "@steward-web/ui/domain/server";
-import { Link } from "react-router";
+import { listPolicies } from "@steward-web/ui/domain/server";
+import { useId } from "react";
 
 import type { Route } from "./+types/home";
 
 import { listAuditLog } from "../audit/audit.server";
 import { actionLabel, displayLabel } from "../audit/auditFormat";
+import { acknowledgementSnapshot } from "../completion/completion.server";
 import { listGroups } from "../groups/groups.server";
 import { listTemplates } from "../templates/templates.server";
 
-const RECENT_ACTIVITY_LIMIT = 8;
+const RECENT_ACTIVITY_LIMIT = 6;
 
 /**
- * The admin dashboard: headline counts across the structure (groups, templates) and the
- * catalog (policies, procedures), plus recent activity off the audit log. Every read a
- * caller might lack the permission for degrades to empty rather than redirecting — this IS
- * "/", so a `group.manage`/`audit.read` redirect back here would loop.
- *
- * Compliance/completion stats aren't here yet: they land with the completion area.
+ * The admin Overview (A1): five stat cards that link to what they count, then Recent activity
+ * beside the Acknowledgement snapshot (decision 4-components.s9). Every read a caller might
+ * lack the permission for degrades to empty rather than redirecting: this IS "/", so a
+ * `group.manage`/`audit.read` redirect back here would loop.
  */
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await requireIdentityFromRequest(request);
   const cookie = request.headers.get("cookie") ?? undefined;
-  const [policies, procedures, categories, templates, groups, activity] = await Promise.all([
+  const [policies, procedures, templates, groups, activity, ackSnapshot] = await Promise.all([
     listPolicies(DocumentType.Policy, cookie),
     listPolicies(DocumentType.Procedure, cookie),
-    listCategories(cookie).catch(() => []),
     listTemplates(request).catch(() => []),
     listGroups(request).catch(() => []),
     listAuditLog(request).catch(() => []),
+    acknowledgementSnapshot(request).catch(() => null),
   ]);
+  const documents = [...policies, ...procedures];
   return {
+    ackSnapshot,
     activity: activity.slice(0, RECENT_ACTIVITY_LIMIT),
-    categoryCount: categories.length,
     groupCount: groups.length,
-    policyCount: policies.length,
-    procedureCount: procedures.length,
+    inProgressCount: documents.filter((d) => d.status === "DRAFT" || d.status === "IN_REVIEW")
+      .length,
+    policyCount: documents.length,
+    publishedCount: documents.filter((d) => d.status === "PUBLISHED").length,
     templateCount: templates.length,
   };
 };
 
-const fmt = (iso: string): string =>
-  new Date(iso).toLocaleString("en-GB", {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-
-const StatTile = ({ label, to, value }: { label: string; to: string; value: number }) => (
-  <Link to={to}>
-    <Card className="transition-shadow hover:shadow-[var(--shadow-2)]">
-      <CardBody className="flex flex-col gap-1">
-        <span className="text-2xl font-semibold text-ink">{value}</span>
-        <span className="text-sm text-muted">{label}</span>
-      </CardBody>
-    </Card>
-  </Link>
-);
-
 export default function Overview({ loaderData }: Route.ComponentProps) {
-  const { activity, categoryCount, groupCount, policyCount, procedureCount, templateCount } =
-    loaderData;
+  const { t } = useTranslation("admin");
+  const activityId = useId();
+  const {
+    ackSnapshot,
+    activity,
+    groupCount,
+    inProgressCount,
+    policyCount,
+    publishedCount,
+    templateCount,
+  } = loaderData;
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader eyebrow="Overview" subtitle="The org at a glance." title="Overview" />
+    <div className="flex w-full flex-col gap-4 p-6">
+      <PageHeader subtitle={t("overview.subtitle")} title={t("overview.title")} />
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <StatTile label="Policies" to="/policies" value={policyCount} />
-        <StatTile label="Procedures" to="/procedures" value={procedureCount} />
-        <StatTile label="Categories" to="/policies" value={categoryCount} />
-        <StatTile label="Templates" to="/templates" value={templateCount} />
-        <StatTile label="Groups" to="/groups" value={groupCount} />
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+        <StatCard label={t("overview.cards.policies")} to="/policies" value={policyCount} />
+        <StatCard
+          label={t("overview.cards.published")}
+          to="/policies?status=published"
+          value={publishedCount}
+        />
+        <StatCard
+          label={t("overview.cards.inProgress")}
+          to="/policies?status=in-progress"
+          value={inProgressCount}
+        />
+        <StatCard label={t("overview.cards.groups")} to="/groups" value={groupCount} />
+        <StatCard label={t("overview.cards.templates")} to="/templates" value={templateCount} />
       </div>
 
-      <Card>
-        <CardBody className="flex flex-col gap-0 p-0">
-          <div className="flex items-center gap-2 border-b border-border px-5 py-4">
-            <h2 className="text-md font-semibold text-ink">Recent activity</h2>
-            <Badge tone="neutral">{activity.length}</Badge>
-            <Link className="ml-auto text-sm text-primary hover:underline" to="/audit">
-              View audit log
-            </Link>
-          </div>
+      <div className="grid items-start gap-3.5 lg:grid-cols-[1.4fr_1fr]">
+        <section
+          aria-labelledby={activityId}
+          className="overflow-hidden rounded-lg border border-border bg-surface text-ink"
+        >
+          <h2
+            className="border-b border-border-strong bg-sunken px-3.5 py-2.5 text-base font-semibold"
+            id={activityId}
+          >
+            {t("overview.activity.title")}
+          </h2>
           {activity.length === 0 ? (
-            <div className="p-5">
-              <EmptyState
-                description="Nothing recorded yet, or you don't have audit.read."
-                title="No recent activity"
-              />
-            </div>
+            <EmptyState
+              description={t("overview.activity.emptyDescription")}
+              title={t("overview.activity.emptyTitle")}
+            />
           ) : (
             <ul>
               {activity.map((record) => (
                 <li
-                  className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-3 text-sm last:border-b-0"
+                  className="flex gap-2.5 border-b border-border px-3.5 py-[9px] text-sm last:border-b-0"
                   key={record.id}
                 >
-                  <span className="font-medium text-ink">{actionLabel(record.action)}</span>
-                  <span className="text-muted">
+                  <span className="flex-1">
+                    <b className="font-semibold">
+                      {displayLabel(record.actorName, record.actorUserId)}
+                    </b>{" "}
+                    {actionLabel(record.action)} ·{" "}
                     {displayLabel(record.subjectLabel, record.subject)}
                   </span>
-                  <span className="ml-auto text-xs text-muted">
-                    {displayLabel(record.actorName, record.actorUserId)} · {fmt(record.occurredAt)}
-                  </span>
+                  <span className="text-muted">{formatRelativeTime(record.occurredAt)}</span>
                 </li>
               ))}
             </ul>
           )}
-        </CardBody>
-      </Card>
+        </section>
+        {ackSnapshot ? (
+          <AckSnapshot acknowledged={ackSnapshot.acknowledged} audience={ackSnapshot.audience} />
+        ) : null}
+      </div>
     </div>
   );
 }

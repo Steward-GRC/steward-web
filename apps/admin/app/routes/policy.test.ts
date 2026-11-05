@@ -53,8 +53,11 @@ const answer = async (loader: (arguments_: never) => unknown, path: string) => {
       },
       (error: unknown) => error,
     );
-  if (!(thrown instanceof Response)) throw thrown;
-  return { body: await thrown.text(), status: thrown.status };
+  // A missing document is thrown as `data({ kind, number }, { status: 404 })`, so the error
+  // boundary can say which number matched nothing (6-states.s3).
+  const refusal = thrown as { data?: unknown; init?: { status?: number }; type?: string };
+  if (refusal.type !== "DataWithResponseInit") throw thrown;
+  return { body: refusal.data, status: refusal.init?.status };
 };
 
 afterEach(() => {
@@ -67,7 +70,10 @@ describe.each([
 ])("the admin %s reader", (_name, loader, path) => {
   it("answers 404 when the gateway refuses with NotFound", async () => {
     stubGateway(refused);
-    expect(await answer(loader, path)).toEqual({ body: "Not Found", status: 404 });
+    expect(await answer(loader, path)).toEqual({
+      body: { kind: path.startsWith("/procedures") ? "procedure" : "policy", number: "SEC-009" },
+      status: 404,
+    });
   });
 
   it("answers a refused number exactly as a missing one", async () => {

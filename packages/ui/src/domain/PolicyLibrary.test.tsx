@@ -81,12 +81,19 @@ const renderAt = (initialEntries: string[] = ["/policies"]) => {
   render(<Stub initialEntries={initialEntries} />);
 };
 
+const rowTitles = () =>
+  screen
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => within(row).getAllByRole("cell")[2]!.textContent);
+
 describe("PolicyLibrary", () => {
-  it("shows a category tile per category, with its policy count", () => {
+  it("shows a category tile per category, with its count and subcategory chips", () => {
     renderAt();
-    expect(screen.getByRole("button", { name: "Finance" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "IT Security" })).toBeInTheDocument();
-    expect(screen.getAllByText("1 policy")).toHaveLength(2);
+    const finance = screen.getByRole("listitem", { name: "Finance" });
+    expect(within(finance).getByText("1")).toBeInTheDocument();
+    expect(within(finance).getByRole("button", { name: "Reimbursement" })).toBeInTheDocument();
+    expect(screen.getByRole("listitem", { name: "IT Security" })).toBeInTheDocument();
   });
 
   it("lists every policy in the table, with its status and sensitivity", () => {
@@ -99,36 +106,81 @@ describe("PolicyLibrary", () => {
     expect(within(sensitiveRow).getByText("Sensitive")).toBeInTheDocument();
   });
 
-  it("filters the table to a category, hiding the tiles", async () => {
+  it("filters to a category from its tile, with a Filtered by chip", async () => {
     renderAt();
     await userEvent.click(screen.getByRole("button", { name: "Finance" }));
-
-    expect(screen.queryByRole("button", { name: "IT Security" })).not.toBeInTheDocument();
-    expect(screen.getByText("Expense Claims")).toBeInTheDocument();
-    expect(screen.queryByText("Acceptable Use")).not.toBeInTheDocument();
+    const bar = screen.getByRole("region", { name: "Filtered by" });
+    expect(bar).toHaveTextContent("Finance");
+    expect(bar).toHaveTextContent("· 1 result");
+    expect(rowTitles()).toEqual(["Expense Claims"]);
   });
 
-  it("filters by the search box across number and title", async () => {
+  it("filters to a subcategory from its chip", async () => {
     renderAt();
-    await userEvent.type(screen.getByPlaceholderText("Search"), "ITSEC");
-
-    expect(screen.getByText("Acceptable Use")).toBeInTheDocument();
-    expect(screen.queryByText("Expense Claims")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Usage" }));
+    const bar = screen.getByRole("region", { name: "Filtered by" });
+    expect(within(bar).getByText("IT Security")).toBeInTheDocument();
+    expect(within(bar).getByText("Usage")).toBeInTheDocument();
+    expect(rowTitles()).toEqual(["Acceptable Use"]);
   });
 
-  it("stars a policy, then the Starred filter narrows the table to it", async () => {
+  it("removes one filter from its chip, and Clear removes them all", async () => {
+    renderAt(["/policies?category=IT+Security&subcategory=Usage"]);
+    await userEvent.click(screen.getByRole("button", { name: "Remove Usage" }));
+    expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("IT Security");
+    await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.queryByRole("region", { name: "Filtered by" })).toBeNull();
+    expect(rowTitles()).toHaveLength(2);
+  });
+
+  it("filters by status and by the words in the address, each as a chip", () => {
+    renderAt(["/policies?status=published"]);
+    expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("Published");
+    expect(rowTitles()).toEqual(["Expense Claims"]);
+  });
+
+  it("filters to everything not yet published for In progress", () => {
+    renderAt(["/policies?status=in-progress"]);
+    expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("In progress");
+    expect(rowTitles()).toEqual(["Acceptable Use"]);
+  });
+
+  it("filters by words across number and title", () => {
+    renderAt(["/policies?q=ITSEC"]);
+    expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("“ITSEC”");
+    expect(rowTitles()).toEqual(["Acceptable Use"]);
+  });
+
+  it("sorts by title first and by any column from its header", async () => {
+    renderAt();
+    expect(screen.getByRole("columnheader", { name: "Title" })).toHaveAttribute(
+      "aria-sort",
+      "ascending",
+    );
+    expect(rowTitles()).toEqual(["Acceptable Use", "Expense Claims"]);
+    await userEvent.click(screen.getByRole("button", { name: "Title" }));
+    expect(rowTitles()).toEqual(["Expense Claims", "Acceptable Use"]);
+    await userEvent.click(screen.getByRole("button", { name: "Number" }));
+    expect(screen.getByRole("columnheader", { name: "Number" })).toHaveAttribute(
+      "aria-sort",
+      "ascending",
+    );
+  });
+
+  it("pages the table", () => {
+    renderAt();
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 2");
+  });
+
+  it("stars a policy, then Starred in the header narrows the table to it", async () => {
     renderAt();
     await userEvent.click(screen.getByRole("button", { name: "Star POL-FINANCE-001" }));
     await userEvent.click(screen.getByRole("button", { name: "Starred" }));
-
-    expect(screen.getByText("Expense Claims")).toBeInTheDocument();
-    expect(screen.queryByText("Acceptable Use")).not.toBeInTheDocument();
+    expect(rowTitles()).toEqual(["Expense Claims"]);
   });
 
-  it("shows the empty state when no row matches the filters", async () => {
-    renderAt();
-    await userEvent.type(screen.getByPlaceholderText("Search"), "no such policy");
-
+  it("shows the empty state when no row matches the filters", () => {
+    renderAt(["/policies?q=no+such+policy"]);
     expect(screen.getByText("No policies match these filters.")).toBeInTheDocument();
   });
 });

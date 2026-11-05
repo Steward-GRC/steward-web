@@ -12,6 +12,8 @@ import {
   GateShell,
   MaintenanceGate,
   PageTitle,
+  RouteErrorBoundary,
+  RoutePending,
   StaffShell,
   statusGateFor,
   useIsGate,
@@ -33,6 +35,7 @@ import {
   redirect,
   Scripts,
   type ShouldRevalidateFunctionArgs,
+  useRouteLoaderData,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -166,10 +169,40 @@ export default function App({ loaderData }: Route.ComponentProps) {
       >
         <QuickLoginBar enabled={loaderData.quickLoginOn} />
         <DevelopmentUiIssueButton app="staff" enabled={loaderData.devUiIssueCopy} />
-        <Outlet />
+        <RoutePending>
+          <Outlet />
+        </RoutePending>
       </StaffShell>
     </IdentityProvider>
   );
 }
 
-export { RouteErrorBoundary as ErrorBoundary } from "@steward-web/shell";
+/**
+ * Errors (G17) and Not found (6-states.s3) render inside the app's shell when the root could
+ * load, so the header and navigation stay; a gate's error, or one before the root loaded,
+ * renders on the bare gate page.
+ */
+export const ErrorBoundary = () => {
+  const loaderData = useRouteLoaderData<typeof loader>("root");
+  const gate = useIsGate();
+  if (!loaderData || gate) {
+    return (
+      <GateShell environment={loaderData?.shell.config.environment ?? null}>
+        <RouteErrorBoundary />
+      </GateShell>
+    );
+  }
+  return (
+    <IdentityProvider identity={loaderData.identity}>
+      <StaffShell
+        banners={loaderData.siteSettings}
+        categories={loaderData.shell.categories}
+        config={loaderData.shell.config}
+        counts={loaderData.shell.counts}
+        reporting={loaderData.shell.reporting}
+      >
+        <RouteErrorBoundary />
+      </StaffShell>
+    </IdentityProvider>
+  );
+};
