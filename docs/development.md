@@ -211,7 +211,12 @@ A pick that goes nowhere says why on the sign-in page:
 
 - "Quick login isn't available on this server." when the server switch is off or the account
   isn't listed;
-- the mock's own message when it refuses (409 `no_password`, 403 `account_disabled`);
+- the mock's own message when it refuses a person; when it gives only an error code,
+  "Couldn't sign in as {name}." followed by what the code means (`account_disabled`: "This
+  account is disabled."; `no_password`: "This person has no password set on /_mock.";
+  `unknown_person`: "That person isn't on /_mock any more.");
+- "Couldn't reach Steward. Try again." only when the mock doesn't answer at all, or answers
+  502, 503 or 504;
 - the gateway's answer when it turns a users-file account down ("Incorrect username or
   password.", "This account is disabled. Contact your administrator.", "Couldn't reach Steward.
   Try again.").

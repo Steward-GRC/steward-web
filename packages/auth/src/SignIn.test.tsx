@@ -409,6 +409,24 @@ const renderWithHome = () => {
   return render(<Stub initialEntries={["/sign-in?next=%2Fpolicies"]} />);
 };
 
+describe("the dev quick login's refusals without a message", () => {
+  it.each([
+    ["account_disabled", "Couldn't sign in as Frank Disabled. This account is disabled."],
+    [
+      "no_password",
+      "Couldn't sign in as Frank Disabled. This person has no password set on /_mock.",
+    ],
+    ["unknown_person", "Couldn't sign in as Frank Disabled. That person isn't on /_mock any more."],
+    [undefined, "Couldn't sign in as Frank Disabled."],
+    ["something_new", "Couldn't sign in as Frank Disabled."],
+  ])("names the person and says why (%s)", async (code, message) => {
+    renderSignIn({
+      state: { code, name: "Frank Disabled", problem: "quickLoginRefused", view: "password" },
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+  });
+});
+
 describe("a session that appears elsewhere", () => {
   it("moves on by itself when the tab comes back and there's a session", async () => {
     const checks = sessionAnswers({ name: "Bob Author", signedIn: true });

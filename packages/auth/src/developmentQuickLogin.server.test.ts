@@ -193,6 +193,11 @@ const people = [
     secondFactor: false,
     username: "nora",
   },
+  // Refusals without a message: a person the mock no longer has, the mock down for a moment,
+  // and an answer it gives no reason for.
+  { id: "user-gone", name: "Gina Gone", username: "gina" },
+  { id: "user-busy", name: "Bruno Busy", username: "bruno" },
+  { id: "user-odd", name: "Olly Odd", username: "olly" },
 ];
 
 let mock: Server;
@@ -224,6 +229,9 @@ beforeAll(async () => {
           return answer(403, { error: "account_disabled", message: "Frank Disabled is disabled." });
         if (body.personId === "user-nora")
           return answer(409, { error: "no_password", message: "Nora New has no password yet." });
+        if (body.personId === "user-gone") return answer(404, { error: "unknown_person" });
+        if (body.personId === "user-busy") return answer(503, { error: "unavailable" });
+        if (body.personId === "user-odd") return answer(500, {});
         return answer(200, { ok: true }, { "set-cookie": "steward_sid=sid-bob; Path=/; HttpOnly" });
       }
       response.writeHead(404);
@@ -247,13 +255,23 @@ describe("the mock's managed people", () => {
       { label: "Bob Author", note: "author", username: "bob" },
       { label: "Frank Disabled", note: "disabled", username: "frank" },
       { label: "Nora New", note: "no password", username: "nora" },
+      { label: "Gina Gone", username: "gina" },
+      { label: "Bruno Busy", username: "bruno" },
+      { label: "Olly Odd", username: "olly" },
     ]);
   });
 
   it("takes the mock's people over a users file", async () => {
     const file = usersFile(accounts);
     const users = await quickLoginUsers({ ...environment(), STEWARD_DEV_QUICK_LOGIN_USERS: file });
-    expect(users.map((user) => user.username)).toEqual(["bob", "frank", "nora"]);
+    expect(users.map((user) => user.username)).toEqual([
+      "bob",
+      "frank",
+      "nora",
+      "gina",
+      "bruno",
+      "olly",
+    ]);
   });
 
   it("finds the mock at STEWARD_DEV_MOCK_URL when the gateway is elsewhere", async () => {
@@ -262,7 +280,7 @@ describe("the mock's managed people", () => {
       STEWARD_DEV_MOCK_URL: mockUrl,
       STEWARD_DEV_QUICK_LOGIN: "true",
     });
-    expect(users).toHaveLength(3);
+    expect(users).toHaveLength(6);
   });
 
   it("falls back to the users file when nothing answers as the mock", async () => {
@@ -292,6 +310,25 @@ describe("the mock's managed people", () => {
     expect(await quickLoginSignIn("nora", {}, environment())).toEqual({
       kind: "refused",
       message: "Nora New has no password yet.",
+    });
+  });
+
+  it("names the person and the mock's reason when it refuses without a message", async () => {
+    expect(await quickLoginSignIn("gina", {}, environment())).toEqual({
+      code: "unknown_person",
+      kind: "refused",
+      name: "Gina Gone",
+    });
+    expect(await quickLoginSignIn("olly", {}, environment())).toEqual({
+      kind: "refused",
+      name: "Olly Odd",
+    });
+  });
+
+  it("calls only a mock that is down or can't answer unreachable", async () => {
+    expect(await quickLoginSignIn("bruno", {}, environment())).toEqual({
+      kind: "unavailable",
+      status: 503,
     });
   });
 

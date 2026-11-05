@@ -78,6 +78,15 @@ const accountsFromFile = (file: string): QuickLoginAccount[] => {
 /** True in a build that carries the dev quick login, so a pick that goes nowhere can say why. */
 export const quickLoginBuild: boolean = true;
 
+/** The mock turning a pick down: its own message when it gives one, else its error code and
+ *  the person's name, so the page can still say who and why. */
+export interface QuickLoginRefusal {
+  code?: string;
+  kind: "refused";
+  message?: string;
+  name?: string;
+}
+
 /**
  * Where the quick login's accounts come from, and how one signs in. The sign-in page only sees
  * the users and the step, so a source can be swapped without touching it.
@@ -89,7 +98,10 @@ export interface QuickLoginSource {
 
 /** What signing in a quick-login pick came to: a gateway sign-in step, the mock refusing it
  *  with its own message, or no such account here. */
-export type QuickLoginStep = { kind: "missing" } | { kind: "refused"; message: string } | AuthStep;
+export type QuickLoginStep = { kind: "missing" } | AuthStep | QuickLoginRefusal;
+
+/** The answers that mean the mock couldn't be reached, not that it said no. */
+const UNREACHABLE = new Set([502, 503, 504]);
 
 /** The users file or directory: each account signs in with its password at `/auth/login`. */
 export const fileSource = (accounts: readonly QuickLoginAccount[]): QuickLoginSource => ({
@@ -196,10 +208,18 @@ export const mockSource = (base: string, people: readonly MockPerson[]): QuickLo
       return { kind: "unavailable", status: 0 };
     }
     if (response.ok) return { kind: "session", setCookie: cookiesOf(response) };
-    const body = (await response.json().catch(() => ({}))) as { message?: unknown };
+    if (UNREACHABLE.has(response.status)) return { kind: "unavailable", status: response.status };
+    const body = (await response.json().catch(() => ({}))) as {
+      error?: unknown;
+      message?: unknown;
+    };
     if (typeof body.message === "string" && body.message !== "")
       return { kind: "refused", message: body.message };
-    return { kind: "unavailable", status: response.status };
+    return {
+      ...(typeof body.error === "string" && body.error !== "" ? { code: body.error } : {}),
+      kind: "refused",
+      name: person.name || person.username,
+    };
   },
   users: () =>
     people.map((person) => {
