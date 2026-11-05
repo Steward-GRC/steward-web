@@ -22,7 +22,7 @@ import {
 } from "./libraries.server";
 
 const readerMe = {
-  email: "reader@example.com",
+  email: "reader@example.org",
   id: "u-reader",
   managedGroupIds: [],
   name: "Reader",
@@ -38,7 +38,7 @@ const request = () => new Request("https://admin.steward.example/contact-library
 const makeContactBlock = (overrides: Partial<ContactBlock> = {}): ContactBlock => ({
   archived: false,
   department: null,
-  email: "help@example.com",
+  email: "help@example.org",
   hours: null,
   id: "cb-1",
   label: "Help desk",

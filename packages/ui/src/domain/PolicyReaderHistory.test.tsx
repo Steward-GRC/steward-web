@@ -54,7 +54,7 @@ const KINDS = [
 ];
 
 const entry = (kind: string): HistoryEntry => ({
-  actorName: "Charlie Example",
+  actorName: "Charlie Approver",
   at: "2026-08-05T11:05:00Z",
   comment: null,
   kind,

@@ -28,11 +28,11 @@ const routeGateway = (handlers: Record<string, Handler>) => {
 };
 
 const author = {
-  email: "ada@example.com",
-  firstName: "Ada",
-  lastName: "Lovelace",
+  email: "bob@example.org",
+  firstName: "Bob",
+  lastName: "Author",
   managedGroupIds: [],
-  name: "Ada Lovelace",
+  name: "Bob Author",
   permissions: ["policy.read", "policy.author"],
   roles: ["author"],
   scopes: { author: ["Travel"] },
@@ -51,7 +51,7 @@ const gatewayPolicy = {
   homeCategoryId: "c-travel",
   id: "p-1",
   number: "FIN-001",
-  ownerName: "Ada",
+  ownerName: "Bob",
   ownerUserId: "u-1",
   retiredAt: null,
   sensitivity: "STANDARD",

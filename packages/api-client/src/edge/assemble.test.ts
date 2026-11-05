@@ -189,12 +189,12 @@ describe("historyFromAuditLog", () => {
       [
         {
           action: "policy.published",
-          actorName: "Bob Example",
+          actorName: "Bob Author",
           occurredAt: "2026-08-12T00:00:00Z",
         },
         {
           action: "workflow.submitted",
-          actorName: "Bob Example",
+          actorName: "Bob Author",
           occurredAt: "2026-07-29T09:15:00Z",
         },
       ],
@@ -202,7 +202,7 @@ describe("historyFromAuditLog", () => {
     );
     expect(history).toEqual([
       {
-        actorName: "Bob Example",
+        actorName: "Bob Author",
         at: "2026-07-29T09:15:00Z",
         comment: null,
         kind: "submitted",
@@ -210,7 +210,7 @@ describe("historyFromAuditLog", () => {
         versionLabel: "2.0.0",
       },
       {
-        actorName: "Bob Example",
+        actorName: "Bob Author",
         at: "2026-08-12T00:00:00Z",
         comment: null,
         kind: "published",

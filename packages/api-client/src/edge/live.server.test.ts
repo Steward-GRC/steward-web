@@ -63,7 +63,7 @@ const policy = (overrides: Record<string, unknown>) => ({
   homeCategoryId: "c-travel",
   id: "p-1",
   number: "FIN-001",
-  ownerName: "Ada",
+  ownerName: "Bob",
   ownerUserId: "u-1",
   retiredAt: null,
   sensitivity: "STANDARD",
@@ -82,10 +82,10 @@ const treeHandlers: Record<string, Handler> = {
 };
 
 const me = {
-  email: "ada@example.com",
-  firstName: "Ada",
-  lastName: "Lovelace",
-  name: "Ada Lovelace",
+  email: "bob@example.org",
+  firstName: "Bob",
+  lastName: "Author",
+  name: "Bob Author",
   permissions: ["policy.read"],
   roles: ["reader"],
   scopes: { author: ["Finance"] },
@@ -209,12 +209,12 @@ describe("liveEdge.policyDetail", () => {
           records: [
             {
               action: "policy.published",
-              actorName: "Ada Lovelace",
+              actorName: "Bob Author",
               occurredAt: "2026-08-12T00:00:00Z",
             },
             {
               action: "policy.submitted",
-              actorName: "Ada Lovelace",
+              actorName: "Bob Author",
               occurredAt: "2026-07-29T09:15:00Z",
             },
           ],

@@ -23,7 +23,7 @@ const baseDetail: PolicyDetail = {
   documentType: DocumentType.Policy,
   history: [
     {
-      actorName: "Ada Lovelace",
+      actorName: "Bob Author",
       at: "2026-08-12T00:00:00Z",
       comment: null,
       kind: "published",
@@ -33,7 +33,7 @@ const baseDetail: PolicyDetail = {
   ],
   id: "policy-1",
   number: "POL-FINANCE-001",
-  ownerName: "Ada Lovelace",
+  ownerName: "Bob Author",
   priorVersion: null,
   published: "2026-08-12T00:00:00Z",
   references: [],

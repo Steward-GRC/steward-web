@@ -8,8 +8,8 @@ import { describe, expect, it, vi } from "vitest";
 import { GroupMemberTable } from "./GroupMemberTable";
 
 const members = [
-  { email: "grace@example.com", name: "Grace", source: "manual", userId: "u-grace" },
-  { email: "margaret@example.com", name: "Margaret", source: "idp-sync", userId: "u-margaret" },
+  { email: "charlie@example.org", name: "Charlie", source: "manual", userId: "u-charlie" },
+  { email: "margaret@example.org", name: "Margaret", source: "idp-sync", userId: "u-margaret" },
 ];
 
 describe("GroupMemberTable", () => {
@@ -33,7 +33,7 @@ describe("GroupMemberTable", () => {
     const form = posted.mock.calls[0]?.[0];
     expect(form?.get("intent")).toBe("remove-member");
     expect(form?.get("groupId")).toBe("g-2");
-    expect(form?.get("userId")).toBe("u-grace");
+    expect(form?.get("userId")).toBe("u-charlie");
   });
 
   it("shows a synced membership as read-only", () => {
