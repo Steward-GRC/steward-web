@@ -37,6 +37,11 @@ const desk = {
 };
 
 describe("G16: the shared policy reader", () => {
+  it("leaves the main landmark to the gate around it", () => {
+    render(<SharedPolicyReader organisation={null} policy={desk} />);
+    expect(screen.queryByRole("main")).toBeNull();
+  });
+
   it("shows the one pinned version as a read-only shared copy", () => {
     render(<SharedPolicyReader organisation="Example Organisation" policy={desk} />);
     expect(screen.getByText("EO")).toBeInTheDocument();
@@ -53,7 +58,7 @@ describe("G16: the shared policy reader", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "1. Purpose" })).toBeInTheDocument();
     expect(screen.getByText("Shared by Bob · You can print this page")).toBeInTheDocument();
-    expect(screen.getByRole("main")).toHaveClass("doc");
+    expect(screen.getByRole("heading", { level: 2, name: "1. Purpose" })).toHaveClass("font-serif");
   });
 
   it("leaves the organisation slot out when none is set", () => {

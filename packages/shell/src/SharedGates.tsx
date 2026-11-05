@@ -52,14 +52,14 @@ export const SharedPolicyReader = ({
             version: policy.version,
           })}
         </span>
-        <main className="doc mt-2">
+        <div className="doc mt-2">
           {policy.sections.map((section) => (
             <section key={section.heading}>
               <h2 className="mb-1.5 font-serif text-[23px] font-semibold">{section.heading}</h2>
               <p>{section.body}</p>
             </section>
           ))}
-        </main>
+        </div>
       </div>
       <footer className="flex items-center justify-between border-t border-border bg-surface px-[18px] py-3 text-xs text-muted">
         <span>{t("shared.footer", { name: policy.sharedBy })}</span>

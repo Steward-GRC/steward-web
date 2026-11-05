@@ -299,6 +299,38 @@ always has it, a build only with `DEV_QUICK_LOGIN=true`, and a release build ali
 `NoDevelopmentGatePreview.server.ts`, so `?gate=` does nothing there.
 `pnpm run check:no-dev-quick-login-leak` fails if the preview's marker reaches a release build.
 
+## Checking accessibility and layout
+
+`pnpm run check:a11y` (`scripts/check-a11y.mjs`) checks the staff app's pages and gates for
+accessibility and layout. It isn't part of CI or `pnpm run check`, because it needs a running app
+and the mock. Run it against `dev:mock`:
+
+```bash
+(cd ../steward-mock-server && npm start)          # the mock on 5175
+pnpm --filter @steward-web/staff run dev:mock     # the staff app on 5173
+STEWARD_URL=http://localhost:5173 pnpm run check:a11y
+```
+
+For every staff route and gate in its list (`ROUTES`), at 390, 1024 and 1280 px in light, dark
+and high contrast, it opens the page in headless Chrome over the DevTools protocol. No window
+shows. It signs in as the sample person each route needs (Erin, Bob or Charlie, with the mock's
+`<username>-password` and any second-factor code), then:
+
+- runs [axe-core](https://github.com/dequelabs/axe-core) and reports every violation. Serious
+  and critical ones fail the run; moderate and minor ones are printed as notes;
+- checks the page is never wider than the screen, and names the elements that stick out;
+- checks the shell's layout for the width: the drawer's "Open menu" on a phone, the icon rail at
+  1024 px and the full sidebar at 1280 px;
+- tabs through the first four stops and checks each has a visible focus indicator. That's an
+  outline or a ring on the element, or a change around it when it takes focus, such as a
+  focus-within ring;
+- checks the page has a title ("Page · Steward").
+
+It exits non-zero when anything fails. Narrow a run with `--only <path substring>`,
+`--widths 390,1280` or `--themes light,hc`. `STEWARD_URL` (default `http://localhost:5183`),
+`MOCK_URL` (default `http://localhost:5175`) and `CHROME` (the Chrome binary; the macOS default
+path otherwise) point it elsewhere. Add a route to `ROUTES` when you add a page.
+
 ## Tests
 
 Vitest, colocated `*.test.ts`/`*.test.tsx` files, Testing Library for components. No

@@ -279,6 +279,11 @@ describe("StaffShell keyboard and focus (WCAG 2.4.1, 2.4.3)", () => {
     expect(screen.getByRole("main")).toHaveFocus();
   });
 
+  it("keeps the notices inside the main landmark, where the skip link lands", () => {
+    renderShell(bob, { secondFactorNudge: true });
+    expect(within(screen.getByRole("main")).getByRole("link", { name: "Set up" })).toBeVisible();
+  });
+
   it("leaves focus alone on the first page", () => {
     renderShell(bob);
     expect(screen.getByRole("main")).not.toHaveFocus();
