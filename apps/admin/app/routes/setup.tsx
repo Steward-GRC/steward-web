@@ -15,6 +15,8 @@ import {
   type SsoBootstrapResult,
 } from "../setup/setup.server";
 
+const BLANK_TOKEN = "Enter the setup token.";
+
 export const loader = async () => {
   const state = await fetchSetupState();
   if (!state.needsSetup) throw redirect("/sign-in");
@@ -31,8 +33,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const setupToken = String(form.get("setupToken") ?? "");
   const enableSSO = form.get("enableSSO") === "on";
 
-  if (!username || !email || !password || !confirmPassword || !setupToken) {
+  if (!username || !email || !password || !confirmPassword) {
     return data({ ok: false, validationError: "All fields are required." } as const, {
+      status: 400,
+    });
+  }
+  if (!setupToken.trim()) {
+    return data({ field: "setupToken", ok: false, validationError: BLANK_TOKEN } as const, {
       status: 400,
     });
   }
@@ -105,6 +112,18 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const result = await bootstrapRoot({ email, name, password, setupToken, sso, username });
   if (result.status === 409) throw redirect("/sign-in");
+  if (result.status === 403) {
+    // The gateway checks the token only here, at bootstrap, so the page takes the visitor
+    // back to the step where the token is typed.
+    return data(
+      {
+        field: "setupToken",
+        ok: false,
+        validationError: result.error ?? "Invalid setup token.",
+      } as const,
+      { status: 403 },
+    );
+  }
   if (!result.ok) {
     return data({ error: result.error ?? "An unexpected error occurred.", ok: false } as const, {
       status: result.status || 400,
@@ -184,17 +203,38 @@ export default function Setup({ actionData }: Route.ComponentProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [setupToken, setSetupToken] = useState("");
   const [clientError, setClientError] = useState("");
+  const [tokenError, setTokenError] = useState("");
 
   const [enableSSO, setEnableSSO] = useState(false);
   const [providerId, setProviderId] = useState("");
   const provider = findProvider(providerId);
 
+  // A token the gateway refused (or a blank one) is fixed on the account step, so a new
+  // answer naming it goes back there with the token cleared and the other fields kept.
+  const [seenActionData, setSeenActionData] = useState(actionData);
+  if (actionData !== seenActionData) {
+    setSeenActionData(actionData);
+    if (actionData && !actionData.ok && "field" in actionData) {
+      setStep("account");
+      setSetupToken("");
+      setTokenError(actionData.validationError);
+    }
+  }
+
   if (actionData?.ok) return <Done sso={actionData.sso} />;
 
   const handleAccountNext = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!username.trim() || !email.trim() || !password || !confirmPassword || !setupToken.trim()) {
+    setTokenError("");
+    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
       setClientError("All fields are required.");
+      return;
+    }
+    // The gateway has no way to check the token on its own: it is checked when the bootstrap
+    // is sent, at the end. This step can only refuse a blank one.
+    if (!setupToken.trim()) {
+      setClientError("");
+      setTokenError(BLANK_TOKEN);
       return;
     }
     if (username.includes("@")) {
@@ -221,11 +261,11 @@ export default function Setup({ actionData }: Route.ComponentProps) {
   );
 
   const serverError =
-    actionData && !actionData.ok && "validationError" in actionData
-      ? actionData.validationError
-      : actionData && !actionData.ok && "error" in actionData
-        ? actionData.error
-        : undefined;
+    !actionData || actionData.ok || "field" in actionData
+      ? undefined
+      : "validationError" in actionData
+        ? actionData.validationError
+        : actionData.error;
 
   if (step === "sso") {
     return (
@@ -386,7 +426,7 @@ export default function Setup({ actionData }: Route.ComponentProps) {
             value={confirmPassword}
           />
         </Field>
-        <Field label="Setup token">
+        <Field error={tokenError || undefined} label="Setup token">
           <Input
             autoComplete="off"
             className="font-mono text-sm"
