@@ -69,16 +69,22 @@ export type SignInState =
     }
   | {
       identifier?: string;
+      /** The mock's own words for a refused quick login (`quickLoginRefused`). */
+      message?: string;
       notice?: "passwordReset";
       problem?:
+        | "disabled"
         | "expired"
         | "invalid"
         | "missing"
         | "passkey"
+        | "quickLoginRefused"
+        | "quickLoginUnavailable"
         | "sso"
         | "ssoNotActive"
         | "throttled"
-        | "unavailable";
+        | "unavailable"
+        | "unreachable";
       view: "password";
     }
   | {

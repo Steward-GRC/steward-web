@@ -3,11 +3,18 @@
 // Sign-in end to end on the server: the route's own action and loaders against a gateway that
 // keeps steward-gateway's session contract (see fakeGateway.testing.ts), then a protected
 // loader with the cookie the browser was given.
+import { type AddressInfo, createServer } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { FAKE_CODE, type FakeGateway, startFakeGateway } from "./fakeGateway.testing";
 import { requireIdentityFromRequest } from "./guards.server";
-import { safeNext, signInAction, signInLoader, signOutAction } from "./signIn.server";
+import {
+  safeNext,
+  sessionStatusLoader,
+  signInAction,
+  signInLoader,
+  signOutAction,
+} from "./signIn.server";
 
 const ORIGIN = "https://steward.example";
 let gateway: FakeGateway;
@@ -18,6 +25,7 @@ beforeAll(async () => {
     { password: "right-password", userId: "u-plain", username: "plain.sample" },
     { mfa: "challenge", password: "right-password", userId: "u-mfa", username: "mfa.sample" },
     { mfa: "enrol", password: "right-password", userId: "u-new", username: "new.sample" },
+    { disabled: true, password: "right-password", userId: "u-off", username: "off.sample" },
   ]);
   previousGatewayUrl = process.env.GATEWAY_URL;
   process.env.GATEWAY_URL = gateway.queryUrl;
@@ -106,6 +114,51 @@ describe("password sign-in through the gateway session", () => {
       problem: "invalid",
       view: "password",
     });
+  });
+
+  it("says an unknown user exactly as it says a wrong password", async () => {
+    const result = await signInAction(
+      post({ identifier: "nobody.sample", intent: "login", password: "right-password" }),
+    );
+    expect(stateOf(result)).toEqual({
+      identifier: "nobody.sample",
+      problem: "invalid",
+      view: "password",
+    });
+  });
+
+  it("says the account is disabled when the gateway says so", async () => {
+    const result = await signInAction(
+      post({ identifier: "off.sample", intent: "login", password: "right-password" }),
+    );
+    expect(stateOf(result)).toEqual({
+      identifier: "off.sample",
+      problem: "disabled",
+      view: "password",
+    });
+    expect((result as { init: { status: number } }).init.status).toBe(403);
+  });
+
+  it("says Steward couldn't be reached when the gateway doesn't answer at all", async () => {
+    const saved = process.env.GATEWAY_URL;
+    // A port that was free a moment ago: nothing answers, so the fetch itself fails.
+    const probe = createServer();
+    await new Promise<void>((resolve) => probe.listen(0, "127.0.0.1", resolve));
+    const { port } = probe.address() as AddressInfo;
+    await new Promise((resolve) => probe.close(resolve));
+    process.env.GATEWAY_URL = `http://127.0.0.1:${port}/query`;
+    try {
+      const result = await signInAction(
+        post({ identifier: "plain.sample", intent: "login", password: "right-password" }),
+      );
+      expect(stateOf(result)).toEqual({
+        identifier: "plain.sample",
+        problem: "unreachable",
+        view: "password",
+      });
+    } finally {
+      process.env.GATEWAY_URL = saved;
+    }
   });
 
   it("asks for both fields before calling the gateway", async () => {
@@ -234,5 +287,21 @@ describe("dev quick login in a release build", () => {
     await expect(
       signInAction(post({ intent: "dev-quick-login", username: "plain.sample" })),
     ).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("the session check a signed-out page polls", () => {
+  it("says there's no session without one", async () => {
+    const response = await sessionStatusLoader(page(""));
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({ signedIn: false });
+  });
+
+  it("names who is signed in once a session exists, however it was made", async () => {
+    const signed = (await signInAction(
+      post({ identifier: "plain.sample", intent: "login", password: "right-password" }),
+    )) as Response;
+    const response = await sessionStatusLoader(page(cookieFrom(signed)));
+    expect(await response.json()).toEqual({ name: "plain.sample", signedIn: true });
   });
 });

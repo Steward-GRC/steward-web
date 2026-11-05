@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Fails if a release-configuration app build (apps/*/build/, built without the DEV_QUICK_LOGIN
 // build argument) carries the dev quick login: the picker's marker
-// (@steward-web/auth's DEV_QUICK_LOGIN_MARKER) or the users-file variable its server reader
-// reads, or the dev gate preview that rides on the same allowance (its
+// (@steward-web/auth's DEV_QUICK_LOGIN_MARKER), the users-file variable its server reader
+// reads, the mock source's address variable or sign-in control, or the dev gate preview that rides on the same allowance (its
 // DEV_GATE_PREVIEW_MARKER). Also fails if the Dockerfile's DEV_QUICK_LOGIN build argument defaults to anything but
 // false, since that default is what keeps a release image's build from allowing it. A release
 // build should never reach the first state at all: packages/vite-config's
@@ -16,6 +16,9 @@ import path from "node:path";
 export const TELLS = [
   "steward-dev-quick-login",
   "STEWARD_DEV_QUICK_LOGIN_USERS",
+  // The mock source: its address variable and the control it signs people in with.
+  "STEWARD_DEV_MOCK_URL",
+  "/_mock/controls",
   "steward-dev-gate-preview",
 ];
 const TEXT_EXTENSIONS = new Set([".css", ".js", ".mjs"]);

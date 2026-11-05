@@ -57,6 +57,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     identityFromRequest(request),
     siteSettingsFromRequest(request),
   ]);
+  const quickLogin = await quickLoginUsers();
   return {
     // A dev build's `?gate=G11` or `?gate=G12` holds that gate on screen; never in a release.
     gatePreview: statusGatePreview(new URL(request.url)),
@@ -64,7 +65,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     identity,
     // Reused, not re-checked: quickLoginUsers() is already both build- and runtime-gated (empty
     // in any build or deployment that doesn't allow the dev quick login).
-    quickLoginOn: quickLoginUsers().length > 0,
+    quickLoginOn: quickLogin.length > 0,
     shell: await adminShellData(request, identity),
     siteSettings,
   };

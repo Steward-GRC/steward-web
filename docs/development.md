@@ -64,15 +64,26 @@ git clone https://github.com/Steward-GRC/steward-mock-server.git ../steward-mock
 Then run the apps against it, each in its own terminal:
 
 ```bash
-GATEWAY_URL=http://localhost:5175/query pnpm --filter @steward-web/staff run dev
-GATEWAY_URL=http://localhost:5175/query pnpm --filter @steward-web/admin run dev
+pnpm --filter @steward-web/staff run dev:mock
+pnpm --filter @steward-web/admin run dev:mock
 ```
+
+`dev:mock` is `dev` with `GATEWAY_URL=http://localhost:5175/query` and the
+[dev quick login](#the-dev-quick-login) switched on (`STEWARD_DEV_QUICK_LOGIN=true`), so the
+sign-in page offers one button per person the mock manages. Plain
+`GATEWAY_URL=http://localhost:5175/query pnpm --filter @steward-web/staff run dev` runs without
+it.
 
 Staff is on <http://localhost:5173> and admin on <http://localhost:5174/admin>; both ports are
 pinned, so a port already in use stops that app instead of moving it. The mock's
 controls and the people you can sign in as are on <http://localhost:5175/_mock>. Any password
 works, and any six-digit code except `000000`. First-run setup takes the token
 `mock-setup-token` (the mock's `MOCK_SETUP_TOKEN`).
+
+Signing in on the mock's own page (`/_mock`, "Sign in here") sets the session cookie for
+`localhost`, so it signs the apps in too. A sign-in page left open notices by itself: it checks
+`/resources/session` when its tab comes back into focus and every five seconds while it's
+visible, then moves on, saying "Signed in as {name}. Refresh this page." while it does.
 
 ## The dev UI-issue button
 
@@ -182,6 +193,31 @@ It needs both switches, the same pattern as the dev UI-issue button:
 label and note. A missing or malformed source turns the picker (and the banner) off. Keep any
 local file out of the repository: it holds local test passwords.
 
+Against steward-mock-server no users file is needed. The accounts come from a source
+(`QuickLoginSource` in the same file), and the mock's own managed people come first:
+
+- The server asks `GET <mock>/_mock/people` (people only, never passwords). The mock is found at
+  `STEWARD_DEV_MOCK_URL` when that's set, else at `GATEWAY_URL`'s address, since the mock
+  answers both. One look is reused for five seconds.
+- A pick signs that person in with the mock's own control,
+  `POST <mock>/_mock/controls {"kind":"sign-in","personId":"…"}`. It checks the person's stored
+  password the way `/auth/login` does, skips the second factor, and answers the session cookie,
+  which the sign-in action relays like the gateway's. Each person's note shows their roles, and
+  whether they're disabled or have no password yet.
+- When nothing there answers as the mock (a real gateway), the users file or directory above is
+  the source, and a pick signs in through `/auth/login` with its password.
+
+A pick that goes nowhere says why on the sign-in page:
+
+- "Quick login isn't available on this server." when the server switch is off or the account
+  isn't listed;
+- the mock's own message when it refuses (409 `no_password`, 403 `account_disabled`);
+- the gateway's answer when it turns a users-file account down ("Incorrect username or
+  password.", "This account is disabled. Contact your administrator.", "Couldn't reach Steward.
+  Try again.").
+
+A release build, which has no quick login, still answers the intent with a plain 404.
+
 ```bash
 docker build --build-arg APP=staff --build-arg DEV_QUICK_LOGIN=true -t steward-web:dev .
 docker run -e STEWARD_DEV_QUICK_LOGIN=true -e STEWARD_DEV_QUICK_LOGIN_USERS=/users.json \
@@ -189,9 +225,9 @@ docker run -e STEWARD_DEV_QUICK_LOGIN=true -e STEWARD_DEV_QUICK_LOGIN_USERS=/use
 ```
 
 `pnpm run check:no-dev-quick-login-leak` (part of `pnpm run check`, so CI runs it on every pull
-request) fails if a release build under `apps/*/build` carries the picker's marker or the
-users-file variable name, or if the Dockerfile's `DEV_QUICK_LOGIN` defaults to anything but
-`false`.
+request) fails if a release build under `apps/*/build` carries the picker's marker, the
+users-file variable name, the mock source's `STEWARD_DEV_MOCK_URL` or its `/_mock/controls`
+sign-in, or if the Dockerfile's `DEV_QUICK_LOGIN` defaults to anything but `false`.
 
 ## Reaching each gate
 

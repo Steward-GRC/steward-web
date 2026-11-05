@@ -11,6 +11,8 @@ import { randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
 export interface FakeAccount {
+  /** A disabled account: the right password answers 403 `account_disabled`. */
+  disabled?: boolean;
   /** The factors a challenge offers; ["totp", "email"] by default. */
   factors?: string[];
   /** "challenge": a TOTP code is owed; "enrol": no factor yet, enrolment is owed. */
@@ -111,6 +113,7 @@ export const startFakeGateway = async (
           (a) => a.username === body.username && a.password === body.password,
         );
         if (!account) return json(response, 401, { error: "invalid_credentials" });
+        if (account.disabled) return json(response, 403, { error: "account_disabled" });
         if (account.mfa) {
           const pendingId = randomUUID();
           pending.set(pendingId, { account, enrol: account.mfa === "enrol" });
