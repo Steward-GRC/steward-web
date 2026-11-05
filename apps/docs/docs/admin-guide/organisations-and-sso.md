@@ -12,35 +12,49 @@ Each **organisation** in Steward is one domain connected to one SAML or OIDC ide
 
 ## ➕ Add an organisation
 
-1. Select **New organisation** and enter the domain.
+Setting up a connection is a four-step page you can leave and come back to: **1 Details**, **2
+Domain verification**, **3 IdP test** and **4 Activate**. A passed step turns green, and
+**Activate** stays locked until both gates pass.
+
+1. Select **+ New organization**, then enter the organization's name and domain.
 2. Pick your identity provider from the catalog (Google Workspace, Microsoft Entra ID, Okta, or a
    generic SAML/OIDC provider). Picking a provider fixes the protocol and shows a setup checklist
    for that provider; the connection fields are the same underneath regardless of which you pick.
 3. Follow the checklist in your identity provider's console, then copy its details back into
    Steward's connection fields (entity ID, sign-on URL and signing certificate for SAML; issuer and
-   client ID for OIDC).
+   client ID for OIDC), and select **Add organization**.
 
 ## ✅ Verify and test
 
 Before a connection is used for real sign-ins:
 
-1. **Verify the domain** — publish the DNS TXT record Steward shows you, then select **Verify
-   domain**.
-2. **Run an IdP test** — opens a sign-in attempt against the connection in a popup, so you confirm
-   it works before anyone depends on it.
+1. **Domain verification** — copy the DNS TXT record's **Name** and **Value** into your DNS, then
+   select **Verify**. Steward also checks every 10 seconds on its own. **Rotate token** issues a new
+   value, which also revokes an earlier verification.
+2. **IdP test** — **Run IdP test** opens a sign-in attempt against the connection in a popup, so you
+   confirm it works before anyone depends on it. The result comes back to the page.
+3. **Activate** — once both gates pass, **Activate** turns the connection on.
 
-A test link handed to someone at the other organisation opens a page there that says whose
-sign-in it tests and starts the test, then shows whether it passed. That page needs a public
-test-link lookup in the gateway that isn't there yet
+**Copy remote test link** hands the test to someone at the other organisation instead. Their link
+opens a page there that says whose sign-in it tests and starts the test, then shows whether it
+passed. That page needs a public test-link lookup in the gateway that isn't there yet
 ([steward-gateway#54](https://github.com/Steward-GRC/steward-gateway/issues/54)); until it is,
 the page says so.
 
-An organisation's **Active** status is separate from verification and testing: Steward tracks all
-three so you can confirm a connection end-to-end before people use it.
+Once active, the page shows a summary card instead, with **Reconfigure connection** (to see the
+steps again) and **Disable**. Changing the protocol resets the connection to the start, so it
+asks first. **Delete organization** is only offered once the connection is disabled.
+
+## 🔐 The SP certificate
+
+Organizations ends with the one SAML signing certificate Steward presents to every identity
+provider: whether it's active, its serial and expiry, **Copy certificate** and **Copy SP
+metadata** for your identity provider's console, and **Force rotate**. Any identity provider that
+pins the current certificate needs the new metadata after a rotation.
 
 ## 🔄 Just-in-time provisioning
 
-Each organisation has a **JIT provisioning** switch:
+Under **Login options**, each organisation has a **Just-in-time provisioning** switch:
 
 - **On** — the first time someone from that domain signs in, Steward creates their account
   automatically.

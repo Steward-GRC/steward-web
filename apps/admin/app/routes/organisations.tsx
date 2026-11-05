@@ -1,24 +1,35 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { SpCertificate } from "@steward-web/api-client";
+
+import { formatDate, useTranslation } from "@steward-web/i18n";
+import { refusalOf } from "@steward-web/shell";
 import {
   Badge,
+  Banner,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
-  CardTitle,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogTrigger,
   EmptyState,
-  PageHeader,
+  type Failure,
   Table,
   TD,
   TH,
   THead,
 } from "@steward-web/ui";
-import { Link } from "react-router";
+import { useId, useState } from "react";
+import { data, Link, useFetcher } from "react-router";
 
 import type { Route } from "./+types/organisations";
 
-import { getSpCertificate, listOrganizations } from "../organisations/organisations.server";
+import {
+  forceRotateSpCertificate,
+  getSpCertificate,
+  listOrganizations,
+} from "../organisations/organisations.server";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [organisations, spCertificate] = await Promise.all([
@@ -28,35 +39,140 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return { organisations, spCertificate };
 };
 
-export default function Organisations({ loaderData }: Route.ComponentProps) {
+export const action = async ({ request }: Route.ActionArgs) => {
+  const form = await request.formData();
+  const intent = String(form.get("intent") ?? "");
+  if (intent !== "rotate-certificate") throw data("unrecognized intent", { status: 400 });
+  try {
+    await forceRotateSpCertificate(request);
+    return { intent, ok: true } as const;
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    return data({ failure: refusalOf(error), intent, ok: false } as const, { status: 400 });
+  }
+};
+
+type Result = { failure: Failure; ok: false } | { ok: true };
+
+/** A text button that copies a value and says "Copied" for a moment. */
+const CopyButton = ({ label, value }: { label: string; value: string }) => {
+  const { t } = useTranslation("admin");
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      onClick={() =>
+        void navigator.clipboard?.writeText(value).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        })
+      }
+      size="sm"
+      variant="secondary"
+    >
+      {copied ? t("organizations.cert.copied") : label}
+    </Button>
+  );
+};
+
+/** The SP certificate panel (A23): status, serial and expiry, the two copies and D28. */
+const SpCertificateCard = ({ certificate }: { certificate: SpCertificate }) => {
+  const { t } = useTranslation("admin");
+  const rotate = useFetcher<Result>();
+  const [open, setOpen] = useState(false);
+  const titleId = useId();
+  const failure =
+    rotate.state === "idle" && rotate.data && !rotate.data.ok ? rotate.data.failure : undefined;
+  return (
+    <section
+      aria-labelledby={titleId}
+      className="flex flex-col gap-2.5 rounded-[10px] border border-border bg-surface p-4"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <b id={titleId}>{t("organizations.cert.title")}</b>
+        <Badge tone={certificate.active ? "ok" : "neutral"}>
+          {certificate.active ? t("organizations.cert.active") : t("organizations.cert.inactive")}
+        </Badge>
+      </div>
+      <p className="text-sm text-muted">{t("organizations.cert.description")}</p>
+      <p className="flex flex-wrap gap-x-4 text-sm">
+        <span className="font-mono">
+          {t("organizations.cert.serial", { serial: certificate.serial })}
+        </span>
+        <span className="text-muted">
+          {t("organizations.cert.expires", { date: formatDate(certificate.notAfter) })}
+        </span>
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <CopyButton label={t("organizations.cert.copyCertificate")} value={certificate.certPem} />
+        <CopyButton
+          label={t("organizations.cert.copyMetadata")}
+          value={certificate.spMetadataXml}
+        />
+        <Dialog onOpenChange={setOpen} open={open}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="secondary">
+              {t("organizations.cert.rotate")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent
+            description={t("organizations.cert.rotateDescription")}
+            title={t("organizations.cert.rotateTitle")}
+            tone="danger"
+          >
+            <rotate.Form method="post" onSubmit={() => setOpen(false)}>
+              <input name="intent" type="hidden" value="rotate-certificate" />
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="secondary">{t("organizations.cert.cancel")}</Button>
+                </DialogClose>
+                <Button type="submit" variant="danger">
+                  {t("organizations.cert.rotateConfirm")}
+                </Button>
+              </DialogFooter>
+            </rotate.Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      {failure ? (
+        <Banner failure={failure} title={t("organizations.cert.failed")} tone="danger" />
+      ) : null}
+    </section>
+  );
+};
+
+/**
+ * Organizations (A23): each domain's SSO connection with its two gates (Verified, Tested) and
+ * whether it's Active, then the platform's SP certificate.
+ */
+export default function Organizations({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("admin");
   const { organisations, spCertificate } = loaderData;
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader
-        actions={
-          <Button asChild size="sm">
-            <Link to="/organisations/new">New organisation</Link>
-          </Button>
-        }
-        eyebrow="People"
-        subtitle="SAML/OIDC single sign-on connections, one per domain."
-        title="Organisations"
-      />
+    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
+      <header className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[26px] leading-[1.3] font-semibold">{t("organizations.title")}</h1>
+          <p className="text-base text-muted">{t("organizations.subtitle")}</p>
+        </div>
+        <Button asChild>
+          <Link to="/organisations/new">{t("organizations.new")}</Link>
+        </Button>
+      </header>
 
       {organisations.length === 0 ? (
         <EmptyState
-          description="Add an organisation to connect a domain's SAML or OIDC identity provider."
-          title="No organisations configured"
+          description={t("organizations.empty.description")}
+          title={t("organizations.empty.title")}
         />
       ) : (
         <Table>
           <THead>
             <tr>
-              <TH>Domain</TH>
-              <TH>Organisation</TH>
-              <TH>Protocol</TH>
-              <TH>Status</TH>
+              <TH>{t("organizations.columns.domain")}</TH>
+              <TH>{t("organizations.columns.organization")}</TH>
+              <TH>{t("organizations.columns.protocol")}</TH>
+              <TH>{t("organizations.columns.status")}</TH>
             </tr>
           </THead>
           <tbody>
@@ -77,13 +193,19 @@ export default function Organisations({ loaderData }: Route.ComponentProps) {
                 <TD>
                   <div className="flex flex-wrap items-center gap-1">
                     <Badge tone={org.verified ? "ok" : "neutral"}>
-                      {org.verified ? "Verified" : "Not verified"}
+                      {org.verified
+                        ? t("organizations.badges.verified")
+                        : t("organizations.badges.notVerified")}
                     </Badge>
                     <Badge tone={org.testPassed ? "ok" : "neutral"}>
-                      {org.testPassed ? "Tested" : "Not tested"}
+                      {org.testPassed
+                        ? t("organizations.badges.tested")
+                        : t("organizations.badges.notTested")}
                     </Badge>
-                    <Badge tone={org.enabled ? "primary" : "danger"}>
-                      {org.enabled ? "Active" : "Disabled"}
+                    <Badge tone={org.enabled ? "primary" : "neutral"}>
+                      {org.enabled
+                        ? t("organizations.badges.active")
+                        : t("organizations.badges.inactive")}
                     </Badge>
                   </div>
                 </TD>
@@ -93,22 +215,7 @@ export default function Organisations({ loaderData }: Route.ComponentProps) {
         </Table>
       )}
 
-      {/* The platform SP certificate: one SAML SP certificate presented to every connected
-          IdP, not per-organisation, so it lives here rather than on the manage page. */}
-      <Card>
-        <CardHeader>
-          <CardTitle>SP certificate</CardTitle>
-        </CardHeader>
-        <CardBody className="flex flex-col gap-2 text-sm">
-          <div className="flex items-center gap-2">
-            <Badge tone={spCertificate.active ? "ok" : "neutral"}>
-              {spCertificate.active ? "Active" : "Inactive"}
-            </Badge>
-            <span className="font-mono text-muted">{spCertificate.serial}</span>
-          </div>
-          <p className="text-muted">Expires {spCertificate.notAfter}.</p>
-        </CardBody>
-      </Card>
+      <SpCertificateCard certificate={spCertificate} />
     </div>
   );
 }

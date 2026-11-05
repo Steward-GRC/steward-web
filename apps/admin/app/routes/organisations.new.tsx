@@ -1,7 +1,8 @@
+import { useTranslation } from "@steward-web/i18n";
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { refusalOf } from "@steward-web/shell";
-import { Banner, Button, Field, Input, PageHeader, Select, Textarea } from "@steward-web/ui";
+import { Banner, Button, Field, Input, Select, Textarea } from "@steward-web/ui";
 import { useState } from "react";
 import { data, Form, Link, redirect, useFetcher } from "react-router";
 
@@ -11,6 +12,7 @@ import type { action as idpMetadataAction } from "./resources.idp-metadata";
 import { buildIdpConfig, clientSecretInput } from "../organisations/idpConfig";
 import { findProvider, IDP_PROVIDERS, type IdpProtocol } from "../organisations/idpProviders";
 import { addOrganization } from "../organisations/organisations.server";
+import { SetupSteps } from "../organisations/SetupSteps";
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const form = await request.formData();
@@ -52,7 +54,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 };
 
+/** A24 step 1, Details: the connection's name, domain and identity provider, before the gates. */
 export default function NewOrganisation({ actionData }: Route.ComponentProps) {
+  const { t } = useTranslation("admin");
   const [providerId, setProviderId] = useState("");
   const provider = findProvider(providerId);
 
@@ -118,30 +122,43 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
     fetcher.data && !fetcher.data.ok ? fetcher.data.failure : undefined;
 
   return (
-    <div className="flex w-full max-w-xl flex-col gap-6 p-6">
-      <PageHeader
-        eyebrow="People"
-        subtitle="A SAML/OIDC connection is scoped to one domain. It needs domain ownership and a passing IdP login test before it can be activated."
-        title="New organisation"
+    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
+      <header>
+        <p className="text-xs font-medium text-muted">{t("organizations.setup.eyebrow")}</p>
+        <h1 className="text-[26px] leading-[1.3] font-semibold">{t("organizations.add.title")}</h1>
+        <p className="leading-normal text-muted">{t("organizations.setup.description")}</p>
+      </header>
+      <SetupSteps
+        done={new Set()}
+        locked={new Set(["activate", "domain", "test"])}
+        onSelect={() => {}}
+        selected="details"
       />
 
-      <Form className="flex flex-col gap-4" method="post">
-        <Field label="Organisation name">
+      <Form
+        aria-label={t("organizations.add.card")}
+        className="flex flex-col gap-4 rounded-[10px] border border-border bg-surface p-4"
+        method="post"
+      >
+        <Field label={t("organizations.add.orgName")}>
           <Input name="orgName" required />
         </Field>
-        <Field label="Domain">
+        <Field label={t("organizations.add.domain")}>
           <Input name="domain" placeholder="example.org" required />
         </Field>
-        <Field label="Identity provider">
+        <Field label={t("organizations.add.provider")}>
           <Select
             name="providerId"
             onValueChange={setProviderId}
             options={IDP_PROVIDERS.map((p) => ({ label: p.label, value: p.id }))}
-            placeholder="Choose a provider"
+            placeholder={t("organizations.add.choose")}
             value={providerId}
           />
         </Field>
-        <Field hint="Shown on the sign-in screen." label="Display name (optional)">
+        <Field
+          hint={t("organizations.add.displayNameHint")}
+          label={t("organizations.add.displayName")}
+        >
           <Input
             name="displayName"
             onChange={(event) => setDisplayName(event.currentTarget.value)}
@@ -150,7 +167,7 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
         </Field>
 
         {provider ? (
-          <Banner title={`Set up ${provider.label}`} tone="info">
+          <Banner title={t("organizations.add.setUp", { provider: provider.label })} tone="info">
             <ol className="ml-4 list-decimal space-y-1 text-sm">
               {provider.steps.map((step) => (
                 <li key={step}>{step}</li>
@@ -161,14 +178,16 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
 
         {provider?.protocol === "oidc" ? (
           <fieldset className="flex flex-col gap-3 rounded-md border border-dashed border-border p-3">
-            <legend className="text-sm font-semibold text-ink">OIDC connection</legend>
-            <Field label="Issuer">
+            <legend className="text-sm font-semibold text-ink">
+              {t("organizations.add.oidc")}
+            </legend>
+            <Field label={t("organizations.add.issuer")}>
               <Input name="issuer" placeholder="https://idp.example.org" />
             </Field>
-            <Field label="Client ID">
+            <Field label={t("organizations.add.clientId")}>
               <Input name="clientId" />
             </Field>
-            <Field label="Client secret">
+            <Field label={t("organizations.add.clientSecret")}>
               <Input autoComplete="off" name="clientSecret" type="password" />
             </Field>
           </fieldset>
@@ -176,11 +195,13 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
 
         {provider && provider.protocol !== "oidc" ? (
           <fieldset className="flex flex-col gap-3 rounded-md border border-dashed border-border p-3">
-            <legend className="text-sm font-semibold text-ink">SAML connection</legend>
+            <legend className="text-sm font-semibold text-ink">
+              {t("organizations.add.saml")}
+            </legend>
 
             <Field
-              hint="Fetches the IdP's published SAML metadata and fills in the fields below."
-              label="Import metadata from a URL"
+              hint={t("organizations.add.importUrlHint")}
+              label={t("organizations.add.importUrl")}
             >
               <div className="flex gap-2">
                 <Input
@@ -202,21 +223,23 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
                   type="button"
                   variant="secondary"
                 >
-                  {importFetcher.state === "idle" ? "Import" : "Importing…"}
+                  {importFetcher.state === "idle"
+                    ? t("organizations.add.import")
+                    : t("organizations.add.importing")}
                 </Button>
               </div>
             </Field>
             {metadataFailure(importFetcher) ? (
               <Banner
                 failure={metadataFailure(importFetcher)}
-                title="Couldn't import metadata from that URL"
+                title={t("organizations.add.importFailed")}
                 tone="danger"
               />
             ) : null}
 
             <Field
-              hint="Or upload the metadata file your IdP offers for download."
-              label="Import metadata from a file"
+              hint={t("organizations.add.importFileHint")}
+              label={t("organizations.add.importFile")}
             >
               <Input
                 accept=".xml,text/xml,application/xml,application/samlmetadata+xml"
@@ -227,12 +250,12 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
             {metadataFailure(fileFetcher) ? (
               <Banner
                 failure={metadataFailure(fileFetcher)}
-                title="Couldn't parse that metadata file"
+                title={t("organizations.add.fileFailed")}
                 tone="danger"
               />
             ) : null}
 
-            <Field label="Entity ID">
+            <Field label={t("organizations.add.entityId")}>
               <Input
                 name="entityId"
                 onChange={(event) => setEntityId(event.currentTarget.value)}
@@ -240,7 +263,7 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
                 value={entityId}
               />
             </Field>
-            <Field label="SSO URL">
+            <Field label={t("organizations.add.ssoUrl")}>
               <Input
                 name="ssoUrl"
                 onChange={(event) => setSsoUrl(event.currentTarget.value)}
@@ -248,7 +271,7 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
                 value={ssoUrl}
               />
             </Field>
-            <Field label="IdP signing certificate">
+            <Field label={t("organizations.add.certificate")}>
               <Textarea
                 className="min-h-24 font-mono text-xs"
                 name="signingCertificate"
@@ -256,10 +279,7 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
                 value={signingCertificate}
               />
             </Field>
-            <Field
-              hint="Fetch just the signing certificate, if your IdP doesn't publish full metadata."
-              label="Fetch certificate from a URL"
-            >
+            <Field hint={t("organizations.add.certUrlHint")} label={t("organizations.add.certUrl")}>
               <div className="flex gap-2">
                 <Input
                   onChange={(event) => setCertUrl(event.currentTarget.value)}
@@ -280,14 +300,16 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
                   type="button"
                   variant="secondary"
                 >
-                  {certFetcher.state === "idle" ? "Fetch" : "Fetching…"}
+                  {certFetcher.state === "idle"
+                    ? t("organizations.add.fetch")
+                    : t("organizations.add.fetching")}
                 </Button>
               </div>
             </Field>
             {certFetcher.data && !certFetcher.data.ok ? (
               <Banner
                 failure={certFetcher.data.failure}
-                title="Couldn't fetch a certificate from that URL"
+                title={t("organizations.add.certFailed")}
                 tone="danger"
               />
             ) : null}
@@ -295,22 +317,22 @@ export default function NewOrganisation({ actionData }: Route.ComponentProps) {
         ) : null}
 
         {actionData && !actionData.ok && "validationError" in actionData ? (
-          <Banner title="Couldn't add this organisation" tone="danger">
-            {actionData.validationError}
+          <Banner title={t("organizations.add.failed")} tone="danger">
+            {t("organizations.add.required")}
           </Banner>
         ) : null}
         {actionData && !actionData.ok && "failure" in actionData ? (
           <Banner
             failure={actionData.failure}
-            title="Couldn't add this organisation"
+            title={t("organizations.add.failed")}
             tone="danger"
           />
         ) : null}
 
         <div className="flex items-center gap-2">
-          <Button type="submit">Add organisation</Button>
+          <Button type="submit">{t("organizations.add.submit")}</Button>
           <Button asChild variant="secondary">
-            <Link to="/organisations">Cancel</Link>
+            <Link to="/organisations">{t("organizations.add.cancel")}</Link>
           </Button>
         </div>
       </Form>
