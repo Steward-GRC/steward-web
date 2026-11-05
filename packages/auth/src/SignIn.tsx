@@ -28,6 +28,7 @@ import type {
 } from "./signInState";
 
 import { askForPasskey, type PasskeyFailure, passkeysSupported } from "./passkey";
+import { useSessionWatch } from "./sessionWatch";
 
 export interface SignInProps {
   /** The admin console's sign-in: the saffron Admin tag beside Steward, as in its header. */
@@ -224,7 +225,13 @@ const PasswordGate = ({
             {t(`signIn.notice.${state.notice}`)}
           </p>
         ) : null}
-        {problem ? <GateAlert id={problemId}>{t(`signIn.problem.${problem}`)}</GateAlert> : null}
+        {problem ? (
+          <GateAlert id={problemId}>
+            {problem === "quickLoginRefused" && state.message
+              ? state.message
+              : t(`signIn.problem.${problem}`)}
+          </GateAlert>
+        ) : null}
         <Form className="flex flex-col gap-3 sm:gap-[14px]" method="post">
           <Hidden fields={{ intent: "login", next }} />
           <label className={fieldLabel}>
@@ -713,6 +720,34 @@ const SigningInGate = () => {
 };
 
 /**
+ * A session appeared while this page sat signed out (another tab, or the mock's own sign-in):
+ * the page is already moving on, and says who is signed in with Refresh in case the move
+ * stalls. G9's small card.
+ */
+const SignedInElsewhereGate = ({ name }: { name: string }) => {
+  const { t } = useTranslation("auth");
+  return (
+    <GatePage>
+      <GateCard className="items-center text-center">
+        <GateBrand />
+        <div className="flex flex-col items-center gap-3" role="status">
+          <p className="text-base">
+            {name ? t("signIn.elsewhere.signedInAs", { name }) : t("signIn.elsewhere.signedIn")}
+          </p>
+          <button
+            className={primaryButton}
+            onClick={() => globalThis.location.reload()}
+            type="button"
+          >
+            {t("signIn.elsewhere.refresh")}
+          </button>
+        </div>
+      </GateCard>
+    </GatePage>
+  );
+};
+
+/**
  * The sign-in gates (Gates G3, G3m, G4–G9), outside the app shell as one centred card: the
  * password step, the SSO identifier, a passkey, the second factor or a first-sign-in
  * authenticator enrolment, the password reset, and "Signing in…" while the session resolves.
@@ -723,12 +758,14 @@ const SigningInGate = () => {
 export const SignIn = (props: SignInProps) => {
   const navigation = useNavigation();
   const { next, state } = props;
+  const signedInAs = useSessionWatch(next);
   const intent = navigation.formData?.get("intent");
   // An action that opened a session answers with a redirect; the router then loads the next
   // page with the submission still attached.
   const resolving =
     navigation.state === "loading" && typeof intent === "string" && SESSION_INTENTS.has(intent);
 
+  if (signedInAs !== undefined) return <SignedInElsewhereGate name={signedInAs} />;
   if (resolving || state.view === "signing-in") return <SigningInGate />;
   switch (state.view) {
     case "code": {

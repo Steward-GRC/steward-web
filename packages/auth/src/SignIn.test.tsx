@@ -339,3 +339,134 @@ describe("G9: signing in", () => {
     expect(await screen.findByRole("heading", { name: "Signing in…" })).toBeInTheDocument();
   });
 });
+
+describe("after a successful sign-in in this tab", () => {
+  it("always moves on to where the person was going", async () => {
+    const Stub = createRoutesStub([
+      {
+        action: () => redirect("/policies"),
+        Component: () => (
+          <SignIn capabilities={NONE} next="/policies" state={{ view: "password" }} />
+        ),
+        path: "/sign-in",
+      },
+      { Component: () => <p>Home</p>, path: "/policies" },
+    ]);
+    render(<Stub initialEntries={["/sign-in?next=%2Fpolicies"]} />);
+    await userEvent.type(await screen.findByLabelText("Email or username"), "bob");
+    await userEvent.type(screen.getByLabelText("Password"), "secret");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByText("Home")).toBeInTheDocument();
+  });
+});
+
+describe("G3: every failure says what happened", () => {
+  it.each([
+    ["invalid", "Incorrect username or password."],
+    ["disabled", "This account is disabled. Contact your administrator."],
+    ["unreachable", "Couldn't reach Steward. Try again."],
+    ["quickLoginUnavailable", "Quick login isn't available on this server."],
+  ] as const)("says %s calmly, inline", async (problem, message) => {
+    renderSignIn({ state: { problem, view: "password" } });
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+  });
+});
+
+describe("the dev quick login's refusals", () => {
+  it("shows the mock's own words when it won't sign the person in", async () => {
+    renderSignIn({
+      state: {
+        message: "Frank Disabled is disabled.",
+        problem: "quickLoginRefused",
+        view: "password",
+      },
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Frank Disabled is disabled.");
+  });
+});
+
+/** A `/resources/session` that answers `answer`, counting the checks. */
+const sessionAnswers = (answer: { name?: string; signedIn: boolean }) => {
+  const checks: string[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      checks.push(String(input));
+      return Response.json(answer);
+    }),
+  );
+  return checks;
+};
+
+const renderWithHome = () => {
+  const Stub = createRoutesStub([
+    {
+      Component: () => <SignIn capabilities={NONE} next="/policies" state={{ view: "password" }} />,
+      path: "/sign-in",
+    },
+    { Component: () => <p>Home</p>, path: "/policies" },
+  ]);
+  return render(<Stub initialEntries={["/sign-in?next=%2Fpolicies"]} />);
+};
+
+describe("a session that appears elsewhere", () => {
+  it("moves on by itself when the tab comes back and there's a session", async () => {
+    const checks = sessionAnswers({ name: "Bob Author", signedIn: true });
+    renderWithHome();
+    await screen.findByLabelText("Email or username");
+    globalThis.dispatchEvent(new Event("focus"));
+    expect(await screen.findByText("Home")).toBeInTheDocument();
+    expect(checks).toEqual(["/resources/session"]);
+  });
+
+  it("checks again when the tab becomes visible", async () => {
+    const checks = sessionAnswers({ signedIn: false });
+    renderWithHome();
+    await screen.findByLabelText("Email or username");
+    document.dispatchEvent(new Event("visibilitychange"));
+    await waitFor(() => expect(checks).toHaveLength(1));
+    expect(screen.queryByText("Home")).toBeNull();
+    expect(screen.getByLabelText("Email or username")).toBeInTheDocument();
+  });
+
+  it("checks every few seconds while the tab is visible", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const checks = sessionAnswers({ signedIn: false });
+      renderWithHome();
+      await screen.findByLabelText("Email or username");
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(checks).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(checks).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("says who is signed in, with Refresh, while the move is under way", async () => {
+    sessionAnswers({ name: "Bob Author", signedIn: true });
+    // The page never finishes loading, so the notice is what the person sees.
+    renderSignIn({ state: { view: "password" } });
+    await screen.findByLabelText("Email or username");
+    globalThis.dispatchEvent(new Event("focus"));
+    const notice = await screen.findByRole("status");
+    expect(notice).toHaveTextContent("Signed in as Bob Author. Refresh this page.");
+    expect(within(notice).getByRole("button", { name: "Refresh" })).toBeInTheDocument();
+  });
+
+  it("stays put, saying nothing, when the check itself fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("offline");
+      }),
+    );
+    renderWithHome();
+    await screen.findByLabelText("Email or username");
+    globalThis.dispatchEvent(new Event("focus"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Home")).toBeNull();
+  });
+});

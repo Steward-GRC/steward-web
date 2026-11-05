@@ -1,7 +1,11 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { signInPreview } from "@steward-web/dev-gate-preview.server";
-import { quickLoginAccount, quickLoginUsers } from "@steward-web/dev-quick-login.server";
+import {
+  quickLoginBuild,
+  quickLoginSignIn,
+  quickLoginUsers,
+} from "@steward-web/dev-quick-login.server";
 import { data, redirect, redirectDocument } from "react-router";
 
 import type { PasskeyChallenge, SignInFactor, SignInLoaderData, SignInState } from "./signInState";
@@ -127,6 +131,15 @@ const ssoReturn = (query: URLSearchParams): SignInState | undefined => {
   return undefined;
 };
 
+/** The HTTP status the page answers each refusal with. */
+const REJECTED_STATUS = { disabled: 403, expired: 401, invalid: 401, throttled: 429 } as const;
+
+/** "Couldn't reach Steward" when nothing answered or the gateway couldn't reach what's behind
+ *  it; "isn't available" for any other failure. */
+const UNREACHABLE = new Set([0, 502, 503, 504]);
+const unreachable = (status: number): "unavailable" | "unreachable" =>
+  UNREACHABLE.has(status) ? "unreachable" : "unavailable";
+
 /** Where the password step leads: in, a code to ask for, an enrolment, or back with a reason. */
 const afterPassword = async (
   step: AuthStep,
@@ -146,14 +159,14 @@ const afterPassword = async (
     case "rejected": {
       return state(
         { identifier, problem: step.reason, view: "password" },
-        step.reason === "throttled" ? 429 : 401,
+        REJECTED_STATUS[step.reason],
       );
     }
     case "session": {
       return signedIn(step.setCookie, next);
     }
     case "unavailable": {
-      return state({ identifier, problem: "unavailable", view: "password" }, 502);
+      return state({ identifier, problem: unreachable(step.status), view: "password" }, 502);
     }
   }
 };
@@ -171,7 +184,7 @@ export const signInLoader = async (
   const next = safeNext(url.searchParams.get("next"), basename);
   const identity = await identityFromRequest(request);
   if (identity.id !== "") throw redirect(next);
-  const quickLogin = quickLoginUsers();
+  const quickLogin = await quickLoginUsers();
   const preview = signInPreview(url);
   if (preview) {
     return {
@@ -223,16 +236,19 @@ export const signInAction = async (
     return afterPassword(await login(identifier, password, options), identifier, next, request);
   }
 
-  // A release build's alias answers no account here, so this intent is a 404 there.
   if (intent === "dev-quick-login") {
-    const account = quickLoginAccount(field(body, "username"));
-    if (!account) throw new Response("Not found", { status: 404 });
-    return afterPassword(
-      await login(account.username, account.password, options),
-      account.username,
-      next,
-      request,
-    );
+    const username = field(body, "username");
+    const step = await quickLoginSignIn(username, options);
+    if (step.kind === "missing") {
+      // A release build has no quick login at all, so the intent is a plain 404 there. A dev
+      // build says why the pick went nowhere: the switch is off or the account isn't listed.
+      if (!quickLoginBuild) throw new Response("Not found", { status: 404 });
+      return state({ problem: "quickLoginUnavailable", view: "password" }, 404);
+    }
+    // The mock's own refusal ("This person is disabled."), shown as it says it.
+    if (step.kind === "refused")
+      return state({ message: step.message, problem: "quickLoginRefused", view: "password" }, 409);
+    return afterPassword(step, username, next, request);
   }
 
   if (intent === "sso") {
@@ -381,4 +397,15 @@ export const signOutAction = async (request: Request, signInPath = "/sign-in") =
     setCookie = ["steward_sid=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"];
   }
   return redirect(signInPath, { headers: relay(setCookie) });
+};
+
+/**
+ * Whether the browser holding this request has a session, and whose. A signed-out page (the
+ * sign-in gates) asks every few seconds and when its tab comes back, so a session made in
+ * another tab or through the mock's own sign-in moves it on by itself. Never cached.
+ */
+export const sessionStatusLoader = async (request: Request): Promise<Response> => {
+  const identity = await identityFromRequest(request);
+  const body = identity.id === "" ? { signedIn: false } : { name: identity.name, signedIn: true };
+  return Response.json(body, { headers: { "cache-control": "no-store" } });
 };

@@ -8,6 +8,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
+    "dev:mock": "GATEWAY_URL=http://localhost:5175/query STEWARD_DEV_QUICK_LOGIN=true react-router dev",
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {

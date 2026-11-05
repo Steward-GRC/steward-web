@@ -18,6 +18,7 @@ export default [
   route("home", "routes/resources.gateway-home.tsx"),
   route("login", "routes/resources.gateway-login.tsx"),
   route("resources/status", "routes/resources.status.tsx"),
+  route("resources/session", "routes/resources.session.tsx"),
   route("profile", "routes/profile.tsx"),
   route("search", "routes/search.tsx"),
   route("policies", "routes/policies.tsx"),

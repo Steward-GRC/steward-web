@@ -10,6 +10,7 @@ export { type Identity, identityFromMe, type Me, NO_ACCESS } from "./identity";
 export { IdentityProvider, useCan, useIdentity } from "./IdentityContext";
 export { NAV_CHOICE_ENABLED } from "./navigationChoice";
 export { ProfileName, type ProfileNameProps } from "./ProfileName";
+export { SESSION_CHECK_MS, SESSION_PATH, useSessionWatch } from "./sessionWatch";
 export type { SharedLinkState, SharedPolicy, SsoTestOutcome, SsoTestState } from "./sharedLinks";
 export { SignIn, type SignInProps } from "./SignIn";
 export type {

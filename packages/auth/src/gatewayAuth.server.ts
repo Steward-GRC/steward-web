@@ -25,7 +25,7 @@ import { NO_CAPABILITIES } from "./signInState";
 export type AuthStep =
   | { factors: SecondFactor[]; kind: "challenge"; pendingId: string }
   | { kind: "enrol"; pendingId: string }
-  | { kind: "rejected"; reason: "expired" | "invalid" | "throttled" }
+  | { kind: "rejected"; reason: "disabled" | "expired" | "invalid" | "throttled" }
   | { kind: "session"; setCookie: string[] }
   | { kind: "unavailable"; status: number };
 
@@ -125,8 +125,20 @@ const toStep = ({ body, setCookie, status }: Answer): AuthStep => {
   if (status === 401 && body.error === "invalid_pending")
     return { kind: "rejected", reason: "expired" };
   if (status === 400 || status === 401) return { kind: "rejected", reason: "invalid" };
+  if (status === 403 && body.error === "account_disabled")
+    return { kind: "rejected", reason: "disabled" };
   if (status === 429) return { kind: "rejected", reason: "throttled" };
   return { kind: "unavailable", status };
+};
+
+/** A sign-in step's call, with a gateway that doesn't answer at all (status 0) as a step too,
+ *  so the page can say it couldn't reach Steward rather than fail. */
+const step = async (answer: () => Promise<Answer>): Promise<AuthStep> => {
+  try {
+    return toStep(await answer());
+  } catch {
+    return { kind: "unavailable", status: 0 };
+  }
 };
 
 /** `POST /auth/login`: the password step. */
@@ -134,7 +146,7 @@ export const login = async (
   username: string,
   password: string,
   options: AuthCallOptions = {},
-): Promise<AuthStep> => toStep(await post("/auth/login", { password, username }, options));
+): Promise<AuthStep> => step(() => post("/auth/login", { password, username }, options));
 
 /** `POST /auth/mfa/verify`: finish a parked sign-in with a TOTP or emailed code. */
 export const verifyCode = async (
@@ -142,7 +154,7 @@ export const verifyCode = async (
   kind: "email" | "totp",
   code: string,
   options: AuthCallOptions = {},
-): Promise<AuthStep> => toStep(await post("/auth/mfa/verify", { code, kind, pendingId }, options));
+): Promise<AuthStep> => step(() => post("/auth/mfa/verify", { code, kind, pendingId }, options));
 
 /** `POST /auth/mfa/verify` with `kind: "passkey"`: finish a parked sign-in with a passkey. */
 export const verifyPasskey = async (
@@ -150,7 +162,7 @@ export const verifyPasskey = async (
   credentialJson: string,
   options: AuthCallOptions = {},
 ): Promise<AuthStep> =>
-  toStep(await post("/auth/mfa/verify", { credentialJson, kind: "passkey", pendingId }, options));
+  step(() => post("/auth/mfa/verify", { credentialJson, kind: "passkey", pendingId }, options));
 
 /**
  * `GET /auth/config` (steward-gateway `internal/passwordreset`): the sign-in settings the page
@@ -251,7 +263,7 @@ export const finishPasskeyLogin = async (
   credentialJson: string,
   options: AuthCallOptions = {},
 ): Promise<AuthStep> =>
-  toStep(await post("/auth/passkey/login/finish", { credentialJson, flowId }, options));
+  step(() => post("/auth/passkey/login/finish", { credentialJson, flowId }, options));
 
 /** `POST /auth/mfa/webauthn/begin`: a passkey challenge for a parked sign-in's second factor. */
 export const beginPasskeyFactor = async (
@@ -295,7 +307,7 @@ export const confirmTotpEnrolment = async (
   code: string,
   options: AuthCallOptions = {},
 ): Promise<AuthStep> =>
-  toStep(await post("/auth/mfa/enroll/totp/confirm", { code, pendingId }, options));
+  step(() => post("/auth/mfa/enroll/totp/confirm", { code, pendingId }, options));
 
 /**
  * `POST /auth/logout`: the gateway revokes the Kratos session and clears its cookie. Returns
