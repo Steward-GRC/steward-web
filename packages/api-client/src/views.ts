@@ -4,6 +4,9 @@ import type {
   ImpersonationStatusQuery,
   LatestTemplateVersionQuery,
   MyFactorsQuery,
+  MyWebauthnCredentialsQuery,
+  NotificationSettingsFieldsFragment,
+  NotificationSettingsQuery,
   SearchAndAnswerQuery,
   SearchUsersQuery,
   UserFieldsFragment,
@@ -149,6 +152,8 @@ export interface Me {
   readonly firstName: string;
   readonly id: string;
   readonly lastName: string;
+  /** The account's display language (BCP-47); "" or absent means "match my browser". */
+  readonly locale?: string;
   /** Platform group ids the caller is a LOCAL group-manager of; empty for everyone else. */
   readonly managedGroupIds: readonly string[];
   readonly name: string;
@@ -159,6 +164,12 @@ export interface Me {
   readonly username: string;
 }
 
+/** The caller's notification settings, with the type catalog they choose from (U35). */
+export interface NotificationPreferences {
+  readonly catalog: NotificationSettingsQuery["notificationTypeCatalog"];
+  readonly settings: NotificationSettingsFieldsFragment;
+}
+
 /** A published version the caller still has to acknowledge (To acknowledge, U2). */
 export interface Obligation {
   readonly number: string;
@@ -167,6 +178,9 @@ export interface Obligation {
   readonly title: string;
   readonly version: string;
 }
+
+/** One of the caller's registered passkeys (U33). */
+export type Passkey = MyWebauthnCredentialsQuery["myWebauthnCredentials"][number];
 
 /**
  * One library row, also the editor's policy. `category` is the home category's root

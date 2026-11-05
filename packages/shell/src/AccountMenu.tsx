@@ -8,6 +8,7 @@ import { type ReactNode, useState } from "react";
 import { Link, useHref } from "react-router";
 
 import { AboutDiagnostics } from "./AboutDiagnostics";
+import { ACCOUNT_PATHS } from "./staff/accountPaths";
 import { COMING_SOON } from "./staff/comingSoon";
 
 const itemClass =
@@ -45,11 +46,14 @@ const SignOutItem = () => {
  */
 export const AccountMenu = ({
   avatarClassName,
-  links = COMING_SOON,
+  links = {
+    logOutEverywhere: COMING_SOON.logOutEverywhere,
+    notifications: ACCOUNT_PATHS.notifications,
+  },
   trigger,
 }: {
   avatarClassName?: string;
-  /** Where Notifications and Log out everywhere go until they're built. */
+  /** Where Notifications and Log out everywhere go. */
   links?: { logOutEverywhere: string; notifications: string };
   /** Wraps the 32 px avatar, for the phone header's 44 px touch target. */
   trigger?: (avatar: ReactNode) => ReactNode;

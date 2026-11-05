@@ -8,6 +8,7 @@
  */
 
 interface JsonPasskeyCredential {
+  parseCreationOptionsFromJSON?: (options: unknown) => PublicKeyCredentialCreationOptions;
   parseRequestOptionsFromJSON?: (options: unknown) => PublicKeyCredentialRequestOptions;
 }
 
@@ -35,6 +36,35 @@ export const askForPasskey = async (
   try {
     const options = JSON.parse(optionsJson) as { publicKey?: unknown };
     credential = await navigator.credentials.get({
+      publicKey: parse(options.publicKey ?? options),
+    });
+  } catch (error) {
+    const cancelled = error instanceof DOMException && error.name === "NotAllowedError";
+    return { failure: cancelled ? "cancelled" : "failed" };
+  }
+  if (!credential) return { failure: "cancelled" };
+  const json = (credential as unknown as { toJSON: () => unknown }).toJSON();
+  return { credentialJson: JSON.stringify(json) };
+};
+
+/** Whether this browser can register a new passkey (U33). */
+export const passkeyCreationSupported = (): boolean =>
+  typeof passkeyApi()?.parseCreationOptionsFromJSON === "function";
+
+/**
+ * Show the browser's prompt to create a passkey for the gateway's registration options
+ * (`optionsJson`, with or without its `publicKey` wrapper), and answer with the new credential
+ * as JSON for the gateway, or why there is none.
+ */
+export const createPasskey = async (
+  optionsJson: string,
+): Promise<{ credentialJson: string } | { failure: PasskeyFailure }> => {
+  const parse = passkeyApi()?.parseCreationOptionsFromJSON;
+  if (!parse) return { failure: "failed" };
+  let credential: Credential | null;
+  try {
+    const options = JSON.parse(optionsJson) as { publicKey?: unknown };
+    credential = await navigator.credentials.create({
       publicKey: parse(options.publicKey ?? options),
     });
   } catch (error) {

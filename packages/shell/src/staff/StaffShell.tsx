@@ -25,6 +25,7 @@ import { SearchField } from "../SearchField";
 import { ActingAsBanner, ConnectionLostBanner, SecondFactorNudge } from "../ShellBanners";
 import { ShellFooter } from "../ShellFooter";
 import { SiteBanners } from "../SiteBanners";
+import { ACCOUNT_PATHS } from "./accountPaths";
 import { COMING_SOON } from "./comingSoon";
 import { StaffDrawer } from "./StaffDrawer";
 import { staffNav } from "./staffNav";
@@ -180,7 +181,7 @@ export const StaffShell = ({
                   <Link
                     aria-label={t("header.notifications")}
                     className="hidden size-9 items-center justify-center rounded-md text-ink hover:bg-sunken hover:text-ink lg:flex"
-                    to={COMING_SOON.inbox}
+                    to={ACCOUNT_PATHS.inbox}
                   >
                     <Bell aria-hidden="true" className="size-[18px]" />
                   </Link>
@@ -214,7 +215,7 @@ export const StaffShell = ({
           <SiteBanners settings={banners} />
           {signedIn ? <ConnectionLostBanner /> : null}
           {signedIn && secondFactorNudge ? (
-            <SecondFactorNudge setUpUrl={COMING_SOON.security} />
+            <SecondFactorNudge setUpUrl={ACCOUNT_PATHS.security} />
           ) : null}
           <main className="flex-1">{children}</main>
           <ShellFooter organisation={config.organisation} />

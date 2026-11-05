@@ -1131,6 +1131,18 @@ export type EnableUserMutation = {
   };
 };
 
+export type EnrollTotpBeginMutationVariables = Exact<{ [key: string]: never }>;
+
+export type EnrollTotpBeginMutation = {
+  readonly enrollTotpBegin: { readonly otpauthUri: string; readonly secretMasked: string | null };
+};
+
+export type EnrollTotpConfirmMutationVariables = Exact<{
+  code: string;
+}>;
+
+export type EnrollTotpConfirmMutation = { readonly enrollTotpConfirm: boolean };
+
 export type ExportAcksQueryVariables = Exact<{
   policyVersionId: string | number;
   format: string;
@@ -1359,6 +1371,7 @@ export type MeQuery = {
     readonly permissions: ReadonlyArray<string>;
     readonly managedGroupIds: ReadonlyArray<string>;
     readonly needsOnboarding: boolean;
+    readonly locale: string;
     readonly scopes: { readonly author: ReadonlyArray<string> };
   };
 };
@@ -1468,7 +1481,11 @@ export type MyDraftsQuery = {
 export type MyFactorsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type MyFactorsQuery = {
-  readonly myFactors: ReadonlyArray<{ readonly kind: string; readonly enrolledAt: string | null }>;
+  readonly myFactors: ReadonlyArray<{
+    readonly kind: string;
+    readonly enrolledAt: string | null;
+    readonly label: string | null;
+  }>;
 };
 
 export type MyManagedGroupsQueryVariables = Exact<{ [key: string]: never }>;
@@ -1491,6 +1508,61 @@ export type MyObligationsQuery = {
     readonly version: string;
     readonly policyVersionId: string;
   }>;
+};
+
+export type MyWebauthnCredentialsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type MyWebauthnCredentialsQuery = {
+  readonly myWebauthnCredentials: ReadonlyArray<{
+    readonly id: string;
+    readonly label: string | null;
+    readonly createdAt: string;
+    readonly lastUsedAt: string | null;
+  }>;
+};
+
+export type NotificationSettingsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type NotificationSettingsQuery = {
+  readonly notificationSettings: {
+    readonly channels: { readonly email: boolean; readonly inApp: boolean; readonly push: boolean };
+    readonly categories: ReadonlyArray<{
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+    }>;
+    readonly overrides: ReadonlyArray<{
+      readonly kind: string;
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+      readonly delivery: Types.NotifDelivery;
+    }>;
+    readonly digest: { readonly dailyHour: number; readonly weeklyDow: number };
+  };
+  readonly notificationTypeCatalog: ReadonlyArray<{
+    readonly kind: string;
+    readonly category: Types.NotifCategory;
+    readonly mandatory: boolean;
+    readonly delivery: Types.NotifDelivery;
+  }>;
+};
+
+export type NotificationSettingsFieldsFragment = {
+  readonly channels: { readonly email: boolean; readonly inApp: boolean; readonly push: boolean };
+  readonly categories: ReadonlyArray<{
+    readonly category: Types.NotifCategory;
+    readonly cadence: Types.NotifCadence;
+    readonly mandatory: boolean;
+  }>;
+  readonly overrides: ReadonlyArray<{
+    readonly kind: string;
+    readonly category: Types.NotifCategory;
+    readonly cadence: Types.NotifCadence;
+    readonly mandatory: boolean;
+    readonly delivery: Types.NotifDelivery;
+  }>;
+  readonly digest: { readonly dailyHour: number; readonly weeklyDow: number };
 };
 
 export type OrganizationFieldsFragment = {
@@ -1965,6 +2037,12 @@ export type ReferencesQuery = {
   }>;
 };
 
+export type RemoveFactorMutationVariables = Exact<{
+  kind: string;
+}>;
+
+export type RemoveFactorMutation = { readonly removeFactor: boolean };
+
 export type RemoveUserFromGroupMutationVariables = Exact<{
   userId: string | number;
   groupId: string | number;
@@ -2001,6 +2079,12 @@ export type RemoveUserMfaFactorMutationVariables = Exact<{
 
 export type RemoveUserMfaFactorMutation = { readonly removeUserMfaFactor: boolean };
 
+export type RemoveWebauthnCredentialMutationVariables = Exact<{
+  credentialId: string | number;
+}>;
+
+export type RemoveWebauthnCredentialMutation = { readonly removeWebauthnCredential: boolean };
+
 export type RenameCategoryMutationVariables = Exact<{
   id: string | number;
   name: string;
@@ -2026,6 +2110,13 @@ export type RenameCategoryMutation = {
     readonly reviewDate: string | null;
   };
 };
+
+export type RenameMfaMethodMutationVariables = Exact<{
+  methodId: string | number;
+  label: string;
+}>;
+
+export type RenameMfaMethodMutation = { readonly renameMfaMethod: boolean };
 
 export type RenameTemplateMutationVariables = Exact<{
   id: string | number;
@@ -2287,6 +2378,10 @@ export type RevokeMagicLinkMutationVariables = Exact<{
 }>;
 
 export type RevokeMagicLinkMutation = { readonly revokeMagicLink: boolean };
+
+export type RevokeMySessionsMutationVariables = Exact<{ [key: string]: never }>;
+
+export type RevokeMySessionsMutation = { readonly revokeMySessions: number };
 
 export type RevokeRoleMutationVariables = Exact<{
   userId: string | number;
@@ -2563,6 +2658,30 @@ export type SetCaseStatusMutation = {
   };
 };
 
+export type SetCategoryCadenceMutationVariables = Exact<{
+  category: Types.NotifCategory;
+  cadence: Types.NotifCadence;
+}>;
+
+export type SetCategoryCadenceMutation = {
+  readonly setCategoryCadence: {
+    readonly channels: { readonly email: boolean; readonly inApp: boolean; readonly push: boolean };
+    readonly categories: ReadonlyArray<{
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+    }>;
+    readonly overrides: ReadonlyArray<{
+      readonly kind: string;
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+      readonly delivery: Types.NotifDelivery;
+    }>;
+    readonly digest: { readonly dailyHour: number; readonly weeklyDow: number };
+  };
+};
+
 export type SetCategoryDefaultsMutationVariables = Exact<{
   id: string | number;
   defaultTemplateId?: string | number | null | undefined;
@@ -2678,6 +2797,30 @@ export type SetDefinitionArchivedMutation = {
   };
 };
 
+export type SetDigestWindowMutationVariables = Exact<{
+  dailyHour: number;
+  weeklyDow: number;
+}>;
+
+export type SetDigestWindowMutation = {
+  readonly setDigestWindow: {
+    readonly channels: { readonly email: boolean; readonly inApp: boolean; readonly push: boolean };
+    readonly categories: ReadonlyArray<{
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+    }>;
+    readonly overrides: ReadonlyArray<{
+      readonly kind: string;
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+      readonly delivery: Types.NotifDelivery;
+    }>;
+    readonly digest: { readonly dailyHour: number; readonly weeklyDow: number };
+  };
+};
+
 export type SetEmailServiceConfigMutationVariables = Exact<{
   input: Types.EmailServiceConfigInput;
 }>;
@@ -2708,6 +2851,29 @@ export type SetGlobalSettingsMutation = {
   };
 };
 
+export type SetNotificationChannelsMutationVariables = Exact<{
+  input: Types.NotificationPrefInput;
+}>;
+
+export type SetNotificationChannelsMutation = {
+  readonly setNotificationChannels: {
+    readonly channels: { readonly email: boolean; readonly inApp: boolean; readonly push: boolean };
+    readonly categories: ReadonlyArray<{
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+    }>;
+    readonly overrides: ReadonlyArray<{
+      readonly kind: string;
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+      readonly delivery: Types.NotifDelivery;
+    }>;
+    readonly digest: { readonly dailyHour: number; readonly weeklyDow: number };
+  };
+};
+
 export type SetPolicyOwnerMutationVariables = Exact<{
   policyId: string | number;
   ownerUserId: string | number;
@@ -2731,6 +2897,30 @@ export type SetReferenceArchivedMutation = {
     readonly archived: boolean;
     readonly createdByUserId: string | null;
     readonly usedByCount: number;
+  };
+};
+
+export type SetTypeCadenceMutationVariables = Exact<{
+  kind: string;
+  cadence: Types.NotifCadence;
+}>;
+
+export type SetTypeCadenceMutation = {
+  readonly setTypeCadence: {
+    readonly channels: { readonly email: boolean; readonly inApp: boolean; readonly push: boolean };
+    readonly categories: ReadonlyArray<{
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+    }>;
+    readonly overrides: ReadonlyArray<{
+      readonly kind: string;
+      readonly category: Types.NotifCategory;
+      readonly cadence: Types.NotifCadence;
+      readonly mandatory: boolean;
+      readonly delivery: Types.NotifDelivery;
+    }>;
+    readonly digest: { readonly dailyHour: number; readonly weeklyDow: number };
   };
 };
 
@@ -3048,8 +3238,9 @@ export type UpdateIdPConnectionMutation = {
 };
 
 export type UpdateMyProfileMutationVariables = Exact<{
-  firstName: string;
-  lastName: string;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  locale?: string | null | undefined;
 }>;
 
 export type UpdateMyProfileMutation = {
@@ -3060,6 +3251,7 @@ export type UpdateMyProfileMutation = {
     readonly firstName: string;
     readonly lastName: string;
     readonly email: string;
+    readonly locale: string;
     readonly roles: ReadonlyArray<string>;
     readonly permissions: ReadonlyArray<string>;
     readonly managedGroupIds: ReadonlyArray<string>;
@@ -3274,6 +3466,20 @@ export type VerifyDomainMutation = {
     readonly secretReentryRequired: boolean;
   };
 };
+
+export type WebauthnRegisterBeginMutationVariables = Exact<{ [key: string]: never }>;
+
+export type WebauthnRegisterBeginMutation = {
+  readonly webauthnRegisterBegin: { readonly optionsJson: string; readonly sessionId: string };
+};
+
+export type WebauthnRegisterFinishMutationVariables = Exact<{
+  sessionId: string | number;
+  credentialJson: string;
+  label?: string | null | undefined;
+}>;
+
+export type WebauthnRegisterFinishMutation = { readonly webauthnRegisterFinish: boolean };
 
 export type WorkflowDefQueryVariables = Exact<{
   id: string | number;
@@ -3521,6 +3727,70 @@ export const CategoryFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<CategoryFieldsFragment, unknown>;
+export const NotificationSettingsFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "NotificationSettingsFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "NotificationSettings" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "channels" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "inApp" } },
+                { kind: "Field", name: { kind: "Name", value: "push" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categories" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "overrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+                { kind: "Field", name: { kind: "Name", value: "delivery" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "digest" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "dailyHour" } },
+                { kind: "Field", name: { kind: "Name", value: "weeklyDow" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<NotificationSettingsFieldsFragment, unknown>;
 export const OrganizationFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -7730,6 +8000,68 @@ export const EnableUserDocument = {
     },
   ],
 } as unknown as DocumentNode<EnableUserMutation, EnableUserMutationVariables>;
+export const EnrollTotpBeginDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "EnrollTotpBegin" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "enrollTotpBegin" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "otpauthUri" } },
+                { kind: "Field", name: { kind: "Name", value: "secretMasked" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EnrollTotpBeginMutation, EnrollTotpBeginMutationVariables>;
+export const EnrollTotpConfirmDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "EnrollTotpConfirm" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "code" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "enrollTotpConfirm" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "code" },
+                value: { kind: "Variable", name: { kind: "Name", value: "code" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EnrollTotpConfirmMutation, EnrollTotpConfirmMutationVariables>;
 export const ExportAcksDocument = {
   kind: "Document",
   definitions: [
@@ -8507,6 +8839,7 @@ export const MeDocument = {
                 { kind: "Field", name: { kind: "Name", value: "permissions" } },
                 { kind: "Field", name: { kind: "Name", value: "managedGroupIds" } },
                 { kind: "Field", name: { kind: "Name", value: "needsOnboarding" } },
+                { kind: "Field", name: { kind: "Name", value: "locale" } },
                 {
                   kind: "Field",
                   name: { kind: "Name", value: "scopes" },
@@ -8873,6 +9206,7 @@ export const MyFactorsDocument = {
               selections: [
                 { kind: "Field", name: { kind: "Name", value: "kind" } },
                 { kind: "Field", name: { kind: "Name", value: "enrolledAt" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
               ],
             },
           },
@@ -8937,6 +9271,134 @@ export const MyObligationsDocument = {
     },
   ],
 } as unknown as DocumentNode<MyObligationsQuery, MyObligationsQueryVariables>;
+export const MyWebauthnCredentialsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "MyWebauthnCredentials" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "myWebauthnCredentials" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+                { kind: "Field", name: { kind: "Name", value: "lastUsedAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MyWebauthnCredentialsQuery, MyWebauthnCredentialsQueryVariables>;
+export const NotificationSettingsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "NotificationSettings" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notificationSettings" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "FragmentSpread",
+                  name: { kind: "Name", value: "NotificationSettingsFields" },
+                },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "notificationTypeCatalog" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+                { kind: "Field", name: { kind: "Name", value: "delivery" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "NotificationSettingsFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "NotificationSettings" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "channels" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "inApp" } },
+                { kind: "Field", name: { kind: "Name", value: "push" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categories" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "overrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+                { kind: "Field", name: { kind: "Name", value: "delivery" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "digest" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "dailyHour" } },
+                { kind: "Field", name: { kind: "Name", value: "weeklyDow" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<NotificationSettingsQuery, NotificationSettingsQueryVariables>;
 export const OrganizationsDocument = {
   kind: "Document",
   definitions: [
@@ -10309,6 +10771,42 @@ export const ReferencesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReferencesQuery, ReferencesQueryVariables>;
+export const RemoveFactorDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RemoveFactor" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "kind" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "removeFactor" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "kind" },
+                value: { kind: "Variable", name: { kind: "Name", value: "kind" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RemoveFactorMutation, RemoveFactorMutationVariables>;
 export const RemoveUserFromGroupDocument = {
   kind: "Document",
   definitions: [
@@ -10457,6 +10955,45 @@ export const RemoveUserMfaFactorDocument = {
     },
   ],
 } as unknown as DocumentNode<RemoveUserMfaFactorMutation, RemoveUserMfaFactorMutationVariables>;
+export const RemoveWebauthnCredentialDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RemoveWebauthnCredential" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "credentialId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "removeWebauthnCredential" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "credentialId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "credentialId" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  RemoveWebauthnCredentialMutation,
+  RemoveWebauthnCredentialMutationVariables
+>;
 export const RenameCategoryDocument = {
   kind: "Document",
   definitions: [
@@ -10550,6 +11087,55 @@ export const RenameCategoryDocument = {
     },
   ],
 } as unknown as DocumentNode<RenameCategoryMutation, RenameCategoryMutationVariables>;
+export const RenameMfaMethodDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RenameMfaMethod" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "methodId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "label" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "renameMfaMethod" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "methodId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "methodId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "label" },
+                value: { kind: "Variable", name: { kind: "Name", value: "label" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RenameMfaMethodMutation, RenameMfaMethodMutationVariables>;
 export const RenameTemplateDocument = {
   kind: "Document",
   definitions: [
@@ -11335,6 +11921,20 @@ export const RevokeMagicLinkDocument = {
     },
   ],
 } as unknown as DocumentNode<RevokeMagicLinkMutation, RevokeMagicLinkMutationVariables>;
+export const RevokeMySessionsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RevokeMySessions" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [{ kind: "Field", name: { kind: "Name", value: "revokeMySessions" } }],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RevokeMySessionsMutation, RevokeMySessionsMutationVariables>;
 export const RevokeRoleDocument = {
   kind: "Document",
   definitions: [
@@ -12226,6 +12826,123 @@ export const SetCaseStatusDocument = {
     },
   ],
 } as unknown as DocumentNode<SetCaseStatusMutation, SetCaseStatusMutationVariables>;
+export const SetCategoryCadenceDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetCategoryCadence" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "category" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "NotifCategory" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "cadence" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "NotifCadence" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setCategoryCadence" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "category" },
+                value: { kind: "Variable", name: { kind: "Name", value: "category" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "cadence" },
+                value: { kind: "Variable", name: { kind: "Name", value: "cadence" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "FragmentSpread",
+                  name: { kind: "Name", value: "NotificationSettingsFields" },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "NotificationSettingsFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "NotificationSettings" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "channels" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "inApp" } },
+                { kind: "Field", name: { kind: "Name", value: "push" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categories" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "overrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+                { kind: "Field", name: { kind: "Name", value: "delivery" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "digest" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "dailyHour" } },
+                { kind: "Field", name: { kind: "Name", value: "weeklyDow" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetCategoryCadenceMutation, SetCategoryCadenceMutationVariables>;
 export const SetCategoryDefaultsDocument = {
   kind: "Document",
   definitions: [
@@ -12703,6 +13420,123 @@ export const SetDefinitionArchivedDocument = {
     },
   ],
 } as unknown as DocumentNode<SetDefinitionArchivedMutation, SetDefinitionArchivedMutationVariables>;
+export const SetDigestWindowDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetDigestWindow" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "dailyHour" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "weeklyDow" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setDigestWindow" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "dailyHour" },
+                value: { kind: "Variable", name: { kind: "Name", value: "dailyHour" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "weeklyDow" },
+                value: { kind: "Variable", name: { kind: "Name", value: "weeklyDow" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "FragmentSpread",
+                  name: { kind: "Name", value: "NotificationSettingsFields" },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "NotificationSettingsFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "NotificationSettings" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "channels" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "inApp" } },
+                { kind: "Field", name: { kind: "Name", value: "push" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categories" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "overrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+                { kind: "Field", name: { kind: "Name", value: "delivery" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "digest" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "dailyHour" } },
+                { kind: "Field", name: { kind: "Name", value: "weeklyDow" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetDigestWindowMutation, SetDigestWindowMutationVariables>;
 export const SetEmailServiceConfigDocument = {
   kind: "Document",
   definitions: [
@@ -12814,6 +13648,113 @@ export const SetGlobalSettingsDocument = {
     },
   ],
 } as unknown as DocumentNode<SetGlobalSettingsMutation, SetGlobalSettingsMutationVariables>;
+export const SetNotificationChannelsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetNotificationChannels" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "input" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "NotificationPrefInput" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setNotificationChannels" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "input" },
+                value: { kind: "Variable", name: { kind: "Name", value: "input" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "FragmentSpread",
+                  name: { kind: "Name", value: "NotificationSettingsFields" },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "NotificationSettingsFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "NotificationSettings" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "channels" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "inApp" } },
+                { kind: "Field", name: { kind: "Name", value: "push" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categories" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "overrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+                { kind: "Field", name: { kind: "Name", value: "delivery" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "digest" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "dailyHour" } },
+                { kind: "Field", name: { kind: "Name", value: "weeklyDow" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SetNotificationChannelsMutation,
+  SetNotificationChannelsMutationVariables
+>;
 export const SetPolicyOwnerDocument = {
   kind: "Document",
   definitions: [
@@ -12930,6 +13871,123 @@ export const SetReferenceArchivedDocument = {
     },
   ],
 } as unknown as DocumentNode<SetReferenceArchivedMutation, SetReferenceArchivedMutationVariables>;
+export const SetTypeCadenceDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetTypeCadence" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "kind" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "cadence" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "NotifCadence" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setTypeCadence" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "kind" },
+                value: { kind: "Variable", name: { kind: "Name", value: "kind" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "cadence" },
+                value: { kind: "Variable", name: { kind: "Name", value: "cadence" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "FragmentSpread",
+                  name: { kind: "Name", value: "NotificationSettingsFields" },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "NotificationSettingsFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "NotificationSettings" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "channels" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "inApp" } },
+                { kind: "Field", name: { kind: "Name", value: "push" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categories" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "overrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "category" } },
+                { kind: "Field", name: { kind: "Name", value: "cadence" } },
+                { kind: "Field", name: { kind: "Name", value: "mandatory" } },
+                { kind: "Field", name: { kind: "Name", value: "delivery" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "digest" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "dailyHour" } },
+                { kind: "Field", name: { kind: "Name", value: "weeklyDow" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetTypeCadenceMutation, SetTypeCadenceMutationVariables>;
 export const SetUserPolicyOverrideDocument = {
   kind: "Document",
   definitions: [
@@ -14177,18 +15235,17 @@ export const UpdateMyProfileDocument = {
         {
           kind: "VariableDefinition",
           variable: { kind: "Variable", name: { kind: "Name", value: "firstName" } },
-          type: {
-            kind: "NonNullType",
-            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
-          },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
         },
         {
           kind: "VariableDefinition",
           variable: { kind: "Variable", name: { kind: "Name", value: "lastName" } },
-          type: {
-            kind: "NonNullType",
-            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
-          },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "locale" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
         },
       ],
       selectionSet: {
@@ -14208,6 +15265,11 @@ export const UpdateMyProfileDocument = {
                 name: { kind: "Name", value: "lastName" },
                 value: { kind: "Variable", name: { kind: "Name", value: "lastName" } },
               },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "locale" },
+                value: { kind: "Variable", name: { kind: "Name", value: "locale" } },
+              },
             ],
             selectionSet: {
               kind: "SelectionSet",
@@ -14218,6 +15280,7 @@ export const UpdateMyProfileDocument = {
                 { kind: "Field", name: { kind: "Name", value: "firstName" } },
                 { kind: "Field", name: { kind: "Name", value: "lastName" } },
                 { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "locale" } },
                 { kind: "Field", name: { kind: "Name", value: "roles" } },
                 { kind: "Field", name: { kind: "Name", value: "permissions" } },
                 { kind: "Field", name: { kind: "Name", value: "managedGroupIds" } },
@@ -14931,6 +15994,94 @@ export const VerifyDomainDocument = {
     },
   ],
 } as unknown as DocumentNode<VerifyDomainMutation, VerifyDomainMutationVariables>;
+export const WebauthnRegisterBeginDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "WebauthnRegisterBegin" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "webauthnRegisterBegin" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "optionsJson" } },
+                { kind: "Field", name: { kind: "Name", value: "sessionId" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<WebauthnRegisterBeginMutation, WebauthnRegisterBeginMutationVariables>;
+export const WebauthnRegisterFinishDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "WebauthnRegisterFinish" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "sessionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "credentialJson" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "label" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "webauthnRegisterFinish" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "sessionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "sessionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "credentialJson" },
+                value: { kind: "Variable", name: { kind: "Name", value: "credentialJson" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "label" },
+                value: { kind: "Variable", name: { kind: "Name", value: "label" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  WebauthnRegisterFinishMutation,
+  WebauthnRegisterFinishMutationVariables
+>;
 export const WorkflowDefDocument = {
   kind: "Document",
   definitions: [

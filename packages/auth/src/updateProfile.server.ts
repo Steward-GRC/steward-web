@@ -5,8 +5,10 @@ import edge from "@steward-web/edge.server";
 import { type Identity, identityFromMe } from "./identity";
 
 export interface UpdateMyProfileInput {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  /** BCP-47; "" clears it back to "match my browser". Omitted leaves it as it is. */
+  locale?: string;
 }
 
 /**

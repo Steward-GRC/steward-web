@@ -63,6 +63,8 @@ import {
   DiscardTemplateVersionDocument,
   EmailServiceConfigDocument,
   EnableUserDocument,
+  EnrollTotpBeginDocument,
+  EnrollTotpConfirmDocument,
   ExportAcksDocument,
   ForceRotateSpCertificateDocument,
   GlobalSettingsDocument,
@@ -83,6 +85,8 @@ import {
   MyFactorsDocument,
   MyManagedGroupsDocument,
   MyObligationsDocument,
+  MyWebauthnCredentialsDocument,
+  NotificationSettingsDocument,
   OrganizationsDocument,
   PdfDownloadLinkDocument,
   PendingTasksDocument,
@@ -103,9 +107,12 @@ import {
   RecordAckDocument,
   RecordRiskAssessmentDocument,
   ReferencesDocument,
+  RemoveFactorDocument,
   RemoveUserFromGroupDocument,
   RemoveUserMfaFactorDocument,
+  RemoveWebauthnCredentialDocument,
   RenameCategoryDocument,
+  RenameMfaMethodDocument,
   RenameTemplateDocument,
   RenameUserMfaFactorDocument,
   ReorderAppendicesDocument,
@@ -119,6 +126,7 @@ import {
   RetirePolicyDocument,
   RetireTemplateDocument,
   RevokeMagicLinkDocument,
+  RevokeMySessionsDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
   SaveDraftDocument,
@@ -129,15 +137,19 @@ import {
   SetAiRetrievalConfigDocument,
   SetCaseDiscoveryDateDocument,
   SetCaseStatusDocument,
+  SetCategoryCadenceDocument,
   SetCategoryDefaultsDocument,
   SetCategoryGovernanceDocument,
   SetCategoryRulesetDocument,
   SetContactBlockArchivedDocument,
   SetDefinitionArchivedDocument,
+  SetDigestWindowDocument,
   SetEmailServiceConfigDocument,
   SetGlobalSettingsDocument,
+  SetNotificationChannelsDocument,
   SetPolicyOwnerDocument,
   SetReferenceArchivedDocument,
+  SetTypeCadenceDocument,
   SetUserPolicyOverrideDocument,
   SignalWorkflowDocument,
   SimulateCategoryDocument,
@@ -167,6 +179,8 @@ import {
   UsersDocument,
   VerifyAuditChainDocument,
   VerifyDomainDocument,
+  WebauthnRegisterBeginDocument,
+  WebauthnRegisterFinishDocument,
   WorkflowDefDocument,
   WorkflowDefsDocument,
   WorkflowStatusDocument,
@@ -258,6 +272,7 @@ const toMe = (user: {
   email: string;
   firstName: string;
   lastName: string;
+  locale?: null | string;
   managedGroupIds: readonly string[];
   name: string;
   needsOnboarding?: boolean;
@@ -270,6 +285,7 @@ const toMe = (user: {
   firstName: user.firstName,
   id: user.userId,
   lastName: user.lastName,
+  ...(user.locale === undefined || user.locale === null ? {} : { locale: user.locale }),
   managedGroupIds: user.managedGroupIds,
   name: user.name,
   needsOnboarding: user.needsOnboarding ?? false,
@@ -990,6 +1006,102 @@ export const liveEdge: Edge = {
       title,
       version,
     }));
+  },
+  async beginMyPasskeyRegistration(cookie) {
+    const data = await gatewayFetch(WebauthnRegisterBeginDocument, {}, "WebauthnRegisterBegin", {
+      cookie,
+    });
+    return data.webauthnRegisterBegin;
+  },
+  async beginMyTotpEnrolment(cookie) {
+    const data = await gatewayFetch(EnrollTotpBeginDocument, {}, "EnrollTotpBegin", { cookie });
+    return data.enrollTotpBegin;
+  },
+  async confirmMyTotpEnrolment(code, cookie) {
+    const data = await gatewayFetch(EnrollTotpConfirmDocument, { code }, "EnrollTotpConfirm", {
+      cookie,
+    });
+    return data.enrollTotpConfirm;
+  },
+  async finishMyPasskeyRegistration(sessionId, credentialJson, label, cookie) {
+    const data = await gatewayFetch(
+      WebauthnRegisterFinishDocument,
+      { credentialJson, label: label ?? null, sessionId },
+      "WebauthnRegisterFinish",
+      { cookie },
+    );
+    return data.webauthnRegisterFinish;
+  },
+  async myPasskeys(cookie) {
+    const data = await gatewayFetch(MyWebauthnCredentialsDocument, {}, "MyWebauthnCredentials", {
+      cookie,
+    });
+    return data.myWebauthnCredentials;
+  },
+  async notificationPreferences(cookie) {
+    const data = await gatewayFetch(NotificationSettingsDocument, {}, "NotificationSettings", {
+      cookie,
+    });
+    return { catalog: data.notificationTypeCatalog, settings: data.notificationSettings };
+  },
+  async removeMyFactor(kind, cookie) {
+    const data = await gatewayFetch(RemoveFactorDocument, { kind }, "RemoveFactor", { cookie });
+    return data.removeFactor;
+  },
+  async removeMyPasskey(credentialId, cookie) {
+    const data = await gatewayFetch(
+      RemoveWebauthnCredentialDocument,
+      { credentialId },
+      "RemoveWebauthnCredential",
+      { cookie },
+    );
+    return data.removeWebauthnCredential;
+  },
+  async renameMyMethod(methodId, label, cookie) {
+    const data = await gatewayFetch(
+      RenameMfaMethodDocument,
+      { label, methodId },
+      "RenameMfaMethod",
+      { cookie },
+    );
+    return data.renameMfaMethod;
+  },
+  async revokeMySessions(cookie) {
+    const data = await gatewayFetch(RevokeMySessionsDocument, {}, "RevokeMySessions", { cookie });
+    return data.revokeMySessions;
+  },
+  async setCategoryCadence(category, cadence, cookie) {
+    const data = await gatewayFetch(
+      SetCategoryCadenceDocument,
+      { cadence, category },
+      "SetCategoryCadence",
+      { cookie },
+    );
+    return data.setCategoryCadence;
+  },
+  async setDigestWindow(dailyHour, weeklyDow, cookie) {
+    const data = await gatewayFetch(
+      SetDigestWindowDocument,
+      { dailyHour, weeklyDow },
+      "SetDigestWindow",
+      { cookie },
+    );
+    return data.setDigestWindow;
+  },
+  async setNotificationChannels(input, cookie) {
+    const data = await gatewayFetch(
+      SetNotificationChannelsDocument,
+      { input },
+      "SetNotificationChannels",
+      { cookie },
+    );
+    return data.setNotificationChannels;
+  },
+  async setTypeCadence(kind, cadence, cookie) {
+    const data = await gatewayFetch(SetTypeCadenceDocument, { cadence, kind }, "SetTypeCadence", {
+      cookie,
+    });
+    return data.setTypeCadence;
   },
   async myFactors(cookie) {
     const data = await gatewayFetch(MyFactorsDocument, {}, "MyFactors", { cookie });

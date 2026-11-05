@@ -43,6 +43,9 @@ import type {
   MfaFactor,
   NoticeRecipient,
   NoticeStatus,
+  NotifCadence,
+  NotifCategory,
+  NotificationPrefInput,
   Organization,
   OverrideEffect,
   PendingTask,
@@ -62,8 +65,10 @@ import type {
   SignalType,
   SpCertificate,
   ThreadMessage,
+  TotpEnrollment,
   UpcomingApproval,
   UserDeletionPreview,
+  WebauthnRegistration,
   WorkflowStatus,
 } from "./generated/schema";
 import type {
@@ -75,7 +80,9 @@ import type {
   Group,
   ImpersonationStatus,
   Me,
+  NotificationPreferences,
   Obligation,
+  Passkey,
   Policy,
   PolicyDetail,
   PolicySectionDiff,
@@ -178,6 +185,8 @@ export {
   MessageAuthor,
   NoticeRecipient,
   NoticeStatus,
+  NotifCadence,
+  NotifCategory,
   OverrideEffect,
   RaciGrant,
   RaciSubjectKind,
@@ -192,7 +201,7 @@ export {
   Sensitivity,
   SignalType,
 } from "./generated/schema";
-export type { UserLabel } from "./views";
+export type { NotificationPreferences, Passkey, UserLabel } from "./views";
 export type {
   AckStatus,
   AckSummary,
@@ -359,6 +368,10 @@ export interface Edge {
   authorableTemplates(ownerGroupId: null | string, cookie?: string): Promise<readonly Template[]>;
   /** One inline authoring suggestion for a section currently being edited. Never auto-applied. */
   authoringAssist(input: AuthoringAssistInput, cookie?: string): Promise<AuthoringAssistResult>;
+  /** Starts registering a passkey for the caller (WebAuthn creation options). */
+  beginMyPasskeyRegistration(cookie?: string): Promise<WebauthnRegistration>;
+  /** Starts the caller's own authenticator-app enrolment: the QR's otpauth URI (U33). */
+  beginMyTotpEnrolment(cookie?: string): Promise<TotpEnrollment>;
   /** A site admin's time-boxed, audited reveal of a sensitive policy's real content. Rejects with `GatewayError` when signed out or refused. */
   breakGlassReveal(policyId: string, reason: string, cookie?: string): Promise<BreakGlassGrant>;
   /** The library's category tree. Rejects with `GatewayError` when signed out. */
@@ -396,6 +409,8 @@ export interface Edge {
     groupId?: null | string,
     cookie?: string,
   ): Promise<CompletionReport>;
+  /** Activates the caller's pending authenticator app with a current code. */
+  confirmMyTotpEnrolment(code: string, cookie?: string): Promise<boolean>;
   /** The reusable contact-block library (admin), active only unless includeArchived. */
   contactBlocks(includeArchived?: boolean, cookie?: string): Promise<readonly ContactBlock[]>;
   /** Adds a reusable contact block to the library. */
@@ -473,6 +488,7 @@ export interface Edge {
   disableUser(userId: string, cookie?: string): Promise<User>;
   /** Discards a policy's working draft, leaving any published version untouched. */
   discardDraft(policyId: string, cookie?: string): Promise<boolean>;
+
   /** Discards (deletes) a draft template version. Published versions can't be discarded. Site-admin only. */
   discardTemplateVersion(id: string, cookie?: string): Promise<boolean>;
   /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
@@ -480,7 +496,6 @@ export interface Edge {
   /** The platform email transport's non-secret configuration and whether a sending key is
    *  stored; never the key itself. Site-admin only. */
   emailServiceConfig(cookie?: string): Promise<EmailServiceConfigStatus>;
-
   enableUser(userId: string, cookie?: string): Promise<User>;
   /** The acknowledgement roster for a policy version, as a downloadable export (CSV today;
    *  `format` is forwarded to the gateway as-is). */
@@ -493,6 +508,13 @@ export interface Edge {
   ): Promise<{ content: string; title: string }>;
   /** Fetches an IdP signing certificate by URL (SSRF-guarded) and returns it as PEM. Site-admin only. */
   fetchIdpCert(url: string, cookie?: string): Promise<string>;
+  /** Finishes registering a passkey, with the browser's credential and a name for it. */
+  finishMyPasskeyRegistration(
+    sessionId: string,
+    credentialJson: string,
+    label: string | undefined,
+    cookie?: string,
+  ): Promise<boolean>;
   /** Mints a new SP signing certificate and activates it, superseding the previous one. Site-admin only. */
   forceRotateSpCertificate(cookie?: string): Promise<SpCertificate>;
   /** The cross-app announcement and maintenance banners. Readable by any signed-in user. */
@@ -573,6 +595,10 @@ export interface Edge {
   myManagedGroups(cookie?: string): Promise<readonly PlatformGroup[]>;
   /** The published versions the caller still has to acknowledge (To acknowledge, U2). */
   myObligations(cookie?: string): Promise<readonly Obligation[]>;
+  /** The caller's registered passkeys (U33). */
+  myPasskeys(cookie?: string): Promise<readonly Passkey[]>;
+  /** The caller's notification settings and the type catalog they're chosen from (U35). */
+  notificationPreferences(cookie?: string): Promise<NotificationPreferences>;
   /** Every configured organisation SSO connection. Site-admin only. */
   organizations(cookie?: string): Promise<readonly Organization[]>;
   /** Parses a SAML IdP metadata XML document — e.g. a file downloaded from the IdP — into
@@ -634,6 +660,10 @@ export interface Edge {
   ): Promise<RiskAssessment>;
   /** The reusable references/standards library (admin), active only unless includeArchived. */
   references(includeArchived?: boolean, cookie?: string): Promise<readonly Reference[]>;
+  /** Removes the caller's authenticator app ("totp"); the email code can't be removed. */
+  removeMyFactor(kind: string, cookie?: string): Promise<boolean>;
+  /** Removes one of the caller's passkeys. */
+  removeMyPasskey(credentialId: string, cookie?: string): Promise<boolean>;
   /** Removes a MANUAL membership from a platform group. Authorized for site-admins and for a
    *  LOCAL group-manager of groupId; refuses an IdP-synced membership (it is read-only here). */
   removeUserFromGroup(userId: string, groupId: string, cookie?: string): Promise<User>;
@@ -641,6 +671,8 @@ export interface Edge {
   removeUserMfaFactor(userId: string, methodId: string, cookie?: string): Promise<boolean>;
   /** Renames a group (name and slug). Site-admin only. */
   renameGroup(id: string, name: string, slug: string, cookie?: string): Promise<Group>;
+  /** Renames the caller's authenticator app ("totp") or one of their passkeys. */
+  renameMyMethod(methodId: string, label: string, cookie?: string): Promise<boolean>;
   /** Renames a template. Template-level, non-versioned: does not create a new template version. Site-admin only. */
   renameTemplate(id: string, name: string, cookie?: string): Promise<Template>;
   /** Relabels one of a user's second factors; an empty label goes back to the default. */
@@ -681,6 +713,8 @@ export interface Edge {
   retireTemplate(id: string, cookie?: string): Promise<Template>;
   /** Revokes a magic link: anyone holding its URL can no longer reach the policy (D31). */
   revokeMagicLink(token: string, cookie?: string): Promise<boolean>;
+  /** Signs the caller out of every other session; answers how many ended. */
+  revokeMySessions(cookie?: string): Promise<number>;
   /** Revokes a GLOBAL role (no category). Site-admin only. */
   revokeRole(userId: string, role: string, cookie?: string): Promise<User>;
   /** Revokes every active session for a user. Returns how many were revoked. */
@@ -711,6 +745,12 @@ export interface Edge {
   setCaseDiscoveryDate(caseId: string, discoveredOn: string, cookie?: string): Promise<ReportCase>;
   /** Any status but CLOSED; closing goes through `closeCase`. Officers only. */
   setCaseStatus(caseId: string, status: CaseStatus, cookie?: string): Promise<ReportCase>;
+  /** Sets how often one notification category reaches the caller. */
+  setCategoryCadence(
+    category: NotifCategory,
+    cadence: NotifCadence,
+    cookie?: string,
+  ): Promise<NotificationPreferences["settings"]>;
   /** Replaces a category's own ordered access rules (A5). Group managers only. */
   setCategoryRuleset(
     categoryId: string,
@@ -721,6 +761,12 @@ export interface Edge {
   setContactBlockArchived(id: string, archived: boolean, cookie?: string): Promise<ContactBlock>;
   /** Archive (true) or restore (false) a definitions-library entry. */
   setDefinitionArchived(id: string, archived: boolean, cookie?: string): Promise<DefinitionEntry>;
+  /** When the caller's daily and weekly digests go out. */
+  setDigestWindow(
+    dailyHour: number,
+    weeklyDow: number,
+    cookie?: string,
+  ): Promise<NotificationPreferences["settings"]>;
   /** Stores the platform email transport's sending key (write-only) and its non-secret
    *  configuration. Site-admin only. */
   setEmailServiceConfig(
@@ -729,10 +775,21 @@ export interface Edge {
   ): Promise<EmailServiceConfigStatus>;
   /** Sets the cross-app announcement and maintenance banners. Site-admin only. */
   setGlobalSettings(input: GlobalSettingsInput, cookie?: string): Promise<GlobalSettings>;
+  /** Turns the caller's email, in-app and push channels on or off. */
+  setNotificationChannels(
+    input: NotificationPrefInput,
+    cookie?: string,
+  ): Promise<NotificationPreferences["settings"]>;
   /** Makes another user a policy's author (D5). Site-admin only. */
   setPolicyOwner(policyId: string, ownerUserId: string, cookie?: string): Promise<{ id: string }>;
   /** Archive (true) or restore (false) a references-library entry. */
   setReferenceArchived(id: string, archived: boolean, cookie?: string): Promise<Reference>;
+  /** Overrides how often one notification type reaches the caller. */
+  setTypeCadence(
+    kind: string,
+    cadence: NotifCadence,
+    cookie?: string,
+  ): Promise<NotificationPreferences["settings"]>;
   /** Sets (ALLOW or DENY) or clears (null) one per-policy exception for a user (A19). */
   setUserPolicyOverride(
     userId: string,
@@ -1029,8 +1086,10 @@ export interface UpdateGroupSettingsInput {
  * steward-mock-server, reached through `GATEWAY_URL` like any gateway.
  */
 export interface UpdateMyProfileInput {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  /** BCP-47; "" clears it back to "match my browser". Omitted leaves it as it is. */
+  locale?: string;
 }
 
 /** One stage of a workflow definition's approval chain. `approversByCategory` and

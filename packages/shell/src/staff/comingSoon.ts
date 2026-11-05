@@ -12,13 +12,9 @@ export const COMING_SOON = {
   feedback: "/feedback",
   // U21 (CSV import) lands with the editor and new-draft issue (#15).
   importPolicies: "/drafts/import",
-  inbox: "/inbox",
   logOutEverywhere: "/log-out-everywhere",
   myReports: "/compliance/reports",
-  notifications: "/notifications",
   reportConcern: "/compliance/report",
-  // U33, the security page, lands with the profile issue (#17).
-  security: "/profile/security",
   templates: "/templates",
 } as const;
 
