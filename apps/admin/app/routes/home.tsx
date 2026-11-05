@@ -70,7 +70,7 @@ export default function Overview({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader eyebrow="Structure" subtitle="The org at a glance." title="Overview" />
+      <PageHeader eyebrow="Overview" subtitle="The org at a glance." title="Overview" />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatTile label="Policies" to="/policies" value={policyCount} />

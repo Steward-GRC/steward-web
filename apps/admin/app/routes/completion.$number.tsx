@@ -65,7 +65,7 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
       </Button>
 
       <PageHeader
-        eyebrow="Compliance"
+        eyebrow="Assurance"
         subtitle="Who has acknowledged this policy, who hasn't, and when."
         title={policy.title}
       />

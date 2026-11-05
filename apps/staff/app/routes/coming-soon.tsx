@@ -1,7 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { useTranslation } from "@steward-web/i18n";
-import { NotFound } from "@steward-web/ui";
+import { ComingSoonPage } from "@steward-web/shell";
 import { data } from "react-router";
 
 /**
@@ -12,10 +11,5 @@ import { data } from "react-router";
 export const loader = () => data(null, { status: 404 });
 
 export default function ComingSoon() {
-  const { t } = useTranslation("shell");
-  return (
-    <div className="grid min-h-[60vh] place-items-center p-6">
-      <NotFound description={t("comingSoon.description")} title={t("comingSoon.title")} />
-    </div>
-  );
+  return <ComingSoonPage />;
 }

@@ -30,6 +30,11 @@ describe("Mark", () => {
     expect(screen.getByRole("img")).toContainHTML("M25.5 4h12v24.3l-6-5.5-6 5.5z");
   });
 
+  it("has the lilac on-dark page for the ink admin header", () => {
+    render(<Mark size={26} title="Steward" tone="on-dark" />);
+    expect(screen.getByRole("img")).toContainHTML('fill="#d9a6d2"');
+  });
+
   it("is decorative unless it has a title", () => {
     const { rerender } = render(<Mark />);
     expect(screen.queryByRole("img")).toBeNull();
@@ -65,6 +70,15 @@ describe("Lockup", () => {
     expect(lockup).toContainHTML('data-variant="full"');
     expect(lockup).toContainHTML('height="15.12"');
     expect(lockup).toHaveClass("gap-2");
+  });
+});
+
+describe("Lockup on the ink admin header", () => {
+  it("takes the header's light text colour for the wordmark", () => {
+    render(<Lockup tone="on-dark" />);
+    const lockup = screen.getByRole("img", { name: "Steward" });
+    expect(lockup).not.toHaveClass("text-ink");
+    expect(lockup).toContainHTML('fill="#d9a6d2"');
   });
 });
 

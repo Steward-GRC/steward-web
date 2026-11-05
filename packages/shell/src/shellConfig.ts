@@ -10,4 +10,6 @@ export interface ShellConfig {
   environment: null | string;
   /** The organisation's name for the header slot and the footer, or null when none is set. */
   organisation: null | string;
+  /** Where the admin header's Staff link goes back to. */
+  staffUrl: string;
 }

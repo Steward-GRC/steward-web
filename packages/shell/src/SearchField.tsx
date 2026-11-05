@@ -15,11 +15,14 @@ export const SearchField = ({
   className,
   placeholder,
   shortcut = true,
+  tone = "default",
 }: {
   className?: string;
   placeholder?: string;
   /** Show the ⌘K keycap and listen for the shortcut. */
   shortcut?: boolean;
+  /** "on-dark" for the ink admin header (H2). */
+  tone?: "default" | "on-dark";
 }) => {
   const { t } = useTranslation("shell");
   const input = useRef<HTMLInputElement>(null);
@@ -51,14 +54,24 @@ export const SearchField = ({
       <Search aria-hidden="true" className="size-[15px] flex-none" />
       <input
         aria-label={t("header.search.label")}
-        className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-muted"
+        className={cn(
+          "min-w-0 flex-1 bg-transparent outline-none",
+          tone === "on-dark"
+            ? "text-[#f6eef4] placeholder:text-[#c9b8c7]"
+            : "text-ink placeholder:text-muted",
+        )}
         name="q"
         placeholder={placeholder ?? t("header.search.placeholder")}
         ref={input}
         type="search"
       />
       {shortcut ? (
-        <kbd className="rounded-sm border border-border-strong max-xl:hidden px-[5px] py-px font-mono text-2xs">
+        <kbd
+          className={cn(
+            "rounded-sm border px-[5px] py-px font-mono text-2xs max-xl:hidden",
+            tone === "on-dark" ? "border-[#56465b]" : "border-border-strong",
+          )}
+        >
           {t("header.search.shortcut")}
         </kbd>
       ) : null}

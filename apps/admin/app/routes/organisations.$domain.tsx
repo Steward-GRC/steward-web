@@ -248,7 +248,7 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
     return (
       <div className="flex w-full flex-col gap-6 p-6">
         <PageHeader
-          eyebrow="Access"
+          eyebrow="People"
           subtitle="No organisation matches that domain."
           title="Organisation not found"
         />
@@ -277,7 +277,7 @@ export default function OrganisationManage({ actionData, loaderData }: Route.Com
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader eyebrow="Access" subtitle={org.domain} title={org.orgName} />
+      <PageHeader eyebrow="People" subtitle={org.domain} title={org.orgName} />
 
       <Tabs defaultValue="activation">
         <TabsList>

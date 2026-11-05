@@ -11,6 +11,27 @@ An administrator manages Steward for everyone else. If that is your job, these p
 through the first setup and the day-to-day work of keeping people and organisations current. You
 do this work under the `/admin` part of the site.
 
+## 🗂️ Finding your way around admin
+
+The admin app has a dark header with an orange **Admin** tag, so you always know which app you
+are in. **Staff** at the top right takes you back to the staff app.
+
+Down the left is a rail of groups: **Overview**, **Categories**, **Structure**, **Policies**,
+**Assurance**, **People** and **System**. **Compliance** joins them when compliance reporting is
+turned on. Choose a group and the panel beside it lists its pages:
+
+| Group      | Pages                                                          |
+| ---------- | -------------------------------------------------------------- |
+| Overview   | Overview                                                       |
+| Categories | Directory, Access, and the category tree                       |
+| Structure  | Templates, Workflows, Contact library, References, Definitions |
+| Policies   | Catalog, Procedures, Magic links                               |
+| Assurance  | Completion, Audit log                                          |
+| People     | My groups, Users & roles, Organizations                        |
+| System     | Settings                                                       |
+
+On a narrower screen the panel is hidden; the rail takes you to each group's first page.
+
 ## 🧭 What you will learn here
 
 - **[First-run setup](/admin-guide/first-run-setup)** — how to create the very first administrator

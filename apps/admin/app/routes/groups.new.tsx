@@ -59,7 +59,11 @@ export default function NewGroup({ actionData, loaderData }: Route.ComponentProp
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-6 p-6">
-      <PageHeader eyebrow="Access" subtitle="Add a group to the org hierarchy." title="New group" />
+      <PageHeader
+        eyebrow="Categories"
+        subtitle="Add a group to the org hierarchy."
+        title="New group"
+      />
 
       <Form className="flex flex-col gap-4" method="post">
         <Field label="Name">

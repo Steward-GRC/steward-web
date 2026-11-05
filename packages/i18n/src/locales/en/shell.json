@@ -14,6 +14,49 @@
     "notifications": "Notifications",
     "profile": "Your profile"
   },
+  "admin": {
+    "categories": {
+      "filter": "Filter categories",
+      "new": "+ New category",
+      "showChildren": "Show {{category}}'s subcategories"
+    },
+    "destinations": {
+      "access": "Access",
+      "auditLog": "Audit log",
+      "caseSettings": "Case settings",
+      "catalog": "Catalog",
+      "completion": "Completion",
+      "contactLibrary": "Contact library",
+      "definitions": "Definitions",
+      "directory": "Directory",
+      "magicLinks": "Magic links",
+      "myGroups": "My groups",
+      "organizations": "Organizations",
+      "overview": "Overview",
+      "procedures": "Procedures",
+      "references": "References",
+      "settings": "Settings",
+      "templates": "Templates",
+      "users": "Users & roles",
+      "workflows": "Workflows"
+    },
+    "groups": {
+      "assurance": "Assurance",
+      "categories": "Categories",
+      "compliance": "Compliance",
+      "ethics": "Ethics",
+      "overview": "Overview",
+      "people": "People",
+      "policies": "Policies",
+      "structure": "Structure",
+      "system": "System"
+    },
+    "panelLabel": "{{group}} pages",
+    "railLabel": "Admin sections",
+    "searchPlaceholder": "Search policies, templates, groups…",
+    "staff": "Staff",
+    "tag": "Admin"
+  },
   "brand": {
     "name": "Steward"
   },
@@ -104,6 +147,7 @@
       "audit": "Audit log",
       "catalog": "Catalog",
       "category": "Category",
+      "comingSoon": "Coming soon",
       "completion": "Completion",
       "contactLibrary": "Contact library",
       "definitions": "Definitions",

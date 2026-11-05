@@ -176,7 +176,11 @@ export default function GroupEdit({ actionData, loaderData }: Route.ComponentPro
   if (!loaderData.group) {
     return (
       <div className="flex w-full flex-col gap-6 p-6">
-        <PageHeader eyebrow="Access" subtitle="No group matches that id." title="Group not found" />
+        <PageHeader
+          eyebrow="Categories"
+          subtitle="No group matches that id."
+          title="Group not found"
+        />
         <Button asChild className="self-start" variant="secondary">
           <Link to="/groups">Back to groups</Link>
         </Button>
@@ -209,7 +213,7 @@ export default function GroupEdit({ actionData, loaderData }: Route.ComponentPro
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader eyebrow="Access" subtitle={`/${group.slug}`} title={group.name} />
+      <PageHeader eyebrow="Categories" subtitle={`/${group.slug}`} title={group.name} />
 
       <Tabs defaultValue="details">
         <TabsList>

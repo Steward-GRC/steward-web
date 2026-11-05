@@ -39,7 +39,7 @@ export default function Organisations({ loaderData }: Route.ComponentProps) {
             <Link to="/organisations/new">New organisation</Link>
           </Button>
         }
-        eyebrow="Access"
+        eyebrow="People"
         subtitle="SAML/OIDC single sign-on connections, one per domain."
         title="Organisations"
       />

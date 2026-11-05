@@ -178,7 +178,11 @@ const requireGroupManage = (request: Request) =>
  *  the tree breadth-first via groupChildren (parentId: null = the roots). */
 export const listGroups = async (request: Request): Promise<Group[]> => {
   await requireGroupManage(request);
-  const cookie = cookieOf(request);
+  return fetchAllGroups(cookieOf(request));
+};
+
+/** Every group (category), parents before children, one tree level per round of calls. */
+export const fetchAllGroups = async (cookie: string | undefined): Promise<Group[]> => {
   const all: Group[] = [];
   const seen = new Set<string>();
   let frontier: (null | string)[] = [null];
