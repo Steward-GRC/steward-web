@@ -10,6 +10,7 @@ import {
   listManagedGroupMembers,
   listManagedGroups,
   removeUserFromGroup,
+  searchPeople,
 } from "./myGroups.server";
 
 const managerMe = {
@@ -136,6 +137,30 @@ describe("findUserByEmail", () => {
   it("returns undefined when nothing matches exactly", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonOnce({ searchUsers: [] })));
     expect(await findUserByEmail(request(), "nobody@example.org")).toBeUndefined();
+  });
+});
+
+describe("searchPeople", () => {
+  it("asks for nothing until two characters are typed", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(jsonOnce({ me: nonManagerMe }));
+    vi.stubGlobal("fetch", fetchSpy);
+    expect(await searchPeople(request(), " b ")).toEqual([]);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns name, email and id for the picker", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonOnce({ me: nonManagerMe }))
+        .mockResolvedValueOnce(
+          jsonOnce({ searchUsers: [{ email: "bob@example.org", id: "u-bob", name: "Bob" }] }),
+        ),
+    );
+    expect(await searchPeople(request(), "bo")).toEqual([
+      { email: "bob@example.org", id: "u-bob", name: "Bob" },
+    ]);
   });
 });
 

@@ -34,14 +34,14 @@ const loaderData = {
 
 type MergeProps = Parameters<typeof MergeAccounts>[0];
 
-const renderMerge = (action: (form: FormData) => void) => {
+const renderMerge = (action: (form: FormData) => void, data: object = loaderData) => {
   const Stub = createRoutesStub([
     {
       action: async ({ request }) => {
         action(await request.formData());
         return { ok: true };
       },
-      Component: () => <MergeAccounts {...({ loaderData } as unknown as MergeProps)} />,
+      Component: () => <MergeAccounts {...({ loaderData: data } as unknown as MergeProps)} />,
       path: "/users/merge",
     },
   ]);
@@ -52,7 +52,7 @@ describe("the merge confirm (D21)", () => {
   it("shows both accounts and asks for the source email before merging", async () => {
     const action = vi.fn();
     renderMerge(action);
-    await userEvent.click(screen.getByRole("button", { name: "Merge accounts…" }));
+    await userEvent.click(screen.getByRole("button", { name: "Merge accounts" }));
 
     const dialog = screen.getByRole("dialog", { name: "Merge these accounts?" });
     expect(dialog).toHaveAttribute("data-tone", "danger");
@@ -72,5 +72,49 @@ describe("the merge confirm (D21)", () => {
     await vi.waitFor(() => expect(action).toHaveBeenCalledOnce());
     expect(action.mock.calls[0]![0].get("sourceUserId")).toBe("u-old");
     expect(action.mock.calls[0]![0].get("targetUserId")).toBe("u-erin");
+  });
+});
+
+describe("Merge accounts (A21)", () => {
+  it("has the frame's title, subtitle and red irreversibility note", () => {
+    renderMerge(vi.fn());
+    expect(screen.getByRole("heading", { level: 1, name: "Merge accounts" })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Move one user's policies, acknowledgments, and grants onto another, then close the source account.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("This can't be undone. The source account is closed after the merge."),
+    ).toBeInTheDocument();
+  });
+
+  it("puts the source and the target on one line and shows the six counts", () => {
+    renderMerge(vi.fn());
+    expect(screen.getByRole("combobox", { name: "Source (closed after merge)" })).toHaveTextContent(
+      "Erin (old) · erin.old@example.org",
+    );
+    expect(screen.getByRole("combobox", { name: "Target (keeps the records)" })).toHaveTextContent(
+      "Erin · erin@example.org",
+    );
+    const counts = screen.getByRole("list", { name: "What moves" });
+    expect(
+      within(counts)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual([
+      "1Policies owned",
+      "0RACI grants",
+      "2Acks moved",
+      "0Acks deduped",
+      "0Workflow items",
+      "0Preferences",
+    ]);
+  });
+
+  it("keeps Merge accounts off until a preview has run", () => {
+    renderMerge(vi.fn(), { ...loaderData, preview: undefined });
+    expect(screen.getByRole("button", { name: "Preview merge" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Merge accounts" })).toBeDisabled();
   });
 });
