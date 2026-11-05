@@ -49,5 +49,8 @@
     "loading": "Loading…",
     "saving": "Saving…",
     "updatedJustNow": "Updated just now"
+  },
+  "table": {
+    "noMatches": "Nothing matches “{{query}}”."
   }
 }
