@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { Command as CommandPrimitive } from "cmdk";
-import { Clock, FileText, Folder, Search } from "lucide-react";
+import { Clock, FileText, Folder, Plus, Search } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { cn } from "#ui/lib/cn";
 
@@ -15,6 +15,8 @@ export interface CommandPaletteProps {
   /** True while the results for the current words load. */
   loading?: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Cmd/Ctrl+Enter on a result: open it in a new tab. */
+  onOpenInNewTab?: (item: PaletteItem) => void;
   onQueryChange: (query: string) => void;
   onSeeAll: (query: string) => void;
   onSelect: (item: PaletteItem) => void;
@@ -30,14 +32,15 @@ export interface PaletteGroup {
 
 export interface PaletteItem {
   hint?: string;
-  /** Folder for a category, clock for a recent item; none for a document. */
-  icon?: "file" | "folder" | "recent";
+  /** Folder for a category, clock for a recent item, plus for a create action; none for a
+   *  document. */
+  icon?: "create" | "file" | "folder" | "recent";
   id: string;
   label: string;
   to: string;
 }
 
-const ICONS = { file: FileText, folder: Folder, recent: Clock };
+const ICONS = { create: Plus, file: FileText, folder: Folder, recent: Clock };
 
 /** The label with the first match of the words underlined: "<u>Desk</u> Booking Policy". */
 const Highlighted = ({ label, query }: { label: string; query: string }): ReactNode => {
@@ -65,11 +68,18 @@ export const CommandPalette = ({
   loading,
   onOpenChange,
   onQueryChange,
+  onOpenInNewTab,
   onSeeAll,
   onSelect,
   open,
   query,
 }: CommandPaletteProps) => {
+  const [selected, setSelected] = useState("");
+  const byValue = new Map<string, PaletteItem>(
+    groups.flatMap((group) =>
+      group.items.map((item): [string, PaletteItem] => [`${group.id}-${item.id}`, item]),
+    ),
+  );
   const { t } = useTranslation("common");
   const words = query.trim();
   const empty = groups.every((group) => group.items.length === 0);
@@ -82,7 +92,22 @@ export const CommandPalette = ({
           className="fixed top-[12vh] left-1/2 z-[var(--z-dialog)] w-[calc(100vw-32px)] max-w-[540px] -translate-x-1/2 overflow-hidden rounded-[12px] bg-surface text-base text-ink shadow-[var(--shadow-4)] focus:outline-none"
         >
           <DialogPrimitive.Title className="sr-only">{t("palette.title")}</DialogPrimitive.Title>
-          <CommandPrimitive label={t("palette.title")} loop shouldFilter={false}>
+          <CommandPrimitive
+            label={t("palette.title")}
+            loop
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey) || !onOpenInNewTab) {
+                return;
+              }
+              const item = byValue.get(selected);
+              if (!item) return;
+              event.preventDefault();
+              onOpenInNewTab(item);
+            }}
+            onValueChange={setSelected}
+            shouldFilter={false}
+            value={selected}
+          >
             <div className="flex h-[52px] items-center gap-2.5 border-b border-border px-4 text-md">
               <Search aria-hidden="true" className="size-[18px] shrink-0 text-muted" />
               <CommandPrimitive.Input

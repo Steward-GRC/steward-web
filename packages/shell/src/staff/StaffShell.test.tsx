@@ -323,3 +323,16 @@ describe("the staff shell's banners (H7, H8, H9)", () => {
     expect(screen.queryByRole("link", { name: "Set up" })).toBeNull();
   });
 });
+
+describe("the staff command bar's create actions", () => {
+  it("offers an author New policy and New procedure", async () => {
+    renderShell(bob);
+    await userEvent.keyboard("{Meta>}k{/Meta}");
+    const create = await screen.findByRole("group", { name: "Create" });
+    expect(
+      within(create)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["New policy", "New procedure", "New draft from a template"]);
+  });
+});

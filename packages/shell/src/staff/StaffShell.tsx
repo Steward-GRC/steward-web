@@ -19,6 +19,7 @@ import { Link } from "react-router";
 import type { ShellConfig } from "../shellConfig";
 
 import { AccountMenu } from "../AccountMenu";
+import { staffCreates } from "../createActions";
 import { EnvironmentBanner } from "../EnvironmentBanner";
 import { SearchField } from "../SearchField";
 import { ActingAsBanner, ConnectionLostBanner, SecondFactorNudge } from "../ShellBanners";
@@ -115,6 +116,10 @@ export const StaffShell = ({
       }),
     [identity, counts, reporting],
   );
+  const creates = useMemo(
+    () => staffCreates((permission) => identity.permissions.has(permission)),
+    [identity],
+  );
   const adminUrl = signedIn && canOpenAdmin(identity) ? config.adminUrl : undefined;
   // The canvas frames size boxes content-box: a 56 px header plus its 1 px rule is 57 px.
   // The acting-as banner adds its 44 px.
@@ -130,6 +135,7 @@ export const StaffShell = ({
           {signedIn ? (
             <StaffDrawer
               adminUrl={adminUrl}
+              creates={creates}
               docsUrl={config.docsUrl}
               feedbackUrl={COMING_SOON.feedback}
               sections={sections}
@@ -149,7 +155,10 @@ export const StaffShell = ({
           ) : null}
           {signedIn ? (
             <>
-              <SearchField className="ml-6 hidden h-[38px] w-[322px] lg:flex xl:ml-10 xl:w-[382px]" />
+              <SearchField
+                className="ml-6 hidden h-[38px] w-[322px] lg:flex xl:ml-10 xl:w-[382px]"
+                creates={creates}
+              />
               <div className="ml-auto flex items-center gap-1 text-sm font-medium">
                 {adminUrl ? (
                   <a className={`${action} hidden lg:flex`} href={adminUrl}>

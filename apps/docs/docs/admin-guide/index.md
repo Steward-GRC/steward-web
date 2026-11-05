@@ -39,7 +39,9 @@ The **Overview** page counts the policies, those published and those still in pr
 groups and the templates; select a count to open the list behind it. Beside **Recent activity**,
 the **Acknowledgement snapshot** shows how many people have acknowledged the policies that ask
 them to, across all of them. The search box in the header (or ⌘K, Ctrl+K on Windows) searches
-policies, categories, templates and groups as you type.
+policies, categories, templates and groups as you type, and starts whatever you may create:
+a category, group, template, workflow, organisation or magic link (**Shift+C** opens it on
+these).
 
 ## 🧭 What you will learn here
 

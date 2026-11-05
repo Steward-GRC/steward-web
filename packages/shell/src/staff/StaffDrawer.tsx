@@ -6,6 +6,7 @@ import { Menu as MenuIcon, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 
+import type { CreateAction } from "../createActions";
 import type { NavSection } from "./staffNav";
 
 import { SearchField } from "../SearchField";
@@ -20,12 +21,15 @@ const barLink = "flex h-11 items-center px-2.5 text-ink hover:text-ink";
  */
 export const StaffDrawer = ({
   adminUrl,
+  creates = [],
   docsUrl,
   feedbackUrl,
   sections,
 }: {
   /** Shown along the foot for admins. */
   adminUrl?: string;
+  /** What the person may create from the drawer's search (H10). */
+  creates?: readonly CreateAction[];
   docsUrl: string;
   feedbackUrl: string;
   sections: NavSection[];
@@ -63,7 +67,11 @@ export const StaffDrawer = ({
           </DialogClose>
         </div>
         <div className="px-3.5 py-3">
-          <SearchField className="h-[46px] bg-transparent px-3 text-base" shortcut={false} />
+          <SearchField
+            className="h-[46px] bg-transparent px-3 text-base"
+            creates={creates}
+            shortcut={false}
+          />
         </div>
         <nav
           aria-label={t("nav.label")}

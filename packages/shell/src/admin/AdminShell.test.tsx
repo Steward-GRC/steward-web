@@ -246,3 +246,23 @@ describe("AdminShell signed out", () => {
     expect(screen.queryByRole("button", { name: "Account menu" })).toBeNull();
   });
 });
+
+describe("the admin command bar's create actions", () => {
+  it("offers a site admin every type", async () => {
+    renderShell(alice);
+    await userEvent.keyboard("{Meta>}k{/Meta}");
+    const create = await screen.findByRole("group", { name: "Create" });
+    expect(
+      within(create)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual([
+      "New category",
+      "New group",
+      "New template",
+      "New workflow",
+      "New organisation",
+      "New magic link",
+    ]);
+  });
+});

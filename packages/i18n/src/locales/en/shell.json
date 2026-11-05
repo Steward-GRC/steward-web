@@ -86,6 +86,17 @@
     "fallbackHint": "Your browser didn't allow the copy. Select the text below and copy it by hand.",
     "fallbackTitle": "Diagnostics"
   },
+  "create": {
+    "category": "New category",
+    "fromTemplate": "New draft from a template",
+    "group": "New group",
+    "magicLink": "New magic link",
+    "organisation": "New organisation",
+    "policy": "New policy",
+    "procedure": "New procedure",
+    "template": "New template",
+    "workflow": "New workflow"
+  },
   "devUiIssue": {
     "action": "Copy for UI issue",
     "announced": "UI issue bundle copied",
@@ -178,8 +189,10 @@
   "pageTitle": "{{page}} · {{brand}}",
   "palette": {
     "action": "search",
+    "createPrefix": "New ",
     "groups": {
       "categories": "Categories",
+      "create": "Create",
       "groups": "Groups",
       "policies": "Policies",
       "procedures": "Procedures",
