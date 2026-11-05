@@ -1,40 +1,37 @@
-import { refusalOf } from "@steward-web/shell";
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import {
-  Badge,
-  Banner,
-  Button,
-  Checkbox,
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogTrigger,
-  EmptyState,
-  Field,
-  Input,
-  PageHeader,
-  Switch,
-  Table,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  TD,
-  TH,
-  THead,
-  TypeToConfirm,
-} from "@steward-web/ui";
-import { data, Form, Link, redirect } from "react-router";
+import { OverrideEffect } from "@steward-web/api-client";
+import { identityFromRequest } from "@steward-web/auth/server";
+import { useTranslation } from "@steward-web/i18n";
+import { refusalOf } from "@steward-web/shell";
+import { shellConfigFromEnvironment } from "@steward-web/shell/server";
+import { Button, NotFound, Tabs, TabsContent, TabsList, TabsTrigger } from "@steward-web/ui";
+import { data, Link, redirect, redirectDocument, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/users.$userId";
 
-import { BASELINE_ROLE, GLOBAL_ROLES, roleLabel } from "../users/roles";
-import { lastSeenLabel } from "../users/sessionTimes";
+import { AdvancedTab } from "../users/AdvancedTab";
+import { ProfileTab } from "../users/ProfileTab";
+import { roleKey } from "../users/roles";
+import { RolesTab } from "../users/RolesTab";
+import { SecurityTab } from "../users/SecurityTab";
+import {
+  actAsUser,
+  listPolicyChoices,
+  listUserFactors,
+  makeRoot,
+  reassignPolicies,
+  removeUserFactor,
+  renameUserFactor,
+  resendWelcome,
+  resetPassword,
+  sendStepUpCode,
+  setPolicyException,
+} from "../users/userAdmin.server";
 import {
   deleteUser,
   findUser,
+  listUsers,
   listUserSessions,
   previewUserDeletion,
   revokeUserSessions,
@@ -45,342 +42,216 @@ import {
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const user = await findUser(request, params.userId);
-  if (!user) return { deletionPreview: null, sessions: [], user: null };
+  if (!user) return data({ user: null }, { status: 404 });
 
-  const [sessions, deletionPreview] = await Promise.all([
-    listUserSessions(request, user.userId),
-    user.deletedAt ? Promise.resolve(null) : previewUserDeletion(request, user.userId),
+  const live = !user.deletedAt;
+  const [identity, everyone, sessions, deletionPreview, factors, policies] = await Promise.all([
+    identityFromRequest(request),
+    listUsers(request),
+    // Each part below is read on its own; one that fails leaves its card empty, not the page.
+    listUserSessions(request, user.userId).catch(() => []),
+    live ? previewUserDeletion(request, user.userId).catch(() => null) : Promise.resolve(null),
+    live ? listUserFactors(request, user.userId).catch(() => []) : Promise.resolve([]),
+    live ? listPolicyChoices(request).catch(() => []) : Promise.resolve([]),
   ]);
-  return { deletionPreview, sessions, user };
+  const root = everyone.find((entry) => entry.isRoot);
+  return {
+    deletionPreview,
+    factors,
+    people: everyone
+      .filter((entry) => !entry.deletedAt && entry.enabled && entry.userId !== user.userId)
+      .map((entry) => ({ id: entry.userId, name: entry.name })),
+    policies,
+    rootName: root?.name ?? "",
+    sessions,
+    user,
+    viewerIsRoot: root !== undefined && root.userId === identity.id,
+  };
 };
+
+const EFFECTS = new Set<string>(Object.values(OverrideEffect));
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
   const user = await findUser(request, params.userId);
   if (!user) throw data("User not found", { status: 404 });
-
   const form = await request.formData();
-  const intent = form.get("intent");
+  const intent = String(form.get("intent") ?? "");
+  const field = (name: string) => String(form.get(name) ?? "");
 
   try {
     switch (intent) {
+      case "act-as": {
+        await actAsUser(request, user.userId, field("reason"));
+        // The acting-as session lives on the admin's gateway session; staff shows its banner.
+        // A whole-document redirect to an absolute address, so it leaves the admin app (and its
+        // basename) for the staff app.
+        return redirectDocument(new URL(shellConfigFromEnvironment().staffUrl, request.url).href);
+      }
+      case "add-exception": {
+        const effect = field("effect");
+        if (!EFFECTS.has(effect)) throw data("unknown effect", { status: 400 });
+        await setPolicyException(
+          request,
+          user.userId,
+          field("policyNumber"),
+          effect as OverrideEffect,
+        );
+        break;
+      }
       case "delete": {
         await deleteUser(request, user.userId);
         return redirect("/users");
       }
+      case "make-root": {
+        await makeRoot(request, user.userId, field("otp"));
+        break;
+      }
+      case "reassign": {
+        await reassignPolicies(request, user.userId, field("toUserId"));
+        break;
+      }
+      case "remove-exception": {
+        await setPolicyException(request, user.userId, field("policyNumber"), null);
+        break;
+      }
+      case "rename-factor": {
+        await renameUserFactor(request, user.userId, field("methodId"), field("label"));
+        break;
+      }
+      case "resend-welcome": {
+        await resendWelcome(request, user.userId);
+        break;
+      }
+      case "reset-factor": {
+        await removeUserFactor(request, user.userId, field("methodId"));
+        break;
+      }
+      case "reset-password": {
+        const password = await resetPassword(request, user.userId);
+        return { intent, ok: true, password } as const;
+      }
       case "revoke-sessions": {
         await revokeUserSessions(request, user.userId);
-        return data({ intent, ok: true } as const);
+        break;
       }
       case "save-profile": {
         const enabled = form.has("enabled");
         if (!user.isRoot && user.enabled !== enabled) {
           await setUserEnabled(request, user.userId, enabled);
         }
-        if (user.localAccount) {
-          const name = String(form.get("name") ?? "").trim();
-          const email = String(form.get("email") ?? "").trim();
-          if (name && email) await saveUserProfile(request, user.userId, name, email);
+        if (user.localAccount && field("name").trim() && field("email").trim()) {
+          await saveUserProfile(request, user.userId, field("name").trim(), field("email").trim());
         }
-        return data({ intent, ok: true } as const);
+        break;
       }
       case "save-roles": {
         if (!user.isRoot) {
           await setUserGlobalRoles(request, user, form.getAll("roles").map(String));
         }
-        return data({ intent, ok: true } as const);
+        break;
+      }
+      case "send-step-up": {
+        await sendStepUpCode(request);
+        break;
       }
       default: {
         throw data("unrecognized intent", { status: 400 });
       }
     }
+    return { intent, ok: true } as const;
   } catch (error) {
-    return data({ error: refusalOf(error), intent: String(intent), ok: false } as const, {
-      status: 400,
-    });
+    if (error instanceof Response) throw error;
+    return data({ failure: refusalOf(error), intent, ok: false } as const, { status: 400 });
   }
 };
 
-export default function UserEdit({ actionData, loaderData }: Route.ComponentProps) {
-  const { deletionPreview, sessions, user } = loaderData;
+const TABS = ["profile", "security", "roles", "advanced"] as const;
 
-  if (!user) {
+/**
+ * A user (A17 to A20): "Erin · erin@example.org · Reader", then Profile, Security, Roles &
+ * access and Advanced. The open tab is in the address (`?tab=`), so a saved form comes back
+ * to it. A closed account is read-only.
+ */
+export default function UserDetail({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("admin");
+  const [search, setSearch] = useSearchParams();
+
+  if (!loaderData.user) {
     return (
-      <div className="flex w-full flex-col gap-6 p-6">
-        <PageHeader eyebrow="People" subtitle="No user matches that id." title="User not found" />
-        <Button asChild className="self-start" variant="secondary">
-          <Link to="/users">Back to users</Link>
-        </Button>
+      <div className="flex w-full flex-col p-4 md:p-6">
+        <NotFound
+          action={
+            <Button asChild variant="secondary">
+              <Link to="/users">{t("users.notFound.action")}</Link>
+            </Button>
+          }
+          description={t("users.notFound.description")}
+          title={t("users.notFound.title")}
+        />
       </div>
     );
   }
 
-  const errorFor = (intent: string) =>
-    actionData && !actionData.ok && actionData.intent === intent ? actionData.error : undefined;
-  const savedProfile = actionData?.ok && actionData.intent === "save-profile";
-  const savedRoles = actionData?.ok && actionData.intent === "save-roles";
+  const { deletionPreview, factors, people, policies, rootName, sessions, user, viewerIsRoot } =
+    loaderData;
+  const requested = search.get("tab");
+  const tab = TABS.find((entry) => entry === requested) ?? "profile";
+  const role = user.isRoot
+    ? t("users.detail.root")
+    : t(roleKey(user.roles[0] ?? "reader"), { defaultValue: user.roles[0] });
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader eyebrow="People" subtitle={user.email} title={user.name} />
+    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
+      <header>
+        <h1 className="text-2xl font-semibold">{user.name}</h1>
+        <p className="text-base text-muted">
+          {t("users.detail.subtitle", { email: user.email, role })}
+        </p>
+      </header>
+      {user.deletedAt ? <p className="text-sm text-muted">{t("users.detail.closed")}</p> : null}
 
-      <Tabs defaultValue="profile">
-        <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="roles">Roles &amp; access</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
+      <Tabs
+        className="flex flex-col gap-3.5"
+        onValueChange={(next) =>
+          setSearch(
+            (current) => {
+              current.set("tab", next);
+              return current;
+            },
+            { preventScrollReset: true, replace: true },
+          )
+        }
+        value={tab}
+      >
+        <TabsList className="border-border-strong">
+          {TABS.map((entry) => (
+            <TabsTrigger
+              className="px-2.5 py-[9px] font-normal data-[state=active]:font-semibold data-[state=active]:text-primary"
+              key={entry}
+              value={entry}
+            >
+              {t(`users.detail.tabs.${entry}`)}
+            </TabsTrigger>
+          ))}
         </TabsList>
-
-        <TabsContent className="flex flex-col gap-6" value="profile">
-          <Form className="flex flex-col gap-4" method="post">
-            <input name="intent" type="hidden" value="save-profile" />
-            <Field label="Username">
-              <Input disabled readOnly value={user.username || "—"} />
-            </Field>
-            <label className="flex items-center gap-3 text-sm text-ink" htmlFor="user-enabled">
-              <Switch
-                defaultChecked={user.enabled}
-                disabled={user.isRoot}
-                id="user-enabled"
-                name="enabled"
-                value="true"
-              />
-              Account enabled
-            </label>
-            {user.isRoot ? (
-              <p className="text-sm text-muted">
-                This is the protected root site-admin. It can&apos;t be disabled or demoted; account
-                enablement and role toggles are locked.
-              </p>
-            ) : null}
-
-            {user.localAccount ? (
-              <>
-                <Field label="Display name">
-                  <Input defaultValue={user.name} name="name" required />
-                </Field>
-                <Field label="Email">
-                  <Input defaultValue={user.email} name="email" required type="email" />
-                </Field>
-              </>
-            ) : (
-              <p className="text-sm text-muted">
-                This is a directory (AD / SSO) account. Display name, email and password are managed
-                by the identity provider and can&apos;t be edited here.
-              </p>
-            )}
-
-            {errorFor("save-profile") ? (
-              <Banner
-                failure={errorFor("save-profile")}
-                title="Couldn't save this user"
-                tone="danger"
-              />
-            ) : null}
-            <Button className="self-start" type="submit">
-              Save
-            </Button>
-            {savedProfile ? <p className="text-sm text-ok">Saved.</p> : null}
-          </Form>
+        <TabsContent className="pt-0" value="profile">
+          <ProfileTab user={user} />
         </TabsContent>
-
-        <TabsContent className="flex flex-col gap-6" value="roles">
-          <Form className="flex flex-col gap-4" method="post">
-            <input name="intent" type="hidden" value="save-roles" />
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-ink">Reader baseline</span>
-              <Badge tone={user.enabled ? "info" : "neutral"}>{roleLabel(BASELINE_ROLE)}</Badge>
-              <p className="text-sm text-muted">
-                {user.enabled
-                  ? "Every enabled user is a Reader by default."
-                  : "Suspended while the account is disabled."}
-              </p>
-            </div>
-
-            {user.isRoot ? (
-              <p className="text-sm text-muted">
-                Root holds every permission inherently — there are no role toggles to assign.
-              </p>
-            ) : (
-              <fieldset className="flex flex-col gap-2">
-                <legend className="text-sm font-semibold text-ink">Elevated roles</legend>
-                {GLOBAL_ROLES.map((role) => (
-                  <label className="flex items-center gap-3 text-sm text-ink" key={role.value}>
-                    <Checkbox
-                      defaultChecked={user.roles.includes(role.value)}
-                      name="roles"
-                      value={role.value}
-                    />
-                    {role.label}
-                  </label>
-                ))}
-              </fieldset>
-            )}
-
-            {errorFor("save-roles") ? (
-              <Banner
-                failure={errorFor("save-roles")}
-                title="Couldn't save these roles"
-                tone="danger"
-              />
-            ) : null}
-            {user.isRoot ? null : (
-              <Button className="self-start" type="submit">
-                Save
-              </Button>
-            )}
-            {savedRoles ? <p className="text-sm text-ok">Saved.</p> : null}
-          </Form>
+        <TabsContent className="pt-0" value="security">
+          <SecurityTab factors={factors} readOnly={Boolean(user.deletedAt)} />
         </TabsContent>
-
-        <TabsContent className="flex flex-col gap-8" value="security">
-          <section className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-ink">Sessions</h2>
-              {sessions.some((s) => s.active) ? (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="danger">
-                      Log out everywhere
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent
-                    description="This immediately revokes every active session. The user will need to sign in again."
-                    title={`Log out ${user.name} everywhere?`}
-                  >
-                    <Form method="post">
-                      <input name="intent" type="hidden" value="revoke-sessions" />
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button variant="secondary">Cancel</Button>
-                        </DialogClose>
-                        <Button type="submit">Log out everywhere</Button>
-                      </DialogFooter>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
-              ) : null}
-            </div>
-            {errorFor("revoke-sessions") ? (
-              <Banner
-                failure={errorFor("revoke-sessions")}
-                title="Couldn't log this user out"
-                tone="danger"
-              />
-            ) : null}
-            {sessions.length === 0 ? (
-              <EmptyState description="No sessions found for this user." title="No sessions" />
-            ) : (
-              <Table>
-                <THead>
-                  <tr>
-                    <TH>Status</TH>
-                    <TH>Issued</TH>
-                    <TH>Signed in</TH>
-                    <TH>Last seen</TH>
-                    <TH>Expires</TH>
-                    <TH>Client IP</TH>
-                  </tr>
-                </THead>
-                <tbody>
-                  {sessions.map((session) => {
-                    const expired = new Date(session.expiresAt) <= new Date();
-                    return (
-                      <tr key={session.sessionId}>
-                        <TD>
-                          <Badge tone={session.active ? "ok" : "neutral"}>
-                            {session.active ? "Active" : expired ? "Expired" : "Revoked"}
-                          </Badge>
-                        </TD>
-                        <TD className="text-muted">
-                          {new Date(session.issuedAt).toLocaleString()}
-                        </TD>
-                        <TD className="text-muted">
-                          {new Date(session.authenticatedAt).toLocaleString()}
-                        </TD>
-                        <TD className="text-muted">{lastSeenLabel(session)}</TD>
-                        <TD className="text-muted">
-                          {new Date(session.expiresAt).toLocaleString()}
-                        </TD>
-                        <TD className="text-muted">{session.clientIp ?? "—"}</TD>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            )}
-          </section>
-
-          {!user.deletedAt && deletionPreview ? (
-            <section className="flex flex-col gap-4 border-t border-border pt-6">
-              <h2 className="text-sm font-semibold text-danger">Delete user</h2>
-              <p className="text-sm text-muted">
-                Permanently removes <strong>{user.name}</strong>&apos;s account, revokes their
-                sessions and drops their access. This never deletes a policy they own.
-              </p>
-              {deletionPreview.warnings.map((warning) => (
-                <Banner key={warning.code} title={warning.message} tone="warn" />
-              ))}
-              {deletionPreview.items.length > 0 ? (
-                <ul className="flex flex-col gap-1.5 text-sm">
-                  {deletionPreview.items.map((item) => (
-                    <li className="flex items-center gap-2" key={item.refId}>
-                      <Badge tone={item.blocksDelete ? "danger" : "neutral"}>{item.label}</Badge>
-                      <span className="text-muted">{item.detail}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {errorFor("delete") ? (
-                <Banner
-                  failure={errorFor("delete")}
-                  title="Couldn't delete this user"
-                  tone="danger"
-                />
-              ) : null}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    className="self-start"
-                    disabled={user.isRoot || deletionPreview.blocksDelete}
-                    variant="danger"
-                  >
-                    Delete user…
-                  </Button>
-                </DialogTrigger>
-                <DialogContent
-                  description="This can't be undone from here."
-                  hasInput
-                  title={`Delete ${user.name}?`}
-                  tone="danger"
-                >
-                  <Form method="post">
-                    <input name="intent" type="hidden" value="delete" />
-                    <TypeToConfirm phrase={user.email}>
-                      {(confirmed) => (
-                        <DialogFooter>
-                          <DialogClose asChild>
-                            <Button variant="secondary">Cancel</Button>
-                          </DialogClose>
-                          <Button disabled={!confirmed} type="submit" variant="danger">
-                            Delete user
-                          </Button>
-                        </DialogFooter>
-                      )}
-                    </TypeToConfirm>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-              {user.isRoot ? (
-                <p className="text-sm text-muted">
-                  The protected root account can&apos;t be deleted.
-                </p>
-              ) : deletionPreview.blocksDelete ? (
-                <p className="text-sm text-muted">
-                  Resolve the items above before this account can be deleted.
-                </p>
-              ) : null}
-            </section>
-          ) : null}
+        <TabsContent className="pt-0" value="roles">
+          <RolesTab policies={policies} user={user} />
+        </TabsContent>
+        <TabsContent className="pt-0" value="advanced">
+          <AdvancedTab
+            deletionPreview={deletionPreview}
+            people={people}
+            rootName={rootName}
+            sessions={sessions}
+            user={user}
+            viewerIsRoot={viewerIsRoot}
+          />
         </TabsContent>
       </Tabs>
     </div>

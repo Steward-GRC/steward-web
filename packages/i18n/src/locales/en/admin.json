@@ -225,5 +225,207 @@
       "title": "Single sign-on",
       "verification": "We'll create the connection and start domain verification. You'll publish a DNS TXT record, then finish testing and activation from Organizations."
     }
+  },
+  "users": {
+    "title": "Users & roles",
+    "subtitle": "Platform users, roles, and policy access.",
+    "showDeleted": "Show deleted",
+    "merge": "Merge accounts",
+    "search": "Search users",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "status": "Status",
+      "roles": "Roles",
+      "groups": "Groups",
+      "access": "Access"
+    },
+    "status": {
+      "enabled": "enabled",
+      "disabled": "disabled",
+      "root": "root",
+      "deleted": "deleted",
+      "merged": "merged into {{name}}"
+    },
+    "roles": {
+      "reader": "Reader",
+      "site-admin": "Site admin",
+      "template-admin": "Template admin",
+      "compliance-admin": "Compliance admin",
+      "author": "Author",
+      "approver": "Approver"
+    },
+    "access": {
+      "all": "All policies",
+      "changed": "All · {{changes}}",
+      "deny_one": "−{{count}} policy",
+      "deny_other": "−{{count}} policies",
+      "allow_one": "+{{count}} policy",
+      "allow_other": "+{{count}} policies"
+    },
+    "none": "—",
+    "empty": {
+      "title": "No users found",
+      "description": "No platform users match this search."
+    },
+    "notFound": {
+      "title": "User not found",
+      "description": "No user matches that address.",
+      "action": "Back to users"
+    },
+    "detail": {
+      "subtitle": "{{email}} · {{role}}",
+      "root": "Root site-admin",
+      "tabs": {
+        "profile": "Profile",
+        "security": "Security",
+        "roles": "Roles & access",
+        "advanced": "Advanced"
+      },
+      "closed": "This account is closed and read-only.",
+      "saved": "Saved!",
+      "save": "Save",
+      "failed": "Couldn't save this user"
+    },
+    "profile": {
+      "username": "Username",
+      "enabled": "Account enabled",
+      "rootLocked": "The root site-admin can't be disabled.",
+      "name": "Display name",
+      "email": "Email",
+      "federated": "Display name, email and password are managed in the directory and can't be edited here.",
+      "password": {
+        "title": "Reset password",
+        "description": "Sets a new random password and shows it to you once.",
+        "action": "Generate & reset"
+      },
+      "welcome": {
+        "title": "Welcome email",
+        "description": "Sends the account's welcome email again.",
+        "action": "Resend welcome email",
+        "sent": "Welcome email sent"
+      },
+      "newPassword": {
+        "title": "New password for {{name}}",
+        "description": "Copy this now — it won't be shown again.",
+        "label": "Password",
+        "show": "Show",
+        "hide": "Hide",
+        "copy": "Copy",
+        "copied": "Copied",
+        "close": "Close",
+        "done": "I've copied it"
+      }
+    },
+    "security": {
+      "title": "Second factors",
+      "empty": "No authenticator or passkey enrolled — this user relies on their email code only.",
+      "kinds": {
+        "totp": "Authenticator app",
+        "passkey": "Passkey",
+        "email": "Email code"
+      },
+      "added": "Added {{date}}",
+      "implicit": "Always available",
+      "rename": "Rename",
+      "reset": "Reset",
+      "renameTitle": "Rename {{method}}",
+      "renameLabel": "Name",
+      "renameHint": "Leave it empty to use the default name.",
+      "resetTitle": "Reset {{method}}?",
+      "resetDescription": "This removes the method — the user must set it up again the next time they sign in.",
+      "cancel": "Cancel",
+      "failed": "Couldn't change this method"
+    },
+    "rolesTab": {
+      "baseline": "Reader baseline",
+      "baselineDescription": "Baseline — every enabled user is a Reader.",
+      "elevated": "Elevated roles",
+      "root": "Root has all permissions.",
+      "policyAccess": "Policy access",
+      "noExceptions": "No exceptions — this user can see every policy.",
+      "allow": "Allow",
+      "deny": "Deny",
+      "policy": "Policy",
+      "effect": "Exception",
+      "choosePolicy": "Choose a policy",
+      "add": "Add exception",
+      "remove": "Remove the exception for {{policy}}",
+      "failed": "Couldn't change this user's access"
+    },
+    "advanced": {
+      "actAs": {
+        "title": "Act as this user",
+        "description": "See exactly what {{name}} sees, for up to 30 minutes.",
+        "action": "Act as {{name}}",
+        "dialogTitle": "Act as {{name}}?",
+        "dialogDescription": "You will assume this user's roles and access with full write capability. A persistent banner will show while you are acting as them, every action is audited under your own identity, and the session ends automatically after 30 minutes. High-risk actions (password/MFA, deletions, role changes) stay blocked.",
+        "reason": "Reason (required)",
+        "cancel": "Cancel",
+        "notAllowed": "Site admins and the root can't be acted as.",
+        "failed": "Couldn't act as this user"
+      },
+      "sessions": {
+        "title": "Sessions",
+        "logOut": "Log out user",
+        "empty": "No sessions",
+        "active": "Active",
+        "revoked": "Revoked",
+        "expired": "Expired",
+        "now": "now",
+        "unknownAddress": "unknown address",
+        "dialogTitle": "Log out {{name}}?",
+        "dialogDescription": "All active sessions for {{name}} are revoked immediately… This is reversible; the user can simply log back in.",
+        "cancel": "Cancel",
+        "failed": "Couldn't log this user out"
+      },
+      "root": {
+        "title": "Root site-admin",
+        "onlyRoot": "Only the current root ({{name}}) can do this.",
+        "alreadyRoot": "This user is the root site-admin.",
+        "action": "Make this user the root",
+        "dialogTitle": "Make {{name}} the root site-admin?",
+        "dialogDescription": "This demotes the current root and makes {{name}} the root site-admin… This cannot be undone, and only the current root can do it.",
+        "next": "Next: confirm with an email code.",
+        "confirm": "Transfer root",
+        "cancel": "Cancel",
+        "stepUpNote": "Used for transferring root.",
+        "wrongCode": "That code didn't work. Check it, or send a new one.",
+        "failed": "Couldn't transfer root"
+      },
+      "delete": {
+        "title": "Delete user",
+        "description": "Reassign owned policies first.",
+        "rootProtected": "The root site-admin can't be deleted.",
+        "action": "Delete user"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete {{name}}?",
+      "description": "Re-assign their owned policies first, then review what will be removed.",
+      "reassignTo": "Re-assign all to",
+      "choose": "Choose a person",
+      "reassign": "Re-assign",
+      "counts": {
+        "pendingApprovals": "Pending approvals",
+        "ownedPolicies": "Owned policies",
+        "raciGrants": "Rule grants",
+        "roles": "Roles",
+        "permissions": "Permissions",
+        "groupMemberships": "Group memberships",
+        "idpGroups": "Directory groups",
+        "policyOverrides": "Policy overrides",
+        "breakGlassGrants": "Break-glass grants",
+        "managedGroups": "Managed groups"
+      },
+      "blocked": "This account can't be deleted yet",
+      "clearFirst": "Clear these first: {{items}}",
+      "cancel": "Cancel",
+      "continue": "Continue to delete",
+      "confirmTitle": "Delete {{name}}?",
+      "confirmDescription": "This closes the account, revokes its sessions and drops its access. It never deletes a policy.",
+      "confirm": "Delete user",
+      "failed": "Couldn't delete this user"
+    }
   }
 }

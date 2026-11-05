@@ -39,9 +39,11 @@ import type {
   IssueCollabTokenPayload,
   KeyValueInput,
   MergeAccountsResult,
+  MfaFactor,
   NoticeRecipient,
   NoticeStatus,
   Organization,
+  OverrideEffect,
   PendingTask,
   PlatformGroup,
   PolicyVersion,
@@ -129,6 +131,7 @@ export type {
   MergePreviewItem,
   MergeStepResult,
   MergeWarning,
+  MfaFactor,
   Organization,
   OverdueEntry,
   PendingTask,
@@ -171,6 +174,7 @@ export {
   MessageAuthor,
   NoticeRecipient,
   NoticeStatus,
+  OverrideEffect,
   RaciGrant,
   RaciSubjectKind,
   ReferenceKind,
@@ -461,6 +465,9 @@ export interface Edge {
   globalSettings(cookie?: string): Promise<GlobalSettings>;
   /** Grants a GLOBAL role (no category). Site-admin only. */
   grantRole(userId: string, role: string, cookie?: string): Promise<User>;
+  /** Makes another user the root site-admin, demoting the current root (D22). Only the current
+   *  root, with the emailed step-up code from `requestStepUpOtp`. */
+  grantRoot(userId: string, otp: string, cookie?: string): Promise<User>;
   /** A group's direct children. A null parentId lists the root groups. Site-admin only. */
   groupChildren(parentId: null | string, cookie?: string): Promise<readonly Group[]>;
   /** An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only. */
@@ -555,6 +562,12 @@ export interface Edge {
   publishDraft(policyId: string, cookie?: string): Promise<PolicyVersion>;
   /** Publishes a draft template version; it becomes the template's active version for new policies. Site-admin only. */
   publishTemplateVersion(id: string, cookie?: string): Promise<TemplateVersion>;
+  /** Moves every policy a user owns, and their author grants, to another user (D20). */
+  reassignUserPolicies(
+    fromUserId: string,
+    toUserId: string,
+    cookie?: string,
+  ): Promise<{ reassignedAuthorGrants: number; reassignedOwnerCount: number }>;
   /** Records the guided risk assessment and its reportable/not-reportable decision. Officers only. */
   recordRiskAssessment(
     caseId: string,
@@ -568,10 +581,19 @@ export interface Edge {
   /** Removes a MANUAL membership from a platform group. Authorized for site-admins and for a
    *  LOCAL group-manager of groupId; refuses an IdP-synced membership (it is read-only here). */
   removeUserFromGroup(userId: string, groupId: string, cookie?: string): Promise<User>;
+  /** Resets (removes) one of a user's second factors so they set it up again. Site-admin only. */
+  removeUserMfaFactor(userId: string, methodId: string, cookie?: string): Promise<boolean>;
   /** Renames a group (name and slug). Site-admin only. */
   renameGroup(id: string, name: string, slug: string, cookie?: string): Promise<Group>;
   /** Renames a template. Template-level, non-versioned: does not create a new template version. Site-admin only. */
   renameTemplate(id: string, name: string, cookie?: string): Promise<Template>;
+  /** Relabels one of a user's second factors; an empty label goes back to the default. */
+  renameUserMfaFactor(
+    userId: string,
+    methodId: string,
+    label: string,
+    cookie?: string,
+  ): Promise<boolean>;
   /** Reorders a policy version's appendices. */
   reorderAppendices(
     policyVersionId: string,
@@ -586,6 +608,12 @@ export interface Edge {
     assigneeUserId?: string,
     cookie?: string,
   ): Promise<CaseQueue>;
+  /** Emails the signed-in admin a step-up code (D18) for a high-risk action. */
+  requestStepUpOtp(cookie?: string): Promise<boolean>;
+  /** Sends a user's welcome (onboarding) email again. Site-admin only. */
+  resendWelcomeEmail(userId: string, cookie?: string): Promise<boolean>;
+  /** Sets a local account's password to `newPassword`. Site-admin only. */
+  resetUserPassword(userId: string, newPassword: string, cookie?: string): Promise<boolean>;
   /** Display names (and emails) for user ids, with no directory permission needed. */
   resolveUserLabels(ids: readonly string[], cookie?: string): Promise<readonly UserLabel[]>;
   /** Retires (soft-deletes) a template: hidden from listings and pickers, but its versions keep
@@ -632,6 +660,13 @@ export interface Edge {
   setGlobalSettings(input: GlobalSettingsInput, cookie?: string): Promise<GlobalSettings>;
   /** Archive (true) or restore (false) a references-library entry. */
   setReferenceArchived(id: string, archived: boolean, cookie?: string): Promise<Reference>;
+  /** Sets (ALLOW or DENY) or clears (null) one per-policy exception for a user (A19). */
+  setUserPolicyOverride(
+    userId: string,
+    policyNumber: string,
+    effect: null | OverrideEffect,
+    cookie?: string,
+  ): Promise<User>;
   /**
    * Delivers the calling user's approve/reject decision to an active approval run. The actor
    * is bound server-side; runId/taskId are advisory (a stale cached inbox row refuses with
@@ -664,6 +699,12 @@ export interface Edge {
     rotate?: boolean,
     cookie?: string,
   ): Promise<DomainVerification>;
+  /** Starts acting as a user for up to 30 minutes, with a reason (D19). Site-admin only. */
+  startImpersonation(
+    userId: string,
+    reason: string,
+    cookie?: string,
+  ): Promise<{ expiresAt: string; targetName: string; targetUserId: string }>;
   /** Stops the caller's "act as" session. */
   stopImpersonation(cookie?: string): Promise<boolean>;
   /** Submit whole-draft generation as an async job; poll `aiJob(jobId)` for the result. */
@@ -751,6 +792,8 @@ export interface Edge {
     stages: readonly WorkflowStageInput[],
     cookie?: string,
   ): Promise<WorkflowDef>;
+  /** A user's second factors, for the admin Security tab (A18). Site-admin only. */
+  userFactors(userId: string, cookie?: string): Promise<readonly MfaFactor[]>;
   /** The platform's users, site-admin only. */
   users(input: ListUsersInput, cookie?: string): Promise<UserPage>;
   /** Recomputes the hash chain across a record range and reports whether it still holds. Site-admin only. */

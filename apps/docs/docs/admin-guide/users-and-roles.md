@@ -11,24 +11,35 @@ Every person who uses Steward is a **user**. Sign-in is handled by a real identi
 [Organisations and single sign-on](/admin-guide/organisations-and-sso) for how accounts are
 provisioned.
 
-## 👥 The Users page
+## 👥 Users & roles
 
-The **Users** page lists everyone's status and roles. Open a user to:
+**Users & roles** lists everyone with one status (enabled, disabled, root, deleted, or merged
+into someone), their roles, their groups and their policy access: **All policies**, or "All ·"
+followed by how many policies an exception takes away or adds. Open a user to see four tabs.
 
-- **Enable or disable** their account, which blocks sign-in without deleting anything.
-- **Edit their name and email**, for a local account.
-- **Grant or remove the site-admin role.** Site-admin is the one global role in this release: it
-  gives full access to users, organisations and the audit log.
-- **See their sessions**: when each was issued and signed in, when it was last used (to within
-  a minute or so; a dash for a session not used since it signed in), when it expires and the
-  device's IP address.
-- **Revoke their active sessions**, signing them out everywhere.
-- **Delete the account.** Steward previews what the deletion would affect before you confirm, so
-  you can see the impact first. To confirm, type the user's email exactly as shown.
+- **Profile**: the username, **Account enabled** (sign-in is blocked while it's off, and nothing
+  is deleted), and, for a local account, their name and email. **Generate & reset** sets a new
+  random password and shows it to you once; copy it before you close the dialog. **Resend
+  welcome email** sends their onboarding email again. A directory (SSO) account's name, email
+  and password are managed in the directory.
+- **Security**: their second factors. **Rename** gives one a clearer name; **Reset** removes it,
+  so they set it up again the next time they sign in. The email code is always there.
+- **Roles & access**: everyone enabled is a Reader. Tick **Site admin**, **Template admin** or
+  **Compliance admin** to add an elevated role. Under **Policy access**, add an **Allow** or
+  **Deny** exception for one policy, or remove one.
+- **Advanced**:
+  - **Act as this user** shows you exactly what they see, for up to 30 minutes, after you give
+    a reason. Everything you do is recorded under your own name. Site admins and the root can't
+    be acted as.
+  - **Sessions** lists each sign-in with its browser, address and when it was last used. **Log
+    out user** signs them out everywhere; they can simply sign in again.
+  - **Make this user the root** hands the root administrator role to them. Only the current root
+    can do it, and it asks for a code emailed to you.
+  - **Delete user** previews what the deletion would affect. Re-assign their policies to someone
+    first, clear anything that blocks it, then type their email to confirm.
 
 :::note
-The **root** administrator created at first-run setup cannot be disabled, have its roles changed,
-or be deleted from this page.
+The **root** administrator can't be disabled, have its roles changed, or be deleted.
 :::
 
 ## 🗃️ Deleted and merged accounts

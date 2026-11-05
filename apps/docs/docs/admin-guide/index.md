@@ -30,6 +30,9 @@ turned on. Choose a group and the panel beside it lists its pages:
 | People     | My groups, Users & roles, Organizations                        |
 | System     | Settings                                                       |
 
+You only see the pages you can use: a template admin, for example, sees **Access** but not
+**Directory**, and a group with nothing for you doesn't appear on the rail at all.
+
 On a narrower screen the panel is hidden; the rail takes you to each group's first page.
 
 The **Overview** page counts the policies, those published and those still in progress, the

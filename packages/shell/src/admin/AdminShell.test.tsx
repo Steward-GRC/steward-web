@@ -210,6 +210,23 @@ describe("AdminShell rail and panel (H2)", () => {
   });
 });
 
+describe("AdminShell for someone with less than site admin", () => {
+  it("hides the destinations their permissions don't open, and empty groups", () => {
+    renderShell(
+      { ...alice, isSiteAdmin: false, permissions: new Set(["template.manage"]), roles: [] },
+      "/access",
+    );
+    const groups = within(rail())
+      .getAllByRole("link")
+      .map((link) => link.textContent);
+    expect(groups).toEqual(["Overview", "Categories", "Structure", "Policies", "Assurance"]);
+    const panel = screen.getByRole("navigation", { name: "Categories pages" });
+    expect(within(panel).queryByRole("link", { name: "Directory" })).toBeNull();
+    expect(within(panel).getByRole("link", { name: "Access" })).toBeInTheDocument();
+    expect(within(panel).queryByRole("link", { name: "+ New category" })).toBeNull();
+  });
+});
+
 describe("AdminShell banners and footer", () => {
   it("has the environment banner, the footer and the accessibility button", () => {
     renderShell(alice);

@@ -150,12 +150,15 @@ const Panel = ({
             base={current?.id === "access" ? "/access" : "/groups"}
             categories={categories}
           />
-          <Link
-            className="mt-auto flex h-9 flex-none items-center justify-center rounded-md border border-dashed border-border-strong text-sm font-medium text-ink hover:bg-sunken hover:text-ink"
-            to="/groups/new"
-          >
-            {t("admin.categories.new")}
-          </Link>
+          {/* Only someone who manages categories (and so has Directory) can create one. */}
+          {group.destinations.some((entry) => entry.id === "directory") ? (
+            <Link
+              className="mt-auto flex h-9 flex-none items-center justify-center rounded-md border border-dashed border-border-strong text-sm font-medium text-ink hover:bg-sunken hover:text-ink"
+              to="/groups/new"
+            >
+              {t("admin.categories.new")}
+            </Link>
+          ) : null}
         </>
       ) : (
         <div className="flex flex-col gap-px">
@@ -208,7 +211,15 @@ export const AdminShell = ({
   const identity = useIdentity();
   const { pathname } = useLocation();
   const signedIn = identity.id !== "";
-  const groups = useMemo(() => adminNav({ compliance: reporting }), [reporting]);
+  const groups = useMemo(
+    () =>
+      adminNav({
+        can: (permission) => identity.isSiteAdmin || identity.permissions.has(permission),
+        compliance: reporting,
+        groupManager: identity.isSiteAdmin || identity.isGroupManager,
+      }),
+    [identity, reporting],
+  );
   const currentGroup = activeAdminGroup(groups, pathname);
   const currentDestination = activeAdminDestination(groups, pathname);
   // The canvas frames size boxes content-box: a 56 px header plus its 1 px rule is 57 px.

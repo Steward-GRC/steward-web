@@ -160,11 +160,16 @@ export type AddUserToGroupMutation = {
     readonly enabled: boolean;
     readonly roles: ReadonlyArray<string>;
     readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
     readonly isRoot: boolean;
     readonly localAccount: boolean;
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
@@ -1031,11 +1036,16 @@ export type DisableUserMutation = {
     readonly enabled: boolean;
     readonly roles: ReadonlyArray<string>;
     readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
     readonly isRoot: boolean;
     readonly localAccount: boolean;
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
@@ -1079,11 +1089,16 @@ export type EnableUserMutation = {
     readonly enabled: boolean;
     readonly roles: ReadonlyArray<string>;
     readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
     readonly isRoot: boolean;
     readonly localAccount: boolean;
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
@@ -1137,11 +1152,45 @@ export type GrantRoleMutation = {
     readonly enabled: boolean;
     readonly roles: ReadonlyArray<string>;
     readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
     readonly isRoot: boolean;
     readonly localAccount: boolean;
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
+  };
+};
+
+export type GrantRootMutationVariables = Exact<{
+  userId: string | number;
+  otp: string;
+}>;
+
+export type GrantRootMutation = {
+  readonly grantRoot: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
@@ -1240,11 +1289,16 @@ export type ManagedGroupMembersQuery = {
     readonly enabled: boolean;
     readonly roles: ReadonlyArray<string>;
     readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
     readonly isRoot: boolean;
     readonly localAccount: boolean;
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   }>;
 };
@@ -1793,6 +1847,18 @@ export type RaciRuleFieldsFragment = {
   readonly author: Types.RaciGrant;
 };
 
+export type ReassignUserPoliciesMutationVariables = Exact<{
+  fromUserId: string | number;
+  toUserId: string | number;
+}>;
+
+export type ReassignUserPoliciesMutation = {
+  readonly reassignUserPolicies: {
+    readonly reassignedOwnerCount: number;
+    readonly reassignedAuthorGrants: number;
+  };
+};
+
 export type RecordAckMutationVariables = Exact<{
   policyVersionId: string | number;
 }>;
@@ -1855,14 +1921,26 @@ export type RemoveUserFromGroupMutation = {
     readonly enabled: boolean;
     readonly roles: ReadonlyArray<string>;
     readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
     readonly isRoot: boolean;
     readonly localAccount: boolean;
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
+
+export type RemoveUserMfaFactorMutationVariables = Exact<{
+  userId: string | number;
+  methodId: string | number;
+}>;
+
+export type RemoveUserMfaFactorMutation = { readonly removeUserMfaFactor: boolean };
 
 export type RenameCategoryMutationVariables = Exact<{
   id: string | number;
@@ -1904,6 +1982,14 @@ export type RenameTemplateMutation = {
     readonly retiredAt: string | null;
   };
 };
+
+export type RenameUserMfaFactorMutationVariables = Exact<{
+  userId: string | number;
+  methodId: string | number;
+  label: string;
+}>;
+
+export type RenameUserMfaFactorMutation = { readonly renameUserMfaFactor: boolean };
 
 export type ReorderAppendicesMutationVariables = Exact<{
   policyVersionId: string | number;
@@ -2082,6 +2168,23 @@ export type ReportCasesQuery = {
   };
 };
 
+export type RequestStepUpOtpMutationVariables = Exact<{ [key: string]: never }>;
+
+export type RequestStepUpOtpMutation = { readonly requestStepUpOtp: boolean };
+
+export type ResendWelcomeEmailMutationVariables = Exact<{
+  userId: string | number;
+}>;
+
+export type ResendWelcomeEmailMutation = { readonly resendWelcomeEmail: boolean };
+
+export type ResetUserPasswordMutationVariables = Exact<{
+  userId: string | number;
+  newPassword: string;
+}>;
+
+export type ResetUserPasswordMutation = { readonly resetUserPassword: boolean };
+
 export type ResolveUserLabelsQueryVariables = Exact<{
   ids: ReadonlyArray<string | number> | string | number;
 }>;
@@ -2123,11 +2226,16 @@ export type RevokeRoleMutation = {
     readonly enabled: boolean;
     readonly roles: ReadonlyArray<string>;
     readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
     readonly isRoot: boolean;
     readonly localAccount: boolean;
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
@@ -2517,6 +2625,36 @@ export type SetReferenceArchivedMutation = {
   };
 };
 
+export type SetUserPolicyOverrideMutationVariables = Exact<{
+  userId: string | number;
+  policyNumber: string;
+  effect?: Types.OverrideEffect | null | undefined;
+}>;
+
+export type SetUserPolicyOverrideMutation = {
+  readonly setUserPolicyOverride: {
+    readonly userId: string;
+    readonly name: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
+    readonly enabled: boolean;
+    readonly roles: ReadonlyArray<string>;
+    readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
+    readonly isRoot: boolean;
+    readonly localAccount: boolean;
+    readonly username: string;
+    readonly deletedAt: string | null;
+    readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
+    readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
+  };
+};
+
 export type SignalWorkflowMutationVariables = Exact<{
   policyVersionId: string | number;
   runId: string | number;
@@ -2569,6 +2707,19 @@ export type StartDomainVerificationMutation = {
     readonly dnsRecordValue: string;
     readonly instructions: string;
     readonly token: string;
+  };
+};
+
+export type StartImpersonationMutationVariables = Exact<{
+  userId: string | number;
+  reason: string;
+}>;
+
+export type StartImpersonationMutation = {
+  readonly startImpersonation: {
+    readonly targetUserId: string;
+    readonly targetName: string;
+    readonly expiresAt: string;
   };
 };
 
@@ -2858,11 +3009,16 @@ export type UpdateUserProfileMutation = {
     readonly enabled: boolean;
     readonly roles: ReadonlyArray<string>;
     readonly idpGroups: ReadonlyArray<string>;
+    readonly groupIds: ReadonlyArray<string>;
     readonly isRoot: boolean;
     readonly localAccount: boolean;
     readonly username: string;
     readonly deletedAt: string | null;
     readonly mergedIntoUserId: string | null;
+    readonly policyOverrides: ReadonlyArray<{
+      readonly policyNumber: string;
+      readonly effect: Types.OverrideEffect;
+    }>;
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   };
 };
@@ -2901,6 +3057,19 @@ export type UpdateWorkflowDefMutation = {
   };
 };
 
+export type UserFactorsQueryVariables = Exact<{
+  userId: string | number;
+}>;
+
+export type UserFactorsQuery = {
+  readonly userFactors: ReadonlyArray<{
+    readonly id: string;
+    readonly kind: string;
+    readonly enrolledAt: string | null;
+    readonly label: string | null;
+  }>;
+};
+
 export type UserFieldsFragment = {
   readonly userId: string;
   readonly name: string;
@@ -2910,11 +3079,16 @@ export type UserFieldsFragment = {
   readonly enabled: boolean;
   readonly roles: ReadonlyArray<string>;
   readonly idpGroups: ReadonlyArray<string>;
+  readonly groupIds: ReadonlyArray<string>;
   readonly isRoot: boolean;
   readonly localAccount: boolean;
   readonly username: string;
   readonly deletedAt: string | null;
   readonly mergedIntoUserId: string | null;
+  readonly policyOverrides: ReadonlyArray<{
+    readonly policyNumber: string;
+    readonly effect: Types.OverrideEffect;
+  }>;
   readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
 };
 
@@ -2935,11 +3109,16 @@ export type UsersQuery = {
       readonly enabled: boolean;
       readonly roles: ReadonlyArray<string>;
       readonly idpGroups: ReadonlyArray<string>;
+      readonly groupIds: ReadonlyArray<string>;
       readonly isRoot: boolean;
       readonly localAccount: boolean;
       readonly username: string;
       readonly deletedAt: string | null;
       readonly mergedIntoUserId: string | null;
+      readonly policyOverrides: ReadonlyArray<{
+        readonly policyNumber: string;
+        readonly effect: Types.OverrideEffect;
+      }>;
       readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
     }>;
   };
@@ -3560,6 +3739,18 @@ export const UserFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -4304,6 +4495,18 @@ export const AddUserToGroupDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -7064,6 +7267,18 @@ export const DisableUserDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -7243,6 +7458,18 @@ export const EnableUserDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -7465,6 +7692,18 @@ export const GrantRoleDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -7486,6 +7725,105 @@ export const GrantRoleDocument = {
     },
   ],
 } as unknown as DocumentNode<GrantRoleMutation, GrantRoleMutationVariables>;
+export const GrantRootDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "GrantRoot" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "otp" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "grantRoot" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "otp" },
+                value: { kind: "Variable", name: { kind: "Name", value: "otp" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GrantRootMutation, GrantRootMutationVariables>;
 export const GroupMappingsDocument = {
   kind: "Document",
   definitions: [
@@ -7822,6 +8160,18 @@ export const ManagedGroupMembersDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -9331,6 +9681,62 @@ export const PublishTemplateVersionDocument = {
   PublishTemplateVersionMutation,
   PublishTemplateVersionMutationVariables
 >;
+export const ReassignUserPoliciesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ReassignUserPolicies" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "fromUserId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "toUserId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "reassignUserPolicies" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "fromUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "fromUserId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "toUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "toUserId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "reassignedOwnerCount" } },
+                { kind: "Field", name: { kind: "Name", value: "reassignedAuthorGrants" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReassignUserPoliciesMutation, ReassignUserPoliciesMutationVariables>;
 export const RecordAckDocument = {
   kind: "Document",
   definitions: [
@@ -9582,6 +9988,18 @@ export const RemoveUserFromGroupDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -9603,6 +10021,55 @@ export const RemoveUserFromGroupDocument = {
     },
   ],
 } as unknown as DocumentNode<RemoveUserFromGroupMutation, RemoveUserFromGroupMutationVariables>;
+export const RemoveUserMfaFactorDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RemoveUserMfaFactor" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "methodId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "removeUserMfaFactor" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "methodId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "methodId" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RemoveUserMfaFactorMutation, RemoveUserMfaFactorMutationVariables>;
 export const RenameCategoryDocument = {
   kind: "Document",
   definitions: [
@@ -9766,6 +10233,68 @@ export const RenameTemplateDocument = {
     },
   ],
 } as unknown as DocumentNode<RenameTemplateMutation, RenameTemplateMutationVariables>;
+export const RenameUserMfaFactorDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RenameUserMfaFactor" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "methodId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "label" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "renameUserMfaFactor" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "methodId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "methodId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "label" },
+                value: { kind: "Variable", name: { kind: "Name", value: "label" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RenameUserMfaFactorMutation, RenameUserMfaFactorMutationVariables>;
 export const ReorderAppendicesDocument = {
   kind: "Document",
   definitions: [
@@ -10097,6 +10626,105 @@ export const ReportCasesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReportCasesQuery, ReportCasesQueryVariables>;
+export const RequestStepUpOtpDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RequestStepUpOtp" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [{ kind: "Field", name: { kind: "Name", value: "requestStepUpOtp" } }],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RequestStepUpOtpMutation, RequestStepUpOtpMutationVariables>;
+export const ResendWelcomeEmailDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ResendWelcomeEmail" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "resendWelcomeEmail" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ResendWelcomeEmailMutation, ResendWelcomeEmailMutationVariables>;
+export const ResetUserPasswordDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ResetUserPassword" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "newPassword" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "resetUserPassword" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "newPassword" },
+                value: { kind: "Variable", name: { kind: "Name", value: "newPassword" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ResetUserPasswordMutation, ResetUserPasswordMutationVariables>;
 export const ResolveUserLabelsDocument = {
   kind: "Document",
   definitions: [
@@ -10270,6 +10898,18 @@ export const RevokeRoleDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -11612,6 +12252,115 @@ export const SetReferenceArchivedDocument = {
     },
   ],
 } as unknown as DocumentNode<SetReferenceArchivedMutation, SetReferenceArchivedMutationVariables>;
+export const SetUserPolicyOverrideDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetUserPolicyOverride" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyNumber" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "effect" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "OverrideEffect" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setUserPolicyOverride" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyNumber" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyNumber" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "effect" },
+                value: { kind: "Variable", name: { kind: "Name", value: "effect" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "FragmentSpread", name: { kind: "Name", value: "UserFields" } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "UserFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "User" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "userId" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "firstName" } },
+          { kind: "Field", name: { kind: "Name", value: "lastName" } },
+          { kind: "Field", name: { kind: "Name", value: "email" } },
+          { kind: "Field", name: { kind: "Name", value: "enabled" } },
+          { kind: "Field", name: { kind: "Name", value: "roles" } },
+          { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
+          { kind: "Field", name: { kind: "Name", value: "isRoot" } },
+          { kind: "Field", name: { kind: "Name", value: "localAccount" } },
+          { kind: "Field", name: { kind: "Name", value: "username" } },
+          { kind: "Field", name: { kind: "Name", value: "deletedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "mergedIntoUserId" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "memberships" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                { kind: "Field", name: { kind: "Name", value: "source" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetUserPolicyOverrideMutation, SetUserPolicyOverrideMutationVariables>;
 export const SignalWorkflowDocument = {
   kind: "Document",
   definitions: [
@@ -11865,6 +12614,63 @@ export const StartDomainVerificationDocument = {
   StartDomainVerificationMutation,
   StartDomainVerificationMutationVariables
 >;
+export const StartImpersonationDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "StartImpersonation" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "startImpersonation" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "reason" },
+                value: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "targetUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "targetName" } },
+                { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<StartImpersonationMutation, StartImpersonationMutationVariables>;
 export const StopImpersonationDocument = {
   kind: "Document",
   definitions: [
@@ -12950,6 +13756,18 @@ export const UpdateUserProfileDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
@@ -13119,6 +13937,51 @@ export const UpdateWorkflowDefDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateWorkflowDefMutation, UpdateWorkflowDefMutationVariables>;
+export const UserFactorsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "UserFactors" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "userFactors" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "userId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "userId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "enrolledAt" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UserFactorsQuery, UserFactorsQueryVariables>;
 export const UsersDocument = {
   kind: "Document",
   definitions: [
@@ -13196,6 +14059,18 @@ export const UsersDocument = {
           { kind: "Field", name: { kind: "Name", value: "enabled" } },
           { kind: "Field", name: { kind: "Name", value: "roles" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroups" } },
+          { kind: "Field", name: { kind: "Name", value: "groupIds" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyOverrides" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyNumber" } },
+                { kind: "Field", name: { kind: "Name", value: "effect" } },
+              ],
+            },
+          },
           { kind: "Field", name: { kind: "Name", value: "isRoot" } },
           { kind: "Field", name: { kind: "Name", value: "localAccount" } },
           { kind: "Field", name: { kind: "Name", value: "username" } },
