@@ -15,8 +15,9 @@ install time, not here. This page has no module on/off switches.
 
 ## 📣 Announcement and maintenance
 
-An **announcement** is a short, leveled (info or warning) message shown as a banner across
-every app. Both are off until you turn them on, and both can carry an empty message to simply
+An **announcement** is a short, leveled (info or warning) message shown as a strip across the
+top of every page, in both apps and on sign-in. People can dismiss an info announcement (it stays
+hidden for them until the message changes); a warning can't be dismissed. Both are off until you turn them on, and both can carry an empty message to simply
 hide the banner again.
 
 **Maintenance** locks Steward down. While it is on, everyone who opens the staff app sees a

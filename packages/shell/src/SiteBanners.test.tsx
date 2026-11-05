@@ -3,7 +3,8 @@
 import type { GlobalSettings } from "@steward-web/api-client";
 
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { SiteBanners } from "./SiteBanners";
 
@@ -13,11 +14,13 @@ const settings = (overrides: Partial<GlobalSettings> = {}): GlobalSettings => ({
   ...overrides,
 });
 
-/** The banner (a status region) whose text includes `text`, by its tone. */
-const toneOf = (text: string) =>
-  screen.getAllByRole("status").find((banner) => banner.textContent?.includes(text))?.dataset.tone;
+/** The strip whose text includes `text`. */
+const stripOf = (text: string) =>
+  screen.getAllByRole("status").find((strip) => strip.textContent?.includes(text));
 
-describe("SiteBanners", () => {
+afterEach(() => localStorage.clear());
+
+describe("SiteBanners (H5, H6)", () => {
   it("shows nothing when the settings couldn't be read", () => {
     const { container } = render(<SiteBanners settings={null} />);
     expect(container).toBeEmptyDOMElement();
@@ -35,19 +38,62 @@ describe("SiteBanners", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("shows an enabled announcement at the info level", () => {
+  it("shows the maintenance notice as a full-width warn strip with its title (H6)", () => {
     render(
       <SiteBanners
         settings={settings({
-          announcement: { enabled: true, level: "info", message: "New travel policy is live." },
+          maintenance: { enabled: true, message: "Planned downtime Sat 4 Oct, 20:00–22:00." },
         })}
       />,
     );
-    expect(screen.getByText("Announcement")).toBeInTheDocument();
-    expect(toneOf("New travel policy is live.")).toBe("info");
+    const strip = stripOf("Planned downtime")!;
+    expect(strip).toHaveAttribute("data-tone", "warn");
+    expect(strip).toHaveClass("bg-warn");
+    expect(screen.getByText("Maintenance notice").tagName).toBe("B");
   });
 
-  it("shows an announcement at the warning level as a warning", () => {
+  it("shows an info announcement as a soft info strip with no title, dismissible (H5)", async () => {
+    render(
+      <SiteBanners
+        settings={settings({
+          announcement: {
+            enabled: true,
+            level: "info",
+            message: "New: the Visitor Sign-in Policy is now live.",
+          },
+        })}
+      />,
+    );
+    const strip = stripOf("Visitor Sign-in Policy")!;
+    expect(strip).toHaveAttribute("data-tone", "info");
+    expect(strip).toHaveClass("bg-info-soft");
+    expect(screen.queryByText("Announcement")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss announcement" }));
+    expect(screen.queryByText(/Visitor Sign-in Policy/)).toBeNull();
+  });
+
+  it("keeps a dismissed announcement hidden, but shows a new one", () => {
+    localStorage.setItem("steward.announcement.dismissed", "Old news.");
+    const { unmount } = render(
+      <SiteBanners
+        settings={settings({
+          announcement: { enabled: true, level: "info", message: "Old news." },
+        })}
+      />,
+    );
+    expect(screen.queryByText("Old news.")).toBeNull();
+    unmount();
+    render(
+      <SiteBanners
+        settings={settings({
+          announcement: { enabled: true, level: "info", message: "Fresh news." },
+        })}
+      />,
+    );
+    expect(screen.getByText("Fresh news.")).toBeInTheDocument();
+  });
+
+  it("shows a warning announcement as a warn strip that can't be dismissed", () => {
     render(
       <SiteBanners
         settings={settings({
@@ -55,19 +101,8 @@ describe("SiteBanners", () => {
         })}
       />,
     );
-    expect(toneOf("Acknowledge by Friday.")).toBe("warn");
-  });
-
-  it("shows an enabled maintenance message as a maintenance warning", () => {
-    render(
-      <SiteBanners
-        settings={settings({
-          maintenance: { enabled: true, message: "Down for upgrades Saturday 02:00 UTC." },
-        })}
-      />,
-    );
-    expect(screen.getByText("Scheduled maintenance")).toBeInTheDocument();
-    expect(toneOf("Down for upgrades Saturday 02:00 UTC.")).toBe("warn");
+    expect(stripOf("Acknowledge by Friday.")).toHaveAttribute("data-tone", "warn");
+    expect(screen.queryByRole("button", { name: "Dismiss announcement" })).toBeNull();
   });
 
   it("shows both at once, maintenance first", () => {
@@ -79,10 +114,10 @@ describe("SiteBanners", () => {
         })}
       />,
     );
-    const titles = screen
-      .getAllByText(/Announcement|Scheduled maintenance/)
-      .map((title) => title.textContent);
-    expect(titles).toEqual(["Scheduled maintenance", "Announcement"]);
+    expect(screen.getAllByRole("status").map((strip) => strip.dataset.tone)).toEqual([
+      "warn",
+      "info",
+    ]);
   });
 
   it("leaves out an enabled banner with no message", () => {
