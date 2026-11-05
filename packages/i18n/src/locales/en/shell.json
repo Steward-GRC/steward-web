@@ -81,7 +81,11 @@
     "railLabel": "Admin sections",
     "searchPlaceholder": "Search policies, templates, groups…",
     "staff": "Staff",
-    "tag": "Admin"
+    "tag": "Admin",
+    "openPanel": "Open {{group}} pages",
+    "closePanel": "Close {{group}} pages",
+    "pages": "Pages",
+    "menuTitle": "Admin menu"
   },
   "banners": {
     "actingAs": {

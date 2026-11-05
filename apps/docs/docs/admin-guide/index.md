@@ -33,7 +33,13 @@ turned on. Choose a group and the panel beside it lists its pages:
 You only see the pages you can use: a template admin, for example, sees **Access** but not
 **Directory**, and a group with nothing for you doesn't appear on the rail at all.
 
-On a narrower screen the panel is hidden; the rail takes you to each group's first page.
+Below 1280 px the panel turns into an overlay: **Pages** at the top of the rail opens it over the
+page, and choosing a page or pressing Escape closes it. On a phone the rail goes too, and **Open
+menu** in the header lists every group with its pages, with **Staff** and **Docs** at the foot.
+Below 1024 px the header's search becomes a search button.
+
+**Skip to main content** is the first thing the Tab key reaches on every page, and after you follow
+a link, focus moves to the new page's content.
 
 The **Overview** page counts the policies, those published and those still in progress, the
 groups and the templates; select a count to open the list behind it. Beside **Recent activity**,

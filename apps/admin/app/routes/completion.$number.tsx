@@ -3,7 +3,7 @@
 import type { AckRosterEntry } from "@steward-web/api-client";
 
 import { formatDate, formatNumber, formatPercent, useTranslation } from "@steward-web/i18n";
-import { Button, cn, EmptyState } from "@steward-web/ui";
+import { Button, cn, EmptyState, Tabs, TabsContent, TabsList, TabsTrigger } from "@steward-web/ui";
 import { Clock, Download } from "lucide-react";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -170,53 +170,46 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
             aria-label={t("completion.detail.roster.label")}
             className="overflow-hidden rounded-[10px] border border-border bg-surface"
           >
-            <div
-              className="flex gap-1 border-b border-border-strong bg-sunken px-2.5 py-1.5"
-              role="tablist"
-            >
-              {(["acked", "pending"] as const).map((key) => (
-                <button
-                  aria-selected={tab === key}
-                  className={cn(
-                    "rounded-md px-2.5 py-1.5",
-                    tab === key && "bg-surface font-semibold shadow-[var(--shadow-1)]",
-                  )}
-                  key={key}
-                  onClick={() => setTab(key)}
-                  role="tab"
-                  type="button"
-                >
-                  {key === "acked"
-                    ? t("completion.detail.roster.acknowledged", { count: roster.acked.length })
-                    : t("completion.detail.roster.notYet", { count: roster.pending.length })}
-                </button>
-              ))}
-            </div>
-            <div role="tabpanel">
-              {entries.length === 0 ? (
-                <p className="px-3.5 py-2.5 text-[13px] text-muted">
-                  {tab === "acked"
-                    ? t("completion.detail.roster.emptyAcknowledged")
-                    : t("completion.detail.roster.emptyNotYet")}
-                </p>
-              ) : (
-                <ul>
-                  {entries.map((entry) => (
-                    <li className={ROW} key={entry.userId}>
-                      <b className="font-semibold">{entry.userName ?? entry.email}</b>
-                      <span className="text-muted">{entry.email}</span>
-                      <span
-                        className={cn(
-                          tab === "pending" && overdueIds.has(entry.userId) && "text-danger",
-                        )}
-                      >
-                        {status(entry)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <Tabs onValueChange={(value) => setTab(value as "acked" | "pending")} value={tab}>
+              <TabsList className="gap-1 border-b border-border-strong bg-sunken px-2.5 py-1.5">
+                {(["acked", "pending"] as const).map((key) => (
+                  <TabsTrigger
+                    className="mb-0 rounded-md border-b-0 px-2.5 py-1.5 text-base font-normal text-ink data-[state=active]:bg-surface data-[state=active]:font-semibold data-[state=active]:shadow-[var(--shadow-1)]"
+                    key={key}
+                    value={key}
+                  >
+                    {key === "acked"
+                      ? t("completion.detail.roster.acknowledged", { count: roster.acked.length })
+                      : t("completion.detail.roster.notYet", { count: roster.pending.length })}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              <TabsContent className="pt-0" value={tab}>
+                {entries.length === 0 ? (
+                  <p className="px-3.5 py-2.5 text-[13px] text-muted">
+                    {tab === "acked"
+                      ? t("completion.detail.roster.emptyAcknowledged")
+                      : t("completion.detail.roster.emptyNotYet")}
+                  </p>
+                ) : (
+                  <ul>
+                    {entries.map((entry) => (
+                      <li className={ROW} key={entry.userId}>
+                        <b className="font-semibold">{entry.userName ?? entry.email}</b>
+                        <span className="text-muted">{entry.email}</span>
+                        <span
+                          className={cn(
+                            tab === "pending" && overdueIds.has(entry.userId) && "text-danger",
+                          )}
+                        >
+                          {status(entry)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </TabsContent>
+            </Tabs>
           </section>
         </>
       )}

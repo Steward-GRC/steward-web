@@ -266,3 +266,62 @@ describe("the admin command bar's create actions", () => {
     ]);
   });
 });
+
+describe("AdminShell below 1280 px and on a phone (#24)", () => {
+  it("keeps the panel beside the rail only from 1280 px", () => {
+    renderShell(alice, "/policies");
+    expect(screen.getByRole("navigation", { name: "Policies pages" })).toHaveClass(
+      "hidden",
+      "xl:flex",
+    );
+  });
+
+  it("opens the group's pages as an overlay below 1280 px, closing on navigation", async () => {
+    renderShell(alice, "/policies");
+    const open = within(rail()).getByRole("button", { name: "Open Policies pages" });
+    expect(open).toHaveClass("xl:hidden");
+    await userEvent.click(open);
+    const overlay = await screen.findByRole("dialog", { name: "Policies pages" });
+    await userEvent.click(within(overlay).getByRole("link", { name: "Magic links" }));
+    expect(screen.queryByRole("dialog", { name: "Policies pages" })).toBeNull();
+    expect(within(rail()).getByRole("button", { name: "Open Policies pages" })).toHaveFocus();
+  });
+
+  it("hides the rail on a phone and opens every group from Open menu", async () => {
+    renderShell(alice, "/policies");
+    expect(rail()).toHaveClass("hidden", "md:flex");
+    const header = screen.getByRole("banner");
+    const open = within(header).getByRole("button", { name: "Open menu" });
+    expect(open).toHaveClass("md:hidden");
+    await userEvent.click(open);
+    const drawer = await screen.findByRole("dialog", { name: "Admin menu" });
+    for (const group of ["Overview", "Categories", "Structure", "Policies", "People", "System"]) {
+      expect(within(drawer).getByRole("heading", { name: group })).toBeInTheDocument();
+    }
+    expect(within(drawer).getByRole("link", { name: "Catalog" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(within(drawer).getByRole("link", { name: "Staff" })).toHaveAttribute(
+      "href",
+      "https://steward.example/",
+    );
+    await userEvent.click(within(drawer).getByRole("link", { name: "Settings" }));
+    expect(screen.queryByRole("dialog", { name: "Admin menu" })).toBeNull();
+  });
+
+  it("swaps the header search for a search link below 1024 px", () => {
+    renderShell(alice);
+    const header = screen.getByRole("banner");
+    expect(within(header).getByRole("link", { name: "Search" })).toHaveClass("lg:hidden");
+  });
+
+  it("leads with Skip to main content, onto the page's main landmark (WCAG 2.4.1)", async () => {
+    renderShell(alice, "/policies");
+    await userEvent.tab();
+    const skip = screen.getByRole("link", { name: "Skip to main content" });
+    expect(skip).toHaveFocus();
+    expect(skip).toHaveAttribute("href", "#main");
+    expect(screen.getByRole("main")).toHaveAttribute("id", "main");
+  });
+});
