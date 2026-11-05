@@ -4,9 +4,11 @@ import type { Reference, ReferenceInput } from "@steward-web/api-client";
 
 import { ReferenceKind } from "@steward-web/api-client";
 import { PERMISSIONS, useCan, useIdentity } from "@steward-web/auth";
+import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
   Badge,
+  type BadgeTone,
   Banner,
   Button,
   Dialog,
@@ -17,19 +19,15 @@ import {
   EmptyState,
   Field,
   Input,
-  PageHeader,
   RadioGroup,
   RadioItem,
   Table,
-  Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
   TD,
   TH,
   THead,
 } from "@steward-web/ui";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { data, useFetcher } from "react-router";
 
 import type { Route } from "./+types/references-library";
@@ -47,6 +45,13 @@ import {
   setReferenceArchived,
   updateReference,
 } from "../libraries/libraries.server";
+import {
+  DeleteButton,
+  LibraryHeader,
+  LibraryTabs,
+  TableCard,
+  UsedBy,
+} from "../libraries/LibraryParts";
 
 export const loader = async ({ request }: Route.LoaderArgs) => ({
   refs: await listReferences(request),
@@ -101,17 +106,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 const KINDS = [ReferenceKind.Standard, ReferenceKind.Text, ReferenceKind.Link];
 
-const KIND_LABEL: Record<ReferenceKind, string> = {
-  [ReferenceKind.Link]: "Link",
-  [ReferenceKind.Standard]: "Standard",
-  [ReferenceKind.Text]: "Text",
-};
-
-const KIND_DESCRIPTION: Record<ReferenceKind, string> = {
-  [ReferenceKind.Link]: "An external link to a document or resource.",
-  [ReferenceKind.Standard]:
-    "A governing standard or clause (e.g. RFC 2119) — a name plus an optional clause and link.",
-  [ReferenceKind.Text]: "Free-standing reference text shown inline on the policy.",
+/** Each kind's badge: a standard in the info tint, text neutral, a link in plum. */
+const KIND_TONE: Record<ReferenceKind, BadgeTone> = {
+  [ReferenceKind.Link]: "primary",
+  [ReferenceKind.Standard]: "info",
+  [ReferenceKind.Text]: "neutral",
 };
 
 const referenceDetail = (r: Reference): string => {
@@ -124,6 +123,7 @@ const emptyForm = { body: "", clause: "", kind: ReferenceKind.Standard, label: "
 
 export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) {
   const { refs } = loaderData;
+  const { t } = useTranslation("admin");
   const identity = useIdentity();
   const canTemplateManage = useCan(PERMISSIONS.TemplateManage);
   const canComplianceManage = useCan(PERMISSIONS.ComplianceManage);
@@ -143,6 +143,9 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
     setAppliedSave(saveFetcher.data);
     if (saveFetcher.data?.ok && saveFetcher.data.intent === "save") setDialogOpen(false);
   }
+
+  const [archiveTarget, setArchiveTarget] = useState<null | Reference>(null);
+  const kindId = useId();
 
   const deleteFetcher = useFetcher<typeof action>();
   const [deleteTarget, setDeleteTarget] = useState<null | Reference>(null);
@@ -174,125 +177,152 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
 
   return (
     <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader
-        actions={
-          isAdmin ? (
-            <Button onClick={openCreate} size="sm">
-              New reference
-            </Button>
-          ) : undefined
-        }
-        eyebrow="Structure"
-        subtitle="Reusable standards, reference text and links attached by policy authors."
-        title="References & standards"
+      <LibraryHeader
+        newLabel={t("libraries.references.new")}
+        onNew={isAdmin ? openCreate : undefined}
+        subtitle={t("libraries.references.subtitle")}
+        title={t("libraries.references.title")}
       />
 
-      <Tabs onValueChange={(v) => setTab(v as LibraryTab)} value={tab}>
-        <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="archived">Archived</TabsTrigger>
-        </TabsList>
+      <LibraryTabs onTab={setTab} tab={tab}>
         <TabsContent value={tab}>
           {rows.length === 0 ? (
             <EmptyState
-              description={
-                tab === "archived"
-                  ? "Archived references appear here and can be restored."
-                  : "Create a reusable standard, reference text or link that authors can attach to policies."
-              }
-              title={tab === "archived" ? "No archived references" : "No references yet"}
+              description={t(`libraries.references.empty.${tab}Description`)}
+              title={t(`libraries.references.empty.${tab}`)}
             />
           ) : (
-            <Table>
-              <THead>
-                <tr>
-                  <TH>Label</TH>
-                  <TH>Kind</TH>
-                  <TH>Text</TH>
-                  <TH>Used by</TH>
-                  <TH>Actions</TH>
-                </tr>
-              </THead>
-              <tbody>
-                {rows.map((ref) => {
-                  const deletable = isDeletable(ref.usedByCount);
-                  const curatable = canCurateRef(ref);
-                  return (
-                    <tr key={ref.id}>
-                      <TD className="font-medium">{ref.label}</TD>
-                      <TD>
-                        <Badge tone="neutral">{KIND_LABEL[ref.kind]}</Badge>
-                      </TD>
-                      <TD className="max-w-md text-muted">
-                        {ref.kind === ReferenceKind.Link && ref.url ? (
-                          <a
-                            className="inline-block max-w-xs truncate text-primary hover:underline"
-                            href={ref.url}
-                            rel="noopener noreferrer"
-                            target="_blank"
-                          >
-                            {ref.url}
-                          </a>
-                        ) : (
-                          referenceDetail(ref) || "—"
-                        )}
-                      </TD>
-                      <TD className="text-muted">
-                        {ref.usedByCount} {ref.usedByCount === 1 ? "policy" : "policies"}
-                      </TD>
-                      <TD>
-                        {curatable ? (
-                          <div className="flex items-center justify-end gap-2">
-                            {ref.archived ? (
-                              <Badge tone="neutral">Archived</Badge>
-                            ) : (
-                              <Button onClick={() => openEdit(ref)} size="sm" variant="ghost">
-                                Edit
-                              </Button>
-                            )}
-                            <saveFetcher.Form method="post">
-                              <input name="intent" type="hidden" value="archive" />
-                              <input name="id" type="hidden" value={ref.id} />
-                              <input name="archived" type="hidden" value={String(!ref.archived)} />
-                              <Button size="sm" type="submit" variant="secondary">
-                                {ref.archived ? "Restore" : "Archive"}
-                              </Button>
-                            </saveFetcher.Form>
-                            <Button
-                              disabled={!deletable}
-                              onClick={() => setDeleteTarget(ref)}
-                              size="sm"
-                              title={
-                                deletable ? undefined : "In use — archive instead of deleting."
-                              }
-                              variant="ghost"
+            <TableCard>
+              <Table>
+                <THead>
+                  <tr>
+                    <TH>{t("libraries.references.columns.label")}</TH>
+                    <TH>{t("libraries.references.columns.kind")}</TH>
+                    <TH>{t("libraries.references.columns.text")}</TH>
+                    <TH>{t("libraries.references.columns.usedBy")}</TH>
+                    <TH>
+                      <span className="sr-only">{t("libraries.actions.label")}</span>
+                    </TH>
+                  </tr>
+                </THead>
+                <tbody>
+                  {rows.map((ref) => {
+                    const deletable = isDeletable(ref.usedByCount);
+                    const curatable = canCurateRef(ref);
+                    return (
+                      <tr key={ref.id}>
+                        <TD className="font-medium">{ref.label}</TD>
+                        <TD>
+                          <Badge tone={KIND_TONE[ref.kind]}>
+                            {t(`libraries.references.kinds.${ref.kind}`)}
+                          </Badge>
+                        </TD>
+                        <TD className="max-w-md text-muted">
+                          {ref.kind === ReferenceKind.Link && ref.url ? (
+                            <a
+                              className="inline-block max-w-xs truncate text-primary hover:underline"
+                              href={ref.url}
+                              rel="noopener noreferrer"
+                              target="_blank"
                             >
-                              Delete
-                            </Button>
-                          </div>
-                        ) : null}
-                      </TD>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
+                              {ref.url}
+                            </a>
+                          ) : (
+                            referenceDetail(ref) || t("libraries.none")
+                          )}
+                        </TD>
+                        <TD className="text-muted">
+                          <UsedBy count={ref.usedByCount} />
+                        </TD>
+                        <TD>
+                          {curatable ? (
+                            <div className="flex items-center justify-end gap-2">
+                              {ref.archived ? (
+                                <Badge tone="neutral">{t("libraries.actions.archived")}</Badge>
+                              ) : (
+                                <Button onClick={() => openEdit(ref)} size="sm" variant="ghost">
+                                  {t("libraries.actions.edit")}
+                                </Button>
+                              )}
+                              {ref.archived ? (
+                                <saveFetcher.Form method="post">
+                                  <input name="intent" type="hidden" value="archive" />
+                                  <input name="id" type="hidden" value={ref.id} />
+                                  <input name="archived" type="hidden" value="false" />
+                                  <Button size="sm" type="submit" variant="secondary">
+                                    {t("libraries.actions.restore")}
+                                  </Button>
+                                </saveFetcher.Form>
+                              ) : (
+                                <Button
+                                  onClick={() => setArchiveTarget(ref)}
+                                  size="sm"
+                                  variant="secondary"
+                                >
+                                  {t("libraries.actions.archive")}
+                                </Button>
+                              )}
+                              <DeleteButton
+                                inUse={!deletable}
+                                onDelete={() => setDeleteTarget(ref)}
+                              />
+                            </div>
+                          ) : null}
+                        </TD>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </TableCard>
           )}
         </TabsContent>
-      </Tabs>
+      </LibraryTabs>
+
+      <Dialog
+        onOpenChange={(open) => !open && setArchiveTarget(null)}
+        open={archiveTarget !== null}
+      >
+        <DialogContent
+          description={t("libraries.references.archive.description")}
+          title={t("libraries.references.archive.title")}
+        >
+          <saveFetcher.Form method="post" onSubmit={() => setArchiveTarget(null)}>
+            <input name="intent" type="hidden" value="archive" />
+            <input name="id" type="hidden" value={archiveTarget?.id ?? ""} />
+            <input name="archived" type="hidden" value="true" />
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="secondary">{t("libraries.cancel")}</Button>
+              </DialogClose>
+              <Button type="submit">{t("libraries.references.archive.cta")}</Button>
+            </DialogFooter>
+          </saveFetcher.Form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
-        <DialogContent hasInput title={editing ? "Edit reference" : "New reference"}>
+        <DialogContent
+          hasInput
+          title={
+            editing
+              ? t("libraries.references.dialog.editTitle")
+              : t("libraries.references.dialog.newTitle")
+          }
+        >
           <saveFetcher.Form method="post">
             <input name="intent" type="hidden" value="save" />
             <input name="id" type="hidden" value={editing?.id ?? ""} />
             <DialogBody>
-              <Field label="Label">
+              <Field label={t("libraries.references.dialog.label")}>
                 <Input defaultValue={form.label} name="label" required />
               </Field>
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-ink">Kind</span>
+                <span className="text-sm font-semibold text-ink" id={kindId}>
+                  {t("libraries.references.dialog.kind")}
+                </span>
                 <RadioGroup
+                  aria-labelledby={kindId}
                   name="kind"
                   onValueChange={(v) => setKind(v as ReferenceKind)}
                   value={kind}
@@ -300,8 +330,10 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
                   {KINDS.map((k) => (
                     <RadioItem key={k} value={k}>
                       <div className="flex flex-col">
-                        <span>{KIND_LABEL[k]}</span>
-                        <span className="text-sm text-muted">{KIND_DESCRIPTION[k]}</span>
+                        <span>{t(`libraries.references.kinds.${k}`)}</span>
+                        <span className="text-sm text-muted">
+                          {t(`libraries.references.kindDescriptions.${k}`)}
+                        </span>
                       </div>
                     </RadioItem>
                   ))}
@@ -310,21 +342,21 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
 
               {kind === ReferenceKind.Standard ? (
                 <>
-                  <Field label="Clause">
-                    <Input defaultValue={form.clause} name="clause" />
+                  <Field label={t("libraries.references.dialog.clause")}>
+                    <Input className="font-mono" defaultValue={form.clause} name="clause" />
                   </Field>
-                  <Field label="Link (optional)">
+                  <Field label={t("libraries.references.dialog.linkOptional")}>
                     <Input defaultValue={form.url} name="url" />
                   </Field>
                 </>
               ) : null}
               {kind === ReferenceKind.Text ? (
-                <Field label="Reference text">
+                <Field label={t("libraries.references.dialog.body")}>
                   <Input defaultValue={form.body} name="body" />
                 </Field>
               ) : null}
               {kind === ReferenceKind.Link ? (
-                <Field label="Link">
+                <Field label={t("libraries.references.dialog.link")}>
                   <Input defaultValue={form.url} name="url" />
                 </Field>
               ) : null}
@@ -332,17 +364,19 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
               {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
                 <Banner
                   failure={saveFetcher.data.error}
-                  title="Couldn't save this reference"
+                  title={t("libraries.references.dialog.failed")}
                   tone="danger"
                 />
               ) : null}
             </DialogBody>
             <DialogFooter>
               <Button onClick={() => setDialogOpen(false)} type="button" variant="secondary">
-                Cancel
+                {t("libraries.cancel")}
               </Button>
-              <Button disabled={saveFetcher.state !== "idle"} type="submit">
-                {saveFetcher.state === "idle" ? (editing ? "Save changes" : "Create") : "Saving…"}
+              <Button busy={saveFetcher.state !== "idle"} type="submit">
+                {editing
+                  ? t("libraries.references.dialog.save")
+                  : t("libraries.references.dialog.create")}
               </Button>
             </DialogFooter>
           </saveFetcher.Form>
@@ -351,8 +385,10 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
 
       <Dialog onOpenChange={(open) => !open && setDeleteTarget(null)} open={deleteTarget !== null}>
         <DialogContent
-          description={`"${deleteTarget?.label}" will be permanently deleted. This can't be undone.`}
-          title="Delete reference?"
+          description={t("libraries.references.delete.description", {
+            label: deleteTarget?.label,
+          })}
+          title={t("libraries.references.delete.title")}
           tone="danger"
         >
           <deleteFetcher.Form method="post">
@@ -364,17 +400,17 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
               <DialogBody>
                 <Banner
                   failure={deleteFetcher.data.error}
-                  title="Couldn't delete this reference"
+                  title={t("libraries.references.delete.failed")}
                   tone="danger"
                 />
               </DialogBody>
             ) : null}
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="secondary">Cancel</Button>
+                <Button variant="secondary">{t("libraries.cancel")}</Button>
               </DialogClose>
-              <Button disabled={deleteFetcher.state !== "idle"} type="submit" variant="danger">
-                Delete
+              <Button busy={deleteFetcher.state !== "idle"} type="submit" variant="danger">
+                {t("libraries.references.delete.cta")}
               </Button>
             </DialogFooter>
           </deleteFetcher.Form>

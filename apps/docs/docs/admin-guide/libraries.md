@@ -12,13 +12,13 @@ document — editing a library entry updates every policy that attaches it.
 
 ## 📇 Contact library
 
-Open **Contact library** under `/admin` to manage reusable contact blocks (a name, role,
+Open **Contact library** under **Structure** to manage reusable contact blocks (a name, role,
 department, email, phone and hours). A block needs a **label** and at least one of **email** or
 **phone**.
 
 ## 📚 References & standards
 
-**References & standards** holds three kinds of entry:
+**References & standards** holds three kinds of entry, each with its badge in the list:
 
 - **Standard** — a governing standard or clause (e.g. RFC 2119), with an optional clause and link.
 - **Text** — free-standing reference text shown inline on the policy.
@@ -34,10 +34,12 @@ its terms — a definition always belongs to exactly one category.
 
 ## 🗑️ Archive, restore and delete
 
-Every library entry can be **archived** (hidden from the active library and the author's attach
-picker, while still rendering on any policy that already attaches it) and later **restored**. An
-entry attached to nothing can also be **deleted** outright; one still attached to a policy must be
-archived instead.
+Each library lists its entries on **Active** and **Archived** tabs, with **Used by**: how many
+policies attach each one. Every entry can be **archived** (hidden from the active library and the
+author's attach picker, while still rendering on any policy that already attaches it) and later
+**restored**. Archiving a reference asks first: policies that already reference it keep showing
+it. An entry attached to nothing can also be **deleted** outright; while one is attached,
+**Delete** stays off and says "In use — archive instead of deleting."
 
 ## 👤 Who can curate an entry
 
