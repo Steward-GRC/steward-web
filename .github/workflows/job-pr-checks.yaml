@@ -78,16 +78,16 @@ jobs:
             [ -f "$f" ] || continue
             case "$f" in
               .git/*) continue ;;
-              *.png|*.jpg|*.jpeg|*.gif|*.pdf|*.ico|*.svg|*.woff|*.woff2|*.ttf|*.eot|*.zip|*.gz) continue ;;
+              *.png|*.jpg|*.jpeg|*.gif|*.pdf|*.ico|*.svg|*.woff|*.woff2|*.ttf|*.eot|*.zip|*.gz|*.dotx|*.potx|*.pptx) continue ;;
             esac
-            # Emoji allowed in Markdown and .github; blocked elsewhere.
+            # Emoji allowed in Markdown and .github folders (nested ones too, as the pre-commit hook allows); blocked elsewhere.
             case "$f" in
-              .github/*|*.md|NOTES.txt|*/NOTES.txt) : ;;
+              .github/*|*/.github/*|*.md|NOTES.txt|*/NOTES.txt) : ;;
               *) e="$(gov_find_emoji < "$f")"; [ -n "$e" ] && { echo "emoji not allowed in $f:"; echo "$e"; fail=1; } ;;
             esac
-            # AI-tells blocked except in files that document the rule.
+            # AI-tells blocked except in files that document the rule (the same paths the pre-commit hook exempts).
             case "$f" in
-              CLAUDE.md|*/CLAUDE.md|.claude/*|*/.claude/*|.github/workflows/*|*forbidden-text.txt) : ;;
+              CLAUDE.md|*/CLAUDE.md|.claude/*|*/.claude/*|governance/*|*/governance/*|.github/workflows/*|*workflows/*.yml|*workflows/*.yaml|*forbidden-text.txt) : ;;
               *) t="$(gov_find_file_tells "$f")"; [ -n "$t" ] && { echo "AI-tell not allowed in $f:"; echo "$t"; fail=1; } ;;
             esac
           done < <(git diff --name-only --diff-filter=ACM "$BASE" "$HEAD")
@@ -98,14 +98,29 @@ jobs:
       # gitleaks CLI directly rather than gitleaks/gitleaks-action@v2, which needs
       # a paid GITLEAKS_LICENSE for organization-owned repos; the CLI is free
       # everywhere and matches the `gitleaks detect` repos run locally.
+      # Installed under $RUNNER_TEMP, not /usr/local/bin, so the step needs
+      # no write access outside the job's own temp folder. The tarball is
+      # also checked against the release's published SHA-256, the same
+      # pattern job-go-security.yaml uses for gosec.
       - name: Install gitleaks
         id: gitleaks-install
         if: ${{ !cancelled() && steps.checkout.outcome == 'success' }}
+        env:
+          VERSION: 8.30.0
+          # SHA-256 of gitleaks_<version>_linux_x64.tar.gz, from the release's
+          # gitleaks_<version>_checksums.txt. Update it together with VERSION.
+          SHA256: 79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e
         run: |
-          VERSION="8.30.0"
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
-            | tar -xz -C /usr/local/bin gitleaks
-          gitleaks version
+          set -euo pipefail
+          bin="$RUNNER_TEMP/gitleaks/bin"
+          mkdir -p "$bin"
+          tarball="$RUNNER_TEMP/gitleaks_${VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$tarball" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          echo "${SHA256}  $tarball" | sha256sum -c -
+          tar -xzf "$tarball" -C "$bin" gitleaks
+          echo "$bin" >> "$GITHUB_PATH"
+          "$bin/gitleaks" version
 
       - name: 🔒 Gitleaks (secret scan)
         if: ${{ !cancelled() && steps.gitleaks-install.outcome == 'success' }}

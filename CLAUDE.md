@@ -1,15 +1,19 @@
 # CLAUDE.md - steward-web
 
-Working agreement for this repository. The governance below is shared across the org's repos and
-kept in sync with them.
+Working agreement for this repository. The governance below is shared across the owner's repos.
 
-## Enforced by hooks (run `bash .claude/hooks/install.sh` once per clone)
+## Enforced by hooks
+
+These run in the local git and editor hooks where they are installed, and again in CI.
 
 - Conventional Commits on commits, issue titles, and PR titles.
 - No AI tells in commits/issues/PRs/comments/source; no emoji in source or commit messages (emoji
   are allowed in Markdown docs and CI workflow files).
 - Pre-push: the ecosystem's format/lint/test gate must pass (Go: gofmt/vet/golangci-lint/test;
   npm: lint/test scripts; Python: ruff/pytest).
+- Linux-only repos (a committed `.claude/linux-only` marker: the build or tests can't run on macOS)
+  get no local pre-push gate; CI on GitHub-hosted runners is their gate. Run what can run locally,
+  push once, and let CI decide. The commit hooks and any identity guard still run.
 
 ## Conventions
 
@@ -28,10 +32,8 @@ kept in sync with them.
 ## Project layout
 
 The `vite/app` baseline layout.
-The governance sync replaces this whole CLAUDE.md with the shared template on
-every run. Only the layout choice in the begin marker carries over, and this
-section is rendered again from it. Anything else written here is replaced, so
-keep repo-specific notes in AGENTS.md, which the sync leaves alone.
+This block is rendered again from the begin marker whenever the shared governance is
+applied, so keep repo-specific notes in AGENTS.md, which is left alone.
 
 A React single-page app built with Vite.
 
@@ -60,6 +62,7 @@ A React single-page app built with Vite.
 ├── tsconfig.app.json
 ├── tsconfig.node.json
 ├── vite.config.ts        build and Vitest config
+├── eslint.config.mjs
 └── Taskfile.yml
 ```
 
@@ -95,6 +98,11 @@ A React single-page app built with Vite.
 GitHub bills every job for at least one full minute, and a private org's included minutes run out
 fast during a wave of PRs. The shipped workflows are shaped around that:
 
+- **GitHub-hosted runners only.** Every repo in every org runs on GitHub-hosted runners
+  (`runs-on: ubuntu-latest`, `macos-latest` only for a job that truly needs macOS, and the pinned
+  `ubuntu-24.04` and `ubuntu-24.04-arm` images for native image builds). There are
+  no self-hosted runners anywhere. Private repos spend paid minutes, so the rest of this list
+  matters more for them.
 - **Drafts run nothing.** PR workflows skip draft PRs and run on `ready_for_review`, `opened`,
   `synchronize` and `reopened`. Open a PR as a draft, run the full checks locally, push once they
   pass, and mark it ready when the work is finished. That starts one CI run. After it is ready,
@@ -115,6 +123,15 @@ fast during a wave of PRs. The shipped workflows are shaped around that:
   required checks. Use GitHub's "Update branch" when a PR falls behind.
 - **No no-op jobs.** The licence check ships per ecosystem: `job-license-check-go.yaml` only where
   there is a root `go.mod`, `job-license-check-npm.yaml` only where there is a root `package.json`.
+- **Multi-arch service images.** Every service image is published to the registry as one
+  multi-arch manifest list for linux/amd64 and linux/arm64, so it runs on amd64 hosts and on arm64
+  boards such as a Raspberry Pi. An image that is amd64 only, or that ships only inside an
+  appliance bundle, doesn't count. Each platform builds natively on its own GitHub-hosted runner
+  (`ubuntu-24.04` for amd64, `ubuntu-24.04-arm` for arm64; no QEMU emulation), pushes by digest,
+  and one small job joins the digests with `docker buildx imagetools create` and checks that both
+  platforms are in the list. Images build on a published release (or by hand from a release tag)
+  only, never on pull requests. A repo that signs its images signs the manifest list's digest, not
+  each platform's. A new service scaffold carries this as `job-image-publish.yaml`.
 - **Every job has a `timeout-minutes`** (10 for small checks, 15 to 30 for builds, scans and
   releases), so a hung job stops long before GitHub's 360-minute default. Jobs that call a reusable
   workflow (`uses:`) cannot take one; the called workflow's jobs carry it.
@@ -236,6 +253,9 @@ them after `npm run build`; CI runs them on every PR.
   `npm run check:pack:growth` and `npm run check:install`. They are the CI versions of the
   compare-with-`npm view` and install-the-tarball release checks.
 
+The Release Manager pushes to `main` through the release GitHub App, which the branch ruleset lists
+as a bypass actor; without that bypass the `[skip ci]` commit would be rejected by the PR-required
+rule.
 
 **GitHub Action repos release differently** — a composite/JS action has no package manifest and is
 **not** published to a registry. The maintainer manually tags `vX.Y.Z`, publishes the GitHub
@@ -246,10 +266,8 @@ below.
 
 ### First release
 
-release-drafter cannot draft a first release (upstream release-drafter#1630). With no earlier
-published release it proposes a version with "No changes" and a "could not find a previous
-published release" warning block. Do not fix that draft by hand; the maintainer prepares the first
-release notes.
+The release-drafter action resolves a first release (no earlier published release) to `v1.0.0` on
+its own, with the full merged-PR notes and no warning block. There is nothing to fix by hand.
 
 ### Docs site and first-release gotchas
 
