@@ -102,7 +102,9 @@ describe("staffNav", () => {
       toAcknowledge: "/acknowledge",
     });
     expect(COMING_SOON_PATHS).not.toContain("/acknowledge");
-    for (const id of ["ask", "templates", "auditLog", "reportConcern", "myReports"]) {
+    expect(links.ask).toBe("/ask");
+    expect(COMING_SOON_PATHS).not.toContain("/ask");
+    for (const id of ["templates", "auditLog", "reportConcern", "myReports"]) {
       expect(COMING_SOON_PATHS).toContain(links[id]);
     }
   });

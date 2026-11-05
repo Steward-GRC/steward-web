@@ -1,14 +1,21 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDate, useTranslation } from "@steward-web/i18n";
-import { Star } from "lucide-react";
-import { useMemo } from "react";
+import { ChevronDown, Star } from "lucide-react";
+import { type ReactNode, useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
 
 import { SensitivityBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Table, TD, TH, THead } from "#ui/components/Display";
 import { CategoryTiles, FilterBar, Pager, SortHeader } from "#ui/components/LibraryControls";
+import {
+  Menu,
+  MenuContent,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuTrigger,
+} from "#ui/components/Overlays";
 import { EmptyState } from "#ui/feedback/States";
 import { PageHeader } from "#ui/layout/PageHeader";
 import { cn } from "#ui/lib/cn";
@@ -20,6 +27,8 @@ import { useFavorites } from "./favorites";
 import { documentTypeCopy, policyPath } from "./policy";
 
 export interface PolicyLibraryProps {
+  /** The header's own actions after Starred and Status: Import and New policy for an author. */
+  actions?: ReactNode;
   categories: readonly Category[];
   documentType: DocumentType;
   policies: readonly Policy[];
@@ -37,9 +46,11 @@ const SORT_KEYS: ReadonlySet<SortKey> = new Set<SortKey>([
   "updated",
   "version",
 ]);
-/** The status filter's words in the address: the pills' own, and "in-progress" for anything
- *  not yet published (the admin Overview's In progress card links there). */
+/** The status filter's words in the address: the pills' own, "in-progress" for anything not
+ *  yet published (the admin Overview's In progress card links there), and "all" for the whole
+ *  library, which is how the table shows without another filter (U3). */
 const STATUS_FILTERS: Readonly<Record<string, readonly string[]>> = {
+  all: ["DRAFT", "IN_REVIEW", "PUBLISHED", "REJECTED", "SUPERSEDED", "WITHDRAWN"],
   draft: ["DRAFT"],
   "in-progress": ["DRAFT", "IN_REVIEW"],
   "in-review": ["IN_REVIEW"],
@@ -55,7 +66,12 @@ const sortValue = (policy: Policy, key: SortKey): string => (policy[key] ?? "").
  * preference (`useFavorites`); filters, sort and page live in the URL (category, subcategory,
  * status, q, starred, sort, dir, page) so the state survives a refresh or a shared link.
  */
-export const PolicyLibrary = ({ categories, documentType, policies }: PolicyLibraryProps) => {
+export const PolicyLibrary = ({
+  actions,
+  categories,
+  documentType,
+  policies,
+}: PolicyLibraryProps) => {
   const { t } = useTranslation(["policy", "common"]);
   const { isFavorite, toggle } = useFavorites();
   const [parameters, setParameters] = useSearchParams();
@@ -101,13 +117,19 @@ export const PolicyLibrary = ({ categories, documentType, policies }: PolicyLibr
   const page = Math.min(Math.max(Number(parameters.get("page")) || 1, 1), pages);
   const shown = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  const statusLabel = (value: string) => {
+    if (value === "all") return t(`library.filters.all.${copy.nounPlural}`);
+    if (value === "in-progress") return t("library.filters.inProgress");
+    return t(`status.${value}`);
+  };
+
   const chips = [
     category ? { id: "category", label: category } : null,
     subcategory ? { id: "subcategory", label: subcategory } : null,
     STATUS_FILTERS[status]
       ? {
           id: "status",
-          label: status === "in-progress" ? t("library.filters.inProgress") : t(`status.${status}`),
+          label: statusLabel(status),
         }
       : null,
     starredOnly ? { id: "starred", label: t("library.filters.starred") } : null,
@@ -127,29 +149,54 @@ export const PolicyLibrary = ({ categories, documentType, policies }: PolicyLibr
     <div className="grid gap-[18px] p-6">
       <PageHeader
         actions={
-          <Button
-            aria-pressed={starredOnly}
-            className="h-[38px] px-3"
-            onClick={() => update({ starred: starredOnly ? "" : "1" })}
-            variant={starredOnly ? "primary" : "secondary"}
-          >
-            <Star aria-hidden="true" />
-            {t("library.filters.starred")}
-          </Button>
+          <>
+            <Button
+              aria-pressed={starredOnly}
+              className="h-[38px] px-3"
+              onClick={() => update({ starred: starredOnly ? "" : "1" })}
+              variant={starredOnly ? "primary" : "secondary"}
+            >
+              <Star aria-hidden="true" />
+              {t("library.filters.starred")}
+            </Button>
+            <Menu>
+              <MenuTrigger asChild>
+                <Button className="h-[38px] px-3" variant="secondary">
+                  {t("library.filters.status")}
+                  <ChevronDown aria-hidden="true" />
+                </Button>
+              </MenuTrigger>
+              <MenuContent>
+                <MenuRadioGroup
+                  onValueChange={(value) => update({ status: value })}
+                  value={STATUS_FILTERS[status] ? status : ""}
+                >
+                  {["all", "draft", "in-review", "published", "in-progress"].map((value) => (
+                    <MenuRadioItem key={value} value={value}>
+                      {statusLabel(value)}
+                    </MenuRadioItem>
+                  ))}
+                </MenuRadioGroup>
+              </MenuContent>
+            </Menu>
+            {actions}
+          </>
         }
         subtitle={t(`library.${copy.nounPlural}.subtitle`)}
         title={t(`library.${copy.nounPlural}.title`)}
       />
 
-      <CategoryTiles
-        categories={categories.map((c) => ({
-          count: policies.filter((p) => p.category === c.name).length,
-          name: c.name,
-          subcategories: c.subcategories,
-        }))}
-        onCategory={(name) => update({ category: name, subcategory: "" })}
-        onSubcategory={(name, sub) => update({ category: name, subcategory: sub })}
-      />
+      {chips.length === 0 ? (
+        <CategoryTiles
+          categories={categories.map((c) => ({
+            count: policies.filter((p) => p.category === c.name).length,
+            name: c.name,
+            subcategories: c.subcategories,
+          }))}
+          onCategory={(name) => update({ category: name, subcategory: "" })}
+          onSubcategory={(name, sub) => update({ category: name, subcategory: sub })}
+        />
+      ) : null}
 
       {chips.length > 0 ? (
         <FilterBar
@@ -162,7 +209,7 @@ export const PolicyLibrary = ({ categories, documentType, policies }: PolicyLibr
         />
       ) : null}
 
-      {filtered.length === 0 ? (
+      {chips.length === 0 ? null : filtered.length === 0 ? (
         <EmptyState
           description={t("library.empty.description")}
           title={t("library.empty.title", { noun: copy.nounPlural })}

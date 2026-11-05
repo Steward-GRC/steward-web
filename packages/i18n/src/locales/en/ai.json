@@ -1,4 +1,23 @@
 {
+  "ask": {
+    "answer": "Answer",
+    "browse": "Browse the library",
+    "check": {
+      "body": "Always confirm the requirement in the source policy before acting on it.",
+      "title": "Check the source"
+    },
+    "description": "Ask a question in plain language and get an answer grounded in the policies and procedures you can access, with links to the source documents.",
+    "hint": "Enter to send, Shift+Enter for a new line.",
+    "noAnswer": "No policy answers that",
+    "placeholder": "How long do I have to file an expense claim?",
+    "question": "Your question",
+    "reading": "Reading the policies you can access…",
+    "sensitive": "Includes sensitive sources",
+    "submit": "Ask",
+    "title": "Ask policies & procedures",
+    "tryAsking": "Try asking",
+    "unavailable": "Ask policies & procedures is temporarily unavailable. Everything else in the app keeps working as usual."
+  },
   "assist": {
     "apply": "Use this suggestion",
     "ask": "Suggest",

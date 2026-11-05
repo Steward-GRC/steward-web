@@ -32,10 +32,13 @@ describe("useLiveRevalidation", () => {
   it("reloads the page's data when the window comes back into focus", async () => {
     mount();
     expect(await screen.findByText("loads 1")).toBeInTheDocument();
-    act(() => {
-      globalThis.dispatchEvent(new Event("focus"));
+    // Focus until a reload lands: the listener attaches in an effect after the first paint.
+    await vi.waitFor(() => {
+      act(() => {
+        globalThis.dispatchEvent(new Event("focus"));
+      });
+      expect(screen.getByText(/^loads [2-9]$/)).toBeInTheDocument();
     });
-    expect(await screen.findByText("loads 2")).toBeInTheDocument();
   });
 
   it("reloads it every interval", async () => {

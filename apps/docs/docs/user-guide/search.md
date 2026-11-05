@@ -15,11 +15,21 @@ This page shows you how to find the policy or procedure you need and open it to 
   results** opens the full search page. With nothing typed, the panel lists what you opened from
   it recently. This is the fastest way when you know part of the name or a keyword — for
   example, typing `leave` to find the annual-leave policy.
-- **Browse the library** — The Policies and Procedures pages show a tile for each category. Pick
-  a category, or one of its subcategories, to narrow the list. Each filter shows in the
-  **Filtered by** bar with the number of results; remove one with its ×, or **Clear** them all.
-  Select a column heading to sort by it, and use the page numbers under the list to move through
-  a long one. **Starred** shows only the documents you've starred.
+- **Browse the library** — The Policies and Procedures pages open on a tile for each category.
+  Pick a category, or one of its subcategories, to list its documents. **Status** in the header
+  lists every document (**All policies**) or only those in one state, and **Starred** shows only
+  the documents you've starred. Each filter shows in the **Filtered by** bar with the number of
+  results; remove one with its ×, or **Clear** them all to go back to the tiles. Select a column
+  heading to sort by it, and use the page numbers under the list to move through a long one. If
+  you write policies, **New policy** (or **New procedure**) and **Import** are in the header too.
+- **The search page** — **See all results** in the search panel opens the search page, which
+  lists everything that matches, grouped the same way. Its search box understands `"exact
+  phrase"`, `-exclude`, `OR` and `field:value` (for example `category:Finance`).
+- **Ask** — **Ask policies & procedures**, in the menu under Assist, answers a question in plain
+  language from the policies and procedures you can read. Each part of the answer is numbered,
+  and the numbers link to the sections it came from. Always check the source policy before you
+  act on an answer. When your organisation's AI is off, Ask says it's temporarily unavailable;
+  everything else keeps working.
 
 :::tip
 Browse to the right part of the tree first, then search within it — handy when a common word

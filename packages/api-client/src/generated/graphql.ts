@@ -2149,6 +2149,32 @@ export type SaveDraftMutation = {
   };
 };
 
+export type SearchAndAnswerQueryVariables = Exact<{
+  question: string;
+  categoryId?: string | number | null | undefined;
+}>;
+
+export type SearchAndAnswerQuery = {
+  readonly searchAndAnswer: {
+    readonly answer: string;
+    readonly hasSensitiveSource: boolean;
+    readonly noAuthorizedSource: boolean;
+    readonly citations: ReadonlyArray<{
+      readonly documentType: string | null;
+      readonly policyId: string;
+      readonly policyTitle: string;
+      readonly sectionKey: string;
+      readonly versionId: string;
+      readonly versionNo: number;
+    }>;
+    readonly segments: ReadonlyArray<{
+      readonly start: number;
+      readonly end: number;
+      readonly sources: ReadonlyArray<{ readonly policyId: string; readonly sectionKey: string }>;
+    }>;
+  };
+};
+
 export type SearchUsersQueryVariables = Exact<{
   query: string;
   limit?: number | null | undefined;
@@ -2614,6 +2640,12 @@ export type TemplatesQuery = {
     readonly retiredAt: string | null;
   }>;
 };
+
+export type TopPolicyQuestionsQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+export type TopPolicyQuestionsQuery = { readonly topPolicyQuestions: ReadonlyArray<string> };
 
 export type UpcomingApprovalsQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -10339,6 +10371,97 @@ export const SaveDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<SaveDraftMutation, SaveDraftMutationVariables>;
+export const SearchAndAnswerDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "SearchAndAnswer" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "question" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "searchAndAnswer" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "question" },
+                value: { kind: "Variable", name: { kind: "Name", value: "question" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "categoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "categoryId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "answer" } },
+                { kind: "Field", name: { kind: "Name", value: "hasSensitiveSource" } },
+                { kind: "Field", name: { kind: "Name", value: "noAuthorizedSource" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "citations" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "documentType" } },
+                      { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                      { kind: "Field", name: { kind: "Name", value: "policyTitle" } },
+                      { kind: "Field", name: { kind: "Name", value: "sectionKey" } },
+                      { kind: "Field", name: { kind: "Name", value: "versionId" } },
+                      { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "segments" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "start" } },
+                      { kind: "Field", name: { kind: "Name", value: "end" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "sources" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                            { kind: "Field", name: { kind: "Name", value: "sectionKey" } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SearchAndAnswerQuery, SearchAndAnswerQueryVariables>;
 export const SearchUsersDocument = {
   kind: "Document",
   definitions: [
@@ -11970,6 +12093,39 @@ export const TemplatesDocument = {
     },
   ],
 } as unknown as DocumentNode<TemplatesQuery, TemplatesQueryVariables>;
+export const TopPolicyQuestionsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "TopPolicyQuestions" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "limit" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "topPolicyQuestions" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "limit" },
+                value: { kind: "Variable", name: { kind: "Name", value: "limit" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TopPolicyQuestionsQuery, TopPolicyQuestionsQueryVariables>;
 export const UpcomingApprovalsDocument = {
   kind: "Document",
   definitions: [

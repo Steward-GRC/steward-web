@@ -93,6 +93,8 @@ export {
   MenuContent,
   MenuItem,
   MenuLabel,
+  MenuRadioGroup,
+  MenuRadioItem,
   MenuSeparator,
   MenuTrigger,
   Popover,

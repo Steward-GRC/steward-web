@@ -66,6 +66,7 @@ import type {
 import type {
   AckStatus,
   AckSummary,
+  AskAnswer,
   BreakGlassGrant,
   Category,
   Group,
@@ -185,6 +186,7 @@ export type { UserLabel } from "./views";
 export type {
   AckStatus,
   AckSummary,
+  AskAnswer,
   BreakGlassGrant,
   Category,
   DocumentBlock,
@@ -592,6 +594,9 @@ export interface Edge {
     templateVersionId: null | string,
     cookie?: string,
   ): Promise<PolicyVersion>;
+  /** Ask (U6): a grounded answer from the policies the caller can read, with its citations. The
+   *  read scope is the gateway's own. Fails while AI is unavailable (see `aiHealth`). */
+  searchAndAnswer(question: string, cookie?: string): Promise<AskAnswer>;
   /** A lightweight typeahead: any authenticated caller, id+name(+email) pairs for users whose
    *  email contains `query`. Never enumerates the full directory. */
   searchUsers(query: string, limit?: number, cookie?: string): Promise<readonly UserLabel[]>;
@@ -679,6 +684,9 @@ export interface Edge {
    * Approvals where the calling user is an approver on a future (not-yet-reached) stage —
    * visibility/heads-up, not yet actionable. The approver id is bound server-side.
    */
+  /** Ask's "Try asking": the questions asked most, most-frequent first (default 6). Empty
+   *  when AI is unavailable. */
+  topPolicyQuestions(limit?: number, cookie?: string): Promise<readonly string[]>;
   upcomingApprovals(cookie?: string): Promise<readonly UpcomingApproval[]>;
   /** Edits a library appendix. */
   updateAppendix(

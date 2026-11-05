@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import {
   Dialog as DialogPrimitive,
   DropdownMenu as MenuPrimitive,
@@ -471,6 +471,28 @@ export const MenuItem = ({ className, ...props }: ComponentProps<typeof MenuPrim
     )}
     {...props}
   />
+);
+
+export const MenuRadioGroup = MenuPrimitive.RadioGroup;
+
+/** A menu choice of one, marked with a check when it's the current one. */
+export const MenuRadioItem = ({
+  children,
+  className,
+  ...props
+}: ComponentProps<typeof MenuPrimitive.RadioItem>) => (
+  <MenuPrimitive.RadioItem
+    className={cn(
+      "flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-7 text-base outline-none select-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-on-primary-soft relative",
+      className,
+    )}
+    {...props}
+  >
+    <MenuPrimitive.ItemIndicator className="absolute left-2 flex">
+      <Check aria-hidden="true" className="size-4" />
+    </MenuPrimitive.ItemIndicator>
+    {children}
+  </MenuPrimitive.RadioItem>
 );
 
 export const Popover = PopoverPrimitive.Root;

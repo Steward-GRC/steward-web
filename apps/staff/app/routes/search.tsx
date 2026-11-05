@@ -2,128 +2,155 @@
 // SPDX-License-Identifier: Apache-2.0
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
-import { Badge, Card, CardBody, EmptyState, Input, PageHeader } from "@steward-web/ui";
+import { type CommandPaletteResults, refusalOf } from "@steward-web/shell";
+import { PageHeader, ReachError } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
 import { listCategories, listPolicies } from "@steward-web/ui/domain/server";
-import { Search } from "lucide-react";
-import { type FormEvent, useState } from "react";
-import { data, useNavigate, useSearchParams } from "react-router";
+import { Folder, Search } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { Link, useNavigation, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/search";
 
-import { buildSearchIndex, searchHits, type SearchHitType } from "../search/searchIndex";
+import { paletteGroupsOf } from "../search/paletteGroups";
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+/** Typing waits this long before it searches, so each keystroke isn't a request. */
+const TYPE_DELAY_MS = 200;
+
+export const loader = async ({
+  request,
+}: Route.LoaderArgs): Promise<{ q: string } & CommandPaletteResults> => {
   await requireIdentityFromRequest(request);
+  const q = new URL(request.url).searchParams.get("q") ?? "";
+  if (!q.trim()) return { groups: [], q };
   const cookie = request.headers.get("cookie") ?? undefined;
-  const [policies, categories] = await Promise.all([
-    listPolicies(DocumentType.Policy, cookie),
-    listCategories(cookie),
-  ]);
-  return data({ categories, policies });
+  try {
+    const [policies, procedures, categories] = await Promise.all([
+      listPolicies(DocumentType.Policy, cookie),
+      listPolicies(DocumentType.Procedure, cookie),
+      listCategories(cookie),
+    ]);
+    return { groups: paletteGroupsOf(policies, procedures, categories, q), q };
+  } catch (error) {
+    return { failure: refusalOf(error), groups: [], q };
+  }
 };
 
-const GROUP_HEADING: Record<SearchHitType, string> = {
-  Category: "Categories",
-  Policy: "Policies",
-};
-const GROUP_ORDER: SearchHitType[] = ["Policy", "Category"];
+/** A box for one of the page's states (U5): Start typing, Searching…, No results. */
+const StateBox = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex flex-col gap-1 rounded-[8px] border border-border bg-surface p-4 text-center text-muted">
+    {children}
+  </div>
+);
 
+const ResultGroup = ({ group }: { group: CommandPaletteResults["groups"][number] }) => {
+  const { t } = useTranslation("shell");
+  const headingId = useId();
+  return (
+    <section aria-labelledby={headingId} className="flex flex-col gap-1.5">
+      <h2
+        className="px-2.5 text-2xs font-semibold tracking-[.06em] text-muted uppercase"
+        id={headingId}
+      >
+        {t(`palette.groups.${group.id}`, { defaultValue: group.id })}
+      </h2>
+      <ul className="overflow-hidden rounded-[8px] border border-border bg-surface">
+        {group.items.map((item) => (
+          <li className="border-b border-border last:border-b-0" key={item.id}>
+            <Link
+              className="flex items-center gap-2 px-3 py-2.5 text-ink no-underline hover:bg-primary-soft hover:text-on-primary-soft"
+              to={item.to}
+            >
+              {item.icon === "folder" ? (
+                <Folder aria-hidden="true" className="size-4 shrink-0" />
+              ) : null}
+              <span className="flex min-w-0 flex-col">
+                <b className="font-semibold">{item.label}</b>
+                {item.hint ? <span className="text-xs text-muted">{item.hint}</span> : null}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+};
+
+/**
+ * Search (U5): the field, the operators help, and its states (Start typing to search,
+ * Searching…, No results) or the results grouped the way the command palette (H10) groups
+ * them, from the same search. The words live in the address, so a result list can be shared.
+ */
 export default function SearchRoute({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("search");
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const [parameters, setParameters] = useSearchParams();
   const q = parameters.get("q") ?? "";
   const [input, setInput] = useState(q);
-
-  // Keep the local input in sync when the URL query changes (the browser back button, or a
-  // link with ?q= already set). Adjusting state during render on a prop change, not an
-  // effect: track the last-seen URL query and reset the local input when it changes.
   const [lastQ, setLastQ] = useState(q);
   if (q !== lastQ) {
     setLastQ(q);
     setInput(q);
   }
 
-  const index = buildSearchIndex(loaderData.policies, loaderData.categories);
-  const hits = searchHits(index, q);
-  const groups = GROUP_ORDER.map((type) => ({
-    heading: GROUP_HEADING[type],
-    items: hits.filter((h) => h.type === type),
-    type,
-  })).filter((g) => g.items.length > 0);
-
-  const onSubmit = (event: FormEvent) => {
-    event.preventDefault();
+  useEffect(() => {
     const next = input.trim();
-    setParameters(next ? { q: next } : {}, { replace: true });
-  };
+    if (next === q.trim()) return;
+    const timer = setTimeout(
+      () => setParameters(next ? { q: next } : {}, { replace: true }),
+      TYPE_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [input, q, setParameters]);
+
+  const searching = navigation.state === "loading" && navigation.location?.pathname === "/search";
+  const typed = input.trim();
+  const groups = loaderData.groups.filter((group) => group.items.length > 0);
+
+  let body: React.ReactNode;
+  if (!typed) {
+    body = <StateBox>{t("start.title")}</StateBox>;
+  } else if (searching || typed !== loaderData.q.trim()) {
+    body = <StateBox>{t("searching")}</StateBox>;
+  } else if (loaderData.failure) {
+    body = <ReachError action={t("action")} failure={loaderData.failure} />;
+  } else if (groups.length === 0) {
+    body = (
+      <StateBox>
+        <b className="text-ink">{t("noResults.title")}</b>
+        <span>{t("noResults.description", { query: loaderData.q })}</span>
+      </StateBox>
+    );
+  } else {
+    body = groups.map((group) => <ResultGroup group={group} key={group.id} />);
+  }
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <PageHeader
-        eyebrow={t("eyebrow")}
-        subtitle={q ? t("subtitleResults", { count: hits.length, query: q }) : t("subtitleEmpty")}
-        title={t("title")}
-      />
-
-      <form className="relative w-full" onSubmit={onSubmit}>
-        <Search
-          aria-hidden="true"
-          className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
-        />
-        <Input
+    <div className="flex w-full flex-col gap-3 p-6">
+      <PageHeader subtitle={t("subtitleEmpty")} title={t("title")} />
+      <form
+        className="flex h-11 items-center gap-2.5 rounded-[8px] border-2 border-primary bg-surface px-3 shadow-[0_0_0_3px_var(--primary-soft)]"
+        onSubmit={(event) => event.preventDefault()}
+        role="search"
+      >
+        <Search aria-hidden="true" className="size-[18px] shrink-0 text-muted" />
+        <input
           aria-label={t("title")}
-          className="pl-8"
-          onChange={(event) => {
-            setInput(event.target.value);
-            const next = event.target.value.trim();
-            setParameters(next ? { q: next } : {}, { replace: true });
-          }}
+          className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-muted"
+          onChange={(event) => setInput(event.target.value)}
           placeholder={t("placeholder")}
           type="search"
           value={input}
         />
       </form>
-
-      <p className="text-xs text-muted">{t("operatorsHint")}</p>
-
-      {q ? (
-        groups.length === 0 ? (
-          <EmptyState
-            description={t("noResults.description", { query: q })}
-            title={t("noResults.title")}
-          />
-        ) : (
-          groups.map((group) => (
-            <section className="flex flex-col gap-3" key={group.type}>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-                  {group.heading}
-                </h2>
-                <Badge tone="neutral">{group.items.length}</Badge>
-              </div>
-              <Card>
-                <CardBody className="flex flex-col p-0">
-                  {group.items.map((hit) => (
-                    <button
-                      className="flex flex-col items-start gap-0.5 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-sunken"
-                      key={`${group.type}-${hit.id}`}
-                      onClick={() => navigate(hit.to)}
-                      type="button"
-                    >
-                      <span className="text-sm font-medium text-ink">{hit.label}</span>
-                      {hit.hint ? <span className="text-xs text-muted">{hit.hint}</span> : null}
-                    </button>
-                  ))}
-                </CardBody>
-              </Card>
-            </section>
-          ))
-        )
-      ) : (
-        <EmptyState description={t("start.description")} title={t("start.title")} />
-      )}
+      <p className="flex flex-wrap gap-2.5 text-xs text-muted">
+        {["phrase", "exclude", "or", "field"].map((operator) => (
+          <code className="font-mono" key={operator}>
+            {t(`operators.${operator}`)}
+          </code>
+        ))}
+      </p>
+      <div className="flex flex-col gap-2.5">{body}</div>
     </div>
   );
 }
