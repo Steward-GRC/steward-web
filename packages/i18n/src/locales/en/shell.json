@@ -4,11 +4,22 @@
     "title": "About Steward",
     "version": "Version {{version}} ({{commit}})"
   },
+  "accessibility": {
+    "button": "Accessibility options",
+    "saved": "Preferences save to this browser.",
+    "title": "Accessibility options"
+  },
   "account": {
+    "logOutEverywhere": "Log out everywhere",
+    "notifications": "Notifications",
     "profile": "Your profile"
   },
   "brand": {
     "name": "Steward"
+  },
+  "comingSoon": {
+    "description": "This part of Steward is still being built. It will appear here when it's ready.",
+    "title": "Coming soon"
   },
   "copyDiagnostics": {
     "action": "Copy diagnostics",
@@ -23,6 +34,65 @@
     "copied": "Copied",
     "fallbackHint": "Your browser didn't allow the copy. Select the text below and copy it by hand.",
     "fallbackTitle": "UI issue bundle"
+  },
+  "environment": {
+    "label": "{{name}} environment"
+  },
+  "footer": {
+    "copyright": "© {{year}} {{organisation}} · {{brand}}",
+    "copyrightNoOrganisation": "© {{year}} {{brand}}"
+  },
+  "header": {
+    "accountMenu": "Account menu",
+    "admin": "Admin",
+    "closeMenu": "Close menu",
+    "docs": "Docs",
+    "feedback": "Feedback",
+    "menuTitle": "Menu",
+    "notifications": "Notifications",
+    "openMenu": "Open menu",
+    "search": {
+      "label": "Search",
+      "placeholder": "Search policies, templates…",
+      "shortcut": "⌘K"
+    }
+  },
+  "nav": {
+    "badge": "{{label}}, {{count}} waiting",
+    "browseAll": "Browse by category",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "items": {
+      "approvals": "Approvals",
+      "ask": "Ask policies & procedures",
+      "auditLog": "Audit log",
+      "ethicsMyReports": "My reports",
+      "ethicsReportConcern": "Report a concern",
+      "myAttestations": "My attestations",
+      "myReports": "My reports",
+      "myWork": "My work",
+      "policies": "Library",
+      "procedures": "Library",
+      "reportConcern": "Report a concern",
+      "templates": "Templates",
+      "toAcknowledge": "To acknowledge"
+    },
+    "label": "Main navigation",
+    "railLabels": {
+      "policies": "Policies",
+      "procedures": "Procedures"
+    },
+    "sections": {
+      "assist": "Assist",
+      "browse": "Browse by category",
+      "compliance": "Compliance",
+      "ethics": "Ethics",
+      "overview": "Overview",
+      "policies": "Policies",
+      "procedures": "Procedures",
+      "workflow": "Workflow"
+    },
+    "showSubcategories": "Show {{category}}'s subcategories"
   },
   "pageTitle": "{{page}} · {{brand}}",
   "siteBanners": {
@@ -71,6 +141,7 @@
       "approvals": "Approvals",
       "case": "Case",
       "cases": "Cases",
+      "comingSoon": "Coming soon",
       "draft": "Edit draft",
       "drafts": "Drafts",
       "myWork": "My work",

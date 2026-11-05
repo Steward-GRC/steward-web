@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
     {
       items: [
         "user-guide/signing-in",
+        "user-guide/getting-around",
         "user-guide/your-dashboard",
         "user-guide/search",
         "user-guide/acknowledge",

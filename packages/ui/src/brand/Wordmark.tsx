@@ -70,8 +70,11 @@ const PATH = [
   "64.30-9.10Q365.80-10.10 367.30-11.70L367.30-11.70Z",
 ].join("");
 
-/** The outline was set at 100 units to the em, so this is its height per pixel of font size. */
-const HEIGHT_PER_EM = 0.809;
+/**
+ * The outline's height per pixel of type size. Its em is about 107 units (the cap height is
+ * 69.6), so at 20 px type it is 73 px wide, the width "Steward" sets in the H1 header.
+ */
+const HEIGHT_PER_EM = 0.756;
 const WIDTH_PER_HEIGHT = 390.8 / 80.9;
 
 export interface WordmarkProps {

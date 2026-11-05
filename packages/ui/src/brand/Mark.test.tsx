@@ -63,7 +63,7 @@ describe("Lockup", () => {
     const lockup = screen.getByRole("img", { name: "Steward" });
     expect(lockup).toContainHTML('width="26"');
     expect(lockup).toContainHTML('data-variant="full"');
-    expect(lockup).toContainHTML('height="16.18"');
+    expect(lockup).toContainHTML('height="15.12"');
     expect(lockup).toHaveClass("gap-2");
   });
 });

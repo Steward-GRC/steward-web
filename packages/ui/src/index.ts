@@ -80,6 +80,7 @@ export {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  SheetContent,
   Tooltip,
 } from "./components/Overlays";
 export { Spinner } from "./components/Spinner";

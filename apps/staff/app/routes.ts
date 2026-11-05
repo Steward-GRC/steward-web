@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { index, route, type RouteConfig } from "@react-router/dev/routes";
+import { COMING_SOON_PATHS } from "@steward-web/shell/coming-soon";
 
 /**
  * The staff feature areas (gates, library, reader, authoring, approvals, reporting) each add
@@ -28,4 +29,9 @@ export default [
   route("resources/ai-jobs/:jobId", "routes/resources.ai-jobs.$jobId.tsx"),
   route("reporting/cases", "routes/reporting.cases.tsx"),
   route("reporting/cases/:caseId", "routes/reporting.cases.$caseId.tsx"),
+  // The shell's designed destinations that aren't built yet (H1): each answers "Coming soon"
+  // until its feature PR replaces the route.
+  ...COMING_SOON_PATHS.map((path) =>
+    route(path.slice(1), "routes/coming-soon.tsx", { id: `coming-soon${path}` }),
+  ),
 ] satisfies RouteConfig;
