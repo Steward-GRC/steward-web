@@ -58,12 +58,12 @@ describe("buildSearchIndex", () => {
     expect(hit!.to).toBe("/policies/POL-0001");
   });
 
-  it("links a category hit at the library's browse-by-category path", () => {
+  it("links a category hit at the library filtered to that category", () => {
     const [hit] = buildSearchIndex(
       [],
       [category({ id: "c-1", name: "IT Security", slug: "it-security" })],
     );
-    expect(hit!.to).toBe("/policies/category/it-security");
+    expect(hit!.to).toBe("/policies?category=IT+Security");
   });
 });
 

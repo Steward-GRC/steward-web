@@ -63,10 +63,10 @@ export const buildSearchIndex = (
       id: c.id,
       label: c.name,
       rec: { category: lc(c.name), text: lc(c.name) },
-      // The library's browse-by-category path. Categories aren't document-type-specific, but
-      // the original search page only ever indexed the Policy library, never Procedures, and
-      // always pointed a category hit at /policies — carried as-is.
-      to: `/policies/category/${encodeURIComponent(c.slug)}`,
+      // The library filtered to the category, the same `?category=<name>` filter its own
+      // category tiles set. Categories aren't document-type-specific, but the original search
+      // page only ever indexed the Policy library, never Procedures — carried as-is.
+      to: `/policies?${new URLSearchParams({ category: c.name }).toString()}`,
       type: "Category",
     });
   }
