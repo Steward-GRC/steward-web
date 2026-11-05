@@ -119,6 +119,12 @@ describe("PolicyReader", () => {
     expect(screen.getByRole("button", { name: "2.0.0" })).toBeInTheDocument();
   });
 
+  it("names the version a published event published", () => {
+    renderAt(baseDetail);
+    expect(screen.getByText("Published v2.0.0")).toBeInTheDocument();
+    expect(screen.queryByText(/\{\{version\}\}/)).not.toBeInTheDocument();
+  });
+
   it("marks each history event with an icon, not a text glyph", () => {
     renderAt(baseDetail);
     const badges = screen.getAllByTestId("history-event-badge");

@@ -58,7 +58,10 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
                     </span>
                     <div>
                       <p className="text-ink">
-                        {t(`reader.history.events.${event.kind}`, { stage: event.stage ?? "" })}
+                        {t(`reader.history.events.${event.kind}`, {
+                          stage: event.stage ?? "",
+                          version: group.version,
+                        })}
                       </p>
                       <p className="text-muted">
                         {[event.actorName, event.at].filter(Boolean).join(" · ")}
