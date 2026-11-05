@@ -226,6 +226,16 @@ export { PolicyStatus } from "./views";
 /** `AiJobResultContent` is renamed on export only to avoid colliding with the `Edge` method of the same name. */
 export type AIJobResultContent = AiJobResultContentSchema;
 
+/** The AI module's settings as the admin Settings page reads them (A28). */
+export interface AiSettings {
+  credentialLast4: string;
+  credentialSet: boolean;
+  enabled: boolean;
+  model: string;
+  provider: null | string;
+  topK: number;
+}
+
 export interface AuditLogFilters {
   actorUserId?: string;
   groupId?: string;
@@ -318,6 +328,9 @@ export interface Edge {
   /** Adds a MANUAL membership to a platform group. Authorized for site-admins and for a LOCAL
    *  group-manager of groupId; refuses an IdP-synced membership. */
   addUserToGroup(userId: string, groupId: string, cookie?: string): Promise<User>;
+  /** The AI module's settings for the admin Settings page (A28): on or off, the model, whether
+   *  a provider token is stored (never the token) and the retrieval count. Site-admin only. */
+  aiConfig(cookie?: string): Promise<AiSettings>;
   /** Whether AI is usable right now for the calling user. Never rejects; see `AiHealth.reason`. */
   aiHealth(cookie?: string): Promise<AiHealth>;
   /** Polls an async AI job's status by id. */
@@ -638,6 +651,15 @@ export interface Edge {
   /** A lightweight typeahead: any authenticated caller, id+name(+email) pairs for users whose
    *  email contains `query`. Never enumerates the full directory. */
   searchUsers(query: string, limit?: number, cookie?: string): Promise<readonly UserLabel[]>;
+  /** Turns AI features on or off for everyone (A28). Site-admin only. */
+  setAiEnabled(enabled: boolean, cookie?: string): Promise<boolean>;
+  /** Stores the AI provider's token, write-only; an empty value clears it (A28). */
+  setAiProviderCredential(
+    credential: string,
+    cookie?: string,
+  ): Promise<{ credentialLast4: string; credentialSet: boolean }>;
+  /** Sets how many results AI retrieves per question (top-k); 0 goes back to the default. */
+  setAiRetrievalConfig(topK: number, cookie?: string): Promise<number>;
   /** Sets the discovery date every notification deadline counts from. Officers only. */
   setCaseDiscoveryDate(caseId: string, discoveredOn: string, cookie?: string): Promise<ReportCase>;
   /** Any status but CLOSED; closing goes through `closeCase`. Officers only. */

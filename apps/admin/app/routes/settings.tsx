@@ -1,214 +1,475 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { refusalOf } from "@steward-web/shell";
+import { refusalOf, SiteBanners } from "@steward-web/shell";
 import {
   Banner,
   Button,
-  Card,
-  CardBody,
+  cn,
+  type Failure,
   Field,
   Input,
-  PageHeader,
   Select,
   Switch,
+  Textarea,
 } from "@steward-web/ui";
+import { type ReactNode, useId, useState } from "react";
 import { data, useFetcher } from "react-router";
 
 import type { Route } from "./+types/settings";
 
 import {
+  getAiSettings,
   getEmailServiceConfig,
   getGlobalSettings,
   saveEmailServiceConfig,
   saveGlobalSettings,
+  setAiEnabled,
+  setAiToken,
+  setAiTopK,
 } from "../settings/settings.server";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const [globalSettings, emailServiceConfig] = await Promise.all([
+  const [globalSettings, emailServiceConfig, ai] = await Promise.all([
     getGlobalSettings(request),
     getEmailServiceConfig(request),
+    // The AI cards show only when the AI module answers.
+    getAiSettings(request).catch(() => null),
   ]);
-  return { emailServiceConfig, globalSettings };
+  return { ai, emailServiceConfig, globalSettings };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const form = await request.formData();
-  const intent = form.get("intent");
+  const intent = String(form.get("intent") ?? "");
+  const field = (name: string) => String(form.get(name) ?? "").trim();
 
   try {
     switch (intent) {
+      case "ai-clear-token": {
+        await setAiToken(request, "");
+        break;
+      }
+      case "ai-enabled": {
+        await setAiEnabled(request, field("enabled") === "true");
+        break;
+      }
+      case "ai-token": {
+        await setAiToken(request, field("token"));
+        break;
+      }
+      case "ai-top-k": {
+        await setAiTopK(request, Number(field("topK")) || 0);
+        break;
+      }
+      case "email-clear-key":
       case "save-email": {
         const apiKey = String(form.get("apiKey") ?? "");
-        const saved = await saveEmailServiceConfig(request, {
-          apiKey: apiKey === "" ? undefined : apiKey,
-          domain: String(form.get("domain") ?? "").trim(),
-          enabled: form.get("enabled") === "true",
-          fromAddress: String(form.get("fromAddress") ?? "").trim(),
-          provider: String(form.get("provider") ?? "").trim(),
-          region: String(form.get("region") ?? "").trim(),
+        await saveEmailServiceConfig(request, {
+          // Blank keeps the stored key; "" through Clear key removes it.
+          apiKey: intent === "email-clear-key" ? "" : apiKey === "" ? undefined : apiKey,
+          domain: field("domain"),
+          enabled: field("enabled") === "true",
+          fromAddress: field("fromAddress"),
+          provider: field("provider"),
+          region: field("region"),
         });
-        return data({ intent, ok: true, saved } as const);
+        break;
       }
       case "save-global": {
-        const saved = await saveGlobalSettings(request, {
+        await saveGlobalSettings(request, {
           announcement: {
-            enabled: form.get("announcementEnabled") === "true",
-            level: String(form.get("announcementLevel") ?? "info"),
-            message: String(form.get("announcementMessage") ?? "").trim(),
+            enabled: field("announcementEnabled") === "true",
+            level: field("announcementLevel") || "info",
+            message: field("announcementMessage"),
           },
           maintenance: {
-            enabled: form.get("maintenanceEnabled") === "true",
-            message: String(form.get("maintenanceMessage") ?? "").trim(),
+            enabled: field("maintenanceEnabled") === "true",
+            message: field("maintenanceMessage"),
           },
         });
-        return data({ intent, ok: true, saved } as const);
+        break;
       }
       default: {
         throw data("unrecognized intent", { status: 400 });
       }
     }
+    return { intent, ok: true } as const;
   } catch (error) {
-    return data({ error: refusalOf(error), intent: String(intent), ok: false } as const, {
-      status: 400,
-    });
+    if (error instanceof Response) throw error;
+    return data({ failure: refusalOf(error), intent, ok: false } as const, { status: 400 });
   }
 };
 
-export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { emailServiceConfig, globalSettings } = loaderData;
-  const { t } = useTranslation("admin");
-  const globalFetcher = useFetcher<typeof action>();
-  const emailFetcher = useFetcher<typeof action>();
+type Result = { failure: Failure; intent: string; ok: false } | { intent: string; ok: true };
 
-  const globalFailure =
-    globalFetcher.data && !globalFetcher.data.ok && globalFetcher.data.intent === "save-global"
-      ? globalFetcher.data.error
-      : undefined;
-  const emailFailure =
-    emailFetcher.data && !emailFetcher.data.ok && emailFetcher.data.intent === "save-email"
-      ? emailFetcher.data.error
-      : undefined;
-  // Each confirmation holds until that form is submitted again (#112).
-  const globalSaved =
-    globalFetcher.state === "idle" &&
-    globalFetcher.data?.ok === true &&
-    globalFetcher.data.intent === "save-global";
-  const emailSaved =
-    emailFetcher.state === "idle" &&
-    emailFetcher.data?.ok === true &&
-    emailFetcher.data.intent === "save-email";
+type Tone = "neutral" | "ok" | "warn";
+
+const PILL: Record<Tone, string> = {
+  neutral: "bg-neutral-soft text-neutral",
+  ok: "bg-ok-soft text-ok",
+  warn: "bg-warn-soft text-warn",
+};
+
+const failureOf = (fetcher: { data?: Result; state: string }) =>
+  fetcher.state === "idle" && fetcher.data && !fetcher.data.ok ? fetcher.data.failure : undefined;
+
+const savedOf = (fetcher: { data?: Result; state: string }) =>
+  fetcher.state === "idle" && fetcher.data?.ok === true;
+
+/** One settings card: a heading with its status pill, a line about it, then its controls. */
+const SettingsCard = ({
+  children,
+  description,
+  pill,
+  title,
+  tone,
+}: {
+  children?: ReactNode;
+  description: ReactNode;
+  pill: string;
+  title: string;
+  tone: Tone;
+}) => {
+  const titleId = useId();
+  return (
+    <section
+      aria-labelledby={titleId}
+      className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface px-4 py-3.5"
+    >
+      <div className="flex items-center gap-2.5">
+        <b className="flex-1" id={titleId}>
+          {title}
+        </b>
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-2xs leading-[15px] font-semibold",
+            PILL[tone],
+          )}
+          data-testid="status-pill"
+        >
+          {pill}
+        </span>
+      </div>
+      <p className="text-sm leading-normal text-muted">{description}</p>
+      {children}
+    </section>
+  );
+};
+
+/** D36: the inline "are you sure" row before a token or key is cleared. */
+const ClearConfirm = ({
+  confirm,
+  onCancel,
+  onConfirm,
+  text,
+}: {
+  confirm: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+  text: string;
+}) => {
+  const { t } = useTranslation("admin");
+  return (
+    <div className="flex flex-wrap items-center gap-2.5 rounded-lg bg-surface px-3.5 py-3 text-sm shadow-[inset_0_0_0_1px_var(--danger)]">
+      <span className="min-w-0 flex-1">{text}</span>
+      <button className="font-semibold text-muted hover:text-ink" onClick={onCancel} type="button">
+        {t("settings.cancel")}
+      </button>
+      <Button className="h-8 px-3" onClick={onConfirm} variant="danger">
+        {confirm}
+      </Button>
+    </div>
+  );
+};
+
+/**
+ * Settings (A28): six cards, each a heading with its status pill: the AI provider token, AI
+ * features, AI retrieval, outbound email, the global announcement with its live preview, and
+ * the maintenance notice. Full width, as every admin page is.
+ */
+export default function Settings({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("admin");
+  const { ai, emailServiceConfig, globalSettings } = loaderData;
+  const token = useFetcher<Result>();
+  const enabled = useFetcher<Result>();
+  const retrieval = useFetcher<Result>();
+  const email = useFetcher<Result>();
+  const banners = useFetcher<Result>();
+  const [clearingToken, setClearingToken] = useState(false);
+  const [clearingKey, setClearingKey] = useState(false);
+  const [announcement, setAnnouncement] = useState(globalSettings.announcement);
+  const [maintenance, setMaintenance] = useState(globalSettings.maintenance);
+  const previewId = useId();
+
+  const pendingEnabled = enabled.formData?.get("enabled");
+  const aiOn =
+    typeof pendingEnabled === "string" ? pendingEnabled === "true" : (ai?.enabled ?? false);
+  const saveBanners = () =>
+    void banners.submit(
+      {
+        announcementEnabled: String(announcement.enabled),
+        announcementLevel: announcement.level,
+        announcementMessage: announcement.message,
+        intent: "save-global",
+        maintenanceEnabled: String(maintenance.enabled),
+        maintenanceMessage: maintenance.message,
+      },
+      { method: "post" },
+    );
+  const failure = [token, enabled, retrieval, email, banners]
+    .map((fetcher) => failureOf(fetcher))
+    .find(Boolean);
 
   return (
-    <div className="flex w-full max-w-2xl flex-col gap-6 p-6">
-      <PageHeader eyebrow="System" title="Settings" />
+    <div className="flex w-full flex-col gap-3 p-4 md:p-6">
+      <h1 className="text-[26px] leading-[1.3] font-semibold">{t("settings.title")}</h1>
+      {failure ? <Banner failure={failure} title={t("settings.failed")} tone="danger" /> : null}
 
-      <Card>
-        <CardBody className="flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-ink">Announcement &amp; maintenance</h2>
-          <globalFetcher.Form className="flex flex-col gap-4" method="post">
-            <input name="intent" type="hidden" value="save-global" />
+      {ai ? (
+        <>
+          <SettingsCard
+            description={t("settings.token.description")}
+            pill={ai.credentialSet ? t("settings.pills.set") : t("settings.pills.notSet")}
+            title={t("settings.token.title")}
+            tone={ai.credentialSet ? "ok" : "neutral"}
+          >
+            {ai.credentialSet ? (
+              <p className="font-mono text-sm">
+                {t("settings.token.stored", { last4: ai.credentialLast4 })}
+              </p>
+            ) : null}
+            <token.Form className="flex flex-wrap items-end gap-2" method="post">
+              <input name="intent" type="hidden" value="ai-token" />
+              <Field className="min-w-[220px] flex-1" label={t("settings.token.label")}>
+                <Input autoComplete="off" name="token" required type="password" />
+              </Field>
+              <Button busy={token.state !== "idle"} type="submit" variant="secondary">
+                {t("settings.token.replace")}
+              </Button>
+              {ai.credentialSet ? (
+                <Button onClick={() => setClearingToken(true)} variant="secondary">
+                  {t("settings.token.clear")}
+                </Button>
+              ) : null}
+            </token.Form>
+            {clearingToken ? (
+              <ClearConfirm
+                confirm={t("settings.token.clear")}
+                onCancel={() => setClearingToken(false)}
+                onConfirm={() => {
+                  setClearingToken(false);
+                  void token.submit({ intent: "ai-clear-token" }, { method: "post" });
+                }}
+                text={t("settings.token.confirm")}
+              />
+            ) : null}
+          </SettingsCard>
 
-            <Field label="Show an announcement banner">
+          <SettingsCard
+            description={t("settings.ai.description", { model: ai.model })}
+            pill={aiOn ? t("settings.pills.on") : t("settings.pills.off")}
+            title={t("settings.ai.title")}
+            tone={aiOn ? "ok" : "neutral"}
+          >
+            <label className="flex items-center gap-3 text-sm">
               <Switch
-                defaultChecked={globalSettings.announcement.enabled}
-                name="announcementEnabled"
-                value="true"
+                aria-label={t("settings.ai.switch")}
+                checked={aiOn}
+                onCheckedChange={(checked) =>
+                  void enabled.submit(
+                    { enabled: String(checked), intent: "ai-enabled" },
+                    { method: "post" },
+                  )
+                }
               />
-            </Field>
-            <Field label="Level">
-              <Select
-                defaultValue={globalSettings.announcement.level}
-                name="announcementLevel"
-                options={[
-                  { label: "Info", value: "info" },
-                  { label: "Warning", value: "warning" },
-                ]}
-              />
-            </Field>
-            <Field label="Message">
-              <Input
-                defaultValue={globalSettings.announcement.message}
-                name="announcementMessage"
-              />
-            </Field>
+              {t("settings.ai.switch")}
+            </label>
+          </SettingsCard>
 
-            <Field label="Show a maintenance notice">
-              <Switch
-                defaultChecked={globalSettings.maintenance.enabled}
-                name="maintenanceEnabled"
-                value="true"
-              />
-            </Field>
-            <Field label="Maintenance message">
-              <Input defaultValue={globalSettings.maintenance.message} name="maintenanceMessage" />
-            </Field>
+          <SettingsCard
+            description={t("settings.retrieval.description")}
+            pill={t("settings.pills.results", { count: ai.topK })}
+            title={t("settings.retrieval.title")}
+            tone="ok"
+          >
+            <retrieval.Form className="flex flex-wrap items-end gap-2" method="post">
+              <input name="intent" type="hidden" value="ai-top-k" />
+              <Field label={t("settings.retrieval.label")}>
+                <Input className="w-28" defaultValue={ai.topK} min={0} name="topK" type="number" />
+              </Field>
+              <Button busy={retrieval.state !== "idle"} type="submit" variant="secondary">
+                {t("settings.save")}
+              </Button>
+              {savedOf(retrieval) ? (
+                <span className="font-semibold text-ok">{t("settings.saved")}</span>
+              ) : null}
+            </retrieval.Form>
+          </SettingsCard>
+        </>
+      ) : null}
 
-            {globalFailure ? (
-              <Banner failure={globalFailure} title="Couldn't save these banners" tone="danger" />
+      <SettingsCard
+        description={t("settings.email.description")}
+        pill={emailServiceConfig.enabled ? t("settings.pills.on") : t("settings.pills.smtp")}
+        title={t("settings.email.title")}
+        tone={emailServiceConfig.enabled ? "ok" : "warn"}
+      >
+        <email.Form className="grid gap-3 md:grid-cols-2" method="post">
+          <input name="intent" type="hidden" value="save-email" />
+          <label className="flex items-center gap-3 text-sm md:col-span-2">
+            <Switch defaultChecked={emailServiceConfig.enabled} name="enabled" value="true" />
+            {t("settings.email.switch")}
+          </label>
+          <Field
+            hint={emailServiceConfig.apiKeySet ? t("settings.email.keyStored") : undefined}
+            label={t("settings.email.key")}
+          >
+            <Input autoComplete="off" name="apiKey" type="password" />
+          </Field>
+          <Field label={t("settings.email.provider")}>
+            <Input defaultValue={emailServiceConfig.provider} name="provider" />
+          </Field>
+          <Field label={t("settings.email.domain")}>
+            <Input defaultValue={emailServiceConfig.domain} name="domain" />
+          </Field>
+          <Field label={t("settings.email.region")}>
+            <Input defaultValue={emailServiceConfig.region} name="region" />
+          </Field>
+          <Field label={t("settings.email.from")}>
+            <Input defaultValue={emailServiceConfig.fromAddress} name="fromAddress" type="email" />
+          </Field>
+          <div className="flex items-center justify-end gap-2 md:col-span-2">
+            {savedOf(email) ? (
+              <span className="font-semibold text-ok">{t("settings.saved")}</span>
             ) : null}
-            {globalSaved ? (
-              <Banner title={t("settings.saved.banners")} tone="ok">
-                {t("settings.saved.bannersDetail")}
-              </Banner>
+            {emailServiceConfig.apiKeySet ? (
+              <Button onClick={() => setClearingKey(true)} variant="secondary">
+                {t("settings.email.clear")}
+              </Button>
             ) : null}
-
-            <Button className="self-start" disabled={globalFetcher.state !== "idle"} type="submit">
-              {globalFetcher.state === "idle" ? "Save" : "Saving…"}
+            <Button busy={email.state !== "idle"} type="submit">
+              {t("settings.save")}
             </Button>
-          </globalFetcher.Form>
-        </CardBody>
-      </Card>
+          </div>
+        </email.Form>
+        {clearingKey ? (
+          <ClearConfirm
+            confirm={t("settings.email.clear")}
+            onCancel={() => setClearingKey(false)}
+            onConfirm={() => {
+              setClearingKey(false);
+              void email.submit(
+                {
+                  domain: emailServiceConfig.domain,
+                  enabled: String(emailServiceConfig.enabled),
+                  fromAddress: emailServiceConfig.fromAddress,
+                  intent: "email-clear-key",
+                  provider: emailServiceConfig.provider,
+                  region: emailServiceConfig.region,
+                },
+                { method: "post" },
+              );
+            }}
+            text={t("settings.email.confirm")}
+          />
+        ) : null}
+      </SettingsCard>
 
-      <Card>
-        <CardBody className="flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-ink">Outbound email</h2>
-          <p className="text-sm text-muted">
-            {emailServiceConfig.apiKeySet
-              ? "A sending key is stored. It can only be replaced, never read back."
-              : "No sending key is stored yet."}
-          </p>
-          <emailFetcher.Form className="flex flex-col gap-4" method="post">
-            <input name="intent" type="hidden" value="save-email" />
+      <SettingsCard
+        description={t("settings.announcement.description")}
+        pill={
+          announcement.enabled
+            ? t("settings.pills.announcement", {
+                level: t(`settings.levels.${announcement.level}`, {
+                  defaultValue: announcement.level,
+                }),
+              })
+            : t("settings.pills.off")
+        }
+        title={t("settings.announcement.title")}
+        tone={announcement.enabled ? "ok" : "neutral"}
+      >
+        <label className="flex items-center gap-3 text-sm">
+          <Switch
+            checked={announcement.enabled}
+            onCheckedChange={(checked) => setAnnouncement({ ...announcement, enabled: checked })}
+          />
+          {t("settings.announcement.switch")}
+        </label>
+        <div className="grid gap-3 md:grid-cols-[1fr_200px]">
+          <Field label={t("settings.announcement.message")}>
+            <Textarea
+              onChange={(event) =>
+                setAnnouncement({ ...announcement, message: event.target.value })
+              }
+              rows={2}
+              value={announcement.message}
+            />
+          </Field>
+          <Field label={t("settings.announcement.level")}>
+            <Select
+              onValueChange={(level) => setAnnouncement({ ...announcement, level })}
+              options={(["info", "warning"] as const).map((level) => ({
+                label: t(`settings.levels.${level}`),
+                value: level,
+              }))}
+              value={announcement.level}
+            />
+          </Field>
+        </div>
+        <section aria-labelledby={previewId} className="flex flex-col gap-1.5">
+          <b className="text-sm" id={previewId}>
+            {t("settings.announcement.preview")}
+          </b>
+          <div className="overflow-hidden rounded-md">
+            <SiteBanners
+              settings={{
+                announcement: { ...announcement, enabled: true },
+                maintenance: { enabled: false, message: "" },
+              }}
+            />
+          </div>
+        </section>
+        <div className="flex items-center justify-end gap-2">
+          {savedOf(banners) ? (
+            <span className="font-semibold text-ok">{t("settings.saved")}</span>
+          ) : null}
+          <Button busy={banners.state !== "idle"} onClick={saveBanners}>
+            {t("settings.save")}
+          </Button>
+        </div>
+      </SettingsCard>
 
-            <Field label="Enabled">
-              <Switch defaultChecked={emailServiceConfig.enabled} name="enabled" value="true" />
-            </Field>
-            <Field label="Provider">
-              <Input defaultValue={emailServiceConfig.provider} name="provider" />
-            </Field>
-            <Field label="Domain">
-              <Input defaultValue={emailServiceConfig.domain} name="domain" />
-            </Field>
-            <Field label="Region">
-              <Input defaultValue={emailServiceConfig.region} name="region" />
-            </Field>
-            <Field label="From address">
-              <Input
-                defaultValue={emailServiceConfig.fromAddress}
-                name="fromAddress"
-                type="email"
-              />
-            </Field>
-            <Field hint="Leave blank to keep the stored key unchanged." label="Sending key">
-              <Input name="apiKey" placeholder="Replace the stored key…" type="password" />
-            </Field>
-
-            {emailFailure ? (
-              <Banner
-                failure={emailFailure}
-                title="Couldn't save this configuration"
-                tone="danger"
-              />
-            ) : null}
-            {emailSaved ? <Banner title={t("settings.saved.email")} tone="ok" /> : null}
-
-            <Button className="self-start" disabled={emailFetcher.state !== "idle"} type="submit">
-              {emailFetcher.state === "idle" ? "Save" : "Saving…"}
-            </Button>
-          </emailFetcher.Form>
-        </CardBody>
-      </Card>
+      <SettingsCard
+        description={t("settings.maintenance.description")}
+        pill={maintenance.enabled ? t("settings.pills.on") : t("settings.pills.off")}
+        title={t("settings.maintenance.title")}
+        tone={maintenance.enabled ? "warn" : "neutral"}
+      >
+        <label className="flex items-center gap-3 text-sm">
+          <Switch
+            checked={maintenance.enabled}
+            onCheckedChange={(checked) => setMaintenance({ ...maintenance, enabled: checked })}
+          />
+          {t("settings.maintenance.switch")}
+        </label>
+        <Field label={t("settings.maintenance.message")}>
+          <Textarea
+            onChange={(event) => setMaintenance({ ...maintenance, message: event.target.value })}
+            rows={2}
+            value={maintenance.message}
+          />
+        </Field>
+        <div className="flex items-center justify-end gap-2">
+          {savedOf(banners) ? (
+            <span className="font-semibold text-ok">{t("settings.saved")}</span>
+          ) : null}
+          <Button busy={banners.state !== "idle"} onClick={saveBanners}>
+            {t("settings.save")}
+          </Button>
+        </div>
+      </SettingsCard>
     </div>
   );
 }

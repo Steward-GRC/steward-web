@@ -15,6 +15,7 @@ import {
   AddGroupMappingDocument,
   AddOrganizationDocument,
   AddUserToGroupDocument,
+  AiConfigDocument,
   AiHealthDocument,
   AiJobDocument,
   AiJobResultContentDocument,
@@ -116,6 +117,9 @@ import {
   SaveDraftDocument,
   SearchAndAnswerDocument,
   SearchUsersDocument,
+  SetAiEnabledDocument,
+  SetAiProviderCredentialDocument,
+  SetAiRetrievalConfigDocument,
   SetCaseDiscoveryDateDocument,
   SetCaseStatusDocument,
   SetCategoryDefaultsDocument,
@@ -467,6 +471,10 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.addUserToGroup;
+  },
+  async aiConfig(cookie) {
+    const data = await gatewayFetch(AiConfigDocument, {}, "AiConfig", { cookie });
+    return { ...data.aiConfig, provider: data.aiConfig.provider ?? null };
   },
   async aiHealth(cookie) {
     const data = await gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie });
@@ -990,6 +998,28 @@ export const liveEdge: Edge = {
     return found && found.documentType === documentType
       ? assembleDetail(found, index, cookie)
       : null;
+  },
+  async setAiEnabled(enabled, cookie) {
+    const data = await gatewayFetch(SetAiEnabledDocument, { enabled }, "SetAiEnabled", { cookie });
+    return data.setAIEnabled;
+  },
+  async setAiProviderCredential(credential, cookie) {
+    const data = await gatewayFetch(
+      SetAiProviderCredentialDocument,
+      { credential },
+      "SetAiProviderCredential",
+      { cookie },
+    );
+    return data.setAIProviderCredential;
+  },
+  async setAiRetrievalConfig(topK, cookie) {
+    const data = await gatewayFetch(
+      SetAiRetrievalConfigDocument,
+      { topK },
+      "SetAiRetrievalConfig",
+      { cookie },
+    );
+    return data.setAIRetrievalConfig.topK;
   },
   async versionDiff(fromVersionId, toVersionId, cookie) {
     const data = await gatewayFetch(
