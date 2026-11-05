@@ -125,12 +125,33 @@ export const isPermissionDenied = (error: unknown): boolean =>
 export const isNotFound = (error: unknown): boolean =>
   error instanceof GatewayError && error.code?.replaceAll("_", "").toUpperCase() === "NOTFOUND";
 
-/** One audit action's `type.verb` prefix the reader's history strips to a bare lifecycle
- *  kind (e.g. "policy.published" -> "published"), matching the short tokens the reader's
- *  event badges and translations key off. Any other action is kept as-is. */
-const POLICY_ACTION_PREFIX = "policy.";
+/** The audit actions that are a policy's lifecycle steps, shown with their own badge. A bulk
+ *  decision is still that approver's decision, so it reads the same as a single one. */
+const LIFECYCLE_KINDS: Readonly<Record<string, string>> = {
+  "policy.published": "published",
+  "policy.retired": "retired",
+  "workflow.bulk.approved": "approved",
+  "workflow.bulk.rejected": "rejected",
+  "workflow.decision.approved": "approved",
+  "workflow.decision.rejected": "rejected",
+  "workflow.signal.request_changes": "changesRequested",
+  "workflow.submitted": "submitted",
+  "workflow.withdrawn": "withdrawn",
+};
+
+/** An audit action as the history's event kind, which is also its translation key under
+ *  `reader.history.events`: a lifecycle step by name, anything else camelCased with the
+ *  `policy.` prefix dropped ("policy.break_glass_read" -> "breakGlassRead",
+ *  "workflow.stage.escalated" -> "workflowStageEscalated"). A key never holds a dot, which
+ *  i18next would read as nesting. */
 const historyKindOf = (action: string): string =>
-  action.startsWith(POLICY_ACTION_PREFIX) ? action.slice(POLICY_ACTION_PREFIX.length) : action;
+  LIFECYCLE_KINDS[action] ??
+  action
+    .replace(/^policy\./, "")
+    .split(/[._]/)
+    .filter(Boolean)
+    .map((word, index) => (index === 0 ? word : word[0]!.toUpperCase() + word.slice(1)))
+    .join("");
 
 /**
  * A policy's audit records as the reader's history: oldest first (the gateway's own

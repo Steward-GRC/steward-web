@@ -15,15 +15,23 @@ import type { HistoryEntry, PolicyVersionSummary } from "./policyReaderModel";
 
 import { groupHistoryByVersion, plainTextOf } from "./policyReaderModel";
 
-const EVENT_BADGE: Record<HistoryEntry["kind"], LucideIcon> = {
+const EVENT_BADGE: Readonly<Record<string, LucideIcon>> = {
+  approved: Check,
   changesRequested: X,
   decided: Check,
   inReview: Hourglass,
   published: Check,
   rejected: X,
+  retired: RotateCcw,
   submitted: ArrowUp,
   superseded: RotateCcw,
   withdrawn: RotateCcw,
+};
+
+/** A kind with no label yet, in words: "workflowStageEscalated" -> "Workflow stage escalated". */
+const spelledOut = (kind: string): string => {
+  const words = kind.replaceAll(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
 /**
@@ -59,6 +67,7 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
                     <div>
                       <p className="text-ink">
                         {t(`reader.history.events.${event.kind}`, {
+                          defaultValue: spelledOut(event.kind),
                           stage: event.stage ?? "",
                           version: group.version,
                         })}

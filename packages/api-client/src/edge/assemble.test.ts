@@ -184,17 +184,17 @@ describe("toPolicyView", () => {
 });
 
 describe("historyFromAuditLog", () => {
-  it("reverses the gateway's newest-first page and strips the policy. action prefix", () => {
+  it("reverses the gateway's newest-first page, oldest event first", () => {
     const history = historyFromAuditLog(
       [
         {
           action: "policy.published",
-          actorName: "Ada Lovelace",
+          actorName: "Bob Example",
           occurredAt: "2026-08-12T00:00:00Z",
         },
         {
-          action: "policy.submitted",
-          actorName: "Ada Lovelace",
+          action: "workflow.submitted",
+          actorName: "Bob Example",
           occurredAt: "2026-07-29T09:15:00Z",
         },
       ],
@@ -202,7 +202,7 @@ describe("historyFromAuditLog", () => {
     );
     expect(history).toEqual([
       {
-        actorName: "Ada Lovelace",
+        actorName: "Bob Example",
         at: "2026-07-29T09:15:00Z",
         comment: null,
         kind: "submitted",
@@ -210,7 +210,7 @@ describe("historyFromAuditLog", () => {
         versionLabel: "2.0.0",
       },
       {
-        actorName: "Ada Lovelace",
+        actorName: "Bob Example",
         at: "2026-08-12T00:00:00Z",
         comment: null,
         kind: "published",
@@ -220,21 +220,83 @@ describe("historyFromAuditLog", () => {
     ]);
   });
 
-  it("keeps an action with no recognised prefix, and a missing actor as null", () => {
-    const history = historyFromAuditLog(
-      [{ action: "workflow.decided", actorName: null, occurredAt: "2026-08-05T11:05:00Z" }],
+  it("keeps a missing actor as null", () => {
+    const [entry] = historyFromAuditLog(
+      [{ action: "workflow.withdrawn", actorName: null, occurredAt: "2026-08-05T11:05:00Z" }],
       "2.0.0",
     );
-    expect(history).toEqual([
-      {
-        actorName: null,
-        at: "2026-08-05T11:05:00Z",
-        comment: null,
-        kind: "workflow.decided",
-        stage: null,
-        versionLabel: "2.0.0",
-      },
-    ]);
+    expect(entry?.actorName).toBeNull();
+  });
+
+  // Every action steward-core, steward-workflow and steward-obligations write about a policy,
+  // its versions or its approvals (from each service's audit emit calls), with the history
+  // kind it shows as. A kind is one translation key under reader.history.events.
+  const SERVICE_ACTIONS: Record<string, string> = {
+    "ack.recorded": "ackRecorded",
+    "ack.transferred": "ackTransferred",
+    "policy.ack_config_updated": "ackConfigUpdated",
+    "policy.ack_required": "ackRequired",
+    "policy.break_glass_read": "breakGlassRead",
+    "policy.break_glass_revealed": "breakGlassRevealed",
+    "policy.created": "created",
+    "policy.definitions_changed": "definitionsChanged",
+    "policy.deleted": "deleted",
+    "policy.draft_content_updated": "draftContentUpdated",
+    "policy.draft_discarded": "draftDiscarded",
+    "policy.draft_saved": "draftSaved",
+    "policy.moved": "moved",
+    "policy.owner_changed": "ownerChanged",
+    "policy.published": "published",
+    "policy.references_changed": "referencesChanged",
+    "policy.reindexed": "reindexed",
+    "policy.rename_staged": "renameStaged",
+    "policy.renamed": "renamed",
+    "policy.retired": "retired",
+    "policy.sensitivity_changed": "sensitivityChanged",
+    "policy.status_set": "statusSet",
+    "policy.template_changed": "templateChanged",
+    "workflow.assignment.swapped": "workflowAssignmentSwapped",
+    "workflow.assignment.swapped.out_of_eligibility": "workflowAssignmentSwappedOutOfEligibility",
+    "workflow.bulk.approved": "approved",
+    "workflow.bulk.rejected": "rejected",
+    "workflow.decision.approved": "approved",
+    "workflow.decision.rejected": "rejected",
+    "workflow.run.paused": "workflowRunPaused",
+    "workflow.run.resumed": "workflowRunResumed",
+    "workflow.signal.approve": "workflowSignalApprove",
+    "workflow.signal.reject": "workflowSignalReject",
+    "workflow.signal.request_changes": "changesRequested",
+    "workflow.signal.retire": "workflowSignalRetire",
+    "workflow.signal.withdraw": "workflowSignalWithdraw",
+    "workflow.stage.escalated": "workflowStageEscalated",
+    "workflow.stage.misconfigured": "workflowStageMisconfigured",
+    "workflow.stage.unstaffed": "workflowStageUnstaffed",
+    "workflow.submit.no_workflow": "workflowSubmitNoWorkflow",
+    "workflow.submitted": "submitted",
+    "workflow.user.reassigned": "workflowUserReassigned",
+    "workflow.withdrawn": "withdrawn",
+  };
+
+  it.each(Object.entries(SERVICE_ACTIONS))("shows %s as the %s event", (action, kind) => {
+    const [entry] = historyFromAuditLog(
+      [{ action, actorName: null, occurredAt: "2026-08-05T11:05:00Z" }],
+      "1.0.0",
+    );
+    expect(entry?.kind).toBe(kind);
+  });
+
+  it("turns an action it doesn't know into a camelCase key, never one with dots", () => {
+    const [entry] = historyFromAuditLog(
+      [
+        {
+          action: "workflow.stage.split_later",
+          actorName: null,
+          occurredAt: "2026-08-05T11:05:00Z",
+        },
+      ],
+      "1.0.0",
+    );
+    expect(entry?.kind).toBe("workflowStageSplitLater");
   });
 });
 
