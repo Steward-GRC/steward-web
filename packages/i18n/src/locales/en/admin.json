@@ -484,5 +484,201 @@
       "description": "You don't manage any groups. Ask a site administrator to make you a group manager."
     },
     "failed": "Couldn't update this group"
+  },
+  "organizations": {
+    "title": "Organizations",
+    "subtitle": "SAML/OIDC single sign-on connections, one per domain.",
+    "new": "+ New organization",
+    "columns": {
+      "domain": "Domain",
+      "organization": "Organization",
+      "protocol": "Protocol",
+      "status": "Status"
+    },
+    "badges": {
+      "verified": "Verified",
+      "notVerified": "Not verified",
+      "tested": "Tested",
+      "notTested": "Not tested",
+      "active": "Active",
+      "inactive": "Not active"
+    },
+    "empty": {
+      "title": "No organizations yet",
+      "description": "Add an organization to connect a domain's SAML or OIDC identity provider."
+    },
+    "cert": {
+      "title": "SP certificate",
+      "description": "The one SAML signing certificate Steward presents to every connected identity provider.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "serial": "Serial {{serial}}",
+      "expires": "Expires {{date}}",
+      "copyCertificate": "Copy certificate",
+      "copyMetadata": "Copy SP metadata",
+      "copied": "Copied",
+      "rotate": "Force rotate",
+      "rotateTitle": "Force-rotate the SP certificate?",
+      "rotateDescription": "…any IdP that pins the current certificate's fingerprint… will need the new metadata re-uploaded…",
+      "rotateConfirm": "Rotate certificate",
+      "rotated": "SP certificate rotated",
+      "failed": "Couldn't rotate the SP certificate",
+      "cancel": "Cancel"
+    },
+    "setup": {
+      "eyebrow": "Organizations",
+      "description": "A SAML/OIDC connection is scoped to one domain. It needs both gates below — domain ownership and a passing IdP login test — before it can be activated.",
+      "steps": {
+        "label": "Setup steps",
+        "details": "Details",
+        "domain": "Domain verification",
+        "test": "IdP test",
+        "activate": "Activate"
+      },
+      "notFound": {
+        "title": "Organization not found",
+        "description": "No organization matches that domain.",
+        "action": "Back to organizations"
+      },
+      "details": {
+        "title": "Connection details",
+        "protocol": "Protocol",
+        "displayName": "Display name",
+        "organization": "Organization"
+      },
+      "dns": {
+        "title": "Add this DNS TXT record",
+        "name": "Name",
+        "value": "Value",
+        "copy": "Copy",
+        "copied": "Copied",
+        "copyName": "Copy the record name",
+        "copyValue": "Copy the record value",
+        "verify": "Verify",
+        "checking": "Checking every 10 seconds…",
+        "rotate": "Rotate token",
+        "verified": "Domain ownership verified.",
+        "failed": "Couldn't verify the domain"
+      },
+      "test": {
+        "title": "Run the IdP login test",
+        "description": "A full sign-in against the identity provider, in a new window. The result comes back here.",
+        "run": "Run IdP test",
+        "again": "Run the test again",
+        "running": "Testing…",
+        "copyLink": "Copy remote test link",
+        "copyLinkHint": "For someone at {{domain}} to run the test instead. Their result is recorded here too.",
+        "creating": "Creating…",
+        "copied": "Copied",
+        "passed": "IdP test passed",
+        "failed": "IdP test failed",
+        "linkFailed": "Couldn't create a test link",
+        "needsDomain": "Verify the domain first."
+      },
+      "activate": {
+        "title": "Activate the connection",
+        "description": "People on {{domain}} sign in through this identity provider once it's active.",
+        "action": "Activate",
+        "locked": "Both gates must pass first: domain ownership and the IdP login test.",
+        "failed": "Couldn't change the connection's state"
+      },
+      "summary": {
+        "active": "Active",
+        "reconfigure": "Reconfigure connection",
+        "disable": "Disable",
+        "summary": "{{protocol}} · {{displayName}}"
+      },
+      "login": {
+        "title": "Login options",
+        "jit": "Just-in-time provisioning",
+        "jitHint": "An unknown SSO email is set up as a user on first sign-in.",
+        "save": "Save",
+        "saved": "Saved!",
+        "failed": "Couldn't save the login options",
+        "localPassword": "Allow local password login",
+        "localPasswordHint": "Lets this organization's users also sign in with a local password."
+      },
+      "secret": {
+        "title": "Client secret",
+        "hint": "Write-only: it's stored outside the database and never shown again.",
+        "reentry": "Enter the client secret again",
+        "reentryDetail": "The stored client secret reference was cleared because it wasn't a key reference. Sign-in still works; enter the secret again to keep it on record.",
+        "replace": "Replace client secret",
+        "replaced": "Client secret replaced.",
+        "required": "Enter the client secret.",
+        "failed": "Couldn't replace the client secret"
+      },
+      "protocol": {
+        "title": "Identity provider protocol",
+        "change": "Change protocol",
+        "dialogTitle": "Switch {{domain}} to {{protocol}}?",
+        "dialogDescription": "…tears down and re-provisions its identity provider, and resets the organization to the start…",
+        "confirm": "Change protocol",
+        "cancel": "Cancel",
+        "failed": "Couldn't change the protocol"
+      },
+      "mappings": {
+        "title": "Group mappings",
+        "claim": "IdP group claim",
+        "group": "Platform group",
+        "empty": "No group mappings yet.",
+        "add": "Add mapping",
+        "choose": "Choose a group",
+        "remove": "Remove",
+        "removeLabel": "Remove the mapping for {{claim}}",
+        "dialogTitle": "Remove this group mapping?",
+        "dialogDescription": "Users asserting {{claim}} will no longer be added to {{group}} on sign-in.",
+        "confirm": "Remove mapping",
+        "cancel": "Cancel",
+        "required": "A claim value and a target group are required.",
+        "failed": "Couldn't change the group mappings"
+      },
+      "danger": {
+        "title": "Danger zone",
+        "delete": "Delete organization",
+        "deleteHint": "Disable the connection first.",
+        "dialogTitle": "Delete {{domain}}?",
+        "dialogDescription": "Users on this domain will no longer be able to sign in via SSO. This cannot be undone.",
+        "confirm": "Delete organization",
+        "cancel": "Cancel",
+        "failed": "Couldn't delete this organization"
+      }
+    },
+    "add": {
+      "title": "New organization",
+      "card": "Details",
+      "orgName": "Organization name",
+      "domain": "Domain",
+      "provider": "Identity provider",
+      "choose": "Choose a provider",
+      "displayName": "Display name (optional)",
+      "displayNameHint": "Shown on the sign-in screen.",
+      "setUp": "Set up {{provider}}",
+      "oidc": "OIDC connection",
+      "issuer": "Issuer",
+      "clientId": "Client ID",
+      "clientSecret": "Client secret",
+      "saml": "SAML connection",
+      "importUrl": "Import metadata from a URL",
+      "importUrlHint": "Fetches the IdP's published SAML metadata and fills in the fields below.",
+      "import": "Import",
+      "importing": "Importing…",
+      "importFailed": "Couldn't import metadata from that URL",
+      "importFile": "Import metadata from a file",
+      "importFileHint": "Or upload the metadata file your IdP offers for download.",
+      "fileFailed": "Couldn't parse that metadata file",
+      "entityId": "Entity ID",
+      "ssoUrl": "SSO URL",
+      "certificate": "IdP signing certificate",
+      "certUrl": "Fetch certificate from a URL",
+      "certUrlHint": "Fetch just the signing certificate, if your IdP doesn't publish full metadata.",
+      "fetch": "Fetch",
+      "fetching": "Fetching…",
+      "certFailed": "Couldn't fetch a certificate from that URL",
+      "required": "A name, domain and identity provider are required.",
+      "failed": "Couldn't add this organization",
+      "submit": "Add organization",
+      "cancel": "Cancel"
+    }
   }
 }
