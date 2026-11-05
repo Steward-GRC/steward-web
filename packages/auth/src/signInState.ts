@@ -70,7 +70,15 @@ export type SignInState =
   | {
       identifier?: string;
       notice?: "passwordReset";
-      problem?: "expired" | "invalid" | "missing" | "passkey" | "throttled" | "unavailable";
+      problem?:
+        | "expired"
+        | "invalid"
+        | "missing"
+        | "passkey"
+        | "sso"
+        | "ssoNotActive"
+        | "throttled"
+        | "unavailable";
       view: "password";
     }
   | {

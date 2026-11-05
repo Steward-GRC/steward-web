@@ -46,7 +46,7 @@ beforeAll(async () => {
       passkeyEnabled: true,
       ssoAvailable: true,
     },
-    sso: { "dana@example.org": "partner-saml" },
+    sso: { dana: "partner-saml" },
   });
   bare = await startFakeGateway(accounts);
   previousGatewayUrl = process.env.GATEWAY_URL;
@@ -200,10 +200,12 @@ describe("choosing a second factor (G6)", () => {
 
 describe("the SSO identifier step (G4)", () => {
   it("hands someone whose organisation uses SSO to the gateway's SSO start", async () => {
-    const result = await signInAction(post({ identifier: "dana@example.org", intent: "sso" }));
+    const result = await signInAction(post({ identifier: "dana", intent: "sso" }));
     const answer = result as Response;
     expect(answer.status).toBe(302);
-    expect(answer.headers.get("location")).toBe("/auth/sso/start?connection=partner-saml");
+    expect(answer.headers.get("location")).toBe(
+      "/auth/sso/start?connection=partner-saml&identifier=dana",
+    );
     expect(answer.headers.get("x-remix-reload-document")).toBe("true");
   });
 
@@ -222,9 +224,9 @@ describe("the SSO identifier step (G4)", () => {
   it("says SSO isn't available when the gateway can't look the name up", async () => {
     process.env.GATEWAY_URL = bare.queryUrl;
     await bare.close();
-    const result = await signInAction(post({ identifier: "dana@example.org", intent: "sso" }));
+    const result = await signInAction(post({ identifier: "dana", intent: "sso" }));
     expect(stateOf(result)).toEqual({
-      identifier: "dana@example.org",
+      identifier: "dana",
       problem: "unavailable",
       view: "sso",
     });

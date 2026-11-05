@@ -14,6 +14,10 @@ export default [
   index("routes/home.tsx"),
   route("sign-in", "routes/sign-in.tsx"),
   route("sign-out", "routes/sign-out.tsx"),
+  // SSO (#54): the gateway's routes on this app's origin, and the return paths it sends to.
+  route("auth/sso/*", "routes/resources.sso.tsx"),
+  route("home", "routes/resources.gateway-home.tsx"),
+  route("login", "routes/resources.gateway-login.tsx"),
   route("profile", "routes/profile.tsx"),
   route("search", "routes/search.tsx"),
   route("policies", "routes/policies.tsx"),

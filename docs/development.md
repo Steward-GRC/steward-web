@@ -199,13 +199,14 @@ Sign-in and the other gates (the Gates design frames) render outside the app she
 centred card. Each one can be reached against the mock, so it can be checked and screenshotted.
 Where the mock can produce the real state, use it:
 
-| Gate                              | How to reach it against the mock                                                                                                |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| G3 sign in, G3m on a phone        | Open `/sign-in` signed out (`/admin/sign-in` for admin). With `STEWARD_ORGANISATION` set, the organisation slot leads the card. |
-| G3 error state                    | Sign in with the password `wrong-password`.                                                                                     |
-| G6 choose a method, then the code | Sign in as `alice` (any password): she has an authenticator app and email codes. A wrong code is `000000`.                      |
-| G7 set up a second factor         | Sign in as `dave` (any password): he must enrol an authenticator first.                                                         |
-| G9 signing in                     | Shows for a moment after any sign-in succeeds.                                                                                  |
+| Gate                              | How to reach it against the mock                                                                                                                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| G3 sign in, G3m on a phone        | Open `/sign-in` signed out (`/admin/sign-in` for admin). With `STEWARD_ORGANISATION` set, the organisation slot leads the card.                 |
+| G3 error state                    | Sign in with the password `wrong-password`.                                                                                                     |
+| G6 choose a method, then the code | Sign in as `alice` (any password): she has an authenticator app and email codes. A wrong code is `000000`.                                      |
+| G7 set up a second factor         | Sign in as `dave` (any password): he must enrol an authenticator first.                                                                         |
+| G9 signing in                     | Shows for a moment after any sign-in succeeds.                                                                                                  |
+| G4 SSO, then home or G6           | Select "Sign in with SSO →", enter `erin` (signs straight in) or `alice` (goes on to her second factor). The mock's SSO is a pass-through test. |
 
 The mock doesn't answer the gateway's sign-in settings (`GET /auth/config`), SSO discovery, the
 password reset or passkey sign-in, so the page offers none of those against it. For those, and

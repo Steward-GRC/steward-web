@@ -37,7 +37,13 @@ export interface FakeGateway {
   /** The `/query` URL, as `GATEWAY_URL` would name it. */
   queryUrl: string;
   /** Every request seen, for asserting what reached the gateway. */
-  requests: { headers: IncomingMessage["headers"]; method: string; path: string }[];
+  requests: {
+    headers: IncomingMessage["headers"];
+    method: string;
+    path: string;
+    /** The query string, without its "?". */
+    query: string;
+  }[];
   sessions: Map<string, { csrf: string; userId: string }>;
 }
 
@@ -94,7 +100,8 @@ export const startFakeGateway = async (
     void (async () => {
       const path = (request.url ?? "/").split("?", 1)[0] ?? "/";
       const method = request.method ?? "GET";
-      requests.push({ headers: request.headers, method, path });
+      const query = (request.url ?? "").split("?").slice(1).join("?");
+      requests.push({ headers: request.headers, method, path, query });
       const body = method === "POST" ? await readBody(request) : {};
 
       if (method === "POST" && path === "/auth/login") {
@@ -131,6 +138,34 @@ export const startFakeGateway = async (
           otpauthUri: "otpauth://totp/Steward:sample",
           secret: "ABCD****",
         });
+      }
+
+      // The gateway's SSO start as a pass-through, the way the mock runs it: the identifier's
+      // account signs straight in and lands on /home, or is parked for its second factor and
+      // sent to /login, as the gateway's callback sends people back.
+      if (method === "GET" && path === "/auth/sso/start") {
+        const identifier = new URLSearchParams(query).get("identifier");
+        const account = accounts.find((a) => a.username === identifier);
+        if (!account) {
+          response.writeHead(302, { location: "/login?error=sso" });
+          return response.end();
+        }
+        if (account.mfa === "challenge") {
+          const pendingId = randomUUID();
+          pending.set(pendingId, { account, enrol: false });
+          const factors = (account.factors ?? ["totp", "email"]).join(",");
+          response.writeHead(302, {
+            location: `/login?pendingMfa=${pendingId}&mfaFactors=${encodeURIComponent(factors)}`,
+          });
+          return response.end();
+        }
+        const sid = randomUUID();
+        sessions.set(sid, { csrf: randomUUID(), userId: account.userId });
+        response.writeHead(302, {
+          location: "/home",
+          "set-cookie": `steward_sid=${sid}; Path=/; Max-Age=28800; HttpOnly; SameSite=Lax`,
+        });
+        return response.end();
       }
 
       if (method === "GET" && path === "/auth/config") {
