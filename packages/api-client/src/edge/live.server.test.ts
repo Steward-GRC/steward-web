@@ -364,6 +364,28 @@ describe("liveEdge.policyDetail", () => {
     });
   });
 
+  it("lists the versions to compare, the pair it diffed, and whether AI is up", async () => {
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      AiHealth: () => ({ aiHealth: { available: false, reason: "provider_unavailable" } }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail).toMatchObject({
+      ai: { available: false, reason: "provider_unavailable" },
+      priorVersion: { fromVersionId: "v-1", toVersionId: "v-2", version: "1" },
+      versions: [
+        { id: "v-1", status: "superseded", version: "1" },
+        { id: "v-2", status: "published", version: "2" },
+      ],
+    });
+  });
+
+  it("reads AI as unavailable when the health check itself fails", async () => {
+    routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.ai).toEqual({ available: false, reason: "ai_service_unavailable" });
+  });
+
   it("names a revision in review beside the published version, and reads its stored summary", async () => {
     routeGateway({
       ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
@@ -683,5 +705,33 @@ describe("liveEdge.submitWorkflow", () => {
       message: "No approval workflow is attached to this policy's category.",
       operation: "SubmitWorkflow",
     });
+  });
+});
+
+describe("liveEdge.versionDiff", () => {
+  it("diffs any two versions the caller picked (U19)", async () => {
+    const calls = routeGateway({
+      DiffVersions: () => ({
+        diffVersions: [
+          {
+            changeType: "MODIFIED",
+            sectionKey: "receipts",
+            sectionTitle: "Receipts",
+            wordDiffHtml: "<ins>photos</ins>",
+          },
+        ],
+      }),
+    });
+    expect(await liveEdge.versionDiff("v-1", "v-3", "steward_sid=s")).toEqual([
+      {
+        changeType: "MODIFIED",
+        sectionKey: "receipts",
+        sectionTitle: "Receipts",
+        wordDiffHtml: "<ins>photos</ins>",
+      },
+    ]);
+    expect(calls).toEqual([
+      { operation: "DiffVersions", variables: { fromVersionId: "v-1", toVersionId: "v-3" } },
+    ]);
   });
 });

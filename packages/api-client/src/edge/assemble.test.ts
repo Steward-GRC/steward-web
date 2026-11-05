@@ -95,12 +95,12 @@ describe("documentBlocksFromContent", () => {
       ),
     );
     expect(blocks).toEqual([
-      { depth: 1, kind: "heading", text: "Purpose" },
+      { depth: 1, kind: "heading", sectionKey: "purpose", text: "Purpose" },
       {
         kind: "paragraph",
         runs: [{ text: "Book a " }, { bold: true, text: "shared desk" }, { text: " early." }],
       },
-      { depth: 2, kind: "heading", text: "Changing a booking" },
+      { depth: 2, kind: "heading", sectionKey: "changing-a-booking", text: "Changing a booking" },
       { items: [[{ text: "Cancel" }], [{ text: "Rebook" }]], kind: "list", ordered: false },
       { kind: "paragraph", runs: [{ href: "https://example.org/b", text: "the booking page" }] },
       {
@@ -122,9 +122,27 @@ describe("documentBlocksFromContent", () => {
       ),
     );
     expect(blocks).toEqual([
-      { depth: 1, kind: "heading", text: "Scope" },
-      { depth: 2, kind: "heading", text: "Exceptions" },
+      { depth: 1, kind: "heading", sectionKey: "scope", text: "Scope" },
+      { depth: 2, kind: "heading", sectionKey: "exceptions", text: "Exceptions" },
     ]);
+  });
+
+  it("keys each heading the way steward-core keys its sections, so a citation can link to it", () => {
+    // Core slugs each top-level heading, numbers repeats "-2", "-3", and keeps "body" for
+    // anything before the first heading, so a heading called "Body" becomes "body-2".
+    const blocks = documentBlocksFromContent(
+      stored(
+        node("paragraph", [text("Read this first.")]),
+        node("heading", [text("Body")], { tag: "h2" }),
+        node("heading", [text("Making a claim: who & when?")], { tag: "h2" }),
+        node("heading", [text("Notes")], { tag: "h3" }),
+        node("heading", [text("Notes")], { tag: "h3" }),
+        node("heading", [text("¿¡")], { tag: "h2" }),
+      ),
+    );
+    expect(blocks.flatMap((block) => (block.kind === "heading" ? [block.sectionKey] : []))).toEqual(
+      ["body-2", "making-a-claim-who-when", "notes", "notes-2", "section"],
+    );
   });
 
   it("reads the older section array as a heading and paragraphs per section", () => {

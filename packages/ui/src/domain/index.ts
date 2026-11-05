@@ -4,6 +4,7 @@
 // components and logic both apps' library screens share. Server-only data fetching is the
 // separate `@steward-web/ui/domain/server` entry (see index.server.ts).
 export { AckBanner, type AckBannerProps } from "./AckBanner";
+export { AiSummaryCard, type AiSummaryCardProps } from "./AiSummaryCard";
 export {
   ApprovalStepper,
   type ApprovalStepperProps,
@@ -13,6 +14,7 @@ export {
   type StepperRule,
   type StepperStage,
 } from "./ApprovalStepper";
+export { CompareVersions, type CompareVersionsProps, VERSION_DIFF_PATH } from "./CompareVersions";
 export { DecisionPanel, type DecisionPanelProps } from "./DecisionPanel";
 export { DocumentStatusPill } from "./DocumentStatusPill";
 export { type FavoritesStore, useFavorites } from "./favorites";
@@ -33,7 +35,7 @@ export {
 } from "./policy";
 export { PolicyLibrary, type PolicyLibraryProps } from "./PolicyLibrary";
 export { PolicyReader, type PolicyReaderProps } from "./PolicyReader";
-export { PolicyReaderChanges, PolicyReaderHistory } from "./PolicyReaderHistory";
+export { PolicyReaderHistory } from "./PolicyReaderHistory";
 export {
   ackBannerState,
   type AckBannerState,

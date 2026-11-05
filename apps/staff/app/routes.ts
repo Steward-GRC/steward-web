@@ -38,6 +38,7 @@ export default [
   route("approvals", "routes/approvals.tsx"),
   route("approvals/:number", "routes/approvals.$number.tsx"),
   route("resources/ai-health", "routes/resources.ai-health.tsx"),
+  route("resources/version-diff", "routes/resources.version-diff.tsx"),
   route("resources/command-palette", "routes/resources.command-palette.tsx"),
   route("resources/impersonation", "routes/resources.impersonation.tsx"),
   route("resources/ai-jobs/:jobId", "routes/resources.ai-jobs.$jobId.tsx"),

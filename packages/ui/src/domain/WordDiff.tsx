@@ -149,14 +149,27 @@ export const DiffLegend = () => {
 };
 
 /** A folded run of unchanged paragraphs: "⋯ 4 unchanged paragraphs · Show". */
-export const FoldedRun = ({ children, count }: { children?: ReactNode; count: number }) => {
+export const FoldedRun = ({
+  children,
+  count,
+  unit = "paragraphs",
+}: {
+  children?: ReactNode;
+  count: number;
+  /** What was folded: paragraphs of a section, or whole sections the diff left unchanged. */
+  unit?: "paragraphs" | "sections";
+}) => {
   const { t } = useTranslation("policy");
   const [open, setOpen] = useState(false);
   if (open) return <>{children}</>;
   return (
     <div className="my-1.5 flex items-center gap-1.5 rounded-md bg-sunken px-3 py-1.5 font-sans text-sm font-medium text-muted">
       <Ellipsis aria-hidden="true" className="size-4" />
-      <span>{t("reader.changes.unchanged", { count })}</span>
+      <span>
+        {t(unit === "sections" ? "reader.changes.unchangedSections" : "reader.changes.unchanged", {
+          count,
+        })}
+      </span>
       {children ? (
         <button
           aria-label={t("reader.changes.showUnchanged", { count })}
@@ -185,6 +198,26 @@ export interface DiffViewProps {
   unchangedBefore?: Readonly<Record<string, number>>;
 }
 
+/** The gateway's word for a section both versions share word for word. */
+const UNCHANGED = "unchanged";
+
+/** The changed sections, with how many unchanged ones sit before each and after the last. */
+const foldUnchanged = (sections: readonly DiffSection[]) => {
+  const shown: DiffSection[] = [];
+  const before: Record<string, number> = {};
+  let run = 0;
+  for (const section of sections) {
+    if (section.changeType.toLowerCase() === UNCHANGED) {
+      run += 1;
+      continue;
+    }
+    if (run > 0) before[section.sectionKey] = run;
+    run = 0;
+    shown.push(section);
+  }
+  return { after: run, before, shown };
+};
+
 const countRuns = (sections: readonly DiffSection[]) => {
   let added = 0;
   let removed = 0;
@@ -198,11 +231,17 @@ const countRuns = (sections: readonly DiffSection[]) => {
 };
 
 const Article = ({
+  foldedAfter = 0,
+  foldedBefore = {},
   label,
   sections,
   side,
   unchangedBefore,
 }: {
+  /** Unchanged sections after the last changed one. */
+  foldedAfter?: number;
+  /** Unchanged sections before a changed one, by its key. */
+  foldedBefore?: Readonly<Record<string, number>>;
   label?: string;
   sections: readonly DiffSection[];
   side: WordDiffProps["side"];
@@ -214,6 +253,9 @@ const Article = ({
   >
     {sections.map((section, index) => (
       <Fragment key={section.sectionKey}>
+        {foldedBefore[section.sectionKey] ? (
+          <FoldedRun count={foldedBefore[section.sectionKey]!} unit="sections" />
+        ) : null}
         {unchangedBefore?.[section.sectionKey] ? (
           <FoldedRun count={unchangedBefore[section.sectionKey]!} />
         ) : null}
@@ -230,6 +272,7 @@ const Article = ({
         </p>
       </Fragment>
     ))}
+    {foldedAfter > 0 ? <FoldedRun count={foldedAfter} unit="sections" /> : null}
   </article>
 );
 
@@ -241,7 +284,14 @@ export const DiffView = ({ className, sections, unchangedBefore }: DiffViewProps
   const { t } = useTranslation("policy");
   const [layout, setLayout] = useState<"side" | "unified">("unified");
   const name = useId();
-  const { added, removed } = countRuns(sections);
+  const folded = foldUnchanged(sections);
+  const { added, removed } = countRuns(folded.shown);
+  const articleProps = {
+    foldedAfter: folded.after,
+    foldedBefore: folded.before,
+    sections: folded.shown,
+    unchangedBefore,
+  };
   return (
     <div className={cn("flex flex-col gap-4", className)}>
       <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
@@ -278,14 +328,14 @@ export const DiffView = ({ className, sections, unchangedBefore }: DiffViewProps
         </div>
       </div>
       {layout === "unified" ? (
-        <Article sections={sections} side="unified" unchangedBefore={unchangedBefore} />
+        <Article {...articleProps} side="unified" />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           <section aria-label={t("reader.changes.older")}>
-            <Article sections={sections} side="older" unchangedBefore={unchangedBefore} />
+            <Article {...articleProps} side="older" />
           </section>
           <section aria-label={t("reader.changes.newer")}>
-            <Article sections={sections} side="newer" unchangedBefore={unchangedBefore} />
+            <Article {...articleProps} side="newer" />
           </section>
         </div>
       )}

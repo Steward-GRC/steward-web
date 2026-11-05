@@ -30,6 +30,26 @@ interface StoredSection {
   title?: unknown;
 }
 
+/** steward-core's section key for a heading: its text lowercased, every run of anything but
+ *  a-z and 0-9 one hyphen, trimmed; "section" when nothing is left. */
+const coreSlug = (text: string): string =>
+  text
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/^-+|-+$/g, "") || "section";
+
+/** Hands out core's keys in document order: the first use of a key as it is, repeats "-2",
+ *  "-3". "body" is taken first, for any text before the first heading. */
+const sectionKeys = () => {
+  const used = new Map<string, number>([["body", 1]]);
+  return (text: string): string => {
+    const base = coreSlug(text);
+    const count = (used.get(base) ?? 0) + 1;
+    used.set(base, count);
+    return count === 1 ? base : `${base}-${count}`;
+  };
+};
+
 /**
  * A version's `contentJson` as the reader's plain-text body. The editor saves its serialized
  * document (a `{ root }` tree), read block by block; older content is a JSON array of
@@ -160,8 +180,16 @@ export const documentBlocksFromContent = (contentJson: string): DocumentBlock[] 
   if (!document) return [];
   const headings = document.root.children.filter((node) => node.type === "heading");
   const top = headings.length > 0 ? Math.min(...headings.map((node) => headingLevel(node))) : 1;
+  // steward-core keys a section by each top-level heading (diff.go, extractLexicalSections),
+  // and AI citations carry that key, so the reader's anchors use the same one.
+  const keyOf = sectionKeys();
   return document.root.children
-    .map((node) => blockOf(node, top))
+    .map((node) => {
+      const block = blockOf(node, top);
+      if (node.type !== "heading") return block;
+      const key = keyOf(nodeText(node).trim());
+      return block?.kind === "heading" ? { ...block, sectionKey: key } : block;
+    })
     .filter((block): block is DocumentBlock => block !== undefined);
 };
 

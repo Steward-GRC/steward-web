@@ -77,6 +77,7 @@ import type {
   Obligation,
   Policy,
   PolicyDetail,
+  PolicySectionDiff,
   SecondFactor,
   Template,
   TemplateVersion,
@@ -209,6 +210,7 @@ export type {
   PolicyDetail,
   PolicyReference,
   PolicySectionDiff,
+  PolicyVersionOption,
   PolicyVersionSummary,
   SecondFactor,
   Template,
@@ -804,6 +806,12 @@ export interface Edge {
   ): Promise<AuditChainVerification>;
   /** Checks the domain's DNS TXT record against its verification token. Site-admin only. */
   verifyDomain(domain: string, cookie?: string): Promise<Organization>;
+  /** The word-level diff between any two versions of one document (U19), section by section. */
+  versionDiff(
+    fromVersionId: string,
+    toVersionId: string,
+    cookie?: string,
+  ): Promise<readonly PolicySectionDiff[]>;
   /** One workflow definition's full detail (its approval stages), for admin management. Null
    *  when it doesn't exist (or was archived). Site-admin only. */
   workflowDef(id: string, cookie?: string): Promise<null | WorkflowDef>;

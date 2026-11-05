@@ -11,6 +11,7 @@ export type {
   PolicyDetail,
   PolicyReference,
   PolicySectionDiff,
+  PolicyVersionOption,
   PolicyVersionSummary,
   RelatedPolicy,
 } from "@steward-web/api-client";

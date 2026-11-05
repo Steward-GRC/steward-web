@@ -86,6 +86,7 @@ export type {
   PolicyReference,
   PolicySectionDiff,
   PolicyVersion,
+  PolicyVersionOption,
   PolicyVersionSummary,
   RaciDecision,
   RaciRule,
