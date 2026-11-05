@@ -14,6 +14,7 @@ beforeEach(() => {
   mkdirSync(path.join(clientDirectory, "assets"), { recursive: true });
   writeFileSync(path.join(clientDirectory, "assets", "root-abc123.js"), "console.log(1)");
   writeFileSync(path.join(clientDirectory, "favicon.ico"), "x");
+  writeFileSync(path.join(clientDirectory, "site.webmanifest"), "{}");
 });
 
 afterEach(() => {
@@ -31,6 +32,11 @@ describe("resolveStaticAsset", () => {
     const asset = resolveStaticAsset(clientDirectory, "/favicon.ico");
     expect(asset?.immutable).toBe(false);
     expect(asset?.type).toBe("image/x-icon");
+  });
+
+  it("serves the web manifest as a manifest", () => {
+    const asset = resolveStaticAsset(clientDirectory, "/site.webmanifest");
+    expect(asset?.type).toBe("application/manifest+json");
   });
 
   it("returns undefined for a missing file", () => {

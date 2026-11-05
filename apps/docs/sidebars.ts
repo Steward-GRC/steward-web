@@ -25,6 +25,7 @@ const sidebars: SidebarsConfig = {
         "user-guide/author-a-draft",
         "user-guide/review-and-approve",
         "user-guide/compliance-reporting",
+        "user-guide/your-profile",
       ],
       label: "User Guide",
       link: { type: "doc", id: "user-guide/index" },

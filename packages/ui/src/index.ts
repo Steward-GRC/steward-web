@@ -1,6 +1,8 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+export { brandLinks, brandMeta } from "./brand/head";
 export { Loader, Lockup, Mark, type MarkProps, SMALL_MARK_PX } from "./brand/Mark";
+export { Wordmark, type WordmarkProps } from "./brand/Wordmark";
 export {
   ApproverPill,
   type ApproverState,
@@ -104,3 +106,4 @@ export {
   type Theme,
 } from "./theme/preferences";
 export { ThemeProvider, usePreferences } from "./theme/ThemeProvider";
+export { ThemeSwitch } from "./theme/ThemeSwitch";

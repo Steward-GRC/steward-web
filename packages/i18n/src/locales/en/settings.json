@@ -29,5 +29,16 @@
       "security": "Security"
     },
     "title": "Your profile"
+  },
+  "theme": {
+    "description": "Choose how Steward looks. Preferences save to this browser.",
+    "label": "Theme",
+    "options": {
+      "dark": "Dark",
+      "hc": "High contrast",
+      "light": "Light",
+      "system": "Follow my system"
+    },
+    "title": "Theme"
   }
 }

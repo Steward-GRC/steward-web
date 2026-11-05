@@ -10,6 +10,7 @@ export {
   type DiagnosticsReportInput,
   type StewardFacts,
 } from "./diagnosticsText";
+export { PageTitle, pageTitle } from "./pageTitle";
 export { refusalOf, useRefusalMessage } from "./refusal";
 export { RouteErrorBoundary } from "./RouteErrorBoundary";
 export { SiteBanners } from "./SiteBanners";

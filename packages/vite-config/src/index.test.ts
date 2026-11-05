@@ -1,8 +1,16 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { buildInfo, buildInfoDefines, chooseDevelopmentQuickLogin, sharedAliases } from "./index";
+import {
+  brandPublicDirectory,
+  buildInfo,
+  buildInfoDefines,
+  chooseDevelopmentQuickLogin,
+  sharedAliases,
+} from "./index";
 
 describe("sharedAliases", () => {
   it("points every app at the live gateway client: mock data comes from the mock server", () => {
@@ -47,12 +55,10 @@ describe("chooseDevelopmentQuickLogin", () => {
     expect(release.module).toMatch(/NoDevelopmentQuickLogin\.server\.ts$/);
     expect(release.component).toMatch(/NoQuickLogin\.tsx$/);
     expect(
-      chooseDevelopmentQuickLogin("build", { STEWARD_DEV_QUICK_LOGIN_BUILD: "true" })
-        .enabled,
+      chooseDevelopmentQuickLogin("build", { STEWARD_DEV_QUICK_LOGIN_BUILD: "true" }).enabled,
     ).toBe(true);
     expect(
-      chooseDevelopmentQuickLogin("build", { STEWARD_DEV_QUICK_LOGIN_BUILD: "1" })
-        .enabled,
+      chooseDevelopmentQuickLogin("build", { STEWARD_DEV_QUICK_LOGIN_BUILD: "1" }).enabled,
     ).toBe(false);
   });
 });
@@ -63,5 +69,13 @@ describe("buildInfo commit fallback", () => {
     expect(buildInfo({ COMMIT: "0123456789abcdef", GITHUB_SHA: "fedcba9876543210" }).commit).toBe(
       "0123456789abcdef",
     );
+  });
+});
+
+describe("brandPublicDirectory", () => {
+  it("is the UI kit's public folder, which holds the favicons and the web manifest", () => {
+    expect(brandPublicDirectory()).toMatch(/packages[/\\]ui[/\\]public$/);
+    expect(existsSync(path.join(brandPublicDirectory(), "favicon.ico"))).toBe(true);
+    expect(existsSync(path.join(brandPublicDirectory(), "site.webmanifest"))).toBe(true);
   });
 });

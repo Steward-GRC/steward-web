@@ -30,6 +30,8 @@ Staff work at the main site; setup and administration live under `/admin` and ar
   draft and approve or reject it.
 - **[Compliance reporting](/user-guide/compliance-reporting)** — for reporting officers: work a
   compliance case from intake to close.
+- **[Your profile and theme](/user-guide/your-profile)** — change your name, and choose light,
+  dark, high contrast or your system's setting.
 
 :::tip
 New to Steward? Read [Concepts](/concepts) first. It explains the words used here.

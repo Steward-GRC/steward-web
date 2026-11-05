@@ -4,16 +4,31 @@ import { IdentityProvider } from "@steward-web/auth";
 import { identityFromRequest } from "@steward-web/auth/server";
 import { DevelopmentUiIssueButton } from "@steward-web/dev-ui-issue-button";
 import { DEFAULT_LOCALE } from "@steward-web/i18n";
-import { AppShell, DiagnosticsProvider } from "@steward-web/shell";
+import { AppShell, DiagnosticsProvider, PageTitle } from "@steward-web/shell";
 import { siteSettingsFromRequest } from "@steward-web/shell/server";
-import { Toaster } from "@steward-web/ui";
+import {
+  brandLinks,
+  brandMeta,
+  PREFERENCES_BOOT_SCRIPT,
+  ThemeProvider,
+  Toaster,
+} from "@steward-web/ui";
 import stewardCss from "@steward-web/ui/steward.css?url";
 import { type ReactNode } from "react";
 import { Links, Meta, Outlet, Scripts, type ShouldRevalidateFunctionArgs } from "react-router";
 
 import type { Route } from "./+types/root";
 
-export const links: Route.LinksFunction = () => [{ href: stewardCss, rel: "stylesheet" }];
+import { PAGE_TITLES } from "./titles";
+
+export const links: Route.LinksFunction = () => [
+  { href: stewardCss, rel: "stylesheet" },
+  ...brandLinks(import.meta.env.BASE_URL),
+];
+
+// The designed browser-chrome colours from the brand's head snippet. The page title is
+// `PageTitle` in Layout's head.
+export const meta: Route.MetaFunction = () => brandMeta();
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [identity, siteSettings] = await Promise.all([
@@ -36,19 +51,28 @@ export const shouldRevalidate = ({ formAction }: ShouldRevalidateFunctionArgs) =
 // DiagnosticsProvider lives here, not inside the default App component: Layout wraps both
 // the normal route tree AND the route error boundary, so Copy diagnostics is live even on a
 // page this app's own chrome never got to render.
+//
+// The theme (decision 3-colour-type-tokens.s3): the boot script puts the saved choice, or
+// "system", on <html> before the first paint, so there's no light flash for a dark-theme
+// reader; ThemeProvider takes over after hydration. <html>'s class is the script's to set,
+// hence suppressHydrationWarning there.
 export const Layout = ({ children }: { children: ReactNode }) => (
-  <html lang={DEFAULT_LOCALE}>
+  <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
     <head>
       <meta charSet="utf-8" />
       <meta content="width=device-width, initial-scale=1" name="viewport" />
+      <script dangerouslySetInnerHTML={{ __html: PREFERENCES_BOOT_SCRIPT }} />
+      <PageTitle titles={PAGE_TITLES} />
       <Meta />
       <Links />
     </head>
     <body>
-      <DiagnosticsProvider>
-        {children}
-        <Toaster />
-      </DiagnosticsProvider>
+      <ThemeProvider>
+        <DiagnosticsProvider>
+          {children}
+          <Toaster />
+        </DiagnosticsProvider>
+      </ThemeProvider>
       <Scripts />
     </body>
   </html>
