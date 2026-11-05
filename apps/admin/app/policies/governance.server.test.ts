@@ -137,7 +137,7 @@ describe("runGovernance (A11)", () => {
     });
   });
 
-  it("issues a magic link on the staff app, sensitive when the policy is (D31)", async () => {
+  it("issues a magic link to the staff app's shared reader (G16), sensitive when the policy is (D31)", async () => {
     const calls = stubGateway({
       CreateMagicLink: {
         createMagicLink: { expiresAt: "2026-12-05T12:00:00Z", token: "7c1e04b2" },
@@ -148,7 +148,7 @@ describe("runGovernance (A11)", () => {
       intent: "createMagicLink",
       ok: true,
       token: "7c1e04b2",
-      url: "https://steward.example/s/7c1e04b2",
+      url: "https://steward.example/share/7c1e04b2",
     });
     // The policy's own sensitivity, never a value from the form.
     expect(calls[0]?.variables).toEqual({ policyVersionId: "v-3", sensitive: true });

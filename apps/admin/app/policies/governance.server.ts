@@ -19,9 +19,10 @@ const NOT_READY = "PDF_EXPORT_NOT_READY";
 
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 
-/** The link a magic link's token opens, on the staff app (D31's "…/s/7c1e04b2"). */
+/** The link a magic link's token opens: the staff app's shared policy reader (G16), at
+ *  `/share/:token`. */
 const shareUrl = (token: string, staffUrl: string, request: Request) =>
-  new URL(`s/${encodeURIComponent(token)}`, new URL(staffUrl, request.url)).href;
+  new URL(`share/${encodeURIComponent(token)}`, new URL(staffUrl, request.url)).href;
 
 /** An export or a link shares the published version, so a never-published one has neither. */
 const publishedVersion = (document: GovernedDocument) => {

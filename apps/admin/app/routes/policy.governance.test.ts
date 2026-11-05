@@ -98,7 +98,7 @@ describe.each([
       sensitivity: "SENSITIVE",
     });
     const answer = await post(action, path, { intent: "createMagicLink", sensitive: "false" });
-    expect(answer.data).toMatchObject({ url: "https://policies.example.org/s/7c1e04b2" });
+    expect(answer.data).toMatchObject({ url: "https://policies.example.org/share/7c1e04b2" });
     expect(calls[0]?.variables).toEqual({ policyVersionId: "v-3", sensitive: true });
   });
 

@@ -420,7 +420,7 @@ export interface Edge {
   /** Creates a taxonomy group. Site-admin only. */
   createGroup(input: CreateGroupInput, cookie?: string): Promise<Group>;
   /** Issues a read-only share link for one policy version (D31); a sensitive one asks the reader
-   *  for an email first. The link's path is `/s/{token}`. */
+   *  for an email first. It opens on the staff app at `/share/{token}` (G16). */
   createMagicLink(
     policyVersionId: string,
     sensitive: boolean,
