@@ -40,7 +40,8 @@ import { data, Link, useFetcher } from "react-router";
 
 import type { Route } from "./+types/reporting.cases.$caseId";
 
-import { OPEN_SETTABLE_STATUSES, statusLabelKey, statusTone } from "../reporting/caseStatus";
+import { OPEN_SETTABLE_STATUSES, statusTone } from "../reporting/caseStatus";
+import { enumLabelKey } from "../reporting/enumLabel";
 import {
   addCaseNote,
   addCaseNotice,
@@ -175,7 +176,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
         actions={
           <>
             <Badge tone={statusTone(reportCase.status)}>
-              {t(`status.${statusLabelKey(reportCase.status)}`)}
+              {t(enumLabelKey("status", reportCase.status))}
             </Badge>
             <Link className="text-sm text-primary hover:underline" to="/reporting/cases">
               {t("detail.back")}
@@ -183,7 +184,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
           </>
         }
         eyebrow={reportCase.caseCode}
-        subtitle={t(`kind.${reportCase.kind.toLowerCase()}`)}
+        subtitle={t(enumLabelKey("kind", reportCase.kind))}
         title={t("detail.details.title")}
       />
 
@@ -215,7 +216,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
               <dd className="flex flex-wrap gap-1">
                 {reportCase.details.informationKinds.map((kind) => (
                   <Badge key={kind} tone="neutral">
-                    {t(`informationKind.${kind.toLowerCase()}`)}
+                    {t(enumLabelKey("informationKind", kind))}
                   </Badge>
                 ))}
               </dd>
@@ -226,7 +227,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                   {t("detail.details.stillHappening")}
                 </dt>
                 <dd className="text-sm text-ink">
-                  {t(`reportAnswer.${reportCase.details.stillHappening.toLowerCase()}`)}
+                  {t(enumLabelKey("reportAnswer", reportCase.details.stillHappening))}
                 </dd>
               </div>
             ) : null}
@@ -269,7 +270,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                   defaultValue={reportCase.status}
                   name="status"
                   options={OPEN_SETTABLE_STATUSES.map((s) => ({
-                    label: t(`status.${statusLabelKey(s)}`),
+                    label: t(enumLabelKey("status", s)),
                     value: s,
                   }))}
                 />
@@ -395,7 +396,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                 </dt>
                 <dd className="text-ink">
                   {reportCase.assessment.suggestion
-                    ? t(`riskSuggestion.${reportCase.assessment.suggestion.toLowerCase()}`)
+                    ? t(enumLabelKey("riskSuggestion", reportCase.assessment.suggestion))
                     : "—"}
                 </dd>
               </div>
@@ -405,7 +406,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                 </dt>
                 <dd className="text-ink">
                   {reportCase.assessment.decision
-                    ? t(`breachDecision.${reportCase.assessment.decision.toLowerCase()}`)
+                    ? t(enumLabelKey("breachDecision", reportCase.assessment.decision))
                     : "—"}
                 </dd>
               </div>
@@ -433,7 +434,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                         name="information"
                         value={kind}
                       />
-                      {t(`informationKind.${kind.toLowerCase()}`)}
+                      {t(enumLabelKey("informationKind", kind))}
                     </label>
                   ))}
                 </div>
@@ -442,7 +443,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                 <Select
                   name="recipient"
                   options={Object.values(RiskRecipient).map((v) => ({
-                    label: t(`riskRecipient.${v.toLowerCase()}`),
+                    label: t(enumLabelKey("riskRecipient", v)),
                     value: v,
                   }))}
                   required
@@ -452,7 +453,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                 <Select
                   name="viewed"
                   options={Object.values(RiskViewed).map((v) => ({
-                    label: t(`riskViewed.${v.toLowerCase()}`),
+                    label: t(enumLabelKey("riskViewed", v)),
                     value: v,
                   }))}
                   required
@@ -462,7 +463,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                 <Select
                   name="mitigation"
                   options={Object.values(RiskMitigation).map((v) => ({
-                    label: t(`riskMitigation.${v.toLowerCase()}`),
+                    label: t(enumLabelKey("riskMitigation", v)),
                     value: v,
                   }))}
                   required
@@ -472,7 +473,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                 <Select
                   name="decision"
                   options={Object.values(BreachDecision).map((v) => ({
-                    label: t(`breachDecision.${v.toLowerCase()}`),
+                    label: t(enumLabelKey("breachDecision", v)),
                     value: v,
                   }))}
                   required
@@ -510,14 +511,14 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
               <tbody>
                 {reportCase.notices.map((notice) => (
                   <tr key={notice.id}>
-                    <TD>{t(`noticeRecipient.${notice.recipient.toLowerCase()}`)}</TD>
+                    <TD>{t(enumLabelKey("noticeRecipient", notice.recipient))}</TD>
                     <TD>{notice.label}</TD>
                     <TD>{notice.method}</TD>
                     <TD className="text-sm text-muted">{notice.dueOn}</TD>
                     <TD>
                       {isClosed ? (
                         <Badge tone="neutral">
-                          {t(`noticeStatus.${notice.status.toLowerCase()}`)}
+                          {t(enumLabelKey("noticeStatus", notice.status))}
                         </Badge>
                       ) : (
                         <noticeUpdateFetcher.Form className="flex items-center gap-2" method="post">
@@ -528,7 +529,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                             defaultValue={notice.status}
                             name="status"
                             options={Object.values(NoticeStatus).map((v) => ({
-                              label: t(`noticeStatus.${v.toLowerCase()}`),
+                              label: t(enumLabelKey("noticeStatus", v)),
                               value: v,
                             }))}
                           />
@@ -564,7 +565,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                 <Select
                   name="recipient"
                   options={Object.values(NoticeRecipient).map((v) => ({
-                    label: t(`noticeRecipient.${v.toLowerCase()}`),
+                    label: t(enumLabelKey("noticeRecipient", v)),
                     value: v,
                   }))}
                   required
@@ -614,7 +615,7 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
                     <Select
                       name="outcome"
                       options={Object.values(CaseOutcome).map((v) => ({
-                        label: t(`outcome.${v.toLowerCase()}`),
+                        label: t(enumLabelKey("outcome", v)),
                         value: v,
                       }))}
                       required
