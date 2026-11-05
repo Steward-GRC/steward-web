@@ -11,6 +11,7 @@ import {
   categoryNames,
   type CategoryNode,
   historyFromAuditLog,
+  isPermissionDenied,
   isUnauthenticated,
   policyStatusOf,
   toPolicyView,
@@ -230,5 +231,22 @@ describe("isUnauthenticated", () => {
       false,
     );
     expect(isUnauthenticated(new Error("boom"))).toBe(false);
+  });
+});
+
+describe("isPermissionDenied", () => {
+  it("recognises the gRPC status name and the symbol", () => {
+    expect(
+      isPermissionDenied(new GatewayError("AuditLog", "x", { code: "PermissionDenied" })),
+    ).toBe(true);
+    expect(
+      isPermissionDenied(new GatewayError("AuditLog", "x", { code: "PERMISSION_DENIED" })),
+    ).toBe(true);
+  });
+
+  it("leaves every other failure alone, a bare 403 included", () => {
+    expect(isPermissionDenied(new GatewayError("AuditLog", "x", { code: "INTERNAL" }))).toBe(false);
+    expect(isPermissionDenied(new GatewayError("AuditLog", "x", { status: 403 }))).toBe(false);
+    expect(isPermissionDenied(new Error("PermissionDenied"))).toBe(false);
   });
 });

@@ -1568,6 +1568,7 @@ export type PolicyVersionsQuery = {
     readonly id: string;
     readonly versionNo: number;
     readonly status: string;
+    readonly publishedAt: string | null;
   }>;
 };
 
@@ -8383,6 +8384,7 @@ export const PolicyVersionsDocument = {
                 { kind: "Field", name: { kind: "Name", value: "id" } },
                 { kind: "Field", name: { kind: "Name", value: "versionNo" } },
                 { kind: "Field", name: { kind: "Name", value: "status" } },
+                { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
               ],
             },
           },

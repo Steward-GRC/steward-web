@@ -152,6 +152,52 @@ describe("liveEdge.policies", () => {
   });
 });
 
+/** A reader's view of FIN-001: two published versions, and an audit log the caller may not read. */
+const readerHandlers = (auditLog: Handler): Record<string, Handler> => ({
+  ...treeHandlers,
+  AckStatus: () => ({ ackStatus: { ackedAt: null, acknowledged: false } }),
+  AuditLog: auditLog,
+  DiffVersions: () => ({ diffVersions: [] }),
+  PolicyAttachments: () => ({
+    policyContactBlocks: [],
+    policyDefinitionEntries: [],
+    policyReferences: [],
+    relatedPolicies: [],
+  }),
+  PolicyByNumber: () => ({ policyByNumber: policy({}) }),
+  PolicyVersion: () => ({
+    policyVersion: {
+      appendices: [],
+      contentJson: JSON.stringify([{ sectionKey: "purpose", text: "Why.", title: "Purpose" }]),
+      createdAt: "2026-08-05T00:00:00Z",
+      id: "v-2",
+      policyId: "p-1",
+      publishedAt: "2026-08-12T00:00:00Z",
+      status: "published",
+      templateVersionId: "",
+      versionNo: 2,
+    },
+  }),
+  PolicyVersions: () => ({
+    policyVersions: [
+      {
+        createdAt: "2026-03-01T00:00:00Z",
+        id: "v-1",
+        publishedAt: "2026-03-04T00:00:00Z",
+        status: "superseded",
+        versionNo: 1,
+      },
+      {
+        createdAt: "2026-08-05T00:00:00Z",
+        id: "v-2",
+        publishedAt: "2026-08-12T00:00:00Z",
+        status: "published",
+        versionNo: 2,
+      },
+    ],
+  }),
+});
+
 describe("liveEdge.policyDetail", () => {
   it("looks the policy up by number and assembles the reader's view, including its history", async () => {
     const calls = routeGateway({
@@ -247,6 +293,53 @@ describe("liveEdge.policyDetail", () => {
     expect(calls.find((c) => c.operation === "AuditLog")?.variables).toEqual({
       subject: "policy:p-1",
     });
+  });
+
+  it("builds a caller without audit.read the history from the versions they can read", async () => {
+    routeGateway(
+      readerHandlers(() => ({
+        errors: [
+          {
+            extensions: { code: "PermissionDenied" },
+            message: "not authorized: audit.read",
+          },
+        ],
+      })),
+    );
+
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+
+    expect(detail).toMatchObject({ bodyText: "Purpose\n\nWhy.", id: "p-1", version: "2" });
+    expect(detail?.history).toEqual([
+      {
+        actorName: null,
+        at: "2026-03-04T00:00:00Z",
+        comment: null,
+        kind: "published",
+        stage: null,
+        versionLabel: "1",
+      },
+      {
+        actorName: null,
+        at: "2026-08-12T00:00:00Z",
+        comment: null,
+        kind: "published",
+        stage: null,
+        versionLabel: "2",
+      },
+    ]);
+  });
+
+  it("still fails the read when the audit log fails for any other reason", async () => {
+    routeGateway(
+      readerHandlers(() => ({
+        errors: [{ extensions: { code: "INTERNAL" }, message: "audit unavailable" }],
+      })),
+    );
+
+    await expect(liveEdge.policyDetail(DocumentType.Policy, "FIN-001")).rejects.toThrow(
+      "audit unavailable",
+    );
   });
 
   it("answers null when the number carries a different document type", async () => {

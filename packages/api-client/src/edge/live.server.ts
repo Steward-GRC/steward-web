@@ -142,6 +142,8 @@ import {
   categoryNames,
   type CategoryNode,
   historyFromAuditLog,
+  historyFromVersions,
+  isPermissionDenied,
   isUnauthenticated,
   policyStatusOf,
   toPolicyView,
@@ -261,12 +263,18 @@ const assembleDetail = async (
           cookie,
         }).then((d) => d.ackStatus)
       : null,
-    gatewayFetch(AuditLogDocument, { subject: `policy:${policy.id}` }, "AuditLog", { cookie }),
+    // The audit log is gated on audit.read (or managing a group); a plain reader is refused,
+    // and reads the history off the published versions instead.
+    gatewayFetch(AuditLogDocument, { subject: `policy:${policy.id}` }, "AuditLog", {
+      cookie,
+    }).catch((error: unknown) => {
+      if (isPermissionDenied(error)) return null;
+      throw error;
+    }),
   ]);
-  const history = historyFromAuditLog(
-    auditPage.auditLog.records,
-    version ? String(version.versionNo) : "",
-  );
+  const history = auditPage
+    ? historyFromAuditLog(auditPage.auditLog.records, version ? String(version.versionNo) : "")
+    : historyFromVersions(versions);
 
   const at = publishedId ? versions.findIndex((v) => v.id === publishedId) : -1;
   const prior = at > 0 ? versions[at - 1] : undefined;

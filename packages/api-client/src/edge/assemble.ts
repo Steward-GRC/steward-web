@@ -108,6 +108,12 @@ export const isUnauthenticated = (error: unknown): boolean =>
   error instanceof GatewayError &&
   (error.status === 401 || error.code?.toUpperCase() === "UNAUTHENTICATED");
 
+/** True for the gateway's refusal of a caller who lacks the grant, by its code alone: the
+ *  gRPC status name ("PermissionDenied") or its symbol ("PERMISSION_DENIED"). */
+export const isPermissionDenied = (error: unknown): boolean =>
+  error instanceof GatewayError &&
+  error.code?.replaceAll("_", "").toUpperCase() === "PERMISSIONDENIED";
+
 /** One audit action's `type.verb` prefix the reader's history strips to a bare lifecycle
  *  kind (e.g. "policy.published" -> "published"), matching the short tokens the reader's
  *  event badges and translations key off. Any other action is kept as-is. */
@@ -133,3 +139,28 @@ export const historyFromAuditLog = (
     stage: null,
     versionLabel,
   }));
+
+/**
+ * The published versions as the reader's history, for a caller who can't read the audit
+ * log: one "published" event per version that carries a publish time, oldest first, each
+ * under its own version number. Actor, comment and stage are null: a version row has none.
+ */
+export const historyFromVersions = (
+  versions: readonly { publishedAt?: null | string; versionNo: number }[],
+): HistoryEntry[] =>
+  versions
+    .toSorted((a, b) => a.versionNo - b.versionNo)
+    .flatMap((v) =>
+      v.publishedAt
+        ? [
+            {
+              actorName: null,
+              at: v.publishedAt,
+              comment: null,
+              kind: "published",
+              stage: null,
+              versionLabel: String(v.versionNo),
+            },
+          ]
+        : [],
+    );
