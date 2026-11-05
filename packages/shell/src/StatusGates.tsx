@@ -66,7 +66,7 @@ const useStatusPoll = (every: number, onStatus: (status: InstanceStatus) => void
 };
 
 /** A small status card (G1, G2, G12): Steward, a visual, the title and the line under it. */
-const StatusCard = ({
+export const StatusCard = ({
   children,
   className,
   testId,
@@ -101,7 +101,7 @@ const StatusCard = ({
 };
 
 /** The 44 px round icon G2 and G12 carry. */
-const RoundIcon = ({ children, className }: { children: ReactNode; className: string }) => (
+export const RoundIcon = ({ children, className }: { children: ReactNode; className: string }) => (
   <span
     aria-hidden="true"
     className={`flex size-11 items-center justify-center rounded-full text-xl ${className}`}

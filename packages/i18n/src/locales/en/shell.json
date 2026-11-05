@@ -162,9 +162,53 @@
     "showSubcategories": "Show {{category}}'s subcategories"
   },
   "pageTitle": "{{page}} · {{brand}}",
+  "shared": {
+    "email": {
+      "body": "This is a sensitive policy. Your email is recorded with this view, and the copy is watermarked.",
+      "label": "Email",
+      "submit": "View policy",
+      "title": "Enter your email to view"
+    },
+    "expired": {
+      "title": "This link expired on {{date}}."
+    },
+    "footer": "Shared by {{name}} · You can print this page",
+    "marker": "Read-only shared copy",
+    "meta": "{{number}} · v{{version}} · pinned · link expires {{expires}}",
+    "revoked": {
+      "body": "Ask the person who shared it for a new link.",
+      "title": "This link has been revoked"
+    },
+    "unavailable": {
+      "body": "This Steward's gateway has no public share-link lookup yet, so a shared policy can't open without signing in.",
+      "title": "Shared links can't open yet"
+    }
+  },
   "siteBanners": {
     "announcement": "Announcement",
     "maintenance": "Scheduled maintenance"
+  },
+  "ssoTest": {
+    "landing": {
+      "body_one": "{{requester}} at {{organisation}} asked you to test your sign-in. Nothing is saved to your account. Link valid for {{count}} hour.",
+      "body_other": "{{requester}} at {{organisation}} asked you to test your sign-in. Nothing is saved to your account. Link valid for {{count}} hours.",
+      "start": "Start test",
+      "title": "Test sign-in for {{domain}}"
+    },
+    "reason": {
+      "other": "Your identity provider's sign-in didn't complete. Send the reason below to the person who asked for the test.",
+      "sso_no_email": "Your identity provider did not return an email address."
+    },
+    "result": {
+      "expired": "This test link has expired.",
+      "expiredBody": "Ask the person who sent it for a new one.",
+      "failed": "IdP test failed",
+      "passed": "IdP test passed — you can close this page."
+    },
+    "unavailable": {
+      "body": "This Steward's gateway has no public SSO-test lookup yet, so a test link can't say whose sign-in it tests or start from here.",
+      "title": "SSO tests can't open yet"
+    }
   },
   "titles": {
     "admin": {
@@ -222,8 +266,11 @@
       "profile": "Your profile",
       "review": "Review",
       "search": "Search",
+      "shared": "Shared policy",
       "signIn": "Sign in",
       "signOut": "Sign out",
+      "ssoTest": "Test sign-in",
+      "ssoTestResult": "Test result",
       "welcome": "Welcome"
     }
   }

@@ -199,19 +199,23 @@ Sign-in and the other gates (the Gates design frames) render outside the app she
 centred card. Each one can be reached against the mock, so it can be checked and screenshotted.
 Where the mock can produce the real state, use it:
 
-| Gate                              | How to reach it against the mock                                                                                                                |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| G3 sign in, G3m on a phone        | Open `/sign-in` signed out (`/admin/sign-in` for admin). With `STEWARD_ORGANISATION` set, the organisation slot leads the card.                 |
-| G3 error state                    | Sign in with the password `wrong-password`.                                                                                                     |
-| G6 choose a method, then the code | Sign in as `alice` (any password): she has an authenticator app and email codes. A wrong code is `000000`.                                      |
-| G7 set up a second factor         | Sign in as `dave` (any password): he must enrol an authenticator first.                                                                         |
-| G9 signing in                     | Shows for a moment after any sign-in succeeds.                                                                                                  |
-| G4 SSO, then home or G6           | Select "Sign in with SSO →", enter `erin` (signs straight in) or `alice` (goes on to her second factor). The mock's SSO is a pass-through test. |
-| G2 not set up yet                 | Start the mock as a new install ("Start as a new install" on `/_mock`), then open `/sign-in`: it goes to `/not-set-up`.         |
-| G1 checking the instance          | `/not-set-up` while the gateway can't answer `GET /setup/state`, such as during mock maintenance.                               |
-| G11 maintenance lockdown          | `POST /_mock/controls` with `{"kind":"maintenance-start"}`, then any staff page. End it with `{"kind":"maintenance-end"}`.      |
-| G12 admins only                   | Sign in to `/admin` as `erin` (a reader).                                                                                       |
-| G10 welcome                       | A first SSO sign-in whose gateway user has `needsOnboarding`. The mock never sets it, so use the preview below.                 |
+| Gate                              | How to reach it against the mock                                                                                                                                                                                                    |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G3 sign in, G3m on a phone        | Open `/sign-in` signed out (`/admin/sign-in` for admin). With `STEWARD_ORGANISATION` set, the organisation slot leads the card.                                                                                                     |
+| G3 error state                    | Sign in with the password `wrong-password`.                                                                                                                                                                                         |
+| G6 choose a method, then the code | Sign in as `alice` (any password): she has an authenticator app and email codes. A wrong code is `000000`.                                                                                                                          |
+| G7 set up a second factor         | Sign in as `dave` (any password): he must enrol an authenticator first.                                                                                                                                                             |
+| G9 signing in                     | Shows for a moment after any sign-in succeeds.                                                                                                                                                                                      |
+| G4 SSO, then home or G6           | Select "Sign in with SSO →", enter `erin` (signs straight in) or `alice` (goes on to her second factor). The mock's SSO is a pass-through test.                                                                                     |
+| G2 not set up yet                 | Start the mock as a new install ("Start as a new install" on `/_mock`), then open `/sign-in`: it goes to `/not-set-up`.                                                                                                             |
+| G1 checking the instance          | `/not-set-up` while the gateway can't answer `GET /setup/state` (it keeps answering during maintenance, so use the preview below).                                                                                                  |
+| G11 maintenance lockdown          | `POST /_mock/controls` with `{"kind":"maintenance-start"}`, then any staff page; signed in as `alice`, it offers "Go to admin portal". End it with `{"kind":"maintenance-end"}`. An announced window only shows the warning banner. |
+| G13–G15 first-run setup           | Start the mock as a new install, then open `/admin/setup`; the setup token is `mock-setup-token`.                                                                                                                                   |
+| G16 shared policy reader          | `/share/<any token>` says the gateway can't open shared links yet (steward-gateway#53); use the preview below for the reader.                                                                                                       |
+| G18 remote SSO test               | `/sso-test?token=<any>` says the gateway can't look test links up yet (steward-gateway#54); use the preview below.                                                                                                                  |
+| G18r remote SSO test result       | `/sso-test/result?test=passed`, `?test=failed&reason=sso_no_email` or `?test=expired`.                                                                                                                                              |
+| G12 admins only                   | Sign in to `/admin` as `erin` (a reader).                                                                                                                                                                                           |
+| G10 welcome                       | Select "Erin owes onboarding" on `/_mock` (or `POST /_mock/controls` with `{"kind":"needs-onboarding","personId":"user-erin"}`), then sign in as `erin`: she goes to `/welcome`, and Get started clears it.                         |
 
 For any state you want to hold still, such as an error, the dev server takes `?gate=<frame id>`
 on the sign-in page and shows that gate with sample data and every option on:
@@ -229,12 +233,14 @@ on the sign-in page and shows that gate with sample data and every option on:
 
 The status gates take the same parameter where they render:
 
-| URL                                            | Shows                                                   |
-| ---------------------------------------------- | ------------------------------------------------------- |
-| `/not-set-up?gate=G1`, `/not-set-up?gate=G2`   | Checking the instance; not set up yet.                  |
-| `/welcome?gate=G10`                            | The welcome page with a sample first SSO sign-in.       |
-| `/sign-in?gate=G11`, `/admin/sign-in?gate=G11` | The maintenance lockdown (staff with the admin portal). |
-| `/admin/sign-in?gate=G12`                      | Admins only, signed in as a sample reader.              |
+| URL                                                              | Shows                                                                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `/not-set-up?gate=G1`, `/not-set-up?gate=G2`                     | Checking the instance; not set up yet.                                                      |
+| `/welcome?gate=G10`                                              | The welcome page with a sample first SSO sign-in.                                           |
+| `/sign-in?gate=G11`, `/admin/sign-in?gate=G11`                   | The maintenance lockdown (staff with the admin portal).                                     |
+| `/share/any?gate=G16`, `G16-revoked`, `G16-expired`, `G16-email` | The shared policy reader, a revoked or expired link, and the sensitive-policy email prompt. |
+| `/sso-test?gate=G18`                                             | The remote SSO test's landing, with a sample test.                                          |
+| `/admin/sign-in?gate=G12`                                        | Admins only, signed in as a sample reader.                                                  |
 
 The welcome page keeps a slot for a "How do you like to navigate?" step (left sidebar or top
 nav). It stays hidden while `NAV_CHOICE_ENABLED` (`packages/auth/src/navigationChoice.ts`) is

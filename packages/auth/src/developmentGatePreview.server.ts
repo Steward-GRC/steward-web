@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { SharedLinkState, SsoTestState } from "./sharedLinks";
 import type { SignInCapabilities, SignInState } from "./signInState";
 import type { WelcomePerson } from "./welcomeState";
 
@@ -92,4 +93,47 @@ export const statusGatePreview = (url: URL): string | undefined => {
 export const welcomePreview = (url: URL): undefined | WelcomePerson =>
   url.searchParams.get("gate") === "G10"
     ? { email: "erin@example.org", firstName: "", lastName: "", username: "erin" }
+    : undefined;
+
+/** G16's sample: the brief's Desk Booking Policy, shared by Bob. */
+const SHARED_GATES: Readonly<Record<string, SharedLinkState>> = {
+  G16: {
+    policy: {
+      category: "Workplace · Facilities",
+      expiresAt: "2026-11-02T12:00:00Z",
+      number: "POL-FACILITIES-000001",
+      sections: [
+        {
+          body: "This policy explains how staff book a desk in a shared office, how long a booking lasts, and what to do when plans change.",
+          heading: "1. Purpose",
+        },
+      ],
+      sharedBy: "Bob",
+      title: "Desk Booking Policy",
+      version: "1.0.0",
+    },
+    view: "policy",
+  },
+  "G16-email": { view: "email" },
+  "G16-expired": { expiredAt: "2026-11-02T12:00:00Z", view: "expired" },
+  "G16-revoked": { view: "revoked" },
+};
+
+/** G16 and its refusals for `?gate=G16`, `G16-revoked`, `G16-expired` or `G16-email`. */
+export const sharedLinkPreview = (url: URL): SharedLinkState | undefined => {
+  const gate = url.searchParams.get("gate") ?? "";
+  return Object.hasOwn(SHARED_GATES, gate) ? SHARED_GATES[gate] : undefined;
+};
+
+/** G18's sample: Alice at Example Organisation asks someone at example.net to test. */
+export const ssoTestPreview = (url: URL): SsoTestState | undefined =>
+  url.searchParams.get("gate") === "G18"
+    ? {
+        domain: "example.net",
+        organisation: "Example Organisation",
+        requester: "Alice",
+        token: "dev-preview-test",
+        validHours: 24,
+        view: "landing",
+      }
     : undefined;

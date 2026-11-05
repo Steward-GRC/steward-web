@@ -19,6 +19,15 @@ export { PageTitle, pageTitle } from "./pageTitle";
 export { refusalOf, useRefusalMessage } from "./refusal";
 export { RouteErrorBoundary } from "./RouteErrorBoundary";
 export { SearchField } from "./SearchField";
+export {
+  SharedEmailPrompt,
+  SharedLinkRefused,
+  SharedPolicyReader,
+  SharedUnavailable,
+  SsoTestLanding,
+  SsoTestResult,
+  SsoTestUnavailable,
+} from "./SharedGates";
 export type { ShellConfig } from "./shellConfig";
 export { ShellFooter } from "./ShellFooter";
 export { SiteBanners } from "./SiteBanners";

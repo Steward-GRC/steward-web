@@ -19,14 +19,21 @@ reached at all, the page shows only the Steward loading mark until it can tell.
 
 ## 🛠️ Create the first administrator
 
-1. **Open the setup screen.** On a new install, the admin app shows a `/setup` screen.
-2. **Enter the setup token.** The operator who installed Steward holds a **setup token**; enter it
-   to prove you are allowed to create the first account.
-3. **Create the root user.** Fill in a username, email, display name and password. This account is
-   the **root** user and has full access to everything.
-4. **Optionally connect single sign-on.** You can configure your organisation's identity provider
-   right away, during the same setup step, or add it later — see
-   [Organisations and single sign-on](/admin-guide/organisations-and-sso).
+1. **Open the setup screen.** On a new install, the admin app shows **First-run setup** at
+   `/setup`: one card, "Create the root administrator account."
+2. **Create the root user.** Fill in a username, email, display name and password, twice. This
+   account is the **root** user and has full access to everything.
+3. **Enter the setup token.** The operator who installed Steward holds a **setup token**; enter it
+   to prove you are allowed to create the first account, then select **Continue**.
+4. **Optionally connect single sign-on.** The **Single sign-on** card lets you select **Set up
+   SSO now** and connect your organisation's identity provider right away, or **Skip for now**
+   and add it later — see [Organisations and single sign-on](/admin-guide/organisations-and-sso).
+5. **Done.** "Your root administrator is ready." Without SSO, Steward takes you on to sign in by
+   itself. With SSO, it shows the DNS record that finishes enabling it, with **Copy**, then **Go
+   to sign in**.
+
+Appliance installs don't show this screen: the root administrator is made in the appliance's own
+first-boot setup, and the web app shows "Not set up yet" until then.
 
 Once the root user exists, the `/setup` screen goes away. From now on you sign in normally and
 manage Steward from `/admin`.

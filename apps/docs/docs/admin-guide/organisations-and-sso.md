@@ -29,6 +29,12 @@ Before a connection is used for real sign-ins:
 2. **Run an IdP test** — opens a sign-in attempt against the connection in a popup, so you confirm
    it works before anyone depends on it.
 
+A test link handed to someone at the other organisation opens a page there that says whose
+sign-in it tests and starts the test, then shows whether it passed. That page needs a public
+test-link lookup in the gateway that isn't there yet
+([steward-gateway#54](https://github.com/Steward-GRC/steward-gateway/issues/54)); until it is,
+the page says so.
+
 An organisation's **Active** status is separate from verification and testing: Steward tracks all
 three so you can confirm a connection end-to-end before people use it.
 

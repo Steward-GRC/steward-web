@@ -13,5 +13,67 @@
       "bannersDetail": "They now show across both apps, on every page and at sign-in.",
       "email": "Email settings saved"
     }
+  },
+  "setup": {
+    "account": {
+      "body": "Create the root administrator account.",
+      "confirmPassword": "Confirm password",
+      "continue": "Continue",
+      "displayName": "Display name",
+      "email": "Email",
+      "password": "Password",
+      "setupToken": "Setup token",
+      "setupTokenHint": "Setup token · Provided by your system administrator",
+      "title": "First-run setup",
+      "username": "Username"
+    },
+    "done": {
+      "copied": "Copied",
+      "copy": "Copy",
+      "copyLabel": "Copy the DNS record value",
+      "dnsValue": "DNS record value (TXT)",
+      "finishSso": "Finish enabling SSO: add the DNS record {{record}} with the value shown, then go to sign in.",
+      "notProvisioned": "SSO not fully provisioned",
+      "notProvisionedLater": "You can finish setting up SSO from Organizations after signing in.",
+      "redirecting": "Redirecting you to sign in…",
+      "signIn": "Go to sign in",
+      "title": "Your root administrator is ready."
+    },
+    "problem": {
+      "already": "This Steward is already set up.",
+      "disabled": "Setup is not enabled on this Steward.",
+      "failed": "Setup couldn't finish. Try again in a moment.",
+      "fields": "All fields are required.",
+      "oidc": "OIDC requires the issuer and client ID.",
+      "passwords": "Passwords do not match.",
+      "saml": "SAML requires the IdP entity ID, SSO URL and signing certificate.",
+      "ssoFields": "Organization name, domain and identity provider are required.",
+      "token": "Invalid setup token.",
+      "tokenBlank": "Enter the setup token.",
+      "username": "Username must be a plain username, not an email address."
+    },
+    "sso": {
+      "body": "Connect your organization's identity provider now, or skip and set it up later.",
+      "choose": "Choose a provider",
+      "clientId": "Client ID",
+      "clientSecret": "Client secret",
+      "displayName": "Display name (optional) · Shown on the sign-in screen",
+      "domain": "Domain",
+      "entityId": "Entity ID",
+      "finish": "Finish setup",
+      "issuer": "Issuer",
+      "later": "Don't set up SSO",
+      "localSignIn": "Local sign-in is always available for the root administrator you just created, and you can turn on organization SSO at any time.",
+      "now": "Set up SSO now",
+      "oidc": "OIDC connection",
+      "organization": "Organization name",
+      "provider": "Identity provider",
+      "saml": "SAML connection",
+      "signingCertificate": "IdP signing certificate",
+      "skip": "Skip for now",
+      "ssoUrl": "SSO URL",
+      "title": "Single sign-on",
+      "verification": "We'll create the connection and start domain verification. You'll publish a DNS TXT record, then finish testing and activation from Organizations."
+    }
   }
 }

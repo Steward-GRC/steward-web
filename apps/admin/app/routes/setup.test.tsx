@@ -69,7 +69,9 @@ describe("first-run setup's setup token", () => {
     await fillAccount("right-token");
     fireEvent.click(await screen.findByRole("button", { name: "Skip for now" }));
 
-    expect(await screen.findByRole("heading", { name: "Setup complete" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Your root administrator is ready." }),
+    ).toBeInTheDocument();
   });
 });
 
