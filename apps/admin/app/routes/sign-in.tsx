@@ -6,9 +6,13 @@ import { QuickLogin } from "@steward-web/dev-quick-login";
 
 import type { Route } from "./+types/sign-in";
 
-export const loader = ({ request }: Route.LoaderArgs) => signInLoader(request);
+import { BASENAME } from "../basename";
 
-export const action = ({ request }: Route.ActionArgs) => signInAction(request);
+export const loader = ({ request }: Route.LoaderArgs) =>
+  signInLoader(request, { basename: BASENAME });
+
+export const action = ({ request }: Route.ActionArgs) =>
+  signInAction(request, undefined, { basename: BASENAME });
 
 export default function SignInRoute({ actionData, loaderData }: Route.ComponentProps) {
   return (

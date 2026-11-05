@@ -14,10 +14,26 @@ import { identityFromRequest } from "./requestIdentity.server";
  * protected screen flash before the redirect, because it is never rendered.
  */
 
+/**
+ * Where a visitor was headed, as the sign-in page's `next` takes it: the path and query only,
+ * since `safeNext` refuses anything with an origin. A client navigation reaches the loader as
+ * a data request (`/policies.data?_routes=...`), so that is turned back into the page's own
+ * URL the way React Router itself does. The app's basename stays on; sign-in takes it off.
+ */
+const returnPath = (currentUrl: string): string => {
+  const url = new URL(currentUrl, "http://localhost");
+  const pathname = url.pathname.endsWith("/_.data")
+    ? url.pathname.replace(/_\.data$/, "")
+    : url.pathname.replace(/\.data$/, "");
+  url.searchParams.delete("_routes");
+  const search = url.searchParams.toString();
+  return search ? `${pathname}?${search}` : pathname;
+};
+
 /** Sends a signed-out visitor to sign in, carrying where they were headed. */
 export const requireIdentity = (identity: Identity, currentUrl: string): Identity => {
   if (identity.id === "") {
-    const next = encodeURIComponent(currentUrl);
+    const next = encodeURIComponent(returnPath(currentUrl));
     throw redirect(`/sign-in?next=${next}`);
   }
   return identity;

@@ -128,7 +128,7 @@ describe("password sign-in through the gateway session", () => {
 
   it("refuses a page with no session, sending it to sign-in", async () => {
     expect(await reach("steward_sid=not-a-session")).toEqual({
-      redirect: "/sign-in?next=https%3A%2F%2Fsteward.example%2Fpolicies",
+      redirect: "/sign-in?next=%2Fpolicies",
     });
   });
 });
@@ -213,6 +213,17 @@ describe("safeNext", () => {
     expect(safeNext("//elsewhere.example")).toBe("/");
     expect(safeNext("https://elsewhere.example")).toBe("/");
     expect(safeNext(null)).toBe("/");
+    expect(safeNext(String.raw`/\elsewhere.example`)).toBe("/");
+    expect(safeNext("/\t/elsewhere.example")).toBe("/");
+  });
+
+  it("takes the app's basename off, since the router puts it back on every redirect", () => {
+    expect(safeNext("/admin/users/u-1?tab=roles", "/admin")).toBe("/users/u-1?tab=roles");
+    expect(safeNext("/admin", "/admin")).toBe("/");
+    expect(safeNext("/admin?x=1", "/admin")).toBe("/?x=1");
+    expect(safeNext("/users", "/admin")).toBe("/users");
+    expect(safeNext("/administrators", "/admin")).toBe("/administrators");
+    expect(safeNext("/admin//elsewhere.example", "/admin")).toBe("/");
   });
 });
 

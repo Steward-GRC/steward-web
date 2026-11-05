@@ -18,5 +18,11 @@ export {
   requirePermissionFromRequest,
 } from "./guards.server";
 export { identityFromRequest } from "./requestIdentity.server";
-export { safeNext, signInAction, signInLoader, signOutAction } from "./signIn.server";
+export {
+  safeNext,
+  signInAction,
+  signInLoader,
+  type SignInOptions,
+  signOutAction,
+} from "./signIn.server";
 export { updateMyProfile, type UpdateMyProfileInput } from "./updateProfile.server";

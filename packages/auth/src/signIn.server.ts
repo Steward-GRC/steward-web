@@ -16,9 +16,38 @@ import {
 } from "./gatewayAuth.server";
 import { identityFromRequest } from "./requestIdentity.server";
 
-/** Only an in-app relative path is a safe redirect target; anything else falls back to "/". */
-export const safeNext = (next: unknown): string =>
-  typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+/**
+ * Takes the app's basename off a path inside it. The router puts the basename back on every
+ * redirect a loader or action returns, so leaving it on would send `/admin/x` to `/admin/admin/x`.
+ */
+const withoutBasename = (path: string, basename: string): string => {
+  const base = basename.replace(/\/+$/, "");
+  if (base === "" || !path.toLowerCase().startsWith(base.toLowerCase())) return path;
+  const rest = path.slice(base.length);
+  if (rest === "") return "/";
+  if (rest.startsWith("?") || rest.startsWith("#")) return `/${rest}`;
+  return rest.startsWith("/") ? rest : path;
+};
+
+const isInAppPath = (path: string): boolean =>
+  // A backslash or a tab or line break is read as `/` or dropped by the browser's URL
+  // parser, which would turn `/\host` or `/<tab>/host` into a protocol-relative URL.
+  path.startsWith("/") && !path.startsWith("//") && !/[\t\n\r\\]/.test(path);
+
+/**
+ * Only an in-app relative path is a safe redirect target; anything else falls back to "/".
+ * `basename` is the app's own (`/admin`), taken off so the router can put it back on.
+ */
+export const safeNext = (next: unknown, basename = "/"): string => {
+  if (typeof next !== "string" || !isInAppPath(next)) return "/";
+  const path = withoutBasename(next, basename);
+  return isInAppPath(path) ? path : "/";
+};
+
+export interface SignInOptions {
+  /** The app's router basename (`/admin` for the admin app); `/` when it has none. */
+  basename?: string;
+}
 
 const field = (form: FormData, key: string): string => String(form.get(key) ?? "").trim();
 
@@ -66,8 +95,11 @@ const afterPassword = async (
 };
 
 /** A signed-in visitor goes straight on; everyone else gets the password step. */
-export const signInLoader = async (request: Request): Promise<SignInLoaderData> => {
-  const next = safeNext(new URL(request.url).searchParams.get("next"));
+export const signInLoader = async (
+  request: Request,
+  { basename }: SignInOptions = {},
+): Promise<SignInLoaderData> => {
+  const next = safeNext(new URL(request.url).searchParams.get("next"), basename);
   const identity = await identityFromRequest(request);
   if (identity.id !== "") throw redirect(next);
   return { next, quickLoginUsers: quickLoginUsers(), state: { view: "password" } };
@@ -78,10 +110,17 @@ export const signInLoader = async (request: Request): Promise<SignInLoaderData> 
  * emailing a code, or confirming a new authenticator during a first sign-in. Each step goes to
  * the gateway; a step that opens a session answers 303 with the gateway's own cookie relayed.
  */
-export const signInAction = async (request: Request, form?: FormData) => {
+export const signInAction = async (
+  request: Request,
+  form?: FormData,
+  { basename }: SignInOptions = {},
+) => {
   const body = form ?? (await request.formData());
   const intent = field(body, "intent");
-  const next = safeNext(body.get("next") ?? new URL(request.url).searchParams.get("next"));
+  const next = safeNext(
+    body.get("next") ?? new URL(request.url).searchParams.get("next"),
+    basename,
+  );
   const options = { incoming: request };
 
   if (intent === "login") {

@@ -4,9 +4,10 @@ import type { Config } from "@react-router/dev/config";
 
 import { isMockRun } from "@steward-web/vite-config";
 
+import { BASENAME } from "./app/basename";
+
 export default {
-  // Served under /admin (decision: the admin app is the staff app's port plus this prefix).
-  basename: "/admin",
+  basename: BASENAME,
   // Keeps a `--mode mock` build out of `build/`, so a stray local build never ships by
   // accident and the two can sit side by side during manual testing.
   buildDirectory: isMockRun() ? "build-mock" : "build",
