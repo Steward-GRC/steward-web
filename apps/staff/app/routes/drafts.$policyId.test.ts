@@ -201,7 +201,7 @@ describe("drafts.$policyId action: submit-review", () => {
 });
 
 describe("drafts.$policyId action: publish", () => {
-  it("still publishes directly, which the gateway allows any author of the policy", async () => {
+  it("no longer publishes directly: a draft publishes through its approval (5-screens.s9)", async () => {
     const calls = routeGateway({
       ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
       PublishDraft: () => ({ publishDraft: { ...draftVersion("published"), versionNo: 1 } }),
@@ -209,10 +209,8 @@ describe("drafts.$policyId action: publish", () => {
 
     const result = await runAction({ intent: "publish" });
 
-    expect(result.data).toEqual({ intent: "publish", ok: true });
-    expect(calls.find((c) => c.operation === "PublishDraft")?.variables).toEqual({
-      policyId: "p-1",
-    });
+    expect(result.data).toMatchObject({ intent: "publish", ok: false });
+    expect(calls.some((c) => c.operation === "PublishDraft")).toBe(false);
   });
 });
 

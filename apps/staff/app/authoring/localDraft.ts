@@ -42,8 +42,10 @@ export const clearLocalDraft = (): void => {
 
 export interface NewPolicyDraft {
   documentType: string;
+  /** The category (U20); `subcategoryId` narrows it. */
   groupId: string;
   sensitivity: string;
+  subcategoryId?: string;
   templateId: string;
   title: string;
 }

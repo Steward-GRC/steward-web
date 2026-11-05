@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
+import { type Collaborator, collaboratorsFrom } from "./presence";
 import { CONTROL_DRAFT_PUBLISHED, CONTROL_SNAPSHOT_REJECTED, describeRejection } from "./protocol";
 import { CollabSession, type CollabToken } from "./session";
 
@@ -25,9 +26,13 @@ export type CollabMode = "live" | "pending" | "solo";
 export interface CollabSessionResult {
   /** The room to hand the editor while `mode` is `live`, otherwise null. */
   collaboration: null | StewardCollaboration;
+  /** Everyone else in the draft's room, as the server names and colours them. */
+  collaborators: Collaborator[];
   mode: CollabMode;
   /** How many browsers (this one included) are in the draft's room. */
   presenceCount: number;
+  /** The room was live and its socket has dropped; it's trying again. */
+  reconnecting: boolean;
   /** The document changed: arm the checkpoint debounce. */
   touch: () => void;
 }
@@ -58,6 +63,8 @@ export const useCollabSession = (
   const [mode, setMode] = useState<CollabMode>(draftId ? "pending" : "solo");
   const [collaboration, setCollaboration] = useState<null | StewardCollaboration>(null);
   const [presenceCount, setPresenceCount] = useState(1);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [reconnecting, setReconnecting] = useState(false);
   const sessionRef = useRef<CollabSession | null>(null);
 
   // Latest-value ref so the room is not rebuilt every time the caller re-renders with new
@@ -127,10 +134,19 @@ export const useCollabSession = (
       if (stopped || !provider) return;
       room.attach(provider);
       const onAwarenessChange = () => {
-        if (!stopped) setPresenceCount(awareness.getStates().size);
+        if (stopped) return;
+        setPresenceCount(awareness.getStates().size);
+        setCollaborators(collaboratorsFrom(awareness.getStates(), document.clientID));
       };
       awareness.on("change", onAwarenessChange);
       onAwarenessChange();
+      // "Reconnecting…" (U11) once a live room's socket drops, until it's back.
+      let wasLive = false;
+      provider.on("status", ({ status }: { status: string }) => {
+        if (stopped) return;
+        if (status === "connected") wasLive = true;
+        setReconnecting(wasLive && status !== "connected");
+      });
     });
 
     return () => {
@@ -144,6 +160,8 @@ export const useCollabSession = (
       sessionRef.current = null;
       setCollaboration(null);
       setPresenceCount(1);
+      setCollaborators([]);
+      setReconnecting(false);
       setMode("pending");
     };
   }, [draftId, decideWithinMs]);
@@ -164,7 +182,7 @@ export const useCollabSession = (
     if (mode === "live") sessionRef.current?.touch();
   };
 
-  return { collaboration, mode, presenceCount, touch };
+  return { collaboration, collaborators, mode, presenceCount, reconnecting, touch };
 };
 
 export { type CollabToken } from "./session";

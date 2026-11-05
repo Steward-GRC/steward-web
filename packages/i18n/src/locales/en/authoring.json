@@ -17,26 +17,59 @@
   },
   "editor": {
     "actions": {
-      "discard": "Discard draft",
-      "discardConfirm": "Discard this draft? This can't be undone.",
-      "publish": "Publish",
-      "publishing": "Publishing…",
-      "submitForReview": "Submit for review",
-      "submitting": "Submitting…"
+      "menu": "Actions"
+    },
+    "aiMenu": {
+      "improve": "Improve draft…",
+      "label": "AI",
+      "offByAdmin": "AI turned off by an administrator",
+      "review": "Review draft",
+      "rewrite": "Rewrite a section…",
+      "unavailable": "AI isn't available right now"
     },
     "appendices": {
       "add": "Add appendix",
-      "empty": "No appendices.",
-      "title": "Appendices"
+      "delete": "Delete appendix",
+      "empty": "No appendices yet. Add one to attach supplementary material.",
+      "save": "Save appendix",
+      "textLabel": "Appendix {{letter}} text",
+      "title": "Appendices",
+      "titleLabel": "Appendix {{letter}} title"
     },
-    "backToDrafts": "Back to my drafts",
-    "discarded": "Draft discarded.",
+    "coAuthored": "Co-authored — others with author access in this category can edit.",
+    "discard": {
+      "action": "Discard draft",
+      "draft": "Discarding deletes this draft. It has never been published.",
+      "inReview": "It's in review. Discarding withdraws it from approval and deletes your changes.",
+      "keep": "Keep draft",
+      "menu": "Discard draft…",
+      "published": "Discarding deletes your changes.",
+      "stillLive": "The published v{{version}} stays live.",
+      "title": "Discard this draft?"
+    },
+    "draftWord": "draft",
     "imageUploadUnavailable": "Image uploads aren't available here yet. Paste an image link with /image instead.",
     "loading": "Loading the editor",
+    "nextVersion": {
+      "after": "After v{{version}}",
+      "first": "first publish",
+      "title": "Next version",
+      "workedOut": "The type is worked out when you submit."
+    },
     "placeholder": "Start writing, or press / for blocks",
-    "presence": "{{count}} people editing",
+    "presence": {
+      "group": "Editing now",
+      "live": "Live",
+      "published": "Published as v{{version}} — read-only",
+      "reconnecting": "Reconnecting…",
+      "together": "Editing together"
+    },
     "published": "Published as version {{version}}.",
-    "requiredMissing": "These required sections still need content: {{sections}}",
+    "required": {
+      "count": "{{filled}} of {{total}}",
+      "empty": "empty",
+      "title": "Required sections"
+    },
     "review": {
       "inReview": "Sent for review. Its approvers see it in Approvals, and it publishes when the last stage approves.",
       "publishFailed": "The draft wasn't published",
@@ -44,22 +77,75 @@
       "submitRefused": "This draft can't go for review yet",
       "submitRefusedDetail": "No approval workflow applies to its group, or a stage has no approver. Ask an administrator to attach one."
     },
+    "saveDraft": "Save draft",
+    "saveState": {
+      "saved": "Saved",
+      "saving": "Saving…",
+      "unsaved": "Unsaved changes"
+    },
     "sections": {
-      "title": "Section title",
-      "text": "Section text"
+      "text": "Section text",
+      "title": "Section title"
+    },
+    "startingPoint": "Draft a starting point, write from scratch, or select any text to rewrite it.",
+    "submit": {
+      "action": "Submit for approval",
+      "approvers": "its approvers",
+      "changeType": "Change type",
+      "description": "{{title}} ({{number}}) goes to {{workflow}}. You can't edit it while it's in review.",
+      "empty": "Empty: {{sections}}",
+      "fillRequired": "Fill every required section before submitting.",
+      "keepEditing": "Keep editing",
+      "lowering": "Lowering it needs a reason",
+      "reacknowledge": "Everyone in the audience will be asked to acknowledge again.",
+      "title": "Submit for approval?",
+      "why": "Why {{change}}",
+      "workedOut": "Worked out by Steward"
     }
   },
   "new": {
-    "create": "Create draft",
+    "cancel": "Cancel",
+    "create": {
+      "policy": "Create policy",
+      "procedure": "Create procedure"
+    },
     "fields": {
+      "category": "Category",
+      "choose": "Choose a category",
       "documentType": "Type",
-      "group": "Group",
+      "noSubcategory": "None",
       "sensitivity": "Sensitivity",
+      "subcategory": "Subcategory",
       "template": "Template",
       "templateNone": "No template (freeform)",
       "title": "Title"
     },
-    "subtitle": "Choose where it lives and start from a template, or write freeform.",
-    "title": "New policy or procedure"
+    "noCategories": {
+      "body": "An admin needs to create category groups in the Admin console first.",
+      "title": "No categories available"
+    },
+    "required": "A title and a category are required.",
+    "sensitivity": {
+      "sensitive": "Sensitive",
+      "standard": "Standard"
+    },
+    "subtitle": {
+      "policy": "Create a policy shell, then draft its content.",
+      "procedure": "Create a procedure shell, then draft its content."
+    },
+    "title": {
+      "policy": "New policy",
+      "procedure": "New procedure"
+    },
+    "types": {
+      "policy": {
+        "hint": "A rule people must follow. Can require acknowledgement.",
+        "label": "Policy"
+      },
+      "procedure": {
+        "hint": "Steps for doing something. Never needs acknowledgement.",
+        "label": "Procedure"
+      }
+    }
   }
 }

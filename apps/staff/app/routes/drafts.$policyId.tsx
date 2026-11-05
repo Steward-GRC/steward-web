@@ -19,17 +19,17 @@ import {
   DialogClose,
   DialogContent,
   DialogFooter,
-  DialogTrigger,
   Field,
   FindingBadge,
   type FindingSeverity,
   Input,
   Progress,
   Select,
+  StatusPill,
   Textarea,
 } from "@steward-web/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { data, Form, Link, useFetcher } from "react-router";
+import { data, useFetcher } from "react-router";
 
 import type { Route } from "./+types/drafts.$policyId";
 
@@ -47,7 +47,6 @@ import {
   getLatestTemplateVersion,
   getPolicy,
   isDraftInReview,
-  publishDraft,
   saveDraft,
   submitDraftForReview,
   updateAppendix,
@@ -55,7 +54,16 @@ import {
 import { issueCollabToken } from "../authoring/collab/collab.server";
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
-import { DraftReviewActions } from "../authoring/DraftReviewActions";
+import { ActionsMenu, AiMenu, SubmitForApproval } from "../authoring/EditorActions";
+import {
+  AppendicesPanel,
+  EditorHeader,
+  NextVersion,
+  Presence,
+  type PresenceState,
+  RequiredSections,
+  type SaveStateKind,
+} from "../authoring/EditorChrome";
 import {
   aiSections,
   applyAiText,
@@ -145,10 +153,6 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         });
         return data({ intent, jobId, ok: true } as const);
       }
-      case "publish": {
-        await publishDraft(request, policyId);
-        return data({ intent, ok: true } as const);
-      }
       case "review": {
         const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as SectionPayload[];
         const { jobId } = await submitPolicyReview(request, {
@@ -237,12 +241,23 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const contentRef = useRef(initialDocument);
   const editorRef = useRef<null | StewardEditorHandle>(null);
   const [assistOpen, setAssistOpen] = useState(false);
+  const [aiDialog, setAiDialog] = useState<"generate" | "review" | null>(null);
+  // What the page last saved, to tell "Saved" from "Unsaved changes" (U11).
+  const [lastSaved, setLastSaved] = useState(() => serializeDocument(initialDocument));
   const [assistSectionKey, setAssistSectionKey] = useState<string>(
     () => aiSections(initialDocument, outline)[0]?.key ?? "",
   );
   const [appliedGenerateJobId, setAppliedGenerateJobId] = useState<null | string>(null);
 
   const saveFetcher = useFetcher<typeof action>();
+  // A successful save makes what it sent the saved content. Adjusted during render on the
+  // response the page hasn't seen yet, not in an effect.
+  const [seenSave, setSeenSave] = useState(saveFetcher.data);
+  if (saveFetcher.data !== seenSave) {
+    setSeenSave(saveFetcher.data);
+    const sent = saveFetcher.formData?.get("contentJson");
+    if (saveFetcher.data?.ok && typeof sent === "string") setLastSaved(sent);
+  }
   const assistFetcher = useFetcher<typeof action>();
   const generateFetcher = useFetcher<typeof action>();
   const reviewFetcher = useFetcher<typeof action>();
@@ -300,11 +315,13 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
   const [collabNotice, setCollabNotice] = useState<null | string>(null);
   const [collabReadOnly, setCollabReadOnly] = useState(false);
+  const [publishedVersion, setPublishedVersion] = useState<null | string>(null);
   const onCollabSnapshotRejected = useCallback((message: string) => {
     setCollabNotice(`Not saved collaboratively: ${message}`);
   }, []);
-  const onCollabPublishedElsewhere = useCallback(() => {
+  const onCollabPublishedElsewhere = useCallback((versionNumber: number) => {
     setCollabReadOnly(true);
+    setPublishedVersion(String(versionNumber));
     setCollabNotice(
       "This draft was just published elsewhere. Reload to see the published version.",
     );
@@ -375,306 +392,286 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         })
       : null;
 
+  const firstPublish = !policy.currentPublishedVersionId;
+  const outlineRequired = outline.filter((section) => section.required);
+  const presenceState: PresenceState = collabReadOnly
+    ? "published"
+    : collabSession.reconnecting
+      ? "reconnecting"
+      : collabSession.collaborators.length > 0
+        ? "together"
+        : "live";
+  const serialized = serializeDocument(content);
+  const saveState: SaveStateKind =
+    saveFetcher.state === "idle" ? (serialized === lastSaved ? "saved" : "unsaved") : "saving";
+  const saveDraftNow = () =>
+    void saveFetcher.submit(
+      { contentJson: serialized, intent: "save", templateVersionId: draft.templateVersionId ?? "" },
+      { method: "post" },
+    );
+
   return (
-    <div className="grid gap-6 p-6">
-      <Link className="text-sm text-muted hover:underline" to="/drafts">
-        {t("editor.backToDrafts")}
-      </Link>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-ink">{policy.title}</h1>
-          {collabSession.presenceCount > 1 ? (
-            <span className="rounded-full bg-sunken px-2 py-0.5 text-xs text-muted">
-              {t("editor.presence", { count: collabSession.presenceCount })}
-            </span>
-          ) : null}
-        </div>
-        <div className="flex items-start gap-2">
-          {aiHealth.available ? (
-            <>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="secondary">{tAi("generate.title")}</Button>
-                </DialogTrigger>
-                <DialogContent hasInput title={tAi("generate.title")}>
-                  <generateFetcher.Form method="post">
-                    <input name="intent" type="hidden" value="generate" />
-                    <input name="sectionsJson" type="hidden" value={sectionsJson} />
-                    <DialogBody>
-                      <Field label={tAi("generate.brief")}>
-                        <Textarea name="brief" required />
-                      </Field>
-                      {generateJobId && generateJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
-                        <Progress value={generateJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
-                      ) : null}
-                      {generateResult ? (
-                        <div className="grid gap-2">
-                          {generateResult.sections.map((generated) => (
-                            <div
-                              className="rounded-md border border-border p-2 text-sm"
-                              key={generated.sectionKey}
-                            >
-                              {generated.text}
-                            </div>
-                          ))}
-                          <Button
-                            onClick={() => {
-                              replaceDocument(
-                                fillGenerated(content, outline, generateResult.sections),
-                              );
-                              setAppliedGenerateJobId(generateJobId);
-                            }}
-                            type="button"
-                          >
-                            {tAi("assist.apply")}
-                          </Button>
-                        </div>
-                      ) : null}
-                    </DialogBody>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="secondary">{tCommon("actions.close")}</Button>
-                      </DialogClose>
-                      <Button disabled={generateFetcher.state !== "idle"} type="submit">
-                        {tAi("generate.start")}
-                      </Button>
-                    </DialogFooter>
-                  </generateFetcher.Form>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="secondary">{tAi("review.title")}</Button>
-                </DialogTrigger>
-                <DialogContent title={tAi("review.title")}>
-                  <reviewFetcher.Form method="post">
-                    <input name="intent" type="hidden" value="review" />
-                    <input name="versionId" type="hidden" value={draft?.id ?? ""} />
-                    <input name="sectionsJson" type="hidden" value={sectionsJson} />
-                    <DialogBody>
-                      {reviewJobId && reviewJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
-                        <Progress value={reviewJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
-                      ) : null}
-                      {reviewResult ? (
-                        reviewResult.findings.length === 0 ? (
-                          <p className="text-sm text-muted">{tAi("review.empty")}</p>
-                        ) : (
-                          <ul className="grid gap-2">
-                            {reviewResult.findings.map((finding) => (
-                              <li
-                                className="grid gap-1 rounded-md border border-border p-2"
-                                key={finding.sectionKey}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <FindingBadge severity={finding.severity} />
-                                  <span className="text-sm font-medium">{finding.sectionKey}</span>
-                                </div>
-                                <p className="text-sm text-muted">{finding.finding}</p>
-                                {finding.suggestion ? (
-                                  <p className="text-sm">
-                                    {tAi("review.suggestion", { suggestion: finding.suggestion })}
-                                  </p>
-                                ) : null}
-                              </li>
-                            ))}
-                          </ul>
-                        )
-                      ) : null}
-                    </DialogBody>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="secondary">{tCommon("actions.close")}</Button>
-                      </DialogClose>
-                      <Button disabled={reviewFetcher.state !== "idle"} type="submit">
-                        {tAi("review.start")}
-                      </Button>
-                    </DialogFooter>
-                  </reviewFetcher.Form>
-                </DialogContent>
-              </Dialog>
-            </>
-          ) : (
-            <Banner title={tAi("assist.unavailable")} tone="info" />
-          )}
-
-          <DraftReviewActions
-            blocked={missing.length > 0 || collabReadOnly}
-            canPublish={policy.viewerCan.edit}
-            canSubmit={policy.viewerCan.submit}
-            inReview={inReview}
-          />
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="danger">{t("editor.actions.discard")}</Button>
-            </DialogTrigger>
-            <DialogContent
-              description={t("editor.actions.discardConfirm")}
-              title={t("editor.actions.discard")}
-              tone="danger"
+    <div className="flex flex-col gap-3.5 px-4 pt-[22px] pb-8 text-ink sm:px-8">
+      <EditorHeader
+        actions={
+          <>
+            <AiMenu
+              available={aiHealth.available}
+              onChoose={(choice) => {
+                if (choice === "improve") setAiDialog("generate");
+                if (choice === "review") setAiDialog("review");
+                if (choice === "rewrite") setAssistOpen(true);
+              }}
+              reason={aiHealth.reason}
+            />
+            <Button
+              className="h-[38px] px-3.5"
+              disabled={saveFetcher.state !== "idle" || collabReadOnly || inReview}
+              onClick={saveDraftNow}
+              variant="secondary"
             >
-              <Form method="post">
-                <input name="intent" type="hidden" value="discard" />
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="secondary">{tCommon("actions.cancel")}</Button>
-                  </DialogClose>
-                  <Button type="submit" variant="danger">
-                    {t("editor.actions.discard")}
-                  </Button>
-                </DialogFooter>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+              {t("editor.saveDraft")}
+            </Button>
+            {inReview ? (
+              <StatusPill status="in-review" />
+            ) : policy.viewerCan.submit ? (
+              <SubmitForApproval
+                disabled={collabReadOnly}
+                document={{ number: policy.number, title: policy.title }}
+                missing={missing}
+              />
+            ) : null}
+            <ActionsMenu
+              inReview={inReview}
+              published={firstPublish ? undefined : policy.version}
+            />
+          </>
+        }
+        eyebrow={[policy.category, policy.subcategory].filter(Boolean).join(" · ")}
+        meta={[policy.number, firstPublish ? "v1.0.0" : null, t("editor.draftWord")]
+          .filter(Boolean)
+          .join(" · ")}
+        presence={
+          collabSession.mode === "live" ? (
+            <Presence
+              collaborators={collabSession.collaborators}
+              publishedVersion={publishedVersion ?? undefined}
+              state={presenceState}
+            />
+          ) : null
+        }
+        saveState={saveState}
+        title={policy.title}
+      />
 
-      {missing.length > 0 ? (
-        <Banner title={t("editor.requiredMissing", { sections: missing.join(", ") })} tone="warn" />
-      ) : null}
-
+      {inReview ? <p className="text-sm text-muted">{t("editor.review.inReview")}</p> : null}
       {collabNotice ? (
         <Banner title={collabNotice} tone={collabReadOnly ? "info" : "warn"} />
       ) : null}
 
-      <saveFetcher.Form className="grid gap-4" method="post">
-        <input name="intent" type="hidden" value="save" />
-        <input name="contentJson" type="hidden" value={serializeDocument(content)} />
-        <input name="templateVersionId" type="hidden" value={draft.templateVersionId ?? ""} />
-
-        {aiHealth.available ? (
-          <div className="flex justify-end">
-            <Button
-              onClick={() => setAssistOpen((open) => !open)}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              {tAi("assist.title")}
-            </Button>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="rounded-lg border border-border bg-surface px-6 py-8 sm:px-[72px] sm:pt-11 sm:pb-14">
+            <DraftDocumentEditor
+              collaboration={collabSession.mode === "live" ? collabSession.collaboration : null}
+              initialDocument={initialDocument}
+              key={collabSession.mode}
+              onChange={onDocumentChange}
+              onReady={(handle) => {
+                editorRef.current = handle;
+              }}
+              readOnly={collabReadOnly}
+              ready={collabSession.mode !== "pending"}
+            />
           </div>
-        ) : null}
-
-        <DraftDocumentEditor
-          collaboration={collabSession.mode === "live" ? collabSession.collaboration : null}
-          initialDocument={initialDocument}
-          key={collabSession.mode}
-          onChange={onDocumentChange}
-          onReady={(handle) => {
-            editorRef.current = handle;
-          }}
-          readOnly={collabReadOnly}
-          ready={collabSession.mode !== "pending"}
-        />
-
-        <Button
-          className="justify-self-start"
-          disabled={saveFetcher.state !== "idle" || collabReadOnly}
-          type="submit"
-        >
-          {tCommon("actions.save")}
-        </Button>
-      </saveFetcher.Form>
-
-      {assistOpen && aiHealth.available && assistSection ? (
-        <assistFetcher.Form
-          className="grid gap-2 rounded-md border border-border p-3"
-          method="post"
-        >
-          <input name="intent" type="hidden" value="assist" />
-          <input name="versionId" type="hidden" value={draft.id} />
-          <input name="sectionKey" type="hidden" value={assistSection.key} />
-          <input name="editableContent" type="hidden" value={assistSection.text} />
-          {sectionTexts.length > 1 ? (
-            <Field label={tAi("assist.section")}>
-              <Select
-                onValueChange={setAssistSectionKey}
-                options={sectionTexts.map((section) => ({
-                  label: section.title,
-                  value: section.key,
-                }))}
-                value={assistSection.key}
-              />
-            </Field>
+          {assistOpen && aiHealth.available && assistSection ? (
+            <assistFetcher.Form
+              className="grid gap-2 rounded-md border border-border p-3"
+              method="post"
+            >
+              <input name="intent" type="hidden" value="assist" />
+              <input name="versionId" type="hidden" value={draft.id} />
+              <input name="sectionKey" type="hidden" value={assistSection.key} />
+              <input name="editableContent" type="hidden" value={assistSection.text} />
+              {sectionTexts.length > 1 ? (
+                <Field label={tAi("assist.section")}>
+                  <Select
+                    onValueChange={setAssistSectionKey}
+                    options={sectionTexts.map((section) => ({
+                      label: section.title,
+                      value: section.key,
+                    }))}
+                    value={assistSection.key}
+                  />
+                </Field>
+              ) : null}
+              <Field label={tAi("assist.operationLabel")}>
+                <Select
+                  name="operation"
+                  options={Object.values(AssistOperation).map((operation) => ({
+                    label: tAi(`assist.operation.${operation}`),
+                    value: operation,
+                  }))}
+                />
+              </Field>
+              <Field label={tAi("assist.instruction")}>
+                <Input name="instruction" />
+              </Field>
+              <Button disabled={assistFetcher.state !== "idle"} type="submit">
+                {tAi("assist.ask")}
+              </Button>
+              {assistSuggestion && assistSuggestion.sectionKey === assistSection.key ? (
+                <div className="grid gap-2">
+                  <p className="text-sm">{assistSuggestion.suggestion}</p>
+                  <Button
+                    onClick={() => {
+                      replaceDocument(
+                        applyAiText(
+                          content,
+                          outline,
+                          assistSection.key,
+                          assistSuggestion.suggestion,
+                        ),
+                      );
+                      setAssistOpen(false);
+                    }}
+                    type="button"
+                  >
+                    {tAi("assist.apply")}
+                  </Button>
+                </div>
+              ) : null}
+            </assistFetcher.Form>
           ) : null}
-          <Field label={tAi("assist.operationLabel")}>
-            <Select
-              name="operation"
-              options={Object.values(AssistOperation).map((operation) => ({
-                label: tAi(`assist.operation.${operation}`),
-                value: operation,
+        </div>
+
+        <div className="flex flex-col gap-3.5">
+          {outlineRequired.length > 0 ? (
+            <RequiredSections
+              sections={outlineRequired.map((section) => ({
+                filled: !missing.includes(section.title),
+                title: section.title,
               }))}
             />
-          </Field>
-          <Field label={tAi("assist.instruction")}>
-            <Input name="instruction" />
-          </Field>
-          <Button disabled={assistFetcher.state !== "idle"} type="submit">
-            {tAi("assist.ask")}
-          </Button>
-          {assistSuggestion && assistSuggestion.sectionKey === assistSection.key ? (
-            <div className="grid gap-2">
-              <p className="text-sm">{assistSuggestion.suggestion}</p>
-              <Button
-                onClick={() => {
-                  replaceDocument(
-                    applyAiText(content, outline, assistSection.key, assistSuggestion.suggestion),
-                  );
-                  setAssistOpen(false);
-                }}
-                type="button"
-              >
-                {tAi("assist.apply")}
-              </Button>
-            </div>
           ) : null}
-        </assistFetcher.Form>
-      ) : null}
+          <AppendicesPanel
+            appendices={draft.appendices.map((appendix) => ({
+              id: appendix.id,
+              letter: appendix.letter,
+              text: (JSON.parse(appendix.contentJson || "{}") as { text?: string }).text ?? "",
+              title: appendix.title,
+            }))}
+            draftId={draft.id}
+          />
+          <NextVersion
+            firstPublish={firstPublish}
+            published={firstPublish ? undefined : policy.version}
+          />
+        </div>
+      </div>
 
-      <div className="grid gap-2">
-        <h2 className="text-base font-semibold text-ink">{t("editor.appendices.title")}</h2>
-        {draft.appendices.length === 0 ? (
-          <p className="text-sm text-muted">{t("editor.appendices.empty")}</p>
-        ) : (
-          <ul className="grid gap-2">
-            {draft.appendices.map((appendix) => {
-              const text =
-                (JSON.parse(appendix.contentJson || "{}") as { text?: string }).text ?? "";
-              return (
-                <li className="grid gap-2 rounded-md border border-border p-3" key={appendix.id}>
-                  <Form className="grid gap-2" method="post">
-                    <input name="intent" type="hidden" value="update-appendix" />
-                    <input name="appendixId" type="hidden" value={appendix.id} />
-                    <Input defaultValue={appendix.title} name="title" />
-                    <Textarea defaultValue={text} name="text" />
-                    <div className="flex justify-end gap-2">
-                      <Button size="sm" type="submit">
-                        {tCommon("actions.save")}
+      {aiHealth.available ? (
+        <>
+          <Dialog
+            onOpenChange={(open) => setAiDialog(open ? "generate" : null)}
+            open={aiDialog === "generate"}
+          >
+            <DialogContent hasInput title={tAi("generate.title")}>
+              <generateFetcher.Form method="post">
+                <input name="intent" type="hidden" value="generate" />
+                <input name="sectionsJson" type="hidden" value={sectionsJson} />
+                <DialogBody>
+                  <Field label={tAi("generate.brief")}>
+                    <Textarea name="brief" required />
+                  </Field>
+                  {generateJobId && generateJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
+                    <Progress value={generateJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
+                  ) : null}
+                  {generateResult ? (
+                    <div className="grid gap-2">
+                      {generateResult.sections.map((generated) => (
+                        <div
+                          className="rounded-md border border-border p-2 text-sm"
+                          key={generated.sectionKey}
+                        >
+                          {generated.text}
+                        </div>
+                      ))}
+                      <Button
+                        onClick={() => {
+                          replaceDocument(fillGenerated(content, outline, generateResult.sections));
+                          setAppliedGenerateJobId(generateJobId);
+                        }}
+                        type="button"
+                      >
+                        {tAi("assist.apply")}
                       </Button>
                     </div>
-                  </Form>
-                  <Form method="post">
-                    <input name="intent" type="hidden" value="delete-appendix" />
-                    <input name="appendixId" type="hidden" value={appendix.id} />
-                    <Button size="sm" type="submit" variant="ghost">
-                      {tCommon("actions.delete")}
-                    </Button>
-                  </Form>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        <Form method="post">
-          <input name="intent" type="hidden" value="add-appendix" />
-          <input name="policyVersionId" type="hidden" value={draft.id} />
-          <Button size="sm" type="submit" variant="secondary">
-            {t("editor.appendices.add")}
-          </Button>
-        </Form>
-      </div>
+                  ) : null}
+                </DialogBody>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="secondary">{tCommon("actions.close")}</Button>
+                  </DialogClose>
+                  <Button disabled={generateFetcher.state !== "idle"} type="submit">
+                    {tAi("generate.start")}
+                  </Button>
+                </DialogFooter>
+              </generateFetcher.Form>
+            </DialogContent>
+          </Dialog>
+          <Dialog
+            onOpenChange={(open) => setAiDialog(open ? "review" : null)}
+            open={aiDialog === "review"}
+          >
+            <DialogContent title={tAi("review.title")}>
+              <reviewFetcher.Form method="post">
+                <input name="intent" type="hidden" value="review" />
+                <input name="versionId" type="hidden" value={draft?.id ?? ""} />
+                <input name="sectionsJson" type="hidden" value={sectionsJson} />
+                <DialogBody>
+                  {reviewJobId && reviewJob?.phase !== "AI_JOB_PHASE_SUCCEEDED" ? (
+                    <Progress value={reviewJob?.phase === "AI_JOB_PHASE_FAILED" ? 100 : 50} />
+                  ) : null}
+                  {reviewResult ? (
+                    reviewResult.findings.length === 0 ? (
+                      <p className="text-sm text-muted">{tAi("review.empty")}</p>
+                    ) : (
+                      <ul className="grid gap-2">
+                        {reviewResult.findings.map((finding) => (
+                          <li
+                            className="grid gap-1 rounded-md border border-border p-2"
+                            key={finding.sectionKey}
+                          >
+                            <div className="flex items-center gap-2">
+                              <FindingBadge severity={finding.severity} />
+                              <span className="text-sm font-medium">{finding.sectionKey}</span>
+                            </div>
+                            <p className="text-sm text-muted">{finding.finding}</p>
+                            {finding.suggestion ? (
+                              <p className="text-sm">
+                                {tAi("review.suggestion", { suggestion: finding.suggestion })}
+                              </p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )
+                  ) : null}
+                </DialogBody>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="secondary">{tCommon("actions.close")}</Button>
+                  </DialogClose>
+                  <Button disabled={reviewFetcher.state !== "idle"} type="submit">
+                    {tAi("review.start")}
+                  </Button>
+                </DialogFooter>
+              </reviewFetcher.Form>
+            </DialogContent>
+          </Dialog>
+        </>
+      ) : null}
     </div>
   );
 }
