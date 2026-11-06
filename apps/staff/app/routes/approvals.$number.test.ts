@@ -207,11 +207,11 @@ describe("approvals.$number loader: the review", () => {
 
     expect(asked).toEqual(["version-2→version-3"]);
     expect(result.data).toMatchObject({
-      match: { category: "Finance", subcategory: "Expenses", version: "3" },
+      match: { category: "Finance", subcategory: "Expenses", version: "3.0.0" },
       preview: { stageNumber: 2 },
       review: {
         diff: [{ sectionKey: "claim" }],
-        upcoming: { blocks: [], version: "3" },
+        upcoming: { blocks: [], version: "3.0.0" },
       },
       task: null,
     });

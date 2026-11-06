@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { PERMISSIONS, useCan } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
+import { newDraftPath } from "@steward-web/shell";
 import { Button } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
 import { Upload } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 /**
  * The library header's author actions (U3, U4): Import (U21, CSV) and New policy or New
@@ -14,6 +15,8 @@ import { Link } from "react-router";
 export const LibraryActions = ({ documentType }: { documentType: DocumentType }) => {
   const { t } = useTranslation("policy");
   const author = useCan(PERMISSIONS.PolicyAuthor);
+  // A new draft started from a folder view opens on that category (#148).
+  const [parameters] = useSearchParams();
   if (!author) return null;
   const procedure = documentType === DocumentType.Procedure;
   return (
@@ -25,7 +28,12 @@ export const LibraryActions = ({ documentType }: { documentType: DocumentType })
         </Link>
       </Button>
       <Button asChild className="h-[38px] px-4">
-        <Link to={`/drafts/new?type=${documentType}`}>
+        <Link
+          to={newDraftPath(documentType, {
+            category: parameters.get("category") ?? "",
+            subcategory: parameters.get("subcategory") ?? "",
+          })}
+        >
           {t(procedure ? "library.actions.newProcedure" : "library.actions.newPolicy")}
         </Link>
       </Button>

@@ -203,7 +203,7 @@ describe("liveEdge.policies", () => {
         status: PolicyStatus.Published,
         subcategory: "Travel",
         updated: "2026-09-02T00:00:00Z",
-        version: "2",
+        version: "2.0.0",
       }),
     ]);
     expect(calls.find((c) => c.operation === "Policies")?.variables).toEqual({
@@ -344,17 +344,17 @@ describe("liveEdge.policyDetail", () => {
       currentVersionId: "v-2",
       definitions: [{ term: "Travel" }],
       history: [
-        { at: "2026-07-29T09:15:00Z", kind: "submitted", versionLabel: "2" },
-        { at: "2026-08-12T00:00:00Z", kind: "published", versionLabel: "2" },
+        { at: "2026-07-29T09:15:00Z", kind: "submitted", versionLabel: "2.0.0" },
+        { at: "2026-08-12T00:00:00Z", kind: "published", versionLabel: "2.0.0" },
       ],
       id: "p-1",
-      priorVersion: { diff: [{ changeType: "MODIFIED" }], version: "1" },
+      priorVersion: { diff: [{ changeType: "MODIFIED" }], version: "1.0.0" },
       published: "2026-08-12T00:00:00Z",
       revision: null,
       status: PolicyStatus.Published,
       subcategory: "Travel",
       summary: null,
-      version: "2",
+      version: "2.0.0",
     });
     expect(calls.find((c) => c.operation === "PolicyByNumber")?.variables).toEqual({
       number: "FIN-001",
@@ -372,10 +372,10 @@ describe("liveEdge.policyDetail", () => {
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
     expect(detail).toMatchObject({
       ai: { available: false, reason: "provider_unavailable" },
-      priorVersion: { fromVersionId: "v-1", toVersionId: "v-2", version: "1" },
+      priorVersion: { fromVersionId: "v-1", toVersionId: "v-2", version: "1.0.0" },
       versions: [
-        { id: "v-1", status: "superseded", version: "1" },
-        { id: "v-2", status: "published", version: "2" },
+        { id: "v-1", status: "superseded", version: "1.0.0" },
+        { id: "v-2", status: "published", version: "2.0.0" },
       ],
     });
   });
@@ -425,7 +425,7 @@ describe("liveEdge.policyDetail", () => {
     });
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
     expect(detail).toMatchObject({
-      revision: { status: PolicyStatus.InReview, version: "3" },
+      revision: { status: PolicyStatus.InReview, version: "3.0.0" },
       summary: { generatedAt: "2026-08-12T00:00:00Z", text: "Book ahead; cancel early." },
     });
   });
@@ -465,7 +465,7 @@ describe("liveEdge.policyDetail", () => {
 
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
 
-    expect(detail).toMatchObject({ bodyText: "Purpose\n\nWhy.", id: "p-1", version: "2" });
+    expect(detail).toMatchObject({ bodyText: "Purpose\n\nWhy.", id: "p-1", version: "2.0.0" });
     expect(detail?.history).toEqual([
       {
         actorName: null,
@@ -473,7 +473,7 @@ describe("liveEdge.policyDetail", () => {
         comment: null,
         kind: "published",
         stage: null,
-        versionLabel: "1",
+        versionLabel: "1.0.0",
       },
       {
         actorName: null,
@@ -481,7 +481,7 @@ describe("liveEdge.policyDetail", () => {
         comment: null,
         kind: "published",
         stage: null,
-        versionLabel: "2",
+        versionLabel: "2.0.0",
       },
     ]);
   });
@@ -796,7 +796,7 @@ describe("liveEdge.versionDocument", () => {
         { depth: 1, kind: "heading", sectionKey: "receipts", text: "Receipts" },
         { kind: "paragraph", runs: [{ text: "A photo is enough." }] },
       ],
-      version: "3",
+      version: "3.0.0",
     });
     expect(calls).toEqual([{ operation: "PolicyVersion", variables: { id: "v-3" } }]);
   });

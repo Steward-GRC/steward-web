@@ -12,8 +12,8 @@ const may =
 describe("the command bar's create actions", () => {
   it("lets a staff author create a policy, a procedure and a draft from a template", () => {
     expect(staffCreates(may("policy.read", "policy.author"))).toEqual([
-      { id: "policy", label: "shell:create.policy", to: "/drafts/new?type=POLICY" },
-      { id: "procedure", label: "shell:create.procedure", to: "/drafts/new?type=PROCEDURE" },
+      { id: "policy", label: "shell:create.policy", to: "/drafts/new/policy" },
+      { id: "procedure", label: "shell:create.procedure", to: "/drafts/new/procedure" },
       { id: "fromTemplate", label: "shell:create.fromTemplate", to: "/templates" },
     ]);
   });

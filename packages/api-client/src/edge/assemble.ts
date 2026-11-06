@@ -10,6 +10,7 @@ import {
 import type { AuthoringPolicyFieldsFragment } from "../generated/graphql";
 
 import { GatewayError } from "../gatewayFetch";
+import { semanticVersion } from "../semanticVersion";
 import {
   type DocumentBlock,
   type HistoryEntry,
@@ -285,7 +286,7 @@ export const toPolicyView = (
   templateNone: policy.templateNone,
   title: policy.title,
   updated: policy.updatedAt,
-  version: policy.currentVersionNo === null ? "" : String(policy.currentVersionNo),
+  version: semanticVersion(policy.currentVersionNo),
   viewerCan: policy.viewerCan,
 });
 
@@ -371,7 +372,7 @@ export const historyFromVersions = (
               comment: null,
               kind: "published",
               stage: null,
-              versionLabel: String(v.versionNo),
+              versionLabel: semanticVersion(v.versionNo),
             },
           ]
         : [],

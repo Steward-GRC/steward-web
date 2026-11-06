@@ -4,6 +4,8 @@
 // page; where that page isn't built yet, its address answers Coming soon until it is.
 import { PERMISSIONS } from "@steward-web/auth";
 
+import { newDraftPath } from "./newDraftPath";
+
 export interface CreateAction {
   id: string;
   /** The i18n key of "New policy" and the like. */
@@ -23,8 +25,8 @@ const create = (id: string, to: string): CreateAction => ({
 export const staffCreates = (can: Can): CreateAction[] =>
   can(PERMISSIONS.PolicyAuthor)
     ? [
-        create("policy", "/drafts/new?type=POLICY"),
-        create("procedure", "/drafts/new?type=PROCEDURE"),
+        create("policy", newDraftPath("POLICY")),
+        create("procedure", newDraftPath("PROCEDURE")),
         create("fromTemplate", "/templates"),
       ]
     : [];

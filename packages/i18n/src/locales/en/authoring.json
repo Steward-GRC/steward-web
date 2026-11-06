@@ -159,7 +159,9 @@
     "withIssues_other": "{{count}} with issues"
   },
   "new": {
+    "back": "Back",
     "cancel": "Cancel",
+    "continue": "Continue",
     "create": {
       "policy": "Create policy",
       "procedure": "Create procedure"
@@ -184,11 +186,19 @@
       "sensitive": "Sensitive",
       "standard": "Standard"
     },
+    "steps": {
+      "details": "Draft details",
+      "label": "Steps",
+      "progress": "Step {{step}} of 2",
+      "type": "Choose the type"
+    },
     "subtitle": {
+      "draft": "Choose what you are writing, then fill in its details.",
       "policy": "Create a policy shell, then draft its content.",
       "procedure": "Create a procedure shell, then draft its content."
     },
     "title": {
+      "draft": "New draft",
       "policy": "New policy",
       "procedure": "New procedure"
     },

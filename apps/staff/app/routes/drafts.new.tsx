@@ -7,7 +7,15 @@ import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
 import { Banner, Button, Card, cn, EmptyState } from "@steward-web/ui";
 import { type ReactNode, useEffect, useId, useState } from "react";
-import { data, Link, useFetcher, useNavigate, useSearchParams } from "react-router";
+import {
+  data,
+  Link,
+  redirect,
+  useFetcher,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router";
 
 import type { Route } from "./+types/drafts.new";
 
@@ -24,12 +32,21 @@ import {
   newPolicyDraftHasContent,
   readLocalDraft,
 } from "../authoring/localDraft";
+import { documentTypeOfSlug, folderChoice, legacyTypeRedirect } from "../authoring/newDraftRoute";
 import { useResumableDraft } from "../authoring/useResumableDraft";
 
 const NO_TEMPLATE = "__no_template__";
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  const slug = (params as Record<string, string | undefined>).type;
+  // An old /drafts/new?type=POLICY link moves into the path (#147); an unknown type is a 404.
+  if (slug === undefined) {
+    const moved = legacyTypeRedirect(new URL(request.url));
+    if (moved) throw redirect(moved);
+  } else if (!documentTypeOfSlug(slug)) {
+    throw data(null, { status: 404 });
+  }
   const [groups, templates] = await Promise.all([
     listAuthorableGroups(request),
     listAuthorableTemplates(request),
@@ -78,28 +95,35 @@ const Labelled = ({ children, id, label }: { children: ReactNode; id: string; la
 );
 
 /**
- * New policy or New procedure (U20): the type as radio cards with their hints, the title, the
- * category and subcategory, the template and the sensitivity, then Cancel and Create. It opens
- * on the type the command bar asked for (`?type=PROCEDURE`) and the template Use this template
- * chose (`?template=`), and keeps an unsent form in this browser so it can be resumed.
+ * New policy or New procedure (U20). `/drafts/new/policy` and `/drafts/new/procedure` go straight
+ * to the form, with no type to pick (#149); bare `/drafts/new` is a stepper: step 1 chooses the
+ * type as radio cards with their hints, step 2 is the form (title, category and subcategory,
+ * template, sensitivity, then Cancel and Create). It opens on the template Use this template
+ * chose (`?template=`) and the folder the person started from (`?category=`, #148), and keeps an
+ * unsent form in this browser so it can be resumed.
  */
 export default function NewDraft({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("authoring");
   const fetcher = useFetcher<typeof action>();
   const navigate = useNavigate();
   const [parameters] = useSearchParams();
-  const asked = parameters.get("type");
+  const fixedType = documentTypeOfSlug(useParams().type);
+  const [step, setStep] = useState<1 | 2>(1);
   // "Use this template" (U23) opens the form with that template chosen.
   const askedTemplate = parameters.get("template");
   const [draft, setDraft] = useState<NewPolicyDraft>(() => {
     const saved = readLocalDraft<NewPolicyDraft>() ?? emptyNewPolicyDraft();
-    const typed =
-      asked === DocumentType.Procedure || asked === DocumentType.Policy
-        ? { ...saved, documentType: asked }
-        : saved;
-    return askedTemplate && loaderData.templates.some((template) => template.id === askedTemplate)
-      ? { ...typed, templateId: askedTemplate }
-      : typed;
+    const typed = fixedType ? { ...saved, documentType: fixedType } : saved;
+    const withTemplate =
+      askedTemplate && loaderData.templates.some((template) => template.id === askedTemplate)
+        ? { ...typed, templateId: askedTemplate }
+        : typed;
+    const folder = folderChoice(
+      loaderData.categories,
+      parameters.get("category"),
+      parameters.get("subcategory"),
+    );
+    return folder ? { ...withTemplate, ...folder } : withTemplate;
   });
   const ids = { category: useId(), subcategory: useId(), template: useId(), title: useId() };
 
@@ -119,6 +143,8 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
   const refusalMessage = useRefusalMessage(failure && "error" in failure ? failure.error : {});
   const procedure = draft.documentType === DocumentType.Procedure;
   const noun = procedure ? "procedure" : "policy";
+  const stepper = fixedType === null;
+  const choosing = stepper && step === 1;
   const category = loaderData.categories.find((c) => c.id === draft.groupId);
   const subcategories = category?.subcategories ?? [];
   const homeId =
@@ -132,21 +158,38 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
       data-testid="new-draft-page"
     >
       <div className="flex flex-col gap-1">
-        <h1 className="text-[26px] leading-tight font-semibold">{t(`new.title.${noun}`)}</h1>
-        <p className="text-muted">{t(`new.subtitle.${noun}`)}</p>
+        <h1 className="text-[26px] leading-tight font-semibold">
+          {t(`new.title.${choosing ? "draft" : noun}`)}
+        </h1>
+        <p className="text-muted">{t(`new.subtitle.${choosing ? "draft" : noun}`)}</p>
       </div>
+      {stepper ? (
+        <div className="flex flex-col gap-1.5">
+          <ol aria-label={t("new.steps.label")} className="flex gap-2">
+            {([1, 2] as const).map((number) => (
+              <li
+                aria-current={step === number ? "step" : undefined}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1 text-sm",
+                  step === number
+                    ? "bg-primary-soft font-semibold text-on-primary-soft"
+                    : "bg-sunken text-muted",
+                )}
+                key={number}
+              >
+                <span aria-hidden="true">{number}</span>
+                {t(`new.steps.${number === 1 ? "type" : "details"}`)}
+              </li>
+            ))}
+          </ol>
+          <span className="text-sm text-muted">{t("new.steps.progress", { step })}</span>
+        </div>
+      ) : null}
 
       {loaderData.categories.length === 0 ? (
         <EmptyState description={t("new.noCategories.body")} title={t("new.noCategories.title")} />
-      ) : (
-        <fetcher.Form className="flex flex-col gap-3.5" method="post">
-          {failure ? (
-            <Banner
-              title={"validationError" in failure ? t("new.required") : refusalMessage}
-              tone="danger"
-            />
-          ) : null}
-          <input name="categoryId" type="hidden" value={homeId} />
+      ) : choosing ? (
+        <>
           <Card className="flex flex-col gap-3.5 p-[18px]">
             <div
               aria-label={t("new.fields.documentType")}
@@ -191,6 +234,27 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
                 );
               })}
             </div>
+          </Card>
+          <div className="flex justify-end gap-2">
+            <Button asChild className="h-10 px-4" variant="secondary">
+              <Link to="/drafts">{t("new.cancel")}</Link>
+            </Button>
+            <Button className="h-10 px-[18px]" onClick={() => setStep(2)} type="button">
+              {t("new.continue")}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <fetcher.Form className="flex flex-col gap-3.5" method="post">
+          {failure ? (
+            <Banner
+              title={"validationError" in failure ? t("new.required") : refusalMessage}
+              tone="danger"
+            />
+          ) : null}
+          <input name="categoryId" type="hidden" value={homeId} />
+          <input name="documentType" type="hidden" value={draft.documentType} />
+          <Card className="flex flex-col gap-3.5 p-[18px]">
             <Labelled id={ids.title} label={t("new.fields.title")}>
               <input
                 className={control}
@@ -291,6 +355,16 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
             </div>
           </Card>
           <div className="flex justify-end gap-2">
+            {stepper ? (
+              <Button
+                className="h-10 px-4"
+                onClick={() => setStep(1)}
+                type="button"
+                variant="secondary"
+              >
+                {t("new.back")}
+              </Button>
+            ) : null}
             <Button asChild className="h-10 px-4" variant="secondary">
               <Link to={procedure ? "/procedures" : "/policies"}>{t("new.cancel")}</Link>
             </Button>
