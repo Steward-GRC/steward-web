@@ -226,4 +226,29 @@ describe("toAcknowledgeData", () => {
       ],
     });
   });
+
+  it("adds each policy's category from the library, for the page's grouping and filter", async () => {
+    const original = answers.Policies;
+    answers.Policies = {
+      policies: [
+        ...(original as { policies: unknown[] }).policies,
+        policy("p-exp", "POL-EXPENSES-000002", "Expense Claims Policy", "PUBLISHED", "c-work"),
+      ],
+    };
+    try {
+      const asked = gateway();
+      const data = await toAcknowledgeData(request);
+      expect(asked).toContain("Policies");
+      expect(data.obligations?.[0]?.category).toBe("Workplace");
+    } finally {
+      answers.Policies = original;
+    }
+  });
+
+  it("still lists what to acknowledge when the library can't be read", async () => {
+    gateway(["Policies"]);
+    const data = await toAcknowledgeData(request);
+    expect(data.obligations).toHaveLength(1);
+    expect(data.obligations?.[0]?.category).toBeUndefined();
+  });
 });

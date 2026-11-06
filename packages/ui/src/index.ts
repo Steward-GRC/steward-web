@@ -142,8 +142,8 @@ export { FailureDialog, type FailureDialogProps } from "./feedback/FailureDialog
 export { LiveRow, UpdatedJustNow, useLiveList, useLiveUpdate } from "./feedback/LiveUpdate";
 export {
   EmptyState,
-  NotFound,
   ListSkeleton,
+  NotFound,
   PageSkeleton,
   ReachError,
   type ReachErrorProps,
@@ -161,6 +161,13 @@ export {
 export { QrCode } from "./gate/QrCode";
 export { PageHeader, type PageHeaderProps } from "./layout/PageHeader";
 export { cn } from "./lib/cn";
+export {
+  type DataColumn,
+  type DataGroup,
+  type DataSort,
+  DEFAULT_PAGE_SIZES,
+  useDataTable,
+} from "./lib/dataTable";
 export { PHONE, useMediaQuery } from "./lib/media";
 export { scrollBehavior } from "./lib/motion";
 export {

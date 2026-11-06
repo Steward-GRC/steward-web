@@ -17,7 +17,12 @@ describe("My drafts", () => {
         Component: Page,
         loader: () => ({
           drafts: [
-            { id: "d1", number: "POL-001", title: "Expense Claims", updated: "2026-10-02T12:00:00Z" },
+            {
+              id: "d1",
+              number: "POL-001",
+              title: "Expense Claims",
+              updated: "2026-10-02T12:00:00Z",
+            },
             { id: "d2", number: "", title: "Untitled", updated: null },
           ],
         }),

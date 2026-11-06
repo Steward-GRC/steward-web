@@ -5,8 +5,8 @@ import { FileQuestion } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { Link } from "react-router";
 
-import { Button } from "#ui/components/Button";
 import { Loader } from "#ui/brand/Mark";
+import { Button } from "#ui/components/Button";
 import { Skeleton } from "#ui/components/Display";
 import { cn } from "#ui/lib/cn";
 
@@ -186,13 +186,16 @@ export const ListSkeleton = ({
   return (
     <div
       aria-busy="true"
-      className={cn("flex flex-col gap-3 rounded-lg border border-border bg-surface p-5", className)}
+      className={cn(
+        "flex flex-col gap-3 rounded-lg border border-border bg-surface p-5",
+        className,
+      )}
       role="status"
     >
       <span className="sr-only">{label}</span>
       <Loader className="self-center" decorative size={44} />
       {Array.from({ length: rows }, (_, index) => (
-        <div className="flex items-center gap-3" data-skeleton-row="" key={index}>
+        <div className="flex items-center gap-3" data-testid="skeleton-row" key={index}>
           <Skeleton className="h-3.5 w-1/3 rounded-sm" />
           <Skeleton className="h-3 w-1/4 rounded-sm" />
           <Skeleton className="ml-auto h-6 w-16 rounded-full" />

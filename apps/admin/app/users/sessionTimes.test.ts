@@ -16,7 +16,9 @@ describe("lastSeenLabel", () => {
 
   it("follows the person's date preference", () => {
     setDatePreference("iso");
-    expect(lastSeenLabel({ lastSeenAt: "2026-01-01T09:30:00Z" })).toMatch(/^2026-01-0\d \d\d:\d\d$/);
+    expect(lastSeenLabel({ lastSeenAt: "2026-01-01T09:30:00Z" })).toMatch(
+      /^2026-01-0\d \d\d:\d\d$/,
+    );
   });
 
   it("shows a dash for a session never seen", () => {

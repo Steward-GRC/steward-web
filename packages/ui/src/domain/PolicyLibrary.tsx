@@ -281,8 +281,8 @@ export const PolicyLibrary = ({
         )}
         <Pager
           onPage={(next) => update({ page: next > 1 ? String(next) : "" })}
-          page={page}
           onPageSize={(size) => update({ size: size === PAGE_SIZE ? "" : String(size) })}
+          page={page}
           pageSize={pageSize}
           pageSizes={PAGE_SIZES}
           total={filtered.length}
@@ -435,10 +435,10 @@ export const PolicyLibrary = ({
           </Table>
           <Pager
             onPage={(next) => update({ page: next > 1 ? String(next) : "" })}
-            page={page}
             onPageSize={(size) => update({ size: size === PAGE_SIZE ? "" : String(size) })}
-          pageSize={pageSize}
-          pageSizes={PAGE_SIZES}
+            page={page}
+            pageSize={pageSize}
+            pageSizes={PAGE_SIZES}
             total={filtered.length}
           />
         </Card>

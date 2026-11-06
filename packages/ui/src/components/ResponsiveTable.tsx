@@ -326,8 +326,8 @@ const DataTableView = <Row,>({
               aria-label={t("table.sortBy")}
               className="h-9 rounded-md border border-control bg-surface px-2 text-base text-ink"
               onChange={(event) => {
-                const [key, dir] = event.target.value.split(":");
-                if (key) table.setSort(key, dir === "desc" ? "desc" : "asc");
+                const [key, direction] = event.target.value.split(":");
+                if (key) table.setSort(key, direction === "desc" ? "desc" : "asc");
               }}
               value={table.sort ? `${table.sort.key}:${table.sort.dir}` : ""}
             >
@@ -352,7 +352,9 @@ const DataTableView = <Row,>({
         </div>
       ) : null}
       {table.total === 0 && filtering ? (
-        <p className="text-base text-muted">{t("table.noMatches", { query: table.query.trim() })}</p>
+        <p className="text-base text-muted">
+          {t("table.noMatches", { query: table.query.trim() })}
+        </p>
       ) : (
         <PlainTable
           {...props}

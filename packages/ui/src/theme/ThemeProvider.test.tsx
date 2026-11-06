@@ -75,23 +75,23 @@ describe("the boot script", () => {
   });
 });
 
+const Dates = () => {
+  const { update } = usePreferences();
+  return (
+    <>
+      <button onClick={() => update({ dateFormat: "iso" })} type="button">
+        iso
+      </button>
+      <output>{formatDate(new Date(2026, 9, 2, 12, 0), { locale: "en" })}</output>
+    </>
+  );
+};
+
 describe("the date format preference", () => {
   afterEach(() => {
     setDatePreference("system");
     localStorage.clear();
   });
-
-  const Dates = () => {
-    const { update } = usePreferences();
-    return (
-      <>
-        <button onClick={() => update({ dateFormat: "iso" })} type="button">
-          iso
-        </button>
-        <output>{formatDate(new Date(2026, 9, 2, 12, 0), { locale: "en" })}</output>
-      </>
-    );
-  };
 
   it("shows dates in the system default, then in the saved choice once it is made", async () => {
     render(

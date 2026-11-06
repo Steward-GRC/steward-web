@@ -28,6 +28,12 @@ const show = (path: string, data: object) => {
   render(<Stub initialEntries={[path]} />);
 };
 
+const names = () =>
+  within(screen.getByRole("table"))
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => within(row).getAllByRole("cell")[0]?.textContent);
+
 describe("Templates (U22)", () => {
   it("lists each template with its sections and version, linked to its structure", async () => {
     show("/templates", {
@@ -109,11 +115,6 @@ describe("Template detail (U23)", () => {
     const sections = await screen.findByRole("columnheader", { name: "Sections" });
     await userEvent.click(within(sections).getByRole("button"));
     expect(sections).toHaveAttribute("aria-sort", "ascending");
-    const names = () =>
-      within(screen.getByRole("table"))
-        .getAllByRole("row")
-        .slice(1)
-        .map((row) => within(row).getAllByRole("cell")[0]?.textContent);
     expect(names()).toEqual(["Brief", "Standard Policy", "Annex"]);
     await userEvent.click(within(sections).getByRole("button"));
     expect(names()).toEqual(["Annex", "Standard Policy", "Brief"]);

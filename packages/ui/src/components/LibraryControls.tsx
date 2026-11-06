@@ -178,7 +178,7 @@ export const SortHeader = ({
  *  ones beside the current page, with a gap (null) where the rest are. */
 const visiblePages = (page: number, pages: number): (null | number)[] => {
   if (pages <= 7) return Array.from({ length: pages }, (_, index) => index + 1);
-  const keep = new Set([1, pages, page - 1, page, page + 1]);
+  const keep = new Set([1, page, page - 1, page + 1, pages]);
   const out: (null | number)[] = [];
   for (let number = 1; number <= pages; number += 1) {
     if (keep.has(number)) out.push(number);

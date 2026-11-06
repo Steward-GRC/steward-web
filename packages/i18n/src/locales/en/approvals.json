@@ -223,6 +223,20 @@
   },
   "toAcknowledge": {
     "action": "Read & acknowledge",
+    "allCategories": "All categories",
+    "category": "Category",
+    "group": "Group by",
+    "groupHeading": "{{name}} ({{count}})",
+    "groupNone": "No grouping",
+    "noMatches": "Nothing matches your filters.",
+    "search": "Filter by title or number",
+    "sort": {
+      "category": "Category",
+      "numberAsc": "Number",
+      "titleAsc": "Title A–Z",
+      "titleDesc": "Title Z–A"
+    },
+    "uncategorised": "Uncategorised",
     "empty": {
       "body": "You have no policies awaiting your acknowledgement.",
       "title": "You're all caught up"

@@ -15,6 +15,8 @@ import { Link } from "react-router";
 
 import type { LibraryOverview, MyWorkData, WorkRow } from "./myWork.server";
 
+import { AcknowledgeList } from "./AcknowledgeList";
+
 // The Home and Library canvas's cards: the surface, a 1 px border, 10 px corners.
 /** How many rows each home list shows before it links to its full list page. */
 const HOME_LIST_CAP = 5;
@@ -389,24 +391,10 @@ export const ToAcknowledge = ({ obligations }: { obligations: null | WorkRow[] }
         <ReachError action={t("toAcknowledge.loadAction")} />
       ) : obligations.length > 0 ? (
         <Card title={t("toAcknowledge.list", { count: obligations.length })}>
-          <ul>
-            {obligations.map((row) => (
-              <li
-                className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
-                key={row.href}
-              >
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <b className="font-semibold">{row.title}</b>
-                  <span className="font-mono text-xs text-muted">
-                    {t("toAcknowledge.meta", { number: row.number, version: row.version })}
-                  </span>
-                </span>
-                <Link className={`${rowAction} h-[34px]`} to={row.href}>
-                  {t("toAcknowledge.action")}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <AcknowledgeList
+            label={t("toAcknowledge.list", { count: obligations.length })}
+            rows={obligations}
+          />
         </Card>
       ) : (
         <EmptyState

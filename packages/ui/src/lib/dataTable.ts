@@ -3,11 +3,11 @@
 import {
   type ColumnDef,
   type FilterFn,
-  type SortingFn,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type SortingFn,
   useReactTable,
 } from "@tanstack/react-table";
 import { type ReactNode, useMemo } from "react";
@@ -30,14 +30,14 @@ export interface DataColumn<Row> {
   value: (row: Row) => number | string;
 }
 
-export interface DataSort {
-  dir: "asc" | "desc";
-  key: string;
-}
-
 export interface DataGroup<Row> {
   key: string;
   rows: Row[];
+}
+
+export interface DataSort {
+  dir: "asc" | "desc";
+  key: string;
 }
 
 export interface UseDataTableOptions<Row> {
@@ -65,6 +65,8 @@ const sortValue: SortingFn<unknown> = (a, b, id) => {
   if (typeof left === "number" && typeof right === "number") return left - right;
   return NATURAL.compare(String(left), String(right));
 };
+
+const parameterName = (prefix: string, key: string) => (prefix ? `${prefix}-${key}` : key);
 
 /** The address's parameter for a column's filter ("f.title"), as in the library. */
 export const columnFilterParameter = (key: string) => `f.${key}`;
@@ -100,7 +102,7 @@ export const useDataTableState = <Row>(
   parameters: URLSearchParams,
   setParameters: (next: URLSearchParams) => void,
 ) => {
-  const name = (key: string) => (prefix ? `${prefix}-${key}` : key);
+  const name = (key: string) => parameterName(prefix, key);
 
   const query = parameters.get(name("q")) ?? "";
   const group = parameters.get(name("group")) ?? "";
@@ -118,11 +120,11 @@ export const useDataTableState = <Row>(
   const columnFilters = useMemo(() => {
     const filters: Record<string, string> = {};
     for (const column of columns) {
-      const value = parameters.get(name(columnFilterParameter(column.key)));
+      const value = parameters.get(parameterName(prefix, columnFilterParameter(column.key)));
       if (column.filter && value) filters[column.key] = value;
     }
     return filters;
-  }, [columns, parameters]);
+  }, [columns, parameters, prefix]);
 
   const groupColumn = columns.find((c) => c.key === group);
 
@@ -149,7 +151,7 @@ export const useDataTableState = <Row>(
     ];
   }, [columns, groupColumn]);
 
-  const globalFilterFn = useMemo<FilterFn<Row>>(
+  const globalFilterFunction = useMemo<FilterFn<Row>>(
     () => (row, _id, value: string) => {
       const words = value.toLowerCase().split(/\s+/).filter(Boolean);
       const text = (
@@ -170,7 +172,7 @@ export const useDataTableState = <Row>(
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    globalFilterFn,
+    globalFilterFn: globalFilterFunction,
     state: {
       columnFilters: Object.entries(columnFilters).map(([id, value]) => ({ id, value })),
       globalFilter: query,
@@ -192,7 +194,7 @@ export const useDataTableState = <Row>(
   );
 
   const groups = useMemo<DataGroup<Row>[] | undefined>(() => {
-    if (!groupColumn) return undefined;
+    if (!groupColumn) return;
     const out: DataGroup<Row>[] = [];
     for (const row of pageRows) {
       const key = String(groupColumn.value(row));
@@ -230,13 +232,15 @@ export const useDataTableState = <Row>(
     pageSize,
     pageSizes,
     query,
-    setColumnFilter: (key: string, value: string) => update({ [columnFilterParameter(key)]: value }),
+    setColumnFilter: (key: string, value: string) =>
+      update({ [columnFilterParameter(key)]: value }),
     setGroup: (key: string) => update({ group: key }),
     setPage: (next: number) => update({ page: next > 1 ? String(next) : "" }),
     setPageSize: (size: number) => update({ size: size === defaultPageSize ? "" : String(size) }),
     setQuery: (value: string) => update({ q: value }),
-    setSort: (key: string, dir: "asc" | "desc") =>
-      sortable(key) ? update({ dir: dir === "desc" ? "desc" : "", sort: key }) : undefined,
+    setSort: (key: string, direction: "asc" | "desc") => {
+      if (sortable(key)) update({ dir: direction === "desc" ? "desc" : "", sort: key });
+    },
     sort,
     toggleSort: (key: string) => {
       if (!sortable(key)) return;

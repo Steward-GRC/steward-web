@@ -123,7 +123,8 @@ export default function ReportingCasesRoute({ loaderData }: Route.ComponentProps
             },
             {
               card: "meta",
-              cell: (row) => (row.nextDeadline ? formatDate(row.nextDeadline) : t("queue.noDeadline")),
+              cell: (row) =>
+                row.nextDeadline ? formatDate(row.nextDeadline) : t("queue.noDeadline"),
               className: "text-sm text-muted",
               header: t("queue.table.deadline"),
               key: "deadline",

@@ -195,6 +195,12 @@ describe("ResponsiveTable on a phone (7-responsive.s3)", () => {
   });
 });
 
+const names = () =>
+  within(screen.getByRole("table", { name: "People" }))
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => within(row).getAllByRole("cell")[0]?.textContent);
+
 describe("ResponsiveTable with sortable columns", () => {
   const MANY: Person[] = Array.from({ length: 45 }, (_, index) => ({
     email: `p${index}@example.org`,
@@ -224,12 +230,6 @@ describe("ResponsiveTable with sortable columns", () => {
         />
       </MemoryRouter>,
     );
-
-  const names = () =>
-    within(screen.getByRole("table", { name: "People" }))
-      .getAllByRole("row")
-      .slice(1)
-      .map((row) => within(row).getAllByRole("cell")[0]?.textContent);
 
   it("sorts from a header, both ways, and marks it for screen readers", async () => {
     renderData();
@@ -307,7 +307,7 @@ describe("ResponsiveTable with sortable columns", () => {
 
 describe("ResponsiveTable while it loads", () => {
   it("shows the animated skeleton in place of the rows, once the load is slow", async () => {
-    const { container } = render(
+    render(
       <ResponsiveTable
         columns={COLUMNS}
         empty={<p>No people yet</p>}
@@ -319,7 +319,7 @@ describe("ResponsiveTable while it loads", () => {
     );
     expect(screen.queryByText("No people yet")).not.toBeInTheDocument();
     expect(await screen.findByRole("status")).toHaveAttribute("aria-busy", "true");
-    expect(container.querySelector(".stw-loader-g")).not.toBeNull();
+    expect(screen.getByTestId("book-mark")).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });

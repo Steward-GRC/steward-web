@@ -39,8 +39,8 @@ describe("skeleton loading", () => {
   });
 
   it("carries the animated book mark, with one status, not two", () => {
-    const { container } = render(<PageSkeleton label="Loading policy…" />);
-    expect(container.querySelector(".stw-loader-g")).not.toBeNull();
+    render(<PageSkeleton label="Loading policy…" />);
+    expect(screen.getByTestId("book-mark")).toBeInTheDocument();
     expect(screen.getAllByRole("status")).toHaveLength(1);
   });
 });
@@ -50,7 +50,7 @@ describe("the list skeleton", () => {
 
   it("shows nothing for a quick load, then the rows and the animated book mark", () => {
     vi.useFakeTimers();
-    const { container } = render(<ListSkeleton label="Loading your work…" />);
+    render(<ListSkeleton label="Loading your work…" />);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(299));
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
@@ -58,15 +58,15 @@ describe("the list skeleton", () => {
     const status = screen.getByRole("status");
     expect(status).toHaveAttribute("aria-busy", "true");
     expect(status).toHaveTextContent("Loading your work…");
-    expect(container.querySelector(".stw-loader-g")).not.toBeNull();
-    expect(container.querySelectorAll("[data-skeleton-row]")).toHaveLength(5);
+    expect(screen.getByTestId("book-mark")).toBeInTheDocument();
+    expect(screen.getAllByTestId("skeleton-row")).toHaveLength(5);
   });
 
   it("takes its own delay and number of rows", () => {
     vi.useFakeTimers();
-    const { container } = render(<ListSkeleton delay={0} label="Loading…" rows={3} />);
+    render(<ListSkeleton delay={0} label="Loading…" rows={3} />);
     act(() => vi.advanceTimersByTime(1));
-    expect(container.querySelectorAll("[data-skeleton-row]")).toHaveLength(3);
+    expect(screen.getAllByTestId("skeleton-row")).toHaveLength(3);
   });
 });
 

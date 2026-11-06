@@ -19,7 +19,7 @@ const row = (id: string, receivedAt: string, nextDeadline: null | string) => ({
   kind: "CONCERN",
   nextDeadline,
   receivedAt,
-  status: CaseStatus.Open,
+  status: CaseStatus.New,
   summary: `Summary ${id}`,
 });
 

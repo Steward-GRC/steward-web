@@ -350,6 +350,9 @@ describe("PolicyLibrary on a phone (U3m)", () => {
   });
 });
 
+const bodyRows = () =>
+  screen.getAllByRole("row").filter((row) => within(row).queryAllByRole("cell").length > 0);
+
 describe("PolicyLibrary with many policies", () => {
   const many: Policy[] = Array.from({ length: 70 }, (_, index) => ({
     ...policies[0]!,
@@ -374,9 +377,6 @@ describe("PolicyLibrary with many policies", () => {
     ]);
     render(<Stub initialEntries={[entry]} />);
   };
-
-  const bodyRows = () =>
-    screen.getAllByRole("row").filter((row) => within(row).queryAllByRole("cell").length > 0);
 
   it("shows twenty a page until the person picks another size", async () => {
     renderMany("/policies?status=all");
