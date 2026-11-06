@@ -54,6 +54,7 @@ export default [
   route("audit", "routes/audit.tsx"),
   route("approvals/:number", "routes/approvals.$number.tsx"),
   route("resources/ai-health", "routes/resources.ai-health.tsx"),
+  route("resources/review-threads", "routes/resources.review-threads.tsx"),
   route("resources/version-diff", "routes/resources.version-diff.tsx"),
   route("resources/command-palette", "routes/resources.command-palette.tsx"),
   route("resources/impersonation", "routes/resources.impersonation.tsx"),

@@ -62,6 +62,8 @@ import {
   missingRequiredSections,
 } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
+import { listReviewThreads } from "../review/reviewThreads.server";
+import { useReviewComments } from "../review/useReviewComments";
 
 /** A section as the AI forms post it: its key, title and plain text. */
 interface SectionPayload {
@@ -71,7 +73,7 @@ interface SectionPayload {
 }
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
+  const identity = await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const [policy, aiHealth] = await Promise.all([
     getPolicyByNumber(request, params.number),
     getAiHealth(request).catch(() => ({ available: false, reason: "ai_service_unavailable" })),
@@ -82,7 +84,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     policy.templateId ? getLatestTemplateVersion(request, policy.templateId) : null,
   ]);
   const inReview = draft ? await isDraftInReview(request, draft) : false;
-  return { aiHealth, draft, inReview, policy, templateVersion };
+  // What approvers wrote on this version, shown on the text they wrote it on.
+  const threads = draft ? await listReviewThreads(request, draft.id) : [];
+  return { aiHealth, draft, inReview, meId: identity.id, policy, templateVersion, threads };
 };
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
@@ -187,7 +191,13 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const { t: tAi } = useTranslation("ai");
   const location = useLocation();
   const navigate = useNavigate();
-  const { draft, inReview, policy, templateVersion } = loaderData;
+  const { draft, inReview, meId, policy, templateVersion, threads } = loaderData;
+  const comments = useReviewComments({
+    canAdd: false,
+    meId,
+    policyVersionId: draft?.id ?? "",
+    threads,
+  });
   const aiHealth = useAiHealth({
     available: loaderData.aiHealth.available,
     reason: loaderData.aiHealth.reason ?? null,
@@ -525,6 +535,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               onRework={aiHealth.available && !collabReadOnly && !inReview ? onRework : undefined}
               readOnly={collabReadOnly}
               ready={collabSession.mode !== "pending"}
+              review={comments}
             />
           </Card>
         </div>

@@ -9,7 +9,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Awareness } from "y-protocols/awareness";
 import { Doc } from "yjs";
 
-import { createStewardCollaboration, type ProviderEventSource } from "./collab/stewardCollaboration";
+import {
+  createStewardCollaboration,
+  type ProviderEventSource,
+} from "./collab/stewardCollaboration";
 import { StewardEditor } from "./StewardEditor";
 
 afterEach(() => vi.restoreAllMocks());
@@ -34,7 +37,10 @@ const mountEditor = (collab: boolean) => {
   return errors;
 };
 
-type Menu = { insertCommand: Parameters<LexicalEditor["dispatchCommand"]>[0]; insertParams?: unknown };
+type Menu = {
+  insertCommand: Parameters<LexicalEditor["dispatchCommand"]>[0];
+  insertParams?: unknown;
+};
 
 /** The command the slash menu dispatches for a card: the node class's own `kgMenu`. */
 const menuFor = (type: string): Menu => {

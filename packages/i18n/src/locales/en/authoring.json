@@ -19,7 +19,6 @@
     "actions": {
       "menu": "Actions"
     },
-    "cardError": "The {card} card could not be shown. Remove it and add it again, or reload the page if it comes back.",
     "aiMenu": {
       "generate": "Generate a draft…",
       "improve": "Improve draft…",
@@ -50,7 +49,28 @@
       "title": "Appendices",
       "titleLabel": "Appendix {{letter}} title"
     },
+    "cardError": "The {card} card could not be shown. Remove it and add it again, or reload the page if it comes back.",
     "coAuthored": "Co-authored — others with author access in this category can edit.",
+    "comments": {
+      "button": "Comment",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleteLabel": "Delete this comment thread",
+      "empty": "No comments yet.",
+      "lostText": "The text this was written on has changed.",
+      "placeholder": "What's up with this?",
+      "reopen": "Reopen",
+      "reply": "Reply",
+      "replyLabel": "Reply to this comment",
+      "replyPlaceholder": "Write a reply",
+      "resolve": "Resolve",
+      "resolved": "Resolved",
+      "send": "Comment",
+      "threadLabel": "Comment on \"{{quote}}\"",
+      "title": "Comments",
+      "unreadable": "Hidden",
+      "you": "You"
+    },
     "discard": {
       "action": "Discard draft",
       "draft": "Discarding deletes this draft. It has never been published.",

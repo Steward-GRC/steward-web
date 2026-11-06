@@ -39,7 +39,7 @@ const config: CodegenConfig = {
   hooks: {
     afterOneFileWrite: ["oxfmt"],
   },
-  schema: "schema/gateway.graphql",
+  schema: ["schema/gateway.graphql", "schema/pending.graphql"],
 };
 
 export default config;

@@ -103,6 +103,8 @@ export type {
   ReportAttachment,
   ReportCase,
   ReportDetails,
+  ReviewMessage,
+  ReviewThread,
   RiskAssessment,
   RiskFactors,
   RiskFactorsInput,
