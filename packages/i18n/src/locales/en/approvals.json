@@ -110,7 +110,6 @@
   "review": {
     "back": "Back to approvals",
     "changes": {
-      "first": "This is the first version, so there's nothing to compare yet.",
       "unknown": "The changes can't be shown: this draft isn't listed in your library."
     },
     "decided": {

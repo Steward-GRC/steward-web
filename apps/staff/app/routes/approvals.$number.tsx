@@ -173,7 +173,9 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const refusal = actionData && "error" in actionData ? actionData.error : undefined;
   const decided = actionData && "decided" in actionData ? actionData.decided : undefined;
   const refusalMessage = useRefusalMessage(refusal ?? {});
-  const [view, setView] = useState("changes");
+  // A first version has nothing to compare and no history yet, so those tabs aren't offered.
+  const firstVersion = "review" in loaderData && loaderData.review.first;
+  const [view, setView] = useState(firstVersion ? "upcoming" : "changes");
 
   if (!loaderData.match) {
     return (
@@ -297,20 +299,24 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Tabs onValueChange={setView} value={view}>
           <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-border-strong p-0">
-            <TabsTrigger className={tab} value="changes">
-              {t("review.tabs.changes")}
-            </TabsTrigger>
+            {firstVersion ? null : (
+              <TabsTrigger className={tab} value="changes">
+                {t("review.tabs.changes")}
+              </TabsTrigger>
+            )}
             <TabsTrigger className={tab} value="upcoming">
               {t("review.tabs.upcoming")}
             </TabsTrigger>
-            <TabsTrigger className={tab} value="history">
-              {t("review.tabs.history")}
-            </TabsTrigger>
+            {firstVersion ? null : (
+              <TabsTrigger className={tab} value="history">
+                {t("review.tabs.history")}
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent className="mt-3.5" value="changes">
             {review.diff === null ? (
               <Unavailable>
-                {review.first ? t("review.changes.first") : t("review.changes.unknown")}
+                {t("review.changes.unknown")}
               </Unavailable>
             ) : (
               <DiffView sections={review.diff} />
