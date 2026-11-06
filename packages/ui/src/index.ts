@@ -30,6 +30,7 @@ export {
   type FindingSeverity,
   SensitivityBadge,
   StatusPill,
+  Tally,
   VersionBadge,
 } from "./components/Badges";
 export { Breadcrumb, type Crumb } from "./components/Breadcrumb";

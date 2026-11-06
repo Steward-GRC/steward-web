@@ -20,6 +20,18 @@ describe("GateShell", () => {
     expect(screen.getByRole("button", { name: "Accessibility options" })).toBeInTheDocument();
   });
 
+  it("puts the dev login bar across the very top, above the environment banner", () => {
+    render(
+      <GateShell devLogin={<div data-testid="dev-login-bar">Dev login</div>} environment="test">
+        <p>card</p>
+      </GateShell>,
+    );
+    const bar = screen.getByTestId("dev-login-bar");
+    const env = screen.getByTestId("environment-banner");
+    expect(bar.compareDocumentPosition(env) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("main")).not.toContainElement(bar);
+  });
+
   it("still names a non-production install and shows the announcement", () => {
     render(
       <GateShell

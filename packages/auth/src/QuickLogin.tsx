@@ -56,16 +56,24 @@ export interface QuickLoginBarProps {
 }
 
 /**
- * The thin "dev login" bar shown at the top of every page while the dev quick login is on, so
- * a build carrying it is never mistaken for a production one away from the sign-in page.
- * Aliased in alongside `QuickLogin`; see `NoQuickLogin.tsx`.
+ * The "dev login" strip across the very top of every page while the dev quick login is on, in
+ * the same 28 px hatch as the test-environment banner, so a build carrying it is never mistaken
+ * for a production one away from the sign-in page. The shells place it above everything (their
+ * `devLogin` slot). Aliased in alongside `QuickLogin`; see `NoQuickLogin.tsx`.
  */
 export const QuickLoginBar = ({ enabled }: QuickLoginBarProps) => {
   const { t } = useTranslation("auth");
   if (!enabled) return null;
   return (
-    <div data-dev-quick-login-bar={DEV_QUICK_LOGIN_MARKER}>
-      <Banner title={t("quickLogin.bannerTitle")} tone="warn" />
+    <div
+      className="env-banner flex h-7 flex-none items-center justify-center gap-2.5 text-xs font-medium"
+      data-dev-quick-login-bar={DEV_QUICK_LOGIN_MARKER}
+      data-testid="dev-login-bar"
+    >
+      <span className="rounded-[3px] bg-[#e2a336] px-[7px] py-px font-mono text-[11px] font-semibold tracking-[.06em] text-[#261b25]">
+        DEV
+      </span>
+      {t("quickLogin.bannerTitle")}
     </div>
   );
 };

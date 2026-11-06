@@ -20,6 +20,8 @@ export interface GateShellProps {
   /** The site's announcement and maintenance settings, from the app's root loader. */
   banners?: GlobalSettings | null;
   children: ReactNode;
+  /** The dev login bar (dev builds only): a strip across the very top, above the environment banner. */
+  devLogin?: ReactNode;
   /** A non-production environment's name for the banner (H4), or null in production. */
   environment: null | string;
 }
@@ -30,8 +32,9 @@ export interface GateShellProps {
  * carries: the environment banner, the site's announcement (BRIEF H5 shows it on sign-in) and
  * the floating accessibility button.
  */
-export const GateShell = ({ banners, children, environment }: GateShellProps) => (
+export const GateShell = ({ banners, children, devLogin, environment }: GateShellProps) => (
   <div className="flex min-h-dvh flex-col bg-sunken">
+    {devLogin}
     <EnvironmentBanner name={environment} />
     <SiteBanners settings={banners} />
     <main className="flex flex-1 flex-col">{children}</main>

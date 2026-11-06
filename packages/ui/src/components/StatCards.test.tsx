@@ -18,6 +18,7 @@ describe("the admin stat cards (A1)", () => {
     const card = screen.getByRole("link", { name: /^Published/ });
     expect(card).toHaveAttribute("href", "/policies?status=published");
     expect(card).toHaveTextContent("Published9");
+    expect(screen.getByText("9")).toHaveAttribute("data-tally", "lg");
   });
 });
 
@@ -28,6 +29,12 @@ describe("the acknowledgement snapshot (A1)", () => {
     expect(screen.getByText("184 of 214")).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "86");
     expect(screen.getByText("184 of 214 acknowledged · 86%")).toBeInTheDocument();
+  });
+
+  it("shows the figure and the bar in the amber tally style", () => {
+    render(<AckSnapshot acknowledged={184} audience={214} />);
+    expect(screen.getByText("184 of 214")).toHaveAttribute("data-tally", "lg");
+    expect(screen.getByTestId("progress-fill")).toHaveClass("bg-accent");
   });
 
   it("reads 0% with nobody to acknowledge", () => {

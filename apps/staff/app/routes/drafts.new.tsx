@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { DocumentType, Sensitivity } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
-import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
 import { Banner, Button, Card, cn, EmptyState } from "@steward-web/ui";
@@ -38,7 +38,7 @@ import { useResumableDraft } from "../authoring/useResumableDraft";
 const NO_TEMPLATE = "__no_template__";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const slug = (params as Record<string, string | undefined>).type;
   // An old /drafts/new?type=POLICY link moves into the path (#147); an unknown type is a 404.
   if (slug === undefined) {

@@ -193,6 +193,29 @@ export const Detail = ({ label, value }: { label: ReactNode; value: ReactNode })
 );
 
 /** A count that has to stand out (the nav's waiting count, the reader's Related tab): amber pill, dark text. */
+/**
+ * The one tally style: a figure (a count, a percentage) in the amber accent with dark text for
+ * contrast, as on the count badges. `lg` is for a card's headline figure.
+ */
+export const Tally = ({
+  children,
+  className,
+  size = "sm",
+  ...props
+}: { size?: "lg" | "sm" } & ComponentProps<"span">) => (
+  <span
+    className={cn(
+      "inline-flex items-center justify-center rounded-md bg-accent font-mono font-bold text-[#261b25] tabular-nums",
+      size === "lg" ? "px-2.5 py-0.5 text-[22px] leading-tight" : "min-w-6 px-1.5 text-sm",
+      className,
+    )}
+    data-tally={size}
+    {...props}
+  >
+    {children}
+  </span>
+);
+
 export const CountBadge = ({ children, className, ...props }: ComponentProps<"span">) => (
   <span
     className={cn(

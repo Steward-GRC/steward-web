@@ -7,6 +7,8 @@ import { Link } from "react-router";
 
 import { cn } from "#ui/lib/cn";
 
+import { Tally } from "./Badges";
+
 /**
  * An admin stat card (A1; decision 4-components.s9): a link with its label and a chevron over
  * the number, to the list it counts.
@@ -50,9 +52,9 @@ export const StatCard = ({
       </span>
       <ChevronRight aria-hidden="true" className="size-[1.15em]" />
     </span>
-    <b className={cn("font-semibold", size === "lg" ? "text-[30px] leading-tight" : "text-2xl")}>
+    <Tally className="self-start" size="lg">
       {formatNumber(value)}
-    </b>
+    </Tally>
   </Link>
 );
 
@@ -81,7 +83,9 @@ export const AckSnapshot = ({
       <h2 className="font-bold" id={titleId}>
         {t("ackSnapshot.title")}
       </h2>
-      <span className="text-[26px] leading-tight font-semibold">{t("ackSnapshot.of", counts)}</span>
+      <Tally className="self-start" size="lg">
+        {t("ackSnapshot.of", counts)}
+      </Tally>
       <div
         aria-label={t("ackSnapshot.title")}
         aria-valuemax={100}
@@ -90,7 +94,11 @@ export const AckSnapshot = ({
         className="h-2.5 overflow-hidden rounded-[5px] bg-sunken"
         role="progressbar"
       >
-        <div className="h-full bg-primary" style={{ width: `${ratio * 100}%` }} />
+        <div
+          className="h-full bg-accent"
+          data-testid="progress-fill"
+          style={{ width: `${ratio * 100}%` }}
+        />
       </div>
       <span className="text-muted">
         {t("ackSnapshot.caption", { ...counts, percent: formatPercent(ratio) })}

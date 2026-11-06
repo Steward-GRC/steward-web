@@ -161,7 +161,7 @@ const Unavailable = ({ children }: { children: ReactNode }) => (
 /**
  * The review page (U25, U25m, U25o): the way back, the category, the serif title with its
  * number, stage and due date; the stepper; then the changes against the published version,
- * the version under review and its history on tabs, beside the decision panel. Someone who
+ * the version under review and its history on tabs, then the decision panel at the bottom. Someone who
  * isn't deciding now gets a note instead: a preview of a later stage, not their run, or
  * nothing left to decide. Once they've decided, the panel gives way to a confirmation.
  */
@@ -215,7 +215,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
     );
   } else if (deciding && task) {
     aside = (
-      <DecisionPanel error={refusal ? refusalMessage : undefined}>
+      <DecisionPanel className="md:static" error={refusal ? refusalMessage : undefined}>
         <input name="policyVersionId" type="hidden" value={policyVersionId} />
         <input name="runId" type="hidden" value={task.runId} />
         <input name="taskId" type="hidden" value={task.taskId} />
@@ -284,7 +284,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
 
       <ApprovalStepper stages={stepperStagesOf(workflow, meId)} />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid items-start gap-6">
         <Tabs onValueChange={setView} value={view}>
           <TabsList stretch>
             <TabsTrigger empty={!hasChanges} value="changes">

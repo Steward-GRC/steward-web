@@ -5,6 +5,8 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { CommandActionsProvider, useCommandActions } from "#ui/commands/CommandActions";
+
 import { DecisionPanel } from "./DecisionPanel";
 
 const renderPanel = (
@@ -82,5 +84,77 @@ describe("the decision panel (U25)", () => {
     renderPanel(undefined, { busy: true });
     await userEvent.type(screen.getByLabelText("Decision comment"), "Clear and fair.");
     for (const button of screen.getAllByRole("button")) expect(button).toBeDisabled();
+  });
+});
+
+const Bar = () => (
+  <ul aria-label="command bar">
+    {useCommandActions().map((action) => (
+      <li key={action.id}>
+        <button onClick={action.run} type="button">
+          {action.label}
+        </button>
+      </li>
+    ))}
+  </ul>
+);
+const renderWithBar = (action: (form: FormData) => void = () => {}) => {
+  const Stub = createRoutesStub([
+    {
+      action: async ({ request }) => {
+        action(await request.formData());
+        return null;
+      },
+      Component: () => (
+        <CommandActionsProvider>
+          <Bar />
+          <DecisionPanel>
+            <input name="taskId" type="hidden" value="task-1" />
+          </DecisionPanel>
+        </CommandActionsProvider>
+      ),
+      path: "/",
+    },
+  ]);
+  render(<Stub />);
+};
+
+describe("the decision dialog from the command bar (bug log 57)", () => {
+  it("offers I approve and I reject while the person can decide", () => {
+    renderWithBar();
+    const bar = screen.getByRole("list", { name: "command bar" });
+    expect(within(bar).getByRole("button", { name: "I approve" })).toBeInTheDocument();
+    expect(within(bar).getByRole("button", { name: "I reject" })).toBeInTheDocument();
+  });
+
+  it("opens the dialog for the chosen decision and submits it with the comment and fields", async () => {
+    const user = userEvent.setup();
+    const posted = vi.fn();
+    renderWithBar(posted);
+    await user.click(screen.getByRole("button", { name: "I reject" }));
+    const dialog = await screen.findByRole("dialog", { name: "Reject this version" });
+    const confirm = within(dialog).getByRole("button", { name: "Reject" });
+    expect(confirm).toBeDisabled();
+    await user.type(within(dialog).getByLabelText("Decision comment"), "Section 3 is unclear");
+    await user.click(confirm);
+    const form = posted.mock.calls[0]![0] as FormData;
+    expect(form.get("intent")).toBe("reject");
+    expect(form.get("comment")).toBe("Section 3 is unclear");
+    expect(form.get("taskId")).toBe("task-1");
+  });
+
+  it("registers nothing when the panel is not shown", () => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => (
+          <CommandActionsProvider>
+            <Bar />
+          </CommandActionsProvider>
+        ),
+        path: "/",
+      },
+    ]);
+    render(<Stub />);
+    expect(screen.queryByRole("button", { name: "I approve" })).toBeNull();
   });
 });

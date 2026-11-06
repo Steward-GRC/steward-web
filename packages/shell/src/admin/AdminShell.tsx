@@ -360,6 +360,8 @@ export interface AdminShellProps {
   categories?: readonly CategoryNode[];
   children: ReactNode;
   config: ShellConfig;
+  /** The dev login bar (dev builds only): a 28 px strip across the very top, above everything. */
+  devLogin?: ReactNode;
   /** Compliance reporting is on for this install (`STEWARD_REPORTING=true`). */
   reporting?: boolean;
 }
@@ -375,6 +377,7 @@ export const AdminShell = ({
   categories = [],
   children,
   config,
+  devLogin,
   reporting = false,
 }: AdminShellProps) => {
   const { t } = useTranslation("shell");
@@ -398,13 +401,15 @@ export const AdminShell = ({
   const currentGroup = activeAdminGroup(groups, pathname);
   const currentDestination = activeAdminDestination(groups, pathname);
   // The canvas frames size boxes content-box: a 56 px header plus its 1 px rule is 57 px.
-  const style = { "--shell-top": config.environment ? "85px" : "57px" } as CSSProperties;
+  const shellTop = 57 + (devLogin ? 28 : 0) + (config.environment ? 28 : 0);
+  const style = { "--shell-top": `${shellTop}px` } as CSSProperties;
 
   return (
     <CommandActionsProvider>
-      <div className="flex min-h-dvh flex-col" style={style}>
+      <div className="flex min-h-dvh flex-col" data-testid="shell-frame" style={style}>
         <SkipLink />
         <div className="sticky top-0 z-[var(--z-header)]">
+          {devLogin}
           <EnvironmentBanner name={config.environment} />
           <header className="flex h-[57px] items-center gap-3 border-b border-[var(--admin-head-border)] bg-[var(--admin-head)] px-4 text-[#f6eef4]">
             {signedIn ? (

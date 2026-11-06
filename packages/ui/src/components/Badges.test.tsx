@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { Badge, CountBadge, documentStatusOf, StatusPill, VersionBadge } from "./Badges";
+import { Badge, CountBadge, documentStatusOf, StatusPill, Tally, VersionBadge } from "./Badges";
 
 describe("StatusPill", () => {
   it.each([
@@ -52,6 +52,20 @@ describe("CountBadge", () => {
   it("takes extra classes", () => {
     render(<CountBadge className="ml-auto">3</CountBadge>);
     expect(screen.getByText("3")).toHaveClass("ml-auto");
+  });
+});
+
+describe("Tally", () => {
+  it("is the one amber tally style, with dark text on amber for contrast", () => {
+    render(<Tally>14</Tally>);
+    expect(screen.getByText("14")).toHaveClass("bg-accent", "text-[#261b25]", "font-mono");
+    expect(screen.getByText("14")).toHaveAttribute("data-tally", "sm");
+  });
+
+  it("has a large size for headline figures", () => {
+    render(<Tally size="lg">80%</Tally>);
+    expect(screen.getByText("80%")).toHaveAttribute("data-tally", "lg");
+    expect(screen.getByText("80%")).toHaveClass("bg-accent", "text-[22px]");
   });
 });
 

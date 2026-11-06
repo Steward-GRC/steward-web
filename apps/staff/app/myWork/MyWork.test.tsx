@@ -131,6 +131,20 @@ describe("U1: My work for an author and approver", () => {
     );
   });
 
+  it("shows the library counts, the category counts and the compliance figure in the amber tally", async () => {
+    inRouter(<MyWork data={bob} />);
+    const library = await screen.findByRole("region", { name: "Library overview" });
+    expect(within(within(library).getByTestId("library-Policies")).getByText("14")).toHaveAttribute(
+      "data-tally",
+      "lg",
+    );
+    const workplace = within(library).getByTestId("library-category-Workplace");
+    expect(within(workplace).getByText("6")).toHaveAttribute("data-tally", "sm");
+    const compliance = screen.getByRole("region", { name: "Acknowledgement compliance" });
+    expect(within(compliance).getByText("80%")).toHaveAttribute("data-tally", "lg");
+    expect(within(compliance).getByTestId("progress-fill")).toHaveClass("bg-accent");
+  });
+
   it("shows the acknowledgement compliance as a percentage and a bar", async () => {
     inRouter(<MyWork data={bob} />);
     const compliance = await screen.findByRole("region", { name: "Acknowledgement compliance" });

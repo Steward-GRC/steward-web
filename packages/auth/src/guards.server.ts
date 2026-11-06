@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { redirect } from "react-router";
+import { data, redirect } from "react-router";
 
 import type { Identity } from "./identity";
 
@@ -50,6 +50,29 @@ export const requirePermission = (
   if (!can(identity, permission)) throw redirect(redirectTo);
   return identity;
 };
+
+/**
+ * As `requirePermission`, but a signed-in visitor who lacks the permission gets a 403 naming the
+ * role they need (`{ needs }`), which the route error page explains, instead of a silent
+ * redirect that leaves them guessing why a screen won't open.
+ */
+export const requireRole = (
+  identity: Identity,
+  permission: string,
+  needs: string,
+  currentUrl: string,
+): Identity => {
+  requireIdentity(identity, currentUrl);
+  if (!can(identity, permission)) throw data({ needs }, { status: 403 });
+  return identity;
+};
+
+export const requireRoleFromRequest = async (
+  request: Request,
+  permission: string,
+  needs: string,
+): Promise<Identity> =>
+  requireRole(await identityFromRequest(request), permission, needs, request.url);
 
 /**
  * The two guards above, reading identity from the request's own cookie (cached per request;

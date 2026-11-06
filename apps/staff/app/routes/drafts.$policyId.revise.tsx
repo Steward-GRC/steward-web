@@ -4,7 +4,7 @@
 // set across the whole draft, review it section by section, then apply it to the draft in the
 // editor. Nothing changes until the author applies it, and the editor still needs saving.
 import { PERMISSIONS } from "@steward-web/auth";
-import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, Input } from "@steward-web/ui";
@@ -25,7 +25,7 @@ import { type SectionText } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const { aiHealth, draftId, policy, sections } = await loadDraftForAi(request, params.policyId);
   return { aiHealth, draftId, policy, sections };
 };

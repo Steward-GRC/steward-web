@@ -118,3 +118,19 @@ describe("the page error (G17)", () => {
     expect(report).toHaveTextContent(formatDateTime("2026-10-02T14:22:00Z"));
   });
 });
+
+describe("a missing role (bug log 59)", () => {
+  it("says which role is needed instead of leaving the person guessing", async () => {
+    renderThrowing("/drafts/new/policy", () => {
+      throw data({ needs: "author" }, { status: 403 });
+    });
+    expect(
+      await screen.findByRole("heading", { name: "You need the author role" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Creating and editing policies is for authors/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "← Back to the home page" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+  });
+});

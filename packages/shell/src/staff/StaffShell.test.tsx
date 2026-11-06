@@ -235,6 +235,14 @@ describe("StaffShell banners and footer", () => {
     expect(banner).toHaveTextContent("TESTTest environment");
   });
 
+  it("puts the dev login bar across the very top, above the environment banner", () => {
+    renderShell(bob, { devLogin: <div data-testid="dev-login-bar">Dev login</div> });
+    const bar = screen.getByTestId("dev-login-bar");
+    const env = screen.getByTestId("environment-banner");
+    expect(bar.compareDocumentPosition(env) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("shell-frame")).toHaveStyle("--shell-top: 113px");
+  });
+
   it("has no environment banner in production or when none is set", () => {
     renderShell(bob, { config: { ...CONFIG, environment: null } });
     expect(screen.queryByTestId("environment-banner")).toBeNull();

@@ -19,6 +19,12 @@ const isNotFoundData = (value: unknown): value is NotFoundData =>
   ((value as NotFoundData).kind === "policy" || (value as NotFoundData).kind === "procedure") &&
   typeof (value as NotFoundData).number === "string";
 
+/** What `requireRole` throws (`data({ needs }, { status: 403 })`) when a role is missing. */
+const isNeedsRole = (value: unknown): value is { needs: string } =>
+  typeof value === "object" &&
+  value !== null &&
+  typeof (value as { needs?: unknown }).needs === "string";
+
 /**
  * Every route's `ErrorBoundary` content, inside the app's shell when the root could load. A
  * 404 is Not found (U7s, 6-states.s3): "Policy not found / No policy matches {number}." for a
@@ -52,6 +58,21 @@ export const RouteErrorBoundary = () => {
           back={{ label: t("notFound.page.back"), to: "/" }}
           description={t("notFound.page.description", { path: location.pathname })}
           title={t("notFound.page.title")}
+        />
+      </div>
+    );
+  }
+
+  if (isRouteErrorResponse(error) && error.status === 403 && isNeedsRole(error.data)) {
+    const { needs } = error.data;
+    return (
+      <div className="mx-auto my-10 w-[calc(100%-32px)] max-w-[520px]">
+        <NotFound
+          back={{ label: t("notFound.page.back"), to: "/" }}
+          description={t(`needsRole.${needs}.description`, {
+            defaultValue: t("refusal.forbidden"),
+          })}
+          title={t(`needsRole.${needs}.title`, { defaultValue: t("refusal.forbidden") })}
         />
       </div>
     );
