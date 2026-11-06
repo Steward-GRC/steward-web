@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { Input, Popover, PopoverContent, PopoverTrigger } from "@steward-web/ui";
+import { Popover, PopoverContent, PopoverTrigger, SearchInput } from "@steward-web/ui";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 
@@ -53,7 +53,7 @@ export const MemberPicker = ({
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-72 flex-col gap-2 p-2">
-        <Input
+        <SearchInput
           aria-label={t("myGroups.find")}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("myGroups.findPlaceholder")}

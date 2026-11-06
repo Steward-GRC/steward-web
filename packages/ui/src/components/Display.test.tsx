@@ -80,3 +80,19 @@ describe("Card", () => {
     );
   });
 });
+
+describe("Table rows (#105, #112)", () => {
+  it("puts the rows on the card surface, not the page behind them", () => {
+    render(<Table aria-label="Rows" />);
+    expect(screen.getByRole("table", { name: "Rows" })).toHaveClass("bg-surface");
+  });
+
+  it("stripes every second row only when asked", () => {
+    const { rerender } = render(<Table aria-label="Rows" />);
+    expect(screen.getByRole("table", { name: "Rows" }).className).not.toContain("nth-child(even)");
+    expect(screen.getByRole("table", { name: "Rows" })).not.toHaveAttribute("data-striped");
+    rerender(<Table aria-label="Rows" striped />);
+    expect(screen.getByRole("table", { name: "Rows" }).className).toContain("nth-child(even)");
+    expect(screen.getByRole("table", { name: "Rows" })).toHaveAttribute("data-striped");
+  });
+});

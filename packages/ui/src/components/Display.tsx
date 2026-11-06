@@ -174,9 +174,27 @@ export const Kbd = ({ className, ...props }: ComponentProps<"kbd">) => (
   />
 );
 
-export const Table = ({ className, ...props }: ComponentProps<"table">) => (
+/**
+ * The kit's table. Its rows sit on the card surface, never the page behind them (#112), under a
+ * header one shade down. `striped` gives every second row the stripe shade (#105), for a dense
+ * log; the hover shade shows over the stripes and both print.
+ */
+export const Table = ({
+  className,
+  striped = false,
+  ...props
+}: { striped?: boolean } & ComponentProps<"table">) => (
   <div className="relative w-full overflow-x-auto">
-    <table className={cn("w-full border-collapse text-base", className)} {...props} />
+    <table
+      className={cn(
+        "w-full border-collapse bg-surface text-base [&_tbody_tr:hover]:bg-sunken print:[print-color-adjust:exact]",
+        striped &&
+          "[&_tbody_tr:nth-child(even)]:bg-stripe [&_tbody_tr:nth-child(even):hover]:bg-sunken",
+        className,
+      )}
+      data-striped={striped ? "" : undefined}
+      {...props}
+    />
   </div>
 );
 export const THead = ({ className, ...props }: ComponentProps<"thead">) => (

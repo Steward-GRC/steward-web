@@ -173,6 +173,7 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
               displayLabel(record.groupName, record.groupId),
             ].join(" "),
         }}
+        striped
       />
     </div>
   );

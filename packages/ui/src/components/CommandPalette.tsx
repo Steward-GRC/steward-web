@@ -4,8 +4,9 @@ import { useTranslation } from "@steward-web/i18n";
 import { Command as CommandPrimitive } from "cmdk";
 import { Clock, FileText, Folder, Plus, Search, Zap } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 
+import { ClearSearchButton } from "#ui/components/SearchInput";
 import { cn } from "#ui/lib/cn";
 
 export interface CommandPaletteProps {
@@ -83,6 +84,7 @@ export const CommandPalette = ({
   query,
 }: CommandPaletteProps) => {
   const [selected, setSelected] = useState("");
+  const field = useRef<HTMLInputElement>(null);
   const byValue = new Map<string, PaletteItem>(
     groups.flatMap((group) =>
       group.items.map((item): [string, PaletteItem] => [`${group.id}-${item.id}`, item]),
@@ -122,8 +124,10 @@ export const CommandPalette = ({
                 className="min-w-0 flex-1 bg-transparent caret-primary outline-none placeholder:text-muted"
                 onValueChange={onQueryChange}
                 placeholder={t("palette.placeholder")}
+                ref={field}
                 value={query}
               />
+              {query === "" ? null : <ClearSearchButton input={field} />}
               <kbd className="ml-auto rounded-sm border border-border-strong px-[5px] py-px font-mono text-2xs text-muted">
                 {t("palette.esc")}
               </kbd>

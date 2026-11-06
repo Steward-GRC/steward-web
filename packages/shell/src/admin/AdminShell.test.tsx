@@ -236,6 +236,20 @@ describe("AdminShell secondary navigation (#83)", () => {
   });
 });
 
+describe("the category filter's clear button (#107)", () => {
+  it("clears the filter and shows every category again", async () => {
+    renderShell(alice, "/categories/c-fac");
+    const panel = screen.getByRole("navigation", { name: "Categories pages" });
+    const filter = within(panel).getByRole("searchbox", { name: "Filter categories" });
+    await userEvent.type(filter, "peo");
+    expect(within(panel).queryByRole("link", { name: "Facilities" })).toBeNull();
+    await userEvent.click(within(panel).getByRole("button", { name: "Clear search" }));
+    expect(filter).toHaveValue("");
+    expect(filter).toHaveFocus();
+    expect(within(panel).getByRole("link", { name: "Facilities" })).toBeInTheDocument();
+  });
+});
+
 describe("AdminShell for someone with less than site admin", () => {
   it("hides the destinations their permissions don't open, and empty groups", () => {
     renderShell(

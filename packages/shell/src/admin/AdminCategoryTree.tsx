@@ -1,10 +1,10 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { cn } from "@steward-web/ui";
+import { ClearSearchButton, cn } from "@steward-web/ui";
 import { categoriesPath } from "@steward-web/ui/domain";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 export interface CategoryNode {
@@ -49,6 +49,7 @@ export const AdminCategoryTree = ({
   const { t } = useTranslation("shell");
   const { pathname } = useLocation();
   const [query, setQuery] = useState("");
+  const filter = useRef<HTMLInputElement>(null);
   const byId = useMemo(() => new Map(categories.map((node) => [node.id, node])), [categories]);
   const currentId = /^\/(?:access|categories)\/([^/]+)$/.exec(pathname)?.[1];
   const [open, setOpen] = useState<ReadonlySet<string>>(
@@ -124,9 +125,11 @@ export const AdminCategoryTree = ({
           className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-muted"
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("admin.categories.filter")}
+          ref={filter}
           type="search"
           value={query}
         />
+        {query === "" ? null : <ClearSearchButton input={filter} />}
       </label>
       <ul className="flex flex-col gap-px text-[13.5px]">{branch(null, 0)}</ul>
     </>

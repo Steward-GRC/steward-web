@@ -8,8 +8,8 @@ import { Link } from "react-router";
 import { SensitivityBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Checkbox, Select } from "#ui/components/Controls";
-import { Input } from "#ui/components/Input";
 import { Popover, PopoverContent, PopoverTrigger } from "#ui/components/Overlays";
+import { SearchInput } from "#ui/components/SearchInput";
 
 import type { DocumentType, Policy } from "./policy";
 
@@ -303,7 +303,7 @@ export const ColumnFilter = ({
   const label = t("library.columns.filter", { column: t(`library.table.${column.key}`) });
   if (column.filter === "text") {
     return (
-      <Input
+      <SearchInput
         aria-label={label}
         className="h-8 text-sm"
         defaultValue={value}

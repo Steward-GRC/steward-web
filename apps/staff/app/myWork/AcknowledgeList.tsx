@@ -1,7 +1,13 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { type DataColumn, DEFAULT_PAGE_SIZES, Input, Pager, useDataTable } from "@steward-web/ui";
+import {
+  type DataColumn,
+  DEFAULT_PAGE_SIZES,
+  Pager,
+  SearchInput,
+  useDataTable,
+} from "@steward-web/ui";
 import { Link } from "react-router";
 
 import type { WorkRow } from "./myWork.server";
@@ -71,13 +77,13 @@ export const AcknowledgeList = ({ label, rows }: { label: string; rows: readonly
     <>
       {controls ? (
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-          <Input
+          <SearchInput
             aria-label={t("toAcknowledge.search")}
-            className="max-w-sm flex-1"
             onChange={(event) => table.setQuery(event.target.value)}
             placeholder={t("toAcknowledge.search")}
             type="search"
             value={table.query}
+            wrapperClassName="max-w-sm flex-1"
           />
           <select
             aria-label={t("toAcknowledge.category")}

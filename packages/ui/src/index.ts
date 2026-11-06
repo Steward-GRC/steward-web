@@ -140,6 +140,7 @@ export {
   type ResponsiveTableProps,
 } from "./components/ResponsiveTable";
 export { type RowAction } from "./components/RowMenu";
+export { clearInput, ClearSearchButton, SearchInput } from "./components/SearchInput";
 export { type PickerOption, SearchPicker, type SearchPickerProps } from "./components/SearchPicker";
 export { Spinner } from "./components/Spinner";
 export { AckSnapshot, StatCard } from "./components/StatCards";

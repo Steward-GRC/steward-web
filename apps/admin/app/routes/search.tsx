@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
-import { Badge, Card, CardBody, EmptyState, Input, PageHeader } from "@steward-web/ui";
+import { Badge, Card, CardBody, EmptyState, PageHeader, SearchInput } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
 import { listCategories, listPolicies } from "@steward-web/ui/domain/server";
 import { type FormEvent, useState } from "react";
@@ -82,7 +82,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
       />
 
       <form className="w-full" onSubmit={onSubmit}>
-        <Input
+        <SearchInput
           aria-label="Search"
           onChange={(event) => {
             setInput(event.target.value);

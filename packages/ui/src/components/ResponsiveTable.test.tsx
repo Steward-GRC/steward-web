@@ -381,3 +381,19 @@ describe("the right-click row menu (#90)", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 });
+
+describe("striped rows (#105)", () => {
+  it("passes the option to the table", () => {
+    render(
+      <ResponsiveTable
+        columns={COLUMNS}
+        empty={<p>No people yet</p>}
+        label="People"
+        rowKey={(person) => person.id}
+        rows={PEOPLE}
+        striped
+      />,
+    );
+    expect(screen.getByRole("table", { name: "People" })).toHaveAttribute("data-striped");
+  });
+});

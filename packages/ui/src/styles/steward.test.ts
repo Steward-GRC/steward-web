@@ -182,3 +182,25 @@ describe("the text on amber (bug log 62, #217)", () => {
     expect(hits).toEqual([]);
   });
 });
+
+describe("table rows (#105, #112)", () => {
+  const systemDark = /\.system:not\(\.hc\)\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+  it.each([
+    [":root", rule(":root")],
+    [".dark", rule(".dark")],
+    [".hc", rule(".hc")],
+    [".system:not(.hc)", systemDark],
+  ])(
+    "has a stripe shade that keeps row text at 3:1 or better, and apart from the row in %s",
+    (_name, body) => {
+      const get = (name: string) =>
+        new RegExp(String.raw`--${name}:\s*(#[\da-f]{6})`).exec(body)?.[1] ?? "";
+      expect(get("stripe")).not.toBe("");
+      expect(get("stripe")).not.toBe(get("surface"));
+      expect(ratio(get("ink"), get("stripe"))).toBeGreaterThanOrEqual(3);
+      expect(ratio(get("ink"), get("surface"))).toBeGreaterThanOrEqual(3);
+      // Muted text is read on the stripe too.
+      expect(ratio(get("muted"), get("stripe"))).toBeGreaterThanOrEqual(3);
+    },
+  );
+});

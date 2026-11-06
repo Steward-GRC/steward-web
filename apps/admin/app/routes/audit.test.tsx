@@ -41,6 +41,13 @@ const openAudit = (records: object[] = RECORDS) => {
   render(<Stub initialEntries={["/audit"]} />);
 };
 
+describe("Audit log striped rows (#105)", () => {
+  it("alternates the row shades", async () => {
+    openAudit();
+    expect(await screen.findByRole("table", { name: "Audit log" })).toHaveAttribute("data-striped");
+  });
+});
+
 describe("Audit log (A15)", () => {
   it("lists when, action, actor, subject and group", async () => {
     openAudit();
