@@ -95,34 +95,33 @@ const openReader = (
 };
 
 const chooseAction = async (name: string) => {
-  await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+  await userEvent.click(screen.getByRole("button", { name: "Admin actions" }));
   await userEvent.click(await screen.findByRole("menuitem", { name }));
 };
 
 describe("AdminPolicyReader (A11)", () => {
-  it("adds the governance group to the reader's Actions menu", async () => {
+  it("keeps the everyday Actions menu as it was and gives the governance tasks their own Admin actions button (#103)", async () => {
     openReader(published);
     await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    const everyday = await screen.findByRole("menu");
+    expect(
+      within(everyday)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Print / Export", "History & approvals"]);
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByRole("button", { name: "Admin actions" }));
     const menu = await screen.findByRole("menu");
     expect(
       within(menu)
         .getAllByRole("menuitem")
         .map((item) => item.textContent),
-    ).toEqual([
-      "Print / Export",
-      "History & approvals",
-      "Export PDF",
-      "Magic link",
-      "Change author",
-      "Move to section",
-      "Retire",
-      "Delete",
-    ]);
+    ).toEqual(["Export PDF", "Magic link", "Change author", "Move to section", "Retire", "Delete"]);
   });
 
   it("leaves Change author and Move to section to site admins", async () => {
     openReader(published, { isSiteAdmin: false });
-    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    await userEvent.click(screen.getByRole("button", { name: "Admin actions" }));
     const menu = await screen.findByRole("menu");
     expect(within(menu).queryByRole("menuitem", { name: "Change author" })).toBeNull();
     expect(within(menu).queryByRole("menuitem", { name: "Move to section" })).toBeNull();
@@ -343,7 +342,7 @@ describe("AdminPolicyReader (A11)", () => {
 
   it("offers no link or export before the first publish", async () => {
     openReader(draft);
-    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    await userEvent.click(screen.getByRole("button", { name: "Admin actions" }));
     expect(await screen.findByRole("menuitem", { name: "Export PDF" })).toHaveAttribute(
       "data-disabled",
     );

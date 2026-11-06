@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { Command as CommandPrimitive } from "cmdk";
-import { Clock, FileText, Folder, Plus, Search, Zap } from "lucide-react";
+import { Clock, FileText, Folder, Plus, Search, ShieldCheck, Zap } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { type ReactNode, useRef, useState } from "react";
 
@@ -32,6 +32,8 @@ export interface PaletteGroup {
 }
 
 export interface PaletteItem {
+  /** An admin-level task (#103): marked with a badge. */
+  admin?: boolean;
   hint?: string;
   /** Folder for a category, clock for a recent item, plus for a create action, a bolt for a
    *  page action; none for a document. */
@@ -181,6 +183,12 @@ export const CommandPalette = ({
                               ) : null}
                             </span>
                           )}
+                          {item.admin ? (
+                            <span className="ml-auto flex items-center gap-1 rounded-sm bg-accent-fill px-1.5 py-px text-2xs font-semibold text-on-accent">
+                              <ShieldCheck aria-hidden="true" className="size-3" />
+                              {t("palette.adminBadge")}
+                            </span>
+                          ) : null}
                           {item.shortcut ? (
                             <kbd className="ml-auto rounded-sm border border-border-strong px-[5px] py-px font-mono text-2xs text-muted group-data-[selected=true]:text-on-primary-soft [@media(pointer:coarse)]:hidden">
                               {item.shortcut}
