@@ -44,6 +44,9 @@ import {
 } from "../libraries/libraries.server";
 import { DeleteButton, LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => ({
   refs: await listReferences(request),
 });
@@ -185,6 +188,7 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
                 className: "font-medium",
                 header: t("libraries.references.columns.label"),
                 key: "label",
+                value: (ref) => ref.label,
               },
               {
                 card: "status",
@@ -195,6 +199,7 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
                 ),
                 header: t("libraries.references.columns.kind"),
                 key: "kind",
+                value: (ref) => ref.kind,
               },
               {
                 card: "meta",
@@ -221,6 +226,7 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
                 className: "text-muted",
                 header: t("libraries.references.columns.usedBy"),
                 key: "usedBy",
+                value: (ref) => ref.usedByCount,
               },
               {
                 card: "action",

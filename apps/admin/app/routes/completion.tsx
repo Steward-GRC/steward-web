@@ -19,6 +19,9 @@ import type { Route } from "./+types/completion";
 import { getCompletionReport, listObligatingPolicies } from "../completion/completion.server";
 import { StatTiles } from "../completion/StatTiles";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const obligating = await listObligatingPolicies(request);
   const rows = await Promise.all(
@@ -127,6 +130,7 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
               ),
               header: t("completion.table.policy"),
               key: "policy",
+              value: (row) => row.title,
             },
             {
               card: "meta",
@@ -134,6 +138,7 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
               className: "text-muted",
               header: t("completion.table.category"),
               key: "category",
+              value: (row) => row.category,
             },
             {
               card: "meta",
@@ -145,6 +150,7 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
               className: "tabular-nums",
               header: t("completion.table.acknowledged"),
               key: "acknowledged",
+              value: (row) => row.totalAcked,
             },
             {
               card: "status",
@@ -162,6 +168,7 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
               ),
               header: t("completion.table.completion"),
               key: "completion",
+              value: (row) => row.completionPct,
             },
             {
               card: "status",
@@ -173,6 +180,7 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
                 ) : null,
               header: t("completion.table.overdue"),
               key: "overdue",
+              value: (row) => row.overdue,
             },
           ]}
           empty={<EmptyState compact title={t("completion.empty.filtered")} />}

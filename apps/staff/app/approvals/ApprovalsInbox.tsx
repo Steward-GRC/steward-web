@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { formatDate, formatDayMonth, useTranslation } from "@steward-web/i18n";
 import { Badge, Card, CardHeader, cn, EmptyState } from "@steward-web/ui";
-import { Check, Inbox } from "lucide-react";
-import { type ReactNode, useId } from "react";
+import { ArrowDown, ArrowUp, Check, Inbox } from "lucide-react";
+import { type ReactNode, useId, useState } from "react";
 import { Link } from "react-router";
 
 import { type InboxEntry, overdueDays } from "./inbox";
@@ -122,6 +122,59 @@ const INFO_COLUMN: Readonly<Record<Group, string>> = {
   upcoming: "inbox.columns.nowAt",
 };
 
+interface InboxSort {
+  direction: "asc" | "desc";
+  key: SortKey;
+}
+type SortKey = "due" | "policy" | "stage";
+
+const NATURAL = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+/** The entries in the header's order; one with no due date goes last either way. */
+const sortEntries = (entries: readonly InboxEntry[], sort: InboxSort | null): InboxEntry[] => {
+  if (!sort) return [...entries];
+  const sign = sort.direction === "asc" ? 1 : -1;
+  return entries.toSorted((a, b) => {
+    if (sort.key === "due") {
+      if (!a.dueAt || !b.dueAt) return a.dueAt ? -1 : b.dueAt ? 1 : 0;
+      return sign * a.dueAt.localeCompare(b.dueAt);
+    }
+    if (sort.key === "stage") return sign * (a.stageNumber - b.stageNumber);
+    return sign * NATURAL.compare(a.title, b.title);
+  });
+};
+
+/** A column header that sorts its group: a button, with aria-sort on the sorted one. */
+const SortableHeader = ({
+  children,
+  onSort,
+  sort,
+  sortKey,
+}: {
+  children: ReactNode;
+  onSort: (key: SortKey) => void;
+  sort: InboxSort | null;
+  sortKey: SortKey;
+}) => {
+  const active = sort?.key === sortKey ? sort.direction : undefined;
+  return (
+    <span
+      aria-sort={active ? (active === "asc" ? "ascending" : "descending") : undefined}
+      role="columnheader"
+    >
+      <button
+        className="inline-flex items-center gap-1 font-semibold hover:text-ink"
+        onClick={() => onSort(sortKey)}
+        type="button"
+      >
+        {children}
+        {active === "asc" ? <ArrowUp aria-hidden="true" className="size-3.5" /> : null}
+        {active === "desc" ? <ArrowDown aria-hidden="true" className="size-3.5" /> : null}
+      </button>
+    </span>
+  );
+};
+
 /**
  * One group (U24): a card with its title (and what it means), the column header, then a row
  * per entry. On a phone (U24m) the table becomes a card per entry under "PENDING · 2".
@@ -145,6 +198,14 @@ const InboxGroup = ({
   // so the column waits for a row that has it.
   const info = group !== "pending" || entries.some((entry) => entry.submittedBy);
   const action = ACTION[group];
+  // Ascending, then descending, then the order the gateway sent.
+  const [sort, setSort] = useState<InboxSort | null>(null);
+  const toggle = (key: SortKey) =>
+    setSort((current) => {
+      if (current?.key !== key) return { direction: "asc", key };
+      return current.direction === "asc" ? { direction: "desc", key } : null;
+    });
+  const rows = sortEntries(entries, sort);
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-3">
       <Card className="max-md:hidden">
@@ -163,15 +224,21 @@ const InboxGroup = ({
               )}
               role="row"
             >
-              <span role="columnheader">{t("inbox.columns.policy")}</span>
-              <span role="columnheader">{t("inbox.columns.stage")}</span>
+              <SortableHeader onSort={toggle} sort={sort} sortKey="policy">
+                {t("inbox.columns.policy")}
+              </SortableHeader>
+              <SortableHeader onSort={toggle} sort={sort} sortKey="stage">
+                {t("inbox.columns.stage")}
+              </SortableHeader>
               {info ? <span role="columnheader">{t(INFO_COLUMN[group])}</span> : <span />}
-              <span role="columnheader">{t("inbox.columns.due")}</span>
+              <SortableHeader onSort={toggle} sort={sort} sortKey="due">
+                {t("inbox.columns.due")}
+              </SortableHeader>
               <span />
             </div>
           </div>
           <div role="rowgroup">
-            {entries.map((entry) => (
+            {rows.map((entry) => (
               <div
                 aria-label={entry.title}
                 className={cn(columns, "border-b border-border py-3 text-base last:border-b-0")}

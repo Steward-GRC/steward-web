@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
-import { useTranslation } from "@steward-web/i18n";
+import { formatDate, useTranslation } from "@steward-web/i18n";
 import { Button, Card, CardBody, Input, Table, TD, TH, THead } from "@steward-web/ui";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -73,7 +73,7 @@ export default function Drafts({ loaderData }: Route.ComponentProps) {
                       {draft.title}
                     </Link>
                   </TD>
-                  <TD>{draft.updated ?? "—"}</TD>
+                  <TD>{formatDate(draft.updated)}</TD>
                 </tr>
               ))}
             </tbody>

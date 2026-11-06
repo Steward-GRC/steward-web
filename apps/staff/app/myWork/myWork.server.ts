@@ -34,6 +34,8 @@ export interface MyWorkData {
 
 /** One row of a My work or To acknowledge list: what it is, and where it opens. */
 export interface WorkRow {
+  /** The policy's category, where the library can say (the acknowledge list groups by it). */
+  category?: string;
   /** When it's due, where the gateway says (approvals today). */
   dueAt?: null | string;
   href: string;
@@ -47,14 +49,25 @@ const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefine
 /** A failed read leaves its part of the page out rather than failing the page. */
 const orNull = <T>(read: Promise<T>): Promise<null | T> => read.catch(() => null);
 
-const obligationRows = async (request: Request): Promise<WorkRow[]> => {
-  const obligations = await edge.myObligations(cookieOf(request));
-  return obligations.map(({ number, title, version }) => ({
-    href: `/policies/${number}`,
-    number,
-    title,
-    version,
-  }));
+const obligationRows = async (request: Request, withCategory = false): Promise<WorkRow[]> => {
+  const cookie = cookieOf(request);
+  const [obligations, catalog] = await Promise.all([
+    edge.myObligations(cookie),
+    // The category is only for the acknowledge page's grouping and filter, so the home page
+    // doesn't ask for the library; a failed read leaves the rows without it.
+    withCategory ? orNull(edge.policies(DocumentType.Policy, cookie)) : Promise.resolve(null),
+  ]);
+  const categoryOf = new Map((catalog ?? []).map((policy) => [policy.number, policy.category]));
+  return obligations.map(({ number, title, version }) => {
+    const category = categoryOf.get(number);
+    return {
+      ...(category ? { category } : {}),
+      href: `/policies/${number}`,
+      number,
+      title,
+      version,
+    };
+  });
 };
 
 const libraryOverview = (policies: readonly Policy[]): LibraryOverview => {
@@ -129,5 +142,5 @@ export const myWorkData = async (request: Request, identity: Identity): Promise<
 
 /** To acknowledge (U2): what the person still has to acknowledge; null when it can't be read. */
 export const toAcknowledgeData = async (request: Request) => ({
-  obligations: await orNull(obligationRows(request)),
+  obligations: await orNull(obligationRows(request, true)),
 });

@@ -1,8 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { formatDate, setDatePreference } from "@steward-web/i18n";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { parsePreferences, PREFERENCES_BOOT_SCRIPT, PREFERENCES_STORAGE_KEY } from "./preferences";
 import { ThemeProvider, usePreferences } from "./ThemeProvider";
@@ -71,5 +72,44 @@ describe("the boot script", () => {
     new Function(PREFERENCES_BOOT_SCRIPT)();
     expect(document.documentElement).toHaveClass("dark");
     expect(document.documentElement).toHaveAttribute("data-reduce-motion");
+  });
+});
+
+const Dates = () => {
+  const { update } = usePreferences();
+  return (
+    <>
+      <button onClick={() => update({ dateFormat: "iso" })} type="button">
+        iso
+      </button>
+      <output>{formatDate(new Date(2026, 9, 2, 12, 0), { locale: "en" })}</output>
+    </>
+  );
+};
+
+describe("the date format preference", () => {
+  afterEach(() => {
+    setDatePreference("system");
+    localStorage.clear();
+  });
+
+  it("shows dates in the system default, then in the saved choice once it is made", async () => {
+    render(
+      <ThemeProvider>
+        <Dates />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("2 Oct 2026");
+    await userEvent.click(screen.getByRole("button", { name: "iso" }));
+    expect(screen.getByRole("status")).toHaveTextContent("2026-10-02");
+    expect(JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? "{}")).toMatchObject({
+      dateFormat: "iso",
+    });
+  });
+
+  it("reads the saved choice and falls back to the default for anything unknown", () => {
+    expect(parsePreferences(JSON.stringify({ dateFormat: "mdy" })).dateFormat).toBe("mdy");
+    expect(parsePreferences(JSON.stringify({ dateFormat: "weird" })).dateFormat).toBe("system");
+    expect(parsePreferences(null).dateFormat).toBe("system");
   });
 });

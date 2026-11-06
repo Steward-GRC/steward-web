@@ -223,14 +223,29 @@
   },
   "toAcknowledge": {
     "action": "Read & acknowledge",
+    "allCategories": "All categories",
+    "category": "Category",
     "empty": {
       "body": "You have no policies awaiting your acknowledgement.",
       "title": "You're all caught up"
     },
+    "group": "Group by",
+    "groupHeading": "{{name}} ({{count}})",
+    "groupNone": "No grouping",
     "list": "Pending acknowledgements ({{count}})",
     "loadAction": "load what you have to acknowledge",
     "meta": "{{number}} · v{{version}}",
+    "noMatches": "Nothing matches your filters.",
+    "search": "Filter by title or number",
+    "sort": {
+      "category": "Category",
+      "numberAsc": "Number",
+      "titleAsc": "Title A–Z",
+      "titleDesc": "Title Z–A"
+    },
+    "sortBy": "Sort by",
     "subtitle": "Published policies you must confirm you have read.",
-    "title": "To acknowledge"
+    "title": "To acknowledge",
+    "uncategorised": "Uncategorised"
   }
 }

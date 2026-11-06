@@ -349,3 +349,47 @@ describe("PolicyLibrary on a phone (U3m)", () => {
     expect(within(cards).getByRole("link", { name: /Acceptable Use/ })).toBeInTheDocument();
   });
 });
+
+const bodyRows = () =>
+  screen.getAllByRole("row").filter((row) => within(row).queryAllByRole("cell").length > 0);
+
+describe("PolicyLibrary with many policies", () => {
+  const many: Policy[] = Array.from({ length: 70 }, (_, index) => ({
+    ...policies[0]!,
+    id: `bulk-${index}`,
+    number: `BULK-${String(index).padStart(3, "0")}`,
+    status: PolicyStatus.Published,
+    title: `Bulk policy ${String(index).padStart(3, "0")}`,
+  }));
+
+  const renderMany = (entry: string) => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => (
+          <PolicyLibrary
+            categories={categories}
+            documentType={DocumentType.Policy}
+            policies={many}
+          />
+        ),
+        path: "/policies",
+      },
+    ]);
+    render(<Stub initialEntries={[entry]} />);
+  };
+
+  it("shows twenty a page until the person picks another size", async () => {
+    renderMany("/policies?status=all");
+    expect(bodyRows()).toHaveLength(20);
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Rows per page" }), "50");
+    expect(bodyRows()).toHaveLength(50);
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–50 of 70");
+  });
+
+  it("keeps the page size and page in the address", () => {
+    renderMany("/policies?status=all&size=10&page=7");
+    expect(bodyRows()).toHaveLength(10);
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("61–70 of 70");
+    expect(screen.getByRole("combobox", { name: "Jump to page" })).toHaveValue("7");
+  });
+});

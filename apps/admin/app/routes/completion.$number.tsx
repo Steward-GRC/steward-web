@@ -29,6 +29,9 @@ import {
 import { ACTIVITY_DAYS, ActivityBars, CompletionDonut } from "../completion/CompletionCharts";
 import { StatTiles } from "../completion/StatTiles";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const asked = Number(new URL(request.url).searchParams.get("days"));
   const days = ACTIVITY_DAYS.find((option) => option === asked) ?? ACTIVITY_DAYS[0];

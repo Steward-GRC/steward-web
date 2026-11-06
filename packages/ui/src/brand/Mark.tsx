@@ -129,6 +129,7 @@ export const Loader = ({
       <svg
         aria-hidden="true"
         className="motion-reduce:hidden"
+        data-testid="book-mark"
         height={size}
         viewBox="0 0 48 48"
         width={size}

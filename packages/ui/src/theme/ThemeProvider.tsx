@@ -1,7 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { setDatePreference } from "@steward-web/i18n";
 import {
   createContext,
+  Fragment,
   type ReactNode,
   use,
   useCallback,
@@ -70,8 +72,16 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setPreferences(DEFAULT_PREFERENCES);
   }, []);
 
+  // The formatters read the choice from a module, so it is set before the children render and
+  // the subtree is keyed on it: a changed choice redraws every date once.
+  setDatePreference(preferences.dateFormat);
+
   const value = useMemo(() => ({ preferences, reset, update }), [preferences, reset, update]);
-  return <PreferencesContext value={value}>{children}</PreferencesContext>;
+  return (
+    <PreferencesContext value={value}>
+      <Fragment key={preferences.dateFormat}>{children}</Fragment>
+    </PreferencesContext>
+  );
 };
 
 export const usePreferences = (): PreferencesContextValue => {

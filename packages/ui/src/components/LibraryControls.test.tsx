@@ -110,3 +110,51 @@ describe("the pager (U3)", () => {
     expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();
   });
 });
+
+describe("the pager's page jump and page size", () => {
+  it("jumps to any page from a dropdown, however many pages there are", async () => {
+    const onPage = vi.fn();
+    render(<Pager onPage={onPage} page={1} pageSize={20} total={700} />);
+    const jump = screen.getByRole("combobox", { name: "Jump to page" });
+    expect(within(jump).getAllByRole("option")).toHaveLength(35);
+    await userEvent.selectOptions(jump, "27");
+    expect(onPage).toHaveBeenCalledWith(27);
+  });
+
+  it("shows a few page numbers with gaps, not all 35", () => {
+    render(<Pager onPage={() => {}} page={17} pageSize={20} total={700} />);
+    const pager = screen.getByRole("navigation", { name: "Pages" });
+    const buttons = within(pager)
+      .getAllByRole("button")
+      .map((button) => button.getAttribute("aria-label"));
+    expect(buttons).toContain("Page 1");
+    expect(buttons).toContain("Page 16");
+    expect(buttons).toContain("Page 18");
+    expect(buttons).toContain("Page 35");
+    expect(buttons).not.toContain("Page 9");
+    expect(within(pager).getAllByText("…").length).toBe(2);
+  });
+
+  it("picks how many rows a page shows", async () => {
+    const onPageSize = vi.fn();
+    render(
+      <Pager
+        onPage={() => {}}
+        onPageSize={onPageSize}
+        page={1}
+        pageSize={20}
+        pageSizes={[10, 20, 50, 100]}
+        total={700}
+      />,
+    );
+    const size = screen.getByRole("combobox", { name: "Rows per page" });
+    expect(size).toHaveValue("20");
+    await userEvent.selectOptions(size, "100");
+    expect(onPageSize).toHaveBeenCalledWith(100);
+  });
+
+  it("leaves out the page size when none is offered, and the jump on a single page", () => {
+    render(<Pager onPage={() => {}} page={1} pageSize={20} total={4} />);
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+});

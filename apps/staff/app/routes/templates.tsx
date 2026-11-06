@@ -5,12 +5,15 @@
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
-import { EmptyState } from "@steward-web/ui";
+import { EmptyState, ResponsiveTable } from "@steward-web/ui";
 import { Link } from "react-router";
 
 import type { Route } from "./+types/templates";
 
 import { getLatestTemplateVersion, listAuthorableTemplates } from "../authoring/authoring.server";
+
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
@@ -39,35 +42,44 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
       {templates.length === 0 ? (
         <EmptyState description={t("templates.empty.body")} title={t("templates.empty.title")} />
       ) : (
-        <div className="overflow-x-auto rounded-[10px] border border-border bg-surface">
-          <table className="w-full">
-            <thead className="border-b border-border-strong bg-sunken text-left text-xs font-semibold text-muted">
-              <tr>
-                <th className="px-3.5 py-2">{t("templates.headers.name")}</th>
-                <th className="w-20 px-3.5 py-2">{t("templates.headers.sections")}</th>
-                <th className="w-[90px] px-3.5 py-2">{t("templates.headers.version")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {templates.map((template) => (
-                <tr className="border-b border-border last:border-b-0" key={template.id}>
-                  <td className="px-3.5 py-[11px]">
-                    <Link
-                      className="font-semibold text-primary hover:underline"
-                      to={`/templates/${template.id}`}
-                    >
-                      {template.name}
-                    </Link>
-                  </td>
-                  <td className="px-3.5 py-[11px]">{template.sections}</td>
-                  <td className="px-3.5 py-[11px] font-mono">
-                    {template.versionNo === null ? "" : `v${template.versionNo}`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          columns={[
+            {
+              card: "title",
+              cell: (template) => (
+                <Link
+                  className="font-semibold text-primary hover:underline"
+                  to={`/templates/${template.id}`}
+                >
+                  {template.name}
+                </Link>
+              ),
+              header: t("templates.headers.name"),
+              key: "name",
+              value: (template) => template.name,
+            },
+            {
+              card: "meta",
+              cell: (template) => template.sections,
+              header: t("templates.headers.sections"),
+              key: "sections",
+              value: (template) => template.sections,
+            },
+            {
+              card: "meta",
+              cell: (template) => (template.versionNo === null ? "" : `v${template.versionNo}`),
+              className: "font-mono",
+              header: t("templates.headers.version"),
+              key: "version",
+              value: (template) => template.versionNo ?? 0,
+            },
+          ]}
+          empty={null}
+          framed
+          label={t("templates.title")}
+          rowKey={(template) => template.id}
+          rows={templates}
+        />
       )}
     </div>
   );

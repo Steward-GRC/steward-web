@@ -29,6 +29,9 @@ import {
   listOrganizations,
 } from "../organisations/organisations.server";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [organisations, spCertificate] = await Promise.all([
     listOrganizations(request),
@@ -169,18 +172,21 @@ export default function Organizations({ loaderData }: Route.ComponentProps) {
             ),
             header: t("organizations.columns.domain"),
             key: "domain",
+            value: (org) => org.domain,
           },
           {
             card: "meta",
             cell: (org) => org.orgName,
             header: t("organizations.columns.organization"),
             key: "organization",
+            value: (org) => org.orgName,
           },
           {
             card: "status",
             cell: (org) => <Badge tone="neutral">{org.protocol.toUpperCase()}</Badge>,
             header: t("organizations.columns.protocol"),
             key: "protocol",
+            value: (org) => org.protocol,
           },
           {
             card: "status",

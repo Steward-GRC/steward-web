@@ -43,6 +43,9 @@ import {
 } from "../libraries/libraries.server";
 import { DeleteButton, LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [defs, groups] = await Promise.all([listDefinitions(request), listGroups(request)]);
   return { categories: orderedWithPaths(groups), defs };
@@ -163,6 +166,7 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
                 className: "font-medium",
                 header: t("libraries.definitions.columns.term"),
                 key: "term",
+                value: (entry) => entry.term,
               },
               {
                 card: "meta",
@@ -174,6 +178,7 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
                 className: "max-w-lg text-muted",
                 header: t("libraries.definitions.columns.definition"),
                 key: "definition",
+                value: (entry) => entry.definition,
               },
               {
                 card: "meta",
@@ -181,6 +186,7 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
                 className: "text-muted",
                 header: t("libraries.definitions.columns.usedBy"),
                 key: "usedBy",
+                value: (entry) => entry.usedByCount,
               },
               {
                 card: "action",

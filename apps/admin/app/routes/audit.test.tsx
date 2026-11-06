@@ -68,7 +68,7 @@ describe("Audit log on a phone (7-responsive.s3)", () => {
     const [published] = within(list).getAllByRole("listitem");
     // The action, the muted line (when · who · what), then the group's badge.
     expect(published).toHaveTextContent(
-      /^Policy published02 Oct 2026.* · Grace · POL-0012All staff$/,
+      /^Policy published2 Oct 2026.* · Grace · POL-0012All staff$/,
     );
   });
 

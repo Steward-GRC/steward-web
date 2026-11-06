@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { CaseStatus } from "@steward-web/api-client";
 import { useIdentity } from "@steward-web/auth";
-import { useTranslation } from "@steward-web/i18n";
-import { Badge, EmptyState, PageHeader, Select, Table, TD, TH, THead } from "@steward-web/ui";
+import { formatDate, useTranslation } from "@steward-web/i18n";
+import { Badge, EmptyState, PageHeader, ResponsiveTable, Select } from "@steward-web/ui";
 import { Link, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/reporting.cases";
@@ -11,6 +11,9 @@ import type { Route } from "./+types/reporting.cases";
 import { sortQueueByUrgency, statusLabelKey, statusTone } from "../reporting/caseStatus";
 import { requireReporting } from "../reporting/enabled.server";
 import { listReportCases } from "../reporting/reporting.server";
+
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
 
 const FILTERS = ["all", "open", "mine"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -39,6 +42,10 @@ export default function ReportingCasesRoute({ loaderData }: Route.ComponentProps
   const visible =
     filter === "mine" ? queue.cases.filter((c) => c.assigneeUserId === identity.id) : queue.cases;
   const rows = sortQueueByUrgency(visible);
+  const assignee = (row: (typeof rows)[number]) =>
+    row.assigneeUserId === identity.id
+      ? identity.name
+      : row.assigneeUserId || t("queue.unassigned");
 
   return (
     <div className="grid gap-6 p-6">
@@ -65,46 +72,73 @@ export default function ReportingCasesRoute({ loaderData }: Route.ComponentProps
       {rows.length === 0 ? (
         <EmptyState description={t("queue.empty.description")} title={t("queue.empty.title")} />
       ) : (
-        <Table>
-          <THead>
-            <tr>
-              <TH>{t("queue.table.case")}</TH>
-              <TH>{t("queue.table.kind")}</TH>
-              <TH>{t("queue.table.status")}</TH>
-              <TH>{t("queue.table.assignee")}</TH>
-              <TH>{t("queue.table.received")}</TH>
-              <TH>{t("queue.table.deadline")}</TH>
-            </tr>
-          </THead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <TD className="font-mono text-sm">
+        <ResponsiveTable
+          columns={[
+            {
+              card: "title",
+              cell: (row) => (
+                <>
                   <Link
-                    className="font-medium text-ink hover:underline"
+                    className="font-mono text-sm font-medium text-ink hover:underline"
                     to={`/reporting/cases/${row.id}`}
                   >
                     {row.caseCode}
                   </Link>
                   <p className="mt-0.5 max-w-xs truncate text-xs text-muted">{row.summary}</p>
-                </TD>
-                <TD>{t(`kind.${row.kind.toLowerCase()}`)}</TD>
-                <TD>
-                  <Badge tone={statusTone(row.status)}>
-                    {t(`status.${statusLabelKey(row.status)}`)}
-                  </Badge>
-                </TD>
-                <TD>
-                  {row.assigneeUserId === identity.id
-                    ? identity.name
-                    : row.assigneeUserId || t("queue.unassigned")}
-                </TD>
-                <TD className="text-sm text-muted">{row.receivedAt.slice(0, 10)}</TD>
-                <TD className="text-sm text-muted">{row.nextDeadline ?? t("queue.noDeadline")}</TD>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+                </>
+              ),
+              header: t("queue.table.case"),
+              key: "case",
+              value: (row) => row.caseCode,
+            },
+            {
+              card: "meta",
+              cell: (row) => t(`kind.${row.kind.toLowerCase()}`),
+              header: t("queue.table.kind"),
+              key: "kind",
+              value: (row) => t(`kind.${row.kind.toLowerCase()}`),
+            },
+            {
+              card: "status",
+              cell: (row) => (
+                <Badge tone={statusTone(row.status)}>
+                  {t(`status.${statusLabelKey(row.status)}`)}
+                </Badge>
+              ),
+              header: t("queue.table.status"),
+              key: "status",
+              value: (row) => t(`status.${statusLabelKey(row.status)}`),
+            },
+            {
+              card: "meta",
+              cell: (row) => assignee(row),
+              header: t("queue.table.assignee"),
+              key: "assignee",
+              value: (row) => assignee(row),
+            },
+            {
+              card: "meta",
+              cell: (row) => formatDate(row.receivedAt),
+              className: "text-sm text-muted",
+              header: t("queue.table.received"),
+              key: "received",
+              value: (row) => row.receivedAt,
+            },
+            {
+              card: "meta",
+              cell: (row) =>
+                row.nextDeadline ? formatDate(row.nextDeadline) : t("queue.noDeadline"),
+              className: "text-sm text-muted",
+              header: t("queue.table.deadline"),
+              key: "deadline",
+              value: (row) => row.nextDeadline ?? "9999",
+            },
+          ]}
+          empty={null}
+          label={t("queue.title")}
+          rowKey={(row) => row.id}
+          rows={rows}
+        />
       )}
     </div>
   );

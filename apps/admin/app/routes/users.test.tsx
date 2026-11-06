@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -188,10 +188,15 @@ describe("Users & roles on a phone (7-responsive.s3)", () => {
     asPhone();
     openUsers();
     await userEvent.type(await screen.findByRole("searchbox", { name: "Search users" }), "erin");
+    // The search is kept in the address, so the list follows the router a moment later.
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole("list", { name: "Users & roles" })).getAllByRole("listitem"),
+      ).toHaveLength(2),
+    );
     const cards = within(screen.getByRole("list", { name: "Users & roles" })).getAllByRole(
       "listitem",
     );
-    expect(cards).toHaveLength(2);
     expect(cards[0]).toHaveTextContent(/^Erinerin@example\.org/);
     expect(cards[1]).toHaveTextContent(/^Erin \(old\)erin\.old@example\.org/);
   });

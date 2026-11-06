@@ -8,6 +8,9 @@ import type { Route } from "./+types/magic-links";
 
 import { type MagicLinkRow, MagicLinksTable } from "../magicLinks/MagicLinksTable";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 /**
  * The gateway can make and revoke a link (`createMagicLink`, `revokeMagicLink`) but can't list
  * the links already issued or remove one (steward-gateway#71). Until it can, `links` is null and

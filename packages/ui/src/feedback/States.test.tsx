@@ -1,10 +1,10 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { EmptyState, NotFound, PageSkeleton } from "./States";
+import { EmptyState, ListSkeleton, NotFound, PageSkeleton } from "./States";
 
 describe("not found (U7s)", () => {
   it("names what's missing, says why, and offers the way back", () => {
@@ -36,6 +36,37 @@ describe("skeleton loading", () => {
     const skeleton = screen.getByRole("status");
     expect(skeleton).toHaveAttribute("aria-busy", "true");
     expect(skeleton).toHaveTextContent("Loading policy…");
+  });
+
+  it("carries the animated book mark, with one status, not two", () => {
+    render(<PageSkeleton label="Loading policy…" />);
+    expect(screen.getByTestId("book-mark")).toBeInTheDocument();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+});
+
+describe("the list skeleton", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("shows nothing for a quick load, then the rows and the animated book mark", () => {
+    vi.useFakeTimers();
+    render(<ListSkeleton label="Loading your work…" />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(299));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(2));
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-busy", "true");
+    expect(status).toHaveTextContent("Loading your work…");
+    expect(screen.getByTestId("book-mark")).toBeInTheDocument();
+    expect(screen.getAllByTestId("skeleton-row")).toHaveLength(5);
+  });
+
+  it("takes its own delay and number of rows", () => {
+    vi.useFakeTimers();
+    render(<ListSkeleton delay={0} label="Loading…" rows={3} />);
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getAllByTestId("skeleton-row")).toHaveLength(3);
   });
 });
 

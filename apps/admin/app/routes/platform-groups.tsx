@@ -28,6 +28,9 @@ import {
   removeUserFromGroup,
 } from "../users/myGroups.server";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const groups = await listPlatformGroups(request);
   const members = await Promise.all(groups.map((g) => listManagedGroupMembers(request, g.id)));
@@ -86,13 +89,14 @@ const MemberTable = ({
 }) => (
   <ResponsiveTable
     columns={[
-      { card: "title", cell: (m) => m.name, header: "Name", key: "name" },
+      { card: "title", cell: (m) => m.name, header: "Name", key: "name", value: (m) => m.name },
       {
         card: "meta",
         cell: (m) => m.email,
         className: "text-muted",
         header: "Email",
         key: "email",
+        value: (m) => m.email,
       },
       {
         card: "action",

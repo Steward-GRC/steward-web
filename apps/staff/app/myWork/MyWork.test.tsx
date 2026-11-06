@@ -4,6 +4,7 @@
 // Home and Library canvas draws them.
 import { formatDate } from "@steward-web/i18n";
 import { act, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import * as React from "react";
 import { createRoutesStub } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -322,5 +323,95 @@ describe("U1: the live-update cue (6-states.s5)", () => {
     expect(within(drafts).getByText("Updated just now")).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(1200));
     expect(fresh).not.toHaveClass("stw-updated");
+  });
+});
+
+const cards = () => within(screen.getByRole("list", { name: /Pending acknowledgements/ }));
+const titles = () =>
+  cards()
+    .getAllByRole("listitem")
+    .map((item) => within(item).getByText(/^Policy \d{4}$/).textContent);
+
+describe("U2: To acknowledge with hundreds of policies (bug log item 22)", () => {
+  const CATEGORIES = ["Finance", "HR", "IT Security", "Workplace"];
+  const lots: WorkRow[] = Array.from({ length: 520 }, (_, index) => ({
+    category: CATEGORIES[index % CATEGORIES.length],
+    href: `/policies/POL-${String(index).padStart(4, "0")}`,
+    number: `POL-${String(index).padStart(4, "0")}`,
+    title: `Policy ${String(index).padStart(4, "0")}`,
+    version: "1.0.0",
+  }));
+
+  const open = async (entry = "/") => {
+    const Stub = createRoutesStub([
+      { Component: () => <ToAcknowledge obligations={lots} />, path: "/" },
+    ]);
+    render(<Stub initialEntries={[entry]} />);
+    await screen.findByRole("heading", { level: 1, name: "To acknowledge" });
+  };
+
+  it("pages the cards, with the count, the jump and the page size, and no table", async () => {
+    await open();
+    expect(titles()).toHaveLength(20);
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–20 of 520");
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Jump to page" }), "26");
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("501–520 of 520");
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Rows per page" }), "100");
+    expect(titles()).toHaveLength(100);
+  });
+
+  it("filters as you type, on the title or the number", async () => {
+    await open();
+    await userEvent.type(
+      screen.getByRole("searchbox", { name: "Filter by title or number" }),
+      "0042",
+    );
+    expect(titles()).toEqual(["Policy 0042"]);
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–1 of 1");
+  });
+
+  it("filters to one category", async () => {
+    await open();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Category" }), "HR");
+    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–20 of 130");
+    expect(titles()[0]).toBe("Policy 0001");
+  });
+
+  it("groups by category, a heading and the group's whole count over each group on the page", async () => {
+    await open("/?groupby=category&size=100&page=2");
+    const headings = screen.getAllByRole("heading", { level: 3 });
+    expect(headings.map((heading) => heading.textContent)).toEqual(["Finance (130)", "HR (130)"]);
+    expect(screen.getAllByText(/^Policy \d{4}$/)).toHaveLength(100);
+    // A valid list: each group is an item of the outer list, holding its own list.
+    expect(
+      within(screen.getByRole("list", { name: /Pending acknowledgements/ })).getAllByRole(
+        "heading",
+        {
+          level: 3,
+        },
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("starts sorted by title and says so", async () => {
+    await open();
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveValue("title:asc");
+  });
+
+  it("sorts from a Sort by dropdown", async () => {
+    await open();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sort by" }), "title:desc");
+    expect(titles()[0]).toBe("Policy 0519");
+  });
+
+  it("keeps a short list as it was: no filter, no pager", async () => {
+    const Stub = createRoutesStub([
+      { Component: () => <ToAcknowledge obligations={lots.slice(0, 3)} />, path: "/" },
+    ]);
+    render(<Stub initialEntries={["/"]} />);
+    await screen.findByRole("heading", { level: 1, name: "To acknowledge" });
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Pages" })).not.toBeInTheDocument();
   });
 });

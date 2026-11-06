@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { formatDateTime } from "@steward-web/i18n";
 import { actionLabel, auditChainRange, displayLabel, refusalOf } from "@steward-web/shell";
 import {
   Badge,
@@ -16,6 +17,9 @@ import { data, Form } from "react-router";
 import type { Route } from "./+types/audit";
 
 import { listAuditLog, verifyAuditChain } from "../audit/audit.server";
+
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
@@ -41,14 +45,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 };
 
-const fmt = (iso: string): string =>
-  new Date(iso).toLocaleString("en-GB", {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+const fmt = (iso: string): string => formatDateTime(iso);
 
 export default function AuditLog({ actionData, loaderData }: Route.ComponentProps) {
   const { filters, records } = loaderData;
@@ -112,12 +109,14 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
             className: "whitespace-nowrap text-sm text-muted",
             header: "When",
             key: "when",
+            value: (record) => record.occurredAt,
           },
           {
             card: "title",
             cell: (record) => actionLabel(record.action),
             header: "Action",
             key: "action",
+            value: (record) => actionLabel(record.action),
           },
           {
             card: "meta",
@@ -125,6 +124,7 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
             className: "text-muted",
             header: "Actor",
             key: "actor",
+            value: (record) => displayLabel(record.actorName, record.actorUserId),
           },
           {
             card: "meta",
@@ -132,6 +132,7 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
             className: "text-muted",
             header: "Subject",
             key: "subject",
+            value: (record) => displayLabel(record.subjectLabel, record.subject),
           },
           {
             card: "status",
@@ -140,6 +141,7 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
             ),
             header: "Group",
             key: "group",
+            value: (record) => displayLabel(record.groupName, record.groupId),
           },
         ]}
         empty={
