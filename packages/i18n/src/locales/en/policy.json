@@ -59,6 +59,24 @@
     }
   },
   "print": {
+    "certificate": {
+      "comment": "Comment",
+      "heading": "Version history · {{version}}",
+      "note": "Who took each step for this version, and when. Printed {{time}}.",
+      "person": "Person",
+      "roles": {
+        "approved": "Approved",
+        "changesRequested": "Changes requested",
+        "drafted": "Drafted",
+        "published": "Published",
+        "rejected": "Rejected",
+        "reviewed": "Reviewed",
+        "submitted": "Submitted for review"
+      },
+      "step": "Step",
+      "system": "Steward",
+      "when": "When"
+    },
     "definitions": "Defined terms",
     "header": "{{number}} · v{{version}} · {{status}}",
     "history": "History & approvals · {{version}}",
@@ -66,7 +84,8 @@
     "nextReview": "Next review",
     "page": "Steward · Page {{page}} of {{pages}}",
     "printed": "Printed {{time}} · Check Steward for the current version",
-    "printedBy": "Printed {{time}} by {{name}} · Check Steward for the current version"
+    "printedBy": "Printed {{time}} by {{name}} · Check Steward for the current version",
+    "watermark": "SENSITIVE · {{name}} · {{time}}"
   },
   "reader": {
     "ack": {
@@ -274,6 +293,13 @@
       "position": "{{current}} of {{total}}",
       "positionShort": "{{current}}/{{total}}",
       "title": "On this page"
+    },
+    "printDialog": {
+      "cancel": "Cancel",
+      "description": "Choose what goes in the printout.",
+      "includeHistory": "Include version history page",
+      "print": "Print",
+      "title": "Print this version"
     },
     "redacted": {
       "body": "You're outside this sensitive policy's read audience, so its content is obfuscated.",

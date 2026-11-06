@@ -13,6 +13,7 @@ import { ExportPdfDialog } from "./ExportPdfDialog";
 import { MagicLinkSheet } from "./MagicLinkSheet";
 import { MoveDialog } from "./MoveDialog";
 import { DeleteDialog, RetireDialog } from "./RemoveDialogs";
+import { useGovernanceFetcher } from "./useGovernance";
 
 export interface AdminPolicyReaderProps {
   detail: PolicyDetail;
@@ -37,6 +38,7 @@ export const AdminPolicyReader = ({
   const [open, setOpen] = useState<GovernanceDialog | null>(null);
   const close = useCallback(() => setOpen(null), []);
   const published = Boolean(detail.currentVersionId);
+  const audit = useGovernanceFetcher();
 
   // The same list as the Actions menu, offered to the command bar (bug log 26): what the
   // menu hides from this person the bar leaves out too.
@@ -90,6 +92,12 @@ export const AdminPolicyReader = ({
       <PolicyReader
         detail={detail}
         governance={governance}
+        onPrint={({ includeHistory }) =>
+          void audit.submit(
+            { includeHistory: String(includeHistory), intent: "recordPrint" },
+            { method: "post" },
+          )
+        }
         organisation={organisation}
         viewerName={viewerName}
       />

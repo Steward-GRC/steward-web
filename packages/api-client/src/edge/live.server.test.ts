@@ -1042,3 +1042,29 @@ describe("liveEdge: the caller's own account (U33, U35)", () => {
     ]);
   });
 });
+
+describe("recordPolicyExport", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("records a print through the gateway's mutation when it has one", async () => {
+    const calls = routeGateway({ RecordPolicyExport: () => ({ recordPolicyExport: true }) });
+    expect(await liveEdge.recordPolicyExport("policy-9", "PRINT", true)).toBe(true);
+    expect(calls).toEqual([
+      {
+        operation: "RecordPolicyExport",
+        variables: { includeHistory: true, kind: "PRINT", policyId: "policy-9" },
+      },
+    ]);
+  });
+
+  it("does nothing, and stops asking, while the gateway has no such mutation", async () => {
+    const calls = routeGateway({
+      RecordPolicyExport: () => ({
+        errors: [{ message: 'Cannot query field "recordPolicyExport" on type "Mutation".' }],
+      }),
+    });
+    expect(await liveEdge.recordPolicyExport("policy-9", "PRINT", false)).toBe(false);
+    expect(await liveEdge.recordPolicyExport("policy-9", "PRINT", false)).toBe(false);
+    expect(calls).toHaveLength(1);
+  });
+});

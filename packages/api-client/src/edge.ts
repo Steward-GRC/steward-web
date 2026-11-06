@@ -662,6 +662,17 @@ export interface Edge {
     toUserId: string,
     cookie?: string,
   ): Promise<{ reassignedAuthorGrants: number; reassignedOwnerCount: number }>;
+  /**
+   * Records that the caller printed or exported a sensitive policy (steward-gateway#78). The
+   * gateway may not have the mutation yet: then nothing is sent after the first refusal and the
+   * answer is false.
+   */
+  recordPolicyExport(
+    policyId: string,
+    kind: "PDF" | "PRINT",
+    includeHistory: boolean,
+    cookie?: string,
+  ): Promise<boolean>;
   /** Records the guided risk assessment and its reportable/not-reportable decision. Officers only. */
   recordRiskAssessment(
     caseId: string,

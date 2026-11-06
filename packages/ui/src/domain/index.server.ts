@@ -10,4 +10,5 @@ export {
   getPolicyDetail,
   getVersionDiff,
   getVersionDocument,
+  recordPolicyPrint,
 } from "./policyDetail.server";

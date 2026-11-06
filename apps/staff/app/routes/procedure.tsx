@@ -8,8 +8,9 @@ import {
   acknowledgePolicy,
   breakGlassReveal,
   getPolicyDetail,
+  recordPolicyPrint,
 } from "@steward-web/ui/domain/server";
-import { data, useRouteLoaderData } from "react-router";
+import { data, useFetcher, useRouteLoaderData } from "react-router";
 
 import type { loader as rootLoader } from "../root";
 import type { Route } from "./+types/procedure";
@@ -29,7 +30,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const cookie = request.headers.get("cookie") ?? undefined;
   const form = await request.formData();
   const intent = form.get("intent");
-  if (intent !== "acknowledge" && intent !== "breakGlass") {
+  if (intent !== "acknowledge" && intent !== "breakGlass" && intent !== "recordExport") {
     throw new Response("Bad Request", { status: 400 });
   }
 
@@ -37,6 +38,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
     if (intent === "acknowledge") {
       const policyVersionId = String(form.get("policyVersionId") ?? "");
       await acknowledgePolicy(policyVersionId, cookie);
+      return data({ ok: true });
+    }
+    if (intent === "recordExport") {
+      // The gateway knows the policy's sensitivity and the caller; this only says it was printed.
+      await recordPolicyPrint(
+        String(form.get("policyId") ?? ""),
+        form.get("includeHistory") === "true",
+        cookie,
+      );
       return data({ ok: true });
     }
     const policyId = String(form.get("policyId") ?? "");
@@ -53,6 +63,7 @@ export default function ProcedureRoute({ loaderData }: Route.ComponentProps) {
   const identity = useIdentity();
   // The organisation's name heads every printed page (R1).
   const organisation = useRouteLoaderData<typeof rootLoader>("root")?.shell.config.organisation;
+  const exports = useFetcher();
   return (
     <PolicyReader
       detail={loaderData.detail}
@@ -60,6 +71,16 @@ export default function ProcedureRoute({ loaderData }: Route.ComponentProps) {
         loaderData.detail,
         identity.permissions.has(PERMISSIONS.PolicyAuthor),
       )}
+      onPrint={({ includeHistory }) =>
+        void exports.submit(
+          {
+            includeHistory: String(includeHistory),
+            intent: "recordExport",
+            policyId: loaderData.detail.id,
+          },
+          { method: "post" },
+        )
+      }
       organisation={organisation}
       viewerName={identity.name || undefined}
     />
