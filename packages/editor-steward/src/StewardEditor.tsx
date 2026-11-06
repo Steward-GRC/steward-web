@@ -15,11 +15,11 @@ import type { StewardCollaboration } from "./collab/stewardCollaboration";
 import { parseDocument, type SerializedDocument, serializeDocument } from "./document/tree";
 import { STEWARD_NODES } from "./nodes";
 import {
+  createAiToolbarAction,
   replaceSavedSelection,
   type ReworkRequest,
-  ReworkSelectionPlugin,
-  type SavedSelection,
-} from "./ReworkSelection";
+  type SavedReplace,
+} from "./AiToolbarAction";
 import { ImageUploadError } from "./uploadImage";
 
 /** What a host can do with a mounted editor. */
@@ -44,7 +44,7 @@ export interface StewardEditorProps {
   onChange?: (document: SerializedDocument) => void;
   onReady?: (handle: StewardEditorHandle) => void;
   /**
-   * Shows "Rework selected text with AI" under a text selection, with Rewrite and Clarify, and
+   * Adds "Rework selected text with AI" to the selection toolbar, with Rewrite and Clarify, and
    * is called with the choice and the selected text. Without it there's no button.
    */
   onRework?: (request: ReworkRequest) => void;
@@ -128,7 +128,7 @@ export const StewardEditor = ({
   const { t } = useTranslation("authoring");
   const apiRef = useRef<KoenigEditorAPI | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
-  const savedSelection: SavedSelection = useRef(null);
+  const savedSelection: SavedReplace = useRef(null);
   const useFileUpload = useImageUploader(
     uploadImage,
     t("editor.imageUploadUnavailable"),
@@ -138,6 +138,21 @@ export const StewardEditor = ({
   // Fixed at mount: the composer reads its initial state and collaboration mode once.
   const [initialEditorState] = useState(() =>
     initialDocument ? serializeDocument(initialDocument) : undefined,
+  );
+  const toolbarActions = useMemo(
+    () => [
+      createAiToolbarAction({
+        hidden: !onRework || readOnly,
+        labels: {
+          button: t("editor.rework.button"),
+          clarify: t("editor.rework.clarify"),
+          rewrite: t("editor.rework.rewrite"),
+        },
+        onRework: (request) => onRework?.(request),
+        saved: savedSelection,
+      }),
+    ],
+    [onRework, readOnly, t],
   );
   const koenigCollaboration = useMemo(
     () => (collaboration ? { ...collaboration.koenig, cursorsContainerRef } : null),
@@ -149,7 +164,7 @@ export const StewardEditor = ({
       apiRef.current = api;
       onReady?.({
         getDocument: () => api.editorInstance.getEditorState().toJSON() as SerializedDocument,
-        replaceSelection: (text) => replaceSavedSelection(api.editorInstance, savedSelection, text),
+        replaceSelection: (text) => replaceSavedSelection(savedSelection, text),
         setDocument: (document) => {
           const editor = api.editorInstance;
           editor.setEditorState(editor.parseEditorState(serializeDocument(document)));
@@ -179,6 +194,7 @@ export const StewardEditor = ({
         editable={!readOnly}
         fileUploader={fileUploader}
         initialEditorState={initialEditorState}
+        toolbarActions={toolbarActions}
       >
         <KoenigEditor
           onChange={handleChange}
@@ -186,13 +202,6 @@ export const StewardEditor = ({
           readOnly={readOnly}
           registerAPI={registerAPI}
         />
-        {onRework ? (
-          <ReworkSelectionPlugin
-            containerRef={cursorsContainerRef}
-            onRework={onRework}
-            saved={savedSelection}
-          />
-        ) : null}
       </KoenigComposer>
     </div>
   );

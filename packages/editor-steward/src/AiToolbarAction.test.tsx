@@ -37,7 +37,7 @@ const empty = () => ({
 });
 
 // jsdom has no layout: a selection's range has no rectangles and there's no element at a point,
-// which Koenig's own format toolbar and the rework button both measure.
+// which Koenig's own format toolbar measures.
 beforeAll(() => {
   Range.prototype.getBoundingClientRect ??= empty as () => DOMRect;
   Range.prototype.getClientRects ??= (() => []) as unknown as () => DOMRectList;
@@ -79,19 +79,27 @@ const select = async (from: number, to: number) => {
   });
 };
 
+const AI_BUTTON = '[data-kg-toolbar-button="ai"]';
+// The package puts the id on the list item that holds the button.
+const aiButton = async () =>
+  waitFor(() => {
+    const button = document.querySelector<HTMLElement>(`${AI_BUTTON} button`);
+    expect(button).not.toBeNull();
+    return button!;
+  });
+
 const documentText = (handle: StewardEditorHandle): string =>
   JSON.stringify(handle.getDocument()).match(/"text":"([^"]*)"/)?.[1] ?? "";
 
-describe("Rework selected text with AI", () => {
+describe("The AI action on the selection toolbar", () => {
   it("offers Rewrite and Clarify for the selected text", async () => {
     const onRework = vi.fn();
     await mount({ onRework });
-    expect(screen.queryByRole("button", { name: "Rework selected text with AI" })).toBeNull();
+    expect(document.querySelector(AI_BUTTON)).toBeNull();
 
     await select(0, 8);
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Rework selected text with AI" }),
-    );
+    expect((await aiButton()).getAttribute("aria-label")).toBe("Rework selected text with AI");
+    await userEvent.click(await aiButton());
     expect(screen.getByRole("menuitem", { name: "Rewrite" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("menuitem", { name: "Clarify" }));
 
@@ -103,9 +111,7 @@ describe("Rework selected text with AI", () => {
     const handle = await mount({ onRework });
 
     await select(0, 8);
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Rework selected text with AI" }),
-    );
+    await userEvent.click(await aiButton());
     await userEvent.click(screen.getByRole("menuitem", { name: "Rewrite" }));
 
     let replaced = false;
@@ -126,23 +132,30 @@ describe("Rework selected text with AI", () => {
     expect(documentText(handle)).toBe("Visitors sign in at reception.");
   });
 
+  it("sits on the same toolbar as the format buttons", async () => {
+    await mount({ onRework: vi.fn() });
+    await select(0, 8);
+    const button = await aiButton();
+    expect(button.closest("ul")?.querySelector('[data-kg-toolbar-button="bold"]')).not.toBeNull();
+  });
+
   it("offers nothing for an empty selection", async () => {
     await mount({ onRework: vi.fn() });
     await select(3, 3);
-    expect(screen.queryByRole("button", { name: "Rework selected text with AI" })).toBeNull();
+    expect(document.querySelector(AI_BUTTON)).toBeNull();
   });
 
   it("offers nothing when the host doesn't ask for it", async () => {
     await mount();
     await select(0, 8);
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(screen.queryByRole("button", { name: "Rework selected text with AI" })).toBeNull();
+    expect(document.querySelector(AI_BUTTON)).toBeNull();
   });
 
   it("offers nothing on a read-only document", async () => {
     await mount({ onRework: vi.fn(), readOnly: true });
     await select(0, 8);
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(screen.queryByRole("button", { name: "Rework selected text with AI" })).toBeNull();
+    expect(document.querySelector(AI_BUTTON)).toBeNull();
   });
 });
