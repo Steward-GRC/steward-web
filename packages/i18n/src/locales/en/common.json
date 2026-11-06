@@ -72,7 +72,13 @@
     "updatedJustNow": "Updated just now"
   },
   "table": {
+    "filterBar": "Search and filters",
     "noMatches": "Nothing matches “{{query}}”.",
+    "rowMenu": {
+      "copyLink": "Copy link",
+      "open": "Open",
+      "openNewTab": "Open in new tab"
+    },
     "search": "Filter this list",
     "sortBy": "Sort by"
   }

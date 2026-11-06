@@ -11,6 +11,7 @@ import {
   DialogFooter,
   DialogTrigger,
   EmptyState,
+  ListPage,
   ResponsiveTable,
 } from "@steward-web/ui";
 import { Link, useFetcher } from "react-router";
@@ -55,12 +56,8 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
   const create = useFetcher();
 
   return (
-    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
-      <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-[26px] leading-[1.3] font-semibold">{t("templates.title")}</h1>
-          <p className="text-base text-muted">{t("templates.subtitle")}</p>
-        </div>
+    <ListPage
+      actions={
         <Dialog>
           <DialogTrigger asChild>
             <Button>{t("templates.new")}</Button>
@@ -85,8 +82,10 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
             </create.Form>
           </DialogContent>
         </Dialog>
-      </header>
-
+      }
+      subtitle={t("templates.subtitle")}
+      title={t("templates.title")}
+    >
       <ResponsiveTable
         columns={[
           {
@@ -161,6 +160,7 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
           />
         }
         label={t("templates.title")}
+        rowHref={({ template }) => `/templates/${template.code}`}
         rowKey={({ template }) => template.id}
         rows={rows}
         search={{
@@ -170,6 +170,6 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
             `${template.code} ${template.name} ${categoryName ?? ""}`,
         }}
       />
-    </div>
+    </ListPage>
   );
 }

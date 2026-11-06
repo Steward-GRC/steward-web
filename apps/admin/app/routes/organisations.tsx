@@ -16,6 +16,7 @@ import {
   DialogTrigger,
   EmptyState,
   type Failure,
+  ListPage,
   ResponsiveTable,
 } from "@steward-web/ui";
 import { useId, useState } from "react";
@@ -147,17 +148,15 @@ export default function Organizations({ loaderData }: Route.ComponentProps) {
   const { organisations, spCertificate } = loaderData;
 
   return (
-    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
-      <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-[26px] leading-[1.3] font-semibold">{t("organizations.title")}</h1>
-          <p className="text-base text-muted">{t("organizations.subtitle")}</p>
-        </div>
+    <ListPage
+      actions={
         <Button asChild>
           <Link to="/organisations/new">{t("organizations.new")}</Link>
         </Button>
-      </header>
-
+      }
+      subtitle={t("organizations.subtitle")}
+      title={t("organizations.title")}
+    >
       <ResponsiveTable
         columns={[
           {
@@ -220,6 +219,7 @@ export default function Organizations({ loaderData }: Route.ComponentProps) {
           />
         }
         label={t("organizations.title")}
+        rowHref={(org) => `/organisations/${encodeURIComponent(org.domain)}`}
         rowKey={(org) => org.domain}
         rows={organisations}
         search={{
@@ -230,6 +230,6 @@ export default function Organizations({ loaderData }: Route.ComponentProps) {
       />
 
       <SpCertificateCard certificate={spCertificate} />
-    </div>
+    </ListPage>
   );
 }

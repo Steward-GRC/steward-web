@@ -150,6 +150,15 @@ export const MagicLinksTable = ({
         }
         framed
         label={t("magicLinks.title")}
+        rowActions={(link) => [
+          {
+            label: t("magicLinks.copy"),
+            onSelect: () => void navigator.clipboard?.writeText(link.url),
+          },
+          live(link)
+            ? { label: t("magicLinks.revoke"), onSelect: () => onRevoke(link.id) }
+            : { label: t("magicLinks.remove"), onSelect: () => setRemoving(link) },
+        ]}
         rowClassName={(link) => (live(link) ? undefined : "text-muted")}
         rowKey={(link) => link.id}
         rows={links}

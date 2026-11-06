@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
-import { EmptyState } from "@steward-web/ui";
+import { EmptyState, ListPage } from "@steward-web/ui";
 
 import type { Route } from "./+types/magic-links";
 
@@ -26,11 +26,7 @@ export default function MagicLinks({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
   const { links } = loaderData;
   return (
-    <div className="flex w-full flex-col gap-3 p-4 md:p-6">
-      <header>
-        <h1 className="text-2xl font-semibold">{t("magicLinks.title")}</h1>
-        <p className="text-base text-muted">{t("magicLinks.subtitle")}</p>
-      </header>
+    <ListPage subtitle={t("magicLinks.subtitle")} title={t("magicLinks.title")}>
       {links ? (
         <MagicLinksTable links={links} onRemove={() => {}} onRevoke={() => {}} />
       ) : (
@@ -39,6 +35,6 @@ export default function MagicLinks({ loaderData }: Route.ComponentProps) {
           title={t("magicLinks.unavailable.title")}
         />
       )}
-    </div>
+    </ListPage>
   );
 }

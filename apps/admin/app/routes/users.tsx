@@ -5,7 +5,7 @@ import type { User } from "@steward-web/api-client";
 import { PERMISSIONS, useIdentity } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
 import { useRegisterNavActions } from "@steward-web/shell";
-import { Button, cn, EmptyState, ResponsiveTable, Switch } from "@steward-web/ui";
+import { Button, cn, EmptyState, ListPage, ResponsiveTable, Switch } from "@steward-web/ui";
 import { useId } from "react";
 import { Link, useSubmit } from "react-router";
 
@@ -98,12 +98,13 @@ export default function Users({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
-      <header className="flex flex-wrap items-end gap-2.5">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-[26px] leading-[1.3] font-semibold">{t("users.title")}</h1>
-          <p className="text-base text-muted">{t("users.subtitle")}</p>
-        </div>
+    <ListPage
+      actions={
+        <Button asChild className="px-3" variant="secondary">
+          <Link to="/users/merge">{t("users.merge")}</Link>
+        </Button>
+      }
+      filters={
         <label className="flex items-center gap-1.5 text-sm" htmlFor={toggleId}>
           {t("users.showDeleted")}
           <Switch
@@ -114,11 +115,10 @@ export default function Users({ loaderData }: Route.ComponentProps) {
             }
           />
         </label>
-        <Button asChild className="px-3" variant="secondary">
-          <Link to="/users/merge">{t("users.merge")}</Link>
-        </Button>
-      </header>
-
+      }
+      subtitle={t("users.subtitle")}
+      title={t("users.title")}
+    >
       {/* Phones get the table as stacked cards with a search at the top (7-responsive.s3). */}
       <ResponsiveTable
         className="text-sm"
@@ -184,6 +184,7 @@ export default function Users({ loaderData }: Route.ComponentProps) {
         framed
         label={t("users.title")}
         rowClassName={(user) => (user.deletedAt || !user.enabled ? "text-muted" : undefined)}
+        rowHref={(user) => `/users/${user.userId}`}
         rowKey={(user) => user.userId}
         rows={users}
         search={{
@@ -192,6 +193,6 @@ export default function Users({ loaderData }: Route.ComponentProps) {
           text: (user) => `${user.name} ${user.email}`,
         }}
       />
-    </div>
+    </ListPage>
   );
 }

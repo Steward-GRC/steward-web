@@ -41,7 +41,7 @@ import {
   setDefinitionArchived,
   updateDefinition,
 } from "../libraries/libraries.server";
-import { DeleteButton, LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
+import { DeleteButton, LibraryPage, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
 /** The table's own search, sort and page changes don't load the page again. */
 export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
@@ -139,14 +139,12 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
     : { ...emptyForm, categoryId: category };
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <LibraryHeader
-        newLabel={t("libraries.definitions.new")}
-        onNew={isAdmin && category ? openCreate : undefined}
-        subtitle={t("libraries.definitions.subtitle")}
-        title={t("libraries.definitions.title")}
-      />
-
+    <LibraryPage
+      newLabel={t("libraries.definitions.new")}
+      onNew={isAdmin && category ? openCreate : undefined}
+      subtitle={t("libraries.definitions.subtitle")}
+      title={t("libraries.definitions.title")}
+    >
       <Field className="w-72" label={t("libraries.definitions.category")}>
         <Select
           onValueChange={setCategory}
@@ -228,6 +226,11 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
             }
             framed
             label={t("libraries.definitions.title")}
+            rowActions={(entry) =>
+              isAdmin && !entry.archived
+                ? [{ label: t("libraries.actions.edit"), onSelect: () => openEdit(entry) }]
+                : []
+            }
             rowKey={(entry) => entry.id}
             rows={rows}
             search={{
@@ -322,6 +325,6 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
           </deleteFetcher.Form>
         </DialogContent>
       </Dialog>
-    </div>
+    </LibraryPage>
   );
 }

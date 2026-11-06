@@ -18,6 +18,7 @@ import {
 import { PHONE, useMediaQuery } from "#ui/lib/media";
 
 import { Pager } from "./LibraryControls";
+import { type RowAction, RowMenu } from "./RowMenu";
 
 /** Where a column's cell goes on a phone's card: the bold title (one column), the muted meta
  *  line, the row of status pills, the actions along the foot, or nowhere. */
@@ -56,7 +57,11 @@ export interface ResponsiveTableProps<Row> {
   /** True while the rows load: the animated skeleton shows in their place once the load is
    *  slow, and neither the rows nor the empty state show. */
   loading?: boolean;
+  /** The table's own entries in the row's right-click menu, after the link ones. */
+  rowActions?: (row: Row) => readonly RowAction[];
   rowClassName?: (row: Row) => string | undefined;
+  /** The row's address: the right-click menu offers Open, Open in new tab and Copy link. */
+  rowHref?: (row: Row) => string | undefined;
   rowKey: (row: Row) => string;
   rows: readonly Row[];
   /** A search field above the cards on a phone, matching the words in `text(row)`. */
@@ -83,7 +88,9 @@ const PlainTable = <Row,>({
   hideHeader = false,
   label,
   onSort,
+  rowActions,
   rowClassName,
+  rowHref,
   rowKey,
   rows,
   search,
@@ -107,13 +114,15 @@ const PlainTable = <Row,>({
         </THead>
         <tbody>
           {rows.map((row) => (
-            <tr className={rowClassName?.(row)} key={rowKey(row)}>
-              {columns.map((column) => (
-                <TD className={column.className} key={column.key}>
-                  {column.cell(row)}
-                </TD>
-              ))}
-            </tr>
+            <RowMenu actions={rowActions?.(row)} href={rowHref?.(row)} key={rowKey(row)}>
+              <tr className={rowClassName?.(row)}>
+                {columns.map((column) => (
+                  <TD className={column.className} key={column.key}>
+                    {column.cell(row)}
+                  </TD>
+                ))}
+              </tr>
+            </RowMenu>
           ))}
         </tbody>
       </Table>

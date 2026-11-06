@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -321,5 +321,63 @@ describe("ResponsiveTable while it loads", () => {
     expect(await screen.findByRole("status")).toHaveAttribute("aria-busy", "true");
     expect(screen.getByTestId("book-mark")).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+});
+
+const renderMenu = (props: Partial<Parameters<typeof ResponsiveTable<Person>>[0]> = {}) =>
+  render(
+    <MemoryRouter>
+      <ResponsiveTable
+        columns={COLUMNS}
+        empty={<p>No people yet</p>}
+        label="People"
+        rowHref={(person) => `/users/${person.id}`}
+        rowKey={(person) => person.id}
+        rows={PEOPLE}
+        search={SEARCH}
+        {...props}
+      />
+    </MemoryRouter>,
+  );
+const rowOf = (name: string) => screen.getByRole("row", { name: new RegExp(name) });
+
+describe("the right-click row menu (#90)", () => {
+  const writeText = vi.fn();
+
+  it("opens on a right click with Open, Open in new tab and Copy link", async () => {
+    renderMenu();
+    fireEvent.contextMenu(rowOf("Alice"));
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Open" })).toHaveAttribute(
+      "href",
+      "/users/p-1",
+    );
+    const tab = within(menu).getByRole("menuitem", { name: "Open in new tab" });
+    expect(tab).toHaveAttribute("target", "_blank");
+    expect(within(menu).getByRole("menuitem", { name: "Copy link" })).toBeInTheDocument();
+  });
+
+  it("copies the full address of the row", async () => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    renderMenu();
+    fireEvent.contextMenu(rowOf("Bob"));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Copy link" }));
+    expect(writeText).toHaveBeenCalledWith(`${globalThis.location.origin}/users/p-2`);
+  });
+
+  it("adds the table's own actions after the link actions", async () => {
+    const onRename = vi.fn();
+    renderMenu({
+      rowActions: (person) => [{ label: `Rename ${person.name}`, onSelect: onRename }],
+    });
+    fireEvent.contextMenu(rowOf("Carol"));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Rename Carol" }));
+    expect(onRename).toHaveBeenCalledOnce();
+  });
+
+  it("leaves the browser's own menu on a table with no row actions", () => {
+    renderMenu({ rowHref: undefined });
+    fireEvent.contextMenu(rowOf("Alice"));
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 });
