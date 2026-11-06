@@ -55,6 +55,11 @@ interface Task {
   taskId?: string;
 }
 
+/** A task's link: the approval by record number. With no number (the library doesn't list the
+ *  draft) there is no address to build, and no internal id goes in one, so it opens the inbox. */
+export const approvalHrefOf = (number: string): string =>
+  number ? approvalPath(number) : "/approvals";
+
 /** A task as an inbox row, with its run's stages when the run could be read. */
 export const inboxEntryOf = (task: Task, catalog: readonly CatalogRow[], run?: Run): InboxEntry => {
   const match = matchPolicyForVersion(catalog, task.policyVersionId);
@@ -63,7 +68,7 @@ export const inboxEntryOf = (task: Task, catalog: readonly CatalogRow[], run?: R
   const stageName = stageNames[task.stageIndex] ?? task.stageName ?? "";
   return {
     ...(task.dueAt === undefined ? {} : { dueAt: task.dueAt }),
-    href: approvalPath(number || task.policyVersionId),
+    href: approvalHrefOf(number),
     key: task.taskId ?? `${task.policyVersionId}:${task.stageIndex}`,
     ...(run ? { nowAt: stageNames[run.currentStageIdx] ?? "" } : {}),
     number,

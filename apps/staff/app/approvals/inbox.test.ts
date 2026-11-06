@@ -45,7 +45,7 @@ describe("inboxEntryOf", () => {
     });
   });
 
-  it("links a draft the library hides by its version id, and keeps the task's own stage name", () => {
+  it("opens the inbox for a draft the library hides, never an address with a version id, and keeps the task's own stage name", () => {
     const entry = inboxEntryOf(
       {
         policyTitle: "Remote Work",
@@ -56,7 +56,7 @@ describe("inboxEntryOf", () => {
       catalog,
     );
     expect(entry).toMatchObject({
-      href: "/approvals/version-9",
+      href: "/approvals",
       key: "version-9:0",
       number: "",
       stageCount: 1,
