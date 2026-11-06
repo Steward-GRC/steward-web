@@ -3,7 +3,7 @@
 import { useTranslation } from "@steward-web/i18n";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 
-import { Input } from "#ui/components/Input";
+import { SearchInput } from "#ui/components/SearchInput";
 import { cn } from "#ui/lib/cn";
 
 /** One thing the picker can choose. `id` is the identity; the rest only helps tell them apart. */
@@ -176,7 +176,7 @@ export const SearchPicker = ({
 
   return (
     <div className={cn("relative grid gap-1", className)}>
-      <Input
+      <SearchInput
         aria-activedescendant={listed && active >= 0 ? optionId(active) : undefined}
         aria-autocomplete="list"
         aria-controls={listed ? `${base}-list` : undefined}
@@ -189,6 +189,7 @@ export const SearchPicker = ({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         role="combobox"
+        type="text"
         value={text}
       />
       {listed ? (

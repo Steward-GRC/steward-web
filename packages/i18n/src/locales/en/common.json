@@ -71,6 +71,9 @@
     "saving": "Saving…",
     "updatedJustNow": "Updated just now"
   },
+  "search": {
+    "clear": "Clear search"
+  },
   "picker": {
     "capped": "Showing the first {{count}}. Keep typing to narrow it down.",
     "failed": "Search isn't available right now.",

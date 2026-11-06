@@ -28,6 +28,7 @@ SPDX-License-Identifier: Apache-2.0
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-sunken: var(--sunken);
+  --color-stripe: var(--stripe);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-border: var(--border);
@@ -139,6 +140,7 @@ SPDX-License-Identifier: Apache-2.0
   --background: #f8f4ee;
   --surface: #ffffff;
   --sunken: #e9e0d3;
+  --stripe: #f7f2ea;
   --ink: #261b25;
   --muted: #665967;
   --border: #c4b5a3;
@@ -270,6 +272,7 @@ SPDX-License-Identifier: Apache-2.0
   --background: #170f19;
   --surface: #2a1f2e;
   --sunken: #100a12;
+  --stripe: #33273a;
   --ink: #f3ecf2;
   --muted: #b9a7b8;
   --border: #43354a;
@@ -401,6 +404,7 @@ SPDX-License-Identifier: Apache-2.0
   --background: #000000;
   --surface: #000000;
   --sunken: #111111;
+  --stripe: #1a1a1a;
   --ink: #ffffff;
   --muted: #e8e8e8;
   --border: #ffffff;
@@ -532,6 +536,7 @@ SPDX-License-Identifier: Apache-2.0
     --background: #170f19;
     --surface: #2a1f2e;
     --sunken: #100a12;
+    --stripe: #33273a;
     --ink: #f3ecf2;
     --muted: #b9a7b8;
     --border: #43354a;

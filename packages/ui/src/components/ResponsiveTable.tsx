@@ -6,7 +6,7 @@ import { Fragment, type ReactNode, useState } from "react";
 import { useInRouterContext } from "react-router";
 
 import { Card, Table, TD, TH, THead } from "#ui/components/Display";
-import { Input } from "#ui/components/Input";
+import { SearchInput } from "#ui/components/SearchInput";
 import { ListSkeleton } from "#ui/feedback/States";
 import { cn } from "#ui/lib/cn";
 import {
@@ -66,6 +66,8 @@ export interface ResponsiveTableProps<Row> {
   rows: readonly Row[];
   /** A search field above the cards on a phone, matching the words in `text(row)`. */
   search?: { label: string; placeholder?: string; text: (row: Row) => string };
+  /** Every second row in the stripe shade, for a dense log (the audit log). */
+  striped?: boolean;
 }
 
 /** Nothing to show: React renders these as nothing, so the card leaves them out too. */
@@ -95,6 +97,7 @@ const PlainTable = <Row,>({
   rows,
   search,
   sort,
+  striped,
 }: ResponsiveTableProps<Row> & { onSort?: (key: string) => void; sort?: DataSort | null }) => {
   const { t } = useTranslation("common");
   const phone = useMediaQuery(PHONE);
@@ -104,7 +107,7 @@ const PlainTable = <Row,>({
 
   if (!phone) {
     const table = (
-      <Table aria-label={label} className={className}>
+      <Table aria-label={label} className={className} striped={striped}>
         <THead className={hideHeader ? "sr-only" : undefined}>
           <tr>
             {columns.map((column) => (
@@ -143,7 +146,7 @@ const PlainTable = <Row,>({
   return (
     <div className="flex flex-col gap-3">
       {search ? (
-        <Input
+        <SearchInput
           aria-label={search.label}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={search.placeholder}
@@ -354,13 +357,13 @@ const DataTableView = <Row,>({
             </select>
           ) : null}
           {searchable ? (
-            <Input
+            <SearchInput
               aria-label={props.search?.label ?? t("table.search")}
-              className="max-w-sm flex-1"
               onChange={(event) => table.setQuery(event.target.value)}
               placeholder={props.search?.placeholder}
               type="search"
               value={table.query}
+              wrapperClassName="max-w-sm flex-1"
             />
           ) : null}
         </div>

@@ -98,6 +98,9 @@ describe("the magic links table on a phone (7-responsive.s3)", () => {
     expect(within(revoked!).getByRole("button", { name: /Remove the link/ })).toBeInTheDocument();
     // The actions are reachable from the keyboard: Copy, then Revoke.
     await userEvent.type(screen.getByRole("searchbox", { name: "Search links" }), "desk");
+    // The box's clear button (#107) comes first now that it has text.
+    await userEvent.tab();
+    expect(screen.getByRole("button", { name: "Clear search" })).toHaveFocus();
     await userEvent.tab();
     expect(
       screen.getByRole("button", { name: "Copy the link to Desk Booking Policy" }),

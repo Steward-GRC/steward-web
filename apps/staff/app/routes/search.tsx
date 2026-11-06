@@ -3,11 +3,11 @@
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { type CommandPaletteResults, refusalOf } from "@steward-web/shell";
-import { PageHeader, ReachError } from "@steward-web/ui";
+import { ClearSearchButton, PageHeader, ReachError } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
 import { listCategories, listPolicies } from "@steward-web/ui/domain/server";
 import { Folder, Search } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigation, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/search";
@@ -87,6 +87,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
   const [parameters, setParameters] = useSearchParams();
   const q = parameters.get("q") ?? "";
   const [input, setInput] = useState(q);
+  const field = useRef<HTMLInputElement>(null);
   const [lastQ, setLastQ] = useState(q);
   if (q !== lastQ) {
     setLastQ(q);
@@ -140,9 +141,11 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
           className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-muted"
           onChange={(event) => setInput(event.target.value)}
           placeholder={t("placeholder")}
+          ref={field}
           type="search"
           value={input}
         />
+        {input === "" ? null : <ClearSearchButton input={field} />}
       </form>
       <p className="flex flex-wrap gap-2.5 text-xs text-muted">
         {["phrase", "exclude", "or", "field"].map((operator) => (
