@@ -126,6 +126,19 @@ describe("PolicyPrint (R1)", () => {
     expect(strip).toHaveTextContent(`Next review${formatDate("2027-10-02T00:00:00Z")}`);
   });
 
+  it("shows the Last updated date in the strip", () => {
+    renderPrint();
+    const strip = screen.getByRole("list", { name: "Details" });
+    expect(strip).toHaveTextContent(`Last updated${formatDate("2026-10-02T14:02:00Z")}`);
+  });
+
+  it("keeps a section number on the line, never pushed outside by the hanging indent", () => {
+    renderPrint();
+    const heading = screen.getByRole("heading", { level: 2, name: "1. Purpose" });
+    // text-indent inherits into an inline-block, which would draw "1." left of the margin
+    expect(within(heading).getByText("1.")).toHaveClass("indent-0");
+  });
+
   it("numbers the sections as the reader does, and marks defined terms for the end notes", () => {
     renderPrint();
     expect(screen.getByRole("heading", { level: 2, name: "1. Purpose" })).toBeInTheDocument();

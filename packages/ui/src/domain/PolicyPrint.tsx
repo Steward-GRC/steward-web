@@ -146,7 +146,7 @@ const Runs = ({ notes, runs }: { notes: Notes; runs: readonly InlineRun[] }) => 
 const Hanging = ({ number, text }: { number: string; text: string }) =>
   number ? (
     <>
-      <span className="inline-block min-w-[1.5em]">{number}</span> {text}
+      <span className="inline-block min-w-[1.5em] indent-0">{number}</span> {text}
     </>
   ) : (
     <>{text}</>
@@ -264,8 +264,8 @@ export interface PolicyPrintProps {
 
 /**
  * The print layout (R1): no app chrome; the running header and footer in the page margins;
- * the "Category · Subcategory" kicker, the 22/28 pt serif title and the four-up strip
- * (Status, Owner, Published, Next review); the body in 11/16 pt serif with numbered sections,
+ * the "Category · Subcategory" kicker, the 22/28 pt serif title and the five-up strip
+ * (Status, Owner, Published, Last updated, Next review); the body in 11/16 pt serif with numbered sections,
  * † on defined terms and numbered link notes; then each appendix on a new page, the defined
  * terms and links as end notes, and the full history, every version expanded. Always light.
  */
@@ -304,13 +304,14 @@ export const PolicyPrint = ({ detail, organisation, printedAt, viewerName }: Pol
       </header>
       <ul
         aria-label={t("reader.metadata.label")}
-        className="mt-3 grid grid-cols-4 border-y-[0.5pt] border-[#b9aab7] text-[8.5pt] leading-[12pt]"
+        className="mt-3 grid grid-cols-5 border-y-[0.5pt] border-[#b9aab7] text-[8.5pt] leading-[12pt]"
       >
         {(
           [
             [t("reader.metadata.status"), status],
             [t("reader.metadata.owner"), detail.ownerName ?? none],
             [t("reader.metadata.published"), formatDate(detail.published, { fallback: none })],
+            [t("reader.metadata.updated"), formatDate(detail.updated, { fallback: none })],
             [t("print.nextReview"), formatDate(detail.nextReview, { fallback: none })],
           ] as const
         ).map(([label, value]) => (
