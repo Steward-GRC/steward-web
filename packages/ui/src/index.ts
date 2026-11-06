@@ -166,6 +166,7 @@ export {
   type DataGroup,
   type DataSort,
   DEFAULT_PAGE_SIZES,
+  shouldRevalidateTable,
   useDataTable,
 } from "./lib/dataTable";
 export { PHONE, useMediaQuery } from "./lib/media";

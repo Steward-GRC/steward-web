@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { formatDate, formatDayMonth } from "@steward-web/i18n";
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
@@ -160,5 +161,54 @@ describe("the approvals inbox (U24)", () => {
     const card = within(cards).getAllByRole("listitem")[0]!;
     expect(card).toHaveTextContent("Final approval · 2 of 2 · due");
     expect(within(card).getByRole("link", { name: "Review" })).toBeInTheDocument();
+  });
+});
+
+const pendingTitles = () =>
+  within(screen.getByRole("table", { name: "Pending" }))
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => row.getAttribute("aria-label"));
+
+describe("sorting the inbox's groups from their column headers", () => {
+  it("sorts a group by policy, by stage and by due date, both ways", async () => {
+    renderInbox({ pending: [expense, travel, visitor] });
+    expect(pendingTitles()).toEqual([
+      "Expense Claims Policy",
+      "Travel Booking Procedure",
+      "Visitor Sign-in Policy",
+    ]);
+    const table = screen.getByRole("table", { name: "Pending" });
+    const policy = within(table).getByRole("columnheader", { name: /Policy/ });
+    await userEvent.click(within(policy).getByRole("button"));
+    expect(policy).toHaveAttribute("aria-sort", "ascending");
+    await userEvent.click(within(policy).getByRole("button"));
+    expect(policy).toHaveAttribute("aria-sort", "descending");
+    expect(pendingTitles()[0]).toBe("Visitor Sign-in Policy");
+
+    const due = within(table).getByRole("columnheader", { name: /Due/ });
+    await userEvent.click(within(due).getByRole("button"));
+    // Soonest first; a policy with no due date goes last.
+    expect(pendingTitles()).toEqual([
+      "Travel Booking Procedure",
+      "Expense Claims Policy",
+      "Visitor Sign-in Policy",
+    ]);
+
+    const stage = within(table).getByRole("columnheader", { name: /Stage/ });
+    await userEvent.click(within(stage).getByRole("button"));
+    expect(pendingTitles()[0]).toBe("Travel Booking Procedure");
+  });
+
+  it("keeps each group's sort to itself", async () => {
+    renderInbox({ inProgress: [devices, visitor], pending: [expense, travel] });
+    const pending = screen.getByRole("table", { name: "Pending" });
+    await userEvent.click(
+      within(within(pending).getByRole("columnheader", { name: /Policy/ })).getByRole("button"),
+    );
+    const progress = screen.getAllByRole("table").find((table) => table !== pending)!;
+    expect(within(progress).getByRole("columnheader", { name: /Policy/ })).not.toHaveAttribute(
+      "aria-sort",
+    );
   });
 });

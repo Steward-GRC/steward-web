@@ -13,6 +13,9 @@ import { listPlatformGroups } from "../groups/platformGroups.server";
 import { roleKey } from "../users/roles";
 import { listUsers } from "../users/users.server";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const includeDeleted = new URL(request.url).searchParams.get("deleted") === "1";
   const [users, groups] = await Promise.all([

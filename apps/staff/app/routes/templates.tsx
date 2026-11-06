@@ -12,6 +12,9 @@ import type { Route } from "./+types/templates";
 
 import { getLatestTemplateVersion, listAuthorableTemplates } from "../authoring/authoring.server";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
   const authorable = await listAuthorableTemplates(request);

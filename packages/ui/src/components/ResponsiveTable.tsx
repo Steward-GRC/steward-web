@@ -272,14 +272,20 @@ const RoutedData = <Row,>(props: Props<Row>) => {
     <DataTableView
       {...props}
       parameters={parameters}
-      setParameters={(next) => setParameters(next, { preventScrollReset: true })}
+      setParameters={(next, replace) => setParameters(next, { preventScrollReset: true, replace })}
     />
   );
 };
 
 const LocalData = <Row,>(props: Props<Row>) => {
   const [parameters, setParameters] = useState(() => new URLSearchParams());
-  return <DataTableView {...props} parameters={parameters} setParameters={setParameters} />;
+  return (
+    <DataTableView
+      {...props}
+      parameters={parameters}
+      setParameters={(next) => setParameters(next)}
+    />
+  );
 };
 
 const DataTableView = <Row,>({
@@ -288,7 +294,7 @@ const DataTableView = <Row,>({
   ...props
 }: Props<Row> & {
   parameters: URLSearchParams;
-  setParameters: (next: URLSearchParams) => void;
+  setParameters: (next: URLSearchParams, replace: boolean) => void;
 }) => {
   const { t } = useTranslation("common");
   const phone = useMediaQuery(PHONE);

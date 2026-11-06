@@ -18,6 +18,9 @@ import type { Route } from "./+types/audit";
 
 import { listAuditLog, verifyAuditChain } from "../audit/audit.server";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const filters = {

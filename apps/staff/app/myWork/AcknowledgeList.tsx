@@ -26,7 +26,12 @@ export const AcknowledgeList = ({ label, rows }: { label: string; rows: readonly
       key: "title",
       value: (row) => row.title,
     },
-    { cell: (row) => row.number, header: "Number", key: "number", value: (row) => row.number },
+    {
+      cell: (row) => row.number,
+      header: t("toAcknowledge.sort.numberAsc"),
+      key: "number",
+      value: (row) => row.number,
+    },
     {
       cell: (row) => row.category ?? none,
       filter: "values",
@@ -37,6 +42,7 @@ export const AcknowledgeList = ({ label, rows }: { label: string; rows: readonly
   ];
   const table = useDataTable({
     columns,
+    defaultSort: { dir: "asc", key: "title" },
     rows,
     search: (row) => `${row.title} ${row.number}`,
   });
@@ -96,7 +102,7 @@ export const AcknowledgeList = ({ label, rows }: { label: string; rows: readonly
             <option value="category">{t("toAcknowledge.category")}</option>
           </select>
           <select
-            aria-label="Sort by"
+            aria-label={t("toAcknowledge.sortBy")}
             className={PICK}
             onChange={(event) => {
               const [key, direction] = event.target.value.split(":");
@@ -104,7 +110,6 @@ export const AcknowledgeList = ({ label, rows }: { label: string; rows: readonly
             }}
             value={table.sort ? `${table.sort.key}:${table.sort.dir}` : ""}
           >
-            <option value="">{t("toAcknowledge.sort.titleAsc")}</option>
             <option value="title:asc">{t("toAcknowledge.sort.titleAsc")}</option>
             <option value="title:desc">{t("toAcknowledge.sort.titleDesc")}</option>
             <option value="number:asc">{t("toAcknowledge.sort.numberAsc")}</option>
@@ -115,16 +120,16 @@ export const AcknowledgeList = ({ label, rows }: { label: string; rows: readonly
       {table.total === 0 ? (
         <p className="px-4 py-4 text-base text-muted">{t("toAcknowledge.noMatches")}</p>
       ) : table.groups ? (
-        <div aria-label={label} role="list">
+        <ul aria-label={label}>
           {table.groups.map((group) => (
-            <section key={group.key}>
+            <li key={group.key}>
               <h3 className="border-b border-border bg-sunken px-4 py-2 text-sm font-semibold text-muted">
-                {t("toAcknowledge.groupHeading", { count: group.rows.length, name: group.key })}
+                {t("toAcknowledge.groupHeading", { count: group.total, name: group.key })}
               </h3>
               <ul>{group.rows.map(card)}</ul>
-            </section>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
         <ul aria-label={label}>{table.pageRows.map(card)}</ul>
       )}

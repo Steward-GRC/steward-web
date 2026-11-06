@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 import { act, renderHook } from "@testing-library/react";
 import { type ReactNode } from "react";
-import { MemoryRouter, useLocation } from "react-router";
+import {
+  MemoryRouter,
+  type ShouldRevalidateFunctionArgs,
+  useLocation,
+  useNavigationType,
+} from "react-router";
 import { describe, expect, it } from "vitest";
 
-import { type DataColumn, useDataTable } from "./dataTable";
+import { type DataColumn, shouldRevalidateTable, useDataTable } from "./dataTable";
 
 interface Row {
   id: string;
@@ -42,6 +47,7 @@ const setup = (rows: Row[], entry = "/", options = {}) => {
   return renderHook(
     () => ({
       location: useLocation(),
+      navigation: useNavigationType(),
       table: useDataTable({
         columns,
         rows,
@@ -151,7 +157,7 @@ describe("useDataTable", () => {
   });
 
   it("groups, ordering whole groups ahead of the sort, so a page never splits a heading", () => {
-    const { result } = setup(make(30), "/?group=kind&size=10");
+    const { result } = setup(make(30), "/?groupby=kind&size=10");
     const { groups } = result.current.table;
     expect(groups?.map((group) => group.key)).toEqual(["policy"]);
     expect(groups?.[0]?.rows).toHaveLength(10);
@@ -168,5 +174,40 @@ describe("useDataTable", () => {
     const { result } = setup(make(100), "/?q=item&f.kind=policy&page=2&sort=size");
     act(() => result.current.table.clear());
     expect(result.current.location.search).toBe("?sort=size");
+  });
+});
+
+const arguments_ = (from: string, to: string, extra: object = {}) =>
+  ({
+    currentUrl: new URL(from, "https://x.example"),
+    defaultShouldRevalidate: true,
+    nextUrl: new URL(to, "https://x.example"),
+    ...extra,
+  }) as unknown as ShouldRevalidateFunctionArgs;
+
+describe("the table's address state and the route that holds it", () => {
+  it("does not reload the route when only the table's own parameters change", () => {
+    expect(shouldRevalidateTable(arguments_("/a", "/a?q=x"))).toBe(false);
+    expect(shouldRevalidateTable(arguments_("/a?q=x", "/a?q=xy&sort=name&dir=desc&page=2"))).toBe(
+      false,
+    );
+    expect(shouldRevalidateTable(arguments_("/a", "/a?size=50&groupby=kind&f.kind=policy"))).toBe(
+      false,
+    );
+  });
+
+  it("reloads when anything else changes, or the path, or a form was sent", () => {
+    expect(shouldRevalidateTable(arguments_("/a", "/a?q=x&deleted=1"))).toBe(true);
+    expect(shouldRevalidateTable(arguments_("/a?filter=mine", "/a?filter=all"))).toBe(true);
+    expect(shouldRevalidateTable(arguments_("/a", "/b?q=x"))).toBe(true);
+    expect(shouldRevalidateTable(arguments_("/a", "/a?q=x", { formMethod: "POST" }))).toBe(true);
+  });
+
+  it("replaces the history entry while typing, but a page change is a step of its own", () => {
+    const { result } = setup(make(100));
+    act(() => result.current.table.setQuery("i"));
+    expect(result.current.navigation).toBe("REPLACE");
+    act(() => result.current.table.setPage(2));
+    expect(result.current.navigation).toBe("PUSH");
   });
 });

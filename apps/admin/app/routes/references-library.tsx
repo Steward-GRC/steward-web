@@ -44,6 +44,9 @@ import {
 } from "../libraries/libraries.server";
 import { DeleteButton, LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => ({
   refs: await listReferences(request),
 });

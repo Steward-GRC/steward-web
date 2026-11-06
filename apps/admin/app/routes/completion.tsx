@@ -19,6 +19,9 @@ import type { Route } from "./+types/completion";
 import { getCompletionReport, listObligatingPolicies } from "../completion/completion.server";
 import { StatTiles } from "../completion/StatTiles";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const obligating = await listObligatingPolicies(request);
   const rows = await Promise.all(

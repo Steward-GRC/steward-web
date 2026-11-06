@@ -3,9 +3,9 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useLoaderData } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import Templates from "./templates";
+import Templates, { shouldRevalidate } from "./templates";
 import TemplateDetail from "./templates.$templateId";
 
 type DetailProps = Parameters<typeof TemplateDetail>[0];
@@ -118,5 +118,23 @@ describe("Template detail (U23)", () => {
     expect(names()).toEqual(["Brief", "Standard Policy", "Annex"]);
     await userEvent.click(within(sections).getByRole("button"));
     expect(names()).toEqual(["Annex", "Standard Policy", "Brief"]);
+  });
+
+  it("filters as you type without loading the page's data again", async () => {
+    const loader = vi.fn(() => ({
+      templates: Array.from({ length: 14 }, (_, index) => ({
+        id: `t${index}`,
+        name: `Template ${String(index).padStart(2, "0")}`,
+        sections: index,
+        versionNo: 1,
+      })),
+    }));
+    const Stub = createRoutesStub([
+      { Component: List, loader, path: "/templates", shouldRevalidate },
+    ]);
+    render(<Stub initialEntries={["/templates"]} />);
+    await userEvent.type(await screen.findByRole("searchbox"), "ate 07");
+    expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(2);
+    expect(loader).toHaveBeenCalledTimes(1);
   });
 });

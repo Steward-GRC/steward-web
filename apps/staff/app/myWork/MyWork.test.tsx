@@ -378,11 +378,25 @@ describe("U2: To acknowledge with hundreds of policies (bug log item 22)", () =>
     expect(titles()[0]).toBe("Policy 0001");
   });
 
-  it("groups by category, a heading and a count over each group on the page", async () => {
-    await open("/?group=category&size=100&page=2");
+  it("groups by category, a heading and the group's whole count over each group on the page", async () => {
+    await open("/?groupby=category&size=100&page=2");
     const headings = screen.getAllByRole("heading", { level: 3 });
-    expect(headings.map((heading) => heading.textContent)).toEqual(["Finance (30)", "HR (70)"]);
-    expect(titles()).toHaveLength(100);
+    expect(headings.map((heading) => heading.textContent)).toEqual(["Finance (130)", "HR (130)"]);
+    expect(screen.getAllByText(/^Policy \d{4}$/)).toHaveLength(100);
+    // A valid list: each group is an item of the outer list, holding its own list.
+    expect(
+      within(screen.getByRole("list", { name: /Pending acknowledgements/ })).getAllByRole(
+        "heading",
+        {
+          level: 3,
+        },
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("starts sorted by title and says so", async () => {
+    await open();
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveValue("title:asc");
   });
 
   it("sorts from a Sort by dropdown", async () => {

@@ -12,6 +12,9 @@ import { sortQueueByUrgency, statusLabelKey, statusTone } from "../reporting/cas
 import { requireReporting } from "../reporting/enabled.server";
 import { listReportCases } from "../reporting/reporting.server";
 
+/** The table's own search, sort and page changes don't load the page again. */
+export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
+
 const FILTERS = ["all", "open", "mine"] as const;
 type Filter = (typeof FILTERS)[number];
 

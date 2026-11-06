@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { type ReactNode, useMemo } from "react";
-import { useSearchParams } from "react-router";
+import { type ShouldRevalidateFunctionArgs, useSearchParams } from "react-router";
 
 /** One column of a data table. The same column feeds the table's header, its cells, the sort,
  *  the filter and the group, whether the rows draw as a table or as cards. */
@@ -32,7 +32,10 @@ export interface DataColumn<Row> {
 
 export interface DataGroup<Row> {
   key: string;
+  /** The group's rows on this page. */
   rows: Row[];
+  /** The group's size across every page, after the filters. */
+  total: number;
 }
 
 export interface DataSort {
@@ -74,7 +77,7 @@ export const columnFilterParameter = (key: string) => `f.${key}`;
 /**
  * The shared table's engine: TanStack Table (sorting, filtering, pagination) driven by the
  * address, so a refresh or a shared link keeps the search, filters, sort, group, page and page
- * size (`q`, `f.<column>`, `sort`, `dir`, `group`, `page`, `size`). It renders nothing; a table
+ * size (`q`, `f.<column>`, `sort`, `dir`, `groupby`, `page`, `size`). It renders nothing; a table
  * and a card list both read it.
  *
  * Grouping orders whole groups ahead of the sort, so a page slices through the groups in order
@@ -82,8 +85,8 @@ export const columnFilterParameter = (key: string) => `f.${key}`;
  */
 export const useDataTable = <Row>(options: UseDataTableOptions<Row>) => {
   const [parameters, setParameters] = useSearchParams();
-  return useDataTableState(options, parameters, (next) =>
-    setParameters(next, { preventScrollReset: true }),
+  return useDataTableState(options, parameters, (next, replace) =>
+    setParameters(next, { preventScrollReset: true, replace }),
   );
 };
 
@@ -100,12 +103,12 @@ export const useDataTableState = <Row>(
     search,
   }: UseDataTableOptions<Row>,
   parameters: URLSearchParams,
-  setParameters: (next: URLSearchParams) => void,
+  setParameters: (next: URLSearchParams, replace: boolean) => void,
 ) => {
   const name = (key: string) => parameterName(prefix, key);
 
   const query = parameters.get(name("q")) ?? "";
-  const group = parameters.get(name("group")) ?? "";
+  const group = parameters.get(name("groupby")) ?? "";
   const requestedSize = Number(parameters.get(name("size")));
   const pageSize = pageSizes.includes(requestedSize) ? requestedSize : defaultPageSize;
 
@@ -185,7 +188,8 @@ export const useDataTableState = <Row>(
   });
 
   const sorted = table.getSortedRowModel().rows;
-  const total = table.getFilteredRowModel().rows.length;
+  const filteredRows = table.getFilteredRowModel().rows;
+  const total = filteredRows.length;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const page = Math.min(requestedPage, pageCount);
   const pageRows = useMemo(
@@ -195,15 +199,20 @@ export const useDataTableState = <Row>(
 
   const groups = useMemo<DataGroup<Row>[] | undefined>(() => {
     if (!groupColumn) return;
+    const totals = new Map<string, number>();
+    for (const row of filteredRows) {
+      const key = String(groupColumn.value(row.original));
+      totals.set(key, (totals.get(key) ?? 0) + 1);
+    }
     const out: DataGroup<Row>[] = [];
     for (const row of pageRows) {
       const key = String(groupColumn.value(row));
       const last = out.at(-1);
       if (last?.key === key) last.rows.push(row);
-      else out.push({ key, rows: [row] });
+      else out.push({ key, rows: [row], total: totals.get(key) ?? 1 });
     }
     return out;
-  }, [groupColumn, pageRows]);
+  }, [filteredRows, groupColumn, pageRows]);
 
   /** Applies address changes. Anything but the page itself puts the list back on page one. */
   const update = (changes: Record<string, string>) => {
@@ -213,7 +222,8 @@ export const useDataTableState = <Row>(
       else next.delete(name(key));
     }
     if (!("page" in changes)) next.delete(name("page"));
-    setParameters(next);
+    // Only a change of page is a step in the history; typing, sorting and filtering replace it.
+    setParameters(next, !("page" in changes));
   };
 
   return {
@@ -234,7 +244,7 @@ export const useDataTableState = <Row>(
     query,
     setColumnFilter: (key: string, value: string) =>
       update({ [columnFilterParameter(key)]: value }),
-    setGroup: (key: string) => update({ group: key }),
+    setGroup: (key: string) => update({ groupby: key }),
     setPage: (next: number) => update({ page: next > 1 ? String(next) : "" }),
     setPageSize: (size: number) => update({ size: size === defaultPageSize ? "" : String(size) }),
     setQuery: (value: string) => update({ q: value }),
@@ -258,4 +268,32 @@ export const useDataTableState = <Row>(
       );
     },
   };
+};
+
+/** The address parameters the table owns, with or without a prefix on them. */
+const TABLE_KEYS = /^(?:[\w]+-)?(?:q|sort|dir|page|size|groupby|f\..+)$/;
+
+const withoutTableKeys = (url: URL): string => {
+  const rest = new URLSearchParams();
+  for (const [key, value] of url.searchParams) if (!TABLE_KEYS.test(key)) rest.append(key, value);
+  rest.sort();
+  return rest.toString();
+};
+
+/**
+ * A route's `shouldRevalidate` for a page with a shared table: a change to only the table's own
+ * address parameters (search, filters, sort, page, page size, group) is the page's own
+ * business, so the route's loader isn't run again for it. Anything else, another path, another
+ * parameter or a submitted form, loads as it would have.
+ */
+export const shouldRevalidateTable = ({
+  currentUrl,
+  defaultShouldRevalidate,
+  formMethod,
+  nextUrl,
+}: ShouldRevalidateFunctionArgs): boolean => {
+  if (formMethod && formMethod.toUpperCase() !== "GET") return defaultShouldRevalidate;
+  if (currentUrl.pathname !== nextUrl.pathname) return defaultShouldRevalidate;
+  if (withoutTableKeys(currentUrl) !== withoutTableKeys(nextUrl)) return defaultShouldRevalidate;
+  return false;
 };
