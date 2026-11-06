@@ -5,6 +5,8 @@ import type { User, UserLabel } from "@steward-web/api-client";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
 
+import { listPlatformGroups } from "../groups/platformGroups.server";
+
 const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
 
 export interface ManagedGroup {
@@ -12,10 +14,18 @@ export interface ManagedGroup {
   name: string;
 }
 
-/** The platform groups the signed-in caller is a LOCAL group-manager of, by name, from the
- *  gateway's `myManagedGroups`. Empty for anyone who manages none. */
+/** The most groups a site administrator's page loads members for; the rest are on Platform groups. */
+export const SITE_ADMIN_GROUP_LIMIT = 50;
+
+/** The platform groups the signed-in caller manages, by name: for a group manager, those from the
+ *  gateway's `myManagedGroups`; for a site administrator, every group (they manage them all, #108),
+ *  named by path. Empty for anyone who manages none. */
 export const listManagedGroups = async (request: Request): Promise<ManagedGroup[]> => {
   const identity = await requireIdentityFromRequest(request);
+  if (identity.isSiteAdmin) {
+    const all = await listPlatformGroups(request).catch(() => []);
+    return all.map((g) => ({ id: g.id, name: g.path }));
+  }
   if (identity.managedGroupIds.length === 0) return [];
   const groups = await edge.myManagedGroups(cookieOf(request));
   return groups.map((g) => ({ id: g.id, name: g.name }));

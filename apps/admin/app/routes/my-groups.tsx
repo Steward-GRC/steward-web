@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
@@ -8,11 +9,12 @@ import {
   AccordionItem,
   AccordionTrigger,
   Banner,
+  Button,
   EmptyState,
   type Failure,
 } from "@steward-web/ui";
 import { Lock, X } from "lucide-react";
-import { data, useFetcher } from "react-router";
+import { data, Link, useFetcher } from "react-router";
 
 import type { Route } from "./+types/my-groups";
 
@@ -23,15 +25,22 @@ import {
   listManagedGroupMembers,
   listManagedGroups,
   removeUserFromGroup,
+  SITE_ADMIN_GROUP_LIMIT,
 } from "../users/myGroups.server";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const groups = await listManagedGroups(request);
+  const identity = await requireIdentityFromRequest(request);
+  const all = await listManagedGroups(request);
+  // A site administrator manages every group (#108); the members of the first few load here and
+  // the rest are on Platform groups.
+  const groups = identity.isSiteAdmin ? all.slice(0, SITE_ADMIN_GROUP_LIMIT) : all;
   const membersByGroup = await Promise.all(
     groups.map((g) => listManagedGroupMembers(request, g.id)),
   );
   return {
     groups: groups.map((g, index) => ({ ...g, members: membersByGroup[index] ?? [] })),
+    hidden: all.length - groups.length,
+    siteAdmin: identity.isSiteAdmin,
   };
 };
 
@@ -125,7 +134,7 @@ const GroupMembers = ({
  */
 export default function MyGroups({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
-  const { groups } = loaderData;
+  const { groups, hidden, siteAdmin } = loaderData;
 
   return (
     <div className="flex w-full flex-col gap-3 p-4 md:p-6">
@@ -133,11 +142,29 @@ export default function MyGroups({ loaderData }: Route.ComponentProps) {
         <h1 className="text-2xl font-semibold">{t("myGroups.title")}</h1>
         <p className="text-base text-muted">{t("myGroups.subtitle")}</p>
       </header>
+      {siteAdmin && groups.length > 0 ? (
+        <Banner title={t("myGroups.siteAdmin.all")} tone="info">
+          {hidden > 0 ? t("myGroups.siteAdmin.more", { count: hidden }) : null}{" "}
+          <Link to="/platform-groups">{t("myGroups.siteAdmin.link")}</Link>
+        </Banner>
+      ) : null}
       {groups.length === 0 ? (
-        <EmptyState
-          description={t("myGroups.empty.description")}
-          title={t("myGroups.empty.title")}
-        />
+        siteAdmin ? (
+          <EmptyState
+            action={
+              <Button asChild>
+                <Link to="/platform-groups">{t("myGroups.siteAdmin.link")}</Link>
+              </Button>
+            }
+            description={t("myGroups.siteAdmin.emptyDescription")}
+            title={t("myGroups.siteAdmin.emptyTitle")}
+          />
+        ) : (
+          <EmptyState
+            description={t("myGroups.empty.description")}
+            title={t("myGroups.empty.title")}
+          />
+        )
       ) : (
         <Accordion
           className="flex flex-col gap-3"

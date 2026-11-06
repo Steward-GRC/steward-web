@@ -61,6 +61,60 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const siteAdminMe = {
+  ...nonManagerMe,
+  email: "alice@example.org",
+  id: "u-alice",
+  name: "Alice",
+  permissions: ["user.manage", "group.manage"],
+  roles: ["site-admin"],
+  username: "alice",
+};
+
+/** Answers each gateway operation from its own queue; an operation with none left is refused. */
+const answerByOperation = (queues: Record<string, unknown[]>) =>
+  vi.fn(async (_url: string, init: RequestInit) => {
+    const { query } = JSON.parse(init.body as string) as { query: string };
+    const operation = /^(?:query|mutation) (\w+)/m.exec(query)?.[1] ?? "";
+    const next = queues[operation]?.shift();
+    return next === undefined
+      ? Response.json({ errors: [{ message: operation }] })
+      : jsonOnce(next);
+  });
+
+describe("listManagedGroups for a site administrator (#108)", () => {
+  it("lists every platform group, by its path, since a site administrator manages them all", async () => {
+    vi.stubGlobal(
+      "fetch",
+      answerByOperation({
+        Me: [{ me: siteAdminMe }, { me: siteAdminMe }],
+        PlatformGroups: [
+          { platformGroups: [{ id: "g-fin", name: "Finance", parentId: null }] },
+          { platformGroups: [{ id: "g-exp", name: "Expenses", parentId: "g-fin" }] },
+          { platformGroups: [] },
+        ],
+      }),
+    );
+    expect(await listManagedGroups(request())).toEqual([
+      { id: "g-fin", name: "Finance" },
+      { id: "g-exp", name: "Finance / Expenses" },
+    ]);
+  });
+
+  it("still lists only the managed groups for a manager who is not a site administrator", async () => {
+    vi.stubGlobal(
+      "fetch",
+      answerByOperation({
+        MyManagedGroups: [
+          { myManagedGroups: [{ id: "g-2", name: "IT Security", parentId: null }] },
+        ],
+        Me: [{ me: managerMe }],
+      }),
+    );
+    expect(await listManagedGroups(request())).toEqual([{ id: "g-2", name: "IT Security" }]);
+  });
+});
+
 describe("listManagedGroups", () => {
   it("returns an empty list for a caller who manages nothing", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonOnce({ me: nonManagerMe })));

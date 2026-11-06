@@ -543,6 +543,13 @@
       "title": "No managed groups",
       "description": "You don't manage any groups. Ask a site administrator to make you a group manager."
     },
+    "siteAdmin": {
+      "all": "As a site administrator you can manage every group.",
+      "more": "The first {{count}} are here; the rest are",
+      "emptyTitle": "No groups yet",
+      "emptyDescription": "As a site administrator you can manage every group. There are none yet.",
+      "link": "Platform groups"
+    },
     "failed": "Couldn't update this group"
   },
   "organizations": {
