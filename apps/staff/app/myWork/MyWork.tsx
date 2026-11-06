@@ -12,6 +12,8 @@ import type { LibraryOverview, MyWorkData, WorkRow } from "./myWork.server";
 const card = "overflow-hidden rounded-[10px] border border-border bg-surface";
 const cardHead =
   "border-b border-border-strong bg-sunken px-4 py-3 text-[15px] font-semibold text-ink";
+/** How many rows each home list shows before it links to its full list page. */
+const HOME_LIST_CAP = 5;
 const rowAction =
   "flex h-8 flex-none items-center rounded-md bg-primary px-3 text-sm font-semibold text-on-primary hover:bg-primary-hover hover:text-on-primary";
 
@@ -43,7 +45,10 @@ const Card = ({
   const headingId = useId();
   return (
     <section aria-labelledby={headingId} className={`${card} ${className}`}>
-      <div className={`${cardHead} flex items-center justify-between gap-2`}>
+      <div
+        className={`${cardHead} flex items-center justify-between gap-2`}
+        data-testid="card-band"
+      >
         <h2 id={headingId}>{title}</h2>
         {aside}
       </div>
@@ -112,42 +117,37 @@ const Library = ({ library }: { library: LibraryOverview }) => {
 const percentOf = ({ done, required }: { done: number; required: number }) =>
   required > 0 ? Math.round((done / required) * 100) : 0;
 
-/** U1's compliance card: the percentage, a bar and the summary line. */
+/** U1's compliance card: the banded header, then the percentage, a bar and the summary line. */
 const Compliance = ({ ack }: { ack: { done: number; required: number } }) => {
   const { t } = useTranslation("approvals");
-  const headingId = useId();
   const percent = percentOf(ack);
   return (
-    <section
-      aria-labelledby={headingId}
-      className="flex flex-col gap-2.5 rounded-[10px] border border-border bg-surface px-[18px] py-4"
-    >
-      <h2 className="text-[15px] font-semibold" id={headingId}>
-        {t("myWork.compliance.title")}
-      </h2>
-      {ack.required > 0 ? (
-        <>
-          <span className="text-[34px] font-semibold">
-            {t("myWork.compliance.percent", { percent })}
-          </span>
-          <div
-            aria-labelledby={headingId}
-            aria-valuemax={100}
-            aria-valuemin={0}
-            aria-valuenow={percent}
-            className="h-2.5 overflow-hidden rounded-full bg-sunken shadow-[inset_0_0_0_1px_var(--border)]"
-            role="progressbar"
-          >
-            <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
-          </div>
-          <span className="leading-[1.45] text-muted">
-            {t("myWork.compliance.summary", { ...ack, waiting: ack.required - ack.done })}
-          </span>
-        </>
-      ) : (
-        <span className="leading-[1.45] text-muted">{t("myWork.compliance.empty")}</span>
-      )}
-    </section>
+    <Card title={t("myWork.compliance.title")}>
+      <div className="flex flex-col gap-2.5 px-[18px] py-4">
+        {ack.required > 0 ? (
+          <>
+            <span className="text-[34px] font-semibold">
+              {t("myWork.compliance.percent", { percent })}
+            </span>
+            <div
+              aria-label={t("myWork.compliance.title")}
+              aria-valuemax={100}
+              aria-valuemin={0}
+              aria-valuenow={percent}
+              className="h-2.5 overflow-hidden rounded-full bg-sunken shadow-[inset_0_0_0_1px_var(--border)]"
+              role="progressbar"
+            >
+              <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
+            </div>
+            <span className="leading-[1.45] text-muted">
+              {t("myWork.compliance.summary", { ...ack, waiting: ack.required - ack.done })}
+            </span>
+          </>
+        ) : (
+          <span className="leading-[1.45] text-muted">{t("myWork.compliance.empty")}</span>
+        )}
+      </div>
+    </Card>
   );
 };
 
@@ -193,20 +193,32 @@ const List = ({
   empty,
   rows,
   title,
+  to,
 }: {
   children: (row: WorkRow, flash: boolean) => ReactNode;
   empty: string;
   rows: WorkRow[];
   title: string;
+  /** The full list page, linked when more rows exist than the home shows. */
+  to: string;
 }) => {
+  const { t } = useTranslation("approvals");
   const live = useLiveList(rows.map((row) => [row.href, JSON.stringify(row)] as const));
   return (
     <Card aside={<UpdatedJustNow at={live.updatedAt} className="font-normal" />} title={title}>
       {rows.length > 0 ? (
-        <ul>{rows.map((row) => children(row, live.flashing(row.href)))}</ul>
+        <ul>{rows.slice(0, HOME_LIST_CAP).map((row) => children(row, live.flashing(row.href)))}</ul>
       ) : (
         <p className="px-4 py-3 text-muted">{empty}</p>
       )}
+      {rows.length > HOME_LIST_CAP ? (
+        <Link
+          className="block border-t border-border px-4 py-3 font-semibold text-primary hover:text-primary-hover"
+          to={to}
+        >
+          {t("myWork.viewAll", { count: rows.length })}
+        </Link>
+      ) : null}
     </Card>
   );
 };
@@ -315,9 +327,14 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
         {library ? <Library library={library} /> : <div />}
         {ack ? <Compliance ack={ack} /> : null}
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4" data-testid="home-lists">
         {drafts ? (
-          <List empty={t("myWork.drafts.empty")} rows={drafts} title={t("myWork.drafts.title")}>
+          <List
+            empty={t("myWork.drafts.empty")}
+            rows={drafts}
+            title={t("myWork.drafts.title")}
+            to="/drafts"
+          >
             {(row, flash) => (
               <ListRow
                 action={t("myWork.drafts.action")}
@@ -335,6 +352,7 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
             empty={t("myWork.approvals.empty")}
             rows={approvals}
             title={t("myWork.approvals.title")}
+            to="/approvals"
           >
             {(row, flash) => (
               <ListRow
@@ -360,6 +378,7 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
             empty={t("myWork.acknowledge.empty")}
             rows={obligations}
             title={t("myWork.acknowledge.title")}
+            to="/acknowledge"
           >
             {(row, flash) => (
               <ListRow

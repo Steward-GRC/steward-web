@@ -92,7 +92,8 @@
       "title": "Library overview"
     },
     "subtitle": "Everything waiting on you, across your roles.",
-    "title": "My work"
+    "title": "My work",
+    "viewAll": "View all {{count}}"
   },
   "reassign": {
     "cancel": "Cancel",

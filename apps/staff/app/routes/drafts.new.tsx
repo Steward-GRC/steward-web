@@ -127,7 +127,7 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
       : draft.groupId;
 
   return (
-    <div className="flex w-full max-w-[580px] flex-col gap-3.5 p-6 text-base text-ink">
+    <div className="flex w-full flex-col gap-3.5 p-6 text-base text-ink" data-testid="new-draft-page">
       <div className="flex flex-col gap-1">
         <h1 className="text-[26px] leading-tight font-semibold">{t(`new.title.${noun}`)}</h1>
         <p className="text-muted">{t(`new.subtitle.${noun}`)}</p>
