@@ -26,7 +26,7 @@ const browseHref = (category: string, subcategory?: string) => {
 const Badge = ({ count }: { count: number }) => (
   <span
     aria-hidden="true"
-    className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-primary px-1.5 text-2xs font-semibold text-on-primary rail:hidden"
+    className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-accent px-1.5 text-2xs font-bold text-[#261b25] rail:hidden"
   >
     {count}
   </span>
