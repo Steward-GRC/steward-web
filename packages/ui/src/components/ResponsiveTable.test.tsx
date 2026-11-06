@@ -304,3 +304,22 @@ describe("ResponsiveTable with sortable columns", () => {
     expect(cards[0]).toHaveTextContent("Person 44");
   });
 });
+
+describe("ResponsiveTable while it loads", () => {
+  it("shows the animated skeleton in place of the rows, once the load is slow", async () => {
+    const { container } = render(
+      <ResponsiveTable
+        columns={COLUMNS}
+        empty={<p>No people yet</p>}
+        label="People"
+        loading
+        rowKey={(person) => person.id}
+        rows={[]}
+      />,
+    );
+    expect(screen.queryByText("No people yet")).not.toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(container.querySelector(".stw-loader-g")).not.toBeNull();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+});

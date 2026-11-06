@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { FileQuestion } from "lucide-react";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Link } from "react-router";
 
 import { Button } from "#ui/components/Button";
+import { Loader } from "#ui/brand/Mark";
 import { Skeleton } from "#ui/components/Display";
 import { cn } from "#ui/lib/cn";
 
@@ -148,6 +149,7 @@ export const PageSkeleton = ({ className, label }: { className?: string; label: 
     role="status"
   >
     <span className="sr-only">{label}</span>
+    <Loader className="mb-1 self-center" decorative size={44} />
     <Skeleton className="h-3 w-2/5 rounded-sm" />
     <Skeleton className="h-[26px] w-4/5 rounded-sm" />
     <Skeleton className="h-3 w-1/2 rounded-sm" />
@@ -157,3 +159,45 @@ export const PageSkeleton = ({ className, label }: { className?: string; label: 
     <Skeleton className="h-2.5 w-[70%] rounded-sm" />
   </div>
 );
+
+/**
+ * The loading state for a table or a list (bug log item 21): the animated book mark over rows
+ * the shape of the real ones, busy, with the screen-reader text. It waits `delay` ms first, so
+ * a load that comes back quickly never flashes it. The shimmer and the mark stop with reduced
+ * motion.
+ */
+export const ListSkeleton = ({
+  className,
+  delay = 300,
+  label,
+  rows = 5,
+}: {
+  className?: string;
+  delay?: number;
+  label: string;
+  rows?: number;
+}) => {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setShown(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+  if (!shown) return null;
+  return (
+    <div
+      aria-busy="true"
+      className={cn("flex flex-col gap-3 rounded-lg border border-border bg-surface p-5", className)}
+      role="status"
+    >
+      <span className="sr-only">{label}</span>
+      <Loader className="self-center" decorative size={44} />
+      {Array.from({ length: rows }, (_, index) => (
+        <div className="flex items-center gap-3" data-skeleton-row="" key={index}>
+          <Skeleton className="h-3.5 w-1/3 rounded-sm" />
+          <Skeleton className="h-3 w-1/4 rounded-sm" />
+          <Skeleton className="ml-auto h-6 w-16 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+};

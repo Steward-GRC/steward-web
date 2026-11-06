@@ -7,6 +7,7 @@ import { useInRouterContext, useSearchParams } from "react-router";
 
 import { Card, Table, TD, TH, THead } from "#ui/components/Display";
 import { Input } from "#ui/components/Input";
+import { ListSkeleton } from "#ui/feedback/States";
 import { cn } from "#ui/lib/cn";
 import { type DataColumn, type DataSort, useDataTableState } from "#ui/lib/dataTable";
 import { PHONE, useMediaQuery } from "#ui/lib/media";
@@ -47,6 +48,9 @@ export interface ResponsiveTableProps<Row> {
   hideHeader?: boolean;
   /** The table's and the card list's accessible name. */
   label: string;
+  /** True while the rows load: the animated skeleton shows in their place once the load is
+   *  slow, and neither the rows nor the empty state show. */
+  loading?: boolean;
   rowClassName?: (row: Row) => string | undefined;
   rowKey: (row: Row) => string;
   rows: readonly Row[];
@@ -244,6 +248,11 @@ const SortableTH = <Row,>({
 
 type Props<Row> = ResponsiveTableProps<Row>;
 
+const LoadingRows = () => {
+  const { t } = useTranslation("common");
+  return <ListSkeleton label={t("status.loading")} />;
+};
+
 /**
  * The shared table. Columns with a `value` sort from their headers, and the table pages with a
  * jump-to-page dropdown and a page-size choice and filters as you type, all kept in the address
@@ -252,6 +261,7 @@ type Props<Row> = ResponsiveTableProps<Row>;
  */
 export const ResponsiveTable = <Row,>(props: Props<Row>) => {
   const inRouter = useInRouterContext();
+  if (props.loading) return <LoadingRows />;
   if (!props.columns.some((column) => column.value)) return <PlainTable {...props} />;
   return inRouter ? <RoutedData {...props} /> : <LocalData {...props} />;
 };
