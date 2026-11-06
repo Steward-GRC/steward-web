@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
 import { formatDate, formatDateTime } from "@steward-web/i18n";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -101,10 +101,14 @@ const detail: PolicyDetail = {
 
 const printed = new Date("2026-10-03T09:30:00Z");
 
-const renderPrint = (overrides: Partial<PolicyDetail> = {}) =>
+const renderPrint = (
+  overrides: Partial<PolicyDetail> = {},
+  extra: { includeHistory?: boolean } = {},
+) =>
   render(
     <PolicyPrint
       detail={{ ...detail, ...overrides }}
+      includeHistory={extra.includeHistory}
       organisation="Example Organisation"
       printedAt={printed}
       viewerName="Erin"
@@ -137,6 +141,31 @@ describe("PolicyPrint (R1)", () => {
     const heading = screen.getByRole("heading", { level: 2, name: "1. Purpose" });
     // text-indent inherits into an inline-block, which would draw "1." left of the margin
     expect(within(heading).getByText("1.")).toHaveClass("indent-0");
+  });
+
+  it("adds the version-history page only when asked", () => {
+    const { unmount } = renderPrint();
+    expect(screen.queryByRole("region", { name: "Version history · v1" })).toBeNull();
+    unmount();
+    renderPrint({}, { includeHistory: true });
+    const page = screen.getByRole("region", { name: "Version history · v1" });
+    expect(page).toHaveClass("break-before-page");
+    expect(page).toHaveTextContent("Submitted for reviewBob");
+    expect(page).toHaveTextContent("Approved · Final approvalCarol");
+    expect(page).toHaveTextContent("Clear and ready.");
+    expect(page).toHaveTextContent("Published");
+  });
+
+  it("marks a sensitive record on every page with who printed it and when", () => {
+    const { unmount } = renderPrint();
+    expect(screen.queryByTestId("print-watermark")).toBeNull();
+    unmount();
+    renderPrint({ sensitivity: Sensitivity.Sensitive });
+    const mark = screen.getByTestId("print-watermark");
+    expect(mark).toHaveAttribute("aria-hidden", "true");
+    const tiles = within(mark).getAllByText(/^SENSITIVE · Erin · /);
+    expect(tiles).toHaveLength(12);
+    expect(tiles[0]).toHaveTextContent(formatDate(printed));
   });
 
   it("numbers the sections as the reader does, and marks defined terms for the end notes", () => {
@@ -204,27 +233,94 @@ describe("pageRules", () => {
 });
 
 describe("printing from the reader", () => {
-  it("draws the print layout only while the browser prints", async () => {
-    const print = vi.spyOn(globalThis, "print").mockImplementation(() => {
-      globalThis.dispatchEvent(new Event("beforeprint"));
-    });
+  const stub = (props: Partial<React.ComponentProps<typeof PolicyReader>> = {}, d = detail) => {
     const Stub = createRoutesStub([
       {
         Component: () => (
-          <PolicyReader detail={detail} organisation="Example Organisation" viewerName="Erin" />
+          <PolicyReader
+            detail={d}
+            organisation="Example Organisation"
+            viewerName="Erin"
+            {...props}
+          />
         ),
         path: "/policies/:number",
       },
     ]);
     render(<Stub initialEntries={["/policies/POL-FACILITIES-000001"]} />);
-    expect(screen.queryByRole("document", { name: "Desk Booking Policy" })).toBeNull();
+  };
+  const choosePrint = async () => {
     await userEvent.click(await screen.findByRole("button", { name: /Actions/ }));
     await userEvent.click(screen.getByRole("menuitem", { name: /Print/ }));
+  };
+  const fakePrint = () =>
+    vi.spyOn(globalThis, "print").mockImplementation(() => {
+      globalThis.dispatchEvent(new Event("beforeprint"));
+    });
+
+  it("asks what to include, then draws the print layout only while the browser prints", async () => {
+    localStorage.clear();
+    const print = fakePrint();
+    stub();
+    expect(screen.queryByRole("document", { name: "Desk Booking Policy" })).toBeNull();
+    await choosePrint();
+    expect(print).not.toHaveBeenCalled();
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }));
+    await waitFor(() => expect(print).toHaveBeenCalled());
     expect(screen.getByRole("document", { name: "Desk Booking Policy" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Version history · v1" })).toBeNull();
     act(() => {
       globalThis.dispatchEvent(new Event("afterprint"));
     });
     expect(screen.queryByRole("document", { name: "Desk Booking Policy" })).toBeNull();
+    print.mockRestore();
+  });
+
+  it("adds the history page when ticked, and remembers the choice for that person", async () => {
+    localStorage.clear();
+    const print = fakePrint();
+    stub();
+    await choosePrint();
+    const box = within(screen.getByRole("dialog")).getByRole("checkbox", {
+      name: "Include version history page",
+    });
+    expect(box).not.toBeChecked();
+    await userEvent.click(box);
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }));
+    await waitFor(() => expect(print).toHaveBeenCalled());
+    expect(screen.getByRole("region", { name: "Version history · v1" })).toBeInTheDocument();
+    act(() => {
+      globalThis.dispatchEvent(new Event("afterprint"));
+    });
+    await choosePrint();
+    expect(
+      within(screen.getByRole("dialog")).getByRole("checkbox", {
+        name: "Include version history page",
+      }),
+    ).toBeChecked();
+    print.mockRestore();
+  });
+
+  it("tells the caller when a sensitive record is printed", async () => {
+    localStorage.clear();
+    const print = fakePrint();
+    const onPrint = vi.fn();
+    stub({ onPrint }, { ...detail, sensitivity: Sensitivity.Sensitive });
+    await choosePrint();
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }));
+    await waitFor(() => expect(onPrint).toHaveBeenCalledWith({ includeHistory: false }));
+    print.mockRestore();
+  });
+
+  it("does not report a standard record", async () => {
+    localStorage.clear();
+    const print = fakePrint();
+    const onPrint = vi.fn();
+    stub({ onPrint });
+    await choosePrint();
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }));
+    await waitFor(() => expect(print).toHaveBeenCalled());
+    expect(onPrint).not.toHaveBeenCalled();
     print.mockRestore();
   });
 });

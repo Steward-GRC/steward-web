@@ -54,6 +54,7 @@ import { OutlineCard } from "./OutlineCard";
 import { documentTypeBasePath } from "./policy";
 import { bodyShape, outlineItems, PolicyDocument, RedactedDocument } from "./PolicyDocument";
 import { PolicyPrint } from "./PolicyPrint";
+import { PrintDialog } from "./PrintDialog";
 import { PolicyReaderHistory } from "./PolicyReaderHistory";
 import {
   ackBannerState,
@@ -440,6 +441,8 @@ export interface PolicyReaderProps {
   governance?: ReactNode;
   /** The organisation's name, for the printed page's running header (R1). */
   organisation?: null | string;
+  /** Told when a sensitive record is sent to print, so the app can record the export. */
+  onPrint?: (options: { includeHistory: boolean }) => void;
   /** The signed-in person's name, for D1's record box and the printed footer. */
   viewerName?: string;
 }
@@ -475,11 +478,24 @@ export const PolicyReader = ({
   detail,
   editAction,
   governance,
+  onPrint,
   organisation,
   viewerName,
 }: PolicyReaderProps) => {
   const { t } = useTranslation("policy");
   const printedAt = usePrinting();
+  const [printOpen, setPrintOpen] = useState(false);
+  const [includeHistory, setIncludeHistory] = useState(false);
+  const askToPrint = () => setPrintOpen(true);
+  const printNow = (options: { includeHistory: boolean }) => {
+    flushSync(() => {
+      setIncludeHistory(options.includeHistory);
+      setPrintOpen(false);
+    });
+    if (detail.sensitivity === Sensitivity.Sensitive) onPrint?.(options);
+    // After the dialog has left the page, so the printout is only the document.
+    setTimeout(() => globalThis.print(), 0);
+  };
   const favorites = useFavorites();
   const [view, setView] = useState("view");
   const [summaryOn, setSummaryOn] = useState(false);
@@ -523,7 +539,7 @@ export const PolicyReader = ({
   };
   useRegisterCommandActions([
     { allowed: Boolean(editAction), id: "edit", label: t("reader.actions.edit"), run: edit },
-    { id: "print", label: t("reader.actions.print"), run: () => globalThis.print() },
+    { id: "print", label: t("reader.actions.print"), run: askToPrint },
     { id: "history", label: t("reader.actions.history"), run: showHistory, shortcut: "history" },
   ]);
   const appendixLabel = (appendix: PolicyAppendix) =>
@@ -611,7 +627,7 @@ export const PolicyReader = ({
                 {t("reader.actions.edit")}
               </MenuItem>
             ) : null}
-            <MenuItem onSelect={() => globalThis.print()}>
+            <MenuItem onSelect={askToPrint}>
               <Printer aria-hidden="true" className="size-4" />
               {t("reader.actions.print")}
             </MenuItem>
@@ -747,7 +763,7 @@ export const PolicyReader = ({
                           </a>
                           <button
                             className="flex items-center gap-2 text-primary"
-                            onClick={() => globalThis.print()}
+                            onClick={askToPrint}
                             type="button"
                           >
                             <Printer aria-hidden="true" className="size-4" />
@@ -804,10 +820,17 @@ export const PolicyReader = ({
       <div id={HISTORY_ID}>
         <PolicyReaderHistory history={detail.history} />
       </div>
+      <PrintDialog
+        onOpenChange={setPrintOpen}
+        onPrint={printNow}
+        open={printOpen}
+        viewerName={viewerName}
+      />
       {printedAt
         ? createPortal(
             <PolicyPrint
               detail={detail}
+              includeHistory={includeHistory}
               organisation={organisation}
               printedAt={printedAt}
               viewerName={viewerName}

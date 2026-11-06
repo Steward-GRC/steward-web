@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { DocumentBlock, InlineRun } from "@steward-web/api-client";
 
+import { Sensitivity } from "@steward-web/api-client";
+
 import { formatDate, formatDayMonth, formatTime, useTranslation } from "@steward-web/i18n";
 import { Fragment, type ReactNode } from "react";
 
@@ -11,6 +13,7 @@ import { documentStatusOf } from "./policy";
 import { numberHeadings } from "./PolicyDocument";
 import { historyEventTitle, withV } from "./PolicyReaderHistory";
 import { groupHistoryByVersion, redactionState } from "./policyReaderModel";
+import { certificateOf } from "./printCertificate";
 
 /** A CSS string literal: quotes, backslashes, line breaks and "<" escaped, so no text can end
  *  the string or the style element it sits in. */
@@ -253,8 +256,15 @@ const Body = ({ blocks, notes }: { blocks: readonly DocumentBlock[]; notes: Note
 const endHeading =
   "mt-2 border-t-[0.5pt] border-[#b9aab7] pt-2 font-sans text-[10pt] font-semibold break-after-avoid";
 
+/** The watermark's tint. It has to stay visible on a photocopy, so it is red and darker than a
+ *  screen watermark would be; the stored design's face, angle and 3 x 4 tiling are kept. */
+export const WATERMARK_COLOUR = "rgba(180, 0, 0, 0.18)";
+const WATERMARK_TILES = 12;
+
 export interface PolicyPrintProps {
   detail: PolicyDetail;
+  /** Adds the version-history page after the document (#30). */
+  includeHistory?: boolean;
   organisation?: null | string;
   /** When the person printed, for the footer. */
   printedAt: Date;
@@ -269,7 +279,13 @@ export interface PolicyPrintProps {
  * † on defined terms and numbered link notes; then each appendix on a new page, the defined
  * terms and links as end notes, and the full history, every version expanded. Always light.
  */
-export const PolicyPrint = ({ detail, organisation, printedAt, viewerName }: PolicyPrintProps) => {
+export const PolicyPrint = ({
+  detail,
+  includeHistory = false,
+  organisation,
+  printedAt,
+  viewerName,
+}: PolicyPrintProps) => {
   const { t } = useTranslation("policy");
   const redacted = redactionState(detail) !== "visible";
   const notes = notesFor(redacted ? [] : detail.body, detail.definitions);
@@ -288,6 +304,8 @@ export const PolicyPrint = ({ detail, organisation, printedAt, viewerName }: Pol
   const appendices = redacted ? [] : detail.appendices;
   const groups = groupHistoryByVersion(detail.history);
   const none = t("reader.metadata.none");
+  const certificate = includeHistory ? certificateOf(detail.history, detail.version) : [];
+  const watermark = t("print.watermark", { name: viewerName ?? none, time: printed });
 
   return (
     <article
@@ -296,6 +314,23 @@ export const PolicyPrint = ({ detail, organisation, printedAt, viewerName }: Pol
       role="document"
     >
       <style>{css}</style>
+      {detail.sensitivity === Sensitivity.Sensitive ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-50 grid grid-cols-3 grid-rows-4 place-items-center [print-color-adjust:exact]"
+          data-testid="print-watermark"
+        >
+          {Array.from({ length: WATERMARK_TILES }, (_, tile) => (
+            <span
+              className="-rotate-30 font-mono text-[28pt] whitespace-nowrap"
+              key={tile}
+              style={{ color: WATERMARK_COLOUR }}
+            >
+              {watermark}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <header className="flex flex-col gap-1">
         <span className="text-[8.5pt] font-medium text-[#5e525f]">
           {detail.subcategory ? `${detail.category} · ${detail.subcategory}` : detail.category}
@@ -401,6 +436,51 @@ export const PolicyPrint = ({ detail, organisation, printedAt, viewerName }: Pol
           );
         })}
       </section>
+      {includeHistory ? (
+        <section
+          aria-labelledby="print-certificate"
+          className="break-before-page"
+          role="region"
+        >
+          <h2 className="font-serif text-[15pt] leading-[20pt] font-semibold" id="print-certificate">
+            {t("print.certificate.heading", { version: withV(detail.version) })}
+          </h2>
+          <p className="mt-1 mb-3 text-[#5e525f]">{t("print.certificate.note", { time: printed })}</p>
+          <table className="w-full border-collapse font-sans text-[9.5pt] leading-[13pt]">
+            <thead>
+              <tr>
+                {(["step", "person", "when", "comment"] as const).map((column) => (
+                  <th
+                    className="border-b-[1pt] border-[#261b25] px-1.5 py-[5px] text-left font-semibold"
+                    key={column}
+                  >
+                    {t(`print.certificate.${column}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {certificate.map((row, index) => (
+                <tr className="break-inside-avoid" key={index}>
+                  <td className="border-b-[0.5pt] border-[#dcd0c1] px-1.5 py-[5px] align-top font-semibold">
+                    {t(`print.certificate.roles.${row.role}`)}
+                    {row.stage ? <span className="font-normal"> · {row.stage}</span> : null}
+                  </td>
+                  <td className="border-b-[0.5pt] border-[#dcd0c1] px-1.5 py-[5px] align-top">
+                    {row.actorName ?? t("print.certificate.system")}
+                  </td>
+                  <td className="border-b-[0.5pt] border-[#dcd0c1] px-1.5 py-[5px] align-top font-mono text-[8pt]">
+                    {formatDate(row.at)} {formatTime(row.at)}
+                  </td>
+                  <td className="border-b-[0.5pt] border-[#dcd0c1] px-1.5 py-[5px] align-top">
+                    {row.comment ?? ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
     </article>
   );
 };
