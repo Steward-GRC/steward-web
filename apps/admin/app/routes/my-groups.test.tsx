@@ -22,7 +22,7 @@ const GROUPS = [
 
 type GroupsProps = Parameters<typeof MyGroups>[0];
 
-const openGroups = (groups: object[] = GROUPS) => {
+const openGroups = (groups: object[] = GROUPS, extra: object = {}) => {
   const posted: FormData[] = [];
   const searched: string[] = [];
   const Stub = createRoutesStub([
@@ -31,7 +31,11 @@ const openGroups = (groups: object[] = GROUPS) => {
         posted.push(await request.formData());
         return { ok: true };
       },
-      Component: () => <MyGroups {...({ loaderData: { groups } } as unknown as GroupsProps)} />,
+      Component: () => (
+        <MyGroups
+          {...({ loaderData: { groups, siteAdmin: false, ...extra } } as unknown as GroupsProps)}
+        />
+      ),
       path: "/my-groups",
     },
     {
@@ -90,5 +94,30 @@ describe("My groups (A22)", () => {
   it("says when someone manages no groups", async () => {
     openGroups([]);
     expect(await screen.findByText("No managed groups")).toBeInTheDocument();
+  });
+});
+
+describe("My groups for a site administrator (#108)", () => {
+  it("never tells a site administrator to ask a site administrator", async () => {
+    openGroups([], { siteAdmin: true });
+    expect(await screen.findByText("No groups yet")).toBeInTheDocument();
+    expect(screen.queryByText(/Ask a site administrator/)).toBeNull();
+    expect(screen.getByRole("link", { name: "Platform groups" })).toHaveAttribute(
+      "href",
+      "/platform-groups",
+    );
+  });
+
+  it("says a site administrator manages every group, above the list", async () => {
+    openGroups(GROUPS, { siteAdmin: true });
+    expect(
+      await screen.findByText("As a site administrator you can manage every group."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Facilities team")).toBeInTheDocument();
+  });
+
+  it("still asks everyone else to ask a site administrator", async () => {
+    openGroups([]);
+    expect(await screen.findByText(/Ask a site administrator/)).toBeInTheDocument();
   });
 });
