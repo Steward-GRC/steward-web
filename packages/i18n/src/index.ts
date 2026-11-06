@@ -9,6 +9,8 @@
 
 export {
   clearFormatCache,
+  currentDatePreference,
+  type DatePreference,
   formatDate,
   formatDateTime,
   formatDayMonth,
@@ -20,6 +22,7 @@ export {
   formatRelativeTime,
   formatTime,
   formatWeekday,
+  setDatePreference,
 } from "./formats";
 
 export { currentLocale, i18n } from "./i18n";

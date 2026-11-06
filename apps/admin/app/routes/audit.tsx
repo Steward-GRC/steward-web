@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { formatDateTime } from "@steward-web/i18n";
 import { actionLabel, auditChainRange, displayLabel, refusalOf } from "@steward-web/shell";
 import {
   Badge,
@@ -41,14 +42,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 };
 
-const fmt = (iso: string): string =>
-  new Date(iso).toLocaleString("en-GB", {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+const fmt = (iso: string): string => formatDateTime(iso);
 
 export default function AuditLog({ actionData, loaderData }: Route.ComponentProps) {
   const { filters, records } = loaderData;

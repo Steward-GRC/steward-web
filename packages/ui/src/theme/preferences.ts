@@ -1,7 +1,11 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { DatePreference } from "@steward-web/i18n";
+
 /** The accessibility panel's display options. They save to this browser only. */
 export interface DisplayPreferences {
+  /** How dates are written; "system" is the app default. */
+  dateFormat: DatePreference;
   readableSpacing: boolean;
   reduceMotion: boolean;
   textSize: TextSize;
@@ -15,6 +19,7 @@ export type TextSize = "default" | "large" | "small" | "x-large" | "x-small";
 export type Theme = "dark" | "hc" | "light" | "system";
 
 export const DEFAULT_PREFERENCES: DisplayPreferences = {
+  dateFormat: "system",
   readableSpacing: false,
   reduceMotion: false,
   textSize: "default",
@@ -24,6 +29,7 @@ export const DEFAULT_PREFERENCES: DisplayPreferences = {
 
 export const PREFERENCES_STORAGE_KEY = "steward.display";
 
+const DATE_FORMATS = new Set<DatePreference>(["dmy", "iso", "mdy", "system"]);
 const THEMES = new Set<Theme>(["dark", "hc", "light", "system"]);
 const SIZES = new Set<TextSize>(["default", "large", "small", "x-large", "x-small"]);
 
@@ -33,6 +39,9 @@ export const parsePreferences = (raw: null | string): DisplayPreferences => {
   try {
     const value = JSON.parse(raw) as Partial<Record<keyof DisplayPreferences, unknown>>;
     return {
+      dateFormat: DATE_FORMATS.has(value.dateFormat as DatePreference)
+        ? (value.dateFormat as DatePreference)
+        : "system",
       readableSpacing: value.readableSpacing === true,
       reduceMotion: value.reduceMotion === true,
       textSize: SIZES.has(value.textSize as TextSize) ? (value.textSize as TextSize) : "default",

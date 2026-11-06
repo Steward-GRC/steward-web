@@ -38,6 +38,40 @@ const dateTimeFormat = (locale: string, options: Intl.DateTimeFormatOptions) =>
  */
 const dateLocale = (locale: string): string => (locale === "en" ? "en-GB" : locale);
 
+/**
+ * How a person wants dates written. "system" is the app's own default, the decided style;
+ * the rest override it for every date the app shows, through the formatters below.
+ */
+export type DatePreference = "dmy" | "iso" | "mdy" | "system";
+
+const DATE_PREFERENCES: ReadonlySet<string> = new Set(["dmy", "iso", "mdy", "system"]);
+
+let datePreference: DatePreference = "system";
+
+export const currentDatePreference = (): DatePreference => datePreference;
+
+/** Set by whatever holds the person's saved choice; anything unknown means the system default. */
+export const setDatePreference = (value: unknown): void => {
+  datePreference = DATE_PREFERENCES.has(String(value)) ? (value as DatePreference) : "system";
+};
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** The numeric, year-first form: "2026-10-02", the day-month "10-02", with the time "09:30". */
+const isoParts = (date: Date) => ({
+  day: pad(date.getDate()),
+  month: pad(date.getMonth() + 1),
+  time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+  year: String(date.getFullYear()),
+});
+
+/** The locale a date is written in once the person's choice is applied. */
+const choiceLocale = (locale: string): string => {
+  if (datePreference === "dmy") return "en-GB";
+  if (datePreference === "mdy") return "en-US";
+  return dateLocale(locale);
+};
+
 /** Accepts what the data layer actually holds: an ISO string, epoch ms, or Date.
  *  Returns undefined for null/blank/unparseable rather than "Invalid Date". */
 const toDate = (value: Date | null | number | string | undefined): Date | undefined => {
@@ -60,7 +94,11 @@ export const formatDayMonth = (
 ): string => {
   const date = toDate(value);
   if (!date) return fallback;
-  return dateTimeFormat(dateLocale(locale), { day: "numeric", month: "short" }).format(date);
+  if (datePreference === "iso") {
+    const parts = isoParts(date);
+    return `${parts.month}-${parts.day}`;
+  }
+  return dateTimeFormat(choiceLocale(locale), { day: "numeric", month: "short" }).format(date);
 };
 
 /** Medium date in the decided style, e.g. "24 Aug 2026"; other locales keep their own order. */
@@ -70,7 +108,11 @@ export const formatDate = (
 ): string => {
   const date = toDate(value);
   if (!date) return fallback;
-  return dateTimeFormat(dateLocale(locale), {
+  if (datePreference === "iso") {
+    const parts = isoParts(date);
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+  return dateTimeFormat(choiceLocale(locale), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -84,7 +126,11 @@ export const formatDateTime = (
 ): string => {
   const date = toDate(value);
   if (!date) return fallback;
-  return dateTimeFormat(dateLocale(locale), {
+  if (datePreference === "iso") {
+    const parts = isoParts(date);
+    return `${parts.year}-${parts.month}-${parts.day} ${parts.time}`;
+  }
+  return dateTimeFormat(choiceLocale(locale), {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
