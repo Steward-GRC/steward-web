@@ -19,7 +19,7 @@ import {
   getVersionDocument,
   listPolicies,
 } from "@steward-web/ui/domain/server";
-import { Check, ChevronLeft, Clock } from "lucide-react";
+import { Check, ChevronLeft } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { data, Link } from "react-router";
 
@@ -193,7 +193,6 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
 
   const { match, meId, policyVersionId, preview, review, task, workflow } = loaderData;
   const inReview = statusOf(workflow.status) === IN_REVIEW;
-  const stages = workflow.stageNames.length;
   const current = workflow.stageNames[workflow.currentStageIdx] ?? "";
   const eyebrow = [match.category, match.subcategory].filter(Boolean).join(" · ");
   const deciding = Boolean(task) && inReview && !decided;
@@ -272,18 +271,6 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           {match.number ? (
             <span className="font-mono text-[13px] text-muted">
               {match.version ? `${match.number} · v${match.version}` : match.number}
-            </span>
-          ) : null}
-          {inReview ? (
-            <span
-              className="inline-flex items-center gap-[5px] rounded-full px-[9px] py-[3px] text-xs font-semibold hc:outline hc:outline-1"
-              style={{
-                background: "var(--status-in-review-soft)",
-                color: "var(--status-in-review)",
-              }}
-            >
-              <Clock aria-hidden="true" className="size-3" />
-              {t("review.inReview", { n: workflow.currentStageIdx + 1, total: stages })}
             </span>
           ) : null}
           {task?.dueAt ? (

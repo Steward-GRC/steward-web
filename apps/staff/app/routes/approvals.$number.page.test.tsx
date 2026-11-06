@@ -133,7 +133,7 @@ describe("the review page's head and tabs (U25)", () => {
       "font-serif",
     );
     expect(screen.getByText("POL-EXPENSES-000002 · v3")).toHaveClass("font-mono");
-    expect(screen.getByText("in review · stage 2 of 2")).toBeVisible();
+    expect(screen.queryByText(/in review · stage/)).toBeNull();
     expect(
       screen.getByText(`Due ${formatDayMonth("2026-10-04T00:00:00Z")} · Final approval`),
     ).toBeVisible();
