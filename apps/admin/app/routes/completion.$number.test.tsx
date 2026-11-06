@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useLoaderData } from "react-router";
 import { describe, expect, it } from "vitest";
@@ -120,7 +120,10 @@ describe("Completion for one policy (A14)", () => {
     expect(bars[0]).toHaveAccessibleName(/: 2$/);
     expect(within(activity).getByRole("radio", { name: "30 days" })).toBeChecked();
     await userEvent.click(within(activity).getByRole("radio", { name: "90 days" }));
-    expect(await within(activity).findByRole("radio", { name: "90 days" })).toBeChecked();
+    // The radio is there at once; its checked state follows the navigation, so wait for it.
+    await waitFor(() =>
+      expect(within(activity).getByRole("radio", { name: "90 days" })).toBeChecked(),
+    );
   });
 
   it("says when activity isn't available, keeping the rest of the page", async () => {
@@ -171,7 +174,10 @@ describe("Completion for one policy (A14)", () => {
     expect(ninety).toHaveAttribute("tabindex", "-1");
     thirty.focus();
     await userEvent.keyboard("{ArrowRight}");
-    expect(await within(activity).findByRole("radio", { name: "90 days" })).toBeChecked();
+    // The radio is there at once; its checked state follows the navigation, so wait for it.
+    await waitFor(() =>
+      expect(within(activity).getByRole("radio", { name: "90 days" })).toBeChecked(),
+    );
     expect(within(activity).getByRole("radio", { name: "90 days" })).toHaveFocus();
   });
 
