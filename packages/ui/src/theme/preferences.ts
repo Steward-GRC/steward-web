@@ -9,7 +9,7 @@ export interface DisplayPreferences {
   underlineLinks: boolean;
 }
 
-export type TextSize = "default" | "large" | "small" | "x-large";
+export type TextSize = "default" | "large" | "small" | "x-large" | "x-small";
 
 /** The display theme: follow the system, or force light, dark or high contrast. */
 export type Theme = "dark" | "hc" | "light" | "system";
@@ -25,7 +25,7 @@ export const DEFAULT_PREFERENCES: DisplayPreferences = {
 export const PREFERENCES_STORAGE_KEY = "steward.display";
 
 const THEMES = new Set<Theme>(["dark", "hc", "light", "system"]);
-const SIZES = new Set<TextSize>(["default", "large", "small", "x-large"]);
+const SIZES = new Set<TextSize>(["default", "large", "small", "x-large", "x-small"]);
 
 /** Read the saved preferences, ignoring anything malformed or unknown. */
 export const parsePreferences = (raw: null | string): DisplayPreferences => {
@@ -63,4 +63,4 @@ export const applyPreferences = (root: HTMLElement, preferences: DisplayPreferen
  * A tiny script for the document head that applies the saved preferences before the first
  * paint, so a dark-theme reader never sees a light flash.
  */
-export const PREFERENCES_BOOT_SCRIPT = `(function(){try{var p=JSON.parse(localStorage.getItem(${JSON.stringify(PREFERENCES_STORAGE_KEY)})||"{}");var r=document.documentElement;var t=["dark","hc","light","system"].indexOf(p.theme)>=0?p.theme:"system";r.classList.add(t);if(p.readableSpacing===true)r.setAttribute("data-readable-spacing","");if(p.reduceMotion===true)r.setAttribute("data-reduce-motion","");if(p.underlineLinks===true)r.setAttribute("data-underline-links","");if(["small","large","x-large"].indexOf(p.textSize)>=0)r.setAttribute("data-text-size",p.textSize);}catch(e){document.documentElement.classList.add("system");}})();`;
+export const PREFERENCES_BOOT_SCRIPT = `(function(){try{var p=JSON.parse(localStorage.getItem(${JSON.stringify(PREFERENCES_STORAGE_KEY)})||"{}");var r=document.documentElement;var t=["dark","hc","light","system"].indexOf(p.theme)>=0?p.theme:"system";r.classList.add(t);if(p.readableSpacing===true)r.setAttribute("data-readable-spacing","");if(p.reduceMotion===true)r.setAttribute("data-reduce-motion","");if(p.underlineLinks===true)r.setAttribute("data-underline-links","");if(["x-small","small","large","x-large"].indexOf(p.textSize)>=0)r.setAttribute("data-text-size",p.textSize);}catch(e){document.documentElement.classList.add("system");}})();`;

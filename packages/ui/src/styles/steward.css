@@ -819,6 +819,9 @@ SPDX-License-Identifier: Apache-2.0
 }
 
 /* Text size from the accessibility panel. */
+html[data-text-size="x-small"] {
+  font-size: 87.5%;
+}
 html[data-text-size="small"] {
   font-size: 93.75%;
 }

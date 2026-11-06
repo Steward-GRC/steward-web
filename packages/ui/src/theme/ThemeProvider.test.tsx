@@ -54,6 +54,7 @@ describe("ThemeProvider", () => {
 describe("parsePreferences", () => {
   it("ignores junk", () => {
     expect(parsePreferences("not json").theme).toBe("system");
+    expect(parsePreferences(JSON.stringify({ textSize: "x-small" })).textSize).toBe("x-small");
     expect(parsePreferences(JSON.stringify({ textSize: "huge", theme: "neon" }))).toMatchObject({
       textSize: "default",
       theme: "system",
