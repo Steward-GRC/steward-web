@@ -30,7 +30,14 @@
       "large": "Large",
       "small": "Small",
       "title": "Text size",
-      "x-large": "X-Large"
+      "x-large": "X-Large",
+      "x-small": "X-Small"
+    },
+    "theme": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System",
+      "title": "Theme"
     },
     "title": "Accessibility options",
     "underlineLinks": "Underline links"

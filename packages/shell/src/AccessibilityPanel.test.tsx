@@ -54,12 +54,41 @@ describe("Accessibility options (H12)", () => {
     expect(screen.getByText("Preferences save to this browser.")).toBeVisible();
   });
 
-  it("sizes the text: Small, Default, Large or X-Large", async () => {
+  it("sizes the text: X-Small, Small, Default, Large or X-Large", async () => {
     openPanel();
     const sizes = screen.getByRole("radiogroup", { name: "Text size" });
+    expect(
+      within(sizes)
+        .getAllByRole("radio")
+        .map((radio) => radio.getAttribute("value")),
+    ).toEqual(["x-small", "small", "default", "large", "x-large"]);
     expect(within(sizes).getByRole("radio", { name: "Default" })).toBeChecked();
     await userEvent.click(within(sizes).getByRole("radio", { name: "Large" }));
     expect(html().dataset.textSize).toBe("large");
+    await userEvent.click(within(sizes).getByRole("radio", { name: "X-Small" }));
+    expect(html().dataset.textSize).toBe("x-small");
+  });
+
+  it("picks the theme: System, Light or Dark", async () => {
+    openPanel();
+    const themes = screen.getByRole("radiogroup", { name: "Theme" });
+    expect(within(themes).getByRole("radio", { name: "System" })).toBeChecked();
+    await userEvent.click(within(themes).getByRole("radio", { name: "Dark" }));
+    expect(html()).toHaveClass("dark");
+    await userEvent.click(within(themes).getByRole("radio", { name: "Light" }));
+    expect(html()).toHaveClass("light");
+    expect(html()).not.toHaveClass("dark");
+  });
+
+  it("leaves no theme picked while high contrast is on, and a pick turns it off", async () => {
+    openPanel();
+    await userEvent.click(screen.getByRole("switch", { name: "High contrast" }));
+    const themes = screen.getByRole("radiogroup", { name: "Theme" });
+    expect(within(themes).queryByRole("radio", { checked: true })).toBeNull();
+    await userEvent.click(within(themes).getByRole("radio", { name: "Dark" }));
+    expect(html()).toHaveClass("dark");
+    expect(html()).not.toHaveClass("hc");
+    expect(screen.getByRole("switch", { name: "High contrast" })).not.toBeChecked();
   });
 
   it("switches high contrast, reduced motion, readable spacing and underlined links", async () => {

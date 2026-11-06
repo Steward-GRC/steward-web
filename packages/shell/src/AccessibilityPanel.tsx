@@ -1,11 +1,15 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { cn, Switch, type TextSize, usePreferences } from "@steward-web/ui";
+import { cn, Switch, type TextSize, type Theme, usePreferences } from "@steward-web/ui";
 import { PersonStanding, X } from "lucide-react";
 import { type ReactNode, useEffect, useId, useState } from "react";
 
+/** The theme choices the panel offers; high contrast stays its own switch. */
+const THEMES: readonly Extract<Theme, "dark" | "light" | "system">[] = ["system", "light", "dark"];
+
 const SIZES: readonly { size: TextSize; text: string }[] = [
+  { size: "x-small", text: "text-[10px]" },
   { size: "small", text: "text-xs" },
   { size: "default", text: "text-sm" },
   { size: "large", text: "text-base" },
@@ -142,6 +146,7 @@ export const AccessibilityPanel = ({ onClose }: { onClose?: () => void }) => {
   const { preferences, reset, update } = usePreferences();
   const titleId = useId();
   const sizeName = useId();
+  const themeName = useId();
   return (
     <section aria-labelledby={titleId} className="text-base text-ink">
       <div className="flex items-center gap-2.5 border-b border-border px-[18px] py-4">
@@ -167,7 +172,7 @@ export const AccessibilityPanel = ({ onClose }: { onClose?: () => void }) => {
           <b className="text-[13px]">{t("accessibility.textSize.title")}</b>
           <div
             aria-label={t("accessibility.textSize.title")}
-            className="grid grid-cols-4 gap-0.5 rounded-lg bg-sunken p-[3px]"
+            className="grid grid-cols-5 gap-0.5 rounded-lg bg-sunken p-[3px]"
             role="radiogroup"
           >
             {SIZES.map(({ size, text }) => (
@@ -189,6 +194,35 @@ export const AccessibilityPanel = ({ onClose }: { onClose?: () => void }) => {
                   value={size}
                 />
                 {t(`accessibility.textSize.${size}`)}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <b className="text-[13px]">{t("accessibility.theme.title")}</b>
+          <div
+            aria-label={t("accessibility.theme.title")}
+            className="grid grid-cols-3 gap-0.5 rounded-lg bg-sunken p-[3px]"
+            role="radiogroup"
+          >
+            {THEMES.map((theme) => (
+              <label
+                className={cn(
+                  "flex h-[34px] cursor-pointer items-center justify-center rounded-md px-1 text-sm text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus",
+                  preferences.theme === theme &&
+                    "bg-surface font-semibold shadow-[var(--shadow-1)] hc:outline hc:outline-1",
+                )}
+                key={theme}
+              >
+                <input
+                  checked={preferences.theme === theme}
+                  className="sr-only"
+                  name={themeName}
+                  onChange={() => update({ theme })}
+                  type="radio"
+                  value={theme}
+                />
+                {t(`accessibility.theme.${theme}`)}
               </label>
             ))}
           </div>
