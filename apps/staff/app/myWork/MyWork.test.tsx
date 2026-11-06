@@ -202,7 +202,22 @@ describe("U1: My work for an author and approver", () => {
       "href",
       "/acknowledge",
     );
-    expect(screen.getByTestId("home-lists")).not.toHaveClass("lg:grid-cols-3");
+    expect(screen.getByTestId("home-lists")).toHaveClass("md:grid-cols-3");
+  });
+
+  it("shares the row equally: thirds for three boxes, halves for two, stacked when narrow (bug log 61)", async () => {
+    inRouter(<MyWork data={bob} />);
+    const three = await screen.findByTestId("home-lists");
+    expect(three).toHaveClass("grid", "md:grid-cols-3");
+    expect(three).not.toHaveClass("grid-cols-2");
+  });
+
+  it("gives two boxes 50/50 when access hides the third", async () => {
+    inRouter(<MyWork data={{ ...bob, approvals: null }} />);
+    const two = await screen.findByTestId("home-lists");
+    expect(two).toHaveClass("md:grid-cols-2");
+    expect(two).not.toHaveClass("md:grid-cols-3");
+    expect(screen.queryByRole("region", { name: "Awaiting my approval" })).toBeNull();
   });
 
   it("doesn't link to the full list when everything already shows", async () => {

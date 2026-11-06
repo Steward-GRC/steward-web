@@ -5,6 +5,7 @@
 import { PERMISSIONS } from "@steward-web/auth";
 import { requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
+import { useRegisterCreateActions } from "@steward-web/shell";
 import { EmptyState, ResponsiveTable } from "@steward-web/ui";
 import { Link } from "react-router";
 
@@ -34,6 +35,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export default function Templates({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("authoring");
+  useRegisterCreateActions("staff", ["policy", "procedure"]);
   const { templates } = loaderData;
   return (
     <div className="flex flex-col gap-3 px-4 pt-6 pb-8 text-ink sm:px-8">

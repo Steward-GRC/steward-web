@@ -140,5 +140,19 @@ describe("the editor's selection colour (#72)", () => {
 
   it("keeps a visible outline on selected cards in high contrast, where shadows are off", () => {
     expect(css).toMatch(/\.hc \.koenig-lexical[^{]*\{[^}]*outline/);
+
+describe("the text on amber (bug log 62)", () => {
+  const systemDark = /\.system:not\(\.hc\)\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+  it.each([
+    [":root", rule(":root"), 4.5],
+    [".dark", rule(".dark"), 4.5],
+    [".hc", rule(".hc"), 7],
+    [".system:not(.hc)", systemDark, 4.5],
+  ])("passes contrast on the amber fill in %s and is not black", (_name, body, least) => {
+    const get = (name: string) =>
+      new RegExp(String.raw`--${name}:\s*(#[\da-f]{6})`).exec(body)?.[1] ?? "";
+    expect(get("on-accent")).not.toBe("");
+    expect(ratio(get("on-accent"), get("accent"))).toBeGreaterThanOrEqual(least);
+    expect(luminance(get("on-accent"))).toBeGreaterThan(0.01);
   });
 });

@@ -37,4 +37,10 @@ describe("the shell's own command bar actions", () => {
     await userEvent.keyboard("{Shift>}I{/Shift}");
     expect(screen.getByText("at /policies")).toBeInTheDocument();
   });
+
+  it("opens the keyboard shortcuts page on Shift+?, signed in or not", async () => {
+    mount(false);
+    await userEvent.keyboard("?");
+    expect(await screen.findByText("at /shortcuts")).toBeInTheDocument();
+  });
 });

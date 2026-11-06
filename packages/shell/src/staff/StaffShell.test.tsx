@@ -185,7 +185,7 @@ describe("StaffShell sidebar (H1)", () => {
   it("shows the Approvals count as an amber pill so it stands out", () => {
     renderShell(alice, { counts: { approvals: 2 } });
     const link = within(sidebar()).getByRole("link", { name: "Approvals, 2 waiting" });
-    expect(within(link).getByText("2")).toHaveClass("bg-accent", "text-[#261b25]");
+    expect(within(link).getByText("2")).toHaveClass("bg-accent", "text-on-accent");
   });
 
   it("counts pending approvals on Approvals", () => {

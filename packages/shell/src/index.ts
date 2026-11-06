@@ -67,3 +67,4 @@ export {
   useAccessRevalidation,
 } from "./useAccessRevalidation";
 export { useLiveRevalidation } from "./useLiveRevalidation";
+export { type NavAction, useRegisterCreateActions, useRegisterNavActions } from "./useNavActions";

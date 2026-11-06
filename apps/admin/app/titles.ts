@@ -6,6 +6,7 @@ import { ADMIN_COMING_SOON_PATHS } from "@steward-web/shell/admin-coming-soon";
 export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/access": "shell:titles.admin.access",
   "routes/access.$categoryId": "shell:titles.admin.access",
+  "routes/shortcuts": "shell:titles.admin.shortcuts",
   "routes/audit": "shell:titles.admin.audit",
   "routes/completion": "shell:titles.admin.completion",
   "routes/completion.$number": "shell:titles.admin.policyCompletion",

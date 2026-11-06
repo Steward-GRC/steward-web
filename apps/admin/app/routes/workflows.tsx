@@ -3,6 +3,7 @@
 import type { WorkflowDef } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
+import { useRegisterCreateActions } from "@steward-web/shell";
 import { Badge, Button, EmptyState } from "@steward-web/ui";
 import { AlertTriangle } from "lucide-react";
 import { useId } from "react";
@@ -103,6 +104,7 @@ const Site = ({ name, workflows }: { name: null | string; workflows: readonly Wo
 /** Workflows (A8): approval workflows as cards grouped by the site whose categories use them. */
 export default function Workflows({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
+  useRegisterCreateActions("admin", ["workflow"]);
   const { sites } = loaderData;
   return (
     <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">

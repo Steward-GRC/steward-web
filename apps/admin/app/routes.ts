@@ -62,6 +62,7 @@ export default [
   route("resources/sections", "routes/resources.sections.tsx"),
   route("resources/user-search", "routes/resources.user-search.tsx"),
   route("audit", "routes/audit.tsx"),
+  route("shortcuts", "routes/shortcuts.tsx"),
   // The shell's designed destinations that aren't built yet (H2, H14): each answers "Coming
   // soon" until its feature PR replaces the route.
   ...ADMIN_COMING_SOON_PATHS.map((path) =>

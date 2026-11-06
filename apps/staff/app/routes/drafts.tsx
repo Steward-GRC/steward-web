@@ -3,6 +3,7 @@
 import { PERMISSIONS } from "@steward-web/auth";
 import { requireRoleFromRequest } from "@steward-web/auth/server";
 import { formatDate, useTranslation } from "@steward-web/i18n";
+import { useRegisterCreateActions } from "@steward-web/shell";
 import { Button, Card, CardBody, Input, Table, TD, TH, THead } from "@steward-web/ui";
 import { draftPath } from "@steward-web/ui/domain";
 import { useState } from "react";
@@ -21,6 +22,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export default function Drafts({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("authoring");
+  useRegisterCreateActions("staff", ["policy", "procedure", "fromTemplate"]);
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState(false);
 

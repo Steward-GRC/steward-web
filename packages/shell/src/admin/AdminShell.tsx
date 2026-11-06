@@ -24,6 +24,7 @@ import { adminCreates } from "../createActions";
 import { EnvironmentBanner } from "../EnvironmentBanner";
 import { MainContent, SkipLink } from "../MainContent";
 import { SearchField } from "../SearchField";
+import { ShellActions } from "../ShellActions";
 import { ShellFooter } from "../ShellFooter";
 import { SiteBanners } from "../SiteBanners";
 import { AdminCategoryTree, type CategoryNode } from "./AdminCategoryTree";
@@ -318,7 +319,7 @@ const AdminDrawer = ({
       <SheetContent className="w-[318px] max-w-[calc(100vw-48px)]" title={t("admin.menuTitle")}>
         <div className="flex h-[57px] flex-none items-center gap-2 border-b border-border pr-1.5 pl-4">
           <Lockup fontSize={19} size={24} />
-          <span className="rounded-sm bg-[#e2a336] px-2 py-[3px] text-2xs font-semibold tracking-[.04em] text-[#261b25]">
+          <span className="rounded-sm bg-accent px-2 py-[3px] text-2xs font-semibold tracking-[.04em] text-on-accent">
             {t("admin.tag")}
           </span>
           <DialogClose
@@ -406,6 +407,7 @@ export const AdminShell = ({
 
   return (
     <CommandActionsProvider>
+      <ShellActions inbox={false} />
       <div className="flex min-h-dvh flex-col" data-testid="shell-frame" style={style}>
         <SkipLink />
         <div className="sticky top-0 z-[var(--z-header)]">
@@ -423,7 +425,7 @@ export const AdminShell = ({
             <Link className="flex text-[#f6eef4] hover:text-[#f6eef4]" to="/">
               <Lockup tone="on-dark" />
             </Link>
-            <span className="rounded-sm bg-[#e2a336] px-2 py-[3px] text-2xs font-semibold tracking-[.04em] text-[#261b25]">
+            <span className="rounded-sm bg-accent px-2 py-[3px] text-2xs font-semibold tracking-[.04em] text-on-accent">
               {t("admin.tag")}
             </span>
             {signedIn ? (
