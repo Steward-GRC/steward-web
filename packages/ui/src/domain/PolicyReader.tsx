@@ -19,6 +19,7 @@ import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
 import { CountBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Switch } from "#ui/components/Controls";
+import { CopyId } from "#ui/components/CopyId";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/Display";
 import { Field } from "#ui/components/Field";
 import { Textarea } from "#ui/components/Input";
@@ -563,9 +564,9 @@ export const PolicyReader = ({
             {detail.title}
           </h1>
           <span className="flex flex-wrap items-center gap-2.5">
-            <span className="font-mono text-[13px] text-muted">
+            <CopyId id={detail.number}>
               {t("reader.versionLine", { number: detail.number, version: detail.version })}
-            </span>
+            </CopyId>
             {detail.sensitivity === Sensitivity.Sensitive ? (
               <span
                 className="inline-flex items-center gap-[5px] rounded-full px-2 py-0.5 text-xs font-semibold hc:outline hc:outline-1"
