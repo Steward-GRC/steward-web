@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useLoaderData } from "react-router";
 import { describe, expect, it } from "vitest";
 
@@ -95,5 +96,26 @@ describe("Template detail (U23)", () => {
   it("says when a template has no sections yet", async () => {
     show("/templates/t1", { ...detail, sections: [] });
     expect(await screen.findByText("This template has no sections yet.")).toBeInTheDocument();
+  });
+
+  it("sorts from the column headers, by sections as numbers", async () => {
+    show("/templates", {
+      templates: [
+        { id: "t1", name: "Standard Policy", sections: 10, versionNo: 2 },
+        { id: "t2", name: "Brief", sections: 9, versionNo: 1 },
+        { id: "t3", name: "Annex", sections: 100, versionNo: null },
+      ],
+    });
+    const sections = await screen.findByRole("columnheader", { name: "Sections" });
+    await userEvent.click(within(sections).getByRole("button"));
+    expect(sections).toHaveAttribute("aria-sort", "ascending");
+    const names = () =>
+      within(screen.getByRole("table"))
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => within(row).getAllByRole("cell")[0]?.textContent);
+    expect(names()).toEqual(["Brief", "Standard Policy", "Annex"]);
+    await userEvent.click(within(sections).getByRole("button"));
+    expect(names()).toEqual(["Annex", "Standard Policy", "Brief"]);
   });
 });
