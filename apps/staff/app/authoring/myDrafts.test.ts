@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { DRAFTS_COLLAPSED_CAP, filterDrafts, sortDraftsByRecent, visibleDrafts } from "./myDrafts";
+import {
+  DRAFTS_COLLAPSED_CAP,
+  filterDrafts,
+  mergeWorkingDrafts,
+  sortDraftsByRecent,
+  visibleDrafts,
+} from "./myDrafts";
 
 const drafts = [
   { number: "POL-002", title: "Acceptable Use", updated: "2026-09-01T00:00:00Z" },
@@ -59,5 +65,33 @@ describe("visibleDrafts", () => {
     }));
     expect(visibleDrafts(many, false)).toHaveLength(DRAFTS_COLLAPSED_CAP);
     expect(visibleDrafts(many, true)).toHaveLength(10);
+  });
+});
+
+const row = (id: string, over: Record<string, unknown> = {}) =>
+  ({
+    currentDraftVersionId: `v-${id}`,
+    id,
+    number: `POL-${id}`,
+    viewerCan: { edit: true },
+    ...over,
+  }) as never;
+
+describe("mergeWorkingDrafts (#75)", () => {
+  it("adds the library's drafts the person can edit to the ones they own, once each", () => {
+    const merged = mergeWorkingDrafts(
+      [row("1")],
+      [
+        row("1"),
+        row("2"),
+        row("3", { currentDraftVersionId: null }),
+        row("4", { viewerCan: { edit: false } }),
+      ],
+    );
+    expect(merged.map((p: { id: string }) => p.id)).toEqual(["1", "2"]);
+  });
+
+  it("keeps the owned drafts when the library could not be read", () => {
+    expect(mergeWorkingDrafts([row("1")], []).map((p: { id: string }) => p.id)).toEqual(["1"]);
   });
 });

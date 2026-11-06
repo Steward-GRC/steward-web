@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Policy } from "@steward-web/api-client";
+import type { Policy, PolicyDetail } from "@steward-web/api-client";
 
 import { DocumentType, PolicyStatus } from "@steward-web/api-client";
 
@@ -59,6 +59,14 @@ const STATUS_TO_DOCUMENT_STATUS: Record<PolicyStatus, DocumentStatus | null> = {
  */
 export const documentStatusOf = (status: PolicyStatus): DocumentStatus | null =>
   STATUS_TO_DOCUMENT_STATUS[status];
+
+/**
+ * True when the document has a saved working draft: a newer revision being drafted beside the
+ * published version, or a document that has only ever been a draft. One draft is shared by
+ * everyone who can edit the document.
+ */
+export const hasWorkingDraft = (detail: Pick<PolicyDetail, "revision" | "status">): boolean =>
+  detail.revision?.status === PolicyStatus.Draft || detail.status === PolicyStatus.Draft;
 
 /** True when a row is a Procedure: drives the PRC- number label and ack-UI suppression. */
 export const isProcedure = (policy: Pick<Policy, "documentType">): boolean =>

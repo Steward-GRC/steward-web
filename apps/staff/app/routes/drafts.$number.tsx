@@ -16,7 +16,7 @@ import {
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, scrollBehavior, StatusPill } from "@steward-web/ui";
-import { draftPath } from "@steward-web/ui/domain";
+import { draftPath, RecordBreadcrumb } from "@steward-web/ui/domain";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, redirect, useFetcher, useLocation, useNavigate } from "react-router";
 
@@ -481,7 +481,13 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
             />
           </>
         }
-        eyebrow={[policy.category, policy.subcategory].filter(Boolean).join(" · ")}
+        breadcrumb={
+          <RecordBreadcrumb
+            page={t("editor.draftWord")}
+            published={!firstPublish}
+            record={policy}
+          />
+        }
         meta={[policy.number, firstPublish ? "v1.0.0" : null, t("editor.draftWord")]
           .filter(Boolean)
           .join(" · ")}

@@ -3,6 +3,7 @@
 import { useTranslation } from "@steward-web/i18n";
 import { ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
+import { Link } from "react-router";
 
 export interface Crumb {
   href?: string;
@@ -21,9 +22,9 @@ export const Breadcrumb = ({ items }: { items: Crumb[] }) => {
             <Fragment key={index}>
               <li>
                 {item.href && !last ? (
-                  <a className="text-muted hover:text-ink" href={item.href}>
+                  <Link className="text-muted hover:text-ink hover:underline" to={item.href}>
                     {item.label}
-                  </a>
+                  </Link>
                 ) : (
                   <span aria-current={last ? "page" : undefined} className={last ? "text-ink" : ""}>
                     {item.label}

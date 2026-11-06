@@ -121,17 +121,17 @@ export const Presence = ({
   );
 };
 
-/** The page's top (U11): eyebrow, serif title, number and version, Draft and the save state. */
+/** The page's top (U11): breadcrumb, serif title, number and version, Draft and the save state. */
 export const EditorHeader = ({
   actions,
-  eyebrow,
+  breadcrumb,
   meta,
   presence,
   saveState,
   title,
 }: {
   actions: ReactNode;
-  eyebrow: string;
+  breadcrumb: ReactNode;
   meta: string;
   presence: ReactNode;
   saveState: SaveStateKind;
@@ -142,7 +142,7 @@ export const EditorHeader = ({
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-wrap items-start gap-3.5">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-xs font-medium text-muted">{eyebrow}</span>
+          {breadcrumb}
           <h1 className="font-serif text-[30px] leading-[38px] font-semibold">{title}</h1>
           <span className="flex flex-wrap items-center gap-2.5">
             <span className="font-mono text-sm text-muted">{meta}</span>

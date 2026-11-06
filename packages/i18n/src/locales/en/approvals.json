@@ -139,6 +139,7 @@
   },
   "review": {
     "back": "Back to approvals",
+    "crumb": "Approval",
     "decided": {
       "approved": {
         "body": "Your decision and comment are recorded, and the run moves on.",

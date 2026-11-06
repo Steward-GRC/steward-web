@@ -8,6 +8,7 @@ import { draftPath, recordPath } from "@steward-web/ui/domain";
 import { buildInboxRow } from "../approvals/approvalRows";
 import { listPendingTasks } from "../approvals/approvals.server";
 import { approvalHrefOf } from "../approvals/inbox";
+import { workingDraftsFor } from "../authoring/authoring.server";
 
 /** The library overview on My work (U1): counts across the policies the person can see. */
 export interface LibraryOverview {
@@ -103,7 +104,7 @@ export const myWorkData = async (request: Request, identity: Identity): Promise<
   const [ack, obligations, drafts, tasks, catalog] = await Promise.all([
     orNull(edge.myAckSummary(cookie)),
     orNull(obligationRows(request)),
-    author ? orNull(edge.myDraftPolicies(cookie)) : Promise.resolve(null),
+    author ? orNull(workingDraftsFor(cookie)) : Promise.resolve(null),
     approver ? orNull(listPendingTasks(request)) : Promise.resolve(null),
     author || approver ? orNull(edge.policies(DocumentType.Policy, cookie)) : Promise.resolve(null),
   ]);

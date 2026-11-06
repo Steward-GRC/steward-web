@@ -130,10 +130,17 @@ const renderAt = (
 };
 
 describe("PolicyReader", () => {
-  it("heads the page with the back link, eyebrow, serif title and number", () => {
+  it("heads the page with the back link, the breadcrumb, serif title and number", () => {
     renderAt(baseDetail);
-    expect(screen.getByRole("link", { name: "Policies" })).toHaveAttribute("href", "/policies");
-    expect(screen.getByText("Finance · Reimbursement")).toBeInTheDocument();
+    const crumbs = within(screen.getByRole("navigation", { name: "Breadcrumb" }));
+    expect(crumbs.getAllByRole("link").map((a) => [a.textContent, a.getAttribute("href")])).toEqual(
+      [
+        ["Policies", "/policies"],
+        ["Finance", "/policies?category=Finance"],
+        ["Reimbursement", "/policies?category=Finance&subcategory=Reimbursement"],
+      ],
+    );
+    expect(crumbs.getByText("Expense Claims")).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { level: 1, name: "Expense Claims" })).toHaveClass(
       "font-serif",
     );
@@ -813,12 +820,12 @@ describe("the reader on the command bar (bug log 26)", () => {
 
 describe("Edit on the reader (bug log 59)", () => {
   const posted = vi.fn();
-  const mountEditable = (editAction?: string) => {
+  const mountEditable = (editAction?: string, detail: PolicyDetail = baseDetail) => {
     const Stub = createRoutesStub([
       {
         Component: () => (
           <CommandActionsProvider>
-            <PolicyReader detail={baseDetail} editAction={editAction} viewerName="Bob Author" />
+            <PolicyReader detail={detail} editAction={editAction} viewerName="Bob Author" />
             <Offered />
           </CommandActionsProvider>
         ),
@@ -830,7 +837,7 @@ describe("Edit on the reader (bug log 59)", () => {
           return null;
         },
         Component: () => <p>Editor</p>,
-        path: "/drafts/:policyId",
+        path: "/drafts/:number",
       },
     ]);
     render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
@@ -855,5 +862,47 @@ describe("Edit on the reader (bug log 59)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Actions" }));
     await screen.findByRole("menu");
     expect(screen.queryByRole("menuitem", { name: "Edit" })).toBeNull();
+  });
+
+  describe("with a saved draft (#75)", () => {
+    const withDraft = {
+      ...baseDetail,
+      revision: { status: PolicyStatus.Draft, version: "3.0.0" },
+    };
+
+    it("says so in a banner with Continue editing, for someone who can edit", async () => {
+      mountEditable("/drafts/POL-FINANCE-001", withDraft);
+      const banner = screen.getByRole("note");
+      expect(within(banner).getByText("This policy has a saved draft")).toBeInTheDocument();
+      await userEvent.click(within(banner).getByRole("button", { name: "Continue editing" }));
+      await waitFor(() => expect(posted).toHaveBeenCalled());
+      expect((posted.mock.calls.at(-1)![0] as FormData).get("intent")).toBe("edit");
+    });
+
+    it("turns Edit into Continue draft in the Actions menu and on the command bar", async () => {
+      mountEditable("/drafts/POL-FINANCE-001", withDraft);
+      expect(offered()).toContain("Continue draft");
+      expect(offered()).not.toContain("Edit");
+      await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+      expect(await screen.findByRole("menuitem", { name: "Continue draft" })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: "Edit" })).toBeNull();
+    });
+
+    it("names a procedure as a procedure", () => {
+      mountEditable("/drafts/PRC-A-000001", { ...withDraft, documentType: DocumentType.Procedure });
+      expect(screen.getByText("This procedure has a saved draft")).toBeInTheDocument();
+    });
+
+    it("keeps the plain notice, and no button, for someone who can't edit", () => {
+      mountEditable(undefined, withDraft);
+      expect(screen.getByText("A draft revision is in progress")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Continue editing" })).toBeNull();
+    });
+
+    it("keeps Edit when there is no draft", async () => {
+      mountEditable("/drafts/POL-FINANCE-001");
+      expect(offered()).toContain("Edit");
+      expect(screen.queryByRole("button", { name: "Continue editing" })).toBeNull();
+    });
   });
 });

@@ -28,6 +28,7 @@ export {
   documentTypeBasePath,
   documentTypeCopy,
   type DocumentTypeCopy,
+  hasWorkingDraft,
   isProcedure,
   type Policy,
   policyPath,
@@ -65,6 +66,7 @@ export {
   ReassignDialog,
   type ReassignDialogProps,
 } from "./ReassignDialog";
+export { RecordBreadcrumb, recordCrumbs } from "./RecordBreadcrumb";
 export {
   approvalPath,
   draftPath,

@@ -38,6 +38,14 @@ describe("the shared tab strip", () => {
     expect(tab).toHaveClass("transition-shadow", "motion-reduce:transition-none");
   });
 
+  it("keeps the underline inside the strip, which clips anything past its bottom edge (#64)", () => {
+    strip();
+    // The strip scrolls sideways and so clips vertically; a tab pulled down over the strip's
+    // border (a negative bottom margin) had the foot of its underline cut off.
+    expect(screen.getByRole("tablist")).toHaveClass("overflow-y-hidden");
+    for (const tab of screen.getAllByRole("tab")) expect(tab.className).not.toMatch(/-m[by]?-/);
+  });
+
   it("shows a count as an amber badge, and only when given one", () => {
     strip();
     expect(screen.getByText("3")).toHaveClass("bg-accent");
@@ -95,6 +103,7 @@ describe("the shared tab links", () => {
     expect(screen.getByRole("link", { name: "Name" }).className).toContain(
       "shadow-[inset_0_-3px_var(--accent)]",
     );
+    expect(screen.getByRole("link", { name: "Name" }).className).not.toMatch(/-m[by]?-/);
     expect(screen.getByRole("link", { name: "Other" }).className).not.toContain(
       "shadow-[inset_0_-3px_var(--accent)]",
     );

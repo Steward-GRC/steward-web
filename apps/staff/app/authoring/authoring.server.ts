@@ -4,6 +4,7 @@ import {
   type Appendix,
   ApprovalStatus,
   type CreatePolicyInput,
+  DocumentType,
   type Group,
   type Policy,
   type PolicyVersion,
@@ -11,6 +12,8 @@ import {
   type TemplateVersion,
 } from "@steward-web/api-client";
 import edge from "@steward-web/edge.server";
+
+import { mergeWorkingDrafts } from "./myDrafts";
 
 const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
 
@@ -28,9 +31,22 @@ export const getLatestTemplateVersion = (
   templateId: string,
 ): Promise<null | TemplateVersion> => edge.latestTemplateVersion(templateId, cookieOf(request));
 
-/** The calling author's own policies with a working draft. */
+/**
+ * The documents with a saved working draft that this person can pick up: the ones they own
+ * and every library document with a draft they can edit (the draft is shared, #75). A library
+ * that can't be read leaves just the owned ones.
+ */
+export const workingDraftsFor = async (cookie?: string): Promise<readonly Policy[]> => {
+  const [owned, policies, procedures] = await Promise.all([
+    edge.myDraftPolicies(cookie),
+    edge.policies(DocumentType.Policy, cookie).catch(() => []),
+    edge.policies(DocumentType.Procedure, cookie).catch(() => []),
+  ]);
+  return mergeWorkingDrafts(owned, [...policies, ...procedures]);
+};
+
 export const listMyDraftPolicies = (request: Request): Promise<readonly Policy[]> =>
-  edge.myDraftPolicies(cookieOf(request));
+  workingDraftsFor(cookieOf(request));
 
 /** One policy by backend id, for the editor route. */
 export const getPolicy = (request: Request, id: string): Promise<null | Policy> =>

@@ -877,6 +877,13 @@ html[data-tab-transition="smooth"] .stw-tab {
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* High contrast removes every box-shadow, and the active tab's underline is one: draw it as a
+   border there so the open tab still shows (#64). */
+.hc .stw-tab[data-state="active"],
+.hc .stw-tab[aria-current="page"] {
+  border-bottom: 3px solid var(--accent);
+}
+
 /* The print layout (R1). The reader draws it into the body only while the browser prints;
    then it is the only thing on the page, and it is always light. */
 .steward-print {
