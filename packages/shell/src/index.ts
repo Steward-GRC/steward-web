@@ -9,6 +9,7 @@ export {
   auditChainRange,
   displayLabel,
   isReportingRecord,
+  KNOWN_AUDIT_ACTIONS,
   shortId,
 } from "./auditFormat";
 export { ComingSoonPage } from "./ComingSoonPage";

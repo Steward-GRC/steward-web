@@ -113,7 +113,7 @@ export default function Overview({ loaderData }: Route.ComponentProps) {
               ))}
               {activityMore ? (
                 <li className="px-3.5 py-[9px] text-sm">
-                  <Link to={auditResumePath({}, activity.at(-1)!)}>
+                  <Link to={auditResumePath({ actions: [] }, activity.at(-1)!)}>
                     {t("overview.activity.seeMore")}
                   </Link>
                 </li>

@@ -10,7 +10,7 @@ import { useHref } from "react-router";
  * matches on the server and caps the answer. The function is stable per kind, so the picker's
  * debounce is not restarted by a re-render.
  */
-export const useSubjectSearch = (kind: "group" | "user") => {
+export const useSubjectSearch = (kind: "category" | "document" | "group" | "user") => {
   const path = useHref("/resources/subject-search");
   return useCallback(
     async (query: string): Promise<PickerOption[]> => {

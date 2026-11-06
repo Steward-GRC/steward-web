@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { PickerOption } from "@steward-web/ui";
 
+import { DocumentType } from "@steward-web/api-client";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
 
+import { fetchAllGroups, orderedWithPaths } from "../categories/categories.server";
 import { listPlatformGroups } from "../groups/platformGroups.server";
 
 /** The most results a search sends back; the picker says to keep typing past it. */
@@ -15,7 +17,44 @@ export const SUBJECT_SEARCH_MIN = 2;
 
 const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
 
-export type SubjectKind = "group" | "user";
+export type SubjectKind = "category" | "document" | "group" | "user";
+
+/** Categories whose full path holds the words, as picker options. */
+export const matchCategories = (
+  rows: readonly { id: string; path: string }[],
+  query: string,
+): PickerOption[] => {
+  const needle = query.toLowerCase();
+  const options = rows
+    .filter((row) => row.path.toLowerCase().includes(needle))
+    .map((row) => ({
+      detail: row.path.includes(" › ") ? row.path.slice(0, row.path.lastIndexOf(" › ")) : undefined,
+      id: row.id,
+      label: row.path,
+    }));
+  return rankByPrefix(options, query);
+};
+
+/** Policies and procedures whose number or title holds the words. The id is the audit log's own
+ *  subject (`policy:<id>`), so the picker can filter the log by it. */
+export const matchDocuments = (
+  documents: readonly { documentType: string; id: string; number: string; title: string }[],
+  query: string,
+): PickerOption[] => {
+  const needle = query.toLowerCase();
+  const options = documents
+    .filter(
+      (document) =>
+        document.number.toLowerCase().includes(needle) ||
+        document.title.toLowerCase().includes(needle),
+    )
+    .map((document) => ({
+      detail: document.number,
+      id: `${document.documentType === "PROCEDURE" ? "procedure" : "policy"}:${document.id}`,
+      label: document.title,
+    }));
+  return rankByPrefix(options, query);
+};
 
 /** Names that start with the words typed come before names that only contain them. */
 export const rankByPrefix = <T extends { label: string }>(
@@ -41,6 +80,18 @@ export const searchSubjects = async (
   await requireIdentityFromRequest(request);
   const needle = query.trim();
   if (needle.length < SUBJECT_SEARCH_MIN) return [];
+  if (kind === "category") {
+    const groups = await fetchAllGroups(cookieOf(request)).catch(() => []);
+    return matchCategories(orderedWithPaths(groups), needle).slice(0, SUBJECT_SEARCH_LIMIT);
+  }
+  if (kind === "document") {
+    const cookie = cookieOf(request);
+    const [policies, procedures] = await Promise.all([
+      edge.policies(DocumentType.Policy, cookie).catch(() => []),
+      edge.policies(DocumentType.Procedure, cookie).catch(() => []),
+    ]);
+    return matchDocuments([...policies, ...procedures], needle).slice(0, SUBJECT_SEARCH_LIMIT);
+  }
   if (kind === "user") {
     const found = await edge.searchUsers(needle, SUBJECT_SEARCH_LIMIT, cookieOf(request));
     return rankByPrefix(

@@ -7,7 +7,10 @@ import { searchSubjects, type SubjectKind } from "../access/subjectSearch.server
 /** The add-rule typeahead (#88): `?kind=user|group&q=…`, a few matches, matched on the server. */
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
-  const kind: SubjectKind = url.searchParams.get("kind") === "group" ? "group" : "user";
+  const asked = url.searchParams.get("kind");
+  const kind: SubjectKind = ["category", "document", "group"].includes(asked ?? "")
+    ? (asked as SubjectKind)
+    : "user";
   return Response.json({
     options: await searchSubjects(request, kind, url.searchParams.get("q") ?? ""),
   });

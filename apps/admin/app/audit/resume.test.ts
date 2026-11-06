@@ -15,9 +15,16 @@ const log = [
 
 describe("auditResumePath", () => {
   it("opens the audit log after the last entry shown, with the same filters", () => {
-    expect(auditResumePath({}, log[2]!)).toBe("/audit?after=r3&at=2026-11-05T10%3A03%3A00Z");
-    expect(auditResumePath({ action: "policy.published", actorUserId: "u-1" }, log[2]!)).toBe(
-      "/audit?action=policy.published&actor=u-1&after=r3&at=2026-11-05T10%3A03%3A00Z",
+    expect(auditResumePath({ actions: [] }, log[2]!)).toBe(
+      "/audit?after=r3&at=2026-11-05T10%3A03%3A00Z",
+    );
+    expect(
+      auditResumePath(
+        { actions: ["policy.published"], actor: { id: "u-1", label: "Jane" } },
+        log[2]!,
+      ),
+    ).toBe(
+      "/audit?actor=u-1&actorName=Jane&action=policy.published&after=r3&at=2026-11-05T10%3A03%3A00Z",
     );
   });
 });

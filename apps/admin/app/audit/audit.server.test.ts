@@ -89,10 +89,12 @@ describe("listAuditLog", () => {
     });
   });
 
-  it("filters by action client-side (the gateway has no argument for it)", async () => {
+  it("filters by several actions and a subject type here (the gateway has no argument for them, steward-gateway#83)", async () => {
     const records = [
       makeRecord({ action: "group.created", id: "1" }),
       makeRecord({ action: "group.deleted", id: "2" }),
+      makeRecord({ action: "group.deleted", id: "3", subject: "user:u-1" }),
+      makeRecord({ action: "role.granted", id: "4" }),
     ];
     const fetchSpy = vi
       .fn()
@@ -100,8 +102,11 @@ describe("listAuditLog", () => {
       .mockResolvedValueOnce(jsonOnce({ auditLog: { nextPageToken: "", records } }));
     vi.stubGlobal("fetch", fetchSpy);
 
-    const result = await listAuditLog(request(), { action: "deleted" });
-    expect(result.map((r) => r.id)).toEqual(["2"]);
+    const result = await listAuditLog(request(), {
+      actions: ["group.deleted", "role.granted"],
+      subjectType: "group",
+    });
+    expect(result.map((r) => r.id)).toEqual(["2", "4"]);
   });
 });
 
