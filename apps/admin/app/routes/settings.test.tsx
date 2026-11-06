@@ -164,3 +164,25 @@ describe("Settings (A28)", () => {
     expect(screen.getByRole("region", { name: "Outbound email" })).toBeInTheDocument();
   });
 });
+
+describe("AI settings on an appliance (#113)", () => {
+  it("shows the AI cards read-only on an appliance, with a pointer to its own admin", async () => {
+    openSettings({ appliance: "steward-box-1" });
+    expect(
+      await screen.findByText("AI is configured on the appliance (steward-box-1)."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Change it in the appliance's own admin.")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "AI features on for everyone" })).toBeDisabled();
+    expect(screen.getByLabelText("New token")).toBeDisabled();
+    expect(screen.getByLabelText("Results per question")).toBeDisabled();
+  });
+
+  it("leaves the AI cards editable when the deployment is not an appliance", async () => {
+    openSettings({ appliance: null });
+    expect(
+      await screen.findByRole("switch", { name: "AI features on for everyone" }),
+    ).toBeEnabled();
+    expect(screen.getByLabelText("New token")).toBeEnabled();
+    expect(screen.queryByText(/configured on the appliance/)).toBeNull();
+  });
+});

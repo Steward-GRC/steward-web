@@ -365,6 +365,8 @@ export interface AdminShellProps {
   config: ShellConfig;
   /** The dev login bar (dev builds only): a 28 px strip across the very top, above everything. */
   devLogin?: ReactNode;
+  /** The reserved MCP page shows (`STEWARD_MCP=true`). */
+  mcp?: boolean;
   /** Compliance reporting is on for this install (`STEWARD_REPORTING=true`). */
   reporting?: boolean;
 }
@@ -381,6 +383,7 @@ export const AdminShell = ({
   children,
   config,
   devLogin,
+  mcp = false,
   reporting = false,
 }: AdminShellProps) => {
   const { t } = useTranslation("shell");
@@ -393,8 +396,9 @@ export const AdminShell = ({
         can: (permission) => identity.isSiteAdmin || identity.permissions.has(permission),
         compliance: reporting,
         groupManager: identity.isSiteAdmin || identity.isGroupManager,
+        mcp,
       }),
-    [identity, reporting],
+    [identity, mcp, reporting],
   );
   const creates = useMemo(
     () =>

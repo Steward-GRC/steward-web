@@ -21,6 +21,7 @@ import type { Route } from "./+types/settings";
 
 import {
   getAiSettings,
+  getAppliance,
   getEmailServiceConfig,
   getGlobalSettings,
   saveEmailServiceConfig,
@@ -31,13 +32,14 @@ import {
 } from "../settings/settings.server";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const [globalSettings, emailServiceConfig, ai] = await Promise.all([
+  const [globalSettings, emailServiceConfig, ai, appliance] = await Promise.all([
     getGlobalSettings(request),
     getEmailServiceConfig(request),
     // The AI cards show only when the AI module answers.
     getAiSettings(request).catch(() => null),
+    getAppliance(request),
   ]);
-  return { ai, emailServiceConfig, globalSettings };
+  return { ai, appliance, emailServiceConfig, globalSettings };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -188,7 +190,9 @@ const ClearConfirm = ({
  */
 export default function Settings({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
-  const { ai, emailServiceConfig, globalSettings } = loaderData;
+  const { ai, appliance, emailServiceConfig, globalSettings } = loaderData;
+  // An appliance configures AI on its own box; here the cards only show what is set (#113).
+  const locked = appliance !== null && appliance !== undefined;
   const token = useFetcher<Result>();
   const enabled = useFetcher<Result>();
   const retrieval = useFetcher<Result>();
@@ -224,6 +228,12 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
       <h1 className="text-[26px] leading-[1.3] font-semibold">{t("settings.title")}</h1>
       {failure ? <Banner failure={failure} title={t("settings.failed")} tone="danger" /> : null}
 
+      {ai && locked ? (
+        <Banner title={t("settings.appliance.title", { name: appliance })} tone="info">
+          {t("settings.appliance.description")}
+        </Banner>
+      ) : null}
+
       {ai ? (
         <>
           <SettingsCard
@@ -240,13 +250,22 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
             <token.Form className="flex flex-wrap items-end gap-2" method="post">
               <input name="intent" type="hidden" value="ai-token" />
               <Field className="min-w-[220px] flex-1" label={t("settings.token.label")}>
-                <Input autoComplete="off" name="token" required type="password" />
+                <Input autoComplete="off" disabled={locked} name="token" required type="password" />
               </Field>
-              <Button busy={token.state !== "idle"} type="submit" variant="secondary">
+              <Button
+                busy={token.state !== "idle"}
+                disabled={locked}
+                type="submit"
+                variant="secondary"
+              >
                 {t("settings.token.replace")}
               </Button>
               {ai.credentialSet ? (
-                <Button onClick={() => setClearingToken(true)} variant="secondary">
+                <Button
+                  disabled={locked}
+                  onClick={() => setClearingToken(true)}
+                  variant="secondary"
+                >
                   {t("settings.token.clear")}
                 </Button>
               ) : null}
@@ -274,6 +293,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
               <Switch
                 aria-label={t("settings.ai.switch")}
                 checked={aiOn}
+                disabled={locked}
                 onCheckedChange={(checked) =>
                   void enabled.submit(
                     { enabled: String(checked), intent: "ai-enabled" },
@@ -294,9 +314,21 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
             <retrieval.Form className="flex flex-wrap items-end gap-2" method="post">
               <input name="intent" type="hidden" value="ai-top-k" />
               <Field label={t("settings.retrieval.label")}>
-                <Input className="w-28" defaultValue={ai.topK} min={0} name="topK" type="number" />
+                <Input
+                  className="w-28"
+                  defaultValue={ai.topK}
+                  disabled={locked}
+                  min={0}
+                  name="topK"
+                  type="number"
+                />
               </Field>
-              <Button busy={retrieval.state !== "idle"} type="submit" variant="secondary">
+              <Button
+                busy={retrieval.state !== "idle"}
+                disabled={locked}
+                type="submit"
+                variant="secondary"
+              >
                 {t("settings.save")}
               </Button>
               {savedOf(retrieval) ? (

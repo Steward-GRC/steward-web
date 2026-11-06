@@ -18,6 +18,7 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/categories.new": "shell:titles.admin.newCategory",
   "routes/home": "shell:titles.admin.overview",
   "routes/magic-links": "shell:titles.admin.magicLinks",
+  "routes/mcp": "shell:titles.admin.mcp",
   "routes/my-groups": "shell:titles.admin.myGroups",
   "routes/organisations": "shell:titles.admin.organisations",
   "routes/organisations.$domain": "shell:titles.admin.organisation",

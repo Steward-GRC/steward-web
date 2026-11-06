@@ -106,6 +106,29 @@ describe("adminNav for what the person can use", () => {
   });
 });
 
+describe("the reserved MCP page (#113)", () => {
+  it("is not in System until the MCP flag is on", () => {
+    const system = adminNav({ compliance: false }).find((entry) => entry.id === "system")!;
+    expect(system.destinations.map((entry) => entry.id)).toEqual(["settings"]);
+  });
+
+  it("joins System once it is on, which gives System a second page and so a secondary nav", () => {
+    const system = adminNav({ compliance: false, mcp: true }).find(
+      (entry) => entry.id === "system",
+    )!;
+    expect(system.destinations.map((entry) => entry.id)).toEqual(["settings", "mcp"]);
+    expect(system.destinations.at(-1)?.to).toBe("/mcp");
+    expect(hasSecondaryNav(system)).toBe(true);
+  });
+
+  it("is for someone who manages settings only", () => {
+    const system = adminNav({ can: () => false, compliance: false, mcp: true }).find(
+      (entry) => entry.id === "system",
+    );
+    expect(system).toBeUndefined();
+  });
+});
+
 describe("hasSecondaryNav (#83)", () => {
   it("is true for a section with two or more pages and false for one", () => {
     const groups = adminNav({ compliance: false });
