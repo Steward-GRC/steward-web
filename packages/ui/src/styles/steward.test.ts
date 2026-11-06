@@ -140,6 +140,8 @@ describe("the editor's selection colour (#72)", () => {
 
   it("keeps a visible outline on selected cards in high contrast, where shadows are off", () => {
     expect(css).toMatch(/\.hc \.koenig-lexical[^{]*\{[^}]*outline/);
+  });
+});
 
 describe("the text on amber (bug log 62)", () => {
   const systemDark = /\.system:not\(\.hc\)\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
