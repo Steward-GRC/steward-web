@@ -10,11 +10,12 @@ import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-w
 import { formatNumber, useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, cn, Input, Spinner, Textarea } from "@steward-web/ui";
+import { draftPath } from "@steward-web/ui/domain";
 import { FileText, Link2, Lock, LockOpen, Send, TriangleAlert } from "lucide-react";
 import { useId, useState } from "react";
 import { data, useFetcher, useLocation, useNavigate } from "react-router";
 
-import type { Route } from "./+types/drafts.$policyId.generate";
+import type { Route } from "./+types/drafts.$number.generate";
 
 import {
   authoringAssist,
@@ -32,12 +33,13 @@ import {
   parseRevisionResult,
 } from "../authoring/ai/results";
 import { useAiJob } from "../authoring/ai/useAiJob";
+import { policyIdOfNumber } from "../authoring/authoring.server";
 import { type SectionText } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
-  return loadDraftForAi(request, params.policyId);
+  return loadDraftForAi(request, params.number);
 };
 
 const sectionsOf = (form: FormData): SectionText[] =>
@@ -47,7 +49,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
   await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
   const form = await request.formData();
   const intent = form.get("intent");
-  const policyId = params.policyId;
+  const policyId = await policyIdOfNumber(request, params.number);
   const versionId = String(form.get("versionId") ?? "");
   try {
     switch (intent) {
@@ -419,7 +421,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
         },
       ];
     });
-    void navigate(`/drafts/${policy.id}`, { state: { aiApply: { entries } } });
+    void navigate(draftPath(policy.number), { state: { aiApply: { entries } } });
   };
 
   const working = job.stage === "queued" || job.stage === "generating";

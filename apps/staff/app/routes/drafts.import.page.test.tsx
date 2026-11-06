@@ -96,7 +96,12 @@ describe("Import from CSV (U21)", () => {
       ok: true,
       results: rows
         .filter((row) => [1, 2, 5].includes(row.line))
-        .map((row) => ({ line: row.line, ok: true, policyId: `p-${row.line}` })),
+        .map((row) => ({
+          line: row.line,
+          number: `POL-IMPORT-00000${row.line}`,
+          ok: true,
+          policyId: `p-${row.line}`,
+        })),
     }));
     await choose();
     await userEvent.click(await screen.findByRole("button", { name: "Import 3 policies" }));
@@ -110,7 +115,7 @@ describe("Import from CSV (U21)", () => {
     );
     expect(screen.getByRole("link", { name: "Kitchen Use Policy" })).toHaveAttribute(
       "href",
-      "/drafts/p-1",
+      "/drafts/POL-IMPORT-000001",
     );
   });
 
@@ -118,9 +123,9 @@ describe("Import from CSV (U21)", () => {
     open(() => ({
       ok: true,
       results: [
-        { line: 1, ok: true, policyId: "p-1" },
+        { line: 1, number: "POL-IMPORT-000001", ok: true, policyId: "p-1" },
         { line: 2, ok: false },
-        { line: 5, ok: true, policyId: "p-5" },
+        { line: 5, number: "POL-IMPORT-000005", ok: true, policyId: "p-5" },
       ],
     }));
     await choose();

@@ -66,6 +66,13 @@ export {
   type ReassignDialogProps,
 } from "./ReassignDialog";
 export {
+  approvalPath,
+  draftPath,
+  isReservedDraftSegment,
+  recordPath,
+  type RecordRef,
+} from "./routes";
+export {
   DiffCounts,
   DiffLegend,
   type DiffRun,

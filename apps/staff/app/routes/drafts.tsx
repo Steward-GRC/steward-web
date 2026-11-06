@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@steward-web/auth";
 import { requireRoleFromRequest } from "@steward-web/auth/server";
 import { formatDate, useTranslation } from "@steward-web/i18n";
 import { Button, Card, CardBody, Input, Table, TD, TH, THead } from "@steward-web/ui";
+import { draftPath } from "@steward-web/ui/domain";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -66,12 +67,16 @@ export default function Drafts({ loaderData }: Route.ComponentProps) {
                 <tr key={draft.id}>
                   <TD className="font-mono text-sm">{draft.number || "—"}</TD>
                   <TD>
-                    <Link
-                      className="font-medium text-ink hover:underline"
-                      to={`/drafts/${draft.id}`}
-                    >
-                      {draft.title}
-                    </Link>
+                    {draft.number ? (
+                      <Link
+                        className="font-medium text-ink hover:underline"
+                        to={draftPath(draft.number)}
+                      >
+                        {draft.title}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-ink">{draft.title}</span>
+                    )}
                   </TD>
                   <TD>{formatDate(draft.updated)}</TD>
                 </tr>

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // The approvals inbox's rows (U24): each task with its catalog number, version and link, the
 // stage it waits at and where that sits in its run. Pure, so it's tested without the route.
+import { approvalPath } from "@steward-web/ui/domain";
+
 import { matchPolicyForVersion } from "./approvalRows";
 
 /** One row of the inbox, in any of its three groups. */
@@ -61,7 +63,7 @@ export const inboxEntryOf = (task: Task, catalog: readonly CatalogRow[], run?: R
   const stageName = stageNames[task.stageIndex] ?? task.stageName ?? "";
   return {
     ...(task.dueAt === undefined ? {} : { dueAt: task.dueAt }),
-    href: `/approvals/${number || task.policyVersionId}`,
+    href: approvalPath(number || task.policyVersionId),
     key: task.taskId ?? `${task.policyVersionId}:${task.stageIndex}`,
     ...(run ? { nowAt: stageNames[run.currentStageIdx] ?? "" } : {}),
     number,

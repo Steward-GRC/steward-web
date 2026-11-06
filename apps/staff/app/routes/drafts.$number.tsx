@@ -16,10 +16,11 @@ import {
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, scrollBehavior, StatusPill } from "@steward-web/ui";
+import { draftPath } from "@steward-web/ui/domain";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, redirect, useFetcher, useLocation, useNavigate } from "react-router";
 
-import type { Route } from "./+types/drafts.$policyId";
+import type { Route } from "./+types/drafts.$number";
 
 import { authoringAssist, getAiHealth, submitPolicyReview } from "../authoring/ai.server";
 import { AiReviewSheet, RewriteSectionDialog, SuggestionSheet } from "../authoring/ai/AiOverlays";
@@ -31,8 +32,9 @@ import {
   discardDraft,
   getDraftVersion,
   getLatestTemplateVersion,
-  getPolicy,
+  getPolicyByNumber,
   isDraftInReview,
+  policyIdOfNumber,
   reorderAppendices,
   saveDraft,
   startDraft,
@@ -71,7 +73,7 @@ interface SectionPayload {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const [policy, aiHealth] = await Promise.all([
-    getPolicy(request, params.policyId),
+    getPolicyByNumber(request, params.number),
     getAiHealth(request).catch(() => ({ available: false, reason: "ai_service_unavailable" })),
   ]);
   if (!policy?.viewerCan.edit) throw new Response("Not Found", { status: 404 });
@@ -85,7 +87,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
   await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
-  const policyId = params.policyId;
+  const policyId = await policyIdOfNumber(request, params.number);
   const form = await request.formData();
   const intent = form.get("intent");
 
@@ -134,7 +136,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         // when there is none), then open the editor on it.
         const started = await startDraft(request, policyId);
         if (!started) throw new Response("Not Found", { status: 404 });
-        return redirect(`/drafts/${policyId}`);
+        return redirect(draftPath(params.number));
       }
       case "reorder-appendices": {
         const orderedIds = String(form.get("orderedIds") ?? "")
@@ -441,8 +443,10 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               emptyDraft={emptyDraft}
               onChoose={(choice) => {
                 const handOver = { state: { sections: sectionTexts } };
-                if (choice === "generate") void navigate(`/drafts/${policy.id}/generate`, handOver);
-                if (choice === "improve") void navigate(`/drafts/${policy.id}/revise`, handOver);
+                if (choice === "generate")
+                  void navigate(draftPath(policy.number, "generate"), handOver);
+                if (choice === "improve")
+                  void navigate(draftPath(policy.number, "revise"), handOver);
                 if (choice === "rewrite") setRewriteOpen(true);
                 if (choice === "review") startReview();
                 if (choice === "result") {

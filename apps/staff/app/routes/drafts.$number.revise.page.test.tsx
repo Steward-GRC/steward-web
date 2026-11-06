@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useLoaderData, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import Revise from "./drafts.$policyId.revise";
+import Revise from "./drafts.$number.revise";
 
 type Props = Parameters<typeof Revise>[0];
 
@@ -50,7 +50,7 @@ const sections = [
 const loaderData = {
   aiHealth: { available: true, reason: null },
   draftId: "v-9",
-  policy: { id: "p-1", title: "Lost Device Procedure" },
+  policy: { id: "p-1", number: "PRC-LOST-000001", title: "Lost Device Procedure" },
   sections,
 };
 
@@ -74,11 +74,11 @@ const open = (data: object = loaderData) => {
       },
       Component: Page,
       loader: () => data,
-      path: "/drafts/:policyId/revise",
+      path: "/drafts/:number/revise",
     },
-    { Component: Editor, path: "/drafts/:policyId" },
+    { Component: Editor, path: "/drafts/:number" },
   ]);
-  render(<Stub initialEntries={["/drafts/p-1/revise"]} />);
+  render(<Stub initialEntries={["/drafts/PRC-LOST-000001/revise"]} />);
   return posted;
 };
 

@@ -5,12 +5,12 @@
 // sections over when it opens one of these pages; these are the stored ones, for a page opened
 // on its own.
 import { getAiHealth } from "../ai.server";
-import { getDraftVersion, getLatestTemplateVersion, getPolicy } from "../authoring.server";
+import { getDraftVersion, getLatestTemplateVersion, getPolicyByNumber } from "../authoring.server";
 import { aiSections, draftDocument } from "../sections";
 
-export const loadDraftForAi = async (request: Request, policyId: string) => {
+export const loadDraftForAi = async (request: Request, number: string) => {
   const [policy, aiHealth] = await Promise.all([
-    getPolicy(request, policyId),
+    getPolicyByNumber(request, number),
     getAiHealth(request).catch(() => ({ available: false, reason: "ai_service_unavailable" })),
   ]);
   if (!policy?.viewerCan.edit) throw new Response("Not Found", { status: 404 });
@@ -24,7 +24,12 @@ export const loadDraftForAi = async (request: Request, policyId: string) => {
     aiHealth: { available: aiHealth.available, reason: aiHealth.reason ?? null },
     draftId: draft.id,
     outline,
-    policy: { homeGroupId: policy.homeGroupId, id: policy.id, title: policy.title },
+    policy: {
+      homeGroupId: policy.homeGroupId,
+      id: policy.id,
+      number: policy.number,
+      title: policy.title,
+    },
     sections: aiSections(draftDocument(draft.contentJson, outline), outline),
   };
 };

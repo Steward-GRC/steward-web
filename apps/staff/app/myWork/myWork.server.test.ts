@@ -155,7 +155,7 @@ describe("myWorkData", () => {
     expect(data.email).toBe("bob@example.org");
     expect(data.drafts).toEqual([
       {
-        href: "/drafts/p-visit",
+        href: "/drafts/POL-FACILITIES-000004",
         number: "POL-FACILITIES-000004",
         title: "Visitor Sign-in Policy",
         version: "1.0.0",

@@ -579,6 +579,28 @@ describe("liveEdge.myDraftPolicies", () => {
   });
 });
 
+describe("liveEdge.policyByNumber", () => {
+  it("looks the record up by its number and answers its view", async () => {
+    const calls = routeGateway({
+      ...treeHandlers,
+      PolicyByNumber: () => ({ policyByNumber: policy({ id: "p-7", number: "FIN-007" }) }),
+    });
+    const found = await liveEdge.policyByNumber("FIN-007");
+    expect(found).toMatchObject({ id: "p-7", number: "FIN-007" });
+    expect(calls.find((c) => c.operation === "PolicyByNumber")?.variables).toEqual({
+      number: "FIN-007",
+    });
+  });
+
+  it("answers null when the gateway has no such number or refuses it", async () => {
+    routeGateway({
+      ...treeHandlers,
+      PolicyByNumber: () => ({ errors: [{ extensions: { code: "NOT_FOUND" }, message: "no" }] }),
+    });
+    expect(await liveEdge.policyByNumber("FIN-404")).toBeNull();
+  });
+});
+
 describe("liveEdge.myManagedGroups", () => {
   it("reads the caller's managed platform groups, not the category tree", async () => {
     const calls = routeGateway({
