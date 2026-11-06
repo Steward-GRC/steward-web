@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { formatRelativeTime, useTranslation } from "@steward-web/i18n";
+import { actionLabel, displayLabel } from "@steward-web/shell";
 import { AckSnapshot, EmptyState, PageHeader, StatCard } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
 import { listPolicies } from "@steward-web/ui/domain/server";
@@ -10,7 +11,6 @@ import { useId } from "react";
 import type { Route } from "./+types/home";
 
 import { listAuditLog } from "../audit/audit.server";
-import { actionLabel, displayLabel } from "../audit/auditFormat";
 import { acknowledgementSnapshot } from "../completion/completion.server";
 import { listGroups } from "../groups/groups.server";
 import { listTemplates } from "../templates/templates.server";

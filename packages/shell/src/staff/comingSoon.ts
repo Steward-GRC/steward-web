@@ -8,7 +8,6 @@
  * Plain data with no imports: the app's `routes.ts` reads it at config time.
  */
 export const COMING_SOON = {
-  auditLog: "/audit",
   feedback: "/feedback",
   logOutEverywhere: "/log-out-everywhere",
   myReports: "/compliance/reports",

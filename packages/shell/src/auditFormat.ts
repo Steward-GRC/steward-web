@@ -53,3 +53,16 @@ export const auditChainRange = (
   }
   return { fromRecordId: min, toRecordId: max };
 };
+
+/**
+ * Whether a record belongs to a reporting case (or a report). A reporter's identity must not be
+ * recoverable from any audit list, so lists meant for staff leave these out entirely
+ * (anonymous reporting: nothing identifies the reporter, and the people who handle a case stay
+ * with the case screens).
+ */
+export const isReportingRecord = (
+  record: Pick<AuditRecord, "action" | "subject" | "tier">,
+): boolean =>
+  /^(case|report|reporting)[._:]/.test(record.action) ||
+  /^(case|report|reporting)[._:]/.test(record.subject) ||
+  record.tier === "reporting";

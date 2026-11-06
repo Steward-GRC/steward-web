@@ -191,6 +191,11 @@ describe("PolicyReader", () => {
     ]);
   });
 
+  it("marks the document for Read aloud, so it reads the text and not the tabs around it", () => {
+    renderAt(baseDetail);
+    expect(screen.getByRole("article")).toHaveAttribute("data-read-aloud");
+  });
+
   it("draws the body in the reading serif, with numbered sections and the table", () => {
     renderAt(baseDetail);
     const article = screen.getByRole("article");

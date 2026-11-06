@@ -50,6 +50,7 @@ export default [
   route("drafts/:policyId/generate", "routes/drafts.$policyId.generate.tsx"),
   route("drafts/:policyId/revise", "routes/drafts.$policyId.revise.tsx"),
   route("approvals", "routes/approvals.tsx"),
+  route("audit", "routes/audit.tsx"),
   route("approvals/:number", "routes/approvals.$number.tsx"),
   route("resources/ai-health", "routes/resources.ai-health.tsx"),
   route("resources/version-diff", "routes/resources.version-diff.tsx"),

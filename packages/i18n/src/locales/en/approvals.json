@@ -4,6 +4,21 @@
     "pending": "Pending",
     "rejected": "Rejected"
   },
+  "audit": {
+    "title": "Audit log",
+    "description": "Every policy and approval action across your group.",
+    "columns": {
+      "when": "When",
+      "policy": "Policy",
+      "title": "Title",
+      "action": "Action",
+      "by": "By"
+    },
+    "empty": {
+      "title": "No actions recorded yet",
+      "body": "Policy and approval actions appear here as they happen."
+    }
+  },
   "inbox": {
     "cardDue": "{{stage}} · {{n}} of {{total}} · due {{date}}",
     "columns": {

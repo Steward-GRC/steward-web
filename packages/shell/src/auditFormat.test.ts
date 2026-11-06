@@ -4,7 +4,13 @@ import type { AuditRecord } from "@steward-web/api-client";
 
 import { describe, expect, it } from "vitest";
 
-import { actionLabel, auditChainRange, displayLabel, shortId } from "./auditFormat";
+import {
+  actionLabel,
+  auditChainRange,
+  displayLabel,
+  isReportingRecord,
+  shortId,
+} from "./auditFormat";
 
 const makeRecord = (overrides: Partial<AuditRecord> & Pick<AuditRecord, "id">): AuditRecord => ({
   action: "group.created",
@@ -60,5 +66,19 @@ describe("auditChainRange", () => {
       fromRecordId: "9",
       toRecordId: "9007199254740993",
     });
+  });
+});
+
+describe("isReportingRecord", () => {
+  it("marks a reporting case's records, which no audit list may show an actor for", () => {
+    expect(isReportingRecord(makeRecord({ action: "case.opened", id: "1" }))).toBe(true);
+    expect(isReportingRecord(makeRecord({ action: "report.submitted", id: "2" }))).toBe(true);
+    expect(isReportingRecord(makeRecord({ id: "3", subject: "case:RC-1" }))).toBe(true);
+    expect(isReportingRecord(makeRecord({ id: "4", tier: "reporting" }))).toBe(true);
+  });
+
+  it("leaves policy and approval records alone", () => {
+    expect(isReportingRecord(makeRecord({ action: "policy.published", id: "5" }))).toBe(false);
+    expect(isReportingRecord(makeRecord({ action: "approval.decided", id: "6" }))).toBe(false);
   });
 });
