@@ -7,14 +7,9 @@ import { Link, useSearchParams } from "react-router";
 
 import { Button } from "#ui/components/Button";
 import { Card, Table, TD, TH, THead } from "#ui/components/Display";
+import { FavoriteStar } from "#ui/components/FavoriteStar";
 import { CategoryTiles, FilterBar, Pager, SortHeader } from "#ui/components/LibraryControls";
-import {
-  Menu,
-  MenuContent,
-  MenuRadioGroup,
-  MenuRadioItem,
-  MenuTrigger,
-} from "#ui/components/Overlays";
+import { Menu, MenuCheckboxItem, MenuContent, MenuTrigger } from "#ui/components/Overlays";
 import { EmptyState } from "#ui/feedback/States";
 import { PageHeader } from "#ui/layout/PageHeader";
 import { cn } from "#ui/lib/cn";
@@ -85,6 +80,20 @@ const STATUS_FILTERS: Readonly<Record<string, readonly string[]>> = {
   published: ["PUBLISHED"],
 };
 
+/** The statuses picked in the address: "draft,published". "all" stands alone; unknown words go. */
+const selectedStatuses = (value: string): string[] => {
+  const keys = value.split(",").filter((key) => STATUS_FILTERS[key]);
+  return keys.includes("all") ? ["all"] : [...new Set(keys)];
+};
+
+/** The address value after a status is switched on or off. "All" replaces the rest, and a
+ *  specific status replaces "All"; with none left, the filter is off. */
+const toggleStatus = (current: readonly string[], value: string): string => {
+  if (value === "all") return current.includes("all") ? "" : "all";
+  const rest = current.filter((key) => key !== "all");
+  return (rest.includes(value) ? rest.filter((key) => key !== value) : [...rest, value]).join(",");
+};
+
 const sortValue = (policy: Policy, key: SortKey): string => (policy[key] ?? "").toString();
 
 /**
@@ -114,7 +123,8 @@ export const PolicyLibrary = ({
 
   const category = parameters.get("category") ?? "";
   const subcategory = parameters.get("subcategory") ?? "";
-  const status = parameters.get("status") ?? "";
+  const statusParameter = parameters.get("status") ?? "";
+  const statuses = useMemo(() => selectedStatuses(statusParameter), [statusParameter]);
   const q = parameters.get("q") ?? "";
   const starredOnly = parameters.get("starred") === "1";
   const sortParameter = parameters.get("sort") as null | SortKey;
@@ -134,7 +144,8 @@ export const PolicyLibrary = ({
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const statusValue = STATUS_FILTERS[status];
+    const statusValue =
+      statuses.length > 0 ? statuses.flatMap((key) => STATUS_FILTERS[key]!) : null;
     return policies
       .filter((p) => (category ? p.category === category : true))
       .filter((p) => (subcategory ? p.subcategory === subcategory : true))
@@ -158,7 +169,7 @@ export const PolicyLibrary = ({
     q,
     sort,
     starredOnly,
-    status,
+    statuses,
     subcategory,
   ]);
 
@@ -195,12 +206,7 @@ export const PolicyLibrary = ({
   const chips = [
     category ? { id: "category", label: category } : null,
     subcategory ? { id: "subcategory", label: subcategory } : null,
-    STATUS_FILTERS[status]
-      ? {
-          id: "status",
-          label: statusLabel(status),
-        }
-      : null,
+    ...statuses.map((key) => ({ id: `status:${key}`, label: statusLabel(key) })),
     starredOnly ? { id: "starred", label: t("library.filters.starred") } : null,
     q ? { id: "q", label: `“${q}”` } : null,
     ...(columnOptions ? columnChips : []),
@@ -313,16 +319,15 @@ export const PolicyLibrary = ({
                 </Button>
               </MenuTrigger>
               <MenuContent>
-                <MenuRadioGroup
-                  onValueChange={(value) => update({ status: value })}
-                  value={STATUS_FILTERS[status] ? status : ""}
-                >
-                  {["all", "draft", "in-review", "published", "in-progress"].map((value) => (
-                    <MenuRadioItem key={value} value={value}>
-                      {statusLabel(value)}
-                    </MenuRadioItem>
-                  ))}
-                </MenuRadioGroup>
+                {["all", "draft", "in-review", "published", "in-progress"].map((value) => (
+                  <MenuCheckboxItem
+                    checked={statuses.includes(value)}
+                    key={value}
+                    onCheckedChange={() => update({ status: toggleStatus(statuses, value) })}
+                  >
+                    {statusLabel(value)}
+                  </MenuCheckboxItem>
+                ))}
               </MenuContent>
             </Menu>
             {columnOptions ? (
@@ -358,7 +363,13 @@ export const PolicyLibrary = ({
           count={filtered.length}
           onClear={() => setParameters(new URLSearchParams(), { preventScrollReset: true })}
           onRemove={(id) =>
-            update(id === "category" ? { category: "", subcategory: "" } : { [id]: "" })
+            update(
+              id === "category"
+                ? { category: "", subcategory: "" }
+                : id.startsWith("status:")
+                  ? { status: toggleStatus(statuses, id.slice("status:".length)) }
+                  : { [id]: "" },
+            )
           }
         />
       ) : null}
@@ -415,13 +426,7 @@ export const PolicyLibrary = ({
                       onClick={() => toggle(policy.number)}
                       type="button"
                     >
-                      <Star
-                        aria-hidden="true"
-                        className={cn(
-                          "size-4",
-                          isFavorite(policy.number) && "fill-current text-accent",
-                        )}
-                      />
+                      <FavoriteStar className="size-4" starred={isFavorite(policy.number)} />
                     </button>
                   </TD>
                   {visibleColumns.map((column) => (

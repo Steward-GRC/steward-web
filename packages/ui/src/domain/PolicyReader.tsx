@@ -1,15 +1,6 @@
 import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
 import { formatDate, formatDateTime, formatTime, useTranslation } from "@steward-web/i18n";
-import {
-  ChevronDown,
-  ChevronLeft,
-  Eye,
-  EyeOff,
-  History,
-  Printer,
-  Sparkles,
-  Star,
-} from "lucide-react";
+import { ChevronDown, ChevronLeft, Eye, EyeOff, History, Printer, Sparkles } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
@@ -21,6 +12,7 @@ import { SensitivityBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Switch } from "#ui/components/Controls";
 import { CopyId } from "#ui/components/CopyId";
+import { FavoriteStar } from "#ui/components/FavoriteStar";
 import { Field } from "#ui/components/Field";
 import { Textarea } from "#ui/components/Input";
 import {
@@ -582,10 +574,7 @@ export const PolicyReader = ({
           onClick={() => favorites.toggle(detail.number)}
           type="button"
         >
-          <Star
-            aria-hidden="true"
-            className={cn("size-[1.15em]", starred && "fill-accent text-accent")}
-          />
+          <FavoriteStar className="size-[1.15em]" starred={starred} />
         </button>
         <Menu>
           <MenuTrigger asChild>

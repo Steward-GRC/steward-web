@@ -841,10 +841,21 @@ html[data-text-size="small"] {
   font-size: 93.75%;
 }
 html[data-text-size="large"] {
-  font-size: 112.5%;
+  font-size: 106.25%;
 }
 html[data-text-size="x-large"] {
-  font-size: 125%;
+  font-size: 112.5%;
+}
+
+/* The tab transition from the accessibility panel (#154). "Current" is the tab's own 200 ms
+   ease; reduced motion still stills everything above, so these only act when motion is allowed. */
+html[data-tab-transition="none"] .stw-tab {
+  transition: none;
+}
+html[data-tab-transition="smooth"] .stw-tab {
+  transition-duration: 450ms;
+  transition-property: box-shadow, color;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* The print layout (R1). The reader draws it into the body only while the browser prints;

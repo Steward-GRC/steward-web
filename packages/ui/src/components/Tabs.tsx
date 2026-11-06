@@ -12,7 +12,8 @@ import { cn } from "#ui/lib/cn";
  * look and the rules so a fix lands everywhere at once:
  * - the tabs share one width, whatever their labels;
  * - the strip sits on the white surface, and the active tab has a 3px amber underline that eases
- *   in (not under reduced motion);
+ *   in as the person's tab transition setting says (None, Current or Smooth; not under reduced
+ *   motion);
  * - a tab can carry an amber count badge, and a tab with nothing to show is left out;
  * - a strip wider than its box scrolls sideways, never up and down.
  */
@@ -20,12 +21,12 @@ const stripClass =
   "grid auto-cols-fr grid-flow-col gap-1 overflow-x-auto overflow-y-hidden border-b border-border-strong bg-surface";
 
 const tabClass =
-  "-mb-px rounded-none border-0 bg-transparent px-3 py-2.5 text-base font-medium whitespace-nowrap text-muted shadow-none transition-shadow duration-200 hover:text-ink motion-reduce:transition-none data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-[inset_0_-3px_var(--accent)]";
+  "stw-tab -mb-px rounded-none border-0 bg-transparent px-3 py-2.5 text-base font-medium whitespace-nowrap text-muted shadow-none transition-shadow duration-200 hover:text-ink motion-reduce:transition-none data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-[inset_0_-3px_var(--accent)]";
 
 /** The same look for a tab that is a link to its own address (the profile's tabs). */
 const linkClass = (active: boolean) =>
   cn(
-    "-mb-px px-3 py-2.5 text-center text-base font-medium whitespace-nowrap shadow-none transition-shadow duration-200 motion-reduce:transition-none",
+    "stw-tab -mb-px px-3 py-2.5 text-center text-base font-medium whitespace-nowrap shadow-none transition-shadow duration-200 motion-reduce:transition-none",
     active
       ? "font-semibold text-primary shadow-[inset_0_-3px_var(--accent)]"
       : "text-muted hover:text-ink",

@@ -460,6 +460,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
                 disabled={collabReadOnly}
                 document={{ number: policy.number, title: policy.title }}
                 missing={missing}
+                published={firstPublish ? undefined : policy.version}
               />
             ) : null}
             <ActionsMenu

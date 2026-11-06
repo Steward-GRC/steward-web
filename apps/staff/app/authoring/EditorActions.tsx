@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // The editor's header actions (U11): the AI menu (U27), Submit for approval (D37) and the
 // Actions menu with Discard draft (D3).
+import { nextVersion, type VersionChange } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import {
   Button,
@@ -117,6 +118,62 @@ const VersionBlock = ({ version }: { version: VersionPreview }) => {
 };
 
 /**
+ * The author's pick for a revision of a published document (#156): Major, Minor or Fix, and the
+ * version it gives. The service keeps no pick, so this is only worked out here and sent with the
+ * submit; later screens still read the service's plain number.
+ */
+const ChangePicker = ({ published }: { published: string }) => {
+  const { t } = useTranslation(["authoring", "policy"]);
+  const name = useId();
+  const [change, setChange] = useState<VersionChange>("minor");
+  return (
+    <div className="flex flex-col gap-3 rounded-lg px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--border)]">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="font-mono text-[15px] font-medium text-muted line-through">
+          v{published}
+        </span>
+        <span aria-hidden="true" className="text-muted">
+          →
+        </span>
+        <span className="font-mono text-xl font-semibold" data-testid="next-version">
+          v{nextVersion(published, change)}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2.5 text-sm">
+        <span className="text-muted" id={name}>
+          {t("editor.submit.changeType")}
+        </span>
+        <span
+          aria-labelledby={name}
+          className="flex gap-0.5 rounded-md bg-sunken p-[3px]"
+          role="radiogroup"
+        >
+          {CHANGES.map((value) => (
+            <label
+              className={cn(
+                "cursor-pointer rounded-sm px-2.5 py-1 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus",
+                change === value ? "bg-surface font-bold shadow-[var(--shadow-1)]" : "text-muted",
+              )}
+              key={value}
+            >
+              <input
+                checked={change === value}
+                className="sr-only"
+                name="changeType"
+                onChange={() => setChange(value)}
+                type="radio"
+                value={value}
+              />
+              {t(`change.${value}`, { ns: "policy" })}
+            </label>
+          ))}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/**
  * Submit for approval (D37). With a required section empty it says which instead of opening.
  * The dialog names the document and where it goes, shows the version Steward worked out when
  * the gateway sends one, and submits with Keep editing beside it.
@@ -125,12 +182,15 @@ export const SubmitForApproval = ({
   disabled,
   document,
   missing,
+  published,
   version,
   workflow,
 }: {
   disabled?: boolean;
   document: { number: string; title: string };
   missing: readonly string[];
+  /** The published version this revision follows; absent for a first publish. */
+  published?: string;
   version?: VersionPreview;
   workflow?: string;
 }) => {
@@ -184,9 +244,10 @@ export const SubmitForApproval = ({
         >
           <fetcher.Form method="post">
             <input name="intent" type="hidden" value="submit-review" />
-            {version || refusal ? (
+            {version || published || refusal ? (
               <DialogBody>
                 {version ? <VersionBlock version={version} /> : null}
+                {!version && published ? <ChangePicker published={published} /> : null}
                 {refusal ? (
                   <DialogNote tone="danger">
                     <b className="block">

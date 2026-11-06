@@ -174,3 +174,42 @@ describe("the AI menu (U27)", () => {
     );
   });
 });
+
+describe("Submit for approval: the author picks the change (#156)", () => {
+  it("offers Major, Minor and Fix and shows the version each one gives", async () => {
+    inRouter(<SubmitForApproval document={document} missing={[]} published="1.2.3" />);
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    const dialog = screen.getByRole("dialog", { name: "Submit for approval?" });
+    const kinds = within(dialog).getByRole("radiogroup", { name: "Change type" });
+    expect(
+      within(kinds)
+        .getAllByRole("radio")
+        .map((radio) => radio.getAttribute("value")),
+    ).toEqual(["major", "minor", "fix"]);
+    expect(within(kinds).getByRole("radio", { name: "Minor" })).toBeChecked();
+    expect(within(dialog).getByText("v1.3.0")).toBeInTheDocument();
+    await userEvent.click(within(kinds).getByRole("radio", { name: "Major" }));
+    expect(within(dialog).getByText("v2.0.0")).toBeInTheDocument();
+    await userEvent.click(within(kinds).getByRole("radio", { name: "Fix" }));
+    expect(within(dialog).getByText("v1.2.4")).toBeInTheDocument();
+  });
+
+  it("sends the pick with the submit", async () => {
+    const posted = inRouter(
+      <SubmitForApproval document={document} missing={[]} published="1.2.3" />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    const dialog = screen.getByRole("dialog", { name: "Submit for approval?" });
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Fix" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Submit for approval" }));
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith({ changeType: "fix", intent: "submit-review" }),
+    );
+  });
+
+  it("has no picker for a first publish, which is always v1.0.0", async () => {
+    inRouter(<SubmitForApproval document={document} missing={[]} />);
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    expect(screen.queryByRole("radiogroup", { name: "Change type" })).toBeNull();
+  });
+});

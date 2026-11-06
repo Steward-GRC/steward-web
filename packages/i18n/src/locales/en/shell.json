@@ -25,6 +25,12 @@
     "reduceMotion": "Reduce motion",
     "reset": "Reset",
     "saved": "Preferences save to this browser.",
+    "tabTransition": {
+      "current": "Current",
+      "none": "None",
+      "smooth": "Smooth",
+      "title": "Tab transition"
+    },
     "textSize": {
       "default": "Default",
       "large": "Large",

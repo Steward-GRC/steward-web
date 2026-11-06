@@ -151,6 +151,14 @@ describe("PolicyReader", () => {
     expect(screen.getByRole("menuitem", { name: "History & approvals" })).toBeInTheDocument();
   });
 
+  it("draws the star with the shared gold star, filled once starred (#152)", async () => {
+    renderAt(baseDetail);
+    const star = screen.getByRole("button", { name: "Star" });
+    expect(within(star).getByTestId("favorite-star")).toHaveAttribute("data-starred", "false");
+    await userEvent.click(star);
+    expect(within(star).getByTestId("favorite-star")).toHaveAttribute("data-starred", "true");
+  });
+
   it("keeps the staff Actions menu to its two items when there's no governance group", async () => {
     renderAt(baseDetail);
     await userEvent.click(screen.getByRole("button", { name: "Actions" }));

@@ -383,4 +383,4 @@ export {
   type UserDeletionPreviewItem,
   type UserDeletionWarning,
 } from "./generated/schema";
-export { semanticVersion } from "./semanticVersion";
+export { nextVersion, semanticVersion, type VersionChange } from "./semanticVersion";
