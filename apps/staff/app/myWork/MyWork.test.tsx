@@ -24,6 +24,11 @@ const row = (title: string, number: string, version: string, href: string): Work
   version,
 });
 
+const many = (n: number, base: string): WorkRow[] =>
+  Array.from({ length: n }, (_, index) =>
+    row(`${base} ${index + 1}`, `POL-X-00000${index}`, "1.0.0", `/${base}/${index}`),
+  );
+
 const bob: MyWorkData = {
   ack: { done: 4, required: 5 },
   approvals: [
@@ -135,6 +140,52 @@ describe("U1: My work for an author and approver", () => {
         "4 of 5 mandatory-read policies acknowledged · 1 waiting on you",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("gives the compliance card the same banded header as the library overview", async () => {
+    inRouter(<MyWork data={bob} />);
+    const compliance = await screen.findByRole("region", { name: "Acknowledgement compliance" });
+    const library = screen.getByRole("region", { name: "Library overview" });
+    expect(within(compliance).getByTestId("card-band")).toHaveClass("bg-sunken", "border-b");
+    expect(within(library).getByTestId("card-band")).toHaveClass("bg-sunken", "border-b");
+  });
+
+  it("puts each list on its own full-width row, capped at five with a link to the full list", async () => {
+    inRouter(
+      <MyWork
+        data={{
+          ...bob,
+          approvals: many(8, "Approval"),
+          drafts: many(7, "Draft"),
+          obligations: many(6, "Ack"),
+        }}
+      />,
+    );
+    const drafts = await screen.findByRole("region", { name: "My drafts" });
+    const approvals = screen.getByRole("region", { name: "Awaiting my approval" });
+    const acknowledge = screen.getByRole("region", { name: "To acknowledge" });
+    expect(within(drafts).getAllByRole("listitem")).toHaveLength(5);
+    expect(within(approvals).getAllByRole("listitem")).toHaveLength(5);
+    expect(within(acknowledge).getAllByRole("listitem")).toHaveLength(5);
+    expect(within(drafts).getByRole("link", { name: "View all 7" })).toHaveAttribute(
+      "href",
+      "/drafts",
+    );
+    expect(within(approvals).getByRole("link", { name: "View all 8" })).toHaveAttribute(
+      "href",
+      "/approvals",
+    );
+    expect(within(acknowledge).getByRole("link", { name: "View all 6" })).toHaveAttribute(
+      "href",
+      "/acknowledge",
+    );
+    expect(screen.getByTestId("home-lists")).not.toHaveClass("lg:grid-cols-3");
+  });
+
+  it("doesn't link to the full list when everything already shows", async () => {
+    inRouter(<MyWork data={bob} />);
+    const drafts = await screen.findByRole("region", { name: "My drafts" });
+    expect(within(drafts).queryByRole("link", { name: /View all/ })).toBeNull();
   });
 
   it("lists my drafts, my approvals and what I still have to acknowledge", async () => {

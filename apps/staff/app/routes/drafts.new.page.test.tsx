@@ -69,6 +69,11 @@ describe("New policy (U20)", () => {
     expect(screen.getByRole("link", { name: "Cancel" })).toHaveAttribute("href", "/policies");
   });
 
+  it("uses the full width of the page", async () => {
+    openForm();
+    expect(await screen.findByTestId("new-draft-page")).not.toHaveClass("max-w-[580px]");
+  });
+
   it("starts as a procedure from the command bar's New procedure", async () => {
     openForm("/drafts/new?type=PROCEDURE");
     expect(
