@@ -464,7 +464,6 @@ export type CategoryQuery = {
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
     readonly defaultWorkflowId: string | null;
-    readonly documentTypes: Types.CategoryDocumentTypes;
     readonly owners: ReadonlyArray<string>;
     readonly idpGroupIds: ReadonlyArray<string> | null;
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -489,7 +488,6 @@ export type CategoryChildrenQuery = {
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
     readonly defaultWorkflowId: string | null;
-    readonly documentTypes: Types.CategoryDocumentTypes;
     readonly owners: ReadonlyArray<string>;
     readonly idpGroupIds: ReadonlyArray<string> | null;
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -509,6 +507,15 @@ export type CategoryDocumentCountsQuery = {
   readonly categoryDocumentCounts: { readonly policies: number; readonly procedures: number };
 };
 
+export type CategoryDocumentTypesAllQueryVariables = Exact<{ [key: string]: never }>;
+
+export type CategoryDocumentTypesAllQuery = {
+  readonly categoryTree: ReadonlyArray<{
+    readonly id: string;
+    readonly documentTypes: Types.CategoryDocumentTypes;
+  }>;
+};
+
 export type CategoryFieldsFragment = {
   readonly id: string;
   readonly name: string;
@@ -517,7 +524,6 @@ export type CategoryFieldsFragment = {
   readonly defaultTemplateId: string | null;
   readonly defaultTemplateNone: boolean;
   readonly defaultWorkflowId: string | null;
-  readonly documentTypes: Types.CategoryDocumentTypes;
   readonly owners: ReadonlyArray<string>;
   readonly idpGroupIds: ReadonlyArray<string> | null;
   readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -559,7 +565,6 @@ export type CategoryTreeQuery = {
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
     readonly defaultWorkflowId: string | null;
-    readonly documentTypes: Types.CategoryDocumentTypes;
     readonly owners: ReadonlyArray<string>;
     readonly idpGroupIds: ReadonlyArray<string> | null;
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -754,7 +759,6 @@ export type CreateCategoryMutation = {
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
     readonly defaultWorkflowId: string | null;
-    readonly documentTypes: Types.CategoryDocumentTypes;
     readonly owners: ReadonlyArray<string>;
     readonly idpGroupIds: ReadonlyArray<string> | null;
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -1476,7 +1480,6 @@ export type MoveCategoryMutation = {
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
     readonly defaultWorkflowId: string | null;
-    readonly documentTypes: Types.CategoryDocumentTypes;
     readonly owners: ReadonlyArray<string>;
     readonly idpGroupIds: ReadonlyArray<string> | null;
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -2159,7 +2162,6 @@ export type RenameCategoryMutation = {
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
     readonly defaultWorkflowId: string | null;
-    readonly documentTypes: Types.CategoryDocumentTypes;
     readonly owners: ReadonlyArray<string>;
     readonly idpGroupIds: ReadonlyArray<string> | null;
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -2819,7 +2821,6 @@ export type SetCategoryDefaultsMutation = {
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
     readonly defaultWorkflowId: string | null;
-    readonly documentTypes: Types.CategoryDocumentTypes;
     readonly owners: ReadonlyArray<string>;
     readonly idpGroupIds: ReadonlyArray<string> | null;
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -2839,21 +2840,7 @@ export type SetCategoryDocumentTypesMutationVariables = Exact<{
 export type SetCategoryDocumentTypesMutation = {
   readonly setCategoryDocumentTypes: {
     readonly id: string;
-    readonly name: string;
-    readonly slug: string;
-    readonly parentId: string | null;
-    readonly defaultTemplateId: string | null;
-    readonly defaultTemplateNone: boolean;
-    readonly defaultWorkflowId: string | null;
     readonly documentTypes: Types.CategoryDocumentTypes;
-    readonly owners: ReadonlyArray<string>;
-    readonly idpGroupIds: ReadonlyArray<string> | null;
-    readonly exclusionGroupIds: ReadonlyArray<string> | null;
-    readonly ackTriggers: Types.AckTrigger;
-    readonly ackEveryone: boolean;
-    readonly ackEveryoneSet: boolean;
-    readonly reviewCadence: Types.ReviewCadence;
-    readonly reviewDate: string | null;
   };
 };
 
@@ -2877,7 +2864,6 @@ export type SetCategoryGovernanceMutation = {
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
     readonly defaultWorkflowId: string | null;
-    readonly documentTypes: Types.CategoryDocumentTypes;
     readonly owners: ReadonlyArray<string>;
     readonly idpGroupIds: ReadonlyArray<string> | null;
     readonly exclusionGroupIds: ReadonlyArray<string> | null;
@@ -3887,7 +3873,6 @@ export const CategoryFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
@@ -5986,7 +5971,6 @@ export const CategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
@@ -6051,7 +6035,6 @@ export const CategoryChildrenDocument = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
@@ -6108,6 +6091,32 @@ export const CategoryDocumentCountsDocument = {
     },
   ],
 } as unknown as DocumentNode<CategoryDocumentCountsQuery, CategoryDocumentCountsQueryVariables>;
+export const CategoryDocumentTypesAllDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "CategoryDocumentTypesAll" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categoryTree" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CategoryDocumentTypesAllQuery, CategoryDocumentTypesAllQueryVariables>;
 export const CategoryRulesetDocument = {
   kind: "Document",
   definitions: [
@@ -6227,7 +6236,6 @@ export const CategoryTreeDocument = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
@@ -6850,7 +6858,6 @@ export const CreateCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
@@ -9494,7 +9501,6 @@ export const MoveCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
@@ -11545,7 +11551,6 @@ export const RenameCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
@@ -13656,7 +13661,6 @@ export const SetCategoryDefaultsDocument = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
@@ -13716,36 +13720,11 @@ export const SetCategoryDocumentTypesDocument = {
             selectionSet: {
               kind: "SelectionSet",
               selections: [
-                { kind: "FragmentSpread", name: { kind: "Name", value: "CategoryFields" } },
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
               ],
             },
           },
-        ],
-      },
-    },
-    {
-      kind: "FragmentDefinition",
-      name: { kind: "Name", value: "CategoryFields" },
-      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Category" } },
-      selectionSet: {
-        kind: "SelectionSet",
-        selections: [
-          { kind: "Field", name: { kind: "Name", value: "id" } },
-          { kind: "Field", name: { kind: "Name", value: "name" } },
-          { kind: "Field", name: { kind: "Name", value: "slug" } },
-          { kind: "Field", name: { kind: "Name", value: "parentId" } },
-          { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
-          { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
-          { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
-          { kind: "Field", name: { kind: "Name", value: "owners" } },
-          { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
-          { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
-          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
-          { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
-          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
-          { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
-          { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
         ],
       },
     },
@@ -13905,7 +13884,6 @@ export const SetCategoryGovernanceDocument = {
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
           { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
-          { kind: "Field", name: { kind: "Name", value: "documentTypes" } },
           { kind: "Field", name: { kind: "Name", value: "owners" } },
           { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
           { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
