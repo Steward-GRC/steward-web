@@ -744,6 +744,12 @@
   },
   "categories": {
     "subtitle": "Org hierarchy, review cadence, and inherited defaults.",
+    "search": "Search categories",
+    "columns": {
+      "category": "Category",
+      "children": "Sub-categories",
+      "owners": "Owners"
+    },
     "detailsLabel": "Details & Defaults",
     "name": "Name",
     "slug": "Slug",
@@ -823,13 +829,19 @@
       "description": "Create the first workflow to start building approval chains."
     },
     "notInUse": "Not in use",
+    "search": "Search workflows",
+    "columns": {
+      "appliesTo": "Applies to",
+      "name": "Name",
+      "stages": "Stages",
+      "status": "Status",
+      "version": "Version"
+    },
+    "status": {
+      "active": "Active"
+    },
     "draft": "Draft",
     "disabledApprover": "Disabled approver — needs replacement",
-    "summary": "{{stages}} · {{usedBy}}",
-    "stages_one": "{{count}} stage",
-    "stages_other": "{{count}} stages",
-    "usedBy_one": "used by {{count}} group",
-    "usedBy_other": "used by {{count}} groups",
     "editor": {
       "eyebrow": "Workflows",
       "sequential": "Stages run sequentially. Each runs after the previous one approves.",

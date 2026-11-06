@@ -42,7 +42,7 @@ import {
   setReferenceArchived,
   updateReference,
 } from "../libraries/libraries.server";
-import { DeleteButton, LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
+import { DeleteButton, LibraryPage, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
 /** The table's own search, sort and page changes don't load the page again. */
 export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
@@ -170,14 +170,12 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
     : emptyForm;
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <LibraryHeader
-        newLabel={t("libraries.references.new")}
-        onNew={isAdmin ? openCreate : undefined}
-        subtitle={t("libraries.references.subtitle")}
-        title={t("libraries.references.title")}
-      />
-
+    <LibraryPage
+      newLabel={t("libraries.references.new")}
+      onNew={isAdmin ? openCreate : undefined}
+      subtitle={t("libraries.references.subtitle")}
+      title={t("libraries.references.title")}
+    >
       <LibraryTabs onTab={setTab} tab={tab}>
         <TabsContent value={tab}>
           <ResponsiveTable
@@ -272,6 +270,11 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
             }
             framed
             label={t("libraries.references.title")}
+            rowActions={(ref) =>
+              isAdmin && !ref.archived
+                ? [{ label: t("libraries.actions.edit"), onSelect: () => openEdit(ref) }]
+                : []
+            }
             rowKey={(ref) => ref.id}
             rows={rows}
             search={{
@@ -420,6 +423,6 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
           </deleteFetcher.Form>
         </DialogContent>
       </Dialog>
-    </div>
+    </LibraryPage>
   );
 }

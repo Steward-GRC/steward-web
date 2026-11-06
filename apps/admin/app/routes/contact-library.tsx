@@ -31,7 +31,7 @@ import {
   setContactBlockArchived,
   updateContactBlock,
 } from "../libraries/libraries.server";
-import { LibraryHeader, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
+import { LibraryPage, LibraryTabs, UsedBy } from "../libraries/LibraryParts";
 
 /** The table's own search, sort and page changes don't load the page again. */
 export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
@@ -134,14 +134,12 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
     : emptyForm;
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
-      <LibraryHeader
-        newLabel={t("libraries.contacts.new")}
-        onNew={canManage ? openCreate : undefined}
-        subtitle={t("libraries.contacts.subtitle")}
-        title={t("libraries.contacts.title")}
-      />
-
+    <LibraryPage
+      newLabel={t("libraries.contacts.new")}
+      onNew={canManage ? openCreate : undefined}
+      subtitle={t("libraries.contacts.subtitle")}
+      title={t("libraries.contacts.title")}
+    >
       <LibraryTabs onTab={setTab} tab={tab}>
         <TabsContent value={tab}>
           <ResponsiveTable
@@ -233,6 +231,11 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
             }
             framed
             label={t("libraries.contacts.title")}
+            rowActions={(block) =>
+              canManage && !block.archived
+                ? [{ label: t("libraries.actions.edit"), onSelect: () => openEdit(block) }]
+                : []
+            }
             rowKey={(block) => block.id}
             rows={rows}
             search={{
@@ -314,6 +317,6 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
           </saveFetcher.Form>
         </DialogContent>
       </Dialog>
-    </div>
+    </LibraryPage>
   );
 }

@@ -1,29 +1,32 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { Button, PageHeader, Tabs, TabsList, TabsTrigger, Tooltip } from "@steward-web/ui";
+import { Button, ListPage, Tabs, TabsList, TabsTrigger, Tooltip } from "@steward-web/ui";
 import { Plus } from "lucide-react";
 import { type ReactNode, useId } from "react";
 
 import type { LibraryTab } from "./libraries.logic";
 
 /**
- * A library's header (A25–A27): its title and line, and "+ New …" for someone who may add one.
- * The page sits in the panel's Structure group, so it carries no eyebrow of its own.
+ * A library's page (A25–A27): the common list page (#90) with its title and line, and "+ New …"
+ * for someone who may add one. The page sits in the panel's Structure group, so it carries no
+ * eyebrow of its own.
  */
-export const LibraryHeader = ({
+export const LibraryPage = ({
+  children,
   newLabel,
   onNew,
   subtitle,
   title,
 }: {
+  children: ReactNode;
   newLabel: string;
   /** Left out when the viewer can't add an entry. */
   onNew?: () => void;
   subtitle: string;
   title: string;
 }) => (
-  <PageHeader
+  <ListPage
     actions={
       onNew ? (
         <Button className="h-[38px] px-3" onClick={onNew}>
@@ -34,7 +37,9 @@ export const LibraryHeader = ({
     }
     subtitle={subtitle}
     title={title}
-  />
+  >
+    {children}
+  </ListPage>
 );
 
 /** The libraries' Active / Archived tabs; the list below them is the caller's. */

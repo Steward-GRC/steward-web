@@ -1,73 +1,86 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import { asPhone } from "../test/phone";
 import Workflows from "./workflows";
 
-const stage = (approvers: string[]) => ({
-  approvers,
-  approversByCategory: [],
-  groupUnits: [],
-  id: `s-${approvers.join("-")}`,
-  name: "Review",
-  pinnedLast: false,
-  quorum: "one",
-  rejectOnSlaBreach: false,
-  slaDays: null,
-});
-
-const SITES = [
+const ROWS = [
   {
-    name: "Finance",
-    workflows: [
-      {
-        disabledApprover: true,
-        id: "w-finance",
-        name: "Finance sign-off",
-        stages: [stage(["u-dave"]), stage(["u-carol"])],
-        usedBy: 2,
-      },
-    ],
+    categories: ["Expenses", "Travel"],
+    disabledApprover: true,
+    id: "w-finance",
+    name: "Finance sign-off",
+    stages: 2,
+    usable: true,
+    version: 3,
   },
   {
-    name: null,
-    workflows: [
-      { disabledApprover: false, id: "w-legacy", name: "Legacy", stages: [stage([])], usedBy: 0 },
-    ],
+    categories: [],
+    disabledApprover: false,
+    id: "w-legacy",
+    name: "Legacy",
+    stages: 1,
+    usable: false,
+    version: 1,
   },
 ];
 
 type WorkflowsProps = Parameters<typeof Workflows>[0];
 
-const openWorkflows = (sites: object[] = SITES) => {
+const openWorkflows = (rows: object[] = ROWS) => {
   const Stub = createRoutesStub([
     {
-      Component: () => <Workflows {...({ loaderData: { sites } } as unknown as WorkflowsProps)} />,
+      Component: () => <Workflows {...({ loaderData: { rows } } as unknown as WorkflowsProps)} />,
       path: "/workflows",
     },
   ]);
   render(<Stub initialEntries={["/workflows"]} />);
 };
 
-describe("Workflows (A8)", () => {
-  it("groups the workflows by site as cards", async () => {
+describe("Workflows (A8, #90)", () => {
+  it("is a table, never cards, under the common list structure", async () => {
     openWorkflows();
     expect(await screen.findByRole("heading", { level: 1, name: "Workflows" })).toBeInTheDocument();
     expect(screen.getByText("Approval workflows for policy review.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "+ New workflow" })).toHaveAttribute(
+      "href",
+      "/workflows/new",
+    );
+    const table = screen.getByRole("table", { name: "Workflows" });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Name", "Applies to", "Stages", "Version", "Status"]);
+  });
 
-    const finance = screen.getByRole("region", { name: "Finance" });
-    const card = within(finance).getByRole("link", { name: /Finance sign-off/ });
-    expect(card).toHaveAttribute("href", "/workflows/w-finance");
-    expect(within(card).getByText("2 stages · used by 2 groups")).toBeInTheDocument();
-    expect(within(card).getByText("Disabled approver — needs replacement")).toBeInTheDocument();
-
-    const unused = screen.getByRole("region", { name: "Not in use" });
-    const legacy = within(unused).getByRole("link", { name: /Legacy/ });
+  it("opens the workflow from its name and lists the categories it applies to", async () => {
+    openWorkflows();
+    const row = await screen.findByRole("row", { name: /Finance sign-off/ });
+    expect(within(row).getByRole("link", { name: "Finance sign-off" })).toHaveAttribute(
+      "href",
+      "/workflows/w-finance",
+    );
+    expect(within(row).getByText("Expenses, Travel")).toBeInTheDocument();
+    expect(within(row).getByText("2")).toBeInTheDocument();
+    expect(within(row).getByText("v3")).toBeInTheDocument();
+    expect(within(row).getByText("Disabled approver — needs replacement")).toBeInTheDocument();
+    const legacy = screen.getByRole("row", { name: /Legacy/ });
     expect(within(legacy).getByText("Draft")).toBeInTheDocument();
-    expect(within(legacy).getByText("1 stage · used by 0 groups")).toBeInTheDocument();
+    expect(within(legacy).getByText("Not in use")).toBeInTheDocument();
+  });
+
+  it("has the right-click row menu", async () => {
+    openWorkflows();
+    fireEvent.contextMenu(await screen.findByRole("row", { name: /Finance sign-off/ }));
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Open" })).toHaveAttribute(
+      "href",
+      "/workflows/w-finance",
+    );
   });
 
   it("says when there are no workflows", async () => {
@@ -77,14 +90,13 @@ describe("Workflows (A8)", () => {
 });
 
 describe("Workflows on a phone (7-responsive.s3)", () => {
-  it("keeps A8's cards, each one a link, since there's no table to fold", async () => {
+  it("folds the table into cards, each name a link", async () => {
     asPhone();
     openWorkflows();
-    const finance = await screen.findByRole("region", { name: "Finance" });
-    expect(screen.queryByRole("table")).toBeNull();
-    expect(within(finance).getByRole("link", { name: /Finance sign-off/ })).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: "Finance sign-off" })).toHaveAttribute(
       "href",
       "/workflows/w-finance",
     );
+    expect(screen.queryByRole("table")).toBeNull();
   });
 });
