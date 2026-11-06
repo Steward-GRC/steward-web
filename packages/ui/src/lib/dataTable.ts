@@ -46,6 +46,9 @@ export interface UseDataTableOptions<Row> {
   /** Used until the person picks a sort. `null` leaves the rows in the order given. */
   defaultSort?: DataSort | null;
   pageSizes?: readonly number[];
+  /** Puts this table's address parameters under a prefix ("a-sort"), for a second table on the
+   *  same page. */
+  prefix?: string;
   rows: readonly Row[];
   /** The words the search box matches. Defaults to every column's value. */
   search?: (row: Row) => string;
@@ -75,33 +78,47 @@ export const columnFilterParameter = (key: string) => `f.${key}`;
  * Grouping orders whole groups ahead of the sort, so a page slices through the groups in order
  * and `groups` is the page's rows split under their headings.
  */
-export const useDataTable = <Row>({
-  columns,
-  defaultPageSize = 20,
-  defaultSort = null,
-  pageSizes = DEFAULT_PAGE_SIZES,
-  rows,
-  search,
-}: UseDataTableOptions<Row>) => {
+export const useDataTable = <Row>(options: UseDataTableOptions<Row>) => {
   const [parameters, setParameters] = useSearchParams();
+  return useDataTableState(options, parameters, (next) =>
+    setParameters(next, { preventScrollReset: true }),
+  );
+};
 
-  const query = parameters.get("q") ?? "";
-  const group = parameters.get("group") ?? "";
-  const requestedSize = Number(parameters.get("size"));
+/** The engine over any URLSearchParams state: the address (`useDataTable`) or, outside a router,
+ *  the component's own. */
+export const useDataTableState = <Row>(
+  {
+    columns,
+    defaultPageSize = 20,
+    defaultSort = null,
+    pageSizes = DEFAULT_PAGE_SIZES,
+    prefix = "",
+    rows,
+    search,
+  }: UseDataTableOptions<Row>,
+  parameters: URLSearchParams,
+  setParameters: (next: URLSearchParams) => void,
+) => {
+  const name = (key: string) => (prefix ? `${prefix}-${key}` : key);
+
+  const query = parameters.get(name("q")) ?? "";
+  const group = parameters.get(name("group")) ?? "";
+  const requestedSize = Number(parameters.get(name("size")));
   const pageSize = pageSizes.includes(requestedSize) ? requestedSize : defaultPageSize;
 
   const sortable = (key: string) => columns.some((c) => c.key === key && c.sorts !== false);
-  const sortKey = parameters.get("sort");
+  const sortKey = parameters.get(name("sort"));
   let sort: DataSort | null = null;
   if (sortKey === null) sort = defaultSort;
   else if (sortable(sortKey)) {
-    sort = { dir: parameters.get("dir") === "desc" ? "desc" : "asc", key: sortKey };
+    sort = { dir: parameters.get(name("dir")) === "desc" ? "desc" : "asc", key: sortKey };
   }
 
   const columnFilters = useMemo(() => {
     const filters: Record<string, string> = {};
     for (const column of columns) {
-      const value = parameters.get(columnFilterParameter(column.key));
+      const value = parameters.get(name(columnFilterParameter(column.key)));
       if (column.filter && value) filters[column.key] = value;
     }
     return filters;
@@ -143,7 +160,7 @@ export const useDataTable = <Row>({
     [columns, search],
   );
 
-  const requestedPage = Math.max(1, Math.floor(Number(parameters.get("page"))) || 1);
+  const requestedPage = Math.max(1, Math.floor(Number(parameters.get(name("page")))) || 1);
 
   const table = useReactTable<Row>({
     autoResetPageIndex: false,
@@ -190,11 +207,11 @@ export const useDataTable = <Row>({
   const update = (changes: Record<string, string>) => {
     const next = new URLSearchParams(parameters);
     for (const [key, value] of Object.entries(changes)) {
-      if (value) next.set(key, value);
-      else next.delete(key);
+      if (value) next.set(name(key), value);
+      else next.delete(name(key));
     }
-    if (!("page" in changes)) next.delete("page");
-    setParameters(next, { preventScrollReset: true });
+    if (!("page" in changes)) next.delete(name("page"));
+    setParameters(next);
   };
 
   return {
@@ -218,6 +235,8 @@ export const useDataTable = <Row>({
     setPage: (next: number) => update({ page: next > 1 ? String(next) : "" }),
     setPageSize: (size: number) => update({ size: size === defaultPageSize ? "" : String(size) }),
     setQuery: (value: string) => update({ q: value }),
+    setSort: (key: string, dir: "asc" | "desc") =>
+      sortable(key) ? update({ dir: dir === "desc" ? "desc" : "", sort: key }) : undefined,
     sort,
     toggleSort: (key: string) => {
       if (!sortable(key)) return;

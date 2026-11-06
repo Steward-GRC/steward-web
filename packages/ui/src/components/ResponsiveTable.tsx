@@ -1,13 +1,17 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { ChevronRight } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode, useState } from "react";
+import { useInRouterContext, useSearchParams } from "react-router";
 
 import { Card, Table, TD, TH, THead } from "#ui/components/Display";
 import { Input } from "#ui/components/Input";
 import { cn } from "#ui/lib/cn";
+import { type DataColumn, type DataSort, useDataTableState } from "#ui/lib/dataTable";
 import { PHONE, useMediaQuery } from "#ui/lib/media";
+
+import { Pager } from "./LibraryControls";
 
 /** Where a column's cell goes on a phone's card: the bold title (one column), the muted meta
  *  line, the row of status pills, the actions along the foot, or nowhere. */
@@ -18,8 +22,15 @@ export interface ResponsiveColumn<Row> {
   cell: (row: Row) => ReactNode;
   /** The wide table's cell class; the phone's card doesn't use it. */
   className?: string;
+  /** A filter under the column: words typed, or one of the values it holds. */
+  filter?: "text" | "values";
   header: ReactNode;
   key: string;
+  /** False keeps a column with a value from sorting. */
+  sorts?: boolean;
+  /** The column's plain value. A column with one sorts from its header and filters; a table
+   *  with any such column also pages, jumps, and filters as you type. */
+  value?: (row: Row) => number | string;
 }
 
 export interface ResponsiveTableProps<Row> {
@@ -55,18 +66,20 @@ const blank = (node: ReactNode) => BLANK.has(node);
  * link), the meta columns as one muted line, the status pills on their own row, and the actions
  * along the foot.
  */
-export const ResponsiveTable = <Row,>({
+const PlainTable = <Row,>({
   className,
   columns,
   empty,
   framed = false,
   hideHeader = false,
   label,
+  onSort,
   rowClassName,
   rowKey,
   rows,
   search,
-}: ResponsiveTableProps<Row>) => {
+  sort,
+}: ResponsiveTableProps<Row> & { onSort?: (key: string) => void; sort?: DataSort | null }) => {
   const { t } = useTranslation("common");
   const phone = useMediaQuery(PHONE);
   const [query, setQuery] = useState("");
@@ -79,7 +92,7 @@ export const ResponsiveTable = <Row,>({
         <THead className={hideHeader ? "sr-only" : undefined}>
           <tr>
             {columns.map((column) => (
-              <TH key={column.key}>{column.header}</TH>
+              <SortableTH column={column} key={column.key} onSort={onSort} sort={sort} />
             ))}
           </tr>
         </THead>
@@ -190,6 +203,165 @@ export const ResponsiveTable = <Row,>({
           })}
         </ul>
       )}
+    </div>
+  );
+};
+
+const sortable = <Row,>(column: ResponsiveColumn<Row>) =>
+  column.value !== undefined && column.sorts !== false;
+
+/** A header cell: plain text, or a button that sorts the column, with aria-sort on the sorted. */
+const SortableTH = <Row,>({
+  column,
+  onSort,
+  sort,
+}: {
+  column: ResponsiveColumn<Row>;
+  onSort?: (key: string) => void;
+  sort?: DataSort | null;
+}) => {
+  if (!onSort || !sortable(column)) return <TH>{column.header}</TH>;
+  const active = sort?.key === column.key ? sort.dir : undefined;
+  return (
+    <TH aria-sort={active ? (active === "asc" ? "ascending" : "descending") : undefined}>
+      <button
+        className="inline-flex items-center gap-1 font-semibold hover:text-primary"
+        onClick={() => onSort(column.key)}
+        type="button"
+      >
+        {column.header}
+        {active ? (
+          active === "asc" ? (
+            <ArrowUp aria-hidden="true" className="size-3.5" />
+          ) : (
+            <ArrowDown aria-hidden="true" className="size-3.5" />
+          )
+        ) : null}
+      </button>
+    </TH>
+  );
+};
+
+type Props<Row> = ResponsiveTableProps<Row>;
+
+/**
+ * The shared table. Columns with a `value` sort from their headers, and the table pages with a
+ * jump-to-page dropdown and a page-size choice and filters as you type, all kept in the address
+ * (TanStack Table underneath, in `useDataTable`). A table with no such column renders as it
+ * always has. Outside a router the state lives in the component.
+ */
+export const ResponsiveTable = <Row,>(props: Props<Row>) => {
+  const inRouter = useInRouterContext();
+  if (!props.columns.some((column) => column.value)) return <PlainTable {...props} />;
+  return inRouter ? <RoutedData {...props} /> : <LocalData {...props} />;
+};
+
+const RoutedData = <Row,>(props: Props<Row>) => {
+  const [parameters, setParameters] = useSearchParams();
+  return (
+    <DataTableView
+      {...props}
+      parameters={parameters}
+      setParameters={(next) => setParameters(next, { preventScrollReset: true })}
+    />
+  );
+};
+
+const LocalData = <Row,>(props: Props<Row>) => {
+  const [parameters, setParameters] = useState(() => new URLSearchParams());
+  return <DataTableView {...props} parameters={parameters} setParameters={setParameters} />;
+};
+
+const DataTableView = <Row,>({
+  parameters,
+  setParameters,
+  ...props
+}: Props<Row> & {
+  parameters: URLSearchParams;
+  setParameters: (next: URLSearchParams) => void;
+}) => {
+  const { t } = useTranslation("common");
+  const phone = useMediaQuery(PHONE);
+  const dataColumns: DataColumn<Row>[] = props.columns.map((column) => ({
+    cell: column.cell,
+    filter: column.filter,
+    header: typeof column.header === "string" ? column.header : column.key,
+    key: column.key,
+    sorts: sortable(column),
+    value: column.value ?? (() => ""),
+  }));
+  const table = useDataTableState(
+    {
+      columns: dataColumns,
+      rows: props.rows,
+      search: props.search ? (row) => props.search!.text(row) : undefined,
+    },
+    parameters,
+    setParameters,
+  );
+  const smallest = table.pageSizes[0] ?? 10;
+  const searchable = props.rows.length > smallest || props.search !== undefined;
+  const filtering = table.query.trim() !== "" || Object.keys(table.columnFilters).length > 0;
+  const sortOptions = props.columns.filter(sortable).flatMap((column) => [
+    { label: `${column.header} ↑`, value: `${column.key}:asc` },
+    { label: `${column.header} ↓`, value: `${column.key}:desc` },
+  ]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      {searchable || (phone && sortOptions.length > 0) ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {searchable ? (
+            <Input
+              aria-label={props.search?.label ?? t("table.search")}
+              className="max-w-sm flex-1"
+              onChange={(event) => table.setQuery(event.target.value)}
+              placeholder={props.search?.placeholder}
+              type="search"
+              value={table.query}
+            />
+          ) : null}
+          {phone && sortOptions.length > 0 ? (
+            <select
+              aria-label={t("table.sortBy")}
+              className="h-9 rounded-md border border-control bg-surface px-2 text-base text-ink"
+              onChange={(event) => {
+                const [key, dir] = event.target.value.split(":");
+                if (key) table.setSort(key, dir === "desc" ? "desc" : "asc");
+              }}
+              value={table.sort ? `${table.sort.key}:${table.sort.dir}` : ""}
+            >
+              <option value="">{t("table.sortBy")}</option>
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ) : null}
+        </div>
+      ) : null}
+      {table.total === 0 && filtering ? (
+        <p className="text-base text-muted">{t("table.noMatches", { query: table.query.trim() })}</p>
+      ) : (
+        <PlainTable
+          {...props}
+          onSort={table.toggleSort}
+          rows={table.pageRows}
+          search={undefined}
+          sort={table.sort}
+        />
+      )}
+      {table.total > smallest ? (
+        <Pager
+          onPage={table.setPage}
+          onPageSize={table.setPageSize}
+          page={table.page}
+          pageSize={table.pageSize}
+          pageSizes={table.pageSizes}
+          total={table.total}
+        />
+      ) : null}
     </div>
   );
 };
