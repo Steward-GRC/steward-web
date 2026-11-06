@@ -175,6 +175,7 @@ export const PolicyDocument = ({
     // "body" is core's key for text before the first heading, so a citation to it opens here.
     <article
       className="relative scroll-mt-4 rounded-[10px] border border-border bg-surface px-5 pt-8 pb-10 font-serif text-[17px] leading-[28px] text-ink sm:px-14 sm:pt-10 sm:pb-12 sm:text-[18px] sm:leading-[30px]"
+      data-read-aloud=""
       id="body"
     >
       {blocks.map((block, index) => {

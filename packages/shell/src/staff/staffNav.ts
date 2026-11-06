@@ -111,7 +111,7 @@ export const staffNav = ({ can, counts, reporting }: StaffNavInput): NavSection[
         show: can("policy.approve"),
         to: "/approvals",
       }),
-      item({ icon: ScrollText, id: "auditLog", show: can("audit.read"), to: COMING_SOON.auditLog }),
+      item({ icon: ScrollText, id: "auditLog", show: can("audit.read"), to: "/audit" }),
     ]),
   ].filter((entry) => entry.items.length > 0);
 };

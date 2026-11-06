@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { refusalOf } from "@steward-web/shell";
+import { actionLabel, auditChainRange, displayLabel, refusalOf } from "@steward-web/shell";
 import {
   Badge,
   Banner,
@@ -16,7 +16,6 @@ import { data, Form } from "react-router";
 import type { Route } from "./+types/audit";
 
 import { listAuditLog, verifyAuditChain } from "../audit/audit.server";
-import { actionLabel, auditChainRange, displayLabel } from "../audit/auditFormat";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);

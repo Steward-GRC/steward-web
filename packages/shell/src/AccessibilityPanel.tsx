@@ -20,10 +20,40 @@ const SIZES: readonly { size: TextSize; text: string }[] = [
 const speechOf = (): null | SpeechSynthesis =>
   (globalThis as { speechSynthesis?: null | SpeechSynthesis }).speechSynthesis ?? null;
 
-/** What "Read" reads: the page's main content, without the shell around it. */
+/** The marker a page puts on its document body so Read aloud reads that, not the page around it. */
+const READ_ALOUD_SELECTOR = "[data-read-aloud]";
+
+/** What "Read" reads: the page's document when it marks one, else its main content. */
 const mainText = () => {
-  const main = document.querySelector("main");
-  return (main?.textContent || main?.textContent || "").trim();
+  const region = document.querySelector(READ_ALOUD_SELECTOR) ?? document.querySelector("main");
+  return (region?.textContent ?? "").replaceAll(/\s+/g, " ").trim();
+};
+
+/** The longest piece handed to the browser at once: some browsers stop reading a long text. */
+const PIECE = 200;
+
+/** Splits text at sentence ends into pieces no longer than `PIECE`, breaking at spaces if needed. */
+const pieces = (text: string): string[] => {
+  const out: string[] = [];
+  let current = "";
+  const push = (part: string) => {
+    if (current && current.length + 1 + part.length > PIECE) {
+      out.push(current);
+      current = "";
+    }
+    current = current ? `${current} ${part}` : part;
+  };
+  for (const sentence of text.match(/[^.!?]+[.!?]*\s*/g) ?? []) {
+    let rest = sentence.trim();
+    while (rest.length > PIECE) {
+      const cut = rest.lastIndexOf(" ", PIECE);
+      push(rest.slice(0, cut > 0 ? cut : PIECE));
+      rest = rest.slice(cut > 0 ? cut + 1 : PIECE);
+    }
+    if (rest) push(rest);
+  }
+  if (current) out.push(current);
+  return out;
 };
 
 /** "Read aloud": Read, Pause, Resume and Stop over the page's main content, at a speed and voice. */
@@ -57,10 +87,12 @@ const ReadAloud = () => {
 
   const read = () => {
     speech.cancel();
-    const utterance = new SpeechSynthesisUtterance(mainText());
-    utterance.rate = rate;
-    utterance.voice = voices.find((v) => v.name === voice) ?? null;
-    speech.speak(utterance);
+    for (const piece of pieces(mainText())) {
+      const utterance = new SpeechSynthesisUtterance(piece);
+      utterance.rate = rate;
+      utterance.voice = voices.find((v) => v.name === voice) ?? null;
+      speech.speak(utterance);
+    }
   };
   const button =
     "inline-flex h-9 items-center rounded-md border border-border-strong px-3 text-sm hover:bg-sunken";

@@ -4,6 +4,13 @@ export { AboutDiagnostics } from "./AboutDiagnostics";
 export { AccountMenu } from "./AccountMenu";
 export { ADMIN_COMING_SOON, ADMIN_COMING_SOON_PATHS } from "./admin/adminComingSoon";
 export { AdminShell, type AdminShellProps } from "./admin/AdminShell";
+export {
+  actionLabel,
+  auditChainRange,
+  displayLabel,
+  isReportingRecord,
+  shortId,
+} from "./auditFormat";
 export { ComingSoonPage } from "./ComingSoonPage";
 export { CopyDiagnostics } from "./CopyDiagnostics";
 export { adminCreates, type CreateAction, staffCreates } from "./createActions";

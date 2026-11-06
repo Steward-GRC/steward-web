@@ -141,6 +141,41 @@ describe("Accessibility options (H12)", () => {
     }
   });
 
+  it("reads the document, not the tabs and banners around it, when the page marks one", async () => {
+    const calls = speech();
+    const main = document.createElement("main");
+    main.innerHTML =
+      '<nav>Definitions Related</nav><article data-read-aloud="">Wash hands often.</article>';
+    document.body.append(main);
+    try {
+      openPanel();
+      await userEvent.click(screen.getByRole("button", { name: "Read" }));
+      expect(calls).toEqual(["cancel", "speak:Wash hands often.:1:"]);
+    } finally {
+      main.remove();
+    }
+  });
+
+  it("queues a long text in sentences, so the browser doesn't cut it off", async () => {
+    const calls = speech();
+    const sentence = "Every visitor signs in at the front desk before entering the building.";
+    const main = document.createElement("main");
+    main.textContent = Array.from({ length: 12 }, () => sentence).join(" ");
+    document.body.append(main);
+    try {
+      openPanel();
+      await userEvent.click(screen.getByRole("button", { name: "Read" }));
+      const spoken = calls.filter((call) => call.startsWith("speak:"));
+      expect(spoken.length).toBeGreaterThan(1);
+      for (const call of spoken) expect(call.length).toBeLessThan(260);
+      expect(spoken.map((call) => call.split(":", 2)[1]).join(" ")).toBe(
+        Array.from({ length: 12 }, () => sentence).join(" "),
+      );
+    } finally {
+      main.remove();
+    }
+  });
+
   it("says when this browser can't read aloud", () => {
     vi.stubGlobal("speechSynthesis", null);
     openPanel();

@@ -39,6 +39,7 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   ...Object.fromEntries(
     COMING_SOON_PATHS.map((path) => [`coming-soon${path}`, "shell:titles.staff.comingSoon"]),
   ),
+  "routes/audit": "shell:titles.staff.audit",
   "routes/templates": "shell:titles.staff.templates",
   "routes/templates.$templateId": "shell:titles.staff.template",
 };
