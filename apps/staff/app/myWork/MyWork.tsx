@@ -70,6 +70,7 @@ const Library = ({ library }: { library: LibraryOverview }) => {
           {library.byCategory.map((category) => (
             <div
               className="grid grid-cols-[100px_1fr_30px] items-center gap-2.5 text-sm"
+              data-testid={`library-category-${category.name}`}
               key={category.name}
             >
               <span className="truncate">{category.name}</span>
@@ -118,7 +119,11 @@ const Compliance = ({ ack }: { ack: { done: number; required: number } }) => {
               className="h-2.5 overflow-hidden rounded-full bg-sunken shadow-[inset_0_0_0_1px_var(--border)]"
               role="progressbar"
             >
-              <div className="h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
+              <div
+                className="h-full rounded-full bg-accent"
+                data-testid="progress-fill"
+                style={{ width: `${percent}%` }}
+              />
             </div>
             <span className="leading-[1.45] text-muted">
               {t("myWork.compliance.summary", { ...ack, waiting: ack.required - ack.done })}

@@ -202,7 +202,7 @@ export const Tally = ({
   className,
   size = "sm",
   ...props
-}: ComponentProps<"span"> & { size?: "lg" | "sm" }) => (
+}: { size?: "lg" | "sm" } & ComponentProps<"span">) => (
   <span
     className={cn(
       "inline-flex items-center justify-center rounded-md bg-accent font-mono font-bold text-[#261b25] tabular-nums",

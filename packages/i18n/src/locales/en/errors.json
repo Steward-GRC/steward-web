@@ -1,4 +1,10 @@
 {
+  "needsRole": {
+    "author": {
+      "title": "You need the author role",
+      "description": "Creating and editing policies is for authors. Ask a site admin to give you the author role."
+    }
+  },
   "notFound": {
     "page": {
       "back": "Back to the home page",

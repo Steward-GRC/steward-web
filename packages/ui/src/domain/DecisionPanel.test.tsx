@@ -87,39 +87,39 @@ describe("the decision panel (U25)", () => {
   });
 });
 
-describe("the decision dialog from the command bar (bug log 57)", () => {
-  const Bar = () => (
-    <ul aria-label="command bar">
-      {useCommandActions().map((action) => (
-        <li key={action.id}>
-          <button onClick={action.run} type="button">
-            {action.label}
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-  const renderWithBar = (action: (form: FormData) => void = () => {}) => {
-    const Stub = createRoutesStub([
-      {
-        action: async ({ request }) => {
-          action(await request.formData());
-          return null;
-        },
-        Component: () => (
-          <CommandActionsProvider>
-            <Bar />
-            <DecisionPanel>
-              <input name="taskId" type="hidden" value="task-1" />
-            </DecisionPanel>
-          </CommandActionsProvider>
-        ),
-        path: "/",
+const Bar = () => (
+  <ul aria-label="command bar">
+    {useCommandActions().map((action) => (
+      <li key={action.id}>
+        <button onClick={action.run} type="button">
+          {action.label}
+        </button>
+      </li>
+    ))}
+  </ul>
+);
+const renderWithBar = (action: (form: FormData) => void = () => {}) => {
+  const Stub = createRoutesStub([
+    {
+      action: async ({ request }) => {
+        action(await request.formData());
+        return null;
       },
-    ]);
-    render(<Stub />);
-  };
+      Component: () => (
+        <CommandActionsProvider>
+          <Bar />
+          <DecisionPanel>
+            <input name="taskId" type="hidden" value="task-1" />
+          </DecisionPanel>
+        </CommandActionsProvider>
+      ),
+      path: "/",
+    },
+  ]);
+  render(<Stub />);
+};
 
+describe("the decision dialog from the command bar (bug log 57)", () => {
   it("offers I approve and I reject while the person can decide", () => {
     renderWithBar();
     const bar = screen.getByRole("list", { name: "command bar" });

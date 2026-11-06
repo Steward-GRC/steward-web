@@ -6,7 +6,7 @@
 // three steps.
 import { AssistOperation } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
-import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import { formatNumber, useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, cn, Input, Spinner, Textarea } from "@steward-web/ui";
@@ -36,7 +36,7 @@ import { type SectionText } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   return loadDraftForAi(request, params.policyId);
 };
 

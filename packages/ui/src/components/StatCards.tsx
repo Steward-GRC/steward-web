@@ -94,7 +94,11 @@ export const AckSnapshot = ({
         className="h-2.5 overflow-hidden rounded-[5px] bg-sunken"
         role="progressbar"
       >
-        <div className="h-full bg-accent" style={{ width: `${ratio * 100}%` }} />
+        <div
+          className="h-full bg-accent"
+          data-testid="progress-fill"
+          style={{ width: `${ratio * 100}%` }}
+        />
       </div>
       <span className="text-muted">
         {t("ackSnapshot.caption", { ...counts, percent: formatPercent(ratio) })}

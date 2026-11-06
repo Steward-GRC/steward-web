@@ -5,7 +5,7 @@
 // (steward-gateway#75), so the server checks the rows again and creates them one
 // `createPolicy` at a time, answering each row's result.
 import { PERMISSIONS } from "@steward-web/auth";
-import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { cn } from "@steward-web/ui";
 import { Check, Download, X } from "lucide-react";
@@ -43,7 +43,7 @@ const authoringChoices = async (request: Request) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   return authoringChoices(request);
 };
 

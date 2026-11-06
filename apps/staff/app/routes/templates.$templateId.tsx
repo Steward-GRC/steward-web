@@ -3,7 +3,7 @@
 // One template for authors (Authoring U23): its sections in order, nested ones indented, each
 // required or optional, and Use this template, which opens New policy with it chosen.
 import { PERMISSIONS } from "@steward-web/auth";
-import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import { requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { Button, cn } from "@steward-web/ui";
 import { Link } from "react-router";
@@ -13,7 +13,7 @@ import type { Route } from "./+types/templates.$templateId";
 import { getLatestTemplateVersion, listAuthorableTemplates } from "../authoring/authoring.server";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const authorable = await listAuthorableTemplates(request);
   const template = authorable.find(
     (candidate) => candidate.id === params.templateId && !candidate.retiredAt,

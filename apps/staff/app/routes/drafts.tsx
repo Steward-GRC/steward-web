@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { PERMISSIONS } from "@steward-web/auth";
-import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import { requireRoleFromRequest } from "@steward-web/auth/server";
 import { formatDate, useTranslation } from "@steward-web/i18n";
 import { Button, Card, CardBody, Input, Table, TD, TH, THead } from "@steward-web/ui";
 import { useState } from "react";
@@ -13,7 +13,7 @@ import { listMyDraftPolicies } from "../authoring/authoring.server";
 import { filterDrafts, sortDraftsByRecent, visibleDrafts } from "../authoring/myDrafts";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const drafts = await listMyDraftPolicies(request);
   return { drafts };
 };

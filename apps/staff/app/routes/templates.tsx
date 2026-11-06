@@ -3,7 +3,7 @@
 // Templates for authors (Authoring U22): the structures a policy can be drafted against, with
 // how many sections each has and its current version. Admins manage them in the console.
 import { PERMISSIONS } from "@steward-web/auth";
-import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import { requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { EmptyState, ResponsiveTable } from "@steward-web/ui";
 import { Link } from "react-router";
@@ -16,7 +16,7 @@ import { getLatestTemplateVersion, listAuthorableTemplates } from "../authoring/
 export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const authorable = await listAuthorableTemplates(request);
   const templates = authorable.filter((t) => !t.retiredAt);
   const versions = await Promise.all(

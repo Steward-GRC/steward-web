@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { requireIdentity } from "./guards.server";
+import { requireIdentity, requireRole } from "./guards.server";
 import { NO_ACCESS } from "./identity";
+
+const someone = { ...NO_ACCESS, id: "u-1", permissions: new Set(["policy.read"]) };
 
 const redirectFrom = (currentUrl: string): null | string => {
   try {
@@ -38,5 +40,32 @@ describe("requireIdentity's next", () => {
 
   it("drops the fragment", () => {
     expect(nextFrom("https://steward.example/policies#top")).toBe("/policies");
+  });
+});
+
+describe("requireRole", () => {
+  it("lets someone with the permission through", () => {
+    const author = { ...someone, permissions: new Set(["policy.author"]) };
+    expect(requireRole(author, "policy.author", "author", "https://steward.example/drafts")).toBe(
+      author,
+    );
+  });
+
+  it("refuses someone without it with a 403 that names the missing role, instead of a silent redirect", () => {
+    try {
+      requireRole(someone, "policy.author", "author", "https://steward.example/drafts");
+    } catch (error) {
+      const refusal = error as { data: unknown; init: { status: number } };
+      expect(refusal.init.status).toBe(403);
+      expect(refusal.data).toEqual({ needs: "author" });
+      return;
+    }
+    throw new Error("expected a 403");
+  });
+
+  it("still sends someone signed out to sign in", () => {
+    expect(() =>
+      requireRole(NO_ACCESS, "policy.author", "author", "https://steward.example/drafts"),
+    ).toThrow(Response);
   });
 });

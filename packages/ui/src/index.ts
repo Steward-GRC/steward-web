@@ -23,7 +23,6 @@ export {
   type BadgeTone,
   type ChangeType,
   CountBadge,
-  Tally,
   Detail,
   type DocumentStatus,
   documentStatusOf,
@@ -31,6 +30,7 @@ export {
   type FindingSeverity,
   SensitivityBadge,
   StatusPill,
+  Tally,
   VersionBadge,
 } from "./components/Badges";
 export { Breadcrumb, type Crumb } from "./components/Breadcrumb";

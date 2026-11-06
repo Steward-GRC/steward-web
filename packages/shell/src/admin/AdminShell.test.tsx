@@ -233,7 +233,7 @@ describe("AdminShell banners and footer", () => {
     const bar = screen.getByTestId("dev-login-bar");
     const env = screen.getByTestId("environment-banner");
     expect(bar.compareDocumentPosition(env) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByRole("banner").closest("[style]")).toHaveStyle("--shell-top: 113px");
+    expect(screen.getByTestId("shell-frame")).toHaveStyle("--shell-top: 113px");
   });
 
   it("has the environment banner, the footer and the accessibility button", () => {

@@ -126,11 +126,11 @@ describe("the approval review page (U25)", () => {
 
 describe("the review page's head and tabs (U25)", () => {
   it("puts the Your decision box at the bottom of the page, below the tabs and the changes", () => {
-    renderReview();
+    renderReview(vi.fn());
     const panel = screen.getByRole("region", { name: "Your decision" });
     const changes = screen.getByRole("tab", { name: /Changes/ });
     expect(changes.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(panel.parentElement).not.toHaveClass("lg:grid-cols-[minmax(0,1fr)_380px]");
+    expect(panel).toHaveClass("md:static");
     expect(panel).not.toHaveClass("md:sticky");
   });
 

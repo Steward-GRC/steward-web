@@ -135,7 +135,7 @@ export const StaffShell = ({
   return (
     <CommandActionsProvider>
       <ShellActions inbox={signedIn} />
-      <div className="flex min-h-dvh flex-col" style={style}>
+      <div className="flex min-h-dvh flex-col" data-testid="shell-frame" style={style}>
         <SkipLink />
         <div className="sticky top-0 z-[var(--z-header)]">
           {devLogin}

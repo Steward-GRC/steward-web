@@ -16,6 +16,8 @@ export {
   requireIdentityFromRequest,
   requirePermission,
   requirePermissionFromRequest,
+  requireRole,
+  requireRoleFromRequest,
 } from "./guards.server";
 export { identityFromRequest } from "./requestIdentity.server";
 export {

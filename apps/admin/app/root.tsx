@@ -105,7 +105,7 @@ const PREVIEW_NAME = "Erin Reader";
 export default function App({ loaderData }: Route.ComponentProps) {
   // Sign-in and the other gates sit outside the shell as a centred card (2-layout-and-navigation.s5).
   const gate = useIsGate();
-  const devLogin = loaderData.quickLoginOn ? <QuickLoginBar enabled /> : null;
+  const developmentLogin = loaderData.quickLoginOn ? <QuickLoginBar enabled /> : null;
   const { identity, shell, siteSettings } = loaderData;
   useAccessRevalidation(identity.id !== "");
   const preview = loaderData.gatePreview;
@@ -120,7 +120,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
   if (status) {
     return (
       <IdentityProvider identity={identity}>
-        <GateShell devLogin={devLogin} environment={shell.config.environment}>
+        <GateShell devLogin={developmentLogin} environment={shell.config.environment}>
           <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
           {status === "maintenance" ? (
             <MaintenanceGate message={siteSettings?.maintenance.message ?? ""} />
@@ -138,8 +138,8 @@ export default function App({ loaderData }: Route.ComponentProps) {
     return (
       <IdentityProvider identity={loaderData.identity}>
         <GateShell
-          devLogin={devLogin}
           banners={loaderData.siteSettings}
+          devLogin={developmentLogin}
           environment={loaderData.shell.config.environment}
         >
           <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
@@ -151,10 +151,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
   return (
     <IdentityProvider identity={loaderData.identity}>
       <AdminShell
-        devLogin={devLogin}
         banners={loaderData.siteSettings}
         categories={loaderData.shell.categories}
         config={loaderData.shell.config}
+        devLogin={developmentLogin}
         reporting={loaderData.shell.reporting}
       >
         <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
@@ -174,10 +174,13 @@ export default function App({ loaderData }: Route.ComponentProps) {
 export const ErrorBoundary = () => {
   const loaderData = useRouteLoaderData<typeof loader>("root");
   const gate = useIsGate();
-  const devLogin = loaderData?.quickLoginOn ? <QuickLoginBar enabled /> : null;
+  const developmentLogin = loaderData?.quickLoginOn ? <QuickLoginBar enabled /> : null;
   if (!loaderData || gate) {
     return (
-      <GateShell devLogin={devLogin} environment={loaderData?.shell.config.environment ?? null}>
+      <GateShell
+        devLogin={developmentLogin}
+        environment={loaderData?.shell.config.environment ?? null}
+      >
         <RouteErrorBoundary />
       </GateShell>
     );
@@ -185,10 +188,10 @@ export const ErrorBoundary = () => {
   return (
     <IdentityProvider identity={loaderData.identity}>
       <AdminShell
-        devLogin={devLogin}
         banners={loaderData.siteSettings}
         categories={loaderData.shell.categories}
         config={loaderData.shell.config}
+        devLogin={developmentLogin}
         reporting={loaderData.shell.reporting}
       >
         <RouteErrorBoundary />

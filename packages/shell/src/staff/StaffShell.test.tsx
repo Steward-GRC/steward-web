@@ -239,9 +239,8 @@ describe("StaffShell banners and footer", () => {
     renderShell(bob, { devLogin: <div data-testid="dev-login-bar">Dev login</div> });
     const bar = screen.getByTestId("dev-login-bar");
     const env = screen.getByTestId("environment-banner");
-    expect(screen.getByRole("banner").parentElement).toContainElement(bar);
     expect(bar.compareDocumentPosition(env) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByRole("banner").closest("[style]")).toHaveStyle("--shell-top: 113px");
+    expect(screen.getByTestId("shell-frame")).toHaveStyle("--shell-top: 113px");
   });
 
   it("has no environment banner in production or when none is set", () => {

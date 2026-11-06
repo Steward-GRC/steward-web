@@ -34,7 +34,7 @@ describe("the acknowledgement snapshot (A1)", () => {
   it("shows the figure and the bar in the amber tally style", () => {
     render(<AckSnapshot acknowledged={184} audience={214} />);
     expect(screen.getByText("184 of 214")).toHaveAttribute("data-tally", "lg");
-    expect(screen.getByRole("progressbar").firstElementChild).toHaveClass("bg-accent");
+    expect(screen.getByTestId("progress-fill")).toHaveClass("bg-accent");
   });
 
   it("reads 0% with nobody to acknowledge", () => {

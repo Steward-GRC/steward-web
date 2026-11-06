@@ -4,7 +4,7 @@ import type { AiJobStage } from "@steward-web/ui/domain";
 // SPDX-License-Identifier: Apache-2.0
 import { AssistOperation } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
-import { requirePermissionFromRequest } from "@steward-web/auth/server";
+import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import {
   parseDocument,
   type ReworkChoice,
@@ -68,7 +68,7 @@ interface SectionPayload {
 }
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const [policy, aiHealth] = await Promise.all([
     getPolicy(request, params.policyId),
     getAiHealth(request).catch(() => ({ available: false, reason: "ai_service_unavailable" })),

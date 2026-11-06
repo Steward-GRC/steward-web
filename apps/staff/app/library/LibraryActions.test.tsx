@@ -63,4 +63,17 @@ describe("the library's header actions (U3, U4)", () => {
     renderFor(person(["policy.read"]), DocumentType.Policy);
     expect(screen.queryByRole("link")).toBeNull();
   });
+
+  it("explains why New is unavailable to a reader, instead of hiding them", () => {
+    renderFor(person(["policy.read"]), DocumentType.Policy);
+    expect(screen.queryByRole("link", { name: "New policy" })).toBeNull();
+    const button = screen.getByRole("button", { name: "New policy" });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(button).toHaveAccessibleDescription(
+      "You need the author role to create policies. Ask a site admin.",
+    );
+    expect(
+      screen.getByText("You need the author role to create policies. Ask a site admin."),
+    ).toBeVisible();
+  });
 });
