@@ -4,7 +4,7 @@ import { SignalType } from "@steward-web/api-client";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { formatDayMonth, useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
-import { cn, EmptyState, Tabs, TabsContent, TabsList, TabsTrigger } from "@steward-web/ui";
+import { cn, CopyId, EmptyState, Tabs, TabsContent, TabsList, TabsTrigger } from "@steward-web/ui";
 import {
   ApprovalStepper,
   DecisionPanel,
@@ -269,9 +269,9 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
         </h1>
         <span className="flex flex-wrap items-center gap-2.5">
           {match.number ? (
-            <span className="font-mono text-[13px] text-muted">
+            <CopyId id={match.number}>
               {match.version ? `${match.number} · v${match.version}` : match.number}
-            </span>
+            </CopyId>
           ) : null}
           {task?.dueAt ? (
             <span className="text-[13px] text-muted">

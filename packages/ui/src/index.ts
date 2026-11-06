@@ -45,6 +45,7 @@ export {
   type SelectProps,
   Switch,
 } from "./components/Controls";
+export { CopyId, type CopyIdProps } from "./components/CopyId";
 export {
   Accordion,
   AccordionContent,

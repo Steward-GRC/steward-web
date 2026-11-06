@@ -176,7 +176,9 @@ describe("the review page's head and tabs (U25)", () => {
       ...loaderData,
       review: { ...loaderData.review, diff: null, first: true },
     });
-    expect(screen.queryByRole("tab", { name: "Changes vs the current published version" })).toBeNull();
+    expect(
+      screen.queryByRole("tab", { name: "Changes vs the current published version" }),
+    ).toBeNull();
     expect(screen.queryByRole("tab", { name: "History" })).toBeNull();
     expect(screen.getByRole("tab", { name: "Upcoming version (under review)" })).toHaveAttribute(
       "aria-selected",

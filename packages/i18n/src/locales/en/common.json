@@ -14,6 +14,10 @@
   "breadcrumb": {
     "aria": "Breadcrumb"
   },
+  "copyId": {
+    "copied": "Copied {{id}}",
+    "copy": "Copy {{id}}"
+  },
   "dialog": {
     "stepUp": {
       "code": "Code",
