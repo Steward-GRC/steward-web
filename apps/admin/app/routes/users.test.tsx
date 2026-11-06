@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -199,5 +199,18 @@ describe("Users & roles on a phone (7-responsive.s3)", () => {
     );
     expect(cards[0]).toHaveTextContent(/^Erinerin@example\.org/);
     expect(cards[1]).toHaveTextContent(/^Erin \(old\)erin\.old@example\.org/);
+  });
+});
+
+describe("Users right-click and command bar (#109)", () => {
+  it("offers Edit in the row menu, opening that user's page", async () => {
+    openUsers();
+    fireEvent.contextMenu(await screen.findByRole("row", { name: /^Erin erin@example.org/ }));
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Open" })).toHaveAttribute(
+      "href",
+      "/users/mock-user-erin",
+    );
+    expect(within(menu).getByRole("menuitem", { name: "Edit user" })).toBeInTheDocument();
   });
 });

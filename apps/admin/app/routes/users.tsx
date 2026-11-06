@@ -5,9 +5,17 @@ import type { User } from "@steward-web/api-client";
 import { PERMISSIONS, useIdentity } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
 import { useRegisterNavActions } from "@steward-web/shell";
-import { Button, cn, EmptyState, ListPage, ResponsiveTable, Switch } from "@steward-web/ui";
+import {
+  Button,
+  cn,
+  EmptyState,
+  ListPage,
+  ResponsiveTable,
+  Switch,
+  useRegisterCommandActions,
+} from "@steward-web/ui";
 import { useId } from "react";
-import { Link, useSubmit } from "react-router";
+import { Link, useNavigate, useSubmit } from "react-router";
 
 import type { Route } from "./+types/users";
 
@@ -55,6 +63,16 @@ export default function Users({ loaderData }: Route.ComponentProps) {
   ]);
   const { groupNames, includeDeleted, users } = loaderData;
   const submit = useSubmit();
+  const navigate = useNavigate();
+  // The admin task on this page, offered to the command bar under Admin (#103, #109).
+  useRegisterCommandActions([
+    {
+      id: "merge-accounts",
+      kind: "admin",
+      label: t("users.merge"),
+      run: () => void navigate("/users/merge"),
+    },
+  ]);
   const toggleId = useId();
 
   const status = (user: User): [string, Tone] => {
@@ -183,6 +201,11 @@ export default function Users({ loaderData }: Route.ComponentProps) {
         }
         framed
         label={t("users.title")}
+        rowActions={(user) =>
+          user.deletedAt
+            ? []
+            : [{ label: t("users.edit"), onSelect: () => void navigate(`/users/${user.userId}`) }]
+        }
         rowClassName={(user) => (user.deletedAt || !user.enabled ? "text-muted" : undefined)}
         rowHref={(user) => `/users/${user.userId}`}
         rowKey={(user) => user.userId}
