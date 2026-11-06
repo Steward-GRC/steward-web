@@ -56,10 +56,12 @@ Some entries are still being built. They open a **Coming soon** page until they'
 The round button at the bottom right of every page, including sign-in, opens **Accessibility
 options**:
 
-- **Text size** — Small, Default, Large or X-Large, for every page.
+- **Text size** — X-Small, Small, Default, Large or X-Large, for every page. The steps are even,
+  and X-Large grows the text by an eighth.
 - **Display** — **High contrast** (black and white with a yellow accent), **Reduce motion**
   (stops animations and smooth scrolling; Steward also follows your system's reduced-motion
-  setting), **Readable spacing** (more room between letters, words and lines) and **Underline
+  setting), **Tab transition** (**None**, **Current** or **Smooth**: how the underline moves
+  between tabs; until you choose, it follows reduced motion), **Readable spacing** (more room between letters, words and lines) and **Underline
   links**.
 - **Read aloud** — **Read** reads the page's main content aloud with your browser's voice;
   **Pause**, **Resume** and **Stop** control it, and you can change the **Speed** and the

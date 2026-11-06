@@ -8,10 +8,14 @@ export interface DisplayPreferences {
   dateFormat: DatePreference;
   readableSpacing: boolean;
   reduceMotion: boolean;
+  /** How the tab underline moves; null until chosen, then it follows reduced motion. */
+  tabTransition: null | TabTransition;
   textSize: TextSize;
   theme: Theme;
   underlineLinks: boolean;
 }
+
+export type TabTransition = "current" | "none" | "smooth";
 
 export type TextSize = "default" | "large" | "small" | "x-large" | "x-small";
 
@@ -22,6 +26,7 @@ export const DEFAULT_PREFERENCES: DisplayPreferences = {
   dateFormat: "system",
   readableSpacing: false,
   reduceMotion: false,
+  tabTransition: null,
   textSize: "default",
   theme: "system",
   underlineLinks: false,
@@ -31,6 +36,7 @@ export const PREFERENCES_STORAGE_KEY = "steward.display";
 
 const DATE_FORMATS = new Set<DatePreference>(["dmy", "iso", "mdy", "system"]);
 const THEMES = new Set<Theme>(["dark", "hc", "light", "system"]);
+const TAB_TRANSITIONS = new Set<TabTransition>(["current", "none", "smooth"]);
 const SIZES = new Set<TextSize>(["default", "large", "small", "x-large", "x-small"]);
 
 /** Read the saved preferences, ignoring anything malformed or unknown. */
@@ -44,6 +50,9 @@ export const parsePreferences = (raw: null | string): DisplayPreferences => {
         : "system",
       readableSpacing: value.readableSpacing === true,
       reduceMotion: value.reduceMotion === true,
+      tabTransition: TAB_TRANSITIONS.has(value.tabTransition as TabTransition)
+        ? (value.tabTransition as TabTransition)
+        : null,
       textSize: SIZES.has(value.textSize as TextSize) ? (value.textSize as TextSize) : "default",
       theme: THEMES.has(value.theme as Theme) ? (value.theme as Theme) : "system",
       underlineLinks: value.underlineLinks === true,
@@ -52,6 +61,15 @@ export const parsePreferences = (raw: null | string): DisplayPreferences => {
     return DEFAULT_PREFERENCES;
   }
 };
+
+/** The tab transition in force: the person's choice, else None when the system or the Reduce
+ *  motion switch asks for less motion and Current otherwise. */
+export const tabTransitionOf = (
+  preferences: DisplayPreferences,
+  systemReducesMotion: boolean,
+): TabTransition =>
+  preferences.tabTransition ??
+  (preferences.reduceMotion || systemReducesMotion ? "none" : "current");
 
 /** Put the preferences on the <html> element, where the theme's selectors read them. */
 export const applyPreferences = (root: HTMLElement, preferences: DisplayPreferences): void => {
@@ -64,6 +82,10 @@ export const applyPreferences = (root: HTMLElement, preferences: DisplayPreferen
   flag("data-readable-spacing", preferences.readableSpacing);
   flag("data-reduce-motion", preferences.reduceMotion);
   flag("data-underline-links", preferences.underlineLinks);
+  root.dataset.tabTransition = tabTransitionOf(
+    preferences,
+    globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true,
+  );
   if (preferences.textSize === "default") delete root.dataset.textSize;
   else root.dataset.textSize = preferences.textSize;
 };

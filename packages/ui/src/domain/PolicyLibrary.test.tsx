@@ -154,7 +154,8 @@ describe("PolicyLibrary", () => {
   it("lists every policy, with its status and sensitivity, under All policies", async () => {
     renderAt();
     await userEvent.click(screen.getByRole("button", { name: "Status" }));
-    await userEvent.click(screen.getByRole("menuitemradio", { name: "All policies" }));
+    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: "All policies" }));
+    await userEvent.keyboard("{Escape}");
     expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("All policies");
     const row = screen.getByRole("row", { name: new RegExp("Expense Claims") });
     expect(within(row).getByText("Published")).toBeInTheDocument();
@@ -167,10 +168,45 @@ describe("PolicyLibrary", () => {
     renderAt();
     await userEvent.click(screen.getByRole("button", { name: "Status" }));
     for (const name of ["All policies", "Draft", "In review", "Published", "In progress"]) {
-      expect(screen.getByRole("menuitemradio", { name })).toBeInTheDocument();
+      expect(screen.getByRole("menuitemcheckbox", { name })).toBeInTheDocument();
     }
-    await userEvent.click(screen.getByRole("menuitemradio", { name: "Draft" }));
+    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: "Draft" }));
+    await userEvent.keyboard("{Escape}");
     expect(rowTitles()).toEqual(["Acceptable Use"]);
+  });
+
+  it("filters by several statuses at once (#153)", async () => {
+    renderAt();
+    await userEvent.click(screen.getByRole("button", { name: "Status" }));
+    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: "Draft" }));
+    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: "Published" }));
+    // The menu stays open between picks, so a second one needs no second trip.
+    expect(screen.getByRole("menuitemcheckbox", { name: "Draft" })).toBeChecked();
+    await userEvent.keyboard("{Escape}");
+    expect(rowTitles().toSorted()).toEqual(["Acceptable Use", "Expense Claims"]);
+    const bar = screen.getByRole("region", { name: "Filtered by" });
+    expect(bar).toHaveTextContent("Draft");
+    expect(bar).toHaveTextContent("Published");
+  });
+
+  it("reads several statuses from the address, and the All choice replaces them (#153)", async () => {
+    renderAt(["/policies?status=draft,published"]);
+    expect(rowTitles().toSorted()).toEqual(["Acceptable Use", "Expense Claims"]);
+    await userEvent.click(screen.getAllByRole("button", { name: "Status" })[0]!);
+    expect(screen.getByRole("menuitemcheckbox", { name: "Draft" })).toBeChecked();
+    expect(screen.getByRole("menuitemcheckbox", { name: "Published" })).toBeChecked();
+    expect(screen.getByRole("menuitemcheckbox", { name: "In review" })).not.toBeChecked();
+    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: "All policies" }));
+    expect(screen.getByRole("menuitemcheckbox", { name: "All policies" })).toBeChecked();
+    expect(screen.getByRole("menuitemcheckbox", { name: "Draft" })).not.toBeChecked();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("region", { name: "Filtered by" })).not.toHaveTextContent("Draft");
+  });
+
+  it("removes one status from its chip (#153)", async () => {
+    renderAt(["/policies?status=draft,published"]);
+    await userEvent.click(screen.getByRole("button", { name: "Remove Draft" }));
+    expect(rowTitles()).toEqual(["Expense Claims"]);
   });
 
   it("removes one filter from its chip, and Clear goes back to the tiles", async () => {
@@ -250,6 +286,15 @@ describe("PolicyLibrary", () => {
     renderAt(["/policies?q=ITSEC"]);
     expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("“ITSEC”");
     expect(rowTitles()).toEqual(["Acceptable Use"]);
+  });
+
+  it("shows a starred policy as a filled gold star, and the others as outlines (#152)", async () => {
+    renderAt(["/policies?status=all"]);
+    await userEvent.click(screen.getByRole("button", { name: "Star POL-FINANCE-001" }));
+    const starred = screen.getByRole("button", { name: "Star POL-FINANCE-001" });
+    expect(within(starred).getByTestId("favorite-star")).toHaveAttribute("data-starred", "true");
+    const other = screen.getByRole("button", { name: "Star POL-ITSEC-004" });
+    expect(within(other).getByTestId("favorite-star")).toHaveAttribute("data-starred", "false");
   });
 
   it("stars a policy, then Starred in the header narrows the table to it", async () => {

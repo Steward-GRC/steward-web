@@ -495,6 +495,31 @@ export const MenuRadioItem = ({
   </MenuPrimitive.RadioItem>
 );
 
+/** A menu choice that stands on its own, so several can be on at once; the menu stays open. */
+export const MenuCheckboxItem = ({
+  children,
+  className,
+  onSelect,
+  ...props
+}: ComponentProps<typeof MenuPrimitive.CheckboxItem>) => (
+  <MenuPrimitive.CheckboxItem
+    className={cn(
+      "flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-7 text-base outline-none select-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-on-primary-soft relative",
+      className,
+    )}
+    onSelect={(event) => {
+      event.preventDefault();
+      onSelect?.(event);
+    }}
+    {...props}
+  >
+    <MenuPrimitive.ItemIndicator className="absolute left-2 flex">
+      <Check aria-hidden="true" className="size-4" />
+    </MenuPrimitive.ItemIndicator>
+    {children}
+  </MenuPrimitive.CheckboxItem>
+);
+
 export const Popover = PopoverPrimitive.Root;
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverContent = ({

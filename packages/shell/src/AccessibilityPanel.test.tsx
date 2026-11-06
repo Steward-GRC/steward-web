@@ -69,6 +69,66 @@ describe("Accessibility options (H12)", () => {
     expect(html().dataset.textSize).toBe("x-small");
   });
 
+  it("previews each size in its pill, in even small steps, and lets the pill grow (#155)", () => {
+    openPanel();
+    const sizes = screen.getByRole("radiogroup", { name: "Text size" });
+    const px: number[] = [];
+    for (const name of ["X-Small", "Small", "Default", "Large", "X-Large"]) {
+      // The label's text sits straight in its pill.
+      const pill = within(sizes).getByText(name);
+      expect(pill.className).not.toMatch(/(^|\s)h-\[/);
+      expect(pill.className).toMatch(/min-h-/);
+      px.push(Number(/text-\[(\d+)px\]/.exec(pill.className)![1]));
+    }
+    const gaps = px.slice(1).map((value, index) => value - px[index]!);
+    expect(new Set(gaps).size).toBe(1);
+    expect(Math.max(...px)).toBeLessThanOrEqual(15);
+  });
+
+  it("sets the tab transition beside the display switches: None, Current or Smooth (#154)", async () => {
+    openPanel();
+    const group = screen.getByRole("radiogroup", { name: "Tab transition" });
+    expect(
+      within(group)
+        .getAllByRole("radio")
+        .map((radio) => radio.getAttribute("value")),
+    ).toEqual(["none", "current", "smooth"]);
+    // Nothing chosen: it follows reduced motion, which is off here.
+    expect(within(group).getByRole("radio", { name: "Current" })).toBeChecked();
+    await userEvent.click(within(group).getByRole("radio", { name: "Smooth" }));
+    expect(html().dataset.tabTransition).toBe("smooth");
+    await userEvent.click(within(group).getByRole("radio", { name: "None" }));
+    expect(html().dataset.tabTransition).toBe("none");
+  });
+
+  it("fits every text size label in its pill: one label size, a pill that can grow (#155)", () => {
+    openPanel();
+    const sizes = screen.getByRole("radiogroup", { name: "Text size" });
+    for (const name of ["X-Small", "Small", "Default", "Large", "X-Large"]) {
+      // The label's text sits straight in its pill.
+      const pill = within(sizes).getByText(name);
+      expect(pill.className).not.toMatch(/(^|\s)h-\[/);
+      expect(pill.className).toMatch(/min-h-/);
+      expect(pill.className).not.toMatch(/text-(lg|base|\[10px\])/);
+    }
+  });
+
+  it("sets the tab transition beside the display switches: None, Current or Smooth (#154)", async () => {
+    openPanel();
+    const group = screen.getByRole("radiogroup", { name: "Tab transition" });
+    expect(
+      within(group)
+        .getAllByRole("radio")
+        .map((radio) => radio.getAttribute("value")),
+    ).toEqual(["none", "current", "smooth"]);
+    // Nothing chosen: it follows reduced motion, which is off here.
+    expect(within(group).getByRole("radio", { name: "Current" })).toBeChecked();
+    await userEvent.click(within(group).getByRole("radio", { name: "Smooth" }));
+    expect(html().dataset.tabTransition).toBe("smooth");
+    await userEvent.click(within(group).getByRole("radio", { name: "None" }));
+    expect(html().dataset.tabTransition).toBe("none");
+  });
+
   it("picks the theme: System, Light or Dark", async () => {
     openPanel();
     const themes = screen.getByRole("radiogroup", { name: "Theme" });

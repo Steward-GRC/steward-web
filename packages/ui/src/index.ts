@@ -80,6 +80,7 @@ export {
   TH,
   THead,
 } from "./components/Display";
+export { FavoriteStar } from "./components/FavoriteStar";
 export { Field, type FieldProps } from "./components/Field";
 export { Input, Textarea } from "./components/Input";
 export {
@@ -102,6 +103,7 @@ export {
   type DialogTone,
   DialogTrigger,
   Menu,
+  MenuCheckboxItem,
   MenuContent,
   MenuItem,
   MenuLabel,
@@ -178,6 +180,8 @@ export {
   parsePreferences,
   PREFERENCES_BOOT_SCRIPT,
   PREFERENCES_STORAGE_KEY,
+  type TabTransition,
+  tabTransitionOf,
   type TextSize,
   type Theme,
 } from "./theme/preferences";
