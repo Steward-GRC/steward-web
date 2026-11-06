@@ -46,6 +46,30 @@ const Host = () => {
   );
 };
 
+describe("admin command actions (#103)", () => {
+  it("lists the everyday actions first and the admin ones after, whatever order they registered in", () => {
+    render(
+      <CommandActionsProvider>
+        <Page
+          actions={[
+            { id: "move", kind: "admin", label: "Move", run: vi.fn() },
+            { id: "print", label: "Print", run: vi.fn() },
+            { id: "retire", kind: "admin", label: "Retire", run: vi.fn() },
+            { id: "history", label: "History", run: vi.fn() },
+          ]}
+        />
+        <Listed />
+      </CommandActionsProvider>,
+    );
+    expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Print",
+      "History",
+      "Move",
+      "Retire",
+    ]);
+  });
+});
+
 describe("command actions", () => {
   it("lists what a page registers, and drops it when the page goes", () => {
     render(<Host />);

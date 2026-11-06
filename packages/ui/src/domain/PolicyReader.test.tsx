@@ -112,14 +112,14 @@ const section = (sectionKey: string, changeType: string, wordDiffHtml = "") => (
 const renderAt = (
   detail: PolicyDetail,
   action?: (arguments_: { request: Request }) => unknown,
-  governance?: ReactNode,
+  adminActions?: ReactNode,
 ) => {
   const Stub = createRoutesStub([
     {
       action,
       Component: () => (
         <>
-          <PolicyReader detail={detail} governance={governance} viewerName="Erin Reader" />
+          <PolicyReader adminActions={adminActions} detail={detail} viewerName="Erin Reader" />
           <Toaster />
         </>
       ),
@@ -189,16 +189,28 @@ describe("PolicyReader", () => {
     expect(within(menu).queryByRole("separator")).not.toBeInTheDocument();
   });
 
-  it("adds the admin governance group after a separator (A11)", async () => {
+  it("has no Admin actions button for someone with no admin tasks (#103)", () => {
+    renderAt(baseDetail);
+    expect(screen.queryByRole("button", { name: "Admin actions" })).toBeNull();
+  });
+
+  it("puts the admin tasks in their own Admin actions button next to Actions (#103, A11)", async () => {
     renderAt(baseDetail, undefined, <MenuItem>Retire</MenuItem>);
     await userEvent.click(screen.getByRole("button", { name: "Actions" }));
-    const menu = await screen.findByRole("menu");
+    const everyday = await screen.findByRole("menu");
     expect(
-      within(menu)
+      within(everyday)
         .getAllByRole("menuitem")
         .map((item) => item.textContent),
-    ).toEqual(["Print / Export", "History & approvals", "Retire"]);
-    expect(within(menu).getByRole("separator")).toBeInTheDocument();
+    ).toEqual(["Print / Export", "History & approvals"]);
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByRole("button", { name: "Admin actions" }));
+    const admin = await screen.findByRole("menu");
+    expect(
+      within(admin)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Retire"]);
   });
 
   it("puts the acknowledgement banner above the six-up detail strip", () => {
@@ -700,7 +712,9 @@ describe("PolicyReader", () => {
       ["References 2", "2"],
       ["Contacts 1", "1"],
     ] as const) {
-      expect(within(screen.getByRole("tab", { name })).getByText(count)).toHaveClass("bg-accent-fill");
+      expect(within(screen.getByRole("tab", { name })).getByText(count)).toHaveClass(
+        "bg-accent-fill",
+      );
     }
     await userEvent.click(screen.getByRole("tab", { name: "Related 1" }));
     const related = screen.getByRole("region", { name: "Related" });

@@ -23,6 +23,9 @@ export interface CommandAction {
   allowed?: boolean;
   /** Folder, clock and the like are for results; an action shows the bolt. */
   id: string;
+  /** `admin` marks an admin-level task (#103): the Admin actions button and the bar's Admin
+   *  group show it, after the everyday ones. */
+  kind?: "admin";
   /** Already worded for the person. */
   label: string;
   run: () => void;
@@ -66,7 +69,12 @@ export const CommandActionsProvider = ({ children }: { children: ReactNode }) =>
     for (const list of byOwner.values()) {
       for (const action of list) if (action.allowed !== false) byId.set(action.id, action);
     }
-    return [...byId.values()];
+    // The everyday actions first, the admin ones after, each in the order they registered.
+    const all = [...byId.values()];
+    return [
+      ...all.filter((action) => action.kind !== "admin"),
+      ...all.filter((action) => action.kind === "admin"),
+    ];
   }, [byOwner]);
 
   const actionsRef = useRef(actions);

@@ -1,15 +1,6 @@
 import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
 import { formatDate, formatDateTime, formatTime, useTranslation } from "@steward-web/i18n";
-import {
-  ChevronDown,
-  ChevronLeft,
-  Eye,
-  EyeOff,
-  History,
-  Pencil,
-  Printer,
-  Sparkles,
-} from "lucide-react";
+import { ChevronLeft, Eye, EyeOff, History, Pencil, Printer, Sparkles } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { Link, useFetcher, useLocation, useRevalidator, useSubmit } from "react-router";
@@ -23,6 +14,7 @@ import { Switch } from "#ui/components/Controls";
 import { CopyId } from "#ui/components/CopyId";
 import { FavoriteStar } from "#ui/components/FavoriteStar";
 import { Field } from "#ui/components/Field";
+import { HeaderActions } from "#ui/components/HeaderActions";
 import { Textarea } from "#ui/components/Input";
 import {
   Dialog,
@@ -31,11 +23,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogTrigger,
-  Menu,
-  MenuContent,
   MenuItem,
-  MenuSeparator,
-  MenuTrigger,
 } from "#ui/components/Overlays";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/Tabs";
 import { Banner } from "#ui/feedback/Banner";
@@ -452,13 +440,13 @@ const DetailCell = ({ children, label }: { children: ReactNode; label: string })
 const HISTORY_ID = "reader-history";
 
 export interface PolicyReaderProps {
+  /** The admin console's governance items (A11), in their own Admin actions button next to
+   *  Actions (#103). The staff reader leaves it out. */
+  adminActions?: ReactNode;
   detail: PolicyDetail;
   /** Where the staff app posts `intent=edit` to start (or reopen) the working draft and open
    *  the editor. Given only when the viewer can edit; without it there is no Edit. */
   editAction?: string;
-  /** The admin console's governance items (A11), drawn in the Actions menu after a separator.
-   *  The staff reader leaves it out. */
-  governance?: ReactNode;
   /** Told when a sensitive record is sent to print, so the app can record the export. */
   onPrint?: (options: { includeHistory: boolean }) => void;
   /** The organisation's name, for the printed page's running header (R1). */
@@ -497,7 +485,7 @@ const usePrinting = (): Date | null => {
 export const PolicyReader = ({
   detail,
   editAction,
-  governance,
+  adminActions,
   onPrint,
   organisation,
   viewerName,
@@ -631,39 +619,29 @@ export const PolicyReader = ({
         >
           <FavoriteStar className="size-[1.15em]" starred={starred} />
         </button>
-        <Menu>
-          <MenuTrigger asChild>
-            <button
-              className="flex h-[38px] flex-none items-center gap-1.5 rounded-md border border-border-strong bg-surface px-3.5 font-semibold hover:bg-sunken"
-              type="button"
-            >
-              {t("reader.actions.menu")}
-              <ChevronDown aria-hidden="true" className="size-4" />
-            </button>
-          </MenuTrigger>
-          <MenuContent align="end">
-            {editAction ? (
-              <MenuItem onSelect={edit}>
-                <Pencil aria-hidden="true" className="size-4" />
-                {editLabel}
+        <HeaderActions
+          actions={
+            <>
+              {editAction ? (
+                <MenuItem onSelect={edit}>
+                  <Pencil aria-hidden="true" className="size-4" />
+                  {editLabel}
+                </MenuItem>
+              ) : null}
+              <MenuItem onSelect={askToPrint}>
+                <Printer aria-hidden="true" className="size-4" />
+                {t("reader.actions.print")}
               </MenuItem>
-            ) : null}
-            <MenuItem onSelect={askToPrint}>
-              <Printer aria-hidden="true" className="size-4" />
-              {t("reader.actions.print")}
-            </MenuItem>
-            <MenuItem onSelect={showHistory}>
-              <History aria-hidden="true" className="size-4" />
-              {t("reader.actions.history")}
-            </MenuItem>
-            {governance ? (
-              <>
-                <MenuSeparator />
-                {governance}
-              </>
-            ) : null}
-          </MenuContent>
-        </Menu>
+              <MenuItem onSelect={showHistory}>
+                <History aria-hidden="true" className="size-4" />
+                {t("reader.actions.history")}
+              </MenuItem>
+            </>
+          }
+          actionsLabel={t("reader.actions.menu")}
+          adminActions={adminActions}
+          adminLabel={t("reader.actions.adminMenu")}
+        />
       </div>
 
       {/* Nobody can acknowledge what they can't read (U9). */}

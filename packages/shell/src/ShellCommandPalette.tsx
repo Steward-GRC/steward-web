@@ -4,12 +4,10 @@ import { useTranslation } from "@steward-web/i18n";
 import {
   CommandPalette,
   type Failure,
-  formatShortcut,
   type PaletteGroup,
   type PaletteItem,
   type PaletteLink,
   ReachError,
-  SHORTCUTS,
   useCommandActions,
 } from "@steward-web/ui";
 import { useEffect, useState } from "react";
@@ -18,6 +16,7 @@ import { useFetcher, useNavigate } from "react-router";
 import type { CreateAction } from "./createActions";
 
 import { readRecent, rememberRecent } from "./commandPaletteRecent";
+import { pageActionGroups } from "./pageActionGroups";
 
 /** A create action answers words in its label ("New procedure" for "proc" or "new pro"). */
 const matchesCreate = (label: string, words: string) =>
@@ -96,22 +95,13 @@ export const ShellCommandPalette = ({
       .filter((item) => !words || matchesCreate(item.label, words)),
   };
   // This page's actions (bug log 26) come before everything, narrowed by the words like Create.
-  const actionsGroup: PaletteGroup = {
-    heading: t("palette.groups.actions"),
-    id: "actions",
-    items: pageActions
-      .filter((action) => !words || matchesCreate(action.label, words))
-      .map((action) => ({
-        icon: "action" as const,
-        id: `action:${action.id}`,
-        label: action.label,
-        run: action.run,
-        shortcut: action.shortcut ? formatShortcut(SHORTCUTS[action.shortcut].keys) : undefined,
-      })),
-  };
+  const actionGroups = pageActionGroups(pageActions, words, {
+    actions: t("palette.groups.actions"),
+    admin: t("palette.groups.admin"),
+  });
   const groups: PaletteGroup[] = words
     ? [
-        actionsGroup,
+        ...actionGroups,
         ...(fetcher.data?.groups ?? []).map((group) => ({
           heading: t(`palette.groups.${group.id}`, { defaultValue: group.id }),
           id: group.id,
@@ -120,7 +110,7 @@ export const ShellCommandPalette = ({
         createGroup,
       ]
     : [
-        actionsGroup,
+        ...actionGroups,
         createGroup,
         {
           heading: t("palette.groups.recent"),

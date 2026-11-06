@@ -58,6 +58,7 @@ export const AdminPolicyReader = ({
     governanceActions.map(({ allowed, dialog, shortcut }) => ({
       allowed,
       id: dialog,
+      kind: "admin" as const,
       label: t(`governance.menu.${dialog}`),
       run: () => setOpen(dialog),
       shortcut,
@@ -71,7 +72,7 @@ export const AdminPolicyReader = ({
     </MenuItem>
   );
 
-  const governance = (
+  const adminActions = (
     <>
       {item("exportPdf", FileDown, !published)}
       {item("magicLinks", Link2)}
@@ -90,8 +91,8 @@ export const AdminPolicyReader = ({
   return (
     <>
       <PolicyReader
+        adminActions={adminActions}
         detail={detail}
-        governance={governance}
         onPrint={({ includeHistory }) =>
           void audit.submit(
             { includeHistory: String(includeHistory), intent: "recordPrint" },

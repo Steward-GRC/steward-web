@@ -45,6 +45,7 @@
     "range": "{{first}}–{{last}} of {{total}}"
   },
   "palette": {
+    "adminBadge": "Admin",
     "empty": "Nothing matches “{{query}}”.",
     "esc": "esc",
     "placeholder": "Search policies, templates…",

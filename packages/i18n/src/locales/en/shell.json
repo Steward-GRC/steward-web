@@ -257,6 +257,7 @@
     "createPrefix": "New ",
     "groups": {
       "actions": "Actions",
+      "admin": "Admin",
       "categories": "Categories",
       "create": "Create",
       "groups": "Groups",

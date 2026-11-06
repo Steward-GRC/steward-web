@@ -110,3 +110,29 @@ describe("the command palette (H10)", () => {
     expect(screen.getByText("closed")).toBeInTheDocument();
   });
 });
+
+describe("admin items in the palette (#103)", () => {
+  it("marks an admin action with the Admin badge", () => {
+    render(
+      <CommandPalette
+        groups={[
+          {
+            heading: "Admin",
+            id: "admin",
+            items: [
+              { admin: true, icon: "action", id: "action:retire", label: "Retire", run: () => {} },
+            ],
+          },
+        ]}
+        onOpenChange={() => {}}
+        onQueryChange={() => {}}
+        onSeeAll={() => {}}
+        onSelect={() => {}}
+        open
+        query=""
+      />,
+    );
+    const item = screen.getByRole("option", { name: /Retire/ });
+    expect(item).toHaveTextContent("Admin");
+  });
+});
