@@ -168,14 +168,30 @@ describe("the review page's head and tabs (U25)", () => {
     expect(screen.getByRole("heading", { name: "History & approvals" })).toBeVisible();
   });
 
-  it("says why there are no changes to show when the published version isn't known", () => {
+  it("leaves out the changes tab when there are no changes to show, even if the version isn't known to be first", () => {
     renderReview(() => {}, {
       ...loaderData,
       review: { ...loaderData.review, diff: null, first: false },
     });
     expect(
-      screen.getByText("The changes can't be shown: this draft isn't listed in your library."),
-    ).toBeVisible();
+      screen.queryByRole("tab", { name: "Changes vs the current published version" }),
+    ).toBeNull();
+    expect(screen.getByRole("tab", { name: "History" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Upcoming version (under review)" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("leaves out the history tab when there is no history yet", () => {
+    renderReview(() => {}, {
+      ...loaderData,
+      review: { ...loaderData.review, first: false, history: [] },
+    });
+    expect(screen.queryByRole("tab", { name: "History" })).toBeNull();
+    expect(
+      screen.getByRole("tab", { name: "Changes vs the current published version" }),
+    ).toBeInTheDocument();
   });
 
   it("leaves out the changes and history tabs for a first version, opening on the upcoming one", () => {

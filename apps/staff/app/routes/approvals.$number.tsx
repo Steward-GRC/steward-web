@@ -173,9 +173,13 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const refusal = actionData && "error" in actionData ? actionData.error : undefined;
   const decided = actionData && "decided" in actionData ? actionData.decided : undefined;
   const refusalMessage = useRefusalMessage(refusal ?? {});
-  // A first version has nothing to compare and no history yet, so those tabs aren't offered.
-  const firstVersion = "review" in loaderData && loaderData.review.first;
-  const [view, setView] = useState(firstVersion ? "upcoming" : "changes");
+  // A tab with nothing to show isn't offered: no changes when there is nothing to compare
+  // against (a first version, or a published version that isn't known), and no history for a
+  // first version or one without entries yet.
+  const early = "review" in loaderData ? loaderData.review : null;
+  const hasChanges = early !== null && early.diff !== null;
+  const hasHistory = early !== null && !early.first && early.history.length > 0;
+  const [view, setView] = useState(hasChanges ? "changes" : "upcoming");
 
   if (!loaderData.match) {
     return (
@@ -286,29 +290,25 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Tabs onValueChange={setView} value={view}>
           <TabsList className="grid h-auto w-full auto-cols-fr grid-flow-col justify-start gap-1 overflow-x-auto rounded-none border-b border-border-strong p-0">
-            {firstVersion ? null : (
+            {hasChanges ? (
               <TabsTrigger className={tab} value="changes">
                 {t("review.tabs.changes")}
               </TabsTrigger>
-            )}
+            ) : null}
             <TabsTrigger className={tab} value="upcoming">
               {t("review.tabs.upcoming")}
             </TabsTrigger>
-            {firstVersion ? null : (
+            {hasHistory ? (
               <TabsTrigger className={tab} value="history">
                 {t("review.tabs.history")}
               </TabsTrigger>
-            )}
+            ) : null}
           </TabsList>
-          <TabsContent className="mt-3.5" value="changes">
-            {review.diff === null ? (
-              <Unavailable>
-                {t("review.changes.unknown")}
-              </Unavailable>
-            ) : (
+          {review.diff === null ? null : (
+            <TabsContent className="mt-3.5" value="changes">
               <DiffView sections={review.diff} />
-            )}
-          </TabsContent>
+            </TabsContent>
+          )}
           <TabsContent className="mt-3.5" value="upcoming">
             {review.upcoming ? (
               <PolicyDocument
