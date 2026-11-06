@@ -39,3 +39,36 @@ describe("the dialog scrim", () => {
     expect(css).toMatch(/\.system:not\(\.hc\)\s*\{[^}]*--scrim: rgb\(0 0 0 \/ 0\.65\)/);
   });
 });
+
+const channel = (value: number) => {
+  const c = value / 255;
+  return c <= 4.045 / 100 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+};
+const luminance = (hex: string) => {
+  const [r = 0, g = 0, b = 0] = [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16));
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+};
+const ratio = (a: string, b: string) => {
+  const [hi = 0, lo = 0] = [luminance(a), luminance(b)].toSorted((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+const light = (name: string) =>
+  new RegExp(String.raw`--${name}:\s*(#[\da-f]{6})`).exec(rule(":root"))?.[1] ?? "";
+
+describe("the light theme's page and card colours", () => {
+  it("sets the page on the design's paper, not a darker sand", () => {
+    expect(light("background")).toBe("#f8f4ee");
+  });
+
+  it("keeps text readable on the page and on the card band: 4.5:1 or better", () => {
+    for (const text of ["ink", "muted"]) {
+      expect(ratio(light(text), light("background"))).toBeGreaterThanOrEqual(4.5);
+      expect(ratio(light(text), light("sunken"))).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("draws a card's edge firmly enough to tell it from the page", () => {
+    expect(ratio(light("border"), light("background"))).toBeGreaterThanOrEqual(1.8);
+    expect(ratio(light("sunken"), light("background"))).toBeGreaterThanOrEqual(1.15);
+  });
+});
