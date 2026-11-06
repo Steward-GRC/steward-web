@@ -20,6 +20,7 @@ import {
   ReworkSelectionPlugin,
   type SavedSelection,
 } from "./ReworkSelection";
+import { ImageUploadError } from "./uploadImage";
 
 /** What a host can do with a mounted editor. */
 export interface StewardEditorHandle {
@@ -61,16 +62,18 @@ const EDITOR_THEME = {
   position: "relative",
 } as CSSProperties;
 
+// What steward-core stores (SVG is refused: served inline it is a stored-XSS vector).
 const IMAGE_TYPES = {
   image: {
-    extensions: ["gif", "jpg", "jpeg", "png", "svg", "webp"],
-    mimeTypes: ["image/gif", "image/jpeg", "image/png", "image/svg+xml", "image/webp"],
+    extensions: ["gif", "jpg", "jpeg", "png", "webp"],
+    mimeTypes: ["image/gif", "image/jpeg", "image/png", "image/webp"],
   },
 };
 
 const useImageUploader = (
   uploadImage: StewardEditorProps["uploadImage"],
   unavailable: string,
+  failed: string,
 ): FileUploader["useFileUpload"] =>
   // A hook factory the cards call as `useFileUpload("image")`; its identity is stable per
   // upload function so the cards' effects don't re-run on every render.
@@ -94,14 +97,16 @@ const useImageUploader = (
             setState({ errors: [], isLoading: false, progress: 100 });
             return urls.map((url, index) => ({ fileName: list[index]?.name, url }));
           } catch (error) {
-            const message = error instanceof Error ? error.message : unavailable;
+            // The gateway's own refusal (too large, not an allowed image) when it gave one.
+            const message =
+              error instanceof ImageUploadError ? (error.gatewayText ?? failed) : failed;
             setState({ errors: [{ message }], isLoading: false, progress: 0 });
             return null;
           }
         }, []);
         return { ...state, upload };
       },
-    [uploadImage, unavailable],
+    [uploadImage, unavailable, failed],
   );
 
 /**
@@ -124,7 +129,11 @@ export const StewardEditor = ({
   const apiRef = useRef<KoenigEditorAPI | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
   const savedSelection: SavedSelection = useRef(null);
-  const useFileUpload = useImageUploader(uploadImage, t("editor.imageUploadUnavailable"));
+  const useFileUpload = useImageUploader(
+    uploadImage,
+    t("editor.imageUploadUnavailable"),
+    t("editor.imageUploadFailed"),
+  );
   const fileUploader = useMemo(() => ({ fileTypes: IMAGE_TYPES, useFileUpload }), [useFileUpload]);
   // Fixed at mount: the composer reads its initial state and collaboration mode once.
   const [initialEditorState] = useState(() =>

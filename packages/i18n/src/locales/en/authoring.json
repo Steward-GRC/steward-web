@@ -61,6 +61,7 @@
       "title": "Discard this draft?"
     },
     "draftWord": "draft",
+    "imageUploadFailed": "The image couldn't be uploaded. Try again.",
     "imageUploadUnavailable": "Image uploads aren't available here yet. Paste an image link with /image instead.",
     "loading": "Loading the editor",
     "nextVersion": {
