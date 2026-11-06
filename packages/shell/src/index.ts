@@ -60,6 +60,7 @@ export {
   type StatusGate,
   statusGateFor,
 } from "./StatusGates";
+export { recordUiIssueError } from "./uiIssueErrorStore";
 export {
   LIVE_ACCESS_PATH,
   shouldRevalidateShell,

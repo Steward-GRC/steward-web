@@ -120,3 +120,25 @@ describe("the active tab in high contrast (#64)", () => {
     );
   });
 });
+
+describe("the editor's selection colour (#72)", () => {
+  // The editor draws selected and focused cards, active toolbar buttons and drop lines in
+  // `--kg-selection-color`, which Steward sets to the purple primary token.
+  const systemDark = /\.system:not\(\.hc\)\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+  it.each([
+    [":root", rule(":root")],
+    [".dark", rule(".dark")],
+    [".hc", rule(".hc")],
+    [".system:not(.hc)", systemDark],
+  ])("reaches 3:1 on the page and on the card in %s", (_name, body) => {
+    const get = (name: string) =>
+      new RegExp(String.raw`--${name}:\s*(#[\da-f]{6})`).exec(body)?.[1] ?? "";
+    expect(get("primary")).not.toBe("");
+    expect(ratio(get("primary"), get("background"))).toBeGreaterThanOrEqual(3);
+    expect(ratio(get("primary"), get("surface"))).toBeGreaterThanOrEqual(3);
+  });
+
+  it("keeps a visible outline on selected cards in high contrast, where shadows are off", () => {
+    expect(css).toMatch(/\.hc \.koenig-lexical[^{]*\{[^}]*outline/);
+  });
+});
