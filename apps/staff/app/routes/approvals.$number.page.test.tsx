@@ -166,14 +166,17 @@ describe("the review page's head and tabs (U25)", () => {
     ).toBeVisible();
   });
 
-  it("says there's nothing to compare for a first version", () => {
+  it("leaves out the changes and history tabs for a first version, opening on the upcoming one", () => {
     renderReview(() => {}, {
       ...loaderData,
       review: { ...loaderData.review, diff: null, first: true },
     });
-    expect(
-      screen.getByText("This is the first version, so there's nothing to compare yet."),
-    ).toBeVisible();
+    expect(screen.queryByRole("tab", { name: "Changes vs the current published version" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "History" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Upcoming version (under review)" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 });
 
