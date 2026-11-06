@@ -9,6 +9,7 @@ export {
   Badge,
   type BadgeTone,
   type ChangeType,
+  CountBadge,
   Detail,
   type DocumentStatus,
   documentStatusOf,

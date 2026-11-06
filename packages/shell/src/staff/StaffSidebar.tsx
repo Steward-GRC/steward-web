@@ -3,7 +3,7 @@
 import type { Category } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
-import { cn, Tooltip } from "@steward-web/ui";
+import { cn, CountBadge, Tooltip } from "@steward-web/ui";
 import { ChevronRight, Folder, PanelLeft } from "lucide-react";
 import { Fragment, type ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -24,12 +24,9 @@ const browseHref = (category: string, subcategory?: string) => {
 };
 
 const Badge = ({ count }: { count: number }) => (
-  <span
-    aria-hidden="true"
-    className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-accent px-1.5 text-2xs font-bold text-[#261b25] rail:hidden"
-  >
+  <CountBadge aria-hidden="true" className="ml-auto rail:hidden">
     {count}
-  </span>
+  </CountBadge>
 );
 
 /** Wraps an icon-only rail item in its tooltip (Icons: "icon-only buttons carry a tooltip"). */

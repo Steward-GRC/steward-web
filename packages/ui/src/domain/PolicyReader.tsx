@@ -16,6 +16,7 @@ import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
 
+import { CountBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Switch } from "#ui/components/Controls";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/Display";
@@ -409,14 +410,14 @@ const DetailCell = ({ children, label }: { children: ReactNode; label: string })
   </li>
 );
 
-/** A view-strip tab with its count in mono (U7). */
+/** A view-strip tab with its count in an amber badge (U7). */
 const TabLabel = ({ count, label }: { count?: number; label: string }) => (
   <>
     {label}
     {count === undefined ? null : (
       <>
         {" "}
-        <span className="font-mono text-xs">{count}</span>
+        <CountBadge>{count}</CountBadge>
       </>
     )}
   </>

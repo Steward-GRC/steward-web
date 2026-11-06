@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { documentStatusOf, StatusPill, VersionBadge } from "./Badges";
+import { CountBadge, documentStatusOf, StatusPill, VersionBadge } from "./Badges";
 
 describe("StatusPill", () => {
   it.each([
@@ -40,5 +40,17 @@ describe("VersionBadge", () => {
     render(<VersionBadge change="major" version="v3.0.0" />);
     expect(screen.getByText("v3.0.0")).toBeInTheDocument();
     expect(screen.getByText("Major")).toBeInTheDocument();
+  });
+});
+
+describe("CountBadge", () => {
+  it("is an amber pill with dark text, so a count stands out", () => {
+    render(<CountBadge>3</CountBadge>);
+    expect(screen.getByText("3")).toHaveClass("bg-accent", "text-[#261b25]", "rounded-[10px]");
+  });
+
+  it("takes extra classes", () => {
+    render(<CountBadge className="ml-auto">3</CountBadge>);
+    expect(screen.getByText("3")).toHaveClass("ml-auto");
   });
 });
