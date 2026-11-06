@@ -53,12 +53,14 @@ export const flowStepsOf = (
       nodes: seats.map((seat, seatIndex): FlowNode => {
         const state = nodeState(seat, stage);
         return {
+          comment: seat.comment ?? null,
           id: `stage-${index}-${seatIndex}`,
           state,
           title: stage.name,
           when:
             seat.state === "pending"
-              ? state === "current"
+              ? // The due date is the viewer's own task's, so only their box carries it.
+                state === "current" && seat.isYou
                 ? dueText
                 : null
               : seat.decidedAt
@@ -70,12 +72,15 @@ export const flowStepsOf = (
     };
   });
 
-/** Who submitted this run and when: the latest submit event in the history, if any. */
+/**
+ * Who submitted this run and when: the latest "submitted" event in the history, if any. The
+ * audit trail carries no per-version number, so this is the policy's latest submit.
+ */
 export const submittedFrom = (
   history: readonly HistoryEntry[],
 ): { at: null | string; by: null | string } => {
   const submits = history
-    .filter((h) => h.kind.toLowerCase().includes("submit"))
+    .filter((h) => h.kind === "submitted")
     .toSorted((a, b) => a.at.localeCompare(b.at));
   const latest = submits.at(-1);
   return { at: latest?.at ?? null, by: latest?.actorName ?? null };

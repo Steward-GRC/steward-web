@@ -38,16 +38,37 @@ describe("flowStepsOf", () => {
     expect(steps[0]!.nodes[0]!.when).toMatch(/Oct/);
   });
 
+  it("carries the approver's decision comment onto the box", () => {
+    const [step] = flowStepsOf(
+      [stage("Legal", "done", [who("Carol", "approved", { comment: "Fine by me." })])],
+      options,
+    );
+    expect(step!.nodes[0]!.comment).toBe("Fine by me.");
+  });
+
   it("shows the due date on the box being waited on, and none on a box not yet reached", () => {
     const steps = flowStepsOf(
       [
-        stage("Finance", "current", [who("Dave", "pending")]),
+        stage("Finance", "current", [who("Dave", "pending", { isYou: true })]),
         stage("CEO", "upcoming", [who("Frank", "pending")]),
       ],
       options,
     );
     expect(steps[0]!.nodes[0]!.when).toBe("Due 9 Oct");
     expect(steps[1]!.nodes[0]!.when).toBeNull();
+  });
+
+  it("shows the due date only on the viewer's own box, since it is the viewer's task that carries it", () => {
+    const [step] = flowStepsOf(
+      [
+        stage("Finance", "current", [
+          who("Dave", "pending"),
+          who("Erin", "pending", { isYou: true }),
+        ]),
+      ],
+      options,
+    );
+    expect(step!.nodes.map((n) => n.when)).toEqual([null, "Due 9 Oct"]);
   });
 
   it("fans a stage with several approvers out into one box each, with their own state", () => {
@@ -108,15 +129,22 @@ describe("submittedFrom", () => {
   it("takes who and when from the latest submit event in the history", () => {
     expect(
       submittedFrom([
-        entry("PUBLISHED", "2026-09-01T00:00:00Z", "Alice"),
-        entry("SUBMITTED", "2026-09-20T00:00:00Z", "Bob"),
-        entry("SUBMITTED", "2026-10-01T00:00:00Z", "Bobbi"),
+        entry("published", "2026-09-01T00:00:00Z", "Alice"),
+        entry("submitted", "2026-09-20T00:00:00Z", "Bob"),
+        entry("submitted", "2026-10-01T00:00:00Z", "Bobbi"),
       ]),
     ).toEqual({ at: "2026-10-01T00:00:00Z", by: "Bobbi" });
   });
 
+  it("ignores other events that merely mention a submit", () => {
+    expect(submittedFrom([entry("submittedBack", "2026-10-01T00:00:00Z", "Bob")])).toEqual({
+      at: null,
+      by: null,
+    });
+  });
+
   it("says nothing when the history has no submit event", () => {
-    expect(submittedFrom([entry("PUBLISHED", "2026-09-01T00:00:00Z", "Alice")])).toEqual({
+    expect(submittedFrom([entry("published", "2026-09-01T00:00:00Z", "Alice")])).toEqual({
       at: null,
       by: null,
     });

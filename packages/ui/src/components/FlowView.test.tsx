@@ -21,7 +21,10 @@ const node = (id: string, state: FlowNode["state"], extra: Partial<FlowNode> = {
 const submitted = node("Submitted", "done", { when: "1 Oct", who: "Bob" });
 
 const steps: FlowStep[] = [
-  { id: "legal", nodes: [node("Legal", "done", { when: "2 Oct", who: "Carol" })] },
+  {
+    id: "legal",
+    nodes: [node("Legal", "done", { comment: "Fine by me.", when: "2 Oct", who: "Carol" })],
+  },
   {
     id: "fin",
     nodes: [
@@ -62,7 +65,7 @@ describe("the flow view", () => {
       "listitem",
     );
     expect(items).toHaveLength(5);
-    expect(items[1]).toHaveTextContent("Legal, Carol, 2 Oct: Done");
+    expect(items[1]).toHaveTextContent("Legal, Carol, 2 Oct: Done. “Fine by me.”");
     expect(items[3]).toHaveTextContent("Finance, Erin: Waiting");
     expect(items[3]).toHaveAttribute("aria-current", "step");
     expect(items[4]).toHaveTextContent("CEO, Frank: Not started");

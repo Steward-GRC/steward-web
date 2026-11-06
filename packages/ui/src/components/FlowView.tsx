@@ -73,7 +73,9 @@ const Mark = ({ state }: { state: FlowNodeState }) => {
 
 /** What a screen reader gets for one box: "Legal, Carol, 2 Oct: Done". */
 const spoken = (node: FlowNode, stateLabels: FlowViewProps["stateLabels"]): string =>
-  `${[node.title, node.who, node.when].filter(Boolean).join(", ")}: ${stateLabels[node.state]}`;
+  `${[node.title, node.who, node.when].filter(Boolean).join(", ")}: ${stateLabels[node.state]}${
+    node.comment ? `. “${node.comment}”` : ""
+  }`;
 
 /**
  * A read-only flow: boxes joined by lines, drawn with SVG and CSS (not an editor). It always

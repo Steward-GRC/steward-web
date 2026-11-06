@@ -99,7 +99,9 @@ describe("the approval review page (U25)", () => {
     const flow = screen.getByRole("list", { name: "Approval flow" });
     const items = within(flow).getAllByRole("listitem");
     expect(items[0]).toHaveTextContent("Submitted");
-    expect(items[1]).toHaveTextContent(/^Finance review, .*: Done$/);
+    expect(items[1]).toHaveTextContent(
+      /^Finance review, .*: Done\. “Thirty days matches our month-end close\.”$/,
+    );
     expect(items[2]).toHaveTextContent(/^Final approval, .* · you.*: Waiting$/);
     expect(items[2]).toHaveAttribute("aria-current", "step");
     expect(items.at(-1)).toHaveTextContent("Publish");

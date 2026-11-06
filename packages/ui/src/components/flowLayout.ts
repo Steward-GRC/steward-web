@@ -6,6 +6,8 @@
 export type FlowEdgeState = "active" | "ahead" | "taken";
 
 export interface FlowNode {
+  /** What the approver wrote with their decision; read aloud and on hover, not drawn. */
+  comment?: null | string;
   id: string;
   state: FlowNodeState;
   title: string;
