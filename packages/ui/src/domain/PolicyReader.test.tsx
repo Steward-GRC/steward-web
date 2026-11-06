@@ -635,6 +635,15 @@ describe("PolicyReader", () => {
       ],
     });
 
+    // Every count tab shows its count in the same amber badge.
+    for (const [name, count] of [
+      ["Definitions 1", "1"],
+      ["Related 1", "1"],
+      ["References 2", "2"],
+      ["Contacts 1", "1"],
+    ] as const) {
+      expect(within(screen.getByRole("tab", { name })).getByText(count)).toHaveClass("bg-accent");
+    }
     await userEvent.click(screen.getByRole("tab", { name: "Related 1" }));
     const related = screen.getByRole("region", { name: "Related" });
     expect(within(related).getByRole("link", { name: /Visitor Sign-in Policy/ })).toHaveAttribute(

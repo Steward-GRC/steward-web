@@ -109,7 +109,10 @@ export const Avatar = ({
 
 export const Tabs = TabsPrimitive.Root;
 export const TabsList = ({ className, ...props }: ComponentProps<typeof TabsPrimitive.List>) => (
-  <TabsPrimitive.List className={cn("flex gap-1 border-b border-border bg-surface", className)} {...props} />
+  <TabsPrimitive.List
+    className={cn("flex gap-1 border-b border-border bg-surface", className)}
+    {...props}
+  />
 );
 export const TabsTrigger = ({
   className,

@@ -180,3 +180,16 @@ export const Detail = ({ label, value }: { label: ReactNode; value: ReactNode })
     <dd className="text-base text-ink">{value}</dd>
   </div>
 );
+
+/** A count that has to stand out (the nav's waiting count, the reader's Related tab): amber pill, dark text. */
+export const CountBadge = ({ children, className, ...props }: ComponentProps<"span">) => (
+  <span
+    className={cn(
+      "inline-flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-accent px-1.5 text-2xs font-bold text-[#261b25]",
+      className,
+    )}
+    {...props}
+  >
+    {children}
+  </span>
+);
