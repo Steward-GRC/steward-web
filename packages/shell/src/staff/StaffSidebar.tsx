@@ -57,11 +57,11 @@ const ItemLink = ({ drawer, item, rail }: { drawer?: boolean; item: NavItem; rai
         aria-current={current ? "page" : undefined}
         aria-label={item.badge ? t("nav.badge", { count: item.badge, label }) : undefined}
         className={cn(
-          "flex items-center rounded-md px-2.5 text-ink hover:bg-sunken hover:text-ink",
+          "flex items-center rounded-md px-2.5 text-ink transition-shadow duration-200 hover:bg-sunken hover:text-ink motion-reduce:transition-none",
           drawer ? "h-[42px] gap-3" : "h-8 gap-2.5",
           "rail:size-11 rail:justify-center rail:rounded-lg rail:px-0",
           current &&
-            "bg-primary-soft font-semibold text-on-primary-soft shadow-[inset_3px_0_0_var(--primary)] hover:bg-primary-soft hover:text-on-primary-soft rail:shadow-[inset_0_0_0_1.5px_var(--primary)]",
+            "bg-primary-soft font-semibold text-on-primary-soft shadow-[inset_4px_0_0_var(--accent)] hover:bg-primary-soft hover:text-on-primary-soft rail:shadow-[inset_0_0_0_1.5px_var(--primary)]",
         )}
         to={item.to}
       >

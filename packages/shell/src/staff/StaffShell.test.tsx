@@ -169,6 +169,8 @@ describe("StaffShell sidebar (H1)", () => {
     const current = within(nav).getByRole("link", { current: "page" });
     expect(current).toHaveAttribute("href", "/policies");
     expect(current).toHaveTextContent("Library");
+    // The current page carries the amber accent bar, like the amber count badge.
+    expect(current.className).toContain("shadow-[inset_4px_0_0_var(--accent)]");
   });
 
   it("shows Compliance only while reporting is on, and never Ethics", () => {
