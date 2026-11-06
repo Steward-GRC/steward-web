@@ -92,6 +92,7 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
             className: "font-mono text-sm text-muted",
             header: t("templates.columns.id"),
             key: "id",
+            value: ({ template }) => template.code,
           },
           {
             card: "title",
@@ -112,6 +113,7 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
             ),
             header: t("templates.columns.name"),
             key: "name",
+            value: ({ template }) => template.name,
           },
           {
             card: "meta",
@@ -119,6 +121,7 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
               categoryName ?? <span className="text-muted">{t("templates.none")}</span>,
             header: t("templates.columns.category"),
             key: "category",
+            value: ({ categoryName }) => categoryName ?? "",
           },
           {
             // The card's Latest line already names the newest version.
@@ -126,6 +129,7 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
             cell: ({ versionCount }) => versionCount,
             header: t("templates.columns.versions"),
             key: "versions",
+            value: ({ versionCount }) => versionCount,
           },
           {
             card: "meta",
@@ -144,6 +148,7 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
               ),
             header: t("templates.columns.latest"),
             key: "latest",
+            value: ({ latest }) => latest?.versionNo ?? 0,
           },
         ]}
         empty={

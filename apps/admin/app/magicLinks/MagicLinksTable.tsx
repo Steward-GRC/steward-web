@@ -62,6 +62,7 @@ export const MagicLinksTable = ({
             cell: (link) => link.policyTitle,
             header: t("magicLinks.columns.policy"),
             key: "policy",
+            value: (link) => link.policyTitle,
           },
           {
             card: "meta",
@@ -69,6 +70,7 @@ export const MagicLinksTable = ({
             className: "w-[70px] font-mono",
             header: t("magicLinks.columns.version"),
             key: "version",
+            value: (link) => link.version,
           },
           {
             card: "meta",
@@ -100,6 +102,7 @@ export const MagicLinksTable = ({
             className: "w-[90px]",
             header: t("magicLinks.columns.status"),
             key: "status",
+            value: (link) => link.status,
           },
           {
             card: "meta",
@@ -110,6 +113,7 @@ export const MagicLinksTable = ({
               }),
             header: t("magicLinks.columns.createdBy"),
             key: "createdBy",
+            value: (link) => link.createdAt,
           },
           {
             card: "action",

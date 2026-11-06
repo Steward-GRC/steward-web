@@ -18,6 +18,7 @@ import {
 import { EmptyState } from "#ui/feedback/States";
 import { PageHeader } from "#ui/layout/PageHeader";
 import { cn } from "#ui/lib/cn";
+import { DEFAULT_PAGE_SIZES } from "#ui/lib/dataTable";
 import { PHONE, useMediaQuery } from "#ui/lib/media";
 
 import type { Category, DocumentType, Policy } from "./policy";
@@ -63,6 +64,7 @@ export interface PolicyLibraryProps {
 type SortKey = "category" | "number" | "status" | "subcategory" | "title" | "updated" | "version";
 
 const PAGE_SIZE = 20;
+const PAGE_SIZES = DEFAULT_PAGE_SIZES;
 const SORT_KEYS: ReadonlySet<SortKey> = new Set<SortKey>([
   "category",
   "number",
@@ -160,9 +162,13 @@ export const PolicyLibrary = ({
     subcategory,
   ]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const sizeParameter = Number(parameters.get("size"));
+  const pageSize = PAGE_SIZES.includes(sizeParameter as (typeof PAGE_SIZES)[number])
+    ? sizeParameter
+    : PAGE_SIZE;
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const page = Math.min(Math.max(Number(parameters.get("page")) || 1, 1), pages);
-  const shown = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const shown = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const statusLabel = (value: string) => {
     if (value === "all") return t(`library.filters.all.${copy.nounPlural}`);
@@ -276,7 +282,9 @@ export const PolicyLibrary = ({
         <Pager
           onPage={(next) => update({ page: next > 1 ? String(next) : "" })}
           page={page}
-          pageSize={PAGE_SIZE}
+          onPageSize={(size) => update({ size: size === PAGE_SIZE ? "" : String(size) })}
+          pageSize={pageSize}
+          pageSizes={PAGE_SIZES}
           total={filtered.length}
         />
       </div>
@@ -428,7 +436,9 @@ export const PolicyLibrary = ({
           <Pager
             onPage={(next) => update({ page: next > 1 ? String(next) : "" })}
             page={page}
-            pageSize={PAGE_SIZE}
+            onPageSize={(size) => update({ size: size === PAGE_SIZE ? "" : String(size) })}
+          pageSize={pageSize}
+          pageSizes={PAGE_SIZES}
             total={filtered.length}
           />
         </Card>

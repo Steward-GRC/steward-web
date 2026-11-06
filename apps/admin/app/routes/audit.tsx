@@ -112,12 +112,14 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
             className: "whitespace-nowrap text-sm text-muted",
             header: "When",
             key: "when",
+            value: (record) => record.occurredAt,
           },
           {
             card: "title",
             cell: (record) => actionLabel(record.action),
             header: "Action",
             key: "action",
+            value: (record) => actionLabel(record.action),
           },
           {
             card: "meta",
@@ -125,6 +127,7 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
             className: "text-muted",
             header: "Actor",
             key: "actor",
+            value: (record) => displayLabel(record.actorName, record.actorUserId),
           },
           {
             card: "meta",
@@ -132,6 +135,7 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
             className: "text-muted",
             header: "Subject",
             key: "subject",
+            value: (record) => displayLabel(record.subjectLabel, record.subject),
           },
           {
             card: "status",
@@ -140,6 +144,7 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
             ),
             header: "Group",
             key: "group",
+            value: (record) => displayLabel(record.groupName, record.groupId),
           },
         ]}
         empty={

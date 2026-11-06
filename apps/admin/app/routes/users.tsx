@@ -124,6 +124,7 @@ export default function Users({ loaderData }: Route.ComponentProps) {
               ),
             header: t("users.columns.name"),
             key: "name",
+            value: (user) => user.name,
           },
           {
             card: "meta",
@@ -131,6 +132,7 @@ export default function Users({ loaderData }: Route.ComponentProps) {
             className: "break-all",
             header: t("users.columns.email"),
             key: "email",
+            value: (user) => user.email,
           },
           {
             card: "status",
@@ -150,6 +152,7 @@ export default function Users({ loaderData }: Route.ComponentProps) {
             className: "w-[110px]",
             header: t("users.columns.status"),
             key: "status",
+            value: (user) => status(user)[0],
           },
           { card: "meta", cell: roles, header: t("users.columns.roles"), key: "roles" },
           { card: "meta", cell: groups, header: t("users.columns.groups"), key: "groups" },

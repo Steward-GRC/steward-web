@@ -86,13 +86,14 @@ const MemberTable = ({
 }) => (
   <ResponsiveTable
     columns={[
-      { card: "title", cell: (m) => m.name, header: "Name", key: "name" },
+      { card: "title", cell: (m) => m.name, header: "Name", key: "name", value: (m) => m.name },
       {
         card: "meta",
         cell: (m) => m.email,
         className: "text-muted",
         header: "Email",
         key: "email",
+        value: (m) => m.email,
       },
       {
         card: "action",

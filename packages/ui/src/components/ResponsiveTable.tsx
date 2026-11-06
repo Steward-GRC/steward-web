@@ -311,16 +311,6 @@ const DataTableView = <Row,>({
     <div className="flex flex-col gap-3">
       {searchable || (phone && sortOptions.length > 0) ? (
         <div className="flex flex-wrap items-center gap-2">
-          {searchable ? (
-            <Input
-              aria-label={props.search?.label ?? t("table.search")}
-              className="max-w-sm flex-1"
-              onChange={(event) => table.setQuery(event.target.value)}
-              placeholder={props.search?.placeholder}
-              type="search"
-              value={table.query}
-            />
-          ) : null}
           {phone && sortOptions.length > 0 ? (
             <select
               aria-label={t("table.sortBy")}
@@ -338,6 +328,16 @@ const DataTableView = <Row,>({
                 </option>
               ))}
             </select>
+          ) : null}
+          {searchable ? (
+            <Input
+              aria-label={props.search?.label ?? t("table.search")}
+              className="max-w-sm flex-1"
+              onChange={(event) => table.setQuery(event.target.value)}
+              placeholder={props.search?.placeholder}
+              type="search"
+              value={table.query}
+            />
           ) : null}
         </div>
       ) : null}

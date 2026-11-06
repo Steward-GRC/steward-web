@@ -185,6 +185,7 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
                 className: "font-medium",
                 header: t("libraries.references.columns.label"),
                 key: "label",
+                value: (ref) => ref.label,
               },
               {
                 card: "status",
@@ -195,6 +196,7 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
                 ),
                 header: t("libraries.references.columns.kind"),
                 key: "kind",
+                value: (ref) => ref.kind,
               },
               {
                 card: "meta",
@@ -221,6 +223,7 @@ export default function ReferencesLibrary({ loaderData }: Route.ComponentProps) 
                 className: "text-muted",
                 header: t("libraries.references.columns.usedBy"),
                 key: "usedBy",
+                value: (ref) => ref.usedByCount,
               },
               {
                 card: "action",

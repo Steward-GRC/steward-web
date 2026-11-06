@@ -149,6 +149,7 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
                 className: "font-medium",
                 header: t("libraries.contacts.columns.label"),
                 key: "label",
+                value: (block) => block.label,
               },
               {
                 card: "meta",
@@ -156,6 +157,7 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
                 className: "text-muted",
                 header: t("libraries.contacts.columns.who"),
                 key: "who",
+                value: (block) => [block.name, block.role].filter(Boolean).join(" "),
               },
               {
                 card: "meta",
@@ -163,6 +165,7 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
                 className: "text-muted",
                 header: t("libraries.contacts.columns.department"),
                 key: "department",
+                value: (block) => block.department ?? "",
               },
               {
                 card: "meta",
@@ -170,6 +173,7 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
                 className: "text-muted",
                 header: t("libraries.contacts.columns.email"),
                 key: "email",
+                value: (block) => block.email ?? "",
               },
               {
                 card: "meta",
@@ -177,6 +181,7 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
                 className: "text-muted",
                 header: t("libraries.contacts.columns.phone"),
                 key: "phone",
+                value: (block) => block.phone ?? "",
               },
               {
                 card: "meta",
@@ -184,6 +189,7 @@ export default function ContactLibrary({ loaderData }: Route.ComponentProps) {
                 className: "text-muted",
                 header: t("libraries.contacts.columns.usedBy"),
                 key: "usedBy",
+                value: (block) => block.usedByCount,
               },
               ...(canManage
                 ? [

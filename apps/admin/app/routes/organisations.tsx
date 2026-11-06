@@ -169,18 +169,21 @@ export default function Organizations({ loaderData }: Route.ComponentProps) {
             ),
             header: t("organizations.columns.domain"),
             key: "domain",
+            value: (org) => org.domain,
           },
           {
             card: "meta",
             cell: (org) => org.orgName,
             header: t("organizations.columns.organization"),
             key: "organization",
+            value: (org) => org.orgName,
           },
           {
             card: "status",
             cell: (org) => <Badge tone="neutral">{org.protocol.toUpperCase()}</Badge>,
             header: t("organizations.columns.protocol"),
             key: "protocol",
+            value: (org) => org.protocol,
           },
           {
             card: "status",
