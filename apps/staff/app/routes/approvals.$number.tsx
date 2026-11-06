@@ -135,9 +135,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
 const IN_REVIEW = "IN_REVIEW";
 const statusOf = (status: string) => status.replace(/^APPROVAL_STATUS_/, "");
 
-const tab =
-  "-mb-px rounded-none border-0 bg-transparent px-3 py-2.5 text-base font-medium text-muted shadow-none transition-shadow duration-200 motion-reduce:transition-none data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-[inset_0_-3px_var(--accent)]";
-
 /** U25o's notes in place of the decision panel: a left edge by weight, a title and a line. */
 const Note = ({ body, title, tone }: { body: string; title: string; tone: "info" | "neutral" }) => (
   <div
@@ -289,20 +286,14 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Tabs onValueChange={setView} value={view}>
-          <TabsList className="grid h-auto w-full auto-cols-fr grid-flow-col justify-start gap-1 overflow-x-auto rounded-none border-b border-border-strong p-0">
-            {hasChanges ? (
-              <TabsTrigger className={tab} value="changes">
-                {t("review.tabs.changes")}
-              </TabsTrigger>
-            ) : null}
-            <TabsTrigger className={tab} value="upcoming">
-              {t("review.tabs.upcoming")}
+          <TabsList stretch>
+            <TabsTrigger empty={!hasChanges} value="changes">
+              {t("review.tabs.changes")}
             </TabsTrigger>
-            {hasHistory ? (
-              <TabsTrigger className={tab} value="history">
-                {t("review.tabs.history")}
-              </TabsTrigger>
-            ) : null}
+            <TabsTrigger value="upcoming">{t("review.tabs.upcoming")}</TabsTrigger>
+            <TabsTrigger empty={!hasHistory} value="history">
+              {t("review.tabs.history")}
+            </TabsTrigger>
           </TabsList>
           {review.diff === null ? null : (
             <TabsContent className="mt-3.5" value="changes">

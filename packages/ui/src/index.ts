@@ -62,10 +62,6 @@ export {
   Separator,
   Skeleton,
   Table,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
   TD,
   TH,
   THead,
@@ -120,6 +116,7 @@ export {
 } from "./components/ResponsiveTable";
 export { Spinner } from "./components/Spinner";
 export { AckSnapshot, StatCard } from "./components/StatCards";
+export { TabLink, TabNav, Tabs, TabsContent, TabsList, TabsTrigger } from "./components/Tabs";
 export { Banner, type BannerProps, type BannerTone } from "./feedback/Banner";
 export {
   type DiagnosticsRenderer,

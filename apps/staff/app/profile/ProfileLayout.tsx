@@ -1,8 +1,8 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { cn } from "@steward-web/ui";
-import { NavLink, Outlet } from "react-router";
+import { TabLink, TabNav } from "@steward-web/ui";
+import { Outlet } from "react-router";
 
 const TABS = [
   { end: true, key: "name", to: "/profile" },
@@ -23,28 +23,13 @@ export const ProfileLayout = () => {
       <h1 className="text-[26px] font-semibold md:text-[30px] md:leading-[38px]">
         {t("profile.title")}
       </h1>
-      <nav
-        aria-label={t("profile.tabsLabel")}
-        className="flex gap-1 overflow-x-auto border-b border-border-strong"
-      >
+      <TabNav aria-label={t("profile.tabsLabel")}>
         {TABS.map((tab) => (
-          <NavLink
-            className={({ isActive }) =>
-              cn(
-                "-mb-px px-3 py-2.5 whitespace-nowrap",
-                isActive
-                  ? "font-semibold text-primary shadow-[inset_0_-2px_var(--primary)]"
-                  : "text-muted hover:text-ink",
-              )
-            }
-            end={tab.end}
-            key={tab.key}
-            to={tab.to}
-          >
+          <TabLink end={tab.end} key={tab.key} to={tab.to}>
             {t(`profile.tabs.${tab.key}`)}
-          </NavLink>
+          </TabLink>
         ))}
-      </nav>
+      </TabNav>
       <Outlet />
     </div>
   );

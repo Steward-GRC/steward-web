@@ -223,13 +223,9 @@ export default function UserDetail({ loaderData }: Route.ComponentProps) {
         }
         value={tab}
       >
-        <TabsList className="border-border-strong">
+        <TabsList>
           {TABS.map((entry) => (
-            <TabsTrigger
-              className="px-2.5 py-[9px] font-normal data-[state=active]:font-semibold data-[state=active]:text-primary"
-              key={entry}
-              value={entry}
-            >
+            <TabsTrigger key={entry} value={entry}>
               {t(`users.detail.tabs.${entry}`)}
             </TabsTrigger>
           ))}

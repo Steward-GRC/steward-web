@@ -1193,6 +1193,8 @@
         "search": "Search people",
         "acknowledged": "Acknowledged {{count}}",
         "notYet": "Not yet {{count}}",
+        "tabAcknowledged": "Acknowledged",
+        "tabNotYet": "Not yet",
         "ackedOn": "Acknowledged {{date}}",
         "overdue": "Overdue",
         "pending": "Not yet",

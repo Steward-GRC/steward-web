@@ -16,11 +16,9 @@ import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
 
-import { CountBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Switch } from "#ui/components/Controls";
 import { CopyId } from "#ui/components/CopyId";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/Display";
 import { Field } from "#ui/components/Field";
 import { Textarea } from "#ui/components/Input";
 import {
@@ -36,6 +34,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "#ui/components/Overlays";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/Tabs";
 import { Banner } from "#ui/feedback/Banner";
 import { type Failure } from "#ui/feedback/failure";
 import { EmptyState } from "#ui/feedback/States";
@@ -411,24 +410,8 @@ const DetailCell = ({ children, label }: { children: ReactNode; label: string })
   </li>
 );
 
-/** A view-strip tab with its count in an amber badge (U7). */
-const TabLabel = ({ count, label }: { count?: number; label: string }) => (
-  <>
-    {label}
-    {count === undefined ? null : (
-      <>
-        {" "}
-        <CountBadge>{count}</CountBadge>
-      </>
-    )}
-  </>
-);
-
 /** The history's anchor, named so no section key (a slug of a heading) can take it. */
 const HISTORY_ID = "reader-history";
-
-const tab =
-  "-mb-px rounded-none border-0 bg-transparent px-3 py-2.5 text-base font-medium text-muted shadow-none transition-shadow duration-200 motion-reduce:transition-none data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-[inset_0_-3px_var(--accent)]";
 
 export interface PolicyReaderProps {
   detail: PolicyDetail;
@@ -670,22 +653,16 @@ export const PolicyReader = ({
       {reading ? (
         <Tabs onValueChange={setView} value={view}>
           <div className="flex flex-wrap items-center gap-1 border-b border-border-strong">
-            <TabsList className="inline-grid h-auto auto-cols-fr grid-flow-col gap-1 rounded-none p-0">
-              <TabsTrigger className={tab} value="view">
-                {t("reader.tabs.view")}
-              </TabsTrigger>
-              {(["definitions", "related", "references", "contacts"] as const).map((key) =>
-                counts[key] > 0 ? (
-                  <TabsTrigger className={tab} key={key} value={key}>
-                    <TabLabel count={counts[key]} label={t(`reader.tabs.${key}`)} />
-                  </TabsTrigger>
-                ) : null,
-              )}
-              {detail.priorVersion ? (
-                <TabsTrigger className={tab} value="changes">
-                  {t("reader.tabs.changes")}
+            <TabsList className="border-b-0">
+              <TabsTrigger value="view">{t("reader.tabs.view")}</TabsTrigger>
+              {(["definitions", "related", "references", "contacts"] as const).map((key) => (
+                <TabsTrigger count={counts[key]} empty={counts[key] === 0} key={key} value={key}>
+                  {t(`reader.tabs.${key}`)}
                 </TabsTrigger>
-              ) : null}
+              ))}
+              <TabsTrigger empty={!detail.priorVersion} value="changes">
+                {t("reader.tabs.changes")}
+              </TabsTrigger>
             </TabsList>
             {offerSummary ? (
               <label className="ml-auto flex items-center gap-2 py-2 text-[13px] font-medium text-muted">

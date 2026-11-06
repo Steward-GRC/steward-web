@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { initialsOf, Table, Tabs, TabsList, TabsTrigger } from "./Display";
+import { initialsOf, Table } from "./Display";
 
 describe("initialsOf", () => {
   it("takes the first and last name's first letters", () => {
@@ -33,18 +33,5 @@ describe("Table", () => {
     // A positioned ancestor stops an off-screen sr-only span from widening the page on a phone.
     // eslint-disable-next-line testing-library/no-node-access -- the scroll wrapper has no role of its own
     expect(screen.getByRole("table").parentElement).toHaveClass("relative", "overflow-x-auto");
-  });
-});
-
-describe("TabsList", () => {
-  it("sits on the white surface background", () => {
-    render(
-      <Tabs defaultValue="a">
-        <TabsList aria-label="Record">
-          <TabsTrigger value="a">A</TabsTrigger>
-        </TabsList>
-      </Tabs>,
-    );
-    expect(screen.getByRole("tablist")).toHaveClass("bg-surface");
   });
 });
