@@ -180,6 +180,12 @@ describe("StaffShell sidebar (H1)", () => {
     expect(headings).not.toContain("Ethics");
   });
 
+  it("shows the Approvals count as an amber pill so it stands out", () => {
+    renderShell(alice, { counts: { approvals: 2 } });
+    const link = within(sidebar()).getByRole("link", { name: "Approvals, 2 waiting" });
+    expect(within(link).getByText("2")).toHaveClass("bg-accent", "text-[#261b25]");
+  });
+
   it("counts pending approvals on Approvals", () => {
     renderShell(alice, { counts: { approvals: 2 } });
     expect(within(sidebar()).getByRole("link", { name: "Approvals, 2 waiting" })).toHaveAttribute(
