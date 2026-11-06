@@ -115,6 +115,21 @@ describe("the flow view", () => {
     expect(container.querySelector('[data-flow-node="Legal"]')).toHaveClass("border-primary");
   });
 
+  it("ends each line into a box with an arrowhead in the line's own colour (#77)", () => {
+    const { container } = view();
+    const into = container.querySelectorAll("[data-flow-edge^='in:']");
+    expect(into.length).toBeGreaterThan(0);
+    for (const edge of into) {
+      const ref = edge.getAttribute("marker-end")!.match(/url\(#(.+)\)/)![1]!;
+      const head = container.querySelector(`marker[id='${CSS.escape(ref)}']`);
+      expect(head).not.toBeNull();
+      expect(ref.endsWith(`-${(edge as SVGElement).dataset.state}`)).toBe(true);
+    }
+    for (const edge of container.querySelectorAll("[data-flow-edge^='out:']")) {
+      expect(edge.getAttribute("marker-end")).toBeNull();
+    }
+  });
+
   it("dims the steps still to come", () => {
     const { container } = view();
     expect(container.querySelector('[data-flow-node="CEO"]')).toHaveClass("opacity-60");

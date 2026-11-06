@@ -3,10 +3,11 @@
 import { DocumentType, type Policy, PolicyStatus } from "@steward-web/api-client";
 import { can, type Identity, PERMISSIONS } from "@steward-web/auth";
 import edge from "@steward-web/edge.server";
-import { approvalPath, draftPath, recordPath } from "@steward-web/ui/domain";
+import { draftPath, recordPath } from "@steward-web/ui/domain";
 
 import { buildInboxRow } from "../approvals/approvalRows";
 import { listPendingTasks } from "../approvals/approvals.server";
+import { approvalHrefOf } from "../approvals/inbox";
 
 /** The library overview on My work (U1): counts across the policies the person can see. */
 export interface LibraryOverview {
@@ -118,7 +119,7 @@ export const myWorkData = async (request: Request, identity: Identity): Promise<
             const match = (catalog ?? []).find((p) => p.number === row.number);
             return {
               dueAt: task.dueAt ?? null,
-              href: approvalPath(row.number || task.policyVersionId),
+              href: approvalHrefOf(row.number),
               number: row.number,
               title: row.title,
               version: match?.version ?? "",

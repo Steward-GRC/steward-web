@@ -48,6 +48,8 @@ export interface FlowStep {
 }
 
 export interface PlacedEdge {
+  /** The line ends at a box: it gets an arrowhead there. */
+  arrow: boolean;
   d: string;
   id: string;
   state: FlowEdgeState;
@@ -84,20 +86,19 @@ const GAP_Y = 16;
 const V_WIDTH = 272;
 const V_NODE_W = 208;
 const V_NODE_X = 32;
-const V_RAIL = 12;
 const V_GAP = 40;
 
 /** Lit only once every box before it is done: a fan's next step waits for all of its approvers. */
 const litBefore = (steps: readonly FlowStep[], index: number): boolean =>
   steps.slice(0, index).every((s) => s.nodes.every((n) => n.state === "done"));
 
-const into = (node: FlowNode, lit: boolean): FlowEdgeState => {
+const into = (state: FlowNodeState, lit: boolean): FlowEdgeState => {
   if (!lit) return "ahead";
-  if (node.state === "current") return "active";
-  return node.state === "upcoming" ? "ahead" : "taken";
+  if (state === "current") return "active";
+  return state === "upcoming" ? "ahead" : "taken";
 };
 
-const out = (node: FlowNode): FlowEdgeState => (node.state === "done" ? "taken" : "ahead");
+const out = (state: FlowNodeState): FlowEdgeState => (state === "done" ? "taken" : "ahead");
 
 /** A group box grows by a row per member while expanded. */
 export const heightOf = (node: FlowNode, expanded: ReadonlySet<string>): number =>
@@ -174,24 +175,47 @@ export const flowLayoutOf = (
           }),
         );
       }
+      const frame = size.framed ? frames.at(-1)! : null;
+      if (frame) {
+        // A mixed step is one box to the lines: one line in, one line out, whatever is inside.
+        if (index > 0) {
+          edges.push({
+            arrow: true,
+            d: `M${x - GAP_X / 2},${mid} H${frame.x}`,
+            id: `in:${frame.id}`,
+            state: into(frame.state, lit),
+          });
+        }
+        if (index < last) {
+          edges.push({
+            arrow: false,
+            d: `M${frame.x + frame.w},${mid} H${jx}`,
+            id: `out:${frame.id}`,
+            state: out(frame.state),
+          });
+        }
+      }
       let y = top + size.head;
       for (const node of step.nodes) {
         const h = heightOf(node, expanded);
         const cy = y + NODE_H / 2;
         nodes.push({ ...node, h, stepIndex: index, w: NODE_W, x, y });
         y += h + GAP_Y;
+        if (frame) continue;
         if (index > 0) {
           edges.push({
+            arrow: true,
             d: `M${x - GAP_X / 2},${mid} V${cy} H${x}`,
             id: `in:${node.id}`,
-            state: into(node, lit),
+            state: into(node.state, lit),
           });
         }
         if (index < last) {
           edges.push({
+            arrow: false,
             d: `M${x + NODE_W},${cy} H${jx} V${mid}`,
             id: `out:${node.id}`,
-            state: out(node),
+            state: out(node.state),
           });
         }
       }
@@ -200,11 +224,8 @@ export const flowLayoutOf = (
   }
 
   const cx = V_NODE_X + V_NODE_W / 2;
-  const railL = V_RAIL;
-  const railR = V_WIDTH - V_RAIL;
   let cursor = 0;
   for (const [index, step] of steps.entries()) {
-    const fan = step.nodes.length > 1;
     const size = sizeOf(step, expanded);
     const bottom = cursor + size.outer;
     const joinY = bottom + V_GAP / 2;
@@ -219,30 +240,62 @@ export const flowLayoutOf = (
         }),
       );
     }
-    let y = cursor + size.head;
-    for (const node of step.nodes) {
-      const h = heightOf(node, expanded);
-      const cy = y + NODE_H / 2;
-      nodes.push({ ...node, h, stepIndex: index, w: V_NODE_W, x: V_NODE_X, y });
-      const top = y;
-      y += h + GAP_Y;
+    const fromY = cursor - V_GAP / 2;
+    const frame = size.framed ? frames.at(-1)! : null;
+    if (frame) {
       if (index > 0) {
-        const fromY = cursor - V_GAP / 2;
         edges.push({
-          d: fan ? `M${cx},${fromY} H${railL} V${cy} H${V_NODE_X}` : `M${cx},${fromY} V${top}`,
-          id: `in:${node.id}`,
-          state: into(node, lit),
+          arrow: true,
+          d: `M${cx},${fromY} V${cursor}`,
+          id: `in:${frame.id}`,
+          state: into(frame.state, lit),
         });
       }
       if (index < last) {
         edges.push({
-          d: fan
-            ? `M${V_NODE_X + V_NODE_W},${cy} H${railR} V${joinY} H${cx}`
-            : `M${cx},${top + h} V${joinY}`,
-          id: `out:${node.id}`,
-          state: out(node),
+          arrow: false,
+          d: `M${cx},${bottom} V${joinY}`,
+          id: `out:${frame.id}`,
+          state: out(frame.state),
         });
       }
+    }
+    // The boxes of a plain fan are chained by short straight lines, so every line runs straight
+    // down one axis: the least bending a phone's width allows.
+    let y = cursor + size.head;
+    let before: { bottom: number; state: FlowNodeState } | null = null;
+    for (const node of step.nodes) {
+      const h = heightOf(node, expanded);
+      nodes.push({ ...node, h, stepIndex: index, w: V_NODE_W, x: V_NODE_X, y });
+      const top = y;
+      y += h + GAP_Y;
+      if (!frame) {
+        if (before) {
+          edges.push({
+            arrow: true,
+            d: `M${cx},${before.bottom} V${top}`,
+            id: `link:${node.id}`,
+            state: into(node.state, before.state === "done"),
+          });
+        } else if (index > 0) {
+          edges.push({
+            arrow: true,
+            d: `M${cx},${fromY} V${top}`,
+            id: `in:${node.id}`,
+            state: into(node.state, lit),
+          });
+        }
+        before = { bottom: top + h, state: node.state };
+      }
+    }
+    if (!frame && before && index < last) {
+      const allDone = step.nodes.every((n) => n.state === "done");
+      edges.push({
+        arrow: false,
+        d: `M${cx},${before.bottom} V${joinY}`,
+        id: `out:${step.nodes.length === 1 ? step.nodes[0]!.id : step.id}`,
+        state: out(allDone ? "done" : "upcoming"),
+      });
     }
     cursor = bottom + V_GAP;
   }

@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Check, ChevronDown, CircleDashed, Clock, X } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { cn } from "#ui/lib/cn";
 import { PHONE, useMediaQuery } from "#ui/lib/media";
@@ -42,6 +42,14 @@ const EDGE: Record<FlowEdgeState, string> = {
 };
 const EDGE_WIDTH: Record<FlowEdgeState, number> = { active: 5, ahead: 2, taken: 3 };
 const EDGE_ORDER: Record<FlowEdgeState, number> = { active: 2, ahead: 0, taken: 1 };
+
+/** The arrowhead's fill follows its line. */
+const HEAD: Record<FlowEdgeState, string> = {
+  active: "fill-accent-line",
+  ahead: "fill-border-strong opacity-60",
+  taken: "fill-primary",
+};
+const HEAD_SIZE = 10;
 
 const BOX: Record<FlowNodeState, string> = {
   current:
@@ -154,6 +162,7 @@ export const FlowView = ({
       return next;
     });
   const layout = flowLayoutOf(all, resolved, expanded);
+  const heads = useId().replaceAll(":", "");
 
   return (
     <div className="max-w-full overflow-x-auto overflow-y-hidden pb-1">
@@ -177,10 +186,28 @@ export const FlowView = ({
         style={{ height: rem(layout.height), width: rem(layout.width) }}
       >
         <svg
+          aria-hidden="true"
           className="absolute inset-0 size-full fill-none"
           preserveAspectRatio="none"
           viewBox={`0 0 ${layout.width} ${layout.height}`}
         >
+          <defs>
+            {(Object.keys(HEAD) as FlowEdgeState[]).map((state) => (
+              <marker
+                id={`${heads}-${state}`}
+                key={state}
+                markerHeight={HEAD_SIZE}
+                markerUnits="userSpaceOnUse"
+                markerWidth={HEAD_SIZE}
+                orient="auto"
+                refX={HEAD_SIZE}
+                refY={HEAD_SIZE / 2}
+                viewBox={`0 0 ${HEAD_SIZE} ${HEAD_SIZE}`}
+              >
+                <path className={cn("stroke-none", HEAD[state])} d="M0,0 L10,5 L0,10 z" />
+              </marker>
+            ))}
+          </defs>
           {layout.edges
             .toSorted((a, b) => EDGE_ORDER[a.state] - EDGE_ORDER[b.state])
             .map((edge) => (
@@ -190,6 +217,7 @@ export const FlowView = ({
                 data-flow-edge={edge.id}
                 data-state={edge.state}
                 key={edge.id}
+                markerEnd={edge.arrow ? `url(#${heads}-${edge.state})` : undefined}
                 strokeDasharray={edge.state === "ahead" ? "4 4" : undefined}
                 strokeLinejoin="round"
                 strokeWidth={EDGE_WIDTH[edge.state]}

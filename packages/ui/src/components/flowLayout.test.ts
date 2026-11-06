@@ -139,12 +139,19 @@ describe("the flow layout, vertical (phone)", () => {
     for (const n of layout.nodes) expect(n.x + n.w).toBeLessThanOrEqual(layout.width);
   });
 
-  it("carries the same line states as the horizontal layout", () => {
+  it("carries the same line states as the horizontal layout for the lines into each box", () => {
     const wide = flowLayoutOf(fanned, "horizontal");
     const tall = flowLayoutOf(fanned, "vertical");
-    expect(tall.edges.map((edge) => [edge.id, edge.state])).toEqual(
-      wide.edges.map((edge) => [edge.id, edge.state]),
-    );
+    expect(edgeOf(tall, "in:carol").state).toBe(edgeOf(wide, "in:carol").state);
+    expect(edgeOf(tall, "in:publish").state).toBe(edgeOf(wide, "in:publish").state);
+    expect(edgeOf(tall, "link:dave").state).toBe(edgeOf(wide, "in:dave").state);
+  });
+
+  it("runs every line straight down one axis, fans included (#80)", () => {
+    const layout = flowLayoutOf(fanned, "vertical");
+    for (const edge of layout.edges) expect(edge.d).toMatch(/^M[\d.]+,[\d.]+ V[\d.]+$/);
+    const axes = new Set(layout.edges.map((edge) => edge.d.match(/^M([\d.]+),/)![1]));
+    expect(axes.size).toBe(1);
   });
 });
 
@@ -191,7 +198,10 @@ describe("the flow layout with an expanded group", () => {
   it("lets a line meet the header of an expanded box, not its middle", () => {
     const open = flowLayoutOf(steps, "horizontal", new Set(["team"]));
     const team = nodeOf(open, "team");
-    expect(edgeOf(open, "in:team").d).toContain(`V${team.y + NODE_H / 2}`);
+    // The step mixes a group and a user, so the one line goes into the outer box, at its middle.
+    const frame = open.frames[0]!;
+    expect(edgeOf(open, `in:${frame.id}`).d).toContain(`H${frame.x}`);
+    expect(team.y).toBeGreaterThan(frame.y);
   });
 });
 
@@ -254,5 +264,47 @@ describe("the outer box around a mixed step", () => {
     expect(open.frames[0]!.h).toBeGreaterThan(closed.frames[0]!.h);
     expect(open.frames[0]!.x).toBeGreaterThanOrEqual(0);
     expect(open.frames[0]!.x + open.frames[0]!.w).toBeLessThanOrEqual(open.width);
+  });
+});
+
+describe("arrowheads and the one line of a mixed step", () => {
+  const group: FlowNode = {
+    ...node("team", "current"),
+    members: [{ id: "m1", name: "m1", state: "upcoming" }],
+  };
+  const mixed = [
+    step("s", node("submitted", "done")),
+    step("mix", group, node("solo", "done")),
+    step("next", node("ceo", "upcoming")),
+  ];
+
+  it("puts an arrowhead on every line that ends at a box, and none where lines only join (#77)", () => {
+    for (const orientation of ["horizontal", "vertical"] as const) {
+      const layout = flowLayoutOf(
+        [...chain, step("fan", node("a", "upcoming"), node("b", "upcoming"))],
+        orientation,
+      );
+      for (const edge of layout.edges) {
+        expect(edge.arrow).toBe(!edge.id.startsWith("out:"));
+      }
+    }
+  });
+
+  it("draws one line into and one line out of the outer box of a mixed step (#78)", () => {
+    for (const orientation of ["horizontal", "vertical"] as const) {
+      const layout = flowLayoutOf(mixed, orientation);
+      const ids = layout.edges.map((edge) => edge.id).toSorted();
+      expect(ids).toEqual(["in:frame:mix", "in:ceo", "out:frame:mix", "out:submitted"].toSorted());
+    }
+  });
+
+  it("keeps the fan of lines for a step of only users (#78)", () => {
+    const layout = flowLayoutOf(
+      [step("s", node("submitted", "done")), step("fan", node("a", "done"), node("b", "done"))],
+      "horizontal",
+    );
+    expect(layout.edges.map((edge) => edge.id).toSorted()).toEqual(
+      ["in:a", "in:b", "out:submitted"].toSorted(),
+    );
   });
 });
