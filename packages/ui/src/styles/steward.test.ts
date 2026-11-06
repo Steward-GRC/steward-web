@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -143,18 +143,42 @@ describe("the editor's selection colour (#72)", () => {
   });
 });
 
-describe("the text on amber (bug log 62)", () => {
+describe("the text on amber (bug log 62, #217)", () => {
   const systemDark = /\.system:not\(\.hc\)\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
   it.each([
     [":root", rule(":root"), 4.5],
     [".dark", rule(".dark"), 4.5],
     [".hc", rule(".hc"), 7],
     [".system:not(.hc)", systemDark, 4.5],
-  ])("passes contrast on the amber fill in %s and is not black", (_name, body, least) => {
+  ])("is white on a darker amber fill that passes contrast in %s", (_name, body, least) => {
     const get = (name: string) =>
       new RegExp(String.raw`--${name}:\s*(#[\da-f]{6})`).exec(body)?.[1] ?? "";
-    expect(get("on-accent")).not.toBe("");
-    expect(ratio(get("on-accent"), get("accent"))).toBeGreaterThanOrEqual(least);
-    expect(luminance(get("on-accent"))).toBeGreaterThan(0.01);
+    expect(get("on-accent")).toBe("#ffffff");
+    expect(get("accent-fill")).not.toBe("");
+    expect(ratio(get("on-accent"), get("accent-fill"))).toBeGreaterThanOrEqual(least);
+  });
+
+  it("keeps the bright amber for the places with no text on them", () => {
+    expect(rule(":root")).toContain("--accent: #e2a336");
+    expect(rule(".hc")).toContain("--accent: #ffd23f");
+  });
+
+  it("only puts text-on-accent on the text-safe fill, never on the bright amber", () => {
+    const root = path.join(import.meta.dirname, "../../../..");
+    const hits: string[] = [];
+    const walk = (directory: string) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        if ([".git", "build", "dist", "node_modules"].includes(entry.name)) continue;
+        const full = path.join(directory, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.name.endsWith(".tsx") && !/\.test\./.test(entry.name)) {
+          const text = readFileSync(full, "utf8");
+          if (text.includes("text-on-accent") && /bg-accent(?!-)/.test(text)) hits.push(full);
+        }
+      }
+    };
+    walk(path.join(root, "packages"));
+    walk(path.join(root, "apps"));
+    expect(hits).toEqual([]);
   });
 });

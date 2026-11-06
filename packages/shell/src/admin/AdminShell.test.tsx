@@ -69,7 +69,7 @@ describe("AdminShell header (H2)", () => {
     renderShell(alice);
     const header = screen.getByRole("banner");
     expect(within(header).getByRole("link", { name: "Steward" })).toHaveAttribute("href", "/");
-    expect(within(header).getByText("Admin")).toHaveClass("bg-accent");
+    expect(within(header).getByText("Admin")).toHaveClass("bg-accent-fill");
     expect(within(header).getByRole("searchbox", { name: "Search" })).toHaveAttribute(
       "placeholder",
       "Search policies, templates, groups…",

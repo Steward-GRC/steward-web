@@ -700,7 +700,7 @@ describe("PolicyReader", () => {
       ["References 2", "2"],
       ["Contacts 1", "1"],
     ] as const) {
-      expect(within(screen.getByRole("tab", { name })).getByText(count)).toHaveClass("bg-accent");
+      expect(within(screen.getByRole("tab", { name })).getByText(count)).toHaveClass("bg-accent-fill");
     }
     await userEvent.click(screen.getByRole("tab", { name: "Related 1" }));
     const related = screen.getByRole("region", { name: "Related" });

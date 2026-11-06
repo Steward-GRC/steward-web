@@ -48,7 +48,7 @@ describe("the shared tab strip", () => {
 
   it("shows a count as an amber badge, and only when given one", () => {
     strip();
-    expect(screen.getByText("3")).toHaveClass("bg-accent");
+    expect(screen.getByText("3")).toHaveClass("bg-accent-fill");
     expect(screen.getByRole("tab", { name: "B" })).toBeInTheDocument();
     expect(screen.getAllByRole("tab")).toHaveLength(2);
   });
