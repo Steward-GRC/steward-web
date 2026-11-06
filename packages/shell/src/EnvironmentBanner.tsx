@@ -17,7 +17,7 @@ export const EnvironmentBanner = ({ name }: { name: null | string }) => {
       className="env-banner flex h-7 flex-none items-center justify-center gap-2.5 text-xs font-medium"
       data-testid="environment-banner"
     >
-      <span className="rounded-[3px] bg-accent px-[7px] py-px font-mono text-[11px] font-semibold tracking-[.06em] text-on-accent">
+      <span className="rounded-[3px] bg-accent-fill px-[7px] py-px font-mono text-[11px] font-semibold tracking-[.06em] text-on-accent">
         {name.toUpperCase()}
       </span>
       {t("environment.label", { name: titleCase(name) })}

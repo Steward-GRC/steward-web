@@ -162,7 +162,7 @@ const Tagline = ({ className }: { className?: string }) => {
 const AdminTag = () => {
   const { t } = useTranslation("auth");
   return (
-    <span className="rounded-sm bg-accent px-2 py-[3px] text-2xs font-semibold tracking-[.04em] text-on-accent">
+    <span className="rounded-sm bg-accent-fill px-2 py-[3px] text-2xs font-semibold tracking-[.04em] text-on-accent">
       {t("signIn.adminTag")}
     </span>
   );

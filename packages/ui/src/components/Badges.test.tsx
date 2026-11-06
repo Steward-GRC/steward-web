@@ -46,7 +46,7 @@ describe("VersionBadge", () => {
 describe("CountBadge", () => {
   it("is an amber pill with dark text, so a count stands out", () => {
     render(<CountBadge>3</CountBadge>);
-    expect(screen.getByText("3")).toHaveClass("bg-accent", "text-on-accent", "rounded-[10px]");
+    expect(screen.getByText("3")).toHaveClass("bg-accent-fill", "text-on-accent", "rounded-[10px]");
   });
 
   it("takes extra classes", () => {
@@ -58,14 +58,14 @@ describe("CountBadge", () => {
 describe("Tally", () => {
   it("is the one amber tally style, with dark text on amber for contrast", () => {
     render(<Tally>14</Tally>);
-    expect(screen.getByText("14")).toHaveClass("bg-accent", "text-on-accent", "font-mono");
+    expect(screen.getByText("14")).toHaveClass("bg-accent-fill", "text-on-accent", "font-mono");
     expect(screen.getByText("14")).toHaveAttribute("data-tally", "sm");
   });
 
   it("has a large size for headline figures", () => {
     render(<Tally size="lg">80%</Tally>);
     expect(screen.getByText("80%")).toHaveAttribute("data-tally", "lg");
-    expect(screen.getByText("80%")).toHaveClass("bg-accent", "text-[22px]");
+    expect(screen.getByText("80%")).toHaveClass("bg-accent-fill", "text-[22px]");
   });
 });
 
