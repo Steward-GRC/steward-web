@@ -84,7 +84,7 @@ export const columnFilterParameter = (key: string) => `f.${key}`;
  * and `groups` is the page's rows split under their headings.
  */
 export const useDataTable = <Row>(options: UseDataTableOptions<Row>) => {
-  const [parameters, setParameters] = useMirroredSearchParams();
+  const [parameters, setParameters] = useMirroredSearchParameters();
   return useDataTableState(options, parameters, setParameters);
 };
 
@@ -93,7 +93,7 @@ export const useDataTable = <Row>(options: UseDataTableOptions<Row>) => {
  * at once and none is lost while the router catches up; the address is written through, and a
  * change made to it from somewhere else (Back, a link) replaces the copy.
  */
-export const useMirroredSearchParams = (): [
+export const useMirroredSearchParameters = (): [
   URLSearchParams,
   (next: URLSearchParams, replace: boolean) => void,
 ] => {

@@ -13,7 +13,7 @@ import {
   type DataColumn,
   type DataSort,
   useDataTableState,
-  useMirroredSearchParams,
+  useMirroredSearchParameters,
 } from "#ui/lib/dataTable";
 import { PHONE, useMediaQuery } from "#ui/lib/media";
 
@@ -272,7 +272,7 @@ export const ResponsiveTable = <Row,>(props: Props<Row>) => {
 };
 
 const RoutedData = <Row,>(props: Props<Row>) => {
-  const [parameters, setParameters] = useMirroredSearchParams();
+  const [parameters, setParameters] = useMirroredSearchParameters();
   return <DataTableView {...props} parameters={parameters} setParameters={setParameters} />;
 };
 
