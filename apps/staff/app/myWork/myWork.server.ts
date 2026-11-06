@@ -3,6 +3,7 @@
 import { DocumentType, type Policy, PolicyStatus } from "@steward-web/api-client";
 import { can, type Identity, PERMISSIONS } from "@steward-web/auth";
 import edge from "@steward-web/edge.server";
+import { approvalPath, draftPath, recordPath } from "@steward-web/ui/domain";
 
 import { buildInboxRow } from "../approvals/approvalRows";
 import { listPendingTasks } from "../approvals/approvals.server";
@@ -62,7 +63,7 @@ const obligationRows = async (request: Request, withCategory = false): Promise<W
     const category = categoryOf.get(number);
     return {
       ...(category ? { category } : {}),
-      href: `/policies/${number}`,
+      href: recordPath({ number }),
       number,
       title,
       version,
@@ -117,7 +118,7 @@ export const myWorkData = async (request: Request, identity: Identity): Promise<
             const match = (catalog ?? []).find((p) => p.number === row.number);
             return {
               dueAt: task.dueAt ?? null,
-              href: `/approvals/${row.number || task.policyVersionId}`,
+              href: approvalPath(row.number || task.policyVersionId),
               number: row.number,
               title: row.title,
               version: match?.version ?? "",
@@ -129,7 +130,7 @@ export const myWorkData = async (request: Request, identity: Identity): Promise<
           ? []
           : null
         : drafts.map((policy) => ({
-            href: `/drafts/${policy.id}`,
+            href: policy.number ? draftPath(policy.number) : "/drafts",
             number: policy.number,
             title: policy.title,
             version: policy.version,

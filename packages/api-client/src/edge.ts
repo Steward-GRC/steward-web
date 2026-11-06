@@ -629,6 +629,8 @@ export interface Edge {
   policies(documentType: DocumentType, cookie?: string): Promise<readonly Policy[]>;
   /** One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it. */
   policy(id: string, cookie?: string): Promise<null | Policy>;
+  /** One policy or procedure by its record number, for the editor's address. Null when there is no such record or the caller can't see it. */
+  policyByNumber(number: string, cookie?: string): Promise<null | Policy>;
   /** The reader's full detail for one policy/procedure, by number. Null when there is no such document, or the caller can't see it. Rejects with `GatewayError` when signed out. */
   policyDetail(
     documentType: DocumentType,

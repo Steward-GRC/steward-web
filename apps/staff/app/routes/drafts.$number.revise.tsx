@@ -8,12 +8,12 @@ import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-w
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, Input } from "@steward-web/ui";
-import { AiJobProgress } from "@steward-web/ui/domain";
+import { AiJobProgress, draftPath } from "@steward-web/ui/domain";
 import { Ellipsis } from "lucide-react";
 import { useId, useState } from "react";
 import { data, Link, useFetcher, useLocation, useNavigate } from "react-router";
 
-import type { Route } from "./+types/drafts.$policyId.revise";
+import type { Route } from "./+types/drafts.$number.revise";
 
 import { submitPolicyRevision } from "../authoring/ai.server";
 import { aiOffReason } from "../authoring/ai/aiOff";
@@ -21,24 +21,26 @@ import { loadDraftForAi } from "../authoring/ai/aiPage.server";
 import { ChangeCard } from "../authoring/ai/ChangeCard";
 import { changeSetOf, parseRevisionResult } from "../authoring/ai/results";
 import { useAiJob } from "../authoring/ai/useAiJob";
+import { policyIdOfNumber } from "../authoring/authoring.server";
 import { type SectionText } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
-  const { aiHealth, draftId, policy, sections } = await loadDraftForAi(request, params.policyId);
+  const { aiHealth, draftId, policy, sections } = await loadDraftForAi(request, params.number);
   return { aiHealth, draftId, policy, sections };
 };
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
   await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  const policyId = await policyIdOfNumber(request, params.number);
   const form = await request.formData();
   if (form.get("intent") !== "revise") throw new Response("Bad Request", { status: 400 });
   const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as SectionText[];
   try {
     const { jobId } = await submitPolicyRevision(request, {
       instruction: String(form.get("instruction") ?? ""),
-      policyId: params.policyId,
+      policyId,
       sections: sections.map((section, order) => ({
         content: section.text,
         key: section.key,
@@ -94,7 +96,7 @@ export default function Revise({ loaderData }: Route.ComponentProps) {
   };
   const apply = () => {
     if (!changes) return;
-    void navigate(`/drafts/${policy.id}`, { state: { aiApply: { entries: changes.entries } } });
+    void navigate(draftPath(policy.number), { state: { aiApply: { entries: changes.entries } } });
   };
 
   const refused = fetcher.data && !fetcher.data.ok ? fetcher.data.error : null;
@@ -106,7 +108,7 @@ export default function Revise({ loaderData }: Route.ComponentProps) {
       <div className="flex flex-col gap-1">
         <Link
           className="text-xs font-medium text-muted hover:underline"
-          to={`/drafts/${policy.id}`}
+          to={draftPath(policy.number)}
         >
           {t("revise.back")}
         </Link>

@@ -8,6 +8,7 @@ import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { cn } from "@steward-web/ui";
+import { draftPath } from "@steward-web/ui/domain";
 import { Check, Download, X } from "lucide-react";
 import { useId, useState } from "react";
 import { data, Link, useFetcher } from "react-router";
@@ -49,6 +50,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export interface RowResult {
   line: number;
+  number?: string;
   ok: boolean;
   policyId?: string;
 }
@@ -64,7 +66,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     if (!row.input) continue;
     try {
       const policy = await createPolicy(request, row.input);
-      results.push({ line: row.line, ok: true, policyId: policy.id });
+      results.push({ line: row.line, number: policy.number, ok: true, policyId: policy.id });
     } catch {
       results.push({ line: row.line, ok: false });
     }
@@ -187,10 +189,10 @@ export default function ImportCsv({ loaderData }: Route.ComponentProps) {
                     <tr className="border-b border-border last:border-b-0" key={row.line}>
                       <td className="px-3 py-2 font-mono text-muted">{row.line}</td>
                       <td className="px-3 py-2">
-                        {result?.ok && result.policyId ? (
+                        {result?.ok && result.number ? (
                           <Link
                             className="text-primary hover:underline"
-                            to={`/drafts/${result.policyId}`}
+                            to={draftPath(result.number)}
                           >
                             {row.title}
                           </Link>

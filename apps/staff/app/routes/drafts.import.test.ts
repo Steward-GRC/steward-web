@@ -128,8 +128,8 @@ describe("importing from CSV (U21)", () => {
     expect(result.data).toEqual({
       ok: true,
       results: [
-        { line: 1, ok: true, policyId: "p-Leave" },
-        { line: 3, ok: true, policyId: "p-Sick days" },
+        { line: 1, number: "PEO-001", ok: true, policyId: "p-Leave" },
+        { line: 3, number: "PEO-001", ok: true, policyId: "p-Sick days" },
       ],
     });
     expect(
@@ -154,7 +154,7 @@ describe("importing from CSV (U21)", () => {
       ok: true,
       results: [
         { line: 1, ok: false },
-        { line: 2, ok: true, policyId: "p-Sick days" },
+        { line: 2, number: "PEO-001", ok: true, policyId: "p-Sick days" },
       ],
     });
   });

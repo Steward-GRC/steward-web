@@ -36,6 +36,17 @@ export const listMyDraftPolicies = (request: Request): Promise<readonly Policy[]
 export const getPolicy = (request: Request, id: string): Promise<null | Policy> =>
   edge.policy(id, cookieOf(request));
 
+/** One policy or procedure by its record number (the address of its draft pages). */
+export const getPolicyByNumber = (request: Request, number: string): Promise<null | Policy> =>
+  edge.policyByNumber(number, cookieOf(request));
+
+/** The backend id behind a record number; a 404 when there is no such record for this caller. */
+export const policyIdOfNumber = async (request: Request, number: string): Promise<string> => {
+  const policy = await getPolicyByNumber(request, number);
+  if (!policy) throw new Response("Not Found", { status: 404 });
+  return policy.id;
+};
+
 /** The working draft version of a policy's content. */
 export const getDraftVersion = (
   request: Request,

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { action, loader } from "./drafts.$policyId";
+import { action, loader } from "./drafts.$number";
 
 type Handler = (variables: Record<string, unknown>) => unknown;
 
@@ -120,6 +120,7 @@ const editorHandlers = (
   }),
   Me: () => ({ me: author }),
   Policy: () => ({ policy: gatewayPolicy }),
+  PolicyByNumber: () => ({ policyByNumber: gatewayPolicy }),
   PolicyVersion: () => ({ policyVersion: draftVersion(versionStatus) }),
   WorkflowStatus: () => workflowStatus(approvalStatus),
 });
@@ -127,7 +128,7 @@ const editorHandlers = (
 const post = (fields: Record<string, string>) => {
   const body = new FormData();
   for (const [key, value] of Object.entries(fields)) body.set(key, value);
-  return new Request("https://staff.steward.example/drafts/p-1", { body, method: "POST" });
+  return new Request("https://staff.steward.example/drafts/FIN-001", { body, method: "POST" });
 };
 
 type ActionArguments = Parameters<typeof action>[0];
@@ -136,7 +137,7 @@ type LoaderArguments = Parameters<typeof loader>[0];
 // The editor's answers are `data(...)`; only `edit` redirects, and its tests read the Response.
 const runAction = (fields: Record<string, string>) =>
   action({
-    params: { policyId: "p-1" },
+    params: { number: "FIN-001" },
     request: post(fields),
   } as unknown as ActionArguments) as Promise<
     Exclude<Awaited<ReturnType<typeof action>>, Response>
@@ -144,15 +145,15 @@ const runAction = (fields: Record<string, string>) =>
 
 const runLoader = () =>
   loader({
-    params: { policyId: "p-1" },
-    request: new Request("https://staff.steward.example/drafts/p-1"),
+    params: { number: "FIN-001" },
+    request: new Request("https://staff.steward.example/drafts/FIN-001"),
   } as unknown as LoaderArguments);
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("drafts.$policyId action: edit (from the reader)", () => {
+describe("drafts.$number action: edit (from the reader)", () => {
   const published = {
     ...draftVersion("published"),
     id: "v-2",
@@ -176,7 +177,7 @@ describe("drafts.$policyId action: edit (from the reader)", () => {
     const result = (await runAction({ intent: "edit" })) as unknown as Response;
 
     expect(result.status).toBe(302);
-    expect(result.headers.get("location")).toBe("/drafts/p-1");
+    expect(result.headers.get("location")).toBe("/drafts/FIN-001");
     expect(calls.find((c) => c.operation === "SaveDraft")?.variables).toMatchObject({
       policyId: "p-1",
       templateVersionId: "tv-1",
@@ -186,12 +187,12 @@ describe("drafts.$policyId action: edit (from the reader)", () => {
   it("just opens the editor when a draft already exists", async () => {
     const calls = routeGateway(editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"));
     const result = (await runAction({ intent: "edit" })) as unknown as Response;
-    expect(result.headers.get("location")).toBe("/drafts/p-1");
+    expect(result.headers.get("location")).toBe("/drafts/FIN-001");
     expect(calls.some((c) => c.operation === "SaveDraft")).toBe(false);
   });
 });
 
-describe("drafts.$policyId action: submit-review", () => {
+describe("drafts.$number action: submit-review", () => {
   it("starts the approval run on the policy's working draft and home category", async () => {
     const calls = routeGateway({
       ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
@@ -245,7 +246,7 @@ describe("drafts.$policyId action: submit-review", () => {
   });
 });
 
-describe("drafts.$policyId action: publish", () => {
+describe("drafts.$number action: publish", () => {
   it("no longer publishes directly: a draft publishes through its approval (5-screens.s9)", async () => {
     const calls = routeGateway({
       ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
@@ -259,7 +260,7 @@ describe("drafts.$policyId action: publish", () => {
   });
 });
 
-describe("drafts.$policyId action: reorder-appendices", () => {
+describe("drafts.$number action: reorder-appendices", () => {
   it("sends the appendices in their new order", async () => {
     const calls = routeGateway({
       ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
@@ -280,7 +281,26 @@ describe("drafts.$policyId action: reorder-appendices", () => {
   });
 });
 
-describe("drafts.$policyId loader: review state", () => {
+describe("drafts.$number loader: the address", () => {
+  it("opens the editor from the record number in the address", async () => {
+    const calls = routeGateway(editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"));
+    const result = await runLoader();
+    expect(result.policy.id).toBe("p-1");
+    expect(calls.find((c) => c.operation === "PolicyByNumber")?.variables).toEqual({
+      number: "FIN-001",
+    });
+  });
+
+  it("answers 404 for a number no record has", async () => {
+    routeGateway({
+      ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+      PolicyByNumber: () => ({ policyByNumber: null }),
+    });
+    await expect(runLoader()).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("drafts.$number loader: review state", () => {
   it("reports a draft whose approval run is open as in review", async () => {
     routeGateway(editorHandlers("draft", "APPROVAL_STATUS_IN_REVIEW"));
     const result = await runLoader();

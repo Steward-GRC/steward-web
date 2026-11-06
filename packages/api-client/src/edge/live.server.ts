@@ -1162,6 +1162,18 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(PolicyDocument, { id }, "Policy", { cookie });
     return data.policy ? policyView(data.policy, cookie) : null;
   },
+  async policyByNumber(number, cookie) {
+    const found = await gatewayFetch(PolicyByNumberDocument, { number }, "PolicyByNumber", {
+      cookie,
+    }).then(
+      (data) => data.policyByNumber,
+      (error: unknown) => {
+        if (isNotFound(error)) return null;
+        throw error;
+      },
+    );
+    return found ? policyView(found, cookie) : null;
+  },
   async policyDetail(documentType, number, cookie) {
     // The gateway refuses a number the caller may not read with NotFound, the same as one
     // that doesn't exist; both answer null so the reader can't tell the two apart.

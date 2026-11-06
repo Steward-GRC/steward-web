@@ -6,6 +6,7 @@ import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-w
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
 import { Banner, Button, Card, cn, EmptyState } from "@steward-web/ui";
+import { draftPath } from "@steward-web/ui/domain";
 import { type ReactNode, useEffect, useId, useState } from "react";
 import {
   data,
@@ -75,7 +76,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       templateId: templateId === NO_TEMPLATE ? null : templateId,
       title,
     });
-    return data({ ok: true, policyId: policy.id } as const);
+    return data({ ok: true, number: policy.number, policyId: policy.id } as const);
   } catch (error) {
     return data({ error: refusalOf(error), ok: false } as const, { status: 400 });
   }
@@ -132,7 +133,7 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
   useEffect(() => {
     if (fetcher.data?.ok) {
       clearLocalDraft();
-      void navigate(`/drafts/${fetcher.data.policyId}`);
+      void navigate(draftPath(fetcher.data.number));
     }
   }, [fetcher.data, navigate]);
 

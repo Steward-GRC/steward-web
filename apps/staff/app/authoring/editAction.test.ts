@@ -6,15 +6,17 @@ import { editActionOf } from "./editAction";
 
 describe("editActionOf", () => {
   it("points an author who can edit at the editor's action", () => {
-    expect(editActionOf({ canEdit: true, id: "p-1" }, true)).toBe("/drafts/p-1");
+    expect(editActionOf({ canEdit: true, number: "POL-A-000001" }, true)).toBe(
+      "/drafts/POL-A-000001",
+    );
   });
 
   it("offers nothing to someone who can't edit this document", () => {
-    expect(editActionOf({ canEdit: false, id: "p-1" }, true)).toBeUndefined();
-    expect(editActionOf({ id: "p-1" }, true)).toBeUndefined();
+    expect(editActionOf({ canEdit: false, number: "POL-A-000001" }, true)).toBeUndefined();
+    expect(editActionOf({ number: "POL-A-000001" }, true)).toBeUndefined();
   });
 
   it("offers nothing without the author role, which the editor's routes require", () => {
-    expect(editActionOf({ canEdit: true, id: "p-1" }, false)).toBeUndefined();
+    expect(editActionOf({ canEdit: true, number: "POL-A-000001" }, false)).toBeUndefined();
   });
 });

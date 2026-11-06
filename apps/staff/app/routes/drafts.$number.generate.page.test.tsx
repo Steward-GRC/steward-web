@@ -6,7 +6,7 @@ import { File as NodeFile } from "node:buffer";
 import { createRoutesStub, useLoaderData, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import Generate from "./drafts.$policyId.generate";
+import Generate from "./drafts.$number.generate";
 
 type Props = Parameters<typeof Generate>[0];
 
@@ -51,7 +51,12 @@ const loaderData = {
   aiHealth: { available: true, reason: null },
   draftId: "v-9",
   outline,
-  policy: { homeGroupId: "g-1", id: "p-1", title: "Visitor Sign-in Policy" },
+  policy: {
+    homeGroupId: "g-1",
+    id: "p-1",
+    number: "POL-VISITOR-000001",
+    title: "Visitor Sign-in Policy",
+  },
   sections: outline.map((section) => ({ key: section.key, text: "", title: section.title })),
 };
 
@@ -77,9 +82,9 @@ const open = (data: object = loaderData) => {
       },
       Component: Page,
       loader: () => data,
-      path: "/drafts/:policyId/generate",
+      path: "/drafts/:number/generate",
     },
-    { Component: Editor, path: "/drafts/:policyId" },
+    { Component: Editor, path: "/drafts/:number" },
     {
       action: async ({ request }) => {
         const form = await request.formData();
@@ -102,7 +107,7 @@ const open = (data: object = loaderData) => {
       path: "/resources/documents/validate-url",
     },
   ]);
-  render(<Stub initialEntries={["/drafts/p-1/generate"]} />);
+  render(<Stub initialEntries={["/drafts/POL-VISITOR-000001/generate"]} />);
   return posted;
 };
 
