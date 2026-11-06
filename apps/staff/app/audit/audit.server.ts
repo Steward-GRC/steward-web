@@ -16,13 +16,18 @@ export interface AuditRow {
   subjectLabel: string;
 }
 
+/** The screen is policy and approval actions only: not logins, role grants or settings. */
+const isPolicyOrApproval = (record: AuditRecord): boolean =>
+  /^(policy|policy_version|procedure|approval|workflow)[:.]/.test(record.subject) ||
+  /^(policy|approval|workflow)[._]/.test(record.action);
+
 /**
  * The staff audit log's rows. Reporting-case records are left out entirely: nothing in a staff
  * list may point at who handled, or filed, a case.
  */
 export const toRows = (records: readonly AuditRecord[]): AuditRow[] =>
   records
-    .filter((record) => !isReportingRecord(record))
+    .filter((record) => !isReportingRecord(record) && isPolicyOrApproval(record))
     .map((record) => ({
       action: actionLabel(record.action),
       actor: displayLabel(record.actorName, record.actorUserId),

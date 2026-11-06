@@ -40,4 +40,16 @@ describe("toRows", () => {
     expect(named?.actor).toBe("Bob Author");
     expect(unnamed?.actor).toBe("a-very-long-…");
   });
+
+  it("keeps policy and approval actions only, not logins, role grants or settings", () => {
+    const rows = toRows([
+      record({ id: "1", subject: "policy:policy-1" }),
+      record({ action: "workflow.submitted", id: "2", subject: "policy_version:version-4" }),
+      record({ action: "approval.decided", id: "3", subject: "approval:PRC-1" }),
+      record({ action: "session.login", id: "4", subject: "user:user-bob" }),
+      record({ action: "role.granted", id: "5", subject: "user:user-bob" }),
+      record({ action: "settings.updated", id: "6", subject: "settings:global" }),
+    ]);
+    expect(rows.map((row) => row.id)).toEqual(["1", "2", "3"]);
+  });
 });
