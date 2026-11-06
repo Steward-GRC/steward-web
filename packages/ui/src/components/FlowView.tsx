@@ -33,7 +33,7 @@ export interface FlowViewProps {
 const rem = (px: number) => `${px / 16}rem`;
 
 const EDGE: Record<FlowEdgeState, string> = {
-  active: "flow-active stroke-accent motion-reduce:animate-none",
+  active: "flow-active stroke-accent-line motion-reduce:animate-none",
   ahead: "stroke-border-strong opacity-60",
   taken: "stroke-primary",
 };
@@ -42,7 +42,7 @@ const EDGE_ORDER: Record<FlowEdgeState, number> = { active: 2, ahead: 0, taken: 
 
 const BOX: Record<FlowNodeState, string> = {
   current:
-    "border-accent bg-surface shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_35%,transparent)]",
+    "border-accent-line bg-surface shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_35%,transparent)]",
   done: "border-primary bg-primary-soft",
   rejected: "border-danger bg-danger-soft",
   upcoming: "border-dashed border-border-strong bg-surface opacity-60",
@@ -64,7 +64,7 @@ const Mark = ({ state }: { state: FlowNodeState }) => {
         "size-3.5 shrink-0",
         state === "done" && "text-primary",
         state === "rejected" && "text-danger",
-        state === "current" && "text-accent",
+        state === "current" && "text-accent-line",
         state === "upcoming" && "text-muted",
       )}
     />

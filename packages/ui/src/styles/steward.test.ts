@@ -91,3 +91,23 @@ describe("the card band and edge in the other themes", () => {
     expect(ratio(get("card-edge"), get("background"))).toBeGreaterThanOrEqual(3);
   });
 });
+
+describe("the amber line colour for the flow view", () => {
+  const systemDark = /\.system:not\(\.hc\)\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+  it.each([
+    [":root", rule(":root")],
+    [".dark", rule(".dark")],
+    [".hc", rule(".hc")],
+    [".system:not(.hc)", systemDark],
+  ])("reaches 3:1 on the page and on the card in %s", (_name, body) => {
+    const get = (name: string) =>
+      new RegExp(String.raw`--${name}:\s*(#[\da-f]{6})`).exec(body)?.[1] ?? "";
+    expect(get("accent-line")).not.toBe("");
+    expect(ratio(get("accent-line"), get("background"))).toBeGreaterThanOrEqual(3);
+    expect(ratio(get("accent-line"), get("surface"))).toBeGreaterThanOrEqual(3);
+  });
+
+  it("is a darker amber than the fill on light, so the fill stays amber", () => {
+    expect(light("accent-line")).not.toBe(light("accent"));
+  });
+});

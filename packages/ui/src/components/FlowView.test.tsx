@@ -101,11 +101,13 @@ describe("the flow view", () => {
     expect(container.querySelector('[data-flow-edge="in:Legal"]')).not.toHaveClass("flow-active");
   });
 
-  it("uses the Steward tokens: purple for the path taken, amber for the current step", () => {
+  it("uses the Steward tokens: purple for the path taken, the dark amber for the current step", () => {
     const { container } = view();
     expect(container.querySelector('[data-flow-edge="in:Legal"]')).toHaveClass("stroke-primary");
-    expect(container.querySelector('[data-flow-edge="in:fin-1"]')).toHaveClass("stroke-accent");
-    expect(container.querySelector('[data-flow-node="fin-1"]')).toHaveClass("border-accent");
+    expect(container.querySelector('[data-flow-edge="in:fin-1"]')).toHaveClass(
+      "stroke-accent-line",
+    );
+    expect(container.querySelector('[data-flow-node="fin-1"]')).toHaveClass("border-accent-line");
     expect(container.querySelector('[data-flow-node="Legal"]')).toHaveClass("border-primary");
   });
 
