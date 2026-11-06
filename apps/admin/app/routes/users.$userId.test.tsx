@@ -162,15 +162,24 @@ describe("Profile (A17)", () => {
     await vi.waitFor(() => expect(last(posted).get("intent")).toBe("resend-welcome"));
   });
 
-  it("says a directory account's name, email and password live in the directory", async () => {
+  it("shows a directory account's name and email read-only, with the reason (#109)", async () => {
     openDetail("profile", { user: { ...ERIN, localAccount: false } });
     expect(
       await screen.findByText(
-        "Display name, email and password are managed in the directory and can't be edited here.",
+        "Display name, email and password are managed in the directory and can't be edited here. Change them there.",
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByLabelText("Display name")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Display name")).toHaveValue("Erin");
+    expect(screen.getByLabelText("Display name")).toBeDisabled();
+    expect(screen.getByLabelText("Email")).toHaveValue("erin@example.org");
+    expect(screen.getByLabelText("Email")).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Generate & reset" })).not.toBeInTheDocument();
+  });
+
+  it("keeps a local account's name and email editable (#109)", async () => {
+    openDetail("profile");
+    expect(await screen.findByLabelText("Display name")).toBeEnabled();
+    expect(screen.getByLabelText("Email")).toBeEnabled();
   });
 });
 

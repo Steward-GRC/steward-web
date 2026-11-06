@@ -135,22 +135,25 @@ export const ProfileTab = ({ user }: { user: User }) => {
             <p className="text-sm text-muted">{t("users.profile.rootLocked")}</p>
           ) : null}
         </div>
-        {user.localAccount ? (
-          <>
-            <Field label={t("users.profile.name")}>
-              <Input defaultValue={user.name} disabled={closed} name="name" required />
-            </Field>
-            <Field label={t("users.profile.email")}>
-              <Input
-                defaultValue={user.email}
-                disabled={closed}
-                name="email"
-                required
-                type="email"
-              />
-            </Field>
-          </>
-        ) : (
+        {/* A directory account's name and email are shown, locked, with why (#109). */}
+        <Field label={t("users.profile.name")}>
+          <Input
+            defaultValue={user.name}
+            disabled={closed || !user.localAccount}
+            name="name"
+            required
+          />
+        </Field>
+        <Field label={t("users.profile.email")}>
+          <Input
+            defaultValue={user.email}
+            disabled={closed || !user.localAccount}
+            name="email"
+            required
+            type="email"
+          />
+        </Field>
+        {user.localAccount ? null : (
           <p className="text-sm text-muted">{t("users.profile.federated")}</p>
         )}
         {failureOf(save) ? (

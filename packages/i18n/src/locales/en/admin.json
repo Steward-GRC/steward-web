@@ -134,6 +134,11 @@
     }
   },
   "merge": {
+    "likely": {
+      "none": "No likely duplicates: no two open accounts share an email.",
+      "preview": "Preview this merge",
+      "title": "Likely duplicates"
+    },
     "confirm": {
       "source": "Source — closed after merge",
       "submit": "Merge accounts",
@@ -327,6 +332,7 @@
     "title": "Users & roles",
     "subtitle": "Platform users, roles, and policy access.",
     "showDeleted": "Show deleted",
+    "edit": "Edit user",
     "merge": "Merge accounts",
     "search": "Search users",
     "columns": {
@@ -390,7 +396,7 @@
       "rootLocked": "The root site-admin can't be disabled.",
       "name": "Display name",
       "email": "Email",
-      "federated": "Display name, email and password are managed in the directory and can't be edited here.",
+      "federated": "Display name, email and password are managed in the directory and can't be edited here. Change them there.",
       "password": {
         "title": "Reset password",
         "description": "Sets a new random password and shows it to you once.",

@@ -118,3 +118,50 @@ describe("Merge accounts (A21)", () => {
     expect(screen.getByRole("button", { name: "Merge accounts" })).toBeDisabled();
   });
 });
+
+describe("Merge accounts: likely duplicates (#110)", () => {
+  const withDuplicates = {
+    ...loaderData,
+    preview: undefined,
+    sourceUserId: "",
+    targetUserId: "",
+    users: [
+      {
+        email: "jsmith@example.org",
+        localAccount: true,
+        name: "Jon Smyth",
+        roles: ["author"],
+        userId: "u-jon",
+      },
+      {
+        email: "jsmith@example.org",
+        localAccount: false,
+        name: "Jonathan Smith",
+        roles: [],
+        userId: "u-jonathan",
+      },
+      { email: "pat.quinn@example.org", name: "Pat Quinn", userId: "u-pat" },
+      { email: "p.quinn@example.net", name: "Pat Quinn", userId: "u-pat2" },
+    ],
+  };
+
+  it("lists accounts that share an email, each with a link that fills the page in", async () => {
+    renderMerge(vi.fn(), withDuplicates);
+    const list = await screen.findByRole("list", { name: "Likely duplicates" });
+    expect(within(list).getByText(/Jon Smyth/)).toBeInTheDocument();
+    expect(within(list).getByText(/Jonathan Smith/)).toBeInTheDocument();
+    expect(within(list).queryByText(/Pat Quinn/)).toBeNull();
+    expect(within(list).getByRole("link", { name: "Preview this merge" })).toHaveAttribute(
+      "href",
+      "/users/merge?sourceUserId=u-jonathan&targetUserId=u-jon",
+    );
+  });
+
+  it("says so when no two open accounts share an email", async () => {
+    renderMerge(vi.fn(), { ...withDuplicates, users: withDuplicates.users.slice(2) });
+    expect(
+      await screen.findByText("No likely duplicates: no two open accounts share an email."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Likely duplicates" })).toBeNull();
+  });
+});

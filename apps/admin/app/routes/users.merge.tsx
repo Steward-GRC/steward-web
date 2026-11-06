@@ -23,10 +23,11 @@ import {
   TypeToConfirm,
 } from "@steward-web/ui";
 import { useState } from "react";
-import { data, Form, redirect } from "react-router";
+import { data, Form, Link, redirect } from "react-router";
 
 import type { Route } from "./+types/users.merge";
 
+import { likelyDuplicates } from "../users/duplicates";
 import { mergeAccounts, previewAccountMerge } from "../users/merge.server";
 import { listUsers } from "../users/users.server";
 
@@ -98,6 +99,7 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
   const sourceUser = users.find((u) => u.userId === sourceUserId);
   const targetUser = users.find((u) => u.userId === targetUserId);
   const sameUser = sourceUserId !== "" && sourceUserId === targetUserId;
+  const duplicates = likelyDuplicates(users);
 
   return (
     <div className="flex w-full flex-col gap-3 p-4 md:p-6">
@@ -108,6 +110,36 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
       <p className="rounded-lg bg-danger-soft px-3.5 py-2.5 font-semibold text-danger">
         {t("merge.irreversible")}
       </p>
+
+      <section aria-labelledby="likely-duplicates" className="flex flex-col gap-2">
+        <h2 className="text-base font-semibold" id="likely-duplicates">
+          {t("merge.likely.title")}
+        </h2>
+        {duplicates.length === 0 ? (
+          <p className="text-sm text-muted">{t("merge.likely.none")}</p>
+        ) : (
+          <ul aria-label={t("merge.likely.title")} className="flex flex-col gap-2">
+            {duplicates.map((group) => (
+              <li
+                className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-3.5 py-2.5"
+                key={group.email}
+              >
+                <span className="min-w-0 flex-1 text-sm">
+                  {group.accounts.map((account) => account.name).join(" · ")}
+                  <span className="block text-muted">{group.email}</span>
+                </span>
+                <Button asChild size="sm" variant="secondary">
+                  <Link
+                    to={`/users/merge?sourceUserId=${encodeURIComponent(group.sourceUserId)}&targetUserId=${encodeURIComponent(group.targetUserId)}`}
+                  >
+                    {t("merge.likely.preview")}
+                  </Link>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <Form className="flex flex-col gap-3" method="get">
         <div className="grid items-center gap-2 md:grid-cols-[1fr_30px_1fr]">
