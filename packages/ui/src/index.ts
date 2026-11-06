@@ -23,6 +23,7 @@ export {
   type BadgeTone,
   type ChangeType,
   CountBadge,
+  Tally,
   Detail,
   type DocumentStatus,
   documentStatusOf,

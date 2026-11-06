@@ -6,6 +6,7 @@ import {
   EmptyState,
   ReachError,
   StatCard,
+  Tally,
   UpdatedJustNow,
   useLiveList,
 } from "@steward-web/ui";
@@ -56,7 +57,9 @@ const Library = ({ library }: { library: LibraryOverview }) => {
             key={label}
           >
             <span className="text-xs font-medium text-muted">{label}</span>
-            <span className="text-[22px] font-semibold">{value}</span>
+            <Tally className="self-start" size="lg">
+              {value}
+            </Tally>
             {note ? <span className="text-[11px] text-muted">{note}</span> : null}
           </div>
         ))}
@@ -79,11 +82,11 @@ const Library = ({ library }: { library: LibraryOverview }) => {
                 role="meter"
               >
                 <span
-                  className="block h-full rounded-[4px] bg-primary"
+                  className="block h-full rounded-[4px] bg-accent"
                   style={{ width: `${(category.count / most) * 100}%` }}
                 />
               </span>
-              <span className="text-right font-mono text-muted">{category.count}</span>
+              <Tally className="justify-self-end">{category.count}</Tally>
             </div>
           ))}
         </div>
@@ -104,9 +107,9 @@ const Compliance = ({ ack }: { ack: { done: number; required: number } }) => {
       <div className="flex flex-col gap-2.5 px-[18px] py-4">
         {ack.required > 0 ? (
           <>
-            <span className="text-[34px] font-semibold">
+            <Tally className="self-start" size="lg">
               {t("myWork.compliance.percent", { percent })}
-            </span>
+            </Tally>
             <div
               aria-label={t("myWork.compliance.title")}
               aria-valuemax={100}
@@ -115,7 +118,7 @@ const Compliance = ({ ack }: { ack: { done: number; required: number } }) => {
               className="h-2.5 overflow-hidden rounded-full bg-sunken shadow-[inset_0_0_0_1px_var(--border)]"
               role="progressbar"
             >
-              <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
+              <div className="h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
             </div>
             <span className="leading-[1.45] text-muted">
               {t("myWork.compliance.summary", { ...ack, waiting: ack.required - ack.done })}
@@ -221,11 +224,11 @@ const ReaderCompliance = ({
         className="flex size-[140px] items-center justify-center rounded-full"
         role="progressbar"
         style={{
-          background: `conic-gradient(var(--primary) 0 ${percent}%, var(--sunken) ${percent}% 100%)`,
+          background: `conic-gradient(var(--accent) 0 ${percent}%, var(--sunken) ${percent}% 100%)`,
         }}
       >
         <div className="flex size-[104px] flex-col items-center justify-center rounded-full bg-surface">
-          <b className="text-[28px] font-semibold">{t("myWork.compliance.percent", { percent })}</b>
+          <Tally size="lg">{t("myWork.compliance.percent", { percent })}</Tally>
           <span className="text-[11px] text-muted">{t("myWork.compliance.acknowledged")}</span>
         </div>
       </div>
