@@ -1,7 +1,11 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { can, type Identity, PERMISSIONS } from "@steward-web/auth";
-import { reportingEnabled, shellConfigFromEnvironment } from "@steward-web/shell/server";
+import {
+  mcpEnabled,
+  reportingEnabled,
+  shellConfigFromEnvironment,
+} from "@steward-web/shell/server";
 
 import { fetchAllGroups } from "../categories/categories.server";
 
@@ -31,6 +35,7 @@ export const adminShellData = async (request: Request, identity: Identity) => {
   return {
     categories,
     config: shellConfigFromEnvironment(),
+    mcp: mcpEnabled(),
     reporting: reportingEnabled(),
   };
 };

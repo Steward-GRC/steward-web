@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { reportingEnabled } from "./modules.server";
+import { mcpEnabled, reportingEnabled } from "./modules.server";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -16,5 +16,15 @@ describe("reportingEnabled", () => {
     expect(reportingEnabled()).toBe(false);
     vi.stubEnv("STEWARD_REPORTING", "");
     expect(reportingEnabled()).toBe(false);
+  });
+});
+
+describe("mcpEnabled (#113)", () => {
+  it("is off unless STEWARD_MCP=true, since the MCP server is not built yet", () => {
+    expect(mcpEnabled()).toBe(false);
+    vi.stubEnv("STEWARD_MCP", "true");
+    expect(mcpEnabled()).toBe(true);
+    vi.stubEnv("STEWARD_MCP", "yes");
+    expect(mcpEnabled()).toBe(false);
   });
 });

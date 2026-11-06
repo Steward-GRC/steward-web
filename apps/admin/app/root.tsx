@@ -155,6 +155,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         categories={loaderData.shell.categories}
         config={loaderData.shell.config}
         devLogin={developmentLogin}
+        mcp={loaderData.shell.mcp}
         reporting={loaderData.shell.reporting}
       >
         <DevelopmentUiIssueButton app="admin" enabled={loaderData.devUiIssueCopy} />
@@ -192,6 +193,7 @@ export const ErrorBoundary = () => {
         categories={loaderData.shell.categories}
         config={loaderData.shell.config}
         devLogin={developmentLogin}
+        mcp={loaderData.shell.mcp}
         reporting={loaderData.shell.reporting}
       >
         <RouteErrorBoundary />

@@ -61,6 +61,7 @@
     },
     "destinations": {
       "access": "Access",
+      "mcp": "Agent access (MCP)",
       "auditLog": "Audit log",
       "caseSettings": "Case settings",
       "catalog": "Catalog",
@@ -331,6 +332,7 @@
       "mergeUsers": "Merge users",
       "myGroups": "My groups",
       "newCategory": "New category",
+      "mcp": "Agent access (MCP)",
       "moveDocuments": "Move documents",
       "newOrganisation": "New organization",
       "newTemplate": "New template",

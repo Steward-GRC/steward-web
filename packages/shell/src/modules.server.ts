@@ -7,3 +7,9 @@
  * group. Ethics is a v0.2.0 module with no switch yet, so it is always off.
  */
 export const reportingEnabled = (): boolean => process.env.STEWARD_REPORTING === "true";
+
+/**
+ * The Steward MCP server (agent access) is an idea today; its Settings page and the profile's
+ * token section are reserved behind `STEWARD_MCP=true` until it exists (#113).
+ */
+export const mcpEnabled = (): boolean => process.env.STEWARD_MCP === "true";

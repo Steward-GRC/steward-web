@@ -219,6 +219,10 @@
     "save": "Save",
     "failed": "Couldn't save these settings",
     "cancel": "Cancel",
+    "appliance": {
+      "title": "AI is configured on the appliance ({{name}}).",
+      "description": "Change it in the appliance's own admin."
+    },
     "token": {
       "title": "AI provider token",
       "description": "The token is stored securely and cannot be retrieved — you can only replace it.",
@@ -557,6 +561,13 @@
       "link": "Platform groups"
     },
     "failed": "Couldn't update this group"
+  },
+  "mcp": {
+    "title": "Agent access (MCP)",
+    "subtitle": "Reserved. This page holds the Steward MCP server's settings once that server exists.",
+    "reserved": "Not available yet",
+    "reservedDescription": "The MCP server is still an idea. Behind this switch, this page will hold the on/off setting, the endpoint to give agents, which scopes agents may use at all, the longest a token may live, and an audit view of agent calls across people. On an appliance it is configured on the box and shown read-only here.",
+    "tokens": "People register their own agent tokens in their profile (Security), with a name, scope and expiry, shown once. A token acts as that person with that person's rights, never more. A site administrator can revoke anyone's token from here."
   },
   "organizations": {
     "title": "Organizations",

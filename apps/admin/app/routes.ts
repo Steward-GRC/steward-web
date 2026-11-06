@@ -56,6 +56,7 @@ export default [
   route("workflows/new", "routes/workflows.new.tsx"),
   route("workflows/:id", "routes/workflows.$id.tsx"),
   route("settings", "routes/settings.tsx"),
+  route("mcp", "routes/mcp.tsx"),
   route("setup", "routes/setup.tsx"),
   route("access", "routes/access.tsx"),
   route("access/:categoryId", "routes/access.$categoryId.tsx"),

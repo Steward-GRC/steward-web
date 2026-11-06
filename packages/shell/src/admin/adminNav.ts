@@ -3,6 +3,7 @@
 import { categoriesPath } from "@steward-web/ui/domain";
 import {
   BookOpen,
+  Bot,
   Building2,
   ChartPie,
   Contact,
@@ -68,6 +69,8 @@ export interface AdminNavInput {
   compliance: boolean;
   /** The person manages at least one group, so My groups is theirs. */
   groupManager?: boolean;
+  /** The reserved MCP page shows (`STEWARD_MCP=true`) until the MCP server exists (#113). */
+  mcp?: boolean;
 }
 
 /**
@@ -85,6 +88,7 @@ export const adminNav = ({
   can = () => true,
   compliance,
   groupManager = true,
+  mcp = false,
 }: AdminNavInput): AdminGroup[] => {
   const categories = can("group.manage");
   return [
@@ -124,6 +128,7 @@ export const adminNav = ({
     ]),
     group("system", Settings2, [
       ...shown(can("settings.manage"), destination("settings", Settings2, "/settings")),
+      ...shown(mcp && can("settings.manage"), destination("mcp", Bot, "/mcp")),
     ]),
   ].filter((entry) => entry.destinations.length > 0);
 };

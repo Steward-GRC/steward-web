@@ -45,6 +45,19 @@ export const saveEmailServiceConfig = async (
   return edge.setEmailServiceConfig(input, cookieOf(request));
 };
 
+/**
+ * Where this install runs: the appliance's name on an appliance, which configures AI on its own
+ * box, else null (Kubernetes, cloud, the mock). Read from the gateway's diagnostics, never
+ * guessed, so the Settings page locks the AI cards only where it is true (#113).
+ */
+export const getAppliance = async (request: Request): Promise<null | string> => {
+  await requireSettingsManage(request);
+  return edge
+    .diagnostics(cookieOf(request))
+    .then((diagnostics) => diagnostics.appliance ?? null)
+    .catch(() => null);
+};
+
 /** A28's three AI cards: on or off, whether a token is stored, and the retrieval count. */
 export const getAiSettings = async (request: Request): Promise<AiSettings> => {
   await requireSettingsManage(request);
