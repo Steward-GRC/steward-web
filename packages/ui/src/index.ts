@@ -4,6 +4,19 @@ export { brandLinks, brandMeta } from "./brand/head";
 export { Loader, Lockup, Mark, type MarkProps, SMALL_MARK_PX } from "./brand/Mark";
 export { Wordmark, type WordmarkProps } from "./brand/Wordmark";
 export {
+  type CommandAction,
+  CommandActionsProvider,
+  useCommandActions,
+  useRegisterCommandActions,
+} from "./commands/CommandActions";
+export {
+  assertUniqueShortcuts,
+  formatShortcut,
+  matchesShortcut,
+  type ShortcutId,
+  SHORTCUTS,
+} from "./commands/shortcuts";
+export {
   ApproverPill,
   type ApproverState,
   Badge,
@@ -35,6 +48,7 @@ export {
   type CommandPaletteProps,
   type PaletteGroup,
   type PaletteItem,
+  type PaletteLink,
 } from "./components/CommandPalette";
 export {
   Checkbox,

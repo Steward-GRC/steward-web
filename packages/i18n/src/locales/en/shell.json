@@ -250,6 +250,7 @@
     "action": "search",
     "createPrefix": "New ",
     "groups": {
+      "actions": "Actions",
       "categories": "Categories",
       "create": "Create",
       "groups": "Groups",

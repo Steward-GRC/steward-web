@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { Dialog, MenuItem } from "@steward-web/ui";
+import { Dialog, MenuItem, useRegisterCommandActions } from "@steward-web/ui";
 import { type PolicyDetail, PolicyReader } from "@steward-web/ui/domain";
 import { Archive, ArrowRightLeft, FileDown, Link2, Trash2, UserRound } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -37,6 +37,30 @@ export const AdminPolicyReader = ({
   const [open, setOpen] = useState<GovernanceDialog | null>(null);
   const close = useCallback(() => setOpen(null), []);
   const published = Boolean(detail.currentVersionId);
+
+  // The same list as the Actions menu, offered to the command bar (bug log 26): what the
+  // menu hides from this person the bar leaves out too.
+  const governanceActions: {
+    allowed: boolean;
+    dialog: GovernanceDialog;
+    shortcut?: "exportPdf" | "magicLinks" | "retire";
+  }[] = [
+    { allowed: published, dialog: "exportPdf", shortcut: "exportPdf" },
+    { allowed: true, dialog: "magicLinks", shortcut: "magicLinks" },
+    { allowed: isSiteAdmin, dialog: "changeAuthor" },
+    { allowed: isSiteAdmin, dialog: "move" },
+    { allowed: true, dialog: "retire", shortcut: "retire" },
+    { allowed: true, dialog: "delete" },
+  ];
+  useRegisterCommandActions(
+    governanceActions.map(({ allowed, dialog, shortcut }) => ({
+      allowed,
+      id: dialog,
+      label: t(`governance.menu.${dialog}`),
+      run: () => setOpen(dialog),
+      shortcut,
+    })),
+  );
 
   const item = (dialog: GovernanceDialog, Icon: typeof FileDown, disabled = false) => (
     <MenuItem disabled={disabled} onSelect={() => setOpen(dialog)}>

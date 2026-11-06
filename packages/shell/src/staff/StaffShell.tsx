@@ -4,7 +4,7 @@ import type { Category, GlobalSettings } from "@steward-web/api-client";
 
 import { canOpenAdmin, useIdentity } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
-import { Lockup, Tooltip } from "@steward-web/ui";
+import { CommandActionsProvider, Lockup, Tooltip } from "@steward-web/ui";
 import { Bell, Search } from "lucide-react";
 import {
   type CSSProperties,
@@ -23,6 +23,7 @@ import { staffCreates } from "../createActions";
 import { EnvironmentBanner } from "../EnvironmentBanner";
 import { MainContent, SkipLink } from "../MainContent";
 import { SearchField } from "../SearchField";
+import { ShellActions } from "../ShellActions";
 import { ActingAsBanner, ConnectionLostBanner, SecondFactorNudge } from "../ShellBanners";
 import { ShellFooter } from "../ShellFooter";
 import { SiteBanners } from "../SiteBanners";
@@ -129,104 +130,107 @@ export const StaffShell = ({
   const style = { "--shell-top": `${top}px` } as CSSProperties;
 
   return (
-    <div className="flex min-h-dvh flex-col" style={style}>
-      <SkipLink />
-      <div className="sticky top-0 z-[var(--z-header)]">
-        {impersonation ? <ActingAsBanner session={impersonation} /> : null}
-        <EnvironmentBanner name={config.environment} />
-        <header className="flex h-[57px] items-center gap-1.5 border-b border-border-strong bg-surface px-1.5 lg:gap-3 lg:px-[14px] xl:gap-[14px] xl:px-4">
+    <CommandActionsProvider>
+      <ShellActions inbox={signedIn} />
+      <div className="flex min-h-dvh flex-col" style={style}>
+        <SkipLink />
+        <div className="sticky top-0 z-[var(--z-header)]">
+          {impersonation ? <ActingAsBanner session={impersonation} /> : null}
+          <EnvironmentBanner name={config.environment} />
+          <header className="flex h-[57px] items-center gap-1.5 border-b border-border-strong bg-surface px-1.5 lg:gap-3 lg:px-[14px] xl:gap-[14px] xl:px-4">
+            {signedIn ? (
+              <StaffDrawer
+                adminUrl={adminUrl}
+                creates={creates}
+                docsUrl={config.docsUrl}
+                feedbackUrl={COMING_SOON.feedback}
+                sections={sections}
+              />
+            ) : null}
+            <Link className="flex text-ink hover:text-ink" to="/">
+              <Lockup className="max-lg:[&>svg:first-child]:size-6 max-lg:[&>svg:last-child]:h-[14.36px] max-lg:[&>svg:last-child]:w-auto" />
+            </Link>
+            {config.organisation ? (
+              <span
+                className="hidden items-center gap-[14px] xl:flex"
+                data-testid="organisation-slot"
+              >
+                <span aria-hidden="true" className="h-[22px] w-px bg-border" />
+                <span className="text-sm font-medium text-muted">{config.organisation}</span>
+              </span>
+            ) : null}
+            {signedIn ? (
+              <>
+                <SearchField
+                  className="ml-6 hidden h-[38px] w-[322px] lg:flex xl:ml-10 xl:w-[382px]"
+                  creates={creates}
+                />
+                <div className="ml-auto flex items-center gap-1 text-sm font-medium">
+                  {adminUrl ? (
+                    <a className={`${action} hidden lg:flex`} href={adminUrl}>
+                      {t("header.admin")}
+                    </a>
+                  ) : null}
+                  <Link className={`${action} hidden xl:flex`} to={COMING_SOON.feedback}>
+                    {t("header.feedback")}
+                  </Link>
+                  <a
+                    className={`${action} hidden lg:flex`}
+                    href={config.docsUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {t("header.docs")}
+                  </a>
+                  <Tooltip content={t("header.notifications")}>
+                    <Link
+                      aria-label={t("header.notifications")}
+                      className="hidden size-9 items-center justify-center rounded-md text-ink hover:bg-sunken hover:text-ink lg:flex"
+                      to={ACCOUNT_PATHS.inbox}
+                    >
+                      <Bell aria-hidden="true" className="size-[18px]" />
+                    </Link>
+                  </Tooltip>
+                  <Link
+                    aria-label={t("header.search.label")}
+                    className="flex size-11 items-center justify-center rounded-md text-ink hover:bg-sunken hover:text-ink lg:hidden"
+                    to="/search"
+                  >
+                    <Search aria-hidden="true" className="size-[22px]" />
+                  </Link>
+                  <span className="lg:ml-1.5">
+                    <AccountMenu />
+                  </span>
+                </div>
+              </>
+            ) : null}
+          </header>
+        </div>
+        <div className="flex flex-1">
           {signedIn ? (
-            <StaffDrawer
-              adminUrl={adminUrl}
-              creates={creates}
-              docsUrl={config.docsUrl}
-              feedbackUrl={COMING_SOON.feedback}
+            <StaffSidebar
+              categories={categories}
+              collapsed={collapsed}
+              onCollapsedChange={setCollapsed}
+              rail={collapsed || railWidth}
               sections={sections}
             />
           ) : null}
-          <Link className="flex text-ink hover:text-ink" to="/">
-            <Lockup className="max-lg:[&>svg:first-child]:size-6 max-lg:[&>svg:last-child]:h-[14.36px] max-lg:[&>svg:last-child]:w-auto" />
-          </Link>
-          {config.organisation ? (
-            <span
-              className="hidden items-center gap-[14px] xl:flex"
-              data-testid="organisation-slot"
-            >
-              <span aria-hidden="true" className="h-[22px] w-px bg-border" />
-              <span className="text-sm font-medium text-muted">{config.organisation}</span>
-            </span>
-          ) : null}
-          {signedIn ? (
-            <>
-              <SearchField
-                className="ml-6 hidden h-[38px] w-[322px] lg:flex xl:ml-10 xl:w-[382px]"
-                creates={creates}
-              />
-              <div className="ml-auto flex items-center gap-1 text-sm font-medium">
-                {adminUrl ? (
-                  <a className={`${action} hidden lg:flex`} href={adminUrl}>
-                    {t("header.admin")}
-                  </a>
-                ) : null}
-                <Link className={`${action} hidden xl:flex`} to={COMING_SOON.feedback}>
-                  {t("header.feedback")}
-                </Link>
-                <a
-                  className={`${action} hidden lg:flex`}
-                  href={config.docsUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {t("header.docs")}
-                </a>
-                <Tooltip content={t("header.notifications")}>
-                  <Link
-                    aria-label={t("header.notifications")}
-                    className="hidden size-9 items-center justify-center rounded-md text-ink hover:bg-sunken hover:text-ink lg:flex"
-                    to={ACCOUNT_PATHS.inbox}
-                  >
-                    <Bell aria-hidden="true" className="size-[18px]" />
-                  </Link>
-                </Tooltip>
-                <Link
-                  aria-label={t("header.search.label")}
-                  className="flex size-11 items-center justify-center rounded-md text-ink hover:bg-sunken hover:text-ink lg:hidden"
-                  to="/search"
-                >
-                  <Search aria-hidden="true" className="size-[22px]" />
-                </Link>
-                <span className="lg:ml-1.5">
-                  <AccountMenu />
-                </span>
-              </div>
-            </>
-          ) : null}
-        </header>
-      </div>
-      <div className="flex flex-1">
-        {signedIn ? (
-          <StaffSidebar
-            categories={categories}
-            collapsed={collapsed}
-            onCollapsedChange={setCollapsed}
-            rail={collapsed || railWidth}
-            sections={sections}
-          />
-        ) : null}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {/* The notices open the main landmark, so every word on the page sits in one and the
+          <div className="flex min-w-0 flex-1 flex-col">
+            {/* The notices open the main landmark, so every word on the page sits in one and the
               skip link lands on them first. */}
-          <MainContent className="flex flex-1 flex-col outline-none">
-            <SiteBanners settings={banners} />
-            {signedIn ? <ConnectionLostBanner /> : null}
-            {signedIn && secondFactorNudge ? (
-              <SecondFactorNudge setUpUrl={ACCOUNT_PATHS.security} />
-            ) : null}
-            <div className="flex-1">{children}</div>
-          </MainContent>
-          <ShellFooter organisation={config.organisation} />
+            <MainContent className="flex flex-1 flex-col outline-none">
+              <SiteBanners settings={banners} />
+              {signedIn ? <ConnectionLostBanner /> : null}
+              {signedIn && secondFactorNudge ? (
+                <SecondFactorNudge setUpUrl={ACCOUNT_PATHS.security} />
+              ) : null}
+              <div className="flex-1">{children}</div>
+            </MainContent>
+            <ShellFooter organisation={config.organisation} />
+          </div>
         </div>
       </div>
-    </div>
+    </CommandActionsProvider>
   );
 };

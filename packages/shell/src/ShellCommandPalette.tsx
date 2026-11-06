@@ -4,9 +4,13 @@ import { useTranslation } from "@steward-web/i18n";
 import {
   CommandPalette,
   type Failure,
+  formatShortcut,
   type PaletteGroup,
   type PaletteItem,
+  type PaletteLink,
   ReachError,
+  SHORTCUTS,
+  useCommandActions,
 } from "@steward-web/ui";
 import { useEffect, useState } from "react";
 import { useFetcher, useNavigate } from "react-router";
@@ -23,7 +27,7 @@ const matchesCreate = (label: string, words: string) =>
 export interface CommandPaletteResults {
   /** Set when the app couldn't reach its data; the palette shows the reach error. */
   failure?: Failure;
-  groups: { id: string; items: PaletteItem[] }[];
+  groups: { id: string; items: PaletteLink[] }[];
 }
 
 export const COMMAND_PALETTE_PATH = "/resources/command-palette";
@@ -50,6 +54,7 @@ export const ShellCommandPalette = ({
   const navigate = useNavigate();
   const fetcher = useFetcher<CommandPaletteResults>();
   const { load } = fetcher;
+  const pageActions = useCommandActions();
   const [query, setQuery] = useState(initialQuery);
   const [recent, setRecent] = useState<PaletteItem[]>([]);
   const [wasOpen, setWasOpen] = useState(open);
@@ -90,8 +95,23 @@ export const ShellCommandPalette = ({
       }))
       .filter((item) => !words || matchesCreate(item.label, words)),
   };
+  // This page's actions (bug log 26) come before everything, narrowed by the words like Create.
+  const actionsGroup: PaletteGroup = {
+    heading: t("palette.groups.actions"),
+    id: "actions",
+    items: pageActions
+      .filter((action) => !words || matchesCreate(action.label, words))
+      .map((action) => ({
+        icon: "action" as const,
+        id: `action:${action.id}`,
+        label: action.label,
+        run: action.run,
+        shortcut: action.shortcut ? formatShortcut(SHORTCUTS[action.shortcut].keys) : undefined,
+      })),
+  };
   const groups: PaletteGroup[] = words
     ? [
+        actionsGroup,
         ...(fetcher.data?.groups ?? []).map((group) => ({
           heading: t(`palette.groups.${group.id}`, { defaultValue: group.id }),
           id: group.id,
@@ -100,6 +120,7 @@ export const ShellCommandPalette = ({
         createGroup,
       ]
     : [
+        actionsGroup,
         createGroup,
         {
           heading: t("palette.groups.recent"),
@@ -130,11 +151,20 @@ export const ShellCommandPalette = ({
       onOpenChange={onOpenChange}
       onOpenInNewTab={(item) => {
         onOpenChange(false);
-        globalThis.open(item.to, "_blank", "noopener");
+        if (item.to) globalThis.open(item.to, "_blank", "noopener");
       }}
       onQueryChange={setQuery}
       onSeeAll={(text) => go(`/search?${new URLSearchParams({ q: text }).toString()}`)}
       onSelect={(item) => {
+        if (item.run) {
+          // Close first and run on the next tick, so a dialog the action opens doesn't fight
+          // the palette's own dialog for focus as it closes.
+          onOpenChange(false);
+          const { run } = item;
+          setTimeout(run, 0);
+          return;
+        }
+        if (!item.to) return;
         if (item.icon !== "create") rememberRecent(item);
         go(item.to);
       }}

@@ -8,6 +8,7 @@ import { type ReactNode } from "react";
 import { createRoutesStub, useLoaderData } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { CommandActionsProvider, useCommandActions } from "#ui/commands/CommandActions";
 import { MenuItem } from "#ui/components/Overlays";
 import { Toaster } from "#ui/feedback/Toast";
 
@@ -750,5 +751,49 @@ describe("ReaderNotices", () => {
     expect(screen.getAllByRole("note")).toHaveLength(3);
     await userEvent.click(screen.getByRole("button", { name: "+2 more notices" }));
     expect(screen.getAllByRole("note")).toHaveLength(5);
+  });
+});
+
+const Offered = () => (
+  <ul aria-label="offered">
+    {useCommandActions().map((action) => (
+      <li key={action.id}>{action.label}</li>
+    ))}
+  </ul>
+);
+const mount = (detail: PolicyDetail) => {
+  const Stub = createRoutesStub([
+    {
+      Component: () => (
+        <CommandActionsProvider>
+          <PolicyReader detail={detail} viewerName="Erin Reader" />
+          <Offered />
+        </CommandActionsProvider>
+      ),
+      path: "/policies/:number",
+    },
+  ]);
+  render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
+};
+const offered = () =>
+  within(screen.getByRole("list", { name: "offered" }))
+    .getAllByRole("listitem")
+    .map((item) => item.textContent);
+
+describe("the reader on the command bar (bug log 26)", () => {
+  it("offers Acknowledge only while the person can, and opens the dialog on A", async () => {
+    mount(baseDetail);
+    expect(offered()).toContain("Acknowledge");
+    await userEvent.keyboard("a");
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("offers no Acknowledge once it is done, but keeps History and Print", () => {
+    mount({
+      ...baseDetail,
+      ack: { ackedAt: "2026-08-13T00:00:00Z", acknowledged: true, required: true },
+    });
+    expect(offered()).not.toContain("Acknowledge");
+    expect(offered()).toEqual(expect.arrayContaining(["Print / Export", "History & approvals"]));
   });
 });

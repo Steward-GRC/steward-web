@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { Command as CommandPrimitive } from "cmdk";
-import { Clock, FileText, Folder, Plus, Search } from "lucide-react";
+import { Clock, FileText, Folder, Plus, Search, Zap } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { type ReactNode, useState } from "react";
 
@@ -32,15 +32,23 @@ export interface PaletteGroup {
 
 export interface PaletteItem {
   hint?: string;
-  /** Folder for a category, clock for a recent item, plus for a create action; none for a
-   *  document. */
-  icon?: "create" | "file" | "folder" | "recent";
+  /** Folder for a category, clock for a recent item, plus for a create action, a bolt for a
+   *  page action; none for a document. */
+  icon?: "action" | "create" | "file" | "folder" | "recent";
   id: string;
   label: string;
-  to: string;
+  /** A page action runs instead of going anywhere (bug log 26). */
+  run?: () => void;
+  /** The action's keycap ("⇧R"), shown at the right edge; hidden on touch. */
+  shortcut?: string;
+  /** Where a result goes; an action has none. */
+  to?: string;
 }
 
-const ICONS = { create: Plus, file: FileText, folder: Folder, recent: Clock };
+/** A result that goes somewhere (every search hit); a page action has no address. */
+export type PaletteLink = { to: string } & PaletteItem;
+
+const ICONS = { action: Zap, create: Plus, file: FileText, folder: Folder, recent: Clock };
 
 /** The label with the first match of the words underlined: "<u>Desk</u> Booking Policy". */
 const Highlighted = ({ label, query }: { label: string; query: string }): ReactNode => {
@@ -169,6 +177,11 @@ export const CommandPalette = ({
                               ) : null}
                             </span>
                           )}
+                          {item.shortcut ? (
+                            <kbd className="ml-auto rounded-sm border border-border-strong px-[5px] py-px font-mono text-2xs text-muted group-data-[selected=true]:text-on-primary-soft [@media(pointer:coarse)]:hidden">
+                              {item.shortcut}
+                            </kbd>
+                          ) : null}
                         </CommandPrimitive.Item>
                       );
                     })}

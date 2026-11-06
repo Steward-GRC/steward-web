@@ -4,7 +4,15 @@ import type { GlobalSettings } from "@steward-web/api-client";
 
 import { useIdentity } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
-import { cn, Dialog, DialogClose, DialogTrigger, Lockup, SheetContent } from "@steward-web/ui";
+import {
+  cn,
+  CommandActionsProvider,
+  Dialog,
+  DialogClose,
+  DialogTrigger,
+  Lockup,
+  SheetContent,
+} from "@steward-web/ui";
 import { ArrowLeft, Menu as MenuIcon, PanelLeftOpen, Search, X } from "lucide-react";
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -393,84 +401,86 @@ export const AdminShell = ({
   const style = { "--shell-top": config.environment ? "85px" : "57px" } as CSSProperties;
 
   return (
-    <div className="flex min-h-dvh flex-col" style={style}>
-      <SkipLink />
-      <div className="sticky top-0 z-[var(--z-header)]">
-        <EnvironmentBanner name={config.environment} />
-        <header className="flex h-[57px] items-center gap-3 border-b border-[var(--admin-head-border)] bg-[var(--admin-head)] px-4 text-[#f6eef4]">
-          {signedIn ? (
-            <AdminDrawer
-              categories={categories}
-              config={config}
-              current={currentDestination}
-              groups={groups}
-            />
-          ) : null}
-          <Link className="flex text-[#f6eef4] hover:text-[#f6eef4]" to="/">
-            <Lockup tone="on-dark" />
-          </Link>
-          <span className="rounded-sm bg-[#e2a336] px-2 py-[3px] text-2xs font-semibold tracking-[.04em] text-[#261b25]">
-            {t("admin.tag")}
-          </span>
+    <CommandActionsProvider>
+      <div className="flex min-h-dvh flex-col" style={style}>
+        <SkipLink />
+        <div className="sticky top-0 z-[var(--z-header)]">
+          <EnvironmentBanner name={config.environment} />
+          <header className="flex h-[57px] items-center gap-3 border-b border-[var(--admin-head-border)] bg-[var(--admin-head)] px-4 text-[#f6eef4]">
+            {signedIn ? (
+              <AdminDrawer
+                categories={categories}
+                config={config}
+                current={currentDestination}
+                groups={groups}
+              />
+            ) : null}
+            <Link className="flex text-[#f6eef4] hover:text-[#f6eef4]" to="/">
+              <Lockup tone="on-dark" />
+            </Link>
+            <span className="rounded-sm bg-[#e2a336] px-2 py-[3px] text-2xs font-semibold tracking-[.04em] text-[#261b25]">
+              {t("admin.tag")}
+            </span>
+            {signedIn ? (
+              <>
+                <SearchField
+                  className="ml-[52px] hidden h-[38px] w-[382px] border-[#56465b] bg-transparent text-[#c9b8c7] focus-within:border-[#d9a6d2] lg:flex"
+                  creates={creates}
+                  placeholder={t("admin.searchPlaceholder")}
+                  tone="on-dark"
+                />
+                <div className="ml-auto flex items-center gap-1 text-sm font-medium">
+                  <Link
+                    aria-label={t("header.search.label")}
+                    className="flex size-11 items-center justify-center rounded-md text-[#f6eef4] hover:bg-white/10 hover:text-[#f6eef4] lg:hidden"
+                    to="/search"
+                  >
+                    <Search aria-hidden="true" className="size-[22px]" />
+                  </Link>
+                  <a className={cn(headerLink, "hidden md:flex")} href={config.staffUrl}>
+                    <ArrowLeft aria-hidden="true" className="size-[15px]" />
+                    {t("admin.staff")}
+                  </a>
+                  <a
+                    className={cn(headerLink, "hidden md:flex")}
+                    href={config.docsUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {t("header.docs")}
+                  </a>
+                  <span className="ml-1.5">
+                    <AccountMenu
+                      avatarClassName="bg-[#d9a6d2] text-[#261b25] shadow-none"
+                      links={ADMIN_COMING_SOON}
+                    />
+                  </span>
+                </div>
+              </>
+            ) : null}
+          </header>
+        </div>
+        <div className="flex flex-1">
           {signedIn ? (
             <>
-              <SearchField
-                className="ml-[52px] hidden h-[38px] w-[382px] border-[#56465b] bg-transparent text-[#c9b8c7] focus-within:border-[#d9a6d2] lg:flex"
-                creates={creates}
-                placeholder={t("admin.searchPlaceholder")}
-                tone="on-dark"
+              <Rail
+                categories={categories}
+                current={currentGroup}
+                currentDestination={currentDestination}
+                groups={groups}
               />
-              <div className="ml-auto flex items-center gap-1 text-sm font-medium">
-                <Link
-                  aria-label={t("header.search.label")}
-                  className="flex size-11 items-center justify-center rounded-md text-[#f6eef4] hover:bg-white/10 hover:text-[#f6eef4] lg:hidden"
-                  to="/search"
-                >
-                  <Search aria-hidden="true" className="size-[22px]" />
-                </Link>
-                <a className={cn(headerLink, "hidden md:flex")} href={config.staffUrl}>
-                  <ArrowLeft aria-hidden="true" className="size-[15px]" />
-                  {t("admin.staff")}
-                </a>
-                <a
-                  className={cn(headerLink, "hidden md:flex")}
-                  href={config.docsUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {t("header.docs")}
-                </a>
-                <span className="ml-1.5">
-                  <AccountMenu
-                    avatarClassName="bg-[#d9a6d2] text-[#261b25] shadow-none"
-                    links={ADMIN_COMING_SOON}
-                  />
-                </span>
-              </div>
+              {currentGroup ? (
+                <Panel categories={categories} current={currentDestination} group={currentGroup} />
+              ) : null}
             </>
           ) : null}
-        </header>
-      </div>
-      <div className="flex flex-1">
-        {signedIn ? (
-          <>
-            <Rail
-              categories={categories}
-              current={currentGroup}
-              currentDestination={currentDestination}
-              groups={groups}
-            />
-            {currentGroup ? (
-              <Panel categories={categories} current={currentDestination} group={currentGroup} />
-            ) : null}
-          </>
-        ) : null}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <SiteBanners settings={banners} />
-          <MainContent className="flex-1 outline-none">{children}</MainContent>
-          <ShellFooter organisation={config.organisation} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <SiteBanners settings={banners} />
+            <MainContent className="flex-1 outline-none">{children}</MainContent>
+            <ShellFooter organisation={config.organisation} />
+          </div>
         </div>
       </div>
-    </div>
+    </CommandActionsProvider>
   );
 };
