@@ -44,6 +44,7 @@ SPDX-License-Identifier: Apache-2.0
   --color-on-primary-soft: var(--on-primary-soft);
   --color-focus: var(--focus);
   --color-accent: var(--accent);
+  --color-accent-line: var(--accent-line);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-on-ok: var(--on-ok);
@@ -152,6 +153,7 @@ SPDX-License-Identifier: Apache-2.0
   --on-primary-soft: #4d2149;
   --focus: #7b3f78;
   --accent: #e2a336;
+  --accent-line: #a86d00;
   --ok: #2c6a34;
   --ok-soft: #e4efe2;
   --on-ok: #ffffff;
@@ -280,6 +282,7 @@ SPDX-License-Identifier: Apache-2.0
   --on-primary-soft: #ebcde6;
   --focus: #e9b8e2;
   --accent: #e2a336;
+  --accent-line: #e2a336;
   --ok: #8fd19a;
   --ok-soft: #1e3323;
   --on-ok: #10210f;
@@ -408,6 +411,7 @@ SPDX-License-Identifier: Apache-2.0
   --on-primary-soft: #f7c8f0;
   --focus: #ffd23f;
   --accent: #ffd23f;
+  --accent-line: #ffd23f;
   --ok: #7cf08a;
   --ok-soft: #000000;
   --on-ok: #000000;
@@ -536,6 +540,7 @@ SPDX-License-Identifier: Apache-2.0
     --on-primary-soft: #ebcde6;
     --focus: #e9b8e2;
     --accent: #e2a336;
+    --accent-line: #e2a336;
     --ok: #8fd19a;
     --ok-soft: #1e3323;
     --on-ok: #10210f;
