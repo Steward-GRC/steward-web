@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { User } from "@steward-web/api-client";
 
+import { PERMISSIONS, useIdentity } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
+import { useRegisterNavActions } from "@steward-web/shell";
 import { Button, cn, EmptyState, ResponsiveTable, Switch } from "@steward-web/ui";
 import { useId } from "react";
 import { Link, useSubmit } from "react-router";
@@ -42,6 +44,15 @@ const PILL: Record<Tone, string> = {
  */
 export default function Users({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
+  const identity = useIdentity();
+  useRegisterNavActions([
+    {
+      allowed: identity.isSiteAdmin || identity.permissions.has(PERMISSIONS.UserManage),
+      id: "merge",
+      label: t("users.merge"),
+      to: "/users/merge",
+    },
+  ]);
   const { groupNames, includeDeleted, users } = loaderData;
   const submit = useSubmit();
   const toggleId = useId();

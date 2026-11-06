@@ -1,7 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { useRegisterCreateActions } from "@steward-web/shell";
 import {
   Badge,
   Button,
@@ -52,7 +51,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 /** Templates (A6): ID, Name, Category, Versions and Latest, with "+ New template" (D25). */
 export default function Templates({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
-  useRegisterCreateActions("admin", ["template"]);
   const { categories, rows } = loaderData;
   const create = useFetcher();
 

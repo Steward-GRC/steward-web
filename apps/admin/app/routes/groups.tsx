@@ -1,7 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { useRegisterCreateActions } from "@steward-web/shell";
 import { Button, EmptyState } from "@steward-web/ui";
 import { Link } from "react-router";
 
@@ -21,7 +20,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
  */
 export default function Directory({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
-  useRegisterCreateActions("admin", ["category"]);
   const { rows } = loaderData;
   return (
     <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">

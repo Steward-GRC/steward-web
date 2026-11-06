@@ -19,7 +19,10 @@ const TABS = [
 export const ProfileLayout = () => {
   const { t } = useTranslation("settings");
   return (
-    <div className="flex flex-col gap-3.5 px-4 py-6 text-base text-ink md:px-9">
+    <div
+      className="flex flex-col gap-3.5 px-4 py-6 text-base text-ink sm:px-8"
+      data-testid="profile-page"
+    >
       <h1 className="text-[26px] font-semibold md:text-[30px] md:leading-[38px]">
         {t("profile.title")}
       </h1>

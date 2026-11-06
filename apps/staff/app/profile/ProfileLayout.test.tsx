@@ -33,4 +33,12 @@ describe("Your profile's tabs (U32–U35)", () => {
     );
     expect(screen.getByText("security page")).toBeVisible();
   });
+
+  it("uses the same page gutter as the other pages, with no width cap (bug log 23)", async () => {
+    const Stub = createRoutesStub([{ Component: ProfileLayout, path: "/profile" }]);
+    render(<Stub initialEntries={["/profile"]} />);
+    const page = await screen.findByTestId("profile-page");
+    expect(page).toHaveClass("px-4", "sm:px-8");
+    expect(page.className).not.toMatch(/max-w-|mx-auto/);
+  });
 });

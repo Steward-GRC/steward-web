@@ -110,6 +110,9 @@ describe("U1: My work for an author and approver", () => {
     await screen.findByRole("link", { name: "Drafts in progress 2" });
     expect(screen.queryByRole("link", { name: /Awaiting my approval/ })).toBeNull();
     expect(screen.queryByRole("region", { name: "Awaiting my approval" })).toBeNull();
+    // The count cards above the lists follow the same rule, so no empty third column is left.
+    expect(screen.getByTestId("home-cards")).toHaveClass("md:grid-cols-2");
+    expect(screen.getByTestId("home-cards")).not.toHaveClass("sm:grid-cols-3");
   });
 
   it("shows the library overview and the policies per category", async () => {

@@ -3,7 +3,7 @@
 import type { SpCertificate } from "@steward-web/api-client";
 
 import { formatDate, useTranslation } from "@steward-web/i18n";
-import { refusalOf, useRegisterCreateActions } from "@steward-web/shell";
+import { refusalOf } from "@steward-web/shell";
 import {
   Badge,
   Banner,
@@ -144,7 +144,6 @@ const SpCertificateCard = ({ certificate }: { certificate: SpCertificate }) => {
  */
 export default function Organizations({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
-  useRegisterCreateActions("admin", ["organisation"]);
   const { organisations, spCertificate } = loaderData;
 
   return (

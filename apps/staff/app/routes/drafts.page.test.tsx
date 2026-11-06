@@ -1,6 +1,5 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { IdentityProvider, NO_ACCESS } from "@steward-web/auth";
 import { CommandActionsProvider, useCommandActions } from "@steward-web/ui";
 import { render, screen } from "@testing-library/react";
 import { createRoutesStub, useLoaderData } from "react-router";
@@ -45,24 +44,20 @@ describe("My drafts", () => {
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
-  it("offers an author the new-draft actions on the command bar", async () => {
+  it("offers the CSV import on the command bar", async () => {
     const Stub = createRoutesStub([
       {
         Component: () => (
-          <IdentityProvider identity={{ ...NO_ACCESS, permissions: new Set(["policy.author"]) }}>
-            <CommandActionsProvider>
-              <Page />
-              <Listed />
-            </CommandActionsProvider>
-          </IdentityProvider>
+          <CommandActionsProvider>
+            <Page />
+            <Listed />
+          </CommandActionsProvider>
         ),
         loader: () => ({ drafts: [] }),
         path: "/drafts",
       },
     ]);
     render(<Stub initialEntries={["/drafts"]} />);
-    expect(await screen.findByText("New policy")).toBeInTheDocument();
-    expect(screen.getByText("New procedure")).toBeInTheDocument();
-    expect(screen.getByText("New draft from a template")).toBeInTheDocument();
+    expect(await screen.findByText("Import policies from a CSV")).toBeInTheDocument();
   });
 });

@@ -284,7 +284,10 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
   return (
     <div className="flex flex-col gap-[22px] px-4 py-7 text-base text-ink sm:px-8">
       <Heading email={data.email} />
-      <div className="grid gap-3.5 sm:grid-cols-3">
+      <div
+        className={`grid grid-cols-1 gap-3.5 ${listColumns[listCount] ?? ""}`}
+        data-testid="home-cards"
+      >
         {drafts ? (
           <StatCard
             icon={<PencilLine aria-hidden="true" className="size-[1.15em]" />}
