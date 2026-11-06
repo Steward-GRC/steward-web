@@ -34,6 +34,7 @@ import {
   CategoryChildrenDocument,
   CategoryDocument,
   CategoryDocumentCountsDocument,
+  CategoryDocumentTypesAllDocument,
   type CategoryFieldsFragment,
   CategoryRulesetDocument,
   CategoryTreeDocument,
@@ -197,7 +198,7 @@ import {
   WorkflowDefsDocument,
   WorkflowStatusDocument,
 } from "../generated/graphql";
-import { DocumentType } from "../generated/schema";
+import { type CategoryDocumentTypes, DocumentType } from "../generated/schema";
 import { semanticVersion } from "../semanticVersion";
 import { awaitAiJobResult } from "./aiJobResult.server";
 import {
@@ -218,23 +219,65 @@ import {
 } from "./assemble";
 import { watchLiveEvents } from "./liveEvents.server";
 
+/**
+ * What each category holds (#87), from its own query so a gateway without the field
+ * (steward-gateway#80) leaves every other category read working: a refusal reads as "none
+ * known", and a category with no entry holds both. Reads that overlap share one call.
+ */
+const typesInFlight = new Map<string, Promise<ReadonlyMap<string, CategoryDocumentTypes>>>();
+const categoryDocumentTypes = (cookie?: string) => {
+  const key = cookie ?? "";
+  const running = typesInFlight.get(key);
+  if (running) return running;
+  const started = gatewayFetch(CategoryDocumentTypesAllDocument, {}, "CategoryDocumentTypesAll", {
+    cookie,
+  })
+    .then(
+      (data): ReadonlyMap<string, CategoryDocumentTypes> =>
+        new Map(data.categoryTree.map((c) => [c.id, c.documentTypes])),
+    )
+    .catch((): ReadonlyMap<string, CategoryDocumentTypes> => new Map())
+    .finally(() => {
+      typesInFlight.delete(key);
+    });
+  typesInFlight.set(key, started);
+  return started;
+};
+
+/** The categories with what each holds added, where the gateway says. */
+const withDocumentTypes = async <T extends { id: string }>(
+  categories: readonly T[],
+  cookie?: string,
+): Promise<({ documentTypes?: CategoryDocumentTypes } & T)[]> => {
+  const types = await categoryDocumentTypes(cookie);
+  return categories.map((c) => {
+    const documentTypes = types.get(c.id);
+    return documentTypes ? { ...c, documentTypes } : c;
+  });
+};
+
 const categoryChildren = async (
   parentId: null | string,
   cookie?: string,
-): Promise<readonly CategoryFieldsFragment[]> => {
+): Promise<readonly ({ documentTypes?: CategoryDocumentTypes } & CategoryFieldsFragment)[]> => {
   const data = await gatewayFetch(CategoryChildrenDocument, { parentId }, "CategoryChildren", {
     cookie,
   });
-  return data.categoryChildren;
+  return withDocumentTypes(data.categoryChildren, cookie);
 };
 
 /** Every category, parents before children, in one call. */
-const categoryTree = async (cookie?: string): Promise<readonly CategoryFieldsFragment[]> => {
+const plainCategoryTree = async (cookie?: string): Promise<readonly CategoryFieldsFragment[]> => {
   const data = await gatewayFetch(CategoryTreeDocument, { rootId: null }, "CategoryTree", {
     cookie,
   });
   return data.categoryTree;
 };
+
+const categoryTree = async (
+  cookie?: string,
+): Promise<readonly ({ documentTypes?: CategoryDocumentTypes } & CategoryFieldsFragment)[]> =>
+  withDocumentTypes(await plainCategoryTree(cookie), cookie);
 
 const categoryIndex = async (cookie?: string): Promise<Map<string, CategoryNode>> => {
   const all = await categoryTree(cookie);
@@ -656,7 +699,7 @@ export const liveEdge: Edge = {
     return data.breakGlassReveal;
   },
   async categories(cookie) {
-    const all = await categoryTree(cookie);
+    const all = await plainCategoryTree(cookie);
     const roots = all.filter((c) => !c.parentId);
     return roots.map((root) => ({
       id: root.id,
@@ -1819,7 +1862,7 @@ export const liveEdge: Edge = {
     if (!category) {
       throw new GatewayError("UpdateGroupSettings", "category not found", { code: "NOT_FOUND" });
     }
-    let current = category;
+    let current: { documentTypes?: CategoryDocumentTypes } & CategoryFieldsFragment = category;
     if (
       input.defaultTemplateId !== undefined ||
       input.defaultTemplateNone !== undefined ||
@@ -1851,7 +1894,7 @@ export const liveEdge: Edge = {
         "SetCategoryDocumentTypes",
         { cookie },
       );
-      current = data.setCategoryDocumentTypes;
+      current = { ...current, documentTypes: data.setCategoryDocumentTypes.documentTypes };
     }
     if (
       input.ackEveryone !== undefined ||

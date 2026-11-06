@@ -48,7 +48,6 @@ const category = (id: string, name: string, parentId: null | string = null) => (
   defaultTemplateId: null,
   defaultTemplateNone: false,
   defaultWorkflowId: null,
-  documentTypes: "BOTH",
   exclusionGroupIds: null,
   id,
   idpGroupIds: null,
@@ -689,6 +688,37 @@ describe("liveEdge category document types (#87)", () => {
       CategoryDocumentCounts: () => ({ categoryDocumentCounts: { policies: 3, procedures: 1 } }),
     });
     expect(await liveEdge.categoryDocumentCounts("c-fin")).toEqual({ policies: 3, procedures: 1 });
+  });
+});
+
+describe("liveEdge category document types on a gateway without the field (#87)", () => {
+  it("reads them from the side query when the gateway has them", async () => {
+    routeGateway({
+      CategoryChildren: () => ({ categoryChildren: [category("c-fin", "Finance")] }),
+      CategoryDocumentTypesAll: () => ({
+        categoryTree: [{ documentTypes: "POLICIES", id: "c-fin" }],
+      }),
+    });
+    const [finance] = await liveEdge.groupChildren(null);
+    expect(finance?.documentTypes).toBe("POLICIES");
+  });
+
+  it("leaves the field out when the gateway refuses the side query, so every category holds both", async () => {
+    routeGateway({
+      CategoryChildren: () => ({ categoryChildren: [category("c-fin", "Finance")] }),
+    });
+    const [finance] = await liveEdge.groupChildren(null);
+    expect(finance?.id).toBe("c-fin");
+    expect(finance?.documentTypes).toBeUndefined();
+  });
+
+  it("asks the side query once for a burst of reads", async () => {
+    const calls = routeGateway({
+      CategoryChildren: () => ({ categoryChildren: [category("c-fin", "Finance")] }),
+      CategoryDocumentTypesAll: () => ({ categoryTree: [] }),
+    });
+    await Promise.all([liveEdge.groupChildren(null), liveEdge.groupChildren("c-fin")]);
+    expect(calls.filter((c) => c.operation === "CategoryDocumentTypesAll")).toHaveLength(1);
   });
 });
 

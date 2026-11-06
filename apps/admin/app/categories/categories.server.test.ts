@@ -46,6 +46,23 @@ const readerMe = {
 
 const jsonOnce = (data: unknown) => Response.json({ data });
 
+/** Answers each gateway operation from its own queue; one with no answer is refused. */
+const answerByOperation = (queues: Record<string, unknown[]>) =>
+  vi.fn(async (_url: string, init: RequestInit) => {
+    const { query } = JSON.parse(init.body as string) as { query: string };
+    const operation = /^(?:query|mutation) (\w+)/m.exec(query)?.[1] ?? "";
+    const next = queues[operation]?.shift();
+    return next === undefined
+      ? Response.json({ errors: [{ message: operation }] })
+      : jsonOnce(next);
+  });
+
+const operationsOf = (spy: { mock: { calls: unknown[][] } }) =>
+  spy.mock.calls.map(([, init]) => {
+    const { query } = JSON.parse((init as RequestInit).body as string) as { query: string };
+    return /^(?:query|mutation) (\w+)/m.exec(query)?.[1];
+  });
+
 const makeGroup = (overrides: Partial<Group> & Pick<Group, "id" | "name">): Group => ({
   ackEveryone: false,
   ackEveryoneSet: false,
@@ -79,27 +96,32 @@ describe("listGroups", () => {
 
   it("walks the tree breadth-first into a flat list", async () => {
     const root = makeGroup({ id: "g-root", name: "Root" });
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [root] }))
-      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [] }));
+    const fetchSpy = answerByOperation({
+      CategoryChildren: [{ categoryChildren: [root] }, { categoryChildren: [] }],
+      Me: [{ me: siteAdminMe }],
+    });
     vi.stubGlobal("fetch", fetchSpy);
 
     const groups = await listGroups(request());
     expect(groups).toEqual([root]);
-    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    // The side query for what each category holds is refused here, as by a gateway without it.
+    expect(operationsOf(fetchSpy)).toEqual([
+      "Me",
+      "CategoryChildren",
+      "CategoryDocumentTypesAll",
+      "CategoryChildren",
+      "CategoryDocumentTypesAll",
+    ]);
   });
 });
 
 describe("findGroup", () => {
   it("finds a group by id out of the flat directory", async () => {
     const root = makeGroup({ id: "g-root", name: "Root" });
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
-      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [root] }))
-      .mockResolvedValueOnce(jsonOnce({ categoryChildren: [] }));
+    const fetchSpy = answerByOperation({
+      CategoryChildren: [{ categoryChildren: [root] }, { categoryChildren: [] }],
+      Me: [{ me: siteAdminMe }],
+    });
     vi.stubGlobal("fetch", fetchSpy);
 
     expect(await findGroup(request(), "g-root")).toEqual(root);
