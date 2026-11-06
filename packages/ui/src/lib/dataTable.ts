@@ -10,7 +10,7 @@ import {
   type SortingFn,
   useReactTable,
 } from "@tanstack/react-table";
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type ShouldRevalidateFunctionArgs, useSearchParams } from "react-router";
 
 /** One column of a data table. The same column feeds the table's header, its cells, the sort,
@@ -84,10 +84,38 @@ export const columnFilterParameter = (key: string) => `f.${key}`;
  * and `groups` is the page's rows split under their headings.
  */
 export const useDataTable = <Row>(options: UseDataTableOptions<Row>) => {
-  const [parameters, setParameters] = useSearchParams();
-  return useDataTableState(options, parameters, (next, replace) =>
-    setParameters(next, { preventScrollReset: true, replace }),
+  const [parameters, setParameters] = useMirroredSearchParameters();
+  return useDataTableState(options, parameters, setParameters);
+};
+
+/**
+ * The address's search parameters with a copy the component owns. A click or a keystroke shows
+ * at once and none is lost while the router catches up; the address is written through, and a
+ * change made to it from somewhere else (Back, a link) replaces the copy.
+ */
+export const useMirroredSearchParameters = (): [
+  URLSearchParams,
+  (next: URLSearchParams, replace: boolean) => void,
+] => {
+  const [address, setAddress] = useSearchParams();
+  const addressKey = address.toString();
+  const [local, setLocal] = useState(() => new URLSearchParams(addressKey));
+  const written = useRef(new Set<string>([addressKey]));
+  useEffect(() => {
+    if (!written.current.has(addressKey)) {
+      written.current.add(addressKey);
+      setLocal(new URLSearchParams(addressKey));
+    }
+  }, [addressKey]);
+  const set = useCallback(
+    (next: URLSearchParams, replace: boolean) => {
+      written.current.add(next.toString());
+      setLocal(next);
+      setAddress(next, { preventScrollReset: true, replace });
+    },
+    [setAddress],
   );
+  return [local, set];
 };
 
 /** The engine over any URLSearchParams state: the address (`useDataTable`) or, outside a router,

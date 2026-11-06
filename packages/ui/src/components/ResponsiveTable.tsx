@@ -3,13 +3,18 @@
 import { useTranslation } from "@steward-web/i18n";
 import { ArrowDown, ArrowUp, ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode, useState } from "react";
-import { useInRouterContext, useSearchParams } from "react-router";
+import { useInRouterContext } from "react-router";
 
 import { Card, Table, TD, TH, THead } from "#ui/components/Display";
 import { Input } from "#ui/components/Input";
 import { ListSkeleton } from "#ui/feedback/States";
 import { cn } from "#ui/lib/cn";
-import { type DataColumn, type DataSort, useDataTableState } from "#ui/lib/dataTable";
+import {
+  type DataColumn,
+  type DataSort,
+  useDataTableState,
+  useMirroredSearchParameters,
+} from "#ui/lib/dataTable";
 import { PHONE, useMediaQuery } from "#ui/lib/media";
 
 import { Pager } from "./LibraryControls";
@@ -267,14 +272,8 @@ export const ResponsiveTable = <Row,>(props: Props<Row>) => {
 };
 
 const RoutedData = <Row,>(props: Props<Row>) => {
-  const [parameters, setParameters] = useSearchParams();
-  return (
-    <DataTableView
-      {...props}
-      parameters={parameters}
-      setParameters={(next, replace) => setParameters(next, { preventScrollReset: true, replace })}
-    />
-  );
+  const [parameters, setParameters] = useMirroredSearchParameters();
+  return <DataTableView {...props} parameters={parameters} setParameters={setParameters} />;
 };
 
 const LocalData = <Row,>(props: Props<Row>) => {

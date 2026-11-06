@@ -1,12 +1,15 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { useTranslation } from "@steward-web/i18n";
-import { Card, Select, ThemeSwitch } from "@steward-web/ui";
+import { type DatePreference, useTranslation } from "@steward-web/i18n";
+import { Card, Select, ThemeSwitch, usePreferences } from "@steward-web/ui";
 import { useId } from "react";
 import { useFetcher } from "react-router";
 
 /** The select's value for "match my browser", which the gateway stores as an empty locale. */
 const BROWSER = "browser";
+
+/** The date formats on offer, in the order shown; "system" is the app default. */
+const DATE_FORMATS: readonly DatePreference[] = ["system", "dmy", "mdy", "iso"];
 
 /** The languages Steward ships; only English today, built for more. */
 const LANGUAGES = ["en"] as const;
@@ -21,6 +24,9 @@ export const Preferences = ({ locale }: { locale?: string }) => {
   const themeId = useId();
   const languageId = useId();
   const selectId = useId();
+  const dateId = useId();
+  const dateSelectId = useId();
+  const { preferences, update } = usePreferences();
   const browserLanguage = t(`language.names.${LANGUAGES[0]}`);
   return (
     <div className="flex flex-col gap-3.5">
@@ -58,6 +64,26 @@ export const Preferences = ({ locale }: { locale?: string }) => {
           value={locale || BROWSER}
         />
         <p className="text-xs text-muted">{t("language.description")}</p>
+      </Card>
+      <Card aria-labelledby={dateId} className="flex flex-col gap-2 px-4 py-3.5">
+        <h2 className="font-semibold" id={dateId}>
+          {t("dateFormat.title")}
+        </h2>
+        <label className="flex flex-col gap-[5px] text-[13px]" htmlFor={dateSelectId}>
+          {t("dateFormat.label")}
+        </label>
+        <Select
+          aria-label={t("dateFormat.label")}
+          className="h-[38px] max-w-sm"
+          id={dateSelectId}
+          onValueChange={(value) => update({ dateFormat: value as DatePreference })}
+          options={DATE_FORMATS.map((format) => ({
+            label: t(`dateFormat.${format}`),
+            value: format,
+          }))}
+          value={preferences.dateFormat}
+        />
+        <p className="text-xs text-muted">{t("dateFormat.description")}</p>
       </Card>
     </div>
   );

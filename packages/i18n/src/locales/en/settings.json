@@ -1,4 +1,13 @@
 {
+  "dateFormat": {
+    "description": "How dates are written across Steward. This is saved to this browser.",
+    "dmy": "2 Oct 2026",
+    "iso": "2026-10-02",
+    "label": "Date format",
+    "mdy": "Oct 2, 2026",
+    "system": "System default · 2 Oct 2026",
+    "title": "Date format"
+  },
   "language": {
     "browserOption": "Match my browser",
     "browserOptionWith": "Match my browser · {{language}}",
