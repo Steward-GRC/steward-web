@@ -110,9 +110,6 @@
   },
   "review": {
     "back": "Back to approvals",
-    "changes": {
-      "unknown": "The changes can't be shown: this draft isn't listed in your library."
-    },
     "decided": {
       "approved": {
         "body": "Your decision and comment are recorded, and the run moves on.",
