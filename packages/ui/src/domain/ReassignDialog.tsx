@@ -138,7 +138,7 @@ export const ReassignDialog = ({
                   ) : null}
                   {candidate.refused ? (
                     <>
-                      <Badge className="ml-auto" tone="danger">
+                      <Badge className="ml-auto" shape="tag" tone="danger">
                         {t("reassign.refused")}
                       </Badge>
                       <span className="text-xs">{candidate.refused}</span>

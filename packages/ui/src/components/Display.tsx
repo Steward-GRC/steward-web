@@ -27,7 +27,7 @@ export const Card = ({
     <section
       aria-labelledby={title ? headingId : undefined}
       className={cn(
-        "overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-1)]",
+        "overflow-hidden rounded-lg border border-card-edge bg-surface shadow-[var(--shadow-1)]",
         className,
       )}
       {...props}
@@ -43,11 +43,11 @@ export const Card = ({
   );
 };
 
-/** The card's band: a sunken strip with a strong rule under it, the Library overview's header. */
+/** The card's band: white text on the purple band colour with the card's edge under it. */
 export const CardHeader = ({ className, ...props }: ComponentProps<"div">) => (
   <div
     className={cn(
-      "flex items-center justify-between gap-2 border-b border-border-strong bg-sunken px-4 py-3 text-[15px] font-semibold text-ink",
+      "flex items-center justify-between gap-2 border-b border-card-edge bg-band px-4 py-3 text-[15px] font-semibold text-on-band [&_.text-muted]:text-on-band/80 [&_.text-primary]:text-on-band",
       className,
     )}
     {...props}

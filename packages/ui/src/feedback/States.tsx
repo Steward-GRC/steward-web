@@ -20,6 +20,7 @@ import { DiagnosticsSlot } from "./DiagnosticsSlot";
 export const EmptyState = ({
   action,
   className,
+  compact,
   description,
   framed,
   icon,
@@ -27,14 +28,17 @@ export const EmptyState = ({
 }: {
   action?: ReactNode;
   className?: string;
+  /** One muted line, for an empty list inside a card. */
+  compact?: boolean;
   description?: ReactNode;
   framed?: boolean;
   icon?: ReactNode;
-  title: ReactNode;
+  title?: ReactNode;
 }) => (
   <div
     className={cn(
       "grid justify-items-center gap-2 px-6 py-10 text-center",
+      compact && "py-4",
       framed && "rounded-lg border border-border bg-surface",
       className,
     )}
@@ -45,7 +49,9 @@ export const EmptyState = ({
         {icon}
       </span>
     ) : null}
-    <p className="text-md font-semibold text-ink">{title}</p>
+    {title ? (
+      <p className={compact ? "text-sm text-muted" : "text-md font-semibold text-ink"}>{title}</p>
+    ) : null}
     {description ? <p className="max-w-md text-base text-muted">{description}</p> : null}
     {action ? <div className="mt-2">{action}</div> : null}
   </div>

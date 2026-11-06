@@ -4,7 +4,7 @@ import type { RaciRule } from "@steward-web/api-client";
 
 import { AckTrigger } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
-import { Badge, Banner, Button, Card, cn, type Failure, notify } from "@steward-web/ui";
+import { Badge, Banner, Button, Card, CardHeader, cn, type Failure, notify } from "@steward-web/ui";
 import { Check, Lock, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
@@ -233,13 +233,13 @@ export const CategoryAccess = ({ view }: { view: AccessView }) => {
           </div>
 
           <Card aria-labelledby={rulesTitleId}>
-            <div className="flex flex-wrap items-center gap-2.5 border-b border-border-strong bg-sunken px-4 py-2.5">
+            <CardHeader className="flex-wrap gap-2.5">
               <b className="text-[15px]" id={rulesTitleId}>
                 {t("access.rules.title")}
               </b>
               <span className="text-sm text-muted">{t("access.rules.order")}</span>
               <AddRuleDialog disabled={!live} onAdd={add} people={view.people} />
-            </div>
+            </CardHeader>
             <RuleTable
               editing={live}
               inherited={view.inherited}

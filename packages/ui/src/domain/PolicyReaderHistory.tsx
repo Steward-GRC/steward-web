@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Card } from "#ui/components/Display";
+import { Card, CardHeader } from "#ui/components/Display";
 import { EmptyState } from "#ui/feedback/States";
 
 import type { HistoryEntry } from "./policyReaderModel";
@@ -193,12 +193,9 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
 
   return (
     <Card aria-labelledby={titleId} className="text-ink">
-      <h2
-        className="border-b border-border-strong bg-sunken px-5 py-3 text-[15px] font-semibold"
-        id={titleId}
-      >
-        {t("reader.history.title")}
-      </h2>
+      <CardHeader>
+        <h2 id={titleId}>{t("reader.history.title")}</h2>
+      </CardHeader>
       {groups.length === 0 ? (
         <EmptyState title={t("reader.history.empty")} />
       ) : (

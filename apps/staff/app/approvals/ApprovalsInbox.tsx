@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDate, formatDayMonth, useTranslation } from "@steward-web/i18n";
-import { Badge, Card, cn, EmptyState } from "@steward-web/ui";
+import { Badge, Card, CardHeader, cn, EmptyState } from "@steward-web/ui";
 import { Check, Inbox } from "lucide-react";
 import { type ReactNode, useId } from "react";
 import { Link } from "react-router";
@@ -34,12 +34,20 @@ const meta = (entry: InboxEntry) => `${entry.number}${entry.version ? ` · v${en
 
 const OverduePill = ({ days }: { days: number }) => {
   const { t } = useTranslation("approvals");
-  return <Badge tone="danger">{t("inbox.overdue", { count: days })}</Badge>;
+  return (
+    <Badge className="shadow-[inset_0_0_0_1px_var(--danger)]" tone="danger">
+      {t("inbox.overdue", { count: days })}
+    </Badge>
+  );
 };
 
 const UpcomingBadge = () => {
   const { t } = useTranslation("approvals");
-  return <Badge tone="info">{t("inbox.upcoming.badge")}</Badge>;
+  return (
+    <Badge shape="tag" tone="info">
+      {t("inbox.upcoming.badge")}
+    </Badge>
+  );
 };
 
 /** A row's Due cell: the overdue pill, the day it's due, or a quiet dot. */
@@ -140,12 +148,12 @@ const InboxGroup = ({
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-3">
       <Card className="max-md:hidden">
-        <div className="flex flex-col gap-0.5 border-b border-border-strong bg-sunken px-[18px] py-3">
+        <CardHeader className="flex-col items-start gap-0.5">
           <h2 className="text-[15px] font-semibold" id={titleId}>
             {title}
           </h2>
           {description ? <p className="text-[13px] text-muted">{description}</p> : null}
-        </div>
+        </CardHeader>
         <div aria-labelledby={titleId} role="table">
           <div role="rowgroup">
             <div

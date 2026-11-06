@@ -91,7 +91,7 @@ export const GroupMappings = ({
     <section aria-labelledby={titleId} className={`${CARD} flex flex-col gap-2`}>
       <b id={titleId}>{t("organizations.setup.mappings.title")}</b>
       {mappings.length === 0 ? (
-        <EmptyState className="py-4" title={t("organizations.setup.mappings.empty")} />
+        <EmptyState compact title={t("organizations.setup.mappings.empty")} />
       ) : (
         <ul className="flex flex-col">
           {mappings.map((mapping) => (

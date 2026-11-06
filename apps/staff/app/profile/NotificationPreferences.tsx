@@ -95,7 +95,7 @@ const GroupRow = ({ group }: { group: NotificationGroup }) => {
       <div className="flex flex-wrap items-center gap-2">
         <b className="flex-1 font-semibold">{name}</b>
         {group.mandatory ? (
-          <Badge>
+          <Badge shape="tag">
             <Lock aria-hidden="true" />
             {t("notifications.required")}
           </Badge>

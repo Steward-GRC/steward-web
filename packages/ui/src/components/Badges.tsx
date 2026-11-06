@@ -29,12 +29,23 @@ const tones: Record<BadgeTone, string> = {
   warn: "bg-warn-soft text-warn",
 };
 
+/** `tag` is the small square-cornered label: Upcoming, Required, Refused. */
 export const Badge = ({
   className,
+  shape = "pill",
   tone = "neutral",
   ...props
-}: { tone?: BadgeTone } & ComponentProps<"span">) => (
-  <span className={cn(pill, tones[tone], "hc:outline hc:outline-1", className)} {...props} />
+}: { shape?: "pill" | "tag"; tone?: BadgeTone } & ComponentProps<"span">) => (
+  <span
+    className={cn(
+      pill,
+      tones[tone],
+      "hc:outline hc:outline-1",
+      shape === "tag" && "h-auto gap-1 rounded-[4px] px-[7px] py-0.5 text-[11px]",
+      className,
+    )}
+    {...props}
+  />
 );
 
 /**

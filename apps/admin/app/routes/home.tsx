@@ -3,7 +3,7 @@
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { formatRelativeTime, useTranslation } from "@steward-web/i18n";
 import { actionLabel, displayLabel } from "@steward-web/shell";
-import { AckSnapshot, Card, EmptyState, PageHeader, StatCard } from "@steward-web/ui";
+import { AckSnapshot, Card, CardHeader, EmptyState, PageHeader, StatCard } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
 import { listPolicies } from "@steward-web/ui/domain/server";
 import { useId } from "react";
@@ -82,12 +82,9 @@ export default function Overview({ loaderData }: Route.ComponentProps) {
 
       <div className="grid items-start gap-3.5 lg:grid-cols-[1.4fr_1fr]">
         <Card aria-labelledby={activityId} className="text-ink">
-          <h2
-            className="border-b border-border-strong bg-sunken px-3.5 py-2.5 text-base font-semibold"
-            id={activityId}
-          >
-            {t("overview.activity.title")}
-          </h2>
+          <CardHeader>
+            <h2 id={activityId}>{t("overview.activity.title")}</h2>
+          </CardHeader>
           {activity.length === 0 ? (
             <EmptyState
               description={t("overview.activity.emptyDescription")}

@@ -345,7 +345,7 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
                   : t("templates.detail.review.titleFirst")}
               </b>
               {changes.length === 0 ? (
-                <EmptyState className="py-4" title={t("templates.detail.review.none")} />
+                <EmptyState compact title={t("templates.detail.review.none")} />
               ) : (
                 <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">
                   {changes.map((change, index) => (

@@ -7,6 +7,7 @@ import {
   Banner,
   Button,
   Card,
+  CardHeader,
   cn,
   Dialog,
   DialogBody,
@@ -115,7 +116,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
 
   return (
     <Card aria-labelledby={titleId}>
-      <div className="flex items-center justify-between border-b border-border-strong bg-sunken px-3.5 py-2.5">
+      <CardHeader>
         <b id={titleId}>{t("users.advanced.sessions.title")}</b>
         {user.deletedAt ? null : (
           <Dialog onOpenChange={setOpen} open={open}>
@@ -140,7 +141,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
             </DialogContent>
           </Dialog>
         )}
-      </div>
+      </CardHeader>
       {failureOf(logOut) ? (
         <Banner
           className="m-3"
@@ -150,7 +151,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
         />
       ) : null}
       {sessions.length === 0 ? (
-        <EmptyState className="py-4" title={t("users.advanced.sessions.empty")} />
+        <EmptyState compact title={t("users.advanced.sessions.empty")} />
       ) : (
         <ul aria-labelledby={titleId}>
           {sessions.map((session) => (

@@ -177,7 +177,7 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
             <Banner key={warning.code} title={warning.message} tone="warn" />
           ))}
           {preview.items.length === 0 ? (
-            <EmptyState className="py-4" title={t("merge.nothing")} />
+            <EmptyState compact title={t("merge.nothing")} />
           ) : (
             <Table>
               <caption className="sr-only">{t("merge.items.label")}</caption>

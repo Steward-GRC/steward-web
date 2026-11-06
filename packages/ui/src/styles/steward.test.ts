@@ -71,4 +71,23 @@ describe("the light theme's page and card colours", () => {
     expect(ratio(light("border"), light("background"))).toBeGreaterThanOrEqual(1.8);
     expect(ratio(light("sunken"), light("background"))).toBeGreaterThanOrEqual(1.15);
   });
+
+  it("sets the card band as white on purple, 4.5:1 or better", () => {
+    expect(light("band")).toBe("#5d2a5b");
+    expect(ratio(light("on-band"), light("band"))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("draws the card edge at 3:1 against the page so cards stand out", () => {
+    expect(ratio(light("card-edge"), light("background"))).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("the card band and edge in the other themes", () => {
+  it.each([".dark", ".hc"])("keeps %s band text at 4.5:1 and the edge at 3:1", (selector) => {
+    const body = rule(selector);
+    const get = (name: string) =>
+      new RegExp(String.raw`--${name}:\s*(#[\da-f]{6})`).exec(body)?.[1] ?? "";
+    expect(ratio(get("on-band"), get("band"))).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(get("card-edge"), get("background"))).toBeGreaterThanOrEqual(3);
+  });
 });

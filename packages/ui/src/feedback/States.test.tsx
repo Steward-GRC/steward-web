@@ -73,4 +73,14 @@ describe("empty state", () => {
     render(<EmptyState title="No results" />);
     expect(screen.getByTestId("empty-state")).not.toHaveClass("border");
   });
+
+  it("can be one muted line inside a card", () => {
+    render(<EmptyState compact title="No sessions" />);
+    expect(screen.getByText("No sessions")).toHaveClass("text-sm", "text-muted");
+  });
+
+  it("can have a description alone", () => {
+    render(<EmptyState description="Notifications are off." />);
+    expect(screen.getByText("Notifications are off.")).toBeInTheDocument();
+  });
 });

@@ -43,7 +43,7 @@ describe("Card", () => {
       "overflow-hidden",
       "rounded-lg",
       "border",
-      "border-border",
+      "border-card-edge",
       "bg-surface",
     );
   });
@@ -57,7 +57,7 @@ describe("Card", () => {
     const card = screen.getByRole("region", { name: "Library overview" });
     const band = screen.getByTestId("card-band");
     expect(card).toContainElement(band);
-    expect(band).toHaveClass("bg-sunken", "border-b", "border-border-strong");
+    expect(band).toHaveClass("bg-band", "text-on-band", "border-b", "border-card-edge");
     expect(band).toHaveTextContent("Library overview");
     expect(band).toHaveTextContent("Updated just now");
   });
@@ -69,6 +69,14 @@ describe("Card", () => {
 
   it("gives a CardHeader the same band", () => {
     render(<CardHeader>Heading</CardHeader>);
-    expect(screen.getByText("Heading")).toHaveClass("bg-sunken", "border-border-strong");
+    expect(screen.getByText("Heading")).toHaveClass("bg-band", "text-on-band");
+  });
+
+  it("keeps muted and primary text readable on the band", () => {
+    render(<CardHeader>Heading</CardHeader>);
+    expect(screen.getByText("Heading")).toHaveClass(
+      "[&_.text-muted]:text-on-band/80",
+      "[&_.text-primary]:text-on-band",
+    );
   });
 });

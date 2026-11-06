@@ -130,9 +130,7 @@ export const SecurityTab = ({
       <h2 className="px-3.5 pt-3 font-semibold" id={titleId}>
         {t("users.security.title")}
       </h2>
-      {enrolled.length === 0 ? (
-        <EmptyState className="py-4" title={t("users.security.empty")} />
-      ) : null}
+      {enrolled.length === 0 ? <EmptyState compact title={t("users.security.empty")} /> : null}
       <ul aria-labelledby={titleId} className="flex flex-col">
         {factors.map((factor) => (
           <FactorRow factor={factor} key={factor.id} readOnly={readOnly} />

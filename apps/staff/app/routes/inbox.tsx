@@ -29,9 +29,9 @@ export default function Inbox() {
             {t("inbox.settings")}
           </Link>
         }
+        description={t("inbox.unavailable.body")}
         framed
         icon={<Bell className="size-[22px]" />}
-        title={t("inbox.unavailable.body")}
       />
     </div>
   );

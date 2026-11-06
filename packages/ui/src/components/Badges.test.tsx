@@ -69,4 +69,10 @@ describe("Badge", () => {
     render(<Badge>Draft</Badge>);
     expect(screen.getByText("Draft")).toHaveClass("bg-neutral-soft");
   });
+
+  it("can be the small square-cornered tag", () => {
+    render(<Badge shape="tag">Upcoming</Badge>);
+    expect(screen.getByText("Upcoming")).toHaveClass("rounded-[4px]", "text-[11px]");
+    expect(screen.getByText("Upcoming")).not.toHaveClass("rounded-full", "h-6");
+  });
 });
