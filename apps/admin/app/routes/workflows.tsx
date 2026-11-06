@@ -10,7 +10,7 @@ import { Link } from "react-router";
 
 import type { Route } from "./+types/workflows";
 
-import { listGroups } from "../groups/groups.server";
+import { listGroups } from "../categories/categories.server";
 import { listUsers } from "../users/users.server";
 import { hasDisabledApprover, notUsable } from "../workflows/workflowRules";
 import { listWorkflowDefs } from "../workflows/workflows.server";

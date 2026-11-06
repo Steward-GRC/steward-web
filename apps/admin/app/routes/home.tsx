@@ -4,15 +4,17 @@ import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { formatRelativeTime, useTranslation } from "@steward-web/i18n";
 import { actionLabel, displayLabel } from "@steward-web/shell";
 import { AckSnapshot, Card, CardHeader, EmptyState, PageHeader, StatCard } from "@steward-web/ui";
-import { DocumentType } from "@steward-web/ui/domain";
+import { categoriesPath, DocumentType } from "@steward-web/ui/domain";
 import { listPolicies } from "@steward-web/ui/domain/server";
 import { useId } from "react";
+import { Link } from "react-router";
 
 import type { Route } from "./+types/home";
 
 import { listAuditLog } from "../audit/audit.server";
+import { auditResumePath } from "../audit/resume";
+import { listGroups } from "../categories/categories.server";
 import { acknowledgementSnapshot } from "../completion/completion.server";
-import { listGroups } from "../groups/groups.server";
 import { listTemplates } from "../templates/templates.server";
 
 const RECENT_ACTIVITY_LIMIT = 6;
@@ -38,6 +40,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return {
     ackSnapshot,
     activity: activity.slice(0, RECENT_ACTIVITY_LIMIT),
+    activityMore: activity.length > RECENT_ACTIVITY_LIMIT,
     groupCount: groups.length,
     inProgressCount: documents.filter((d) => d.status === "DRAFT" || d.status === "IN_REVIEW")
       .length,
@@ -53,6 +56,7 @@ export default function Overview({ loaderData }: Route.ComponentProps) {
   const {
     ackSnapshot,
     activity,
+    activityMore,
     groupCount,
     inProgressCount,
     policyCount,
@@ -76,11 +80,11 @@ export default function Overview({ loaderData }: Route.ComponentProps) {
           to="/policies?status=in-progress"
           value={inProgressCount}
         />
-        <StatCard label={t("overview.cards.groups")} to="/groups" value={groupCount} />
+        <StatCard label={t("overview.cards.groups")} to={categoriesPath()} value={groupCount} />
         <StatCard label={t("overview.cards.templates")} to="/templates" value={templateCount} />
       </div>
 
-      <div className="grid items-start gap-3.5 lg:grid-cols-[1.4fr_1fr]">
+      <div className="flex flex-col gap-3.5" data-testid="overview-cards">
         <Card aria-labelledby={activityId} className="text-ink">
           <CardHeader>
             <h2 id={activityId}>{t("overview.activity.title")}</h2>
@@ -107,6 +111,13 @@ export default function Overview({ loaderData }: Route.ComponentProps) {
                   <span className="text-muted">{formatRelativeTime(record.occurredAt)}</span>
                 </li>
               ))}
+              {activityMore ? (
+                <li className="px-3.5 py-[9px] text-sm">
+                  <Link to={auditResumePath({}, activity.at(-1)!)}>
+                    {t("overview.activity.seeMore")}
+                  </Link>
+                </li>
+              ) : null}
             </ul>
           )}
         </Card>

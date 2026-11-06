@@ -35,3 +35,16 @@ export const approvalPath = (number: string): string => {
 };
 
 export type RecordRef = Pick<Policy, "documentType" | "number">;
+
+/** The admin category list. People groups are a different thing and have their own pages. */
+export const categoriesPath = (): string => "/categories";
+
+/** The admin form that adds a category. */
+export const newCategoryPath = (): string => "/categories/new";
+
+/** One category's page in the admin. "new" is the add form, so it is never an id. */
+export const categoryPath = (id: string): string => {
+  if (!id) throw new Error("A category address needs the category id");
+  if (id === "new") throw new Error('"new" is reserved by the add-category form and is not an id');
+  return `/categories/${encodeURIComponent(id)}`;
+};

@@ -3,7 +3,7 @@
 import { i18n } from "@steward-web/i18n";
 import { describe, expect, it } from "vitest";
 
-import { activeAdminGroup, ADMIN_COMING_SOON_PATHS, adminNav } from "./adminNav";
+import { activeAdminGroup, ADMIN_COMING_SOON_PATHS, adminNav, hasSecondaryNav } from "./adminNav";
 
 const labels = (compliance: boolean) =>
   adminNav({ compliance }).map((group) => [
@@ -49,7 +49,7 @@ describe("adminNav", () => {
       completion: "/completion",
       contactLibrary: "/contact-library",
       definitions: "/definitions-library",
-      directory: "/groups",
+      directory: "/categories",
       magicLinks: "/magic-links",
       myGroups: "/my-groups",
       organizations: "/organisations",
@@ -106,11 +106,29 @@ describe("adminNav for what the person can use", () => {
   });
 });
 
+describe("hasSecondaryNav (#83)", () => {
+  it("is true for a section with two or more pages and false for one", () => {
+    const groups = adminNav({ compliance: false });
+    const by = (id: string) => groups.find((entry) => entry.id === id)!;
+    expect(hasSecondaryNav(by("overview"))).toBe(false);
+    expect(hasSecondaryNav(by("system"))).toBe(false);
+    expect(hasSecondaryNav(by("policies"))).toBe(true);
+    expect(hasSecondaryNav(by("assurance"))).toBe(true);
+  });
+
+  it("keeps Categories' panel, which also holds the category tree, even for one page", () => {
+    const groups = adminNav({ can: (p) => p === "template.manage", compliance: false });
+    const categories = groups.find((entry) => entry.id === "categories")!;
+    expect(categories.destinations).toHaveLength(1);
+    expect(hasSecondaryNav(categories)).toBe(true);
+  });
+});
+
 describe("activeAdminGroup", () => {
   const groups = adminNav({ compliance: false });
   it.each([
     ["/", "overview"],
-    ["/groups/g-1", "categories"],
+    ["/categories/g-1", "categories"],
     ["/access/g-1", "categories"],
     ["/templates/STD", "structure"],
     ["/policies/POL-1", "policies"],

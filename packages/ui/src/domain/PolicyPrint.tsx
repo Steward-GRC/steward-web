@@ -436,15 +436,16 @@ export const PolicyPrint = ({
         })}
       </section>
       {includeHistory ? (
-        <section
-          aria-labelledby="print-certificate"
-          className="break-before-page"
-          
-        >
-          <h2 className="font-serif text-[15pt] leading-[20pt] font-semibold" id="print-certificate">
+        <section aria-labelledby="print-certificate" className="break-before-page">
+          <h2
+            className="font-serif text-[15pt] leading-[20pt] font-semibold"
+            id="print-certificate"
+          >
             {t("print.certificate.heading", { version: withV(detail.version) })}
           </h2>
-          <p className="mt-1 mb-3 text-[#5e525f]">{t("print.certificate.note", { time: printed })}</p>
+          <p className="mt-1 mb-3 text-[#5e525f]">
+            {t("print.certificate.note", { time: printed })}
+          </p>
           <table className="w-full border-collapse font-sans text-[9.5pt] leading-[13pt]">
             <thead>
               <tr>

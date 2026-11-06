@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { cn } from "@steward-web/ui";
+import { categoriesPath } from "@steward-web/ui/domain";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -39,17 +40,17 @@ const withAncestors = (byId: Map<string, CategoryNode>, id: string) => {
  * The category being edited is marked; its branch starts open.
  */
 export const AdminCategoryTree = ({
-  base = "/groups",
+  base = categoriesPath(),
   categories,
 }: {
-  base?: "/access" | "/groups";
+  base?: string;
   categories: readonly CategoryNode[];
 }) => {
   const { t } = useTranslation("shell");
   const { pathname } = useLocation();
   const [query, setQuery] = useState("");
   const byId = useMemo(() => new Map(categories.map((node) => [node.id, node])), [categories]);
-  const currentId = /^\/(?:access|groups)\/([^/]+)$/.exec(pathname)?.[1];
+  const currentId = /^\/(?:access|categories)\/([^/]+)$/.exec(pathname)?.[1];
   const [open, setOpen] = useState<ReadonlySet<string>>(
     () => new Set(currentId ? withAncestors(byId, currentId) : []),
   );

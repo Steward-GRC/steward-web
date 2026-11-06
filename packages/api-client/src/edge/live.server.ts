@@ -511,9 +511,14 @@ export const liveEdge: Edge = {
     return data.addReviewThread;
   },
   async deleteReviewThread(threadId, cookie) {
-    const data = await gatewayFetch(DeleteReviewThreadDocument, { threadId }, "DeleteReviewThread", {
-      cookie,
-    });
+    const data = await gatewayFetch(
+      DeleteReviewThreadDocument,
+      { threadId },
+      "DeleteReviewThread",
+      {
+        cookie,
+      },
+    );
     return data.deleteReviewThread;
   },
   async replyReviewThread(threadId, body, cookie) {

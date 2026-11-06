@@ -26,7 +26,7 @@ describe("the command bar's create actions", () => {
     expect(
       adminCreates(may("group.manage", "user.manage", "settings.manage")).map((a) => [a.id, a.to]),
     ).toEqual([
-      ["category", "/groups/new"],
+      ["category", "/categories/new"],
       ["group", "/platform-groups"],
       ["template", "/templates/new"],
       ["workflow", "/workflows/new"],

@@ -12,7 +12,7 @@
  */
 import type { Category, Group, Policy, Template } from "@steward-web/api-client";
 
-import { policyPath } from "@steward-web/ui/domain";
+import { categoryPath, policyPath } from "@steward-web/ui/domain";
 
 import { compileQuery, type SearchRecord } from "./compileQuery";
 
@@ -91,7 +91,7 @@ export const buildSearchIndex = (
       id: g.id,
       label: g.name,
       rec: { name: lc(g.name), slug: lc(g.slug), text: lc(`${g.name} ${g.slug}`) },
-      to: `/groups/${encodeURIComponent(g.id)}`,
+      to: categoryPath(g.id),
       type: "Group",
     });
   }

@@ -8,7 +8,7 @@ import { listCategories, listPolicies } from "@steward-web/ui/domain/server";
 
 import type { Route } from "./+types/resources.command-palette";
 
-import { listGroups } from "../groups/groups.server";
+import { listGroups } from "../categories/categories.server";
 import { paletteGroupsOf } from "../search/paletteGroups";
 import { listTemplates } from "../templates/templates.server";
 

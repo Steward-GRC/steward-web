@@ -3,7 +3,7 @@
 import { can, type Identity, PERMISSIONS } from "@steward-web/auth";
 import { reportingEnabled, shellConfigFromEnvironment } from "@steward-web/shell/server";
 
-import { fetchAllGroups } from "../groups/groups.server";
+import { fetchAllGroups } from "../categories/categories.server";
 
 export interface ShellCategory {
   id: string;

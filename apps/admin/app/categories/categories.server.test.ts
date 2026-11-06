@@ -22,7 +22,7 @@ import {
   slugify,
   subtreeHeight,
   updateGroupSettings,
-} from "./groups.server";
+} from "./categories.server";
 
 const siteAdminMe = {
   email: "admin@example.org",

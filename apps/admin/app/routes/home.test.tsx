@@ -22,6 +22,7 @@ const loaderData = {
       subjectLabel: "Desk Booking Policy",
     },
   ],
+  activityMore: false,
   groupCount: 4,
   inProgressCount: 5,
   policyCount: 14,
@@ -38,6 +39,33 @@ const renderOverview = (data: object = loaderData) => {
   render(<Stub />);
 };
 
+describe("the admin Overview layout (#84, #85)", () => {
+  it("puts the Acknowledgement snapshot on the bottom row, both cards one per row", () => {
+    renderOverview();
+    const activity = screen.getByRole("heading", { name: "Recent activity" });
+    const snapshot = screen.getByText("Acknowledgement snapshot");
+    expect(
+      activity.compareDocumentPosition(snapshot) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const row = screen.getByTestId("overview-cards");
+    expect(row).toHaveClass("flex-col");
+    expect(row).not.toHaveClass("lg:grid-cols-[1.4fr_1fr]");
+  });
+
+  it("ends Activity with See more, opening the audit log after the last entry shown", () => {
+    renderOverview({ ...loaderData, activityMore: true });
+    const link = screen.getByRole("link", { name: "See more" });
+    expect(link).toHaveAttribute("href", "/audit?after=1&at=" + encodeURIComponent(occurredAt));
+    const items = within(screen.getByRole("list")).getAllByRole("listitem");
+    expect(items.at(-1)).toContainElement(link);
+  });
+
+  it("leaves See more out when the list has shown everything", () => {
+    renderOverview();
+    expect(screen.queryByRole("link", { name: "See more" })).toBeNull();
+  });
+});
+
 describe("the admin Overview (A1)", () => {
   it("says what it is", () => {
     renderOverview();
@@ -51,7 +79,7 @@ describe("the admin Overview (A1)", () => {
       ["Policies", "14", "/policies"],
       ["Published", "9", "/policies?status=published"],
       ["In progress", "5", "/policies?status=in-progress"],
-      ["Groups", "4", "/groups"],
+      ["Groups", "4", "/categories"],
       ["Templates", "2", "/templates"],
     ];
     for (const [label, value, href] of cards) {

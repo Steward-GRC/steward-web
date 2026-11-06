@@ -24,8 +24,9 @@ import {
   MenuTrigger,
   NotFound,
 } from "@steward-web/ui";
+import { VersionHistory, versionLabel } from "@steward-web/ui/domain";
 import { Check, MoreHorizontal } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { data, Link, redirect, useFetcher } from "react-router";
 
 import type { Route } from "./+types/templates.$code";
@@ -231,7 +232,6 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
   const publish = useFetcher<Result>();
   const create = useFetcher<Result>();
   const rename = useFetcher<Result>();
-  const historyId = useId();
 
   // A saved draft moves on to Review.
   const saved = save.state === "idle" && save.data?.ok;
@@ -267,7 +267,6 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
   const failure = [save, publish, create, rename]
     .map((fetcher) => failureOf(fetcher))
     .find(Boolean);
-  const statusLabel = (status: string) => t(`templates.status.${status}`, { defaultValue: status });
 
   return (
     <div className="flex w-full flex-col gap-3.5 p-4 md:p-6">
@@ -394,35 +393,25 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
         />
       )}
 
-      <section aria-labelledby={historyId} className="flex flex-col gap-2">
-        <h2 className="font-semibold" id={historyId}>
-          {t("templates.detail.history")}
-        </h2>
-        <ol aria-labelledby={historyId} className="flex flex-col border-l-2 border-border pl-4">
-          {versions.map((version) => (
-            <li className="relative flex items-center gap-2 py-1.5 text-sm" key={version.id}>
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "absolute -left-[21px] size-2.5 rounded-full",
-                  version.status === "published"
-                    ? "bg-ok"
-                    : version.status === "draft"
-                      ? "bg-primary"
-                      : "bg-border-strong",
-                )}
-              />
-              <span className="font-mono">
-                {t("templates.detail.historyItem", {
-                  count: version.sections.length,
-                  version: version.versionNo,
-                })}
-              </span>
-              <span className="text-muted">{statusLabel(version.status)}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <VersionHistory
+        groups={versions.map((version) => ({
+          current: version.id === (active?.id ?? versions[0]?.id),
+          events: [
+            {
+              title: t("templates.detail.historyItem", { count: version.sections.length }),
+              tone: version.status === "published" ? "published" : "neutral",
+            },
+          ],
+          label: versionLabel("template", version.versionNo),
+          status:
+            version.status === "published"
+              ? "published"
+              : version.status === "draft"
+                ? "draft"
+                : "superseded",
+        }))}
+        title={t("templates.detail.history")}
+      />
 
       <ConfirmDialog
         confirm={t("templates.detail.dialogs.discardConfirm")}

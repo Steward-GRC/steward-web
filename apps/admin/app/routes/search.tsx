@@ -9,7 +9,7 @@ import { data, useNavigate, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/search";
 
-import { listGroups } from "../groups/groups.server";
+import { listGroups } from "../categories/categories.server";
 import { buildSearchIndex, searchHits, type SearchHitType } from "../search/searchIndex";
 import { listTemplates } from "../templates/templates.server";
 

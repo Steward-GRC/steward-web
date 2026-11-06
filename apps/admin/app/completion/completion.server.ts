@@ -14,7 +14,7 @@ import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
 import { data } from "react-router";
 
-import { listGroups } from "../groups/groups.server";
+import { listGroups } from "../categories/categories.server";
 import { obligatingPolicies } from "./completion.logic";
 
 const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;

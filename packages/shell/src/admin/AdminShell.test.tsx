@@ -163,7 +163,7 @@ describe("AdminShell rail and panel (H2)", () => {
   });
 
   it("shows the category tree on Directory, with Directory and Access and New category", async () => {
-    renderShell(alice, "/groups/c-fac");
+    renderShell(alice, "/categories/c-fac");
     const panel = screen.getByRole("navigation", { name: "Categories pages" });
     expect(within(panel).getByRole("link", { name: "Directory" })).toHaveAttribute(
       "aria-current",
@@ -175,7 +175,7 @@ describe("AdminShell rail and panel (H2)", () => {
     );
     expect(within(panel).getByRole("link", { name: "+ New category" })).toHaveAttribute(
       "href",
-      "/groups/new",
+      "/categories/new",
     );
     await userEvent.type(
       within(panel).getByRole("searchbox", { name: "Filter categories" }),
@@ -196,17 +196,43 @@ describe("AdminShell rail and panel (H2)", () => {
     expect(current).toHaveAttribute("href", "/access/c-fac");
     expect(within(panel).getByRole("link", { name: "Directory" })).toHaveAttribute(
       "href",
-      "/groups/c-fac",
+      "/categories/c-fac",
     );
   });
 
   it("switches from a category's details to the same category's access", () => {
-    renderShell(alice, "/groups/c-fac");
+    renderShell(alice, "/categories/c-fac");
     const panel = screen.getByRole("navigation", { name: "Categories pages" });
     expect(within(panel).getByRole("link", { name: "Access" })).toHaveAttribute(
       "href",
       "/access/c-fac",
     );
+  });
+});
+
+describe("AdminShell secondary navigation (#83)", () => {
+  it("shows none on Overview, a section with one page", () => {
+    renderShell(alice, "/");
+    expect(screen.queryByRole("navigation", { name: "Overview pages" })).toBeNull();
+    expect(within(rail()).queryByRole("button", { name: "Open Overview pages" })).toBeNull();
+  });
+
+  it("shows none on System, a section with one page", () => {
+    renderShell(alice, "/settings");
+    expect(screen.queryByRole("navigation", { name: "System pages" })).toBeNull();
+  });
+
+  it("shows none on Assurance for someone who cannot read the audit log", () => {
+    renderShell(
+      { ...alice, isSiteAdmin: false, permissions: new Set(["group.manage"]), roles: [] },
+      "/completion",
+    );
+    expect(screen.queryByRole("navigation", { name: "Assurance pages" })).toBeNull();
+  });
+
+  it("shows it on a section with two or more pages", () => {
+    renderShell(alice, "/audit");
+    expect(screen.getByRole("navigation", { name: "Assurance pages" })).toBeInTheDocument();
   });
 });
 

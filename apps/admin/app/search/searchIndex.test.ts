@@ -104,7 +104,7 @@ describe("buildSearchIndex", () => {
     );
     expect(index.map((h) => h.type)).toEqual(["Template", "Group"]);
     expect(index[0]!.to).toBe("/templates/TPL-001");
-    expect(index[1]!.to).toBe("/groups/g-1");
+    expect(index[1]!.to).toBe("/categories/g-1");
   });
 
   it("indexes nothing extra when templates and groups are omitted", () => {

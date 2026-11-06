@@ -43,9 +43,15 @@ describe("changeReviewThread", () => {
   it("replies, resolves, reopens and deletes", async () => {
     await changeReviewThread(request, form({ body: "Fixed", intent: "reply", threadId: "t-1" }));
     expect(edge.replyReviewThread).toHaveBeenCalledWith("t-1", "Fixed", "session=1");
-    await changeReviewThread(request, form({ intent: "resolve", resolved: "true", threadId: "t-1" }));
+    await changeReviewThread(
+      request,
+      form({ intent: "resolve", resolved: "true", threadId: "t-1" }),
+    );
     expect(edge.setReviewThreadResolved).toHaveBeenLastCalledWith("t-1", true, "session=1");
-    await changeReviewThread(request, form({ intent: "resolve", resolved: "false", threadId: "t-1" }));
+    await changeReviewThread(
+      request,
+      form({ intent: "resolve", resolved: "false", threadId: "t-1" }),
+    );
     expect(edge.setReviewThreadResolved).toHaveBeenLastCalledWith("t-1", false, "session=1");
     await changeReviewThread(request, form({ intent: "delete", threadId: "t-1" }));
     expect(edge.deleteReviewThread).toHaveBeenCalledWith("t-1", "session=1");

@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { Button, EmptyState } from "@steward-web/ui";
+import { categoryPath, newCategoryPath } from "@steward-web/ui/domain";
 import { Link } from "react-router";
 
-import type { Route } from "./+types/groups";
+import type { Route } from "./+types/categories";
 
-import { listGroups, orderedWithPaths } from "../groups/groups.server";
+import { listGroups, orderedWithPaths } from "../categories/categories.server";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const groups = await listGroups(request);
@@ -27,7 +28,7 @@ export default function Directory({ loaderData }: Route.ComponentProps) {
         action={
           <div className="flex flex-wrap justify-center gap-2">
             <Button asChild>
-              <Link to="/groups/new">{t("categories.none.new")}</Link>
+              <Link to={newCategoryPath()}>{t("categories.none.new")}</Link>
             </Button>
             <Button asChild variant="secondary">
               <Link to="/platform-groups">{t("categories.none.platformGroups")}</Link>
@@ -45,7 +46,7 @@ export default function Directory({ loaderData }: Route.ComponentProps) {
           <li className="border-b border-border last:border-b-0" key={row.id}>
             <Link
               className="block px-4 py-2.5 text-ink hover:bg-sunken hover:text-ink"
-              to={`/groups/${row.id}`}
+              to={categoryPath(row.id)}
             >
               {row.path}
             </Link>

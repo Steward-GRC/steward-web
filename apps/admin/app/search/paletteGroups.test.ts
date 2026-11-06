@@ -34,7 +34,7 @@ describe("paletteGroupsOf (admin)", () => {
       ["policies", ["/policies/POL-FACILITIES-000001"]],
       ["categories", ["/policies?category=Desk%20services"]],
       ["templates", ["/templates/TPL-DESK"]],
-      ["groups", ["/groups/g1"]],
+      ["groups", ["/categories/g1"]],
     ]);
     expect(groups[1]!.items[0]!.icon).toBe("folder");
   });

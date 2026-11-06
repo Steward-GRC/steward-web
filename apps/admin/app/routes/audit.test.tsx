@@ -31,7 +31,9 @@ const openAudit = (records: object[] = RECORDS) => {
   const Stub = createRoutesStub([
     {
       Component: () => (
-        <AuditLog {...({ loaderData: { filters: {}, records } } as unknown as AuditProps)} />
+        <AuditLog
+          {...({ loaderData: { cursor: {}, filters: {}, records } } as unknown as AuditProps)}
+        />
       ),
       path: "/audit",
     },

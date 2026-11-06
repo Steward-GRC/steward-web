@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import NewCategory from "./groups.new";
+import NewCategory from "./categories.new";
 
 type NewProps = Parameters<typeof NewCategory>[0];
 
@@ -24,10 +24,10 @@ describe("New category (A4)", () => {
           return null;
         },
         Component: () => <NewCategory {...({ loaderData } as unknown as NewProps)} />,
-        path: "/groups/new",
+        path: "/categories/new",
       },
     ]);
-    render(<Stub initialEntries={["/groups/new"]} />);
+    render(<Stub initialEntries={["/categories/new"]} />);
 
     expect(
       await screen.findByRole("heading", { level: 1, name: "New category" }),

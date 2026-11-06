@@ -7,7 +7,7 @@ import { data, Form, Link, redirect } from "react-router";
 
 import type { Route } from "./+types/templates.new";
 
-import { listGroups } from "../groups/groups.server";
+import { listGroups } from "../categories/categories.server";
 import { NewTemplateFields, NO_CATEGORY } from "../templates/NewTemplateForm";
 import { createTemplate } from "../templates/templates.server";
 

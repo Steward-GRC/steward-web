@@ -27,7 +27,7 @@ import { data, useFetcher } from "react-router";
 
 import type { Route } from "./+types/definitions-library";
 
-import { listGroups, orderedWithPaths } from "../groups/groups.server";
+import { listGroups, orderedWithPaths } from "../categories/categories.server";
 import {
   canCurate,
   isDeletable,

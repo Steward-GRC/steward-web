@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { categoriesPath } from "@steward-web/ui/domain";
 import {
   BookOpen,
   Building2,
@@ -89,7 +90,7 @@ export const adminNav = ({
   return [
     group("overview", LayoutGrid, [destination("overview", LayoutGrid, "/")]),
     group("categories", Folder, [
-      ...shown(categories, destination("directory", FolderTree, "/groups")),
+      ...shown(categories, destination("directory", FolderTree, categoriesPath())),
       ...shown(categories || can("template.manage"), destination("access", ListChecks, "/access")),
     ]),
     group("structure", LayoutTemplate, [
@@ -126,6 +127,14 @@ export const adminNav = ({
     ]),
   ].filter((entry) => entry.destinations.length > 0);
 };
+
+/**
+ * Whether a section shows a secondary navigation (#83): only with two or more pages, since a
+ * list of one has no job. Categories keeps its panel with one page because the panel also holds
+ * the category tree and "+ New category".
+ */
+export const hasSecondaryNav = (entry: AdminGroup) =>
+  entry.id === "categories" || entry.destinations.length >= 2;
 
 /** A destination covers its own path and the pages below it; "/" covers only itself. */
 const covers = (path: string, pathname: string) =>

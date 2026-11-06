@@ -17,7 +17,7 @@ import { Link, useFetcher } from "react-router";
 
 import type { Route } from "./+types/templates";
 
-import { listGroups } from "../groups/groups.server";
+import { listGroups } from "../categories/categories.server";
 import { NewTemplateFields } from "../templates/NewTemplateForm";
 import { listTemplates, listTemplateVersions } from "../templates/templates.server";
 
