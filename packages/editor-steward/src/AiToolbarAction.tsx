@@ -27,10 +27,10 @@ export const replaceSavedSelection = (saved: SavedReplace, text: string): boolea
 };
 
 export interface AiToolbarActionOptions {
-  /** The words on the button and in the card. */
-  labels: { button: string } & Record<ReworkChoice, string>;
   /** Leave the button out: the AI is off, or the person may not use it. */
   hidden: boolean;
+  /** The words on the button and in the card. */
+  labels: { button: string } & Record<ReworkChoice, string>;
   onRework: (request: ReworkRequest) => void;
   saved: SavedReplace;
 }

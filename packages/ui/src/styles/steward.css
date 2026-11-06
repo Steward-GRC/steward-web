@@ -669,6 +669,13 @@ SPDX-License-Identifier: Apache-2.0
   .hc * {
     box-shadow: none !important;
   }
+  /* The editor marks a selected or edited card with an inset shadow, which the rule above
+     removes; in high contrast an outline in the selection colour takes its place. */
+  .hc .koenig-lexical [data-kg-card-selected="true"],
+  .hc .koenig-lexical [data-kg-card-editing="true"] {
+    outline: 3px solid var(--kg-selection-color, var(--primary));
+    outline-offset: -3px;
+  }
   a {
     color: var(--primary);
     text-underline-offset: 2px;

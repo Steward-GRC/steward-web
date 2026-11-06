@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+/* oxlint-disable testing-library/no-node-access, testing-library/no-container */
 import type { LexicalEditor } from "lexical";
 
 import { act, render, screen, waitFor } from "@testing-library/react";
@@ -98,7 +99,8 @@ describe("The AI action on the selection toolbar", () => {
     expect(document.querySelector(AI_BUTTON)).toBeNull();
 
     await select(0, 8);
-    expect((await aiButton()).getAttribute("aria-label")).toBe("Rework selected text with AI");
+    const button = await aiButton();
+    expect(button).toHaveAccessibleName("Rework selected text with AI");
     await userEvent.click(await aiButton());
     expect(screen.getByRole("menuitem", { name: "Rewrite" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("menuitem", { name: "Clarify" }));

@@ -8,18 +8,20 @@ import {
   KoenigEditor,
   type KoenigEditorAPI,
 } from "node-koenig-editor";
-import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { StewardCollaboration } from "./collab/stewardCollaboration";
 
-import { parseDocument, type SerializedDocument, serializeDocument } from "./document/tree";
-import { STEWARD_NODES } from "./nodes";
 import {
   createAiToolbarAction,
   replaceSavedSelection,
   type ReworkRequest,
   type SavedReplace,
 } from "./AiToolbarAction";
+import { parseDocument, type SerializedDocument, serializeDocument } from "./document/tree";
+import { describeEditorError } from "./editorErrors";
+import { EDITOR_THEME, isDarkTheme } from "./editorTheme";
+import { STEWARD_NODES } from "./nodes";
 import { ImageUploadError } from "./uploadImage";
 
 /** What a host can do with a mounted editor. */
@@ -42,6 +44,11 @@ export interface StewardEditorProps {
   /** The stored document. Seeds a collaborative room only when the room is still empty. */
   initialDocument?: SerializedDocument;
   onChange?: (document: SerializedDocument) => void;
+  /**
+   * Called with one short line (no stack, no document text) when the editor catches an error,
+   * a card that failed to show included. It is logged either way; this is for the dev report.
+   */
+  onError?: (summary: string) => void;
   onReady?: (handle: StewardEditorHandle) => void;
   /**
    * Adds "Rework selected text with AI" to the selection toolbar, with Rewrite and Clarify, and
@@ -53,14 +60,6 @@ export interface StewardEditorProps {
   /** Stores an image and answers its URL. Without one the image card says uploads are off. */
   uploadImage?: (file: File) => Promise<string>;
 }
-
-// Steward's theme for the editor: its accent follows the UI kit's primary colour, and its dark
-// styles follow the `dark` class the kit puts on the document. The box is the positioning
-// context remote carets are drawn against.
-const EDITOR_THEME = {
-  "--kg-accent-color": "var(--color-primary)",
-  position: "relative",
-} as CSSProperties;
 
 // What steward-core stores (SVG is refused: served inline it is a stored-XSS vector).
 const IMAGE_TYPES = {
@@ -109,6 +108,32 @@ const useImageUploader = (
     [uploadImage, unavailable, failed],
   );
 
+const prefersDark = () => globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+
+/** Whether the page is in a dark theme: the `dark`/`hc` class, or System with a dark OS. */
+const readDark = () =>
+  isDarkTheme(globalThis.document.documentElement.classList, prefersDark());
+
+const useDarkTheme = (): boolean => {
+  const [dark, setDark] = useState(readDark);
+  useEffect(() => {
+    const update = () => setDark(readDark());
+    const observer = new MutationObserver(update);
+    observer.observe(globalThis.document.documentElement, {
+      attributeFilter: ["class"],
+      attributes: true,
+    });
+    const media = globalThis.matchMedia?.("(prefers-color-scheme: dark)");
+    media?.addEventListener("change", update);
+    update();
+    return () => {
+      observer.disconnect();
+      media?.removeEventListener("change", update);
+    };
+  }, []);
+  return dark;
+};
+
 /**
  * Steward's editor: the Koenig editor with Steward's nodes, Steward's collab room and
  * Steward's wording. Browser only; render it behind a client boundary and show
@@ -119,6 +144,7 @@ export const StewardEditor = ({
   collaboration = null,
   initialDocument,
   onChange,
+  onError,
   onReady,
   onRework,
   placeholder,
@@ -153,6 +179,16 @@ export const StewardEditor = ({
       }),
     ],
     [onRework, readOnly, t],
+  );
+  const strings = useMemo(() => ({ errorFallback: t("editor.cardError") }), [t]);
+  const dark = useDarkTheme();
+  const handleError = useCallback(
+    (error: Error) => {
+      const summary = describeEditorError(error);
+      console.error(`[editor] ${summary}`);
+      onError?.(summary);
+    },
+    [onError],
   );
   const koenigCollaboration = useMemo(
     () => (collaboration ? { ...collaboration.koenig, cursorsContainerRef } : null),
@@ -191,9 +227,12 @@ export const StewardEditor = ({
       <KoenigComposer
         collaboration={koenigCollaboration}
         customNodes={STEWARD_NODES}
+        darkMode={dark}
         editable={!readOnly}
         fileUploader={fileUploader}
         initialEditorState={initialEditorState}
+        onError={handleError}
+        strings={strings}
         toolbarActions={toolbarActions}
       >
         <KoenigEditor

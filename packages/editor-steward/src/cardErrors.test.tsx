@@ -1,7 +1,9 @@
+import type { LexicalEditor } from "lexical";
+
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+/* oxlint-disable testing-library/no-node-access, testing-library/no-container */
 import { render, screen, waitFor } from "@testing-library/react";
-import type { LexicalEditor } from "lexical";
 import { DEFAULT_NODES } from "node-koenig-editor";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Awareness } from "y-protocols/awareness";
@@ -18,14 +20,14 @@ const synced = (): ProviderEventSource => ({ off: () => {}, on: () => {}, synced
 
 const mountEditor = (collab: boolean) => {
   const errors: Error[] = [];
-  vi.spyOn(console, "error").mockImplementation((...args) => {
-    const text = args.map(String).join(" ");
+  vi.spyOn(console, "error").mockImplementation((...arguments_) => {
+    const text = arguments_.map(String).join(" ");
     if (!text.includes("not wrapped in act")) errors.push(new Error(text));
   });
   let collaboration = null;
   if (collab) {
-    const doc = new Doc();
-    collaboration = createStewardCollaboration(doc, new Awareness(doc));
+    const document = new Doc();
+    collaboration = createStewardCollaboration(document, new Awareness(document));
     collaboration.attach(synced());
   }
   render(<StewardEditor collaboration={collaboration} />);
@@ -44,7 +46,8 @@ const menuFor = (type: string): Menu => {
 describe.each([false, true])("inserting cards from the slash menu (collaboration %s)", (collab) => {
   it.each(["toggle", "callout"])("inserts %s without an error", async (type) => {
     const errors = mountEditor(collab);
-    const box = (await screen.findAllByRole("textbox"))[0]!;
+    const boxes = await screen.findAllByRole("textbox");
+    const box = boxes[0]!;
     const editor = (box as unknown as { __lexicalEditor: LexicalEditor }).__lexicalEditor;
     const menu = menuFor(type);
     editor.focus();
@@ -53,6 +56,6 @@ describe.each([false, true])("inserting cards from the slash menu (collaboration
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(JSON.stringify(editor.getEditorState().toJSON())).toContain(`"type":"${type}"`);
     expect(document.querySelector("[data-kg-card-error]")).toBeNull();
-    expect(errors.map((e) => e.message)).toEqual([]);
+    expect(errors.map((error) => error.message)).toEqual([]);
   });
 });

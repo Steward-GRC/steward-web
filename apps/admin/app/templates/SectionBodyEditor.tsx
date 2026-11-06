@@ -6,6 +6,7 @@ import {
   type StewardEditorProps,
   uploadEditorImage,
 } from "@steward-web/editor-steward";
+import { recordUiIssueError } from "@steward-web/shell";
 import { lazy, Suspense, useSyncExternalStore } from "react";
 
 // The editor needs a browser, so it never renders on the server: the server and the first
@@ -38,7 +39,11 @@ export const SectionBodyEditor = (props: SectionBodyEditorProps) => {
   if (!hydrated) return fallback(props.initialDocument);
   return (
     <Suspense fallback={fallback(props.initialDocument)}>
-      <StewardEditor uploadImage={uploadEditorImage} {...props} />
+      <StewardEditor
+        onError={(summary) => recordUiIssueError("render", `editor: ${summary}`)}
+        uploadImage={uploadEditorImage}
+        {...props}
+      />
     </Suspense>
   );
 };

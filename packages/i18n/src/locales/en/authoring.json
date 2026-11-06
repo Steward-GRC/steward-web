@@ -19,6 +19,7 @@
     "actions": {
       "menu": "Actions"
     },
+    "cardError": "The {card} card could not be shown. Remove it and add it again, or reload the page if it comes back.",
     "aiMenu": {
       "generate": "Generate a draft…",
       "improve": "Improve draft…",

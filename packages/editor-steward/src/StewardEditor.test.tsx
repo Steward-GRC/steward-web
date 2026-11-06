@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+/* oxlint-disable testing-library/no-node-access, testing-library/no-container */
 import { render, screen, waitFor } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -88,6 +89,27 @@ describe("StewardEditor", () => {
         expect(box).toHaveAttribute("aria-readonly", "true");
       }
     });
+  });
+});
+
+describe("StewardEditor theme", () => {
+  it("draws the dark card styles in high contrast and light ones in light", async () => {
+    document.documentElement.className = "hc";
+    const dark = await mount();
+    await waitFor(() => expect(document.querySelector(".koenig-lexical.dark")).not.toBeNull());
+    dark.view.unmount();
+    document.documentElement.className = "light";
+    await mount();
+    await waitFor(() => expect(document.querySelector(".koenig-lexical")).not.toBeNull());
+    expect(document.querySelector(".koenig-lexical.dark")).toBeNull();
+    document.documentElement.className = "";
+  });
+
+  it("sets the site's tokens on the editor's box", async () => {
+    await mount();
+    const box = document.querySelector<HTMLElement>(".koenig-lexical")!.parentElement!;
+    expect(box.style.getPropertyValue("--kg-selection-color")).toBe("var(--color-primary)");
+    expect(box.style.getPropertyValue("--kg-font-size")).toBe("var(--text-doc)");
   });
 });
 

@@ -1,3 +1,4 @@
+export type { ReworkChoice, ReworkRequest } from "./AiToolbarAction";
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 // Server-safe entry: the stored format, the template-section helpers, the read-only view and
@@ -9,6 +10,5 @@ export {
 } from "./collab/stewardCollaboration";
 export * from "./document";
 export { LexicalDocumentView, type LexicalDocumentViewProps } from "./LexicalDocumentView";
-export type { ReworkChoice, ReworkRequest } from "./AiToolbarAction";
 export type { StewardEditorHandle, StewardEditorProps } from "./StewardEditor";
 export { ImageUploadError, uploadEditorImage } from "./uploadImage";
