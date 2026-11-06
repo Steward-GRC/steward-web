@@ -17,10 +17,14 @@ const who = (
   extra: object = {},
 ): StepperStage["approvers"][number] => ({ name, state, ...extra });
 
-const options = { dueText: "Due 9 Oct", youLabel: "you" };
+const options = {
+  dueText: "Due 9 Oct",
+  voteLabel: (approved: number, needed: number) => `${approved} of ${needed} approved`,
+  youLabel: "you",
+};
 
 describe("flowStepsOf", () => {
-  it("makes a step per stage, titled by the stage and showing who and when", () => {
+  it("makes a step per stage, each box titled by the user and described by the stage, with when", () => {
     const steps = flowStepsOf(
       [
         stage("Legal", "done", [who("Carol", "approved", { decidedAt: "2026-10-02T10:00:00Z" })]),
@@ -29,10 +33,10 @@ describe("flowStepsOf", () => {
       ],
       options,
     );
-    expect(steps.map((s) => s.nodes.map((n) => [n.title, n.who, n.state]))).toEqual([
-      [["Legal", "Carol", "done"]],
-      [["Finance", "Dave", "current"]],
-      [["CEO", "Frank", "upcoming"]],
+    expect(steps.map((s) => s.nodes.map((n) => [n.title, n.description, n.state]))).toEqual([
+      [["Carol", "Legal", "done"]],
+      [["Dave", "Finance", "current"]],
+      [["Frank", "CEO", "upcoming"]],
     ]);
     expect(steps[0]!.nodes[0]!.when).toMatch(/2/);
     expect(steps[0]!.nodes[0]!.when).toMatch(/Oct/);
@@ -82,10 +86,10 @@ describe("flowStepsOf", () => {
       ],
       options,
     );
-    expect(step!.nodes.map((n) => [n.title, n.who, n.state])).toEqual([
-      ["Finance", "Dave", "done"],
-      ["Finance", "Erin", "current"],
-      ["Finance", "Gus", "rejected"],
+    expect(step!.nodes.map((n) => [n.title, n.description, n.state])).toEqual([
+      ["Dave", "Finance", "done"],
+      ["Erin", "Finance", "current"],
+      ["Gus", "Finance", "rejected"],
     ]);
     expect(new Set(step!.nodes.map((n) => n.id)).size).toBe(3);
   });
@@ -100,7 +104,7 @@ describe("flowStepsOf", () => {
       ],
       options,
     );
-    expect(step!.nodes.map((n) => [n.who, n.state])).toEqual([["Carol", "done"]]);
+    expect(step!.nodes.map((n) => [n.title, n.state])).toEqual([["Carol", "done"]]);
   });
 
   it("marks the viewer's own box", () => {
@@ -108,13 +112,126 @@ describe("flowStepsOf", () => {
       [stage("Finance", "current", [who("Dave", "pending", { isYou: true })])],
       options,
     );
-    expect(step!.nodes[0]!.who).toBe("Dave · you");
+    expect(step!.nodes[0]!.title).toBe("Dave · you");
   });
 
   it("keeps a stage with nobody assigned as one box in the stage's own state", () => {
     const [step] = flowStepsOf([stage("Legal", "upcoming", [])], options);
     expect(step!.nodes).toHaveLength(1);
     expect(step!.nodes[0]).toMatchObject({ state: "upcoming", title: "Legal", who: null });
+    expect(step!.nodes[0]!.members).toBeUndefined();
+  });
+});
+
+const seat = (
+  name: string,
+  state: "approved" | "pending" | "rejected",
+  groupId: null | string,
+  extra: object = {},
+): StepperStage["approvers"][number] => ({ groupId, name, state, ...extra });
+const unit = (
+  id: string,
+  name: string,
+  required: number,
+  status: "pending" | "rejected" | "satisfied",
+): NonNullable<StepperStage["groups"]>[number] => ({
+  approved: [],
+  id,
+  name,
+  pending: [],
+  quorum: "majority",
+  required,
+  roster: 3,
+  status,
+});
+
+const review = (
+  state: StepperStage["state"],
+  approvers: StepperStage["approvers"],
+  status: "pending" | "rejected" | "satisfied" = "pending",
+): StepperStage => ({
+  approvers,
+  groups: [unit("g-fin", "Finance team", 2, status)],
+  name: "Review",
+  state,
+});
+
+const voteOf = (status: "pending" | "rejected" | "satisfied", stage: StepperStage["state"]) =>
+  flowStepsOf(
+    [review(stage, [seat("Carol", "approved", "g-fin"), seat("Dave", "pending", "g-fin")], status)],
+    options,
+  )[0]!.nodes[0]!;
+
+describe("flowStepsOf with groups", () => {
+  it("titles a group box by the group, describes it by the step, and lists the members", () => {
+    const [step] = flowStepsOf(
+      [
+        review("current", [
+          seat("Carol", "approved", "g-fin", { decidedAt: "2026-10-02T10:00:00Z" }),
+          seat("Dave", "pending", "g-fin"),
+          seat("Erin", "rejected", "g-fin"),
+        ]),
+      ],
+      options,
+    );
+    expect(step!.nodes).toHaveLength(1);
+    const box = step!.nodes[0]!;
+    expect([box.title, box.description]).toEqual(["Finance team", "Review"]);
+    expect(box.members!.map((m) => [m.name, m.state])).toEqual([
+      ["Carol", "done"],
+      ["Dave", "current"],
+      ["Erin", "rejected"],
+    ]);
+    expect(box.members![0]!.when).toMatch(/Oct/);
+  });
+
+  it("follows the current vote: the tally against the quorum, and the group's own status", () => {
+    expect(voteOf("pending", "current")).toMatchObject({ state: "current", tally: "1/2" });
+    expect(voteOf("satisfied", "current")).toMatchObject({ state: "done", tally: "1/2" });
+    expect(voteOf("rejected", "current")).toMatchObject({ state: "rejected" });
+    expect(voteOf("pending", "upcoming").state).toBe("upcoming");
+  });
+
+  it("combines users and groups in one step, keeping the group's seats out of the user boxes", () => {
+    const [step] = flowStepsOf(
+      [
+        review("current", [
+          seat("Carol", "approved", "g-fin"),
+          seat("Dave", "pending", "g-fin"),
+          seat("Alice", "approved", null),
+        ]),
+      ],
+      options,
+    );
+    expect(step!.nodes.map((n) => [n.title, n.members === undefined ? "user" : "group"])).toEqual([
+      ["Alice", "user"],
+      ["Finance team", "group"],
+    ]);
+  });
+
+  it("totals the step's vote across users and groups, in digits and in words", () => {
+    const [step] = flowStepsOf(
+      [
+        review("current", [
+          seat("Carol", "approved", "g-fin"),
+          seat("Dave", "pending", "g-fin"),
+          seat("Alice", "approved", null),
+          seat("Bob", "pending", null),
+        ]),
+      ],
+      options,
+    );
+    // Alice 1 of 1, Bob 0 of 1, the group 1 of 2.
+    expect(step!.tally).toBe("2/4");
+    expect(step!.tallyLabel).toBe("2 of 4 approved");
+  });
+
+  it("drops a group that never met its rule from a finished stage, like a seat that never voted", () => {
+    const [step] = flowStepsOf(
+      [review("done", [seat("Alice", "approved", null), seat("Dave", "pending", "g-fin")])],
+      options,
+    );
+    expect(step!.nodes.map((n) => n.title)).toEqual(["Alice"]);
   });
 });
 

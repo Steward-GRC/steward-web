@@ -43,6 +43,7 @@ describe("stepperStagesOf", () => {
     expect(stages[0]!.approvers[0]).toEqual({
       comment: "Fine.",
       decidedAt: "2026-10-02T10:00:00Z",
+      groupId: null,
       isYou: false,
       name: "Dave",
       state: "approved",
@@ -121,6 +122,7 @@ describe("stepperStagesOf", () => {
     expect(stages[0]!.groups).toEqual([
       {
         approved: ["Dave"],
+        id: "g-fin",
         name: "Finance team",
         pending: ["Carol", "Grace"],
         quorum: "majority",

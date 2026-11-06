@@ -314,6 +314,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
         }}
         steps={flowStepsOf(stepperStagesOf(workflow, meId), {
           dueText: task?.dueAt ? t("flow.due", { date: formatDayMonth(task.dueAt) }) : null,
+          voteLabel: (approved, needed) => t("flow.vote", { approved, needed }),
           youLabel: t("flow.you"),
         })}
       />

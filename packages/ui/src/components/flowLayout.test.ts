@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { flowLayoutOf, type FlowNode, type FlowStep } from "./flowLayout";
+import { flowLayoutOf, type FlowNode, type FlowStep, NODE_H } from "./flowLayout";
 
 const node = (id: string, state: FlowNode["state"]): FlowNode => ({ id, state, title: id });
 const step = (id: string, ...nodes: FlowNode[]): FlowStep => ({ id, nodes });
@@ -145,5 +145,114 @@ describe("the flow layout, vertical (phone)", () => {
     expect(tall.edges.map((edge) => [edge.id, edge.state])).toEqual(
       wide.edges.map((edge) => [edge.id, edge.state]),
     );
+  });
+});
+
+const member = (id: string) => ({ id, name: id, state: "upcoming" as const });
+
+describe("the flow layout with an expanded group", () => {
+  const group: FlowNode = {
+    ...node("team", "current"),
+    members: [member("m1"), member("m2"), member("m3")],
+  };
+  const steps = [
+    step("s", node("submitted", "done")),
+    step("mix", group, node("solo", "current")),
+    step("next", node("ceo", "upcoming")),
+  ];
+
+  it("keeps a collapsed group box at the normal height", () => {
+    expect(nodeOf(flowLayoutOf(steps, "horizontal"), "team").h).toBe(NODE_H);
+  });
+
+  it("makes an expanded group taller by its members and pushes the box below it down", () => {
+    const closed = flowLayoutOf(steps, "horizontal");
+    const open = flowLayoutOf(steps, "horizontal", new Set(["team"]));
+    expect(nodeOf(open, "team").h).toBeGreaterThan(NODE_H);
+    expect(nodeOf(open, "solo").y - nodeOf(open, "team").y).toBeGreaterThan(
+      nodeOf(closed, "solo").y - nodeOf(closed, "team").y,
+    );
+    expect(open.height).toBeGreaterThan(closed.height);
+  });
+
+  it("grows the vertical layout too, and joins the lines at the bottom of the taller box", () => {
+    const open = flowLayoutOf(steps, "vertical", new Set(["team"]));
+    const team = nodeOf(open, "team");
+    expect(team.h).toBeGreaterThan(NODE_H);
+    expect(nodeOf(open, "ceo").y).toBeGreaterThan(team.y + team.h);
+    expect(open.height).toBeGreaterThan(flowLayoutOf(steps, "vertical").height);
+  });
+
+  it("ignores an expanded id that has no members", () => {
+    const open = flowLayoutOf(steps, "horizontal", new Set(["solo"]));
+    expect(nodeOf(open, "solo").h).toBe(NODE_H);
+  });
+
+  it("lets a line meet the header of an expanded box, not its middle", () => {
+    const open = flowLayoutOf(steps, "horizontal", new Set(["team"]));
+    const team = nodeOf(open, "team");
+    expect(edgeOf(open, "in:team").d).toContain(`V${team.y + NODE_H / 2}`);
+  });
+});
+
+const frameStateOf = (a: FlowNode["state"], b: FlowNode["state"]) =>
+  flowLayoutOf(
+    [
+      step("s", node("submitted", "done")),
+      step(
+        "mix",
+        { ...node("team", a), members: [{ id: "m1", name: "m1", state: "upcoming" }] },
+        node("solo", b),
+      ),
+    ],
+    "horizontal",
+  ).frames[0]!.state;
+
+describe("the outer box around a mixed step", () => {
+  const group: FlowNode = {
+    ...node("team", "current"),
+    members: [{ id: "m1", name: "m1", state: "upcoming" }],
+  };
+  const mixed = step("mix", group, node("solo", "done"));
+  const steps = (...middle: FlowStep[]) => [step("s", node("submitted", "done")), ...middle];
+
+  it("draws one frame around a step that mixes a user and a group, with the step's tally", () => {
+    const layout = flowLayoutOf(
+      steps({ ...mixed, tally: "2/4" }, step("next", node("ceo", "upcoming"))),
+      "horizontal",
+    );
+    expect(layout.frames).toHaveLength(1);
+    const frame = layout.frames[0]!;
+    const team = nodeOf(layout, "team");
+    const solo = nodeOf(layout, "solo");
+    expect(frame.stepIndex).toBe(1);
+    expect(frame.tally).toBe("2/4");
+    expect(frame.x).toBeLessThan(team.x);
+    expect(frame.x + frame.w).toBeGreaterThan(team.x + team.w);
+    expect(frame.y).toBeLessThan(team.y);
+    expect(frame.y + frame.h).toBeGreaterThan(solo.y + solo.h);
+  });
+
+  it("draws none for a single box, a plain fan of users, or a step with only groups", () => {
+    const users = step("fan", node("a", "done"), node("b", "current"));
+    const groups = step("gs", group, { ...group, id: "team2" });
+    expect(flowLayoutOf(steps(step("one", group)), "horizontal").frames).toEqual([]);
+    expect(flowLayoutOf(steps(users), "horizontal").frames).toEqual([]);
+    expect(flowLayoutOf(steps(groups), "horizontal").frames).toEqual([]);
+  });
+
+  it("follows the boxes inside it: rejected if any is, done when all are, else current", () => {
+    expect(frameStateOf("done", "done")).toBe("done");
+    expect(frameStateOf("done", "rejected")).toBe("rejected");
+    expect(frameStateOf("current", "done")).toBe("current");
+    expect(frameStateOf("upcoming", "upcoming")).toBe("upcoming");
+  });
+
+  it("grows with an expanded group and keeps the vertical form inside its width", () => {
+    const closed = flowLayoutOf(steps(mixed), "vertical");
+    const open = flowLayoutOf(steps(mixed), "vertical", new Set(["team"]));
+    expect(open.frames[0]!.h).toBeGreaterThan(closed.frames[0]!.h);
+    expect(open.frames[0]!.x).toBeGreaterThanOrEqual(0);
+    expect(open.frames[0]!.x + open.frames[0]!.w).toBeLessThanOrEqual(open.width);
   });
 });

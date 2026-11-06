@@ -3616,6 +3616,7 @@ export type WorkflowStatusQuery = {
         readonly state: string;
         readonly comment: string | null;
         readonly decidedAt: string | null;
+        readonly groupId: string | null;
       }>
     >;
     readonly stageUnitProgress: ReadonlyArray<
@@ -16406,6 +16407,7 @@ export const WorkflowStatusDocument = {
                       { kind: "Field", name: { kind: "Name", value: "state" } },
                       { kind: "Field", name: { kind: "Name", value: "comment" } },
                       { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
+                      { kind: "Field", name: { kind: "Name", value: "groupId" } },
                     ],
                   },
                 },

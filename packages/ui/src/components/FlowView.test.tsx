@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /* oxlint-disable testing-library/no-node-access, testing-library/no-container */
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { type FlowNode, type FlowStep, FlowView } from "./FlowView";
@@ -72,9 +73,12 @@ describe("the flow view", () => {
     expect(items.filter((index) => index.getAttribute("aria-current") === "step")).toHaveLength(1);
   });
 
-  it("hides the drawing itself from screen readers, since the list says it all", () => {
+  it("hides the plain boxes from screen readers, since the list says it all", () => {
     const { container } = view();
-    expect(container.querySelector("[data-flow-canvas]")).toHaveAttribute("aria-hidden", "true");
+    expect(container.querySelector('[data-flow-node="Legal"]')).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
   });
 
   it("draws a box per approver in a parallel step", () => {
@@ -142,5 +146,102 @@ describe("the flow view", () => {
     } finally {
       globalThis.matchMedia = restore;
     }
+  });
+
+  describe("a group box", () => {
+    const team: FlowNode = {
+      ...node("team", "current", { description: "Review", tally: "2/3" }),
+      members: [
+        { id: "m1", name: "Carol", state: "done", when: "2 Oct" },
+        { id: "m2", name: "Dave", state: "done", when: null },
+        { id: "m3", name: "Erin", state: "current" },
+        { id: "m4", name: "Frank", state: "rejected", when: "3 Oct" },
+      ],
+      title: "Legal team",
+    };
+    const user = node("alice", "current", { description: "Review", title: "Alice" });
+    const mixed: FlowStep[] = [{ id: "review", nodes: [team, user] }];
+    const open = () => view({ steps: mixed });
+
+    it("is titled by the group, with the step as its description and the tally on the box", () => {
+      open();
+      const toggle = screen.getByRole("button", { name: /Legal team/ });
+      expect(toggle).toHaveTextContent("Review");
+      expect(toggle).toHaveTextContent("2/3");
+      expect(screen.getByText("Alice").closest("[data-flow-node]")).toHaveTextContent("Review");
+    });
+
+    it("starts collapsed, with the members out of sight, and the user box has no toggle", () => {
+      open();
+      expect(screen.getByRole("button", { name: /Legal team/ })).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+      expect(screen.queryByRole("list", { name: "Legal team" })).not.toBeInTheDocument();
+      expect(screen.getAllByRole("button")).toHaveLength(1);
+    });
+
+    it("expands on click to each member's status and when, and collapses again", async () => {
+      open();
+      const toggle = screen.getByRole("button", { name: /Legal team/ });
+      await userEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      const members = within(screen.getByRole("list", { name: "Legal team" })).getAllByRole(
+        "listitem",
+      );
+      expect(members).toHaveLength(4);
+      expect(members[0]).toHaveTextContent("Carol");
+      expect(members[0]).toHaveTextContent("Done");
+      expect(members[0]).toHaveTextContent("2 Oct");
+      expect(members[2]).toHaveTextContent("Erin");
+      expect(members[2]).toHaveTextContent("Waiting");
+      expect(members[3]).toHaveTextContent("Rejected");
+      await userEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-expanded", "false");
+      expect(screen.queryByRole("list", { name: "Legal team" })).not.toBeInTheDocument();
+    });
+
+    it("opens from the keyboard", async () => {
+      open();
+      await userEvent.tab();
+      expect(screen.getByRole("button", { name: /Legal team/ })).toHaveFocus();
+      await userEvent.keyboard("{Enter}");
+      expect(screen.getByRole("button", { name: /Legal team/ })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+      await userEvent.keyboard(" ");
+      expect(screen.getByRole("button", { name: /Legal team/ })).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+    });
+
+    it("grows the drawn box when expanded", async () => {
+      const { container } = open();
+      const box = () => container.querySelector<HTMLElement>('[data-flow-node="team"]')!;
+      const before = box().style.height;
+      await userEvent.click(screen.getByRole("button", { name: /Legal team/ }));
+      expect(box().style.height).not.toBe(before);
+    });
+
+    it("tells screen readers the members and the tally even while collapsed", () => {
+      open();
+      const items = within(screen.getByRole("list", { name: "Approval flow" })).getAllByRole(
+        "listitem",
+      );
+      const text = items.map((item) => item.textContent).join("|");
+      expect(text).toContain("Legal team, Review, 2/3");
+      expect(text).toContain("Carol");
+      expect(text).toContain("Frank");
+    });
+
+    it("keeps the box state on the box, so a group follows its vote", () => {
+      const { container } = open();
+      expect(container.querySelector('[data-flow-node="team"]')).toHaveAttribute(
+        "data-state",
+        "current",
+      );
+    });
   });
 });

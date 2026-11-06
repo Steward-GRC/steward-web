@@ -30,6 +30,7 @@
       "upcoming": "Not started"
     },
     "submitted": "Submitted",
+    "vote": "{{approved}} of {{needed}} approved",
     "you": "you"
   },
   "inbox": {
