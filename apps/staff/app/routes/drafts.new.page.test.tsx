@@ -59,6 +59,53 @@ const openForm = (path = "/drafts/new", data: object = loaderData) => {
 
 afterEach(() => localStorage.clear());
 
+const typed = {
+  ...loaderData,
+  categories: [
+    {
+      documentTypes: "NONE",
+      id: "w",
+      name: "Workplace",
+      subcategories: [
+        { documentTypes: "BOTH", id: "f", name: "Facilities" },
+        { documentTypes: "PROCEDURES", id: "t", name: "Travel" },
+      ],
+    },
+    { documentTypes: "PROCEDURES", id: "c", name: "Conduct", subcategories: [] },
+    { id: "p", name: "People", subcategories: [] },
+  ],
+};
+
+describe("New policy and a category's document types (#87)", () => {
+  it("greys out a category that does not hold policies and says why", async () => {
+    openForm("/drafts/new/policy", typed);
+    expect(
+      await screen.findByRole("option", { name: "Conduct (holds procedures only)" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("option", { name: "People" })).toBeEnabled();
+  });
+
+  it("keeps a container reachable for its children and asks for a subcategory", async () => {
+    openForm("/drafts/new/policy", typed);
+    const workplace = await screen.findByRole("option", {
+      name: "Workplace (only holds other categories: pick a subcategory)",
+    });
+    expect(workplace).toBeEnabled();
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "w");
+    expect(screen.getByRole("option", { name: "Travel (holds procedures only)" })).toBeDisabled();
+    expect(screen.getByRole("option", { name: "Facilities" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Create policy" })).toBeDisabled();
+    expect(screen.getByText(/Workplace only holds other categories/)).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText("Subcategory"), "f");
+    expect(screen.getByRole("button", { name: "Create policy" })).toBeEnabled();
+  });
+
+  it("offers a procedures-only category when the type is a procedure", async () => {
+    openForm("/drafts/new/procedure", typed);
+    expect(await screen.findByRole("option", { name: "Conduct" })).toBeEnabled();
+  });
+});
+
 describe("New policy (U20)", () => {
   it("says what it makes, with no type to pick when the route has one (#147, #149)", async () => {
     openForm("/drafts/new/policy");

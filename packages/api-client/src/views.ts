@@ -14,6 +14,7 @@ import type {
 } from "./generated/graphql";
 import type {
   AckTrigger,
+  CategoryDocumentTypes,
   DocumentType,
   PolicyViewerCan,
   ReferenceKind,
@@ -107,6 +108,8 @@ export interface Group {
   readonly defaultTemplateId?: null | string;
   readonly defaultTemplateNone: boolean;
   readonly defaultWorkflowId?: null | string;
+  /** Which document types the category holds; NONE is a container for child categories. */
+  readonly documentTypes?: CategoryDocumentTypes;
   /** Per-category exclusion IdP group names. null = inherit from the ancestor chain; an
    *  (possibly empty) array is this category's own explicit override. */
   readonly exclusionGroupIds?: null | readonly string[];

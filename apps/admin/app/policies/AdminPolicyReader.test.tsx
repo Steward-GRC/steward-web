@@ -52,8 +52,9 @@ const draft: PolicyDetail = {
 type Action = (fields: Record<string, string>) => unknown;
 
 const SECTIONS = [
-  { id: "c-workplace", path: "Workplace" },
-  { id: "c-travel", path: "Workplace › Travel" },
+  { documentTypes: "NONE", id: "c-workplace", path: "Workplace" },
+  { documentTypes: "BOTH", id: "c-travel", path: "Workplace › Travel" },
+  { documentTypes: "PROCEDURES", id: "c-conduct", path: "People › Conduct" },
 ];
 
 const PEOPLE = [{ email: "carol@example.org", id: "u-carol", name: "Carol" }];
@@ -211,6 +212,24 @@ describe("AdminPolicyReader (A11)", () => {
     expect(await screen.findByText("The moved policy")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(posted).toEqual([{ homeCategoryId: "c-travel", intent: "move" }]);
+  });
+
+  it("greys out the sections that do not hold this kind of document (#87)", async () => {
+    openReader(published);
+    await chooseAction("Move to section");
+    const dialog = await screen.findByRole("dialog", { name: "Move to section" });
+    await userEvent.click(
+      await within(dialog).findByRole("combobox", { name: "Destination section" }),
+    );
+    expect(
+      await screen.findByRole("option", { name: "Workplace (only holds other categories)" }),
+    ).toHaveAttribute("data-disabled");
+    expect(
+      screen.getByRole("option", { name: "People › Conduct (holds procedures only)" }),
+    ).toHaveAttribute("data-disabled");
+    expect(screen.getByRole("option", { name: "Workplace › Travel" })).not.toHaveAttribute(
+      "data-disabled",
+    );
   });
 
   it("renders the PDF, then offers the download (D16)", async () => {

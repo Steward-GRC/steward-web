@@ -238,7 +238,7 @@ export const CategoryAccess = ({ view }: { view: AccessView }) => {
                 {t("access.rules.title")}
               </b>
               <span className="text-sm text-muted">{t("access.rules.order")}</span>
-              <AddRuleDialog disabled={!live} onAdd={add} people={view.people} />
+              <AddRuleDialog disabled={!live} onAdd={add} />
             </CardHeader>
             <RuleTable
               editing={live}

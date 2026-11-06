@@ -6,6 +6,12 @@ export {
   onApiError,
   reportApiError,
 } from "./apiErrorReporter";
+export {
+  acceptsDocumentType,
+  documentTypesOf,
+  refusalKey,
+  strandedBy,
+} from "./categoryDocumentTypes";
 export type {
   AccountMergePreview,
   AckActivityDay,
@@ -37,6 +43,7 @@ export type {
   CaseSummary,
   Category,
   CategoryApproversInput,
+  CategoryDocumentCounts,
   CompletionReport,
   ContactBlock,
   ContactBlockInput,
@@ -141,6 +148,7 @@ export {
   BreachDecision,
   CaseOutcome,
   CaseStatus,
+  CategoryDocumentTypes,
   DocumentType,
   InformationKind,
   MergeItemKind,

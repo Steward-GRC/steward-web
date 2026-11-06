@@ -1,6 +1,14 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { AckTrigger, Group, ReviewCadence, Template, Workflow } from "@steward-web/api-client";
+import type {
+  AckTrigger,
+  CategoryDocumentCounts,
+  CategoryDocumentTypes,
+  Group,
+  ReviewCadence,
+  Template,
+  Workflow,
+} from "@steward-web/api-client";
 
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
@@ -51,6 +59,8 @@ export const descendantIds = (groups: readonly Group[], groupId: string): Set<st
 };
 
 export interface GroupPath {
+  /** What the category holds; missing reads as both. */
+  documentTypes?: CategoryDocumentTypes;
   id: string;
   path: string;
 }
@@ -71,7 +81,7 @@ export const orderedWithPaths = (
     for (const g of byParent.get(parentId) ?? []) {
       if (excludeIds?.has(g.id)) continue;
       const path = prefix ? `${prefix} › ${g.name}` : g.name;
-      out.push({ id: g.id, path });
+      out.push({ ...(g.documentTypes ? { documentTypes: g.documentTypes } : {}), id: g.id, path });
       walk(g.id, path);
     }
   };
@@ -252,6 +262,26 @@ export interface GroupSettingsPatch {
   reviewCadence: ReviewCadence;
   reviewDate: null | string;
 }
+
+/** What the category holds now, for the settings form's check before it narrows. */
+export const categoryDocumentCounts = async (
+  request: Request,
+  groupId: string,
+): Promise<CategoryDocumentCounts> => {
+  await requireGroupManage(request);
+  return edge.categoryDocumentCounts(groupId, cookieOf(request));
+};
+
+/** Sets which document types the category holds; the service refuses a narrowing that would
+ *  strand documents. */
+export const setCategoryDocumentTypes = async (
+  request: Request,
+  groupId: string,
+  documentTypes: CategoryDocumentTypes,
+): Promise<Group> => {
+  await requireGroupManage(request);
+  return edge.updateGroupSettings({ documentTypes, id: groupId }, cookieOf(request));
+};
 
 export const updateGroupSettings = async (
   request: Request,

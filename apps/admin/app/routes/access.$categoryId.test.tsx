@@ -4,11 +4,28 @@ import { AckTrigger, RaciGrant, RaciSubjectKind } from "@steward-web/api-client"
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 
 import type { AccessView } from "../access/access.server";
 
 import CategoryAccessRoute from "./access.$categoryId";
+
+/** Answers the picker's searches from `byKind`, and says what was asked last. */
+const stubSearch = (byKind: Record<string, object[]>) => {
+  let last = "";
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      last = String(input);
+      const kind = new URL(last, "http://localhost").searchParams.get("kind") ?? "";
+      return Response.json({ options: byKind[kind] ?? [] });
+    }),
+  );
+  onTestFinished(() => {
+    vi.unstubAllGlobals();
+  });
+  return () => last;
+};
 
 const rule = (
   subjectKind: RaciSubjectKind,
@@ -232,19 +249,64 @@ describe("the category access page (A5)", () => {
     await vi.waitFor(() => expect(screen.queryByText("moved up")).not.toBeInTheDocument());
   });
 
-  it("adds a rule for a group at the bottom of the category's own rules", async () => {
+  it("adds a rule for a group found by typing, at the bottom of the category's own rules (#88)", async () => {
+    const asked = stubSearch({
+      group: [{ detail: "Internal audit", id: "Auditors", label: "Auditors" }],
+    });
     renderAccess();
     await userEvent.click(screen.getByRole("button", { name: "Edit rules" }));
     await userEvent.click(screen.getByRole("button", { name: "+ Add rule" }));
     const dialog = screen.getByRole("dialog", { name: "Add rule" });
     await userEvent.click(within(dialog).getByRole("radio", { name: "Group" }));
-    await userEvent.type(within(dialog).getByLabelText("Group name"), "Auditors");
+    expect(within(dialog).getByRole("button", { name: "Add rule" })).toBeDisabled();
+    await userEvent.type(within(dialog).getByRole("combobox", { name: "Group" }), "au");
+    await userEvent.click(await within(dialog).findByRole("option", { name: /Auditors/ }));
+    expect(asked()).toContain("kind=group");
     await userEvent.click(within(dialog).getByRole("button", { name: "Add rule" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     const fourth = rows()[3]!;
     expect(within(fourth).getByText("Auditors")).toBeInTheDocument();
     expect(within(fourth).getByRole("button", { name: "Read for Auditors: Blank" })).toBeEnabled();
+  });
+
+  it("adds a rule for a person found by typing, by their id (#88)", async () => {
+    const asked = stubSearch({
+      user: [{ detail: "jane@example.org", id: "u-jane", label: "Jane Smith" }],
+    });
+    const { posted } = renderAccess();
+    await userEvent.click(screen.getByRole("button", { name: "Edit rules" }));
+    await userEvent.click(screen.getByRole("button", { name: "+ Add rule" }));
+    const dialog = screen.getByRole("dialog", { name: "Add rule" });
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Person" }));
+    await userEvent.type(within(dialog).getByRole("combobox", { name: "Person" }), "smi");
+    const option = await within(dialog).findByRole("option", { name: /Jane Smith/ });
+    expect(option).toHaveTextContent("jane@example.org");
+    await userEvent.click(option);
+    expect(asked()).toContain("kind=user");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Add rule" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Save rules" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    const saved = JSON.parse(String(posted[0]!.get("rules"))) as {
+      subjectKind: string;
+      subjectRef: string;
+    }[];
+    expect(saved.at(-1)).toMatchObject({ subjectKind: "USER", subjectRef: "u-jane" });
+  });
+
+  it("does not ask the server before two characters", async () => {
+    const asked = stubSearch({ user: [] });
+    renderAccess();
+    await userEvent.click(screen.getByRole("button", { name: "Edit rules" }));
+    await userEvent.click(screen.getByRole("button", { name: "+ Add rule" }));
+    const dialog = screen.getByRole("dialog", { name: "Add rule" });
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Person" }));
+    await userEvent.type(within(dialog).getByRole("combobox", { name: "Person" }), "s");
+    expect(
+      await within(dialog).findByText("Type at least 2 characters to search."),
+    ).toBeInTheDocument();
+    expect(asked()).toBe("");
   });
 
   it("removes a rule", async () => {

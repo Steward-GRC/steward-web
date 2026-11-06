@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DocumentType, NotifCadence, NotifCategory } from "../generated/schema";
+import {
+  CategoryDocumentTypes,
+  DocumentType,
+  NotifCadence,
+  NotifCategory,
+} from "../generated/schema";
 import { PolicyStatus } from "../views";
 import { liveEdge } from "./live.server";
 
@@ -43,6 +48,7 @@ const category = (id: string, name: string, parentId: null | string = null) => (
   defaultTemplateId: null,
   defaultTemplateNone: false,
   defaultWorkflowId: null,
+  documentTypes: "BOTH",
   exclusionGroupIds: null,
   id,
   idpGroupIds: null,
@@ -655,6 +661,34 @@ describe("liveEdge.updateGroupSettings", () => {
     });
     await liveEdge.updateGroupSettings({ defaultTemplateNone: true, id: "c-fin" });
     expect(calls.some((c) => c.operation === "SetCategoryGovernance")).toBe(false);
+  });
+});
+
+describe("liveEdge category document types (#87)", () => {
+  it("sets what a category holds with its own mutation, leaving the others alone", async () => {
+    const current = category("c-fin", "Finance");
+    const calls = routeGateway({
+      Category: () => ({ category: current }),
+      SetCategoryDocumentTypes: (variables) => ({
+        setCategoryDocumentTypes: { ...current, ...variables },
+      }),
+    });
+    const saved = await liveEdge.updateGroupSettings({
+      documentTypes: CategoryDocumentTypes.Policies,
+      id: "c-fin",
+    });
+    const call = calls.find((c) => c.operation === "SetCategoryDocumentTypes");
+    expect(call?.variables).toEqual({ documentTypes: CategoryDocumentTypes.Policies, id: "c-fin" });
+    expect(saved.documentTypes).toBe(CategoryDocumentTypes.Policies);
+    expect(calls.some((c) => c.operation === "SetCategoryGovernance")).toBe(false);
+    expect(calls.some((c) => c.operation === "SetCategoryDefaults")).toBe(false);
+  });
+
+  it("counts the policies and procedures a category holds", async () => {
+    routeGateway({
+      CategoryDocumentCounts: () => ({ categoryDocumentCounts: { policies: 3, procedures: 1 } }),
+    });
+    expect(await liveEdge.categoryDocumentCounts("c-fin")).toEqual({ policies: 3, procedures: 1 });
   });
 });
 

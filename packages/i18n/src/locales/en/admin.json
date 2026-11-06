@@ -95,12 +95,12 @@
       "description": "It joins the bottom of this category's rules, every action blank. Move it up to give it priority.",
       "kind": "Subject",
       "group": "Group",
-      "groupHint": "The group's name in your identity provider.",
+      "groupHint": "Type at least 2 characters of the group's name.",
+      "groupPlaceholder": "Search groups",
       "person": "Person",
-      "personPlaceholder": "Choose a person",
+      "personPlaceholder": "Search by name, email or username",
       "submit": "Add rule",
-      "cancel": "Cancel",
-      "groupName": "Group name"
+      "cancel": "Cancel"
     },
     "simulator": {
       "title": "Simulator",
@@ -745,6 +745,22 @@
   "categories": {
     "subtitle": "Org hierarchy, review cadence, and inherited defaults.",
     "search": "Search categories",
+    "documentTypes": {
+      "title": "Documents this category holds",
+      "description": "Policies, procedures, both, or none: a category that holds none only holds child categories (new drafts and moves are sent to a child). To narrow it later, move the documents it would no longer accept out first.",
+      "BOTH": "Policies and procedures",
+      "POLICIES": "Policies only",
+      "PROCEDURES": "Procedures only",
+      "NONE": "None (only holds child categories)",
+      "save": "Save",
+      "strandedTitle": "Move the documents out first",
+      "stranded_one": "1 document in this category would no longer be accepted. Move it to another category, then change this.",
+      "stranded_other": "{{count}} documents in this category would no longer be accepted. Move them to another category, then change this.",
+      "find": {
+        "policy": "Find them in the policy catalog",
+        "procedure": "Find them in the procedure catalog"
+      }
+    },
     "columns": {
       "category": "Category",
       "children": "Sub-categories",
@@ -1119,6 +1135,12 @@
       "title": "Move to section",
       "description": "This renumbers the {{noun}} to the target section's sequence.",
       "destination": "Destination section",
+      "refused": "{{path}} ({{why}})",
+      "holds": {
+        "container": "only holds other categories",
+        "policies": "holds policies only",
+        "procedures": "holds procedures only"
+      },
       "choose": "Choose a section",
       "loading": "Loading sections…",
       "newNumber": "New number",

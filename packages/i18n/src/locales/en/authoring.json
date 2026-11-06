@@ -182,6 +182,14 @@
     "withIssues_other": "{{count}} with issues"
   },
   "new": {
+    "holds": {
+      "cannot": "{{name}} {{why}}. Choose another.",
+      "container": "only holds other categories",
+      "policies": "holds policies only",
+      "procedures": "holds procedures only",
+      "reach": "{{name}} ({{why}}: pick a subcategory)",
+      "refused": "{{name}} ({{why}})"
+    },
     "back": "Back",
     "cancel": "Cancel",
     "continue": "Continue",
