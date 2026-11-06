@@ -10,7 +10,7 @@ import {
   type SortingFn,
   useReactTable,
 } from "@tanstack/react-table";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type ShouldRevalidateFunctionArgs, useSearchParams } from "react-router";
 
 /** One column of a data table. The same column feeds the table's header, its cells, the sort,
@@ -84,10 +84,38 @@ export const columnFilterParameter = (key: string) => `f.${key}`;
  * and `groups` is the page's rows split under their headings.
  */
 export const useDataTable = <Row>(options: UseDataTableOptions<Row>) => {
-  const [parameters, setParameters] = useSearchParams();
-  return useDataTableState(options, parameters, (next, replace) =>
-    setParameters(next, { preventScrollReset: true, replace }),
+  const [parameters, setParameters] = useMirroredSearchParams();
+  return useDataTableState(options, parameters, setParameters);
+};
+
+/**
+ * The address's search parameters with a copy the component owns. A click or a keystroke shows
+ * at once and none is lost while the router catches up; the address is written through, and a
+ * change made to it from somewhere else (Back, a link) replaces the copy.
+ */
+export const useMirroredSearchParams = (): [
+  URLSearchParams,
+  (next: URLSearchParams, replace: boolean) => void,
+] => {
+  const [address, setAddress] = useSearchParams();
+  const addressKey = address.toString();
+  const [local, setLocal] = useState(() => new URLSearchParams(addressKey));
+  const written = useRef(new Set<string>([addressKey]));
+  useEffect(() => {
+    if (!written.current.has(addressKey)) {
+      written.current.add(addressKey);
+      setLocal(new URLSearchParams(addressKey));
+    }
+  }, [addressKey]);
+  const set = useCallback(
+    (next: URLSearchParams, replace: boolean) => {
+      written.current.add(next.toString());
+      setLocal(next);
+      setAddress(next, { preventScrollReset: true, replace });
+    },
+    [setAddress],
   );
+  return [local, set];
 };
 
 /** The engine over any URLSearchParams state: the address (`useDataTable`) or, outside a router,
@@ -107,18 +135,7 @@ export const useDataTableState = <Row>(
 ) => {
   const name = (key: string) => parameterName(prefix, key);
 
-  // The search text is the box's own state, so a keystroke shows at once and none is lost while
-  // the address (and the router behind it) catches up. The address still carries it, and a
-  // change made elsewhere (Clear, a link) reaches the box.
-  const addressQuery = parameters.get(name("q")) ?? "";
-  const [query, setQueryState] = useState(addressQuery);
-  const written = useRef(new Set<string>([addressQuery]));
-  useEffect(() => {
-    if (!written.current.has(addressQuery)) {
-      written.current.add(addressQuery);
-      setQueryState(addressQuery);
-    }
-  }, [addressQuery]);
+  const query = parameters.get(name("q")) ?? "";
   const group = parameters.get(name("groupby")) ?? "";
   const requestedSize = Number(parameters.get(name("size")));
   const pageSize = pageSizes.includes(requestedSize) ? requestedSize : defaultPageSize;
@@ -239,8 +256,6 @@ export const useDataTableState = <Row>(
 
   return {
     clear: () => {
-      written.current.add("");
-      setQueryState("");
       const changes: Record<string, string> = { q: "" };
       for (const column of columns) changes[columnFilterParameter(column.key)] = "";
       update(changes);
@@ -260,11 +275,7 @@ export const useDataTableState = <Row>(
     setGroup: (key: string) => update({ groupby: key }),
     setPage: (next: number) => update({ page: next > 1 ? String(next) : "" }),
     setPageSize: (size: number) => update({ size: size === defaultPageSize ? "" : String(size) }),
-    setQuery: (value: string) => {
-      written.current.add(value);
-      setQueryState(value);
-      update({ q: value });
-    },
+    setQuery: (value: string) => update({ q: value }),
     setSort: (key: string, direction: "asc" | "desc") => {
       if (sortable(key)) update({ dir: direction === "desc" ? "desc" : "", sort: key });
     },
