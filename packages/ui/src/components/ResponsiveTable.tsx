@@ -4,7 +4,7 @@ import { useTranslation } from "@steward-web/i18n";
 import { ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode, useState } from "react";
 
-import { Table, TD, TH, THead } from "#ui/components/Display";
+import { Card, Table, TD, TH, THead } from "#ui/components/Display";
 import { Input } from "#ui/components/Input";
 import { cn } from "#ui/lib/cn";
 import { PHONE, useMediaQuery } from "#ui/lib/media";
@@ -96,11 +96,7 @@ export const ResponsiveTable = <Row,>({
         </tbody>
       </Table>
     );
-    return framed ? (
-      <div className="overflow-hidden rounded-[10px] border border-border bg-surface">{table}</div>
-    ) : (
-      table
-    );
+    return framed ? <Card>{table}</Card> : table;
   }
 
   const slot = (card: CardSlot) => columns.filter((column) => column.card === card);

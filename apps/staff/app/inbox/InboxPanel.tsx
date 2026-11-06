@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDayMonth, formatTime, useTranslation } from "@steward-web/i18n";
-import { cn } from "@steward-web/ui";
+import { cn, EmptyState } from "@steward-web/ui";
 import { Bell } from "lucide-react";
 import { useId, useState } from "react";
 import { Link } from "react-router";
@@ -98,11 +98,11 @@ export const InboxPanel = ({ notices, now = new Date(), onMarkAllRead }: InboxPa
         ))}
       </div>
       {shown.length === 0 ? (
-        <div className="flex flex-col items-center gap-1.5 px-7 py-7 text-center">
-          <Bell aria-hidden="true" className="size-[22px] text-muted" />
-          <b>{t("inbox.empty.title")}</b>
-          <span className="text-muted">{t("inbox.empty.body")}</span>
-        </div>
+        <EmptyState
+          description={t("inbox.empty.body")}
+          icon={<Bell className="size-[22px]" />}
+          title={t("inbox.empty.title")}
+        />
       ) : (
         <ul>
           {shown.map((notice) => (

@@ -7,6 +7,7 @@ import { formatDate, useTranslation } from "@steward-web/i18n";
 import {
   Banner,
   Button,
+  Card,
   CodeInput,
   Dialog,
   DialogBody,
@@ -36,8 +37,6 @@ export interface SecurityResult {
   totp?: { otpauthUri: string; secretMasked?: null | string };
 }
 
-const card = "overflow-hidden rounded-[10px] border border-border bg-surface";
-const cardHead = "border-b border-border-strong bg-sunken px-4 py-3 text-[15px] font-semibold";
 const row = "flex flex-wrap items-center gap-3 border-b border-border px-4 py-3 last:border-b-0";
 const textAction = "text-sm font-semibold hover:underline";
 const outline =
@@ -284,10 +283,7 @@ export const SecurityMethods = ({ factors, passkeys }: SecurityMethodsProps) => 
 
   return (
     <div className="flex flex-col gap-3.5">
-      <section aria-labelledby="security-methods" className={card}>
-        <h2 className={cardHead} id="security-methods">
-          {t("security.title")}
-        </h2>
+      <Card title={t("security.title")}>
         <ul>
           <MethodRow
             actions={<Lock aria-label={t("security.email.locked")} className="size-4 text-muted" />}
@@ -340,17 +336,13 @@ export const SecurityMethods = ({ factors, passkeys }: SecurityMethodsProps) => 
             name={t("security.passwordless.name")}
           />
         </ul>
-      </section>
+      </Card>
       {passkeyAdded ? (
         <p className="rounded-lg bg-ok-soft px-3.5 py-2.5 text-[13px] text-ok" role="status">
           {t("security.passkey.registered")}
         </p>
       ) : null}
-
-      <section aria-labelledby="security-sessions" className={card}>
-        <h2 className={cardHead} id="security-sessions">
-          {t("security.sessions.title")}
-        </h2>
+      <Card title={t("security.sessions.title")}>
         <sessions.Form className="flex flex-wrap items-center gap-3 px-4 py-3" method="post">
           <input name="intent" type="hidden" value="revoke-sessions" />
           <p className="min-w-0 flex-1 text-sm text-muted">{t("security.sessions.detail")}</p>
@@ -371,7 +363,7 @@ export const SecurityMethods = ({ factors, passkeys }: SecurityMethodsProps) => 
             tone="danger"
           />
         ) : null}
-      </section>
+      </Card>
     </div>
   );
 };

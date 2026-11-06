@@ -5,7 +5,7 @@ import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
-import { Banner, Button, cn, EmptyState } from "@steward-web/ui";
+import { Banner, Button, Card, cn, EmptyState } from "@steward-web/ui";
 import { type ReactNode, useEffect, useId, useState } from "react";
 import { data, Link, useFetcher, useNavigate, useSearchParams } from "react-router";
 
@@ -127,7 +127,10 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
       : draft.groupId;
 
   return (
-    <div className="flex w-full flex-col gap-3.5 p-6 text-base text-ink" data-testid="new-draft-page">
+    <div
+      className="flex w-full flex-col gap-3.5 p-6 text-base text-ink"
+      data-testid="new-draft-page"
+    >
       <div className="flex flex-col gap-1">
         <h1 className="text-[26px] leading-tight font-semibold">{t(`new.title.${noun}`)}</h1>
         <p className="text-muted">{t(`new.subtitle.${noun}`)}</p>
@@ -144,7 +147,7 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
             />
           ) : null}
           <input name="categoryId" type="hidden" value={homeId} />
-          <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-[18px]">
+          <Card className="flex flex-col gap-3.5 p-[18px]">
             <div
               aria-label={t("new.fields.documentType")}
               className="grid gap-2.5 sm:grid-cols-2"
@@ -286,7 +289,7 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
           <div className="flex justify-end gap-2">
             <Button asChild className="h-10 px-4" variant="secondary">
               <Link to={procedure ? "/procedures" : "/policies"}>{t("new.cancel")}</Link>

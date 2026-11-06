@@ -1,7 +1,8 @@
-// Copyright 2026 The Steward Authors
-// SPDX-License-Identifier: Apache-2.0
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+import { EmptyState } from "@steward-web/ui";
 import { Bell } from "lucide-react";
 import { Link } from "react-router";
 
@@ -22,13 +23,16 @@ export default function Inbox() {
       <h1 className="text-[26px] font-semibold md:text-[30px] md:leading-[38px]">
         {t("inbox.title")}
       </h1>
-      <div className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-surface px-7 py-8 text-center">
-        <Bell aria-hidden="true" className="size-[22px] text-muted" />
-        <p className="max-w-lg text-muted">{t("inbox.unavailable.body")}</p>
-        <Link className="text-[13px] text-primary hover:underline" to="/profile/notifications">
-          {t("inbox.settings")}
-        </Link>
-      </div>
+      <EmptyState
+        action={
+          <Link className="text-[13px] text-primary hover:underline" to="/profile/notifications">
+            {t("inbox.settings")}
+          </Link>
+        }
+        description={t("inbox.unavailable.body")}
+        framed
+        icon={<Bell className="size-[22px]" />}
+      />
     </div>
   );
 }

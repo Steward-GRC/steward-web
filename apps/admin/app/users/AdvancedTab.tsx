@@ -6,6 +6,8 @@ import { formatDayMonth, formatRelativeTime, useTranslation } from "@steward-web
 import {
   Banner,
   Button,
+  Card,
+  CardHeader,
   cn,
   Dialog,
   DialogBody,
@@ -14,6 +16,7 @@ import {
   DialogFooter,
   DialogNote,
   DialogTrigger,
+  EmptyState,
   Field,
   StepUpDialog,
   Textarea,
@@ -112,11 +115,8 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
         : t("users.advanced.sessions.revoked");
 
   return (
-    <section
-      aria-labelledby={titleId}
-      className="overflow-hidden rounded-[10px] border border-border bg-surface"
-    >
-      <div className="flex items-center justify-between border-b border-border-strong bg-sunken px-3.5 py-2.5">
+    <Card aria-labelledby={titleId}>
+      <CardHeader>
         <b id={titleId}>{t("users.advanced.sessions.title")}</b>
         {user.deletedAt ? null : (
           <Dialog onOpenChange={setOpen} open={open}>
@@ -141,7 +141,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
             </DialogContent>
           </Dialog>
         )}
-      </div>
+      </CardHeader>
       {failureOf(logOut) ? (
         <Banner
           className="m-3"
@@ -151,7 +151,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
         />
       ) : null}
       {sessions.length === 0 ? (
-        <p className="px-3.5 py-2.5 text-sm text-muted">{t("users.advanced.sessions.empty")}</p>
+        <EmptyState compact title={t("users.advanced.sessions.empty")} />
       ) : (
         <ul aria-labelledby={titleId}>
           {sessions.map((session) => (
@@ -175,7 +175,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 };
 

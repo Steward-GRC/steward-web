@@ -13,20 +13,45 @@ import type { Failure } from "./failure";
 
 import { DiagnosticsSlot } from "./DiagnosticsSlot";
 
-/** The one empty state: a title, one line and an optional action. */
+/**
+ * The one empty state: an optional icon, a title, one line and an optional action. `framed` puts
+ * it on its own card for a spot that isn't inside one.
+ */
 export const EmptyState = ({
   action,
   className,
+  compact,
   description,
+  framed,
+  icon,
   title,
 }: {
   action?: ReactNode;
   className?: string;
+  /** One muted line, for an empty list inside a card. */
+  compact?: boolean;
   description?: ReactNode;
-  title: ReactNode;
+  framed?: boolean;
+  icon?: ReactNode;
+  title?: ReactNode;
 }) => (
-  <div className={cn("grid justify-items-center gap-2 px-6 py-10 text-center", className)}>
-    <p className="text-md font-semibold text-ink">{title}</p>
+  <div
+    className={cn(
+      "grid justify-items-center gap-2 px-6 py-10 text-center",
+      compact && "py-4",
+      framed && "rounded-lg border border-border bg-surface",
+      className,
+    )}
+    data-testid="empty-state"
+  >
+    {icon ? (
+      <span aria-hidden="true" className="flex text-muted">
+        {icon}
+      </span>
+    ) : null}
+    {title ? (
+      <p className={compact ? "text-sm text-muted" : "text-md font-semibold text-ink"}>{title}</p>
+    ) : null}
     {description ? <p className="max-w-md text-base text-muted">{description}</p> : null}
     {action ? <div className="mt-2">{action}</div> : null}
   </div>

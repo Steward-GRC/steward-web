@@ -3,7 +3,7 @@ import type { SharedPolicy, SsoTestOutcome } from "@steward-web/auth";
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDate, useTranslation } from "@steward-web/i18n";
-import { GatePage, initialsOf, Mark } from "@steward-web/ui";
+import { Badge, GatePage, initialsOf, Mark } from "@steward-web/ui";
 import { Building2, CircleCheck, Clock, Eye, Link2Off, XCircle } from "lucide-react";
 import { useId } from "react";
 import { Form } from "react-router";
@@ -37,10 +37,10 @@ export const SharedPolicyReader = ({
             <b className="font-bold">{organisation}</b>
           </>
         ) : null}
-        <span className="ml-auto flex items-center gap-1.5 rounded-full bg-info-soft px-2.5 py-1 text-xs font-semibold text-info">
-          <Eye aria-hidden="true" className="size-[1.15em]" />
+        <Badge className="ml-auto" tone="info">
+          <Eye aria-hidden="true" />
           {t("shared.marker")}
-        </span>
+        </Badge>
       </header>
       <div className="flex flex-1 flex-col gap-2 px-4 py-[26px] sm:px-11">
         <span className="text-xs font-medium text-muted">{policy.category}</span>

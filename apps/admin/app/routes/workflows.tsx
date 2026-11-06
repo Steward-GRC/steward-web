@@ -3,7 +3,7 @@
 import type { WorkflowDef } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
-import { Button, EmptyState } from "@steward-web/ui";
+import { Badge, Button, EmptyState } from "@steward-web/ui";
 import { AlertTriangle } from "lucide-react";
 import { useId } from "react";
 import { Link } from "react-router";
@@ -79,11 +79,7 @@ const Site = ({ name, workflows }: { name: null | string; workflows: readonly Wo
           >
             <span className="flex items-center gap-2">
               <b className="min-w-0 flex-1 truncate">{workflow.name}</b>
-              {notUsable(workflow) ? (
-                <span className="rounded-full bg-neutral-soft px-[9px] py-[3px] text-xs font-semibold text-neutral">
-                  {t("workflows.draft")}
-                </span>
-              ) : null}
+              {notUsable(workflow) ? <Badge>{t("workflows.draft")}</Badge> : null}
             </span>
             {workflow.disabledApprover ? (
               <span className="flex items-center gap-1.5 text-sm text-warn">

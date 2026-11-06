@@ -7,6 +7,7 @@ import { refusalOf } from "@steward-web/shell";
 import {
   Banner,
   Button,
+  Card,
   cn,
   Dialog,
   DialogBody,
@@ -337,14 +338,14 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
             </>
           ) : null}
           {step === "review" ? (
-            <section className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface p-4">
+            <Card className="flex flex-col gap-2 p-4">
               <b>
                 {active
                   ? t("templates.detail.review.title", { version: active.versionNo })
                   : t("templates.detail.review.titleFirst")}
               </b>
               {changes.length === 0 ? (
-                <p className="text-sm text-muted">{t("templates.detail.review.none")}</p>
+                <EmptyState compact title={t("templates.detail.review.none")} />
               ) : (
                 <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">
                   {changes.map((change, index) => (
@@ -360,10 +361,10 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
                   {t("templates.detail.nextPublish")}
                 </Button>
               </div>
-            </section>
+            </Card>
           ) : null}
           {step === "publish" ? (
-            <section className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface p-4">
+            <Card className="flex flex-col gap-2 p-4">
               <b>{t("templates.detail.publish.title", { version: draft.versionNo })}</b>
               <p className="text-sm text-muted">{t("templates.detail.publish.description")}</p>
               <div className="flex justify-end gap-2">
@@ -383,7 +384,7 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
                   {t("templates.detail.publish.action")}
                 </Button>
               </div>
-            </section>
+            </Card>
           ) : null}
         </>
       ) : (

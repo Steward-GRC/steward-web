@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import { Badge, Banner, Button, NotFound } from "@steward-web/ui";
+import { Badge, Banner, Button, Card, NotFound } from "@steward-web/ui";
 import { useState } from "react";
 import { data, Link, redirect, useFetcher } from "react-router";
 
@@ -228,10 +228,7 @@ export default function OrganizationSetup({ loaderData }: Route.ComponentProps) 
       </header>
 
       {org.enabled ? (
-        <section
-          aria-label={org.orgName}
-          className="flex flex-wrap items-center gap-3 rounded-[10px] border border-border bg-surface p-4"
-        >
+        <Card aria-label={org.orgName} className="flex flex-wrap items-center gap-3 p-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <b>{org.orgName}</b>
@@ -254,7 +251,7 @@ export default function OrganizationSetup({ loaderData }: Route.ComponentProps) 
           >
             {t("organizations.setup.summary.disable")}
           </Button>
-        </section>
+        </Card>
       ) : null}
 
       {showSteps ? (
@@ -278,7 +275,7 @@ export default function OrganizationSetup({ loaderData }: Route.ComponentProps) 
             </>
           ) : null}
           {selected === "activate" ? (
-            <section className="flex flex-col gap-2.5 rounded-[10px] border border-border bg-surface p-4">
+            <Card className="flex flex-col gap-2.5 p-4">
               {org.testPassed ? (
                 <Banner title={t("organizations.setup.test.passed")} tone="ok" />
               ) : null}
@@ -298,7 +295,7 @@ export default function OrganizationSetup({ loaderData }: Route.ComponentProps) 
                   {t("organizations.setup.activate.action")}
                 </Button>
               )}
-            </section>
+            </Card>
           ) : null}
         </>
       ) : null}

@@ -1,9 +1,10 @@
-// Copyright 2026 The Steward Authors
-// SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { type ReactNode, useId } from "react";
 import { Link } from "react-router";
 
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Card } from "#ui/components/Display";
 import { EmptyState } from "#ui/feedback/States";
 import { cn } from "#ui/lib/cn";
 
@@ -29,15 +30,12 @@ const Panel = ({
 }) => {
   const titleId = useId();
   return (
-    <section
-      aria-labelledby={titleId}
-      className="flex flex-col gap-3 rounded-[10px] border border-border bg-surface p-[18px] text-ink"
-    >
+    <Card aria-labelledby={titleId} className="flex flex-col gap-3 p-[18px] text-ink">
       <h2 className="text-[15px] font-semibold" id={titleId}>
         {title}
       </h2>
       {empty ? <EmptyState title={empty} /> : children}
-    </section>
+    </Card>
   );
 };
 

@@ -7,21 +7,47 @@ import {
   Progress as ProgressPrimitive,
   Separator as SeparatorPrimitive,
 } from "radix-ui";
-import { type ComponentProps } from "react";
+import { type ComponentProps, type ReactNode, useId } from "react";
 
 import { cn } from "#ui/lib/cn";
 
-export const Card = ({ className, ...props }: ComponentProps<"section">) => (
-  <section
-    className={cn("rounded-lg border border-border bg-surface shadow-[var(--shadow-1)]", className)}
-    {...props}
-  />
-);
+/**
+ * The one card: the surface, a firm edge and clipped corners. Give it a `title` and it names
+ * itself for screen readers and shows the banded header, with `aside` beside the title.
+ */
+export const Card = ({
+  aside,
+  children,
+  className,
+  title,
+  ...props
+}: { aside?: ReactNode; title?: string } & Omit<ComponentProps<"section">, "title">) => {
+  const headingId = useId();
+  return (
+    <section
+      aria-labelledby={title ? headingId : undefined}
+      className={cn(
+        "overflow-hidden rounded-lg border border-card-edge bg-surface shadow-[var(--shadow-1)]",
+        className,
+      )}
+      {...props}
+    >
+      {title ? (
+        <CardHeader data-testid="card-band">
+          <h2 id={headingId}>{title}</h2>
+          {aside}
+        </CardHeader>
+      ) : null}
+      {children}
+    </section>
+  );
+};
 
+/** The card's band: white text on the purple band colour with the card's edge under it. */
 export const CardHeader = ({ className, ...props }: ComponentProps<"div">) => (
   <div
     className={cn(
-      "flex items-start justify-between gap-4 border-b border-border px-5 py-4",
+      "flex items-center justify-between gap-2 border-b border-card-edge bg-band px-4 py-3 text-[15px] font-semibold text-on-band [&_.text-muted]:text-on-band/80 [&_.text-primary]:text-on-band",
       className,
     )}
     {...props}

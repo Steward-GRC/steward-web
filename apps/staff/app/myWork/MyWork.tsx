@@ -1,17 +1,21 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDate, useTranslation } from "@steward-web/i18n";
-import { ReachError, StatCard, UpdatedJustNow, useLiveList } from "@steward-web/ui";
+import {
+  Card,
+  EmptyState,
+  ReachError,
+  StatCard,
+  UpdatedJustNow,
+  useLiveList,
+} from "@steward-web/ui";
 import { Check, CircleCheck, PencilLine, Stamp } from "lucide-react";
-import { type ReactNode, useId } from "react";
+import { type ReactNode } from "react";
 import { Link } from "react-router";
 
 import type { LibraryOverview, MyWorkData, WorkRow } from "./myWork.server";
 
 // The Home and Library canvas's cards: the surface, a 1 px border, 10 px corners.
-const card = "overflow-hidden rounded-[10px] border border-border bg-surface";
-const cardHead =
-  "border-b border-border-strong bg-sunken px-4 py-3 text-[15px] font-semibold text-ink";
 /** How many rows each home list shows before it links to its full list page. */
 const HOME_LIST_CAP = 5;
 const rowAction =
@@ -26,34 +30,6 @@ const Heading = ({ email }: { email: string }) => {
       <h1 className="text-[30px] leading-[38px] font-semibold">{t("myWork.title")}</h1>
       <span className="text-[15px] text-muted">{t("myWork.subtitle")}</span>
     </div>
-  );
-};
-
-/** A titled card that names itself for screen readers. */
-const Card = ({
-  aside,
-  children,
-  className = "",
-  title,
-}: {
-  /** Beside the title on the band: "Updated just now". */
-  aside?: ReactNode;
-  children: ReactNode;
-  className?: string;
-  title: string;
-}) => {
-  const headingId = useId();
-  return (
-    <section aria-labelledby={headingId} className={`${card} ${className}`}>
-      <div
-        className={`${cardHead} flex items-center justify-between gap-2`}
-        data-testid="card-band"
-      >
-        <h2 id={headingId}>{title}</h2>
-        {aside}
-      </div>
-      {children}
-    </section>
   );
 };
 
@@ -403,7 +379,6 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
  */
 export const ToAcknowledge = ({ obligations }: { obligations: null | WorkRow[] }) => {
   const { t } = useTranslation("approvals");
-  const listId = useId();
   return (
     <div className="flex flex-col gap-4 px-4 py-6 text-base text-ink sm:px-8">
       <div className="flex flex-col gap-1">
@@ -413,10 +388,7 @@ export const ToAcknowledge = ({ obligations }: { obligations: null | WorkRow[] }
       {obligations === null ? (
         <ReachError action={t("toAcknowledge.loadAction")} />
       ) : obligations.length > 0 ? (
-        <section aria-labelledby={listId} className={card}>
-          <h2 className={cardHead} id={listId}>
-            {t("toAcknowledge.list", { count: obligations.length })}
-          </h2>
+        <Card title={t("toAcknowledge.list", { count: obligations.length })}>
           <ul>
             {obligations.map((row) => (
               <li
@@ -435,18 +407,14 @@ export const ToAcknowledge = ({ obligations }: { obligations: null | WorkRow[] }
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       ) : (
-        <div className="flex flex-col items-center gap-1.5 rounded-[10px] border border-border bg-surface p-[30px] text-center">
-          <span
-            aria-hidden="true"
-            className="flex size-11 items-center justify-center rounded-full bg-ok-soft text-xl text-ok"
-          >
-            <Check className="size-[1.15em]" />
-          </span>
-          <b className="text-md font-semibold">{t("toAcknowledge.empty.title")}</b>
-          <span className="text-muted">{t("toAcknowledge.empty.body")}</span>
-        </div>
+        <EmptyState
+          description={t("toAcknowledge.empty.body")}
+          framed
+          icon={<Check className="size-6 text-ok" />}
+          title={t("toAcknowledge.empty.title")}
+        />
       )}
     </div>
   );

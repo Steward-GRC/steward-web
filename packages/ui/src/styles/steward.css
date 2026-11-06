@@ -32,6 +32,9 @@ SPDX-License-Identifier: Apache-2.0
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-band: var(--band);
+  --color-on-band: var(--on-band);
+  --color-card-edge: var(--card-edge);
   --color-control: var(--control);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
@@ -138,6 +141,9 @@ SPDX-License-Identifier: Apache-2.0
   --border: #c4b5a3;
   --border-strong: #b9aab7;
   --control: #8a7b89;
+  --band: #5d2a5b;
+  --on-band: #ffffff;
+  --card-edge: #8a7b89;
   --primary: #5d2a5b;
   --primary-hover: #4d2149;
   --primary-active: #3e1a3b;
@@ -263,6 +269,9 @@ SPDX-License-Identifier: Apache-2.0
   --border: #43354a;
   --border-strong: #65536b;
   --control: #8e7c90;
+  --band: #100a12;
+  --on-band: #f3ecf2;
+  --card-edge: #8e7c90;
   --primary: #d9a6d2;
   --primary-hover: #e5bcdf;
   --primary-active: #cc90c4;
@@ -388,6 +397,9 @@ SPDX-License-Identifier: Apache-2.0
   --border: #ffffff;
   --border-strong: #ffffff;
   --control: #ffffff;
+  --band: #111111;
+  --on-band: #ffffff;
+  --card-edge: #ffffff;
   --primary: #f7c8f0;
   --primary-hover: #ffffff;
   --primary-active: #eab0e1;
@@ -513,6 +525,9 @@ SPDX-License-Identifier: Apache-2.0
     --border: #43354a;
     --border-strong: #65536b;
     --control: #8e7c90;
+    --band: #100a12;
+    --on-band: #f3ecf2;
+    --card-edge: #8e7c90;
     --primary: #d9a6d2;
     --primary-hover: #e5bcdf;
     --primary-active: #cc90c4;

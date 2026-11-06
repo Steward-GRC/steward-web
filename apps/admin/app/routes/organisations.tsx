@@ -8,6 +8,7 @@ import {
   Badge,
   Banner,
   Button,
+  Card,
   Dialog,
   DialogClose,
   DialogContent,
@@ -80,10 +81,7 @@ const SpCertificateCard = ({ certificate }: { certificate: SpCertificate }) => {
   const failure =
     rotate.state === "idle" && rotate.data && !rotate.data.ok ? rotate.data.failure : undefined;
   return (
-    <section
-      aria-labelledby={titleId}
-      className="flex flex-col gap-2.5 rounded-[10px] border border-border bg-surface p-4"
-    >
+    <Card aria-labelledby={titleId} className="flex flex-col gap-2.5 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <b id={titleId}>{t("organizations.cert.title")}</b>
         <Badge tone={certificate.active ? "ok" : "neutral"}>
@@ -133,7 +131,7 @@ const SpCertificateCard = ({ certificate }: { certificate: SpCertificate }) => {
       {failure ? (
         <Banner failure={failure} title={t("organizations.cert.failed")} tone="danger" />
       ) : null}
-    </section>
+    </Card>
   );
 };
 

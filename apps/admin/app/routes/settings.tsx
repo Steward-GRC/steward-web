@@ -5,6 +5,7 @@ import { refusalOf, SiteBanners } from "@steward-web/shell";
 import {
   Banner,
   Button,
+  Card,
   cn,
   type Failure,
   Field,
@@ -133,10 +134,7 @@ const SettingsCard = ({
 }) => {
   const titleId = useId();
   return (
-    <section
-      aria-labelledby={titleId}
-      className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface px-4 py-3.5"
-    >
+    <Card aria-labelledby={titleId} className="flex flex-col gap-2 px-4 py-3.5">
       <div className="flex items-center gap-2.5">
         <b className="flex-1" id={titleId}>
           {title}
@@ -153,7 +151,7 @@ const SettingsCard = ({
       </div>
       <p className="text-sm leading-normal text-muted">{description}</p>
       {children}
-    </section>
+    </Card>
   );
 };
 

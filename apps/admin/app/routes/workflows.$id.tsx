@@ -5,6 +5,7 @@ import type { WorkflowDef, WorkflowStageInput } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
+  Badge,
   Banner,
   Button,
   Dialog,
@@ -178,11 +179,7 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
           <h1 className="text-[26px] leading-[1.3] font-semibold">{name || workflow.name}</h1>
           <p className="text-base text-muted">{t("workflows.editor.sequential")}</p>
         </div>
-        {draft ? (
-          <span className="rounded-full bg-neutral-soft px-[9px] py-[3px] text-xs font-semibold text-neutral">
-            {t("workflows.draft")}
-          </span>
-        ) : null}
+        {draft ? <Badge>{t("workflows.draft")}</Badge> : null}
       </header>
 
       {draft ? (

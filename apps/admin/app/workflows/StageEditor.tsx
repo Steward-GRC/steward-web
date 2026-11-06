@@ -5,7 +5,7 @@
 import type { GroupUnitInput, WorkflowStageInput } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
-import { cn, Select } from "@steward-web/ui";
+import { Card, cn, Select } from "@steward-web/ui";
 import { GripVertical, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
 
@@ -80,9 +80,9 @@ const StageCard = ({
   };
 
   return (
-    <div
+    <Card
       aria-label={t("workflows.editor.stageGroup", { number })}
-      className="overflow-hidden rounded-[10px] border border-border bg-surface"
+
       onDragOver={(event) => event.preventDefault()}
       onDrop={onDrop}
       role="group"
@@ -217,7 +217,7 @@ const StageCard = ({
           <span className="text-muted">{t("workflows.editor.workingDays")}</span>
         </span>
       </div>
-    </div>
+    </Card>
   );
 };
 

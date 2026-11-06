@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogTrigger,
+  EmptyState,
   Field,
   Input,
   Select,
@@ -90,7 +91,7 @@ export const GroupMappings = ({
     <section aria-labelledby={titleId} className={`${CARD} flex flex-col gap-2`}>
       <b id={titleId}>{t("organizations.setup.mappings.title")}</b>
       {mappings.length === 0 ? (
-        <p className="text-sm text-muted">{t("organizations.setup.mappings.empty")}</p>
+        <EmptyState compact title={t("organizations.setup.mappings.empty")} />
       ) : (
         <ul className="flex flex-col">
           {mappings.map((mapping) => (

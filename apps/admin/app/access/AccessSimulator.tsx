@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { type RaciDecision, RaciGrant, type RaciRuleInput } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
-import { Banner, cn, type Failure, Select } from "@steward-web/ui";
+import { Banner, CardHeader, cn, type Failure, Select } from "@steward-web/ui";
 import { useEffect, useId, useState } from "react";
 import { useFetcher } from "react-router";
 
@@ -117,14 +117,14 @@ export const AccessSimulator = ({ categoryId, draft, names, people }: AccessSimu
       aria-labelledby={titleId}
       className="overflow-hidden rounded-[10px] border border-border bg-surface shadow-[var(--shadow-3)] xl:sticky xl:top-[calc(var(--shell-top,0px)+12px)]"
     >
-      <div className="flex items-center gap-2 border-b border-border-strong bg-sunken px-4 py-3">
+      <CardHeader>
         <b className="text-[15px]" id={titleId}>
           {t("access.simulator.title")}
         </b>
         <span className="rounded-[3px] bg-warn-soft px-1.5 py-0.5 font-mono text-[10px] leading-[14px] font-semibold text-warn">
           {t("access.simulator.live")}
         </span>
-      </div>
+      </CardHeader>
       <div className="flex flex-col gap-2.5 px-4 py-3.5">
         <div className="flex flex-col gap-[5px]">
           <label className="text-sm font-medium" htmlFor={personId}>

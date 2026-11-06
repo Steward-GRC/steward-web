@@ -1,9 +1,10 @@
-// Copyright 2026 The Steward Authors
-// SPDX-License-Identifier: Apache-2.0
 import { formatDateTime, useTranslation } from "@steward-web/i18n";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useId, useState } from "react";
 
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Card, CardHeader } from "#ui/components/Display";
 import { EmptyState } from "#ui/feedback/States";
 
 import type { HistoryEntry } from "./policyReaderModel";
@@ -191,16 +192,10 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
   const titleId = useId();
 
   return (
-    <section
-      aria-labelledby={titleId}
-      className="overflow-hidden rounded-lg border border-border bg-surface text-ink"
-    >
-      <h2
-        className="border-b border-border-strong bg-sunken px-5 py-3 text-[15px] font-semibold"
-        id={titleId}
-      >
-        {t("reader.history.title")}
-      </h2>
+    <Card aria-labelledby={titleId} className="text-ink">
+      <CardHeader>
+        <h2 id={titleId}>{t("reader.history.title")}</h2>
+      </CardHeader>
       {groups.length === 0 ? (
         <EmptyState title={t("reader.history.empty")} />
       ) : (
@@ -213,6 +208,6 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
           />
         ))
       )}
-    </section>
+    </Card>
   );
 };

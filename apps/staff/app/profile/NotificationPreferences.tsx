@@ -3,7 +3,7 @@
 import type { NotificationPreferences as Preferences } from "@steward-web/api-client";
 
 import { formatWeekday, useTranslation } from "@steward-web/i18n";
-import { cn, Switch } from "@steward-web/ui";
+import { Badge, Card, cn, Switch } from "@steward-web/ui";
 import { ChevronDown, ChevronRight, Lock } from "lucide-react";
 import { useId, useState } from "react";
 import { useFetcher } from "react-router";
@@ -14,8 +14,6 @@ import {
   type NotificationGroup,
   notificationGroups,
 } from "./notificationGroups";
-
-const card = "overflow-hidden rounded-[10px] border border-border bg-surface";
 
 /** "steward_ack_reminder" as "Ack reminder", for a kind the UI has no label for yet. */
 const spelledOut = (kind: string) => {
@@ -97,10 +95,10 @@ const GroupRow = ({ group }: { group: NotificationGroup }) => {
       <div className="flex flex-wrap items-center gap-2">
         <b className="flex-1 font-semibold">{name}</b>
         {group.mandatory ? (
-          <span className="flex items-center gap-1 rounded-[4px] bg-sunken px-[7px] py-0.5 text-[11px] font-semibold text-muted">
-            <Lock aria-hidden="true" className="size-3" />
+          <Badge shape="tag">
+            <Lock aria-hidden="true" />
             {t("notifications.required")}
-          </span>
+          </Badge>
         ) : null}
         <CadenceControl
           label={t("notifications.cadenceFor", { name })}
@@ -166,10 +164,7 @@ const Channels = ({ settings }: { settings: Preferences["settings"] }) => {
       { method: "post" },
     );
   return (
-    <section
-      aria-labelledby={titleId}
-      className={cn(card, "grid gap-2.5 px-4 py-3.5 sm:grid-cols-3")}
-    >
+    <Card aria-labelledby={titleId} className="grid gap-2.5 px-4 py-3.5 sm:grid-cols-3">
       <h2 className="font-semibold sm:col-span-3" id={titleId}>
         {t("notifications.reached")}
       </h2>
@@ -186,7 +181,7 @@ const Channels = ({ settings }: { settings: Preferences["settings"] }) => {
           time: hour(settings.digest.dailyHour),
         })}
       </p>
-    </section>
+    </Card>
   );
 };
 
@@ -203,7 +198,6 @@ export interface NotificationPreferencesProps {
  */
 export const NotificationPreferences = ({ preferences }: NotificationPreferencesProps) => {
   const { t } = useTranslation("settings");
-  const titleId = useId();
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-col gap-1">
@@ -213,19 +207,13 @@ export const NotificationPreferences = ({ preferences }: NotificationPreferences
       {preferences ? (
         <>
           <Channels settings={preferences.settings} />
-          <section aria-labelledby={titleId} className={card}>
-            <h2
-              className="border-b border-border-strong bg-sunken px-4 py-3 text-[15px] font-semibold"
-              id={titleId}
-            >
-              {t("notifications.about")}
-            </h2>
+          <Card title={t("notifications.about")}>
             <ul>
               {notificationGroups(preferences).map((group) => (
                 <GroupRow group={group} key={group.category} />
               ))}
             </ul>
-          </section>
+          </Card>
         </>
       ) : (
         <p className="rounded-[10px] border border-border bg-surface px-4 py-3.5 text-muted">

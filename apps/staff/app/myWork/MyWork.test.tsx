@@ -146,8 +146,16 @@ describe("U1: My work for an author and approver", () => {
     inRouter(<MyWork data={bob} />);
     const compliance = await screen.findByRole("region", { name: "Acknowledgement compliance" });
     const library = screen.getByRole("region", { name: "Library overview" });
-    expect(within(compliance).getByTestId("card-band")).toHaveClass("bg-sunken", "border-b");
-    expect(within(library).getByTestId("card-band")).toHaveClass("bg-sunken", "border-b");
+    expect(within(compliance).getByTestId("card-band")).toHaveClass(
+      "bg-band",
+      "text-on-band",
+      "border-b",
+    );
+    expect(within(library).getByTestId("card-band")).toHaveClass(
+      "bg-band",
+      "text-on-band",
+      "border-b",
+    );
   });
 
   it("puts each list on its own full-width row, capped at five with a link to the full list", async () => {

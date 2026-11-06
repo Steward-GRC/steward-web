@@ -175,7 +175,7 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
               key: "overdue",
             },
           ]}
-          empty={<p className="text-muted">{t("completion.empty.filtered")}</p>}
+          empty={<EmptyState compact title={t("completion.empty.filtered")} />}
           framed
           label={t("completion.table.label")}
           rowKey={(row) => row.number}
