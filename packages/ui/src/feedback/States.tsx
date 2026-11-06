@@ -13,19 +13,38 @@ import type { Failure } from "./failure";
 
 import { DiagnosticsSlot } from "./DiagnosticsSlot";
 
-/** The one empty state: a title, one line and an optional action. */
+/**
+ * The one empty state: an optional icon, a title, one line and an optional action. `framed` puts
+ * it on its own card for a spot that isn't inside one.
+ */
 export const EmptyState = ({
   action,
   className,
   description,
+  framed,
+  icon,
   title,
 }: {
   action?: ReactNode;
   className?: string;
   description?: ReactNode;
+  framed?: boolean;
+  icon?: ReactNode;
   title: ReactNode;
 }) => (
-  <div className={cn("grid justify-items-center gap-2 px-6 py-10 text-center", className)}>
+  <div
+    className={cn(
+      "grid justify-items-center gap-2 px-6 py-10 text-center",
+      framed && "rounded-lg border border-border bg-surface",
+      className,
+    )}
+    data-testid="empty-state"
+  >
+    {icon ? (
+      <span aria-hidden="true" className="flex text-muted">
+        {icon}
+      </span>
+    ) : null}
     <p className="text-md font-semibold text-ink">{title}</p>
     {description ? <p className="max-w-md text-base text-muted">{description}</p> : null}
     {action ? <div className="mt-2">{action}</div> : null}

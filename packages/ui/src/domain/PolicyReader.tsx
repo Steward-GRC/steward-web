@@ -1,5 +1,3 @@
-// Copyright 2026 The Steward Authors
-// SPDX-License-Identifier: Apache-2.0
 import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
 import { formatDate, formatDateTime, formatTime, useTranslation } from "@steward-web/i18n";
 import {
@@ -17,6 +15,9 @@ import { createPortal, flushSync } from "react-dom";
 import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
 
 import { useRegisterCommandActions } from "#ui/commands/CommandActions";
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+import { SensitivityBadge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Switch } from "#ui/components/Controls";
 import { CopyId } from "#ui/components/CopyId";
@@ -571,18 +572,7 @@ export const PolicyReader = ({
             <CopyId id={detail.number}>
               {t("reader.versionLine", { number: detail.number, version: detail.version })}
             </CopyId>
-            {detail.sensitivity === Sensitivity.Sensitive ? (
-              <span
-                className="inline-flex items-center gap-[5px] rounded-full px-2 py-0.5 text-xs font-semibold hc:outline hc:outline-1"
-                style={{
-                  background: "var(--sensitivity-sensitive-soft)",
-                  color: "var(--sensitivity-sensitive)",
-                }}
-              >
-                <EyeOff aria-hidden="true" className="size-3" />
-                {t("sensitivity.sensitive")}
-              </span>
-            ) : null}
+            {detail.sensitivity === Sensitivity.Sensitive ? <SensitivityBadge sensitive /> : null}
           </span>
         </div>
         <button

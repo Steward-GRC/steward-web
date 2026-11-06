@@ -1,8 +1,10 @@
-// Copyright 2026 The Steward Authors
-// SPDX-License-Identifier: Apache-2.0
 import type { DocumentBlock, InlineRun } from "@steward-web/api-client";
 
 import { Fragment, type ReactNode } from "react";
+
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Card } from "#ui/components/Display";
 
 import type { OutlineItem } from "./OutlineCard";
 import type { PolicyAppendix, PolicyDefinition } from "./policyReaderModel";
@@ -357,9 +359,9 @@ export const RedactedDocument = ({
 }) => {
   const numbered = numberHeadings(blocks);
   return (
-    <div
+    <Card
       aria-label={label}
-      className="flex flex-col gap-2.5 rounded-[10px] border border-border bg-surface px-5 py-7 font-serif text-ink select-none sm:px-9"
+      className="flex flex-col gap-2.5 px-5 py-7 font-serif text-ink select-none sm:px-9"
       role="img"
     >
       {blocks.map((block, index) => {
@@ -434,7 +436,7 @@ export const RedactedDocument = ({
           )}
         </div>
       ))}
-    </div>
+    </Card>
   );
 };
 

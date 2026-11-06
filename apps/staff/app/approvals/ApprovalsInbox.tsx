@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDate, formatDayMonth, useTranslation } from "@steward-web/i18n";
-import { cn } from "@steward-web/ui";
+import { Badge, Card, cn, EmptyState } from "@steward-web/ui";
 import { Check, Inbox } from "lucide-react";
 import { type ReactNode, useId } from "react";
 import { Link } from "react-router";
@@ -34,20 +34,12 @@ const meta = (entry: InboxEntry) => `${entry.number}${entry.version ? ` · v${en
 
 const OverduePill = ({ days }: { days: number }) => {
   const { t } = useTranslation("approvals");
-  return (
-    <span className="inline-flex rounded-full bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger shadow-[inset_0_0_0_1px_var(--danger)] hc:border hc:border-danger">
-      {t("inbox.overdue", { count: days })}
-    </span>
-  );
+  return <Badge tone="danger">{t("inbox.overdue", { count: days })}</Badge>;
 };
 
 const UpcomingBadge = () => {
   const { t } = useTranslation("approvals");
-  return (
-    <span className="rounded-[4px] bg-info-soft px-[7px] py-0.5 text-[11px] font-semibold text-info hc:outline hc:outline-1">
-      {t("inbox.upcoming.badge")}
-    </span>
-  );
+  return <Badge tone="info">{t("inbox.upcoming.badge")}</Badge>;
 };
 
 /** A row's Due cell: the overdue pill, the day it's due, or a quiet dot. */
@@ -147,7 +139,7 @@ const InboxGroup = ({
   const action = ACTION[group];
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-[10px] border border-border bg-surface max-md:hidden">
+      <Card className="max-md:hidden">
         <div className="flex flex-col gap-0.5 border-b border-border-strong bg-sunken px-[18px] py-3">
           <h2 className="text-[15px] font-semibold" id={titleId}>
             {title}
@@ -198,7 +190,7 @@ const InboxGroup = ({
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
       <div className="flex flex-col gap-3 md:hidden">
         <span className="mt-1.5 text-xs font-semibold tracking-[.06em] text-muted uppercase">
@@ -260,12 +252,13 @@ const InboxGroup = ({
 const Empty = ({ children }: { children?: ReactNode }) => {
   const { t } = useTranslation("approvals");
   return (
-    <div className="flex flex-col items-center gap-1.5 rounded-[10px] border border-border bg-surface p-8 text-center">
-      <Inbox aria-hidden="true" className="size-6 text-muted" />
-      <p className="text-md font-semibold">{t("inbox.empty.title")}</p>
-      <p className="text-base text-muted">{t("inbox.empty.description")}</p>
-      {children}
-    </div>
+    <EmptyState
+      action={children}
+      description={t("inbox.empty.description")}
+      framed
+      icon={<Inbox className="size-6" />}
+      title={t("inbox.empty.title")}
+    />
   );
 };
 

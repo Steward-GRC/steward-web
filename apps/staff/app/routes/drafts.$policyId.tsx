@@ -15,7 +15,7 @@ import {
 } from "@steward-web/editor-steward";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import { Banner, Button, scrollBehavior, StatusPill } from "@steward-web/ui";
+import { Banner, Button, Card, scrollBehavior, StatusPill } from "@steward-web/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, useFetcher, useLocation, useNavigate } from "react-router";
 
@@ -493,7 +493,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="flex min-w-0 flex-col gap-4">
-          <div className="rounded-lg border border-border bg-surface px-6 py-8 sm:px-[72px] sm:pt-11 sm:pb-14">
+          <Card className="px-6 py-8 sm:px-[72px] sm:pt-11 sm:pb-14">
             <DraftDocumentEditor
               collaboration={collabSession.mode === "live" ? collabSession.collaboration : null}
               initialDocument={initialDocument}
@@ -507,7 +507,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               readOnly={collabReadOnly}
               ready={collabSession.mode !== "pending"}
             />
-          </div>
+          </Card>
         </div>
 
         <div className="flex flex-col gap-3.5">

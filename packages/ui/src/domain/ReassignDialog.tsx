@@ -1,8 +1,9 @@
-// Copyright 2026 The Steward Authors
-// SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { useId, useState } from "react";
 
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Badge } from "#ui/components/Badges";
 import { Button } from "#ui/components/Button";
 import { Checkbox } from "#ui/components/Controls";
 import {
@@ -137,9 +138,9 @@ export const ReassignDialog = ({
                   ) : null}
                   {candidate.refused ? (
                     <>
-                      <span className="ml-auto rounded-[4px] bg-danger-soft px-[7px] py-0.5 text-[11px] font-semibold text-danger hc:outline hc:outline-1">
+                      <Badge className="ml-auto" tone="danger">
                         {t("reassign.refused")}
-                      </span>
+                      </Badge>
                       <span className="text-xs">{candidate.refused}</span>
                     </>
                   ) : null}

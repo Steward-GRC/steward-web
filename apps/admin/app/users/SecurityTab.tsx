@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogTrigger,
+  EmptyState,
   Field,
   Input,
 } from "@steward-web/ui";
@@ -130,7 +131,7 @@ export const SecurityTab = ({
         {t("users.security.title")}
       </h2>
       {enrolled.length === 0 ? (
-        <p className="px-3.5 text-sm text-muted">{t("users.security.empty")}</p>
+        <EmptyState className="py-4" title={t("users.security.empty")} />
       ) : null}
       <ul aria-labelledby={titleId} className="flex flex-col">
         {factors.map((factor) => (

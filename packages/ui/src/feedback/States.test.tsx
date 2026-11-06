@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import { NotFound, PageSkeleton } from "./States";
+import { EmptyState, NotFound, PageSkeleton } from "./States";
 
 describe("not found (U7s)", () => {
   it("names what's missing, says why, and offers the way back", () => {
@@ -36,5 +36,41 @@ describe("skeleton loading", () => {
     const skeleton = screen.getByRole("status");
     expect(skeleton).toHaveAttribute("aria-busy", "true");
     expect(skeleton).toHaveTextContent("Loading policy…");
+  });
+});
+
+describe("empty state", () => {
+  it("says what's empty, why, and offers an action", () => {
+    render(
+      <EmptyState
+        action={<button type="button">New draft</button>}
+        description="Nothing is waiting for you."
+        title="All caught up"
+      />,
+    );
+    expect(screen.getByText("All caught up")).toBeInTheDocument();
+    expect(screen.getByText("Nothing is waiting for you.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New draft" })).toBeInTheDocument();
+  });
+
+  it("shows a decorative icon above the title", () => {
+    render(<EmptyState icon={<svg data-testid="icon" />} title="No results" />);
+    // eslint-disable-next-line testing-library/no-node-access -- the wrapper has no role of its own
+    expect(screen.getByTestId("icon").parentElement).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("can sit on its own card when it isn't inside one", () => {
+    render(<EmptyState framed title="No results" />);
+    expect(screen.getByTestId("empty-state")).toHaveClass(
+      "rounded-lg",
+      "border",
+      "border-border",
+      "bg-surface",
+    );
+  });
+
+  it("has no card edge by default", () => {
+    render(<EmptyState title="No results" />);
+    expect(screen.getByTestId("empty-state")).not.toHaveClass("border");
   });
 });

@@ -6,7 +6,7 @@ import { Fragment, type ReactNode, useId, useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
 
 import { Button } from "#ui/components/Button";
-import { Table, TD, TH, THead } from "#ui/components/Display";
+import { Card, Table, TD, TH, THead } from "#ui/components/Display";
 import { CategoryTiles, FilterBar, Pager, SortHeader } from "#ui/components/LibraryControls";
 import {
   Menu,
@@ -361,7 +361,7 @@ export const PolicyLibrary = ({
           title={t("library.empty.title", { noun: copy.nounPlural })}
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border bg-surface text-sm">
+        <Card className="text-sm">
           <Table className="text-sm">
             <THead>
               <tr>
@@ -431,7 +431,7 @@ export const PolicyLibrary = ({
             pageSize={PAGE_SIZE}
             total={filtered.length}
           />
-        </div>
+        </Card>
       )}
     </div>
   );

@@ -1,11 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { Select, ThemeSwitch } from "@steward-web/ui";
+import { Card, Select, ThemeSwitch } from "@steward-web/ui";
 import { useId } from "react";
 import { useFetcher } from "react-router";
-
-const card = "flex flex-col gap-2 rounded-[10px] border border-border bg-surface px-4 py-3.5";
 
 /** The select's value for "match my browser", which the gateway stores as an empty locale. */
 const BROWSER = "browser";
@@ -26,14 +24,14 @@ export const Preferences = ({ locale }: { locale?: string }) => {
   const browserLanguage = t(`language.names.${LANGUAGES[0]}`);
   return (
     <div className="flex flex-col gap-3.5">
-      <section aria-labelledby={themeId} className={card}>
+      <Card aria-labelledby={themeId} className="flex flex-col gap-2 px-4 py-3.5">
         <h2 className="font-semibold" id={themeId}>
           {t("theme.title")}
         </h2>
         <p className="text-[13px] leading-normal text-muted">{t("theme.description")}</p>
         <ThemeSwitch />
-      </section>
-      <section aria-labelledby={languageId} className={card}>
+      </Card>
+      <Card aria-labelledby={languageId} className="flex flex-col gap-2 px-4 py-3.5">
         <h2 className="font-semibold" id={languageId}>
           {t("language.title")}
         </h2>
@@ -60,7 +58,7 @@ export const Preferences = ({ locale }: { locale?: string }) => {
           value={locale || BROWSER}
         />
         <p className="text-xs text-muted">{t("language.description")}</p>
-      </section>
+      </Card>
     </div>
   );
 };

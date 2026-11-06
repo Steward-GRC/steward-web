@@ -5,6 +5,7 @@ import type { AckRosterEntry } from "@steward-web/api-client";
 import { formatDate, formatNumber, formatPercent, useTranslation } from "@steward-web/i18n";
 import {
   Button,
+  Card,
   cn,
   EmptyState,
   ResponsiveTable,
@@ -175,10 +176,7 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
             </p>
           ) : null}
 
-          <section
-            aria-label={t("completion.detail.roster.label")}
-            className="overflow-hidden rounded-[10px] border border-border bg-surface"
-          >
+          <Card aria-label={t("completion.detail.roster.label")}>
             <Tabs onValueChange={(value) => setTab(value as "acked" | "pending")} value={tab}>
               <TabsList stretch>
                 {(["acked", "pending"] as const).map((key) => (
@@ -255,7 +253,7 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
                 />
               </TabsContent>
             </Tabs>
-          </section>
+          </Card>
         </>
       )}
     </div>

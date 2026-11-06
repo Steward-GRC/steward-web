@@ -7,7 +7,7 @@ import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import { Banner, Button, Input } from "@steward-web/ui";
+import { Banner, Button, Card, Input } from "@steward-web/ui";
 import { AiJobProgress } from "@steward-web/ui/domain";
 import { Ellipsis } from "lucide-react";
 import { useId, useState } from "react";
@@ -146,9 +146,9 @@ export default function Revise({ loaderData }: Route.ComponentProps) {
       {refused ? <Banner title={t("refused")} tone="danger" /> : null}
 
       {job.stage && job.stage !== "done" ? (
-        <div className="rounded-[10px] border border-border bg-surface p-[18px]">
+        <Card className="p-[18px]">
           <AiJobProgress error={job.error} onRetry={generate} stage={job.stage} />
-        </div>
+        </Card>
       ) : null}
 
       {changes ? (

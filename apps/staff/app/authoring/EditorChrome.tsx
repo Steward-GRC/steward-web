@@ -4,7 +4,9 @@
 // rail's required sections, appendices and next version.
 import { useTranslation } from "@steward-web/i18n";
 import {
+  Badge,
   Button,
+  Card,
   cn,
   Dialog,
   DialogClose,
@@ -95,11 +97,7 @@ export const Presence = ({
               {person.name.charAt(0).toUpperCase()}
             </span>
           ))}
-          {more > 0 ? (
-            <span className="ml-2.5 rounded-full bg-sunken px-2 py-[3px] text-xs font-semibold">
-              +{more}
-            </span>
-          ) : null}
+          {more > 0 ? <Badge className="ml-2.5">+{more}</Badge> : null}
         </div>
       ) : null}
       <span
@@ -164,35 +162,6 @@ export const EditorHeader = ({
   );
 };
 
-/** A rail card with its sunken heading band. */
-const RailCard = ({
-  aside,
-  children,
-  title,
-  ...props
-}: {
-  aside?: ReactNode;
-  children: ReactNode;
-  title: string;
-} & Record<`data-${string}`, string>) => {
-  const titleId = useId();
-  return (
-    <section
-      aria-labelledby={titleId}
-      className="overflow-hidden rounded-lg border border-border bg-surface text-base"
-      {...props}
-    >
-      <div className="flex items-center justify-between border-b border-border-strong bg-sunken px-4 py-3">
-        <h2 className="font-semibold" id={titleId}>
-          {title}
-        </h2>
-        {aside}
-      </div>
-      {children}
-    </section>
-  );
-};
-
 /** "Required sections" (U11): a tick per filled section, a cross and "· empty" per empty one. */
 export const RequiredSections = ({
   sections,
@@ -202,7 +171,7 @@ export const RequiredSections = ({
   const { t } = useTranslation("authoring");
   const filled = sections.filter((section) => section.filled).length;
   return (
-    <RailCard
+    <Card
       aside={
         <span className="text-xs font-medium text-muted">
           {t("editor.required.count", { filled, total: sections.length })}
@@ -236,7 +205,7 @@ export const RequiredSections = ({
           </li>
         ))}
       </ul>
-    </RailCard>
+    </Card>
   );
 };
 
@@ -251,10 +220,7 @@ export const NextVersion = ({
   const { t } = useTranslation("authoring");
   const titleId = useId();
   return (
-    <section
-      aria-labelledby={titleId}
-      className="flex flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
-    >
+    <Card aria-labelledby={titleId} className="flex flex-col gap-2 px-4 py-3 text-sm">
       <h2 className="text-base font-semibold" id={titleId}>
         {t("editor.nextVersion.title")}
       </h2>
@@ -267,7 +233,7 @@ export const NextVersion = ({
         <span>{t("editor.nextVersion.after", { version: published })}</span>
       ) : null}
       <span className="text-muted">{t("editor.nextVersion.workedOut")}</span>
-    </section>
+    </Card>
   );
 };
 
@@ -435,7 +401,7 @@ export const AppendicesPanel = ({
       { method: "post" },
     );
   return (
-    <RailCard
+    <Card
       aside={
         <Form method="post">
           <input name="intent" type="hidden" value="add-appendix" />
@@ -485,6 +451,6 @@ export const AppendicesPanel = ({
           ))}
         </ul>
       )}
-    </RailCard>
+    </Card>
   );
 };

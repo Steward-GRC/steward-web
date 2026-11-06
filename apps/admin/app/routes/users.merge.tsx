@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogNote,
+  EmptyState,
   type Failure,
   Select,
   Table,
@@ -176,7 +177,7 @@ export default function MergeAccounts({ actionData, loaderData }: Route.Componen
             <Banner key={warning.code} title={warning.message} tone="warn" />
           ))}
           {preview.items.length === 0 ? (
-            <p className="text-sm text-muted">{t("merge.nothing")}</p>
+            <EmptyState className="py-4" title={t("merge.nothing")} />
           ) : (
             <Table>
               <caption className="sr-only">{t("merge.items.label")}</caption>

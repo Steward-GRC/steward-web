@@ -6,6 +6,7 @@ import { formatDayMonth, formatRelativeTime, useTranslation } from "@steward-web
 import {
   Banner,
   Button,
+  Card,
   cn,
   Dialog,
   DialogBody,
@@ -14,6 +15,7 @@ import {
   DialogFooter,
   DialogNote,
   DialogTrigger,
+  EmptyState,
   Field,
   StepUpDialog,
   Textarea,
@@ -112,10 +114,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
         : t("users.advanced.sessions.revoked");
 
   return (
-    <section
-      aria-labelledby={titleId}
-      className="overflow-hidden rounded-[10px] border border-border bg-surface"
-    >
+    <Card aria-labelledby={titleId}>
       <div className="flex items-center justify-between border-b border-border-strong bg-sunken px-3.5 py-2.5">
         <b id={titleId}>{t("users.advanced.sessions.title")}</b>
         {user.deletedAt ? null : (
@@ -151,7 +150,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
         />
       ) : null}
       {sessions.length === 0 ? (
-        <p className="px-3.5 py-2.5 text-sm text-muted">{t("users.advanced.sessions.empty")}</p>
+        <EmptyState className="py-4" title={t("users.advanced.sessions.empty")} />
       ) : (
         <ul aria-labelledby={titleId}>
           {sessions.map((session) => (
@@ -175,7 +174,7 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 };
 

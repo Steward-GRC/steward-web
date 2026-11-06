@@ -9,7 +9,7 @@ import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import { formatNumber, useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import { Banner, Button, cn, Input, Spinner, Textarea } from "@steward-web/ui";
+import { Banner, Button, Card, cn, Input, Spinner, Textarea } from "@steward-web/ui";
 import { FileText, Link2, Lock, LockOpen, Send, TriangleAlert } from "lucide-react";
 import { useId, useState } from "react";
 import { data, useFetcher, useLocation, useNavigate } from "react-router";
@@ -473,7 +473,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
       {refused ? <Banner title={t("refused")} tone="danger" /> : null}
 
       {step === 0 ? (
-        <section className="flex flex-col gap-3 rounded-[10px] border border-border bg-surface p-4">
+        <Card className="flex flex-col gap-3 p-4">
           <h2 className="font-bold">{t("generate.step.sources")}</h2>
           <div className="flex flex-col gap-[5px]">
             <label className="text-sm font-medium" htmlFor={`${ids}-brief`}>
@@ -596,14 +596,11 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
           <div className="flex justify-end">
             <Button onClick={next}>{t("generate.next")}</Button>
           </div>
-        </section>
+        </Card>
       ) : null}
 
       {step === 1 ? (
-        <section
-          aria-labelledby={`${ids}-format`}
-          className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface p-4"
-        >
+        <Card aria-labelledby={`${ids}-format`} className="flex flex-col gap-2 p-4">
           <h2 className="font-bold" id={`${ids}-format`}>
             {t("generate.step.format")}
           </h2>
@@ -659,12 +656,12 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
             </Button>
           </div>
           {working ? <Drafting /> : null}
-        </section>
+        </Card>
       ) : null}
 
       {step === 2 ? (
         <div className="grid items-stretch gap-4 lg:grid-cols-[420px_minmax(0,1fr)]">
-          <div className="flex min-h-[500px] flex-col rounded-[10px] border border-border bg-surface">
+          <Card className="flex min-h-[500px] flex-col">
             <div className="flex flex-col gap-2 border-b border-border px-3.5 py-3">
               <span className="text-[13px] font-semibold" id={`${ids}-mode`}>
                 {t("generate.mode")}
@@ -762,7 +759,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
                 <Send aria-hidden="true" />
               </Button>
             </form>
-          </div>
+          </Card>
           <div className="flex flex-col gap-2.5">
             {preview.map((section) => (
               <ChangeCard
