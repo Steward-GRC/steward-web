@@ -15,7 +15,7 @@ const person = (permissions: string[]): Identity => ({
   permissions: new Set(permissions),
 });
 
-const renderFor = (identity: Identity, documentType: DocumentType) => {
+const renderFor = (identity: Identity, documentType: DocumentType, at = "/") => {
   const Stub = createRoutesStub([
     {
       Component: () => (
@@ -26,7 +26,7 @@ const renderFor = (identity: Identity, documentType: DocumentType) => {
       path: "/",
     },
   ]);
-  render(<Stub />);
+  render(<Stub initialEntries={[at]} />);
 };
 
 describe("the library's header actions (U3, U4)", () => {
@@ -35,7 +35,19 @@ describe("the library's header actions (U3, U4)", () => {
     expect(screen.getByRole("link", { name: "Import" })).toHaveAttribute("href", "/drafts/import");
     expect(screen.getByRole("link", { name: "New policy" })).toHaveAttribute(
       "href",
-      "/drafts/new?type=POLICY",
+      "/drafts/new/policy",
+    );
+  });
+
+  it("starts a new draft in the category of the folder being viewed (#148)", () => {
+    renderFor(
+      person(["policy.read", "policy.author"]),
+      DocumentType.Policy,
+      "/?category=Workplace&subcategory=Facilities",
+    );
+    expect(screen.getByRole("link", { name: "New policy" })).toHaveAttribute(
+      "href",
+      "/drafts/new/policy?category=Workplace&subcategory=Facilities",
     );
   });
 
@@ -43,7 +55,7 @@ describe("the library's header actions (U3, U4)", () => {
     renderFor(person(["policy.read", "policy.author"]), DocumentType.Procedure);
     expect(screen.getByRole("link", { name: "New procedure" })).toHaveAttribute(
       "href",
-      "/drafts/new?type=PROCEDURE",
+      "/drafts/new/procedure",
     );
   });
 

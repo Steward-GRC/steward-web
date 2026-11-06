@@ -13,8 +13,8 @@ const Where = () => {
 };
 
 const CREATES = [
-  { id: "policy", label: "shell:create.policy", to: "/drafts/new?type=POLICY" },
-  { id: "procedure", label: "shell:create.procedure", to: "/drafts/new?type=PROCEDURE" },
+  { id: "policy", label: "shell:create.policy", to: "/drafts/new/policy" },
+  { id: "procedure", label: "shell:create.procedure", to: "/drafts/new/procedure" },
 ];
 
 const mountField = (loader = vi.fn(), creates: typeof CREATES = []) => {
@@ -168,7 +168,7 @@ describe("creating from the command bar (Brigade-style)", () => {
     await userEvent.keyboard("{Meta>}k{/Meta}");
     await screen.findByRole("group", { name: "Create" });
     await userEvent.keyboard("{Enter}");
-    expect(await screen.findByText("at /drafts/new?type=POLICY")).toBeInTheDocument();
+    expect(await screen.findByText("at /drafts/new/policy")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
@@ -197,7 +197,7 @@ describe("creating from the command bar (Brigade-style)", () => {
     await userEvent.keyboard("{Meta>}k{/Meta}");
     await screen.findByRole("group", { name: "Create" });
     await userEvent.keyboard("{Meta>}{Enter}{/Meta}");
-    expect(open).toHaveBeenCalledWith("/drafts/new?type=POLICY", "_blank", "noopener");
+    expect(open).toHaveBeenCalledWith("/drafts/new/policy", "_blank", "noopener");
     expect(screen.queryByRole("dialog")).toBeNull();
     vi.unstubAllGlobals();
   });

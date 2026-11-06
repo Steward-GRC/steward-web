@@ -187,6 +187,7 @@ import {
   WorkflowStatusDocument,
 } from "../generated/graphql";
 import { DocumentType } from "../generated/schema";
+import { semanticVersion } from "../semanticVersion";
 import { awaitAiJobResult } from "./aiJobResult.server";
 import {
   appendixText,
@@ -352,7 +353,10 @@ const assembleDetail = async (
     ),
   ]);
   const history = auditPage
-    ? historyFromAuditLog(auditPage.auditLog.records, version ? String(version.versionNo) : "")
+    ? historyFromAuditLog(
+        auditPage.auditLog.records,
+        version ? semanticVersion(version.versionNo) : "",
+      )
     : historyFromVersions(versions);
 
   const at = publishedId ? versions.findIndex((v) => v.id === publishedId) : -1;
@@ -411,14 +415,14 @@ const assembleDetail = async (
             diff,
             fromVersionId: prior.id,
             toVersionId: publishedId,
-            version: String(prior.versionNo),
+            version: semanticVersion(prior.versionNo),
           }
         : null,
     published: publishedId ? (version?.publishedAt ?? null) : null,
     references: attachments.policyReferences,
     related: attachments.relatedPolicies,
     revision: draft
-      ? { status: policyStatusOf(false, draft.status), version: String(draft.versionNo) }
+      ? { status: policyStatusOf(false, draft.status), version: semanticVersion(draft.versionNo) }
       : null,
     sensitivity: policy.sensitivity,
     status: policyStatusOf(publishedId !== null, version?.status),
@@ -426,8 +430,12 @@ const assembleDetail = async (
     summary: summary ? { generatedAt: summary.generatedAt, text: summary.summaryText } : null,
     title: policy.title,
     updated: policy.updatedAt,
-    version: version ? String(version.versionNo) : "",
-    versions: versions.map((v) => ({ id: v.id, status: v.status, version: String(v.versionNo) })),
+    version: version ? semanticVersion(version.versionNo) : "",
+    versions: versions.map((v) => ({
+      id: v.id,
+      status: v.status,
+      version: semanticVersion(v.versionNo),
+    })),
   };
 };
 
@@ -1236,7 +1244,7 @@ export const liveEdge: Edge = {
         title: a.title,
       })),
       blocks: documentBlocksFromContent(policyVersion.contentJson),
-      version: String(policyVersion.versionNo),
+      version: semanticVersion(policyVersion.versionNo),
     };
   },
   async versionDiff(fromVersionId, toVersionId, cookie) {

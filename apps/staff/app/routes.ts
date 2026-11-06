@@ -43,6 +43,7 @@ export default [
   route("procedures/:number", "routes/procedure.tsx"),
   route("drafts", "routes/drafts.tsx"),
   route("drafts/new", "routes/drafts.new.tsx"),
+  route("drafts/new/:type", "routes/drafts.new.tsx", { id: "drafts-new-typed" }),
   route("drafts/import", "routes/drafts.import.tsx"),
   route("templates", "routes/templates.tsx"),
   route("templates/:templateId", "routes/templates.$templateId.tsx"),

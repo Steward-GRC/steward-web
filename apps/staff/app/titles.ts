@@ -14,6 +14,7 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/drafts.$policyId.revise": "shell:titles.staff.reviseDraft",
   "routes/drafts.import": "shell:titles.staff.importPolicies",
   "routes/drafts.new": "shell:titles.staff.newDraft",
+  "drafts-new-typed": "shell:titles.staff.newDraft",
   "routes/home": "shell:titles.staff.myWork",
   "routes/not-set-up": "shell:titles.staff.notSetUp",
   "routes/notifications": "shell:titles.staff.notifications",

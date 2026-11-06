@@ -244,7 +244,7 @@ describe("toPolicyView", () => {
       status: PolicyStatus.Published,
       subcategory: "Travel",
       updated: "2026-09-02T00:00:00Z",
-      version: "3",
+      version: "3.0.0",
     });
   });
 

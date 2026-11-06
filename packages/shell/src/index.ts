@@ -24,6 +24,7 @@ export {
 export { EnvironmentBanner } from "./EnvironmentBanner";
 export { GATE_HANDLE, GateShell, type GateShellProps, useIsGate } from "./GateShell";
 export { MAIN_ID, MainContent, SkipLink } from "./MainContent";
+export { type NewDraftFolder, newDraftPath } from "./newDraftPath";
 export { browserName, PageError } from "./PageError";
 export { PageTitle, pageTitle } from "./pageTitle";
 export { refusalOf, useRefusalMessage } from "./refusal";

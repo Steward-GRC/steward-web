@@ -43,6 +43,15 @@ const openForm = (path = "/drafts/new", data: object = loaderData) => {
       loader: () => data,
       path: "/drafts/new",
     },
+    {
+      action: async ({ request }) => {
+        posted(Object.fromEntries(await request.formData()));
+        return { ok: false, validationError: "stop here" };
+      },
+      Component: Page,
+      loader: () => data,
+      path: "/drafts/new/:type",
+    },
   ]);
   render(<Stub initialEntries={[path]} />);
   return posted;
@@ -51,41 +60,36 @@ const openForm = (path = "/drafts/new", data: object = loaderData) => {
 afterEach(() => localStorage.clear());
 
 describe("New policy (U20)", () => {
-  it("says what it makes and offers both types with their hints", async () => {
-    openForm();
+  it("says what it makes, with no type to pick when the route has one (#147, #149)", async () => {
+    openForm("/drafts/new/policy");
     expect(
       await screen.findByRole("heading", { level: 1, name: "New policy" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Create a policy shell, then draft its content.")).toBeInTheDocument();
-    const policy = screen.getByRole("radio", { name: /Policy/ });
-    expect(policy).toBeChecked();
-    expect(
-      screen.getByText("A rule people must follow. Can require acknowledgement."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Steps for doing something. Never needs acknowledgement."),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /Procedure/ })).toBeNull();
+    expect(screen.queryByRole("radiogroup", { name: "Type" })).toBeNull();
+    expect(screen.queryByRole("list", { name: "Steps" })).toBeNull();
     expect(screen.getByRole("button", { name: "Create policy" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Cancel" })).toHaveAttribute("href", "/policies");
   });
 
   it("uses the full width of the page", async () => {
-    openForm();
+    openForm("/drafts/new/policy");
     expect(await screen.findByTestId("new-draft-page")).not.toHaveClass("max-w-[580px]");
   });
 
-  it("starts as a procedure from the command bar's New procedure", async () => {
-    openForm("/drafts/new?type=PROCEDURE");
+  it("starts as a procedure at /drafts/new/procedure", async () => {
+    openForm("/drafts/new/procedure");
     expect(
       await screen.findByRole("heading", { level: 1, name: "New procedure" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /Procedure/ })).toBeChecked();
+    expect(screen.queryByRole("radio", { name: /Policy/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Create procedure" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Cancel" })).toHaveAttribute("href", "/procedures");
   });
 
   it("creates in the chosen subcategory, with the template and sensitivity", async () => {
-    const posted = openForm();
+    const posted = openForm("/drafts/new/policy");
     await userEvent.type(await screen.findByLabelText("Title"), "Visitor Sign-in Policy");
     await userEvent.selectOptions(screen.getByLabelText("Category"), "w");
     await userEvent.selectOptions(screen.getByLabelText("Subcategory"), "f");
@@ -104,7 +108,7 @@ describe("New policy (U20)", () => {
   });
 
   it("files it under the category itself when it has no subcategory", async () => {
-    const posted = openForm();
+    const posted = openForm("/drafts/new/policy");
     await userEvent.type(await screen.findByLabelText("Title"), "Leave");
     await userEvent.selectOptions(screen.getByLabelText("Category"), "p");
     expect(screen.getByLabelText("Subcategory")).toBeDisabled();
@@ -122,7 +126,66 @@ describe("New policy (U20)", () => {
   });
 
   it("opens with the template chosen from Use this template", async () => {
-    openForm("/drafts/new?template=tpl-1");
+    openForm("/drafts/new/policy?template=tpl-1");
     expect(await screen.findByRole("combobox", { name: "Template" })).toHaveValue("tpl-1");
+  });
+
+  it("defaults the category and subcategory to the folder it started from (#148)", async () => {
+    openForm("/drafts/new/policy?category=Workplace&subcategory=Travel");
+    expect(await screen.findByLabelText("Category")).toHaveValue("w");
+    expect(screen.getByLabelText("Subcategory")).toHaveValue("t");
+  });
+
+  it("defaults to the category alone when the folder has no subcategory chosen (#148)", async () => {
+    openForm("/drafts/new/procedure?category=People");
+    expect(await screen.findByLabelText("Category")).toHaveValue("p");
+  });
+
+  it("ignores a folder it doesn't know (#148)", async () => {
+    openForm("/drafts/new/policy?category=Nowhere");
+    expect(await screen.findByLabelText("Category")).toHaveValue("");
+  });
+});
+
+describe("New draft stepper at /drafts/new (#149)", () => {
+  it("starts on step 1, choosing the type, with the form not yet shown", async () => {
+    openForm("/drafts/new");
+    const steps = await screen.findByRole("list", { name: "Steps" });
+    expect(steps).toHaveTextContent("Choose the type");
+    expect(steps).toHaveTextContent("Draft details");
+    expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Policy/ })).toBeChecked();
+    expect(
+      screen.getByText("A rule people must follow. Can require acknowledgement."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Steps for doing something. Never needs acknowledgement."),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Title")).toBeNull();
+    expect(screen.getByRole("link", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("goes to step 2, the form, for the chosen type, and back", async () => {
+    const posted = openForm("/drafts/new");
+    await userEvent.click(await screen.findByRole("radio", { name: /Procedure/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByText("Step 2 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "New procedure" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /Policy/ })).toBeNull();
+    await userEvent.type(screen.getByLabelText("Title"), "Fire drill");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "p");
+    await userEvent.click(screen.getByRole("button", { name: "Create procedure" }));
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith(expect.objectContaining({ documentType: "PROCEDURE" })),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Procedure/ })).toBeChecked();
+  });
+
+  it("keeps the template from Use this template through the steps", async () => {
+    openForm("/drafts/new?template=tpl-1");
+    await userEvent.click(await screen.findByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("combobox", { name: "Template" })).toHaveValue("tpl-1");
   });
 });
