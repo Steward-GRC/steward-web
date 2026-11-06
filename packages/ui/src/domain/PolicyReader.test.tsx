@@ -223,6 +223,13 @@ describe("PolicyReader", () => {
       expect(within(outline).getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
   });
 
+  it("marks the active tab with the amber accent underline", () => {
+    renderAt(baseDetail);
+    expect(screen.getByRole("tab", { selected: true }).className).toContain(
+      "data-[state=active]:shadow-[inset_0_-3px_var(--accent)]",
+    );
+  });
+
   it("lays the reader's tabs out in equal-width columns, whatever their labels", () => {
     renderAt(baseDetail);
     expect(screen.getByRole("tablist")).toHaveClass("grid-flow-col", "auto-cols-fr");

@@ -428,7 +428,7 @@ const TabLabel = ({ count, label }: { count?: number; label: string }) => (
 const HISTORY_ID = "reader-history";
 
 const tab =
-  "-mb-px rounded-none border-0 bg-transparent px-3 py-2.5 text-base font-medium text-muted shadow-none data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-[inset_0_-2px_var(--primary)]";
+  "-mb-px rounded-none border-0 bg-transparent px-3 py-2.5 text-base font-medium text-muted shadow-none transition-shadow duration-200 motion-reduce:transition-none data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-[inset_0_-3px_var(--accent)]";
 
 export interface PolicyReaderProps {
   detail: PolicyDetail;

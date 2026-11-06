@@ -153,6 +153,13 @@ describe("the review page's head and tabs (U25)", () => {
     expect(screen.getByRole("tablist")).toHaveClass("grid-flow-col", "auto-cols-fr");
   });
 
+  it("marks the active tab with the amber accent underline", () => {
+    renderReview(() => {});
+    expect(screen.getByRole("tab", { selected: true }).className).toContain(
+      "data-[state=active]:shadow-[inset_0_-3px_var(--accent)]",
+    );
+  });
+
   it("shows the version under review, and its history, on their own tabs", async () => {
     renderReview(() => {});
     await userEvent.click(screen.getByRole("tab", { name: "Upcoming version (under review)" }));
