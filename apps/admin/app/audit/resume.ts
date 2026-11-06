@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { AuditLogFilters } from "./audit.server";
+import { auditFilterParameters, type AuditFilters } from "./auditFilters";
 
 /**
  * "See more" on a capped list (the Overview's Activity): the audit log opens at the entry right
@@ -17,23 +17,14 @@ interface Timed {
   occurredAt: string;
 }
 
-const filterQuery = (filters: AuditLogFilters): URLSearchParams => {
-  const query = new URLSearchParams();
-  if (filters.action) query.set("action", filters.action);
-  if (filters.actorUserId) query.set("actor", filters.actorUserId);
-  if (filters.groupId) query.set("group", filters.groupId);
-  if (filters.subject) query.set("subject", filters.subject);
-  return query;
-};
-
 /** The audit log from the newest entry, with the filters kept. */
-export const auditBackPath = (filters: AuditLogFilters): string => {
-  const query = filterQuery(filters).toString();
+export const auditBackPath = (filters: AuditFilters): string => {
+  const query = auditFilterParameters(filters).toString();
   return query ? `/audit?${query}` : "/audit";
 };
 
-export const auditResumePath = (filters: AuditLogFilters, last: Timed): string => {
-  const query = filterQuery(filters);
+export const auditResumePath = (filters: AuditFilters, last: Timed): string => {
+  const query = auditFilterParameters(filters);
   query.set("after", last.id);
   query.set("at", last.occurredAt);
   return `/audit?${query.toString()}`;

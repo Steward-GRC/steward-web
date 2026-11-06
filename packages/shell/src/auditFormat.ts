@@ -8,11 +8,23 @@ import type { AuditRecord } from "@steward-web/api-client";
  * than failing: dots and underscores become spaces, the whole string sentence-cased.
  */
 const ACTION_LABELS: Record<string, string> = {
+  "approval.approved": "Approval approved",
+  "approval.rejected": "Approval rejected",
+  "category.created": "Category created",
+  "category.deleted": "Category deleted",
+  "category.document_types_set": "Category document types set",
+  "category.moved": "Category moved",
   "group.created": "Group created",
   "group.deleted": "Group deleted",
   "group.updated": "Group updated",
   "organization.activated": "Organisation activated",
+  "policy.bulk_moved": "Documents moved",
+  "policy.deleted": "Policy deleted",
+  "policy.moved": "Policy moved",
+  "policy.owner_changed": "Policy owner changed",
   "policy.published": "Policy published",
+  "policy.retired": "Policy retired",
+  "policy.submitted": "Policy submitted",
   "role.granted": "Role granted",
   "role.revoked": "Role revoked",
   "session.login": "Session login",
@@ -20,6 +32,9 @@ const ACTION_LABELS: Record<string, string> = {
   "user.disabled": "User disabled",
   "user.enabled": "User enabled",
 };
+
+/** The action codes the log is known to hold, for the filter's action menu. */
+export const KNOWN_AUDIT_ACTIONS: readonly string[] = Object.keys(ACTION_LABELS);
 
 export const actionLabel = (action: string): string => {
   if (action in ACTION_LABELS) return ACTION_LABELS[action]!;

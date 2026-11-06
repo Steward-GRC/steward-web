@@ -6,7 +6,7 @@ import {
   Button,
   EmptyState,
   Field,
-  PageHeader,
+  ListPage,
   Progress,
   ResponsiveTable,
   Select,
@@ -16,6 +16,7 @@ import { Link } from "react-router";
 
 import type { Route } from "./+types/completion";
 
+import { listGroups, orderedWithPaths } from "../categories/categories.server";
 import { getCompletionReport, listObligatingPolicies } from "../completion/completion.server";
 import { StatTiles } from "../completion/StatTiles";
 
@@ -24,6 +25,11 @@ export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const obligating = await listObligatingPolicies(request);
+  // The whole category path, root first, as the breadcrumb shows it. Without the right to list
+  // categories the policy's own category name stands.
+  const paths = await listGroups(request)
+    .then((groups) => new Map(orderedWithPaths(groups).map((row) => [row.id, row.path])))
+    .catch(() => new Map<string, string>());
   const rows = await Promise.all(
     obligating.map(async ({ policy }) => {
       const versionId = policy.currentPublishedVersionId;
@@ -31,6 +37,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       const report = versionId ? await getCompletionReport(request, versionId) : null;
       return {
         category: policy.category,
+        path: paths.get(policy.homeGroupId) ?? policy.category,
         completionPct: report?.completionPct ?? 0,
         number: policy.number,
         overdue: report?.overdue.length ?? 0,
@@ -45,6 +52,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 const ALL = "all";
 
+/** The top-level category a row sits under: the first step of its path. */
+const topOf = (row: { category: string; path?: string }) =>
+  (row.path ?? row.category).split(" › ", 1)[0] ?? row.category;
+
 /**
  * Completion (A13): "Acknowledgement coverage across every policy that requires
  * acknowledgement." Four stat cards over what's shown, a category filter and "Overdue only",
@@ -57,20 +68,44 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
   const [category, setCategory] = useState(ALL);
 
   const categories = useMemo(
-    () => [...new Set(rows.map((row) => row.category))].toSorted((a, b) => a.localeCompare(b)),
+    () => [...new Set(rows.map((row) => topOf(row)))].toSorted((a, b) => a.localeCompare(b)),
     [rows],
   );
   const shown = rows
     .filter((row) => (overdueOnly ? row.overdue > 0 : true))
-    .filter((row) => (category === ALL ? true : row.category === category));
+    .filter((row) => (category === ALL ? true : topOf(row) === category));
 
   const audience = shown.reduce((sum, row) => sum + row.totalAudience, 0);
   const acknowledged = shown.reduce((sum, row) => sum + row.totalAcked, 0);
 
   return (
-    <div className="flex w-full flex-col gap-[18px] p-6">
-      <PageHeader subtitle={t("completion.subtitle")} title={t("completion.title")} />
-
+    <ListPage
+      filters={
+        <>
+          <Field className="w-56" label={t("completion.filters.category")}>
+            <Select
+              className="h-[38px]"
+              onValueChange={setCategory}
+              options={[
+                { label: t("completion.filters.allCategories"), value: ALL },
+                ...categories.map((name) => ({ label: name, value: name })),
+              ]}
+              value={category}
+            />
+          </Field>
+          <Button
+            aria-pressed={overdueOnly}
+            className="h-[38px] px-3"
+            onClick={() => setOverdueOnly((on) => !on)}
+            variant={overdueOnly ? "primary" : "secondary"}
+          >
+            {t("completion.filters.overdueOnly")}
+          </Button>
+        </>
+      }
+      subtitle={t("completion.subtitle")}
+      title={t("completion.title")}
+    >
       <StatTiles
         className="grid-cols-2 sm:grid-cols-4"
         label={t("completion.stats.label")}
@@ -84,28 +119,6 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
           },
         ]}
       />
-
-      <div className="flex flex-wrap items-end gap-3">
-        <Field className="w-56" label={t("completion.filters.category")}>
-          <Select
-            className="h-[38px]"
-            onValueChange={setCategory}
-            options={[
-              { label: t("completion.filters.allCategories"), value: ALL },
-              ...categories.map((name) => ({ label: name, value: name })),
-            ]}
-            value={category}
-          />
-        </Field>
-        <Button
-          aria-pressed={overdueOnly}
-          className="h-[38px] px-3"
-          onClick={() => setOverdueOnly((on) => !on)}
-          variant={overdueOnly ? "primary" : "secondary"}
-        >
-          {t("completion.filters.overdueOnly")}
-        </Button>
-      </div>
 
       {rows.length === 0 ? (
         <EmptyState
@@ -134,11 +147,11 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
             },
             {
               card: "meta",
-              cell: (row) => row.category,
+              cell: (row) => row.path ?? row.category,
               className: "text-muted",
               header: t("completion.table.category"),
               key: "category",
-              value: (row) => row.category,
+              value: (row) => row.path ?? row.category,
             },
             {
               card: "meta",
@@ -186,15 +199,16 @@ export default function Completion({ loaderData }: Route.ComponentProps) {
           empty={<EmptyState compact title={t("completion.empty.filtered")} />}
           framed
           label={t("completion.table.label")}
+          rowHref={(row) => `/completion/${encodeURIComponent(row.number)}`}
           rowKey={(row) => row.number}
           rows={shown}
           search={{
             label: t("completion.search"),
             placeholder: t("completion.search"),
-            text: (row) => `${row.title} ${row.number} ${row.category}`,
+            text: (row) => `${row.title} ${row.number} ${row.path ?? row.category}`,
           }}
         />
       )}
-    </div>
+    </ListPage>
   );
 }

@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
@@ -129,5 +129,51 @@ describe("Completion on a phone (7-responsive.s3)", () => {
     );
     expect(cards).toHaveLength(1);
     expect(cards[0]).toHaveTextContent("Desk Booking Policy");
+  });
+});
+
+describe("Completion category column and filter (#104)", () => {
+  const NESTED = [
+    { ...ROWS[0], category: "Expenses", path: "Finance › Expenses" },
+    {
+      ...ROWS[1],
+      category: "Travel",
+      path: "Workplace › Travel",
+      number: "POL-TRAVEL-000001",
+      title: "Travel Policy",
+    },
+    {
+      ...ROWS[1],
+      category: "Facilities",
+      path: "Workplace › Facilities",
+      number: "POL-FAC-000001",
+      title: "Desk Booking Policy",
+    },
+  ];
+
+  it("shows the whole category path in the table", () => {
+    openCompletion(NESTED);
+    const table = screen.getByRole("table", { name: "Obligating policies" });
+    expect(within(table).getByText("Finance › Expenses")).toBeInTheDocument();
+    expect(within(table).getByText("Workplace › Travel")).toBeInTheDocument();
+  });
+
+  it("lists top-level categories only in the dropdown, and picking one keeps everything under it", async () => {
+    openCompletion(NESTED);
+    await userEvent.click(screen.getByRole("combobox", { name: "Category" }));
+    const found = await screen.findAllByRole("option");
+    const options = found.map((option) => option.textContent);
+    expect(options).toEqual(["All categories", "Finance", "Workplace"]);
+    await userEvent.click(screen.getByRole("option", { name: "Workplace" }));
+    const table = screen.getByRole("table", { name: "Obligating policies" });
+    expect(within(table).getByText("Workplace › Travel")).toBeInTheDocument();
+    expect(within(table).getByText("Workplace › Facilities")).toBeInTheDocument();
+    expect(within(table).queryByText("Finance › Expenses")).toBeNull();
+  });
+
+  it("has the right-click row menu", async () => {
+    openCompletion(NESTED);
+    fireEvent.contextMenu(screen.getByRole("row", { name: /Travel Policy/ }));
+    expect(await screen.findByRole("menuitem", { name: "Open in new tab" })).toBeInTheDocument();
   });
 });

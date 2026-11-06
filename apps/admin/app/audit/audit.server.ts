@@ -6,16 +6,21 @@ import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
 
+import { type AuditSubjectType, keepMatching } from "./auditFilters";
+
 const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
 
 const requireAuditRead = (request: Request) =>
   requirePermissionFromRequest(request, PERMISSIONS.AuditRead, "/");
 
 export interface AuditLogFilters {
-  action?: string;
+  /** Several action codes; applied here until the gateway filters them. */
+  actions?: readonly string[];
   actorUserId?: string;
   groupId?: string;
   subject?: string;
+  /** The kind of thing the entry is about; applied here until the gateway filters it. */
+  subjectType?: string;
 }
 
 /**
@@ -37,8 +42,10 @@ export const listAuditLog = async (
     },
     cookieOf(request),
   );
-  const action = filters.action?.trim();
-  return action ? page.records.filter((r) => r.action.includes(action)) : page.records;
+  return keepMatching(page.records, {
+    actions: [...(filters.actions ?? [])],
+    subjectType: filters.subjectType as AuditSubjectType | undefined,
+  });
 };
 
 /** Recomputes the hash chain across a record range and reports whether it still holds. */
