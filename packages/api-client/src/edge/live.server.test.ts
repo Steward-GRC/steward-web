@@ -400,6 +400,20 @@ describe("liveEdge.policyDetail", () => {
     expect(detail?.nextReview).toBeNull();
   });
 
+  it("says whether the viewer can edit, for the reader's Edit action", async () => {
+    routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
+    const editable = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(editable?.canEdit).toBe(true);
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      PolicyByNumber: () => ({
+        policyByNumber: policy({ viewerCan: { ...viewerCan, edit: false } }),
+      }),
+    });
+    const readOnly = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(readOnly?.canEdit).toBe(false);
+  });
+
   it("reads AI as unavailable when the health check itself fails", async () => {
     routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
@@ -650,6 +664,53 @@ describe("liveEdge.draftVersion", () => {
     const calls = routeGateway({ Policy: () => ({ policy: policy({}) }) });
     expect(await liveEdge.draftVersion("p-1")).toBeNull();
     expect(calls.map((c) => c.operation)).toEqual(["Policy"]);
+  });
+});
+
+describe("liveEdge.startDraft", () => {
+  const published = {
+    appendices: [],
+    contentJson: JSON.stringify([{ sectionKey: "purpose", text: "Why.", title: "Purpose" }]),
+    createdAt: "2026-08-05T00:00:00Z",
+    id: "v-2",
+    policyId: "p-1",
+    publishedAt: "2026-08-12T00:00:00Z",
+    status: "published",
+    templateVersionId: "tv-1",
+    versionNo: 2,
+  };
+
+  it("saves a working draft from the published version when there is none, so a published policy can be edited", async () => {
+    const calls = routeGateway({
+      Policy: () => ({ policy: policy({}) }),
+      PolicyVersion: () => ({ policyVersion: published }),
+      SaveDraft: (variables) => ({
+        saveDraft: { ...published, contentJson: variables.contentJson, id: "v-3", status: "draft" },
+      }),
+    });
+    const draft = await liveEdge.startDraft("p-1");
+    expect(draft?.id).toBe("v-3");
+    const save = calls.find((c) => c.operation === "SaveDraft");
+    expect(save?.variables).toEqual({
+      contentJson: published.contentJson,
+      policyId: "p-1",
+      templateVersionId: "tv-1",
+    });
+  });
+
+  it("keeps the draft that is already there and saves nothing", async () => {
+    const calls = routeGateway({
+      Policy: () => ({ policy: policy({ currentDraftVersionId: "v-3" }) }),
+      PolicyVersion: () => ({ policyVersion: { ...published, id: "v-3", status: "draft" } }),
+    });
+    const kept = await liveEdge.startDraft("p-1");
+    expect(kept?.id).toBe("v-3");
+    expect(calls.some((c) => c.operation === "SaveDraft")).toBe(false);
+  });
+
+  it("answers null for a policy that cannot be found", async () => {
+    routeGateway({ Policy: () => ({ policy: null }) });
+    expect(await liveEdge.startDraft("p-9")).toBeNull();
   });
 });
 

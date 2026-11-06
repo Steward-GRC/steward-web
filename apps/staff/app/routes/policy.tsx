@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { useIdentity } from "@steward-web/auth";
+import { PERMISSIONS, useIdentity } from "@steward-web/auth";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { refusalOf } from "@steward-web/shell";
 import { DocumentType, PolicyReader } from "@steward-web/ui/domain";
@@ -13,6 +13,8 @@ import { data, useRouteLoaderData } from "react-router";
 
 import type { loader as rootLoader } from "../root";
 import type { Route } from "./+types/policy";
+
+import { editActionOf } from "../authoring/editAction";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   await requireIdentityFromRequest(request);
@@ -54,6 +56,10 @@ export default function PolicyRoute({ loaderData }: Route.ComponentProps) {
   return (
     <PolicyReader
       detail={loaderData.detail}
+      editAction={editActionOf(
+        loaderData.detail,
+        identity.permissions.has(PERMISSIONS.PolicyAuthor),
+      )}
       organisation={organisation}
       viewerName={identity.name || undefined}
     />

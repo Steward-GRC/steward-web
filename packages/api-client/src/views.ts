@@ -253,6 +253,8 @@ export interface PolicyDetail {
   /** True when the version has content the reader couldn't read ("couldn't be displayed"). */
   readonly bodyUnreadable: boolean;
   readonly canBreakGlass: boolean;
+  /** The viewer may edit this document (the reader's Edit action, in the staff app). */
+  readonly canEdit?: boolean;
   readonly category: string;
   readonly contacts: readonly PolicyContact[];
   readonly contentObfuscated: boolean;

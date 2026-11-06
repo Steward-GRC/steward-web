@@ -133,8 +133,14 @@ const post = (fields: Record<string, string>) => {
 type ActionArguments = Parameters<typeof action>[0];
 type LoaderArguments = Parameters<typeof loader>[0];
 
+// The editor's answers are `data(...)`; only `edit` redirects, and its tests read the Response.
 const runAction = (fields: Record<string, string>) =>
-  action({ params: { policyId: "p-1" }, request: post(fields) } as unknown as ActionArguments);
+  action({
+    params: { policyId: "p-1" },
+    request: post(fields),
+  } as unknown as ActionArguments) as Promise<
+    Exclude<Awaited<ReturnType<typeof action>>, Response>
+  >;
 
 const runLoader = () =>
   loader({
@@ -144,6 +150,45 @@ const runLoader = () =>
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe("drafts.$policyId action: edit (from the reader)", () => {
+  const published = {
+    ...draftVersion("published"),
+    id: "v-2",
+    templateVersionId: "tv-1",
+    versionNo: 2,
+  };
+  const publishedOnly = {
+    ...gatewayPolicy,
+    currentDraftVersionId: null,
+    currentPublishedVersionId: "v-2",
+  };
+
+  it("starts a working draft from the published version and sends the author to the editor", async () => {
+    const calls = routeGateway({
+      ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+      Policy: () => ({ policy: publishedOnly }),
+      PolicyVersion: () => ({ policyVersion: published }),
+      SaveDraft: () => ({ saveDraft: { ...published, id: "v-3", status: "draft" } }),
+    });
+
+    const result = (await runAction({ intent: "edit" })) as unknown as Response;
+
+    expect(result.status).toBe(302);
+    expect(result.headers.get("location")).toBe("/drafts/p-1");
+    expect(calls.find((c) => c.operation === "SaveDraft")?.variables).toMatchObject({
+      policyId: "p-1",
+      templateVersionId: "tv-1",
+    });
+  });
+
+  it("just opens the editor when a draft already exists", async () => {
+    const calls = routeGateway(editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"));
+    const result = (await runAction({ intent: "edit" })) as unknown as Response;
+    expect(result.headers.get("location")).toBe("/drafts/p-1");
+    expect(calls.some((c) => c.operation === "SaveDraft")).toBe(false);
+  });
 });
 
 describe("drafts.$policyId action: submit-review", () => {

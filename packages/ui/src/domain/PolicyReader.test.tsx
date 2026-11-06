@@ -810,3 +810,50 @@ describe("the reader on the command bar (bug log 26)", () => {
     expect(offered()).toEqual(expect.arrayContaining(["Print / Export", "History & approvals"]));
   });
 });
+
+describe("Edit on the reader (bug log 59)", () => {
+  const posted = vi.fn();
+  const mountEditable = (editAction?: string) => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => (
+          <CommandActionsProvider>
+            <PolicyReader detail={baseDetail} editAction={editAction} viewerName="Bob Author" />
+            <Offered />
+          </CommandActionsProvider>
+        ),
+        path: "/policies/:number",
+      },
+      {
+        action: async ({ request }) => {
+          posted(await request.formData());
+          return null;
+        },
+        Component: () => <p>Editor</p>,
+        path: "/drafts/:policyId",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
+  };
+
+  it("offers Edit in the Actions menu when the staff app gives it an edit action, and asks for the edit", async () => {
+    mountEditable("/drafts/p-1");
+    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
+    await waitFor(() => expect(posted).toHaveBeenCalled());
+    expect((posted.mock.calls[0]![0] as FormData).get("intent")).toBe("edit");
+  });
+
+  it("registers Edit on the command bar too", async () => {
+    mountEditable("/drafts/p-1");
+    expect(offered()).toContain("Edit");
+  });
+
+  it("has no Edit without an edit action (a reader, or the admin console)", async () => {
+    mountEditable();
+    expect(offered()).not.toContain("Edit");
+    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    await screen.findByRole("menu");
+    expect(screen.queryByRole("menuitem", { name: "Edit" })).toBeNull();
+  });
+});
