@@ -1,5 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+
+import { parse } from "graphql";
+
 import type { Edge } from "../edge";
 import type { Me, Policy, PolicyDetail, PolicySectionDiff } from "../views";
 
@@ -441,6 +445,17 @@ const assembleDetail = async (
 };
 
 /** The live edge: every call is a real POST to `GATEWAY_URL`, cookie forwarded. */
+const RecordPolicyExportDocument =
+  parse(`mutation RecordPolicyExport($policyId: ID!, $kind: PolicyExportKind!, $includeHistory: Boolean!) {
+  recordPolicyExport(policyId: $policyId, kind: $kind, includeHistory: $includeHistory)
+}`) as TypedDocumentNode<
+    { recordPolicyExport: boolean },
+    { includeHistory: boolean; kind: string; policyId: string }
+  >;
+
+/** Set once the gateway answers that it has no `recordPolicyExport` (steward-gateway#78). */
+let exportAuditMissing = false;
+
 export const liveEdge: Edge = {
   async ackActivity(policyVersionId, groupId, days, cookie) {
     const data = await gatewayFetch(
@@ -1190,6 +1205,24 @@ export const liveEdge: Edge = {
     return found && found.documentType === documentType
       ? assembleDetail(found, index, cookie)
       : null;
+  },
+  async recordPolicyExport(policyId, kind, includeHistory, cookie) {
+    if (exportAuditMissing) return false;
+    try {
+      const data = await gatewayFetch(
+        RecordPolicyExportDocument,
+        { includeHistory, kind, policyId },
+        "RecordPolicyExport",
+        { cookie },
+      );
+      return data.recordPolicyExport;
+    } catch (error) {
+      if (error instanceof GatewayError && /Cannot query field|Unknown type/i.test(error.message)) {
+        exportAuditMissing = true;
+        return false;
+      }
+      throw error;
+    }
   },
   async requestPdfExport(policyVersionId, cookie) {
     const data = await gatewayFetch(

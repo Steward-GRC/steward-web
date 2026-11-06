@@ -41,3 +41,10 @@ export const getVersionDocument = (
   versionId: string,
   cookie?: string,
 ): Promise<null | VersionDocument> => edge.versionDocument(versionId, cookie);
+
+/** Writes the audit entry for a printed sensitive record. False while the gateway can't yet. */
+export const recordPolicyPrint = (
+  policyId: string,
+  includeHistory: boolean,
+  cookie?: string,
+): Promise<boolean> => edge.recordPolicyExport(policyId, "PRINT", includeHistory, cookie);

@@ -232,32 +232,27 @@ describe("pageRules", () => {
   });
 });
 
-describe("printing from the reader", () => {
-  const stub = (props: Partial<React.ComponentProps<typeof PolicyReader>> = {}, d = detail) => {
-    const Stub = createRoutesStub([
-      {
-        Component: () => (
-          <PolicyReader
-            detail={d}
-            organisation="Example Organisation"
-            viewerName="Erin"
-            {...props}
-          />
-        ),
-        path: "/policies/:number",
-      },
-    ]);
-    render(<Stub initialEntries={["/policies/POL-FACILITIES-000001"]} />);
-  };
-  const choosePrint = async () => {
-    await userEvent.click(await screen.findByRole("button", { name: /Actions/ }));
-    await userEvent.click(screen.getByRole("menuitem", { name: /Print/ }));
-  };
-  const fakePrint = () =>
-    vi.spyOn(globalThis, "print").mockImplementation(() => {
-      globalThis.dispatchEvent(new Event("beforeprint"));
-    });
+const stub = (props: Partial<React.ComponentProps<typeof PolicyReader>> = {}, d = detail) => {
+  const Stub = createRoutesStub([
+    {
+      Component: () => (
+        <PolicyReader detail={d} organisation="Example Organisation" viewerName="Erin" {...props} />
+      ),
+      path: "/policies/:number",
+    },
+  ]);
+  render(<Stub initialEntries={["/policies/POL-FACILITIES-000001"]} />);
+};
+const choosePrint = async () => {
+  await userEvent.click(await screen.findByRole("button", { name: /Actions/ }));
+  await userEvent.click(screen.getByRole("menuitem", { name: /Print/ }));
+};
+const fakePrint = () =>
+  vi.spyOn(globalThis, "print").mockImplementation(() => {
+    globalThis.dispatchEvent(new Event("beforeprint"));
+  });
 
+describe("printing from the reader", () => {
   it("asks what to include, then draws the print layout only while the browser prints", async () => {
     localStorage.clear();
     const print = fakePrint();
@@ -265,7 +260,9 @@ describe("printing from the reader", () => {
     expect(screen.queryByRole("document", { name: "Desk Booking Policy" })).toBeNull();
     await choosePrint();
     expect(print).not.toHaveBeenCalled();
-    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }));
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }),
+    );
     await waitFor(() => expect(print).toHaveBeenCalled());
     expect(screen.getByRole("document", { name: "Desk Booking Policy" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Version history · v1" })).toBeNull();
@@ -286,7 +283,9 @@ describe("printing from the reader", () => {
     });
     expect(box).not.toBeChecked();
     await userEvent.click(box);
-    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }));
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }),
+    );
     await waitFor(() => expect(print).toHaveBeenCalled());
     expect(screen.getByRole("region", { name: "Version history · v1" })).toBeInTheDocument();
     act(() => {
@@ -307,7 +306,9 @@ describe("printing from the reader", () => {
     const onPrint = vi.fn();
     stub({ onPrint }, { ...detail, sensitivity: Sensitivity.Sensitive });
     await choosePrint();
-    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }));
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }),
+    );
     await waitFor(() => expect(onPrint).toHaveBeenCalledWith({ includeHistory: false }));
     print.mockRestore();
   });
@@ -318,7 +319,9 @@ describe("printing from the reader", () => {
     const onPrint = vi.fn();
     stub({ onPrint });
     await choosePrint();
-    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }));
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Print" }),
+    );
     await waitFor(() => expect(print).toHaveBeenCalled());
     expect(onPrint).not.toHaveBeenCalled();
     print.mockRestore();

@@ -50,7 +50,7 @@ export const PrintDialog = ({ onOpenChange, onPrint, open, viewerName = "" }: Pr
 const PrintChoices = ({
   onPrint,
   viewerName,
-}: Pick<PrintDialogProps, "onPrint"> & { viewerName: string }) => {
+}: { viewerName: string } & Pick<PrintDialogProps, "onPrint">) => {
   const { t } = useTranslation("policy");
   const [include, setInclude] = useState(() => rememberedHistoryChoice(viewerName));
   const id = useId();

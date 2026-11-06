@@ -54,7 +54,6 @@ import { OutlineCard } from "./OutlineCard";
 import { documentTypeBasePath } from "./policy";
 import { bodyShape, outlineItems, PolicyDocument, RedactedDocument } from "./PolicyDocument";
 import { PolicyPrint } from "./PolicyPrint";
-import { PrintDialog } from "./PrintDialog";
 import { PolicyReaderHistory } from "./PolicyReaderHistory";
 import {
   ackBannerState,
@@ -69,6 +68,7 @@ import {
   ReferencesPanel,
   RelatedPanel,
 } from "./PolicyReaderPanels";
+import { PrintDialog } from "./PrintDialog";
 import { type ReaderNotice, ReaderNotices } from "./ReaderNotices";
 
 interface ActionResult {
@@ -439,10 +439,10 @@ export interface PolicyReaderProps {
   /** The admin console's governance items (A11), drawn in the Actions menu after a separator.
    *  The staff reader leaves it out. */
   governance?: ReactNode;
-  /** The organisation's name, for the printed page's running header (R1). */
-  organisation?: null | string;
   /** Told when a sensitive record is sent to print, so the app can record the export. */
   onPrint?: (options: { includeHistory: boolean }) => void;
+  /** The organisation's name, for the printed page's running header (R1). */
+  organisation?: null | string;
   /** The signed-in person's name, for D1's record box and the printed footer. */
   viewerName?: string;
 }

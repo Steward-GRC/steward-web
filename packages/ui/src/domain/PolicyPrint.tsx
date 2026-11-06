@@ -3,7 +3,6 @@
 import type { DocumentBlock, InlineRun } from "@steward-web/api-client";
 
 import { Sensitivity } from "@steward-web/api-client";
-
 import { formatDate, formatDayMonth, formatTime, useTranslation } from "@steward-web/i18n";
 import { Fragment, type ReactNode } from "react";
 
@@ -440,7 +439,7 @@ export const PolicyPrint = ({
         <section
           aria-labelledby="print-certificate"
           className="break-before-page"
-          role="region"
+          
         >
           <h2 className="font-serif text-[15pt] leading-[20pt] font-semibold" id="print-certificate">
             {t("print.certificate.heading", { version: withV(detail.version) })}

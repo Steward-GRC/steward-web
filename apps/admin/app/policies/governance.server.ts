@@ -76,6 +76,7 @@ export const runGovernance = async ({
         return { intent, ok: true };
       }
       case "exportPdf": {
+        if (document.sensitive) await edge.recordPolicyExport(document.id, "PDF", false, cookie);
         const { jobId } = await edge.requestPdfExport(publishedVersion(document), cookie);
         return { intent, jobId, ok: true };
       }
@@ -101,6 +102,18 @@ export const runGovernance = async ({
           replaced,
           ...(await issue(document, staffUrl, request, cookie)),
         };
+      }
+      case "recordPrint": {
+        // Only a sensitive record is audited; the server's own read decides, not the form.
+        if (document.sensitive) {
+          await edge.recordPolicyExport(
+            document.id,
+            "PRINT",
+            field(form, "includeHistory") === "true",
+            cookie,
+          );
+        }
+        return { intent, ok: true };
       }
       case "retire": {
         await edge.retirePolicy(document.id, cookie);

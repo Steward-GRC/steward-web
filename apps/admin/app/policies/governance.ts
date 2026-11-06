@@ -20,6 +20,7 @@ export type GovernanceResult =
   | { intent: "move"; number: string; ok: true }
   | { intent: "pdfLink"; ok: true; pending: false; signedUrl: string }
   | { intent: "pdfLink"; ok: true; pending: true }
+  | { intent: "recordPrint"; ok: true }
   | ({ intent: "reissueMagicLink"; ok: true; replaced: string } & IssuedLink)
   | { intent: "revokeMagicLink"; ok: true; token: string };
 
