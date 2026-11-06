@@ -697,6 +697,20 @@ SPDX-License-Identifier: Apache-2.0
   }
 }
 
+/* The flow view's line into the current step: dashes marching toward the step. The base layer
+   above stills it under reduced motion, and the switch removes it. */
+@keyframes stw-flow-march {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+@layer components {
+  .flow-active {
+    stroke-dasharray: 8 6;
+    animation: stw-flow-march 0.9s linear infinite;
+  }
+}
+
 /* The loading mark: the page fills, the lines type, then the ribbon drops (a 2.8 s loop). */
 @keyframes stw-fill {
   0% {

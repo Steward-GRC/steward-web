@@ -94,15 +94,17 @@ const renderReview = (
 };
 
 describe("the approval review page (U25)", () => {
-  it("shows the stepper with each stage's approvers, and you on the current one", () => {
+  it("shows the approval flow, starting at Submitted, with each stage's approvers and you on the current one", () => {
     renderReview(() => {});
-    const stepper = screen.getByRole("list", { name: "Approval stages" });
-    expect(within(stepper).getByRole("listitem", { name: "Finance review" })).toHaveTextContent(
-      "“Thirty days matches our month-end close.”",
+    const flow = screen.getByRole("list", { name: "Approval flow" });
+    const items = within(flow).getAllByRole("listitem");
+    expect(items[0]).toHaveTextContent("Submitted");
+    expect(items[1]).toHaveTextContent(
+      /^Finance review, .*: Done\. “Thirty days matches our month-end close\.”$/,
     );
-    const current = within(stepper).getByRole("listitem", { name: "Final approval" });
-    expect(current).toHaveAttribute("aria-current", "step");
-    expect(within(current).getByText("· you")).toBeInTheDocument();
+    expect(items[2]).toHaveTextContent(/^Final approval, .* · you.*: Waiting$/);
+    expect(items[2]).toHaveAttribute("aria-current", "step");
+    expect(items.at(-1)).toHaveTextContent("Publish");
   });
 
   it("keeps the decision off until there's a comment, then sends it with the task", async () => {
