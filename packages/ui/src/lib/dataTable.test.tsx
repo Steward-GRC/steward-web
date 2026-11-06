@@ -211,3 +211,22 @@ describe("the table's address state and the route that holds it", () => {
     expect(result.current.navigation).toBe("PUSH");
   });
 });
+
+describe("the search text", () => {
+  it("shows what was typed at once, whatever the address has caught up to", () => {
+    const { result } = setup(make(100));
+    act(() => result.current.table.setQuery("it"));
+    expect(result.current.table.query).toBe("it");
+    act(() => result.current.table.setQuery("ite"));
+    expect(result.current.table.query).toBe("ite");
+  });
+
+  it("follows the address when it changes from somewhere else", () => {
+    const { result } = setup(make(100), "/?q=item");
+    expect(result.current.table.query).toBe("item");
+    act(() => result.current.table.setQuery("it"));
+    act(() => result.current.table.clear());
+    expect(result.current.table.query).toBe("");
+    expect(result.current.location.search).toBe("");
+  });
+});
