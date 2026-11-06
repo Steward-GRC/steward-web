@@ -49,6 +49,16 @@
     "seeAll": "See all results for “{{query}}”",
     "title": "Search Steward"
   },
+  "shortcuts": {
+    "acknowledge": "Acknowledge this document",
+    "create": "Create something",
+    "exportPdf": "Export as PDF",
+    "history": "Go to the history",
+    "inbox": "Open the inbox",
+    "magicLinks": "Magic links",
+    "openPalette": "Open the command bar",
+    "retire": "Retire this document"
+  },
   "status": {
     "loading": "Loading…",
     "saving": "Saving…",

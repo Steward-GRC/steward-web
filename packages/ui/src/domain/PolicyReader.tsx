@@ -16,6 +16,7 @@ import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
 
+import { useRegisterCommandActions } from "#ui/commands/CommandActions";
 import { Button } from "#ui/components/Button";
 import { Switch } from "#ui/components/Controls";
 import { CopyId } from "#ui/components/CopyId";
@@ -90,6 +91,20 @@ const AcknowledgeDialog = ({
   const [at, setAt] = useState(() => new Date());
   const confirm = useRef<HTMLButtonElement>(null);
   const busy = fetcher.state !== "idle";
+
+  // This dialog exists only while the person can acknowledge (the banner is pending and the
+  // document readable), so its action is on the command bar exactly then (bug log 26).
+  useRegisterCommandActions([
+    {
+      id: "acknowledge",
+      label: t("reader.ack.acknowledge"),
+      run: () => {
+        setAt(new Date());
+        setOpen(true);
+      },
+      shortcut: "acknowledge",
+    },
+  ]);
 
   // Closes the dialog once the acknowledge submission succeeds. Adjusted during render
   // (not in an effect) by tracking the fetcher data this render has already seen, so a
@@ -494,6 +509,12 @@ export const PolicyReader = ({
     const id = decodeURIComponent(hash.slice(1)).replaceAll(/["\\]/g, String.raw`\$&`);
     document.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView();
   }, [hash]);
+  const showHistory = () =>
+    document.querySelector(`#${HISTORY_ID}`)?.scrollIntoView({ behavior: scrollBehavior() });
+  useRegisterCommandActions([
+    { id: "print", label: t("reader.actions.print"), run: () => globalThis.print() },
+    { id: "history", label: t("reader.actions.history"), run: showHistory, shortcut: "history" },
+  ]);
   const appendixLabel = (appendix: PolicyAppendix) =>
     t("reader.appendices.heading", { letter: appendix.letter, title: appendix.title });
 
@@ -591,13 +612,7 @@ export const PolicyReader = ({
               <Printer aria-hidden="true" className="size-4" />
               {t("reader.actions.print")}
             </MenuItem>
-            <MenuItem
-              onSelect={() =>
-                document
-                  .querySelector(`#${HISTORY_ID}`)
-                  ?.scrollIntoView({ behavior: scrollBehavior() })
-              }
-            >
+            <MenuItem onSelect={showHistory}>
               <History aria-hidden="true" className="size-4" />
               {t("reader.actions.history")}
             </MenuItem>
