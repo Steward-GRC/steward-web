@@ -180,16 +180,18 @@ export default function PolicyCompletion({ loaderData }: Route.ComponentProps) {
             className="overflow-hidden rounded-[10px] border border-border bg-surface"
           >
             <Tabs onValueChange={(value) => setTab(value as "acked" | "pending")} value={tab}>
-              <TabsList className="gap-1 border-b border-border-strong bg-sunken px-2.5 py-1.5">
+              <TabsList stretch>
                 {(["acked", "pending"] as const).map((key) => (
                   <TabsTrigger
-                    className="mb-0 rounded-md border-b-0 px-2.5 py-1.5 text-base font-normal text-ink data-[state=active]:bg-surface data-[state=active]:font-semibold data-[state=active]:shadow-[var(--shadow-1)]"
+                    count={roster[key === "acked" ? "acked" : "pending"].length}
                     key={key}
                     value={key}
                   >
-                    {key === "acked"
-                      ? t("completion.detail.roster.acknowledged", { count: roster.acked.length })
-                      : t("completion.detail.roster.notYet", { count: roster.pending.length })}
+                    {t(
+                      key === "acked"
+                        ? "completion.detail.roster.tabAcknowledged"
+                        : "completion.detail.roster.tabNotYet",
+                    )}
                   </TabsTrigger>
                 ))}
               </TabsList>

@@ -6,7 +6,6 @@ import {
   Avatar as AvatarPrimitive,
   Progress as ProgressPrimitive,
   Separator as SeparatorPrimitive,
-  Tabs as TabsPrimitive,
 } from "radix-ui";
 import { type ComponentProps } from "react";
 
@@ -105,32 +104,6 @@ export const Avatar = ({
     {src ? <AvatarPrimitive.Image alt="" className="size-full object-cover" src={src} /> : null}
     <AvatarPrimitive.Fallback aria-hidden="true">{initialsOf(name)}</AvatarPrimitive.Fallback>
   </AvatarPrimitive.Root>
-);
-
-export const Tabs = TabsPrimitive.Root;
-export const TabsList = ({ className, ...props }: ComponentProps<typeof TabsPrimitive.List>) => (
-  <TabsPrimitive.List
-    className={cn("flex gap-1 border-b border-border bg-surface", className)}
-    {...props}
-  />
-);
-export const TabsTrigger = ({
-  className,
-  ...props
-}: ComponentProps<typeof TabsPrimitive.Trigger>) => (
-  <TabsPrimitive.Trigger
-    className={cn(
-      "-mb-px border-b-2 border-transparent px-3 py-2 text-sm font-semibold text-muted hover:text-ink data-[state=active]:border-accent data-[state=active]:text-ink",
-      className,
-    )}
-    {...props}
-  />
-);
-export const TabsContent = ({
-  className,
-  ...props
-}: ComponentProps<typeof TabsPrimitive.Content>) => (
-  <TabsPrimitive.Content className={cn("pt-4", className)} {...props} />
 );
 
 export const Accordion = AccordionPrimitive.Root;
