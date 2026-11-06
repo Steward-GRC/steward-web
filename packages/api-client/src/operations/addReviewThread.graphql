@@ -1,5 +1,15 @@
-mutation AddReviewThread($policyVersionId: ID!, $quote: String!, $occurrence: Int!, $body: String!) {
-  addReviewThread(policyVersionId: $policyVersionId, quote: $quote, occurrence: $occurrence, body: $body) {
+mutation AddReviewThread(
+  $policyVersionId: ID!
+  $quote: String!
+  $occurrence: Int!
+  $body: String!
+) {
+  addReviewThread(
+    policyVersionId: $policyVersionId
+    quote: $quote
+    occurrence: $occurrence
+    body: $body
+  ) {
     ...ReviewThreadFields
   }
 }

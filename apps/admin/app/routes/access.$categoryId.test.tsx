@@ -272,7 +272,7 @@ describe("the category access page (A5)", () => {
     expect(screen.getByText("Category not found")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to the directory" })).toHaveAttribute(
       "href",
-      "/groups",
+      "/categories",
     );
   });
 });

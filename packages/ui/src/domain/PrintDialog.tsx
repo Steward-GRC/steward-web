@@ -55,7 +55,10 @@ const PrintChoices = ({
   const [include, setInclude] = useState(() => rememberedHistoryChoice(viewerName));
   const id = useId();
   return (
-    <DialogContent description={t("reader.printDialog.description")} title={t("reader.printDialog.title")}>
+    <DialogContent
+      description={t("reader.printDialog.description")}
+      title={t("reader.printDialog.title")}
+    >
       <DialogBody>
         <label className="flex items-center gap-2.5" htmlFor={id}>
           <Checkbox

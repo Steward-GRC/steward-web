@@ -25,7 +25,7 @@ import { data, Link, redirect, useFetcher } from "react-router";
 
 import type { Route } from "./+types/workflows.$id";
 
-import { listGroups } from "../groups/groups.server";
+import { listGroups } from "../categories/categories.server";
 import { listPlatformGroups } from "../groups/platformGroups.server";
 import { listUsers } from "../users/users.server";
 import { StageEditor } from "../workflows/StageEditor";

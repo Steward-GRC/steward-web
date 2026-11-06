@@ -18,7 +18,7 @@ import { requireIdentityFromRequest, requirePermissionFromRequest } from "@stewa
 import edge from "@steward-web/edge.server";
 import { redirect } from "react-router";
 
-import { fetchAllGroups } from "../groups/groups.server";
+import { fetchAllGroups } from "../categories/categories.server";
 
 const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
 

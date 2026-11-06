@@ -12,11 +12,12 @@ import {
   PageHeader,
   ResponsiveTable,
 } from "@steward-web/ui";
-import { data, Form } from "react-router";
+import { data, Form, Link } from "react-router";
 
 import type { Route } from "./+types/audit";
 
 import { listAuditLog, verifyAuditChain } from "../audit/audit.server";
+import { auditBackPath, olderThan, resumeFrom } from "../audit/resume";
 
 /** The table's own search, sort and page changes don't load the page again. */
 export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
@@ -29,8 +30,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     groupId: url.searchParams.get("group")?.trim() || undefined,
     subject: url.searchParams.get("subject")?.trim() || undefined,
   };
-  const records = await listAuditLog(request, filters);
-  return { filters, records };
+  const cursor = olderThan(url.searchParams);
+  const records = resumeFrom(await listAuditLog(request, filters), cursor);
+  return { cursor, filters, records };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -48,7 +50,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 const fmt = (iso: string): string => formatDateTime(iso);
 
 export default function AuditLog({ actionData, loaderData }: Route.ComponentProps) {
-  const { filters, records } = loaderData;
+  const { cursor, filters, records } = loaderData;
   const range = auditChainRange(records);
 
   return (
@@ -58,6 +60,13 @@ export default function AuditLog({ actionData, loaderData }: Route.ComponentProp
         subtitle="A tamper-evident record of every consequential action."
         title="Audit log"
       />
+
+      {cursor.after || cursor.at ? (
+        <Banner title="Showing older entries" tone="info">
+          Entries after {cursor.at ? fmt(cursor.at) : "the last one you saw"}.{" "}
+          <Link to={auditBackPath(filters)}>Show from the newest</Link>
+        </Banner>
+      ) : null}
 
       <Form className="flex flex-wrap items-end gap-4" method="get">
         <Field label="Action">

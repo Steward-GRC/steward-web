@@ -182,6 +182,7 @@
     "activity": {
       "emptyDescription": "Nothing recorded yet, or you don't have audit.read.",
       "emptyTitle": "No recent activity",
+      "seeMore": "See more",
       "title": "Recent activity"
     },
     "cards": {
@@ -976,7 +977,7 @@
         "description": "Create a version to change this template's sections."
       },
       "history": "Version history",
-      "historyItem": "v{{version}} · {{count}} sections",
+      "historyItem": "{{count}} sections",
       "saveFailed": "Couldn't save these sections",
       "failed": "Couldn't change this template",
       "dialogs": {

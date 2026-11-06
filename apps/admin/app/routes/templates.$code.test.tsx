@@ -146,9 +146,13 @@ describe("Template detail, the draft wizard (A7)", () => {
     const posted = openTemplate(VERSIONS.slice(1));
     expect(await screen.findByText("v2 active")).toBeInTheDocument();
     expect(screen.queryByRole("list", { name: "Draft steps" })).not.toBeInTheDocument();
-    const history = screen.getByRole("list", { name: "Version history" });
-    expect(within(history).getByText("v2 · 4 sections")).toBeInTheDocument();
-    expect(within(history).getByText("published")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Version history" })).toBeInTheDocument();
+    const history = screen.getByRole("list", { name: "v2" });
+    expect(within(history).getByText("4 sections")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /v2.*Published/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
     await userEvent.click(screen.getByRole("button", { name: "Create version" }));
     await vi.waitFor(() => expect(last(posted).get("intent")).toBe("create-version"));
   });

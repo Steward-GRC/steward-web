@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import CategoryDetail from "./groups.$groupId";
+import CategoryDetail from "./categories.$categoryId";
 
 const EXPENSES = {
   ackEveryone: false,
@@ -56,10 +56,10 @@ const openCategory = (overrides: Record<string, unknown> = {}) => {
         return { intent: form.get("intent"), ok: true };
       },
       Component: () => <CategoryDetail {...({ loaderData } as unknown as DetailProps)} />,
-      path: "/groups/:groupId",
+      path: "/categories/:groupId",
     },
   ]);
-  render(<Stub initialEntries={["/groups/c-expenses"]} />);
+  render(<Stub initialEntries={["/categories/c-expenses"]} />);
   return posted;
 };
 

@@ -4,6 +4,7 @@ import { AckTrigger } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Button, NotFound } from "@steward-web/ui";
+import { categoriesPath } from "@steward-web/ui/domain";
 import { data, Link } from "react-router";
 
 import type { Route } from "./+types/access.$categoryId";
@@ -66,7 +67,7 @@ export default function CategoryAccessRoute({ loaderData }: Route.ComponentProps
         <NotFound
           action={
             <Button asChild variant="secondary">
-              <Link to="/groups">{t("access.notFound.action")}</Link>
+              <Link to={categoriesPath()}>{t("access.notFound.action")}</Link>
             </Button>
           }
           description={t("access.notFound.description")}

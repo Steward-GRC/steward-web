@@ -21,11 +21,12 @@ import {
   Select,
   TypeToConfirm,
 } from "@steward-web/ui";
+import { categoriesPath } from "@steward-web/ui/domain";
 import { Lock, X } from "lucide-react";
 import { useId, useState } from "react";
 import { data, Link, redirect, useFetcher } from "react-router";
 
-import type { Route } from "./+types/groups.$groupId";
+import type { Route } from "./+types/categories.$categoryId";
 
 import {
   deleteGroup,
@@ -42,7 +43,7 @@ import {
   ownsOwners,
   renameGroup,
   updateGroupSettings,
-} from "../groups/groups.server";
+} from "../categories/categories.server";
 import { listUsers } from "../users/users.server";
 
 const TOP_LEVEL = "__top_level__";
@@ -71,7 +72,7 @@ const chainOf = (groups: readonly Group[], group: Group): Group[] => {
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const groups = await listGroups(request);
-  const group = groups.find((g) => g.id === params.groupId);
+  const group = groups.find((g) => g.id === params.categoryId);
   if (!group) return data({ group: null }, { status: 404 });
 
   const [templates, workflows, users] = await Promise.all([
@@ -112,7 +113,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 };
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
-  const groupId = params.groupId;
+  const groupId = params.categoryId;
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
   const field = (name: string) => String(form.get(name) ?? "").trim();
@@ -121,7 +122,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
     switch (intent) {
       case "delete": {
         await deleteGroup(request, groupId);
-        return redirect("/groups");
+        return redirect(categoriesPath());
       }
       case "save": {
         const groups = await listGroups(request);
@@ -222,7 +223,7 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
         <NotFound
           action={
             <Button asChild variant="secondary">
-              <Link to="/groups">{t("categories.notFound.action")}</Link>
+              <Link to={categoriesPath()}>{t("categories.notFound.action")}</Link>
             </Button>
           }
           description={t("categories.notFound.description")}

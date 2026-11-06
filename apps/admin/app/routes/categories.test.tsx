@@ -4,7 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import Directory from "./groups";
+import Directory from "./categories";
 
 type DirectoryProps = Parameters<typeof Directory>[0];
 
@@ -17,20 +17,20 @@ describe("Category directory, nothing selected (A3)", () => {
     const Stub = createRoutesStub([
       {
         Component: () => <Directory {...({ loaderData: { rows } } as unknown as DirectoryProps)} />,
-        path: "/groups",
+        path: "/categories",
       },
     ]);
-    render(<Stub initialEntries={["/groups"]} />);
+    render(<Stub initialEntries={["/categories"]} />);
     expect(await screen.findByText("No category selected")).toBeInTheDocument();
     expect(screen.getByText("Select a category from the sidebar.")).toBeInTheDocument();
     const list = screen.getByRole("list", { name: "Categories" });
     expect(within(list).getByRole("link", { name: "Finance › Expenses" })).toHaveAttribute(
       "href",
-      "/groups/c-expenses",
+      "/categories/c-expenses",
     );
     expect(screen.getByRole("link", { name: "+ New category" })).toHaveAttribute(
       "href",
-      "/groups/new",
+      "/categories/new",
     );
   });
 });

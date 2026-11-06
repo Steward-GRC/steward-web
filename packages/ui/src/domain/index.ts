@@ -69,11 +69,21 @@ export {
 export { RecordBreadcrumb, recordCrumbs } from "./RecordBreadcrumb";
 export {
   approvalPath,
+  categoriesPath,
+  categoryPath,
   draftPath,
   isReservedDraftSegment,
+  newCategoryPath,
   recordPath,
   type RecordRef,
 } from "./routes";
+export {
+  VersionHistory,
+  type VersionHistoryEvent,
+  type VersionHistoryGroup,
+  type VersionHistoryKind,
+  versionLabel,
+} from "./VersionHistory";
 export {
   DiffCounts,
   DiffLegend,

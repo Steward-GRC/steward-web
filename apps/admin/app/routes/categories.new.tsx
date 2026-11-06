@@ -5,10 +5,11 @@ import type { ReviewCadence } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Field, Input, Select } from "@steward-web/ui";
+import { categoriesPath, categoryPath } from "@steward-web/ui/domain";
 import { useState } from "react";
 import { data, Form, Link, redirect } from "react-router";
 
-import type { Route } from "./+types/groups.new";
+import type { Route } from "./+types/categories.new";
 
 import {
   createGroup,
@@ -18,8 +19,8 @@ import {
   listWorkflows,
   orderedWithPaths,
   updateGroupSettings,
-} from "../groups/groups.server";
-import { slugify } from "../groups/slug";
+} from "../categories/categories.server";
+import { slugify } from "../categories/slug";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [groups, templates, workflows] = await Promise.all([
@@ -86,7 +87,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
           reviewCadence === "ON_DATE" ? String(form.get("reviewDate") ?? "") || null : null,
       });
     }
-    return redirect(`/groups/${created.id}`);
+    return redirect(categoryPath(created.id));
   } catch (error) {
     return data({ failure: refusalOf(error), ok: false } as const, { status: 400 });
   }
@@ -198,7 +199,7 @@ export default function NewCategory({ actionData, loaderData }: Route.ComponentP
 
         <div className="flex items-center justify-end gap-2 md:col-span-2">
           <Button asChild variant="secondary">
-            <Link to="/groups">{t("categories.add.cancel")}</Link>
+            <Link to={categoriesPath()}>{t("categories.add.cancel")}</Link>
           </Button>
           <Button className="h-[38px] px-4 text-base" type="submit">
             {t("categories.add.submit")}

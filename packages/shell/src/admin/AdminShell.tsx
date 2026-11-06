@@ -13,6 +13,7 @@ import {
   Lockup,
   SheetContent,
 } from "@steward-web/ui";
+import { categoriesPath, newCategoryPath } from "@steward-web/ui/domain";
 import { ArrowLeft, Menu as MenuIcon, PanelLeftOpen, Search, X } from "lucide-react";
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -35,6 +36,7 @@ import {
   type AdminDestination,
   type AdminGroup,
   adminNav,
+  hasSecondaryNav,
 } from "./adminNav";
 
 const headerLink =
@@ -75,7 +77,7 @@ const Rail = ({
         "hidden w-[77px] flex-col items-center gap-1 overflow-y-auto border-r border-border-strong bg-sunken py-2.5 md:flex",
       )}
     >
-      {current ? (
+      {current && hasSecondaryNav(current) ? (
         <PanelOverlay categories={categories} current={currentDestination} group={current} />
       ) : null}
       {groups.map((group) => {
@@ -110,7 +112,7 @@ const panelRow = (current: boolean) =>
   );
 
 /** The category a Directory or Access page is showing, if any. */
-const categoryIn = (pathname: string) => /^\/(?:access|groups)\/([^/]+)$/.exec(pathname)?.[1];
+const categoryIn = (pathname: string) => /^\/(?:access|categories)\/([^/]+)$/.exec(pathname)?.[1];
 
 /**
  * Categories' two destinations as H2's segmented control. With a category open, each side
@@ -169,14 +171,14 @@ const PanelContent = ({
     <>
       <Segmented current={current} destinations={group.destinations} />
       <AdminCategoryTree
-        base={current?.id === "access" ? "/access" : "/groups"}
+        base={current?.id === "access" ? "/access" : categoriesPath()}
         categories={categories}
       />
       {/* Only someone who manages categories (and so has Directory) can create one. */}
       {group.destinations.some((entry) => entry.id === "directory") ? (
         <Link
           className="mt-auto flex h-9 flex-none items-center justify-center rounded-md border border-dashed border-border-strong text-sm font-medium text-ink hover:bg-sunken hover:text-ink"
-          to="/groups/new"
+          to={newCategoryPath()}
         >
           {t("admin.categories.new")}
         </Link>
@@ -476,7 +478,7 @@ export const AdminShell = ({
                 currentDestination={currentDestination}
                 groups={groups}
               />
-              {currentGroup ? (
+              {currentGroup && hasSecondaryNav(currentGroup) ? (
                 <Panel categories={categories} current={currentDestination} group={currentGroup} />
               ) : null}
             </>

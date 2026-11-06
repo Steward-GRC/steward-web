@@ -3,7 +3,15 @@
 import { DocumentType } from "@steward-web/api-client";
 import { describe, expect, it } from "vitest";
 
-import { approvalPath, draftPath, isReservedDraftSegment, recordPath } from "./routes";
+import {
+  approvalPath,
+  categoriesPath,
+  categoryPath,
+  draftPath,
+  isReservedDraftSegment,
+  newCategoryPath,
+  recordPath,
+} from "./routes";
 
 describe("draftPath", () => {
   it("uses the record number, never an internal id", () => {
@@ -53,5 +61,19 @@ describe("recordPath", () => {
     expect(recordPath({ documentType: DocumentType.Procedure, number: "PRC-A-000001" })).toBe(
       "/procedures/PRC-A-000001",
     );
+  });
+});
+
+describe("category addresses", () => {
+  it("serves categories at /categories, never /groups", () => {
+    expect(categoriesPath()).toBe("/categories");
+    expect(newCategoryPath()).toBe("/categories/new");
+    expect(categoryPath("c-expenses")).toBe("/categories/c-expenses");
+  });
+
+  it("encodes the id and refuses an empty one or the reserved word new", () => {
+    expect(categoryPath("a/b c")).toBe("/categories/a%2Fb%20c");
+    expect(() => categoryPath("")).toThrow();
+    expect(() => categoryPath("new")).toThrow(/reserved/);
   });
 });

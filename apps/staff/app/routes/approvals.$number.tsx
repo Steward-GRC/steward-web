@@ -365,12 +365,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           )}
           <TabsContent className="mt-3.5" value="upcoming">
             {review.upcoming && commentable ? (
-              <DraftDocumentEditor
-                initialDocument={commentable}
-                readOnly
-                ready
-                review={comments}
-              />
+              <DraftDocumentEditor initialDocument={commentable} readOnly ready review={comments} />
             ) : review.upcoming ? (
               <PolicyDocument
                 appendices={review.upcoming.appendices}
