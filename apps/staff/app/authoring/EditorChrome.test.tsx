@@ -30,11 +30,11 @@ const inRouter = (node: React.ReactNode, action = vi.fn()) => {
 };
 
 describe("the editor header (U11)", () => {
-  it("shows the eyebrow, the serif title, the number and version line, Draft and the save state", () => {
+  it("shows the breadcrumb, the serif title, the number and version line, Draft and the save state", () => {
     inRouter(
       <EditorHeader
         actions={<button type="button">Submit for approval</button>}
-        eyebrow="Workplace · Facilities"
+        breadcrumb={<nav aria-label="Breadcrumb">Workplace · Facilities</nav>}
         meta="POL-FACILITIES-000004 · v1.0.0 · draft"
         presence={null}
         saveState="saved"

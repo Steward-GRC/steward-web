@@ -111,3 +111,12 @@ describe("the amber line colour for the flow view", () => {
     expect(light("accent-line")).not.toBe(light("accent"));
   });
 });
+
+describe("the active tab in high contrast (#64)", () => {
+  it("keeps its underline as a border, since high contrast removes every box-shadow", () => {
+    expect(css).toMatch(/\.hc \* \{\s*box-shadow: none !important;/);
+    expect(css).toMatch(
+      /\.hc \.stw-tab\[data-state="active"\],\s*\.hc \.stw-tab\[aria-current="page"\] \{\s*border-bottom: 3px solid var\(--accent\);/,
+    );
+  });
+});

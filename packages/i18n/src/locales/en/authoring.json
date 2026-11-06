@@ -5,9 +5,9 @@
       "title": "No drafts yet"
     },
     "new": "New",
-    "search": "Search your drafts",
+    "search": "Search drafts",
     "showAll": "Show all ({{count}})",
-    "subtitle": "Policies and procedures you're currently writing.",
+    "subtitle": "Policies and procedures with a saved draft you can edit.",
     "table": {
       "number": "Number",
       "title": "Title",

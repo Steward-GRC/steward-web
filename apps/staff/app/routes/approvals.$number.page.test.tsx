@@ -139,7 +139,14 @@ describe("the review page's head and tabs (U25)", () => {
   it("heads the page with the way back, the category, the serif title, number and stage", () => {
     renderReview(() => {});
     expect(screen.getByRole("link", { name: "Approvals" })).toHaveAttribute("href", "/approvals");
-    expect(screen.getByText("Finance · Expenses")).toBeVisible();
+    const crumbs = within(screen.getByRole("navigation", { name: "Breadcrumb" }));
+    expect(crumbs.getAllByRole("link").map((a) => a.textContent)).toEqual([
+      "Policies",
+      "Finance",
+      "Expenses",
+      "Expense Claims Policy",
+    ]);
+    expect(crumbs.getByText("Approval")).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { level: 1, name: "Expense Claims Policy" })).toHaveClass(
       "font-serif",
     );

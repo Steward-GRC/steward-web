@@ -160,6 +160,13 @@ describe("myWorkData", () => {
         title: "Visitor Sign-in Policy",
         version: "1.0.0",
       },
+      // Someone else's saved draft in the library, which this person can edit (#75).
+      {
+        href: "/drafts/POL-IT-000003",
+        number: "POL-IT-000003",
+        title: "Lost Device Procedure",
+        version: "1.0.0",
+      },
     ]);
     expect(data.approvals).toEqual([
       {

@@ -20,6 +20,7 @@ import {
   DocumentType,
   PolicyDocument,
   PolicyReaderHistory,
+  RecordBreadcrumb,
 } from "@steward-web/ui/domain";
 import {
   getPolicyDetail,
@@ -205,7 +206,6 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const inReview = statusOf(workflow.status) === IN_REVIEW;
   const current = workflow.stageNames[workflow.currentStageIdx] ?? "";
   const submitted = submittedFrom(review.history);
-  const eyebrow = [match.category, match.subcategory].filter(Boolean).join(" · ");
   const deciding = Boolean(task) && inReview && !decided;
   const appendixLabel = (appendix: { letter: string; title: string }) =>
     t("policy:reader.appendices.heading", { letter: appendix.letter, title: appendix.title });
@@ -274,7 +274,13 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
       </Link>
 
       <div className="flex flex-col gap-1">
-        {eyebrow ? <span className="text-xs font-medium text-muted">{eyebrow}</span> : null}
+        {match.number ? (
+          <RecordBreadcrumb
+            page={t("review.crumb")}
+            published={!review.first}
+            record={{ ...match, documentType: match.documentType ?? DocumentType.Policy }}
+          />
+        ) : null}
         <h1 className="font-serif text-[24px] leading-[30px] font-semibold md:text-[32px] md:leading-[40px]">
           {match.title || t("inbox.untitled")}
         </h1>

@@ -96,6 +96,7 @@
       "pendingTitle": "Please review and confirm"
     },
     "actions": {
+      "continueDraft": "Continue draft",
       "edit": "Edit",
       "history": "History & approvals",
       "menu": "Actions",
@@ -268,6 +269,8 @@
       },
       "draftRevision": {
         "body": "A newer version, v{{revision}}, is being drafted. You're reading the published v{{version}}.",
+        "continue": "Continue editing",
+        "savedTitle": "This {{noun}} has a saved draft",
         "title": "A draft revision is in progress"
       },
       "inReview": {

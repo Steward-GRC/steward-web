@@ -4,6 +4,25 @@
 // slice by default, expands to the full list, and filters by title/number. No React or DOM,
 // so the predicate is unit-tested directly.
 
+/**
+ * The drafts a person can pick up: the ones they own, plus every library document that has a
+ * saved working draft and that they can edit. There is one shared draft per document for
+ * everyone who can edit it, so a draft saved by someone else (or on a document someone else is
+ * accountable for) still belongs in this person's list (#75).
+ */
+export const mergeWorkingDrafts = <
+  T extends { currentDraftVersionId?: null | string; id: string; viewerCan: { edit: boolean } },
+>(
+  owned: readonly T[],
+  library: readonly T[],
+): T[] => {
+  const byId = new Map(owned.map((p) => [p.id, p]));
+  for (const p of library) {
+    if (p.currentDraftVersionId && p.viewerCan.edit && !byId.has(p.id)) byId.set(p.id, p);
+  }
+  return [...byId.values()];
+};
+
 /** How many drafts the list shows before "Show all (N)" is offered. */
 export const DRAFTS_COLLAPSED_CAP = 5;
 

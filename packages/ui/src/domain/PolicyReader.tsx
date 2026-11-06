@@ -51,7 +51,7 @@ import { CompareVersions } from "./CompareVersions";
 import { DocumentStatusPill } from "./DocumentStatusPill";
 import { useFavorites } from "./favorites";
 import { OutlineCard } from "./OutlineCard";
-import { documentTypeBasePath } from "./policy";
+import { documentTypeBasePath, documentTypeCopy, hasWorkingDraft } from "./policy";
 import { bodyShape, outlineItems, PolicyDocument, RedactedDocument } from "./PolicyDocument";
 import { PolicyPrint } from "./PolicyPrint";
 import { PolicyReaderHistory } from "./PolicyReaderHistory";
@@ -70,6 +70,7 @@ import {
 } from "./PolicyReaderPanels";
 import { PrintDialog } from "./PrintDialog";
 import { type ReaderNotice, ReaderNotices } from "./ReaderNotices";
+import { RecordBreadcrumb } from "./RecordBreadcrumb";
 
 interface ActionResult {
   error?: Failure;
@@ -361,6 +362,7 @@ const RevealedBar = ({ onHide, until }: { onHide: () => void; until: string }) =
 const noticesFor = (
   detail: PolicyDetail,
   t: (key: string, values?: Record<string, unknown>) => string,
+  continueDraft?: () => void,
 ): ReaderNotice[] => {
   const notices: ReaderNotice[] = [];
   const revision = detail.revision;
@@ -375,13 +377,31 @@ const noticesFor = (
       tone: "info",
     });
   } else if (revision?.status === PolicyStatus.Draft) {
+    // Someone who can edit gets the way back into the one shared draft (#75).
     notices.push({
+      ...(continueDraft
+        ? {
+            action: (
+              <button
+                className="font-semibold hover:underline"
+                onClick={continueDraft}
+                type="button"
+              >
+                {t("reader.notices.draftRevision.continue")}
+              </button>
+            ),
+          }
+        : {}),
       body: t("reader.notices.draftRevision.body", {
         revision: revision.version,
         version: detail.version,
       }),
       id: "draftRevision",
-      title: t("reader.notices.draftRevision.title"),
+      title: continueDraft
+        ? t("reader.notices.draftRevision.savedTitle", {
+            noun: documentTypeCopy(detail.documentType).noun,
+          })
+        : t("reader.notices.draftRevision.title"),
       tone: "neutral",
     });
   }
@@ -512,7 +532,6 @@ export const PolicyReader = ({
   }, [grant, t]);
   const revealed = redaction === "visible" && grant !== undefined && hiddenGrant !== grant;
   const reading = redaction === "visible" && (grant === undefined || hiddenGrant !== grant);
-  const notices = noticesFor(detail, t);
   const procedure = detail.documentType === DocumentType.Procedure;
   const starred = favorites.isFavorite(detail.number);
   // An administrator's switch removes every AI control; any other outage says so where the
@@ -534,11 +553,15 @@ export const PolicyReader = ({
   const showHistory = () =>
     document.querySelector(`#${HISTORY_ID}`)?.scrollIntoView({ behavior: scrollBehavior() });
   const submit = useSubmit();
+  const editLabel = hasWorkingDraft(detail)
+    ? t("reader.actions.continueDraft")
+    : t("reader.actions.edit");
   const edit = () => {
     if (editAction) void submit({ intent: "edit" }, { action: editAction, method: "post" });
   };
+  const notices = noticesFor(detail, t, editAction ? edit : undefined);
   useRegisterCommandActions([
-    { allowed: Boolean(editAction), id: "edit", label: t("reader.actions.edit"), run: edit },
+    { allowed: Boolean(editAction), id: "edit", label: editLabel, run: edit },
     { id: "print", label: t("reader.actions.print"), run: askToPrint },
     { id: "history", label: t("reader.actions.history"), run: showHistory, shortcut: "history" },
   ]);
@@ -588,9 +611,7 @@ export const PolicyReader = ({
 
       <div className="flex items-start gap-4">
         <div className="flex flex-1 flex-col gap-1">
-          <span className="text-xs font-medium tracking-[.04em] text-muted">
-            {detail.subcategory ? `${detail.category} · ${detail.subcategory}` : detail.category}
-          </span>
+          <RecordBreadcrumb record={detail} />
           <h1 className="font-serif text-[26px] leading-8 font-semibold sm:text-[34px] sm:leading-[42px]">
             {detail.title}
           </h1>
@@ -624,7 +645,7 @@ export const PolicyReader = ({
             {editAction ? (
               <MenuItem onSelect={edit}>
                 <Pencil aria-hidden="true" className="size-4" />
-                {t("reader.actions.edit")}
+                {editLabel}
               </MenuItem>
             ) : null}
             <MenuItem onSelect={askToPrint}>
