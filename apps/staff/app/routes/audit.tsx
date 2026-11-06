@@ -40,7 +40,7 @@ export default function Audit({ loaderData }: Route.ComponentProps) {
                   <td className="px-3.5 py-[11px] whitespace-nowrap text-muted">
                     {formatDateTime(record.occurredAt)}
                   </td>
-                  <td className="px-3.5 py-[11px] font-mono">{record.subject}</td>
+                  <td className="px-3.5 py-[11px] font-mono">{record.number}</td>
                   <td className="px-3.5 py-[11px]">{record.subjectLabel}</td>
                   <td className="px-3.5 py-[11px]">{record.action}</td>
                   <td className="px-3.5 py-[11px] text-muted">{record.actor}</td>

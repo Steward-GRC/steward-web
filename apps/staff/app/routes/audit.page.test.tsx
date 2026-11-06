@@ -27,7 +27,7 @@ describe("Audit log (U26)", () => {
           actor: "Bob Author",
           id: "7",
           occurredAt: "2026-11-05T14:30:00Z",
-          subject: "POL-EXPENSES-000002",
+          number: "POL-EXPENSES-000002",
           subjectLabel: "Expenses policy",
         },
       ],

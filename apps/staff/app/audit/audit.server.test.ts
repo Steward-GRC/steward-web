@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import { toRows } from "./audit.server";
 
+const NUMBERS = new Map([["policy-1", "POL-EXPENSES-000002"]]);
+
 const record = (over: object) => ({
   action: "policy.published",
   actorName: "Bob Author",
@@ -16,7 +18,7 @@ const record = (over: object) => ({
   prevHash: "0",
   recordHash: "1",
   recordUuid: "u1",
-  subject: "POL-1",
+  subject: "policy:policy-1",
   subjectLabel: "Expenses policy",
   tier: "audit",
   ...over,
@@ -24,7 +26,7 @@ const record = (over: object) => ({
 
 describe("toRows", () => {
   it("drops reporting-case records, so no actor on a case can be seen here", () => {
-    const rows = toRows([
+    const rows = toRows(NUMBERS, [
       record({ id: "1" }),
       record({ action: "case.note_added", id: "2" }),
       record({ id: "3", subject: "case:RC-9" }),
@@ -33,7 +35,7 @@ describe("toRows", () => {
   });
 
   it("shows the resolved actor name, falling back to a short id", () => {
-    const [named, unnamed] = toRows([
+    const [named, unnamed] = toRows(NUMBERS, [
       record({ id: "1" }),
       record({ actorName: null, actorUserId: "a-very-long-opaque-id", id: "2" }),
     ]);
@@ -42,7 +44,7 @@ describe("toRows", () => {
   });
 
   it("keeps policy and approval actions only, not logins, role grants or settings", () => {
-    const rows = toRows([
+    const rows = toRows(NUMBERS, [
       record({ id: "1", subject: "policy:policy-1" }),
       record({ action: "workflow.submitted", id: "2", subject: "policy_version:version-4" }),
       record({ action: "approval.decided", id: "3", subject: "approval:PRC-1" }),
@@ -51,5 +53,14 @@ describe("toRows", () => {
       record({ action: "settings.updated", id: "6", subject: "settings:global" }),
     ]);
     expect(rows.map((row) => row.id)).toEqual(["1", "2", "3"]);
+  });
+
+  it("shows the policy number for a policy and a dash where the subject has none", () => {
+    const rows = toRows(NUMBERS, [
+      record({ id: "1", subject: "policy:policy-1" }),
+      record({ action: "workflow.submitted", id: "2", subject: "policy_version:version-4" }),
+      record({ id: "3", subject: "policy:policy-unknown" }),
+    ]);
+    expect(rows.map((row) => row.number)).toEqual(["POL-EXPENSES-000002", "—", "—"]);
   });
 });
