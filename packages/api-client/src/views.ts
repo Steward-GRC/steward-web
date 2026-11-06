@@ -319,6 +319,29 @@ export interface PolicyVersionSummary {
   readonly version: string;
 }
 
+/** One message of an inline review thread. */
+export interface ReviewMessage {
+  readonly authorName: null | string;
+  readonly authorUserId: string;
+  readonly body: string;
+  readonly createdAt: string;
+  readonly id: string;
+}
+
+/**
+ * A comment thread on text in a policy version: the quoted text and which match of it (from 1)
+ * place the highlight again in the stored document.
+ */
+export interface ReviewThread {
+  readonly createdAt: string;
+  readonly id: string;
+  readonly messages: readonly ReviewMessage[];
+  readonly occurrence: number;
+  readonly policyVersionId: string;
+  readonly quote: string;
+  readonly resolved: boolean;
+}
+
 /** One of the caller's second factors: kind is "totp", "email" or "passkey". */
 export type SecondFactor = MyFactorsQuery["myFactors"][number];
 
@@ -350,6 +373,8 @@ export interface UserPage {
 export interface VersionDocument {
   readonly appendices: readonly PolicyAppendix[];
   readonly blocks: readonly DocumentBlock[];
+  /** The version's stored editor document, for the review page's commenting view. */
+  readonly contentJson: string;
   readonly version: string;
 }
 

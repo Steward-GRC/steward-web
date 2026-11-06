@@ -159,6 +159,31 @@ export type AddOrganizationMutation = {
   };
 };
 
+export type AddReviewThreadMutationVariables = Exact<{
+  policyVersionId: string | number;
+  quote: string;
+  occurrence: number;
+  body: string;
+}>;
+
+export type AddReviewThreadMutation = {
+  readonly addReviewThread: {
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly quote: string;
+    readonly occurrence: number;
+    readonly resolved: boolean;
+    readonly createdAt: string;
+    readonly messages: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly authorName: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+  };
+};
+
 export type AddUserToGroupMutationVariables = Exact<{
   userId: string | number;
   groupId: string | number;
@@ -975,6 +1000,12 @@ export type DeleteReferenceMutationVariables = Exact<{
 }>;
 
 export type DeleteReferenceMutation = { readonly deleteReference: boolean };
+
+export type DeleteReviewThreadMutationVariables = Exact<{
+  threadId: string | number;
+}>;
+
+export type DeleteReviewThreadMutation = { readonly deleteReviewThread: boolean };
 
 export type DeleteTemplateMutationVariables = Exact<{
   id: string | number;
@@ -2171,6 +2202,29 @@ export type ReorderAppendicesMutation = {
   }>;
 };
 
+export type ReplyReviewThreadMutationVariables = Exact<{
+  threadId: string | number;
+  body: string;
+}>;
+
+export type ReplyReviewThreadMutation = {
+  readonly replyReviewThread: {
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly quote: string;
+    readonly occurrence: number;
+    readonly resolved: boolean;
+    readonly createdAt: string;
+    readonly messages: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly authorName: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+  };
+};
+
 export type ReportCaseQueryVariables = Exact<{
   caseId: string | number;
 }>;
@@ -2385,6 +2439,44 @@ export type RetireTemplateMutation = {
     readonly ownerCategoryId: string | null;
     readonly retiredAt: string | null;
   };
+};
+
+export type ReviewThreadFieldsFragment = {
+  readonly id: string;
+  readonly policyVersionId: string;
+  readonly quote: string;
+  readonly occurrence: number;
+  readonly resolved: boolean;
+  readonly createdAt: string;
+  readonly messages: ReadonlyArray<{
+    readonly id: string;
+    readonly authorUserId: string;
+    readonly authorName: string | null;
+    readonly body: string;
+    readonly createdAt: string;
+  }>;
+};
+
+export type ReviewThreadsQueryVariables = Exact<{
+  policyVersionId: string | number;
+}>;
+
+export type ReviewThreadsQuery = {
+  readonly reviewThreads: ReadonlyArray<{
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly quote: string;
+    readonly occurrence: number;
+    readonly resolved: boolean;
+    readonly createdAt: string;
+    readonly messages: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly authorName: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+  }>;
 };
 
 export type RevokeMagicLinkMutationVariables = Exact<{
@@ -2911,6 +3003,29 @@ export type SetReferenceArchivedMutation = {
     readonly archived: boolean;
     readonly createdByUserId: string | null;
     readonly usedByCount: number;
+  };
+};
+
+export type SetReviewThreadResolvedMutationVariables = Exact<{
+  threadId: string | number;
+  resolved: boolean;
+}>;
+
+export type SetReviewThreadResolvedMutation = {
+  readonly setReviewThreadResolved: {
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly quote: string;
+    readonly occurrence: number;
+    readonly resolved: boolean;
+    readonly createdAt: string;
+    readonly messages: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly authorName: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
   };
 };
 
@@ -4059,6 +4174,41 @@ export const ReportCaseFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<ReportCaseFieldsFragment, unknown>;
+export const ReviewThreadFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReviewThreadFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReviewThread" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "quote" } },
+          { kind: "Field", name: { kind: "Name", value: "occurrence" } },
+          { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "messages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "authorName" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReviewThreadFieldsFragment, unknown>;
 export const TemplateFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -4898,6 +5048,117 @@ export const AddOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<AddOrganizationMutation, AddOrganizationMutationVariables>;
+export const AddReviewThreadDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "AddReviewThread" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "quote" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "occurrence" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "body" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "addReviewThread" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "quote" },
+                value: { kind: "Variable", name: { kind: "Name", value: "quote" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "occurrence" },
+                value: { kind: "Variable", name: { kind: "Name", value: "occurrence" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "body" },
+                value: { kind: "Variable", name: { kind: "Name", value: "body" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReviewThreadFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReviewThreadFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReviewThread" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "quote" } },
+          { kind: "Field", name: { kind: "Name", value: "occurrence" } },
+          { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "messages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "authorName" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddReviewThreadMutation, AddReviewThreadMutationVariables>;
 export const AddUserToGroupDocument = {
   kind: "Document",
   definitions: [
@@ -7513,6 +7774,42 @@ export const DeleteReferenceDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteReferenceMutation, DeleteReferenceMutationVariables>;
+export const DeleteReviewThreadDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteReviewThread" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteReviewThread" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "threadId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteReviewThreadMutation, DeleteReviewThreadMutationVariables>;
 export const DeleteTemplateDocument = {
   kind: "Document",
   definitions: [
@@ -11427,6 +11724,91 @@ export const ReorderAppendicesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReorderAppendicesMutation, ReorderAppendicesMutationVariables>;
+export const ReplyReviewThreadDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ReplyReviewThread" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "body" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "replyReviewThread" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "threadId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "body" },
+                value: { kind: "Variable", name: { kind: "Name", value: "body" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReviewThreadFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReviewThreadFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReviewThread" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "quote" } },
+          { kind: "Field", name: { kind: "Name", value: "occurrence" } },
+          { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "messages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "authorName" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReplyReviewThreadMutation, ReplyReviewThreadMutationVariables>;
 export const ReportCaseDocument = {
   kind: "Document",
   definitions: [
@@ -11967,6 +12349,78 @@ export const RetireTemplateDocument = {
     },
   ],
 } as unknown as DocumentNode<RetireTemplateMutation, RetireTemplateMutationVariables>;
+export const ReviewThreadsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ReviewThreads" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "reviewThreads" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReviewThreadFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReviewThreadFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReviewThread" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "quote" } },
+          { kind: "Field", name: { kind: "Name", value: "occurrence" } },
+          { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "messages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "authorName" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReviewThreadsQuery, ReviewThreadsQueryVariables>;
 export const RevokeMagicLinkDocument = {
   kind: "Document",
   definitions: [
@@ -13953,6 +14407,94 @@ export const SetReferenceArchivedDocument = {
     },
   ],
 } as unknown as DocumentNode<SetReferenceArchivedMutation, SetReferenceArchivedMutationVariables>;
+export const SetReviewThreadResolvedDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetReviewThreadResolved" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "resolved" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setReviewThreadResolved" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "threadId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "resolved" },
+                value: { kind: "Variable", name: { kind: "Name", value: "resolved" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReviewThreadFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReviewThreadFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReviewThread" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "quote" } },
+          { kind: "Field", name: { kind: "Name", value: "occurrence" } },
+          { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "messages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "authorName" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SetReviewThreadResolvedMutation,
+  SetReviewThreadResolvedMutationVariables
+>;
 export const SetTypeCadenceDocument = {
   kind: "Document",
   definitions: [

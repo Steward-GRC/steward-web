@@ -139,6 +139,10 @@
   },
   "review": {
     "back": "Back to approvals",
+    "comments": {
+      "withDecision_one": "1 comment on this version goes to the drafter with your decision.",
+      "withDecision_other": "{{count}} comments on this version go to the drafter with your decision."
+    },
     "crumb": "Approval",
     "decided": {
       "approved": {

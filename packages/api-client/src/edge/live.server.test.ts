@@ -879,6 +879,7 @@ describe("liveEdge.versionDocument", () => {
         { depth: 1, kind: "heading", sectionKey: "receipts", text: "Receipts" },
         { kind: "paragraph", runs: [{ text: "A photo is enough." }] },
       ],
+      contentJson: expect.stringContaining("A photo is enough."),
       version: "3.0.0",
     });
     expect(calls).toEqual([{ operation: "PolicyVersion", variables: { id: "v-3" } }]);
@@ -887,6 +888,44 @@ describe("liveEdge.versionDocument", () => {
   it("is null for a version the caller can't read", async () => {
     routeGateway({ PolicyVersion: () => ({ policyVersion: null }) });
     expect(await liveEdge.versionDocument("v-9")).toBeNull();
+  });
+});
+
+describe("liveEdge: inline review threads", () => {
+  const thread = {
+    createdAt: "2026-11-06T12:00:00Z",
+    id: "thread-1",
+    messages: [],
+    occurrence: 1,
+    policyVersionId: "v-3",
+    quote: "seven years",
+    resolved: false,
+  };
+
+  it("lists a version's threads", async () => {
+    const calls = routeGateway({ ReviewThreads: () => ({ reviewThreads: [thread] }) });
+    expect(await liveEdge.reviewThreads("v-3")).toEqual([thread]);
+    expect(calls).toEqual([{ operation: "ReviewThreads", variables: { policyVersionId: "v-3" } }]);
+  });
+
+  it("starts, answers, resolves and deletes a thread", async () => {
+    const calls = routeGateway({
+      AddReviewThread: () => ({ addReviewThread: thread }),
+      DeleteReviewThread: () => ({ deleteReviewThread: true }),
+      ReplyReviewThread: () => ({ replyReviewThread: thread }),
+      SetReviewThreadResolved: () => ({ setReviewThreadResolved: { ...thread, resolved: true } }),
+    });
+    expect(await liveEdge.addReviewThread("v-3", "seven years", 2, "Why?")).toEqual(thread);
+    expect(await liveEdge.replyReviewThread("thread-1", "Because.")).toEqual(thread);
+    const resolved = await liveEdge.setReviewThreadResolved("thread-1", true);
+    expect(resolved.resolved).toBe(true);
+    expect(await liveEdge.deleteReviewThread("thread-1")).toBe(true);
+    expect(calls.map((call) => call.variables)).toEqual([
+      { body: "Why?", occurrence: 2, policyVersionId: "v-3", quote: "seven years" },
+      { body: "Because.", threadId: "thread-1" },
+      { resolved: true, threadId: "thread-1" },
+      { threadId: "thread-1" },
+    ]);
   });
 });
 

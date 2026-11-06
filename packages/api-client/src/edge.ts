@@ -87,6 +87,7 @@ import type {
   Policy,
   PolicyDetail,
   PolicySectionDiff,
+  ReviewThread,
   SecondFactor,
   Template,
   TemplateVersion,
@@ -226,6 +227,8 @@ export type {
   PolicySectionDiff,
   PolicyVersionOption,
   PolicyVersionSummary,
+  ReviewMessage,
+  ReviewThread,
   SecondFactor,
   Template,
   TemplateVersion,
@@ -348,6 +351,17 @@ export interface Edge {
   ): Promise<GroupMapping>;
   /** Registers a new organisation SSO connection, unverified and disabled. Site-admin only. */
   addOrganization(input: AddOrganizationInput, cookie?: string): Promise<Organization>;
+  /**
+   * Starts an inline review thread on text in a policy version, with its first message.
+   * Approvers on the version's run, its authors and site admins only.
+   */
+  addReviewThread(
+    policyVersionId: string,
+    quote: string,
+    occurrence: number,
+    body: string,
+    cookie?: string,
+  ): Promise<ReviewThread>;
   /** Adds a MANUAL membership to a platform group. Authorized for site-admins and for a LOCAL
    *  group-manager of groupId; refuses an IdP-synced membership. */
   addUserToGroup(userId: string, groupId: string, cookie?: string): Promise<User>;
@@ -486,6 +500,8 @@ export interface Edge {
   /** Hard-deletes a reference/standard entry. The gateway refuses while anything attaches it
    *  (archive instead). */
   deleteReference(id: string, cookie?: string): Promise<boolean>;
+  /** Deletes a review thread; only the person who started it. */
+  deleteReviewThread(threadId: string, cookie?: string): Promise<boolean>;
   /** Hard-deletes an unreferenced template and its versions. Dev-only, server-gated; fails if any
    *  policy references it (retire it instead). Site-admin only. */
   deleteTemplate(id: string, cookie?: string): Promise<boolean>;
@@ -496,9 +512,9 @@ export interface Edge {
   /** Disables an organisation's SSO connection. Does not clear its gates. Site-admin only. */
   disableOrganization(domain: string, cookie?: string): Promise<Organization>;
   disableUser(userId: string, cookie?: string): Promise<User>;
+
   /** Discards a policy's working draft, leaving any published version untouched. */
   discardDraft(policyId: string, cookie?: string): Promise<boolean>;
-
   /** Discards (deletes) a draft template version. Published versions can't be discarded. Site-admin only. */
   discardTemplateVersion(id: string, cookie?: string): Promise<boolean>;
   /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
@@ -711,6 +727,8 @@ export interface Edge {
     orderedIds: readonly string[],
     cookie?: string,
   ): Promise<readonly Appendix[]>;
+  /** Appends a message to a review thread. */
+  replyReviewThread(threadId: string, body: string, cookie?: string): Promise<ReviewThread>;
   /** One case's full detail. Officers only. */
   reportCase(caseId: string, cookie?: string): Promise<ReportCase>;
   /** The case queue, optionally filtered by status and/or assignee. Officers only. */
@@ -734,6 +752,8 @@ export interface Edge {
   /** Retires (soft-deletes) a template: hidden from listings and pickers, but its versions keep
    *  working for policies that already pinned them. Site-admin only. */
   retireTemplate(id: string, cookie?: string): Promise<Template>;
+  /** Every review thread on a version the caller may read, without bodies for an obfuscated reader. */
+  reviewThreads(policyVersionId: string, cookie?: string): Promise<readonly ReviewThread[]>;
   /** Revokes a magic link: anyone holding its URL can no longer reach the policy (D31). */
   revokeMagicLink(token: string, cookie?: string): Promise<boolean>;
   /** Signs the caller out of every other session; answers how many ended. */
@@ -807,6 +827,12 @@ export interface Edge {
   setPolicyOwner(policyId: string, ownerUserId: string, cookie?: string): Promise<{ id: string }>;
   /** Archive (true) or restore (false) a references-library entry. */
   setReferenceArchived(id: string, archived: boolean, cookie?: string): Promise<Reference>;
+  /** Resolves a review thread, or reopens it with `resolved: false`. */
+  setReviewThreadResolved(
+    threadId: string,
+    resolved: boolean,
+    cookie?: string,
+  ): Promise<ReviewThread>;
   /** Overrides how often one notification type reaches the caller. */
   setTypeCadence(
     kind: string,

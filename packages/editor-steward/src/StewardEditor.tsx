@@ -18,10 +18,17 @@ import {
   type ReworkRequest,
   type SavedReplace,
 } from "./AiToolbarAction";
+import { stripMarks } from "./document/marks";
 import { parseDocument, type SerializedDocument, serializeDocument } from "./document/tree";
 import { describeEditorError } from "./editorErrors";
 import { EDITOR_THEME, isDarkTheme } from "./editorTheme";
 import { STEWARD_NODES } from "./nodes";
+import {
+  createCommentToolbarAction,
+  type ReviewComments,
+  ReviewThreadAnchors,
+  ReviewThreadsPanel,
+} from "./ReviewComments";
 import { ImageUploadError } from "./uploadImage";
 
 /** What a host can do with a mounted editor. */
@@ -57,6 +64,12 @@ export interface StewardEditorProps {
   onRework?: (request: ReworkRequest) => void;
   placeholder?: string;
   readOnly?: boolean;
+  /**
+   * Inline review comments: the service's threads are highlighted on their text and listed
+   * beside the document, with reply and resolve. `onAdd` adds a Comment button to the selection
+   * toolbar. The highlights are never part of the stored document.
+   */
+  review?: ReviewComments;
   /** Stores an image and answers its URL. Without one the image card says uploads are off. */
   uploadImage?: (file: File) => Promise<string>;
 }
@@ -111,8 +124,7 @@ const useImageUploader = (
 const prefersDark = () => globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
 
 /** Whether the page is in a dark theme: the `dark`/`hc` class, or System with a dark OS. */
-const readDark = () =>
-  isDarkTheme(globalThis.document.documentElement.classList, prefersDark());
+const readDark = () => isDarkTheme(globalThis.document.documentElement.classList, prefersDark());
 
 const useDarkTheme = (): boolean => {
   const [dark, setDark] = useState(readDark);
@@ -149,6 +161,7 @@ export const StewardEditor = ({
   onRework,
   placeholder,
   readOnly = false,
+  review,
   uploadImage,
 }: StewardEditorProps) => {
   const { t } = useTranslation("authoring");
@@ -167,6 +180,7 @@ export const StewardEditor = ({
   );
   const toolbarActions = useMemo(
     () => [
+      createCommentToolbarAction(t("editor.comments.button"), review?.onAdd),
       createAiToolbarAction({
         hidden: !onRework || readOnly,
         labels: {
@@ -178,7 +192,29 @@ export const StewardEditor = ({
         saved: savedSelection,
       }),
     ],
-    [onRework, readOnly, t],
+    [onRework, readOnly, review?.onAdd, t],
+  );
+  // The package keeps the threads' state (resolved, active) to style the highlights; the
+  // service's threads are the source.
+  const commentThreads = useMemo(
+    () =>
+      review
+        ? {
+            threads: review.threads.map((thread) => ({
+              createdAt: thread.createdAt,
+              id: thread.id,
+              messages: thread.messages.map((message) => ({
+                author: message.authorName ?? message.authorUserId,
+                body: message.body,
+                createdAt: message.createdAt,
+                id: message.id,
+              })),
+              quote: thread.quote,
+              resolved: thread.resolved,
+            })),
+          }
+        : undefined,
+    [review],
   );
   const strings = useMemo(() => ({ errorFallback: t("editor.cardError") }), [t]);
   const dark = useDarkTheme();
@@ -199,7 +235,8 @@ export const StewardEditor = ({
     (api: KoenigEditorAPI) => {
       apiRef.current = api;
       onReady?.({
-        getDocument: () => api.editorInstance.getEditorState().toJSON() as SerializedDocument,
+        getDocument: () =>
+          stripMarks(api.editorInstance.getEditorState().toJSON() as SerializedDocument),
         replaceSelection: (text) => replaceSavedSelection(savedSelection, text),
         setDocument: (document) => {
           const editor = api.editorInstance;
@@ -217,15 +254,25 @@ export const StewardEditor = ({
   const handleChange = useCallback(
     (json: unknown) => {
       const document = parseDocument(JSON.stringify(json));
-      if (document) onChange?.(document);
+      if (document) onChange?.(stripMarks(document));
     },
     [onChange],
+  );
+
+  const editor = (
+    <KoenigEditor
+      onChange={handleChange}
+      placeholderText={placeholder ?? t("editor.placeholder")}
+      readOnly={readOnly}
+      registerAPI={registerAPI}
+    />
   );
 
   return (
     <div className={className} ref={cursorsContainerRef} style={EDITOR_THEME}>
       <KoenigComposer
         collaboration={koenigCollaboration}
+        comments={commentThreads}
         customNodes={STEWARD_NODES}
         darkMode={dark}
         editable={!readOnly}
@@ -233,14 +280,18 @@ export const StewardEditor = ({
         initialEditorState={initialEditorState}
         onError={handleError}
         strings={strings}
+        toolbar={review && readOnly ? [] : undefined}
         toolbarActions={toolbarActions}
       >
-        <KoenigEditor
-          onChange={handleChange}
-          placeholderText={placeholder ?? t("editor.placeholder")}
-          readOnly={readOnly}
-          registerAPI={registerAPI}
-        />
+        {review && (review.threads.length > 0 || review.onAdd) ? (
+          <div className="flex flex-col items-start gap-6 lg:flex-row">
+            <div className="min-w-0 flex-1 self-stretch">{editor}</div>
+            <ReviewThreadAnchors threads={review.threads} />
+            <ReviewThreadsPanel comments={review} />
+          </div>
+        ) : (
+          editor
+        )}
       </KoenigComposer>
     </div>
   );

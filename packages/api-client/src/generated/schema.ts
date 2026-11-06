@@ -946,6 +946,7 @@ export type Mutation = {
   readonly addCaseNotice: CaseNotice;
   readonly addGroupMapping: GroupMapping;
   readonly addOrganization: Organization;
+  readonly addReviewThread: ReviewThread;
   readonly addUserToGroup: User;
   readonly approveHardReset: HardResetRequest;
   readonly archiveWorkflowDef: Scalars["Boolean"]["output"];
@@ -983,6 +984,7 @@ export type Mutation = {
   readonly deleteOrganization: Scalars["Boolean"]["output"];
   readonly deletePolicy: Scalars["Boolean"]["output"];
   readonly deleteReference: Scalars["Boolean"]["output"];
+  readonly deleteReviewThread: Scalars["Boolean"]["output"];
   readonly deleteTemplate: Scalars["Boolean"]["output"];
   readonly deleteUser: DeleteUserResult;
   readonly disableOrganization: Organization;
@@ -1025,6 +1027,7 @@ export type Mutation = {
   readonly renameTemplate: Template;
   readonly renameUserMfaFactor: Scalars["Boolean"]["output"];
   readonly reorderAppendices: ReadonlyArray<Appendix>;
+  readonly replyReviewThread: ReviewThread;
   readonly replyToMyReport: ReporterView;
   readonly replyToReport: ReporterView;
   readonly requestHardReset: HardResetRequest;
@@ -1103,6 +1106,7 @@ export type Mutation = {
   readonly setPolicyTemplate: Policy;
   readonly setReferenceArchived: Reference;
   readonly setRelatedPolicies: ReadonlyArray<RelatedPolicy>;
+  readonly setReviewThreadResolved: ReviewThread;
   readonly setTypeCadence: NotificationSettings;
   /**
    * Site-admin only. Sets a single user's per-day AI query limit,
@@ -1251,6 +1255,13 @@ export type MutationAddGroupMappingArgs = {
 
 export type MutationAddOrganizationArgs = {
   input: AddOrganizationInput;
+};
+
+export type MutationAddReviewThreadArgs = {
+  body: Scalars["String"]["input"];
+  occurrence: Scalars["Int"]["input"];
+  policyVersionId: Scalars["ID"]["input"];
+  quote: Scalars["String"]["input"];
 };
 
 export type MutationAddUserToGroupArgs = {
@@ -1407,6 +1418,10 @@ export type MutationDeletePolicyArgs = {
 
 export type MutationDeleteReferenceArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type MutationDeleteReviewThreadArgs = {
+  threadId: Scalars["ID"]["input"];
 };
 
 export type MutationDeleteTemplateArgs = {
@@ -1571,6 +1586,11 @@ export type MutationRenameUserMfaFactorArgs = {
 export type MutationReorderAppendicesArgs = {
   orderedIds: ReadonlyArray<Scalars["ID"]["input"]>;
   policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationReplyReviewThreadArgs = {
+  body: Scalars["String"]["input"];
+  threadId: Scalars["ID"]["input"];
 };
 
 export type MutationReplyToMyReportArgs = {
@@ -1767,6 +1787,11 @@ export type MutationSetReferenceArchivedArgs = {
 export type MutationSetRelatedPoliciesArgs = {
   policyId: Scalars["ID"]["input"];
   relatedPolicyIds: ReadonlyArray<Scalars["ID"]["input"]>;
+};
+
+export type MutationSetReviewThreadResolvedArgs = {
+  resolved: Scalars["Boolean"]["input"];
+  threadId: Scalars["ID"]["input"];
 };
 
 export type MutationSetTypeCadenceArgs = {
@@ -2293,6 +2318,7 @@ export type Query = {
   readonly reportCase: ReportCase;
   readonly reportCases: CaseQueue;
   readonly resolveUserLabels: ReadonlyArray<UserLabel>;
+  readonly reviewThreads: ReadonlyArray<ReviewThread>;
   /**
    * Grounded search-and-answer over policy content. The read scope (the
    * categories the caller reads, and sensitive documents with the individual
@@ -2610,6 +2636,10 @@ export type QueryResolveUserLabelsArgs = {
   ids: ReadonlyArray<Scalars["ID"]["input"]>;
 };
 
+export type QueryReviewThreadsArgs = {
+  policyVersionId: Scalars["ID"]["input"];
+};
+
 export type QuerySearchAndAnswerArgs = {
   categoryId?: InputMaybe<Scalars["ID"]["input"]>;
   question: Scalars["String"]["input"];
@@ -2870,6 +2900,26 @@ export enum ReviewCadence {
   None = "NONE",
   OnDate = "ON_DATE",
 }
+
+export type ReviewMessage = {
+  readonly __typename?: "ReviewMessage";
+  readonly authorName?: Maybe<Scalars["String"]["output"]>;
+  readonly authorUserId: Scalars["ID"]["output"];
+  readonly body: Scalars["String"]["output"];
+  readonly createdAt: Scalars["DateTime"]["output"];
+  readonly id: Scalars["ID"]["output"];
+};
+
+export type ReviewThread = {
+  readonly __typename?: "ReviewThread";
+  readonly createdAt: Scalars["DateTime"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly messages: ReadonlyArray<ReviewMessage>;
+  readonly occurrence: Scalars["Int"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly quote: Scalars["String"]["output"];
+  readonly resolved: Scalars["Boolean"]["output"];
+};
 
 export type RiskAssessment = {
   readonly __typename?: "RiskAssessment";

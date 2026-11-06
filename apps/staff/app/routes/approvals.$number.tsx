@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { SignalType } from "@steward-web/api-client";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
+import { parseDocument } from "@steward-web/editor-steward";
 import { formatDayMonth, useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
 import {
@@ -42,6 +43,9 @@ import {
   listUpcomingApprovals,
 } from "../approvals/approvals.server";
 import { stepperStagesOf } from "../approvals/stepperStages";
+import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
+import { listReviewThreads } from "../review/reviewThreads.server";
+import { useReviewComments } from "../review/useReviewComments";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const identity = await requireIdentityFromRequest(request);
@@ -69,13 +73,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const publishedId = found?.currentPublishedVersionId ?? null;
   const draftId = found ? (found.currentDraftVersionId ?? null) : policyVersionId;
   // Each part of the review reads on its own: one that fails leaves its tab saying so.
-  const [workflow, diff, upcoming, detail] = await Promise.all([
+  const [workflow, diff, upcoming, detail, threads] = await Promise.all([
     getWorkflowStatus(request, policyVersionId),
     publishedId && draftId && publishedId !== draftId
       ? getVersionDiff(publishedId, draftId, cookie).catch(() => [])
       : Promise.resolve(null),
     draftId ? getVersionDocument(draftId, cookie).catch(() => null) : Promise.resolve(null),
     found ? getPolicyDetail(found.documentType, found.number, cookie).catch(() => null) : null,
+    draftId ? listReviewThreads(request, draftId) : Promise.resolve([]),
   ]);
   const task = pendingTasks.find((t) => t.policyVersionId === policyVersionId) ?? null;
   const coming = task
@@ -112,6 +117,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       upcoming,
     },
     task,
+    threads,
     workflow,
   });
 };
@@ -187,6 +193,14 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const hasChanges = early !== null && early.diff !== null;
   const hasHistory = early !== null && !early.first && early.history.length > 0;
   const [view, setView] = useState(hasChanges ? "changes" : "upcoming");
+  // Inline comments on the version under review: whoever holds a seat on it comments and
+  // replies; the drafter sees the same threads in the editor.
+  const comments = useReviewComments({
+    canAdd: "task" in loaderData && Boolean(loaderData.task),
+    meId: "meId" in loaderData ? loaderData.meId : "",
+    policyVersionId: "policyVersionId" in loaderData ? loaderData.policyVersionId : "",
+    threads: "threads" in loaderData ? loaderData.threads : [],
+  });
 
   if (!loaderData.match) {
     return (
@@ -207,6 +221,9 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const current = workflow.stageNames[workflow.currentStageIdx] ?? "";
   const submitted = submittedFrom(review.history);
   const deciding = Boolean(task) && inReview && !decided;
+  // The version as the editor, for the commenting view; the plain reader when it can't open.
+  const commentable =
+    task && review.upcoming ? parseDocument(review.upcoming.contentJson) : undefined;
   const appendixLabel = (appendix: { letter: string; title: string }) =>
     t("policy:reader.appendices.heading", { letter: appendix.letter, title: appendix.title });
 
@@ -226,6 +243,11 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   } else if (deciding && task) {
     aside = (
       <DecisionPanel className="md:static" error={refusal ? refusalMessage : undefined}>
+        {comments.threads.length > 0 ? (
+          <p className="text-sm text-muted">
+            {t("review.comments.withDecision", { count: comments.threads.length })}
+          </p>
+        ) : null}
         <input name="policyVersionId" type="hidden" value={policyVersionId} />
         <input name="runId" type="hidden" value={task.runId} />
         <input name="taskId" type="hidden" value={task.taskId} />
@@ -342,7 +364,14 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
             </TabsContent>
           )}
           <TabsContent className="mt-3.5" value="upcoming">
-            {review.upcoming ? (
+            {review.upcoming && commentable ? (
+              <DraftDocumentEditor
+                initialDocument={commentable}
+                readOnly
+                ready
+                review={comments}
+              />
+            ) : review.upcoming ? (
               <PolicyDocument
                 appendices={review.upcoming.appendices}
                 appendixLabel={appendixLabel}

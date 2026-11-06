@@ -19,6 +19,7 @@ import {
   AddCaseNoticeDocument,
   AddGroupMappingDocument,
   AddOrganizationDocument,
+  AddReviewThreadDocument,
   AddUserToGroupDocument,
   AiConfigDocument,
   AiHealthDocument,
@@ -58,6 +59,7 @@ import {
   DeleteOrganizationDocument,
   DeletePolicyDocument,
   DeleteReferenceDocument,
+  DeleteReviewThreadDocument,
   DeleteTemplateDocument,
   DeleteUserDocument,
   DiagnosticsDocument,
@@ -121,6 +123,7 @@ import {
   RenameTemplateDocument,
   RenameUserMfaFactorDocument,
   ReorderAppendicesDocument,
+  ReplyReviewThreadDocument,
   ReportCaseDocument,
   ReportCasesDocument,
   RequestPdfExportDocument,
@@ -130,6 +133,7 @@ import {
   ResolveUserLabelsDocument,
   RetirePolicyDocument,
   RetireTemplateDocument,
+  ReviewThreadsDocument,
   RevokeMagicLinkDocument,
   RevokeMySessionsDocument,
   RevokeRoleDocument,
@@ -154,6 +158,7 @@ import {
   SetNotificationChannelsDocument,
   SetPolicyOwnerDocument,
   SetReferenceArchivedDocument,
+  SetReviewThreadResolvedDocument,
   SetTypeCadenceDocument,
   SetUserPolicyOverrideDocument,
   SignalWorkflowDocument,
@@ -495,6 +500,45 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.addAppendix;
+  },
+  async addReviewThread(policyVersionId, quote, occurrence, body, cookie) {
+    const data = await gatewayFetch(
+      AddReviewThreadDocument,
+      { body, occurrence, policyVersionId, quote },
+      "AddReviewThread",
+      { cookie },
+    );
+    return data.addReviewThread;
+  },
+  async deleteReviewThread(threadId, cookie) {
+    const data = await gatewayFetch(DeleteReviewThreadDocument, { threadId }, "DeleteReviewThread", {
+      cookie,
+    });
+    return data.deleteReviewThread;
+  },
+  async replyReviewThread(threadId, body, cookie) {
+    const data = await gatewayFetch(
+      ReplyReviewThreadDocument,
+      { body, threadId },
+      "ReplyReviewThread",
+      { cookie },
+    );
+    return data.replyReviewThread;
+  },
+  async reviewThreads(policyVersionId, cookie) {
+    const data = await gatewayFetch(ReviewThreadsDocument, { policyVersionId }, "ReviewThreads", {
+      cookie,
+    });
+    return data.reviewThreads;
+  },
+  async setReviewThreadResolved(threadId, resolved, cookie) {
+    const data = await gatewayFetch(
+      SetReviewThreadResolvedDocument,
+      { resolved, threadId },
+      "SetReviewThreadResolved",
+      { cookie },
+    );
+    return data.setReviewThreadResolved;
   },
   async addCaseNote(caseId, body, cookie) {
     const data = await gatewayFetch(AddCaseNoteDocument, { body, caseId }, "AddCaseNote", {
@@ -1290,6 +1334,7 @@ export const liveEdge: Edge = {
         title: a.title,
       })),
       blocks: documentBlocksFromContent(policyVersion.contentJson),
+      contentJson: policyVersion.contentJson,
       version: semanticVersion(policyVersion.versionNo),
     };
   },

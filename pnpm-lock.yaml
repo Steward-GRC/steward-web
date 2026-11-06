@@ -444,6 +444,9 @@ importers:
       '@lexical/list':
         specifier: ^0.52.0
         version: 0.52.0(typescript@6.0.3)
+      '@lexical/mark':
+        specifier: ^0.52.0
+        version: 0.52.0(typescript@6.0.3)
       '@lexical/markdown':
         specifier: ^0.52.0
         version: 0.52.0(typescript@6.0.3)
