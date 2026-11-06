@@ -2,6 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { Group, ReviewCadence } from "@steward-web/api-client";
 
+import {
+  acceptsDocumentType,
+  CategoryDocumentTypes,
+  documentTypesOf,
+  strandedBy,
+} from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
@@ -29,6 +35,7 @@ import { data, Link, redirect, useFetcher } from "react-router";
 import type { Route } from "./+types/categories.$categoryId";
 
 import {
+  categoryDocumentCounts,
   deleteGroup,
   effectiveAckEveryone,
   effectiveExclusionGroupIds,
@@ -42,6 +49,7 @@ import {
   moveGroup,
   ownsOwners,
   renameGroup,
+  setCategoryDocumentTypes,
   updateGroupSettings,
 } from "../categories/categories.server";
 import { listUsers } from "../users/users.server";
@@ -82,6 +90,8 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     // the page, with names falling back to ids.
     listUsers(request).catch(() => []),
   ]);
+  // The count is a courtesy for the form's own check; the service refuses a bad narrowing anyway.
+  const documentCounts = await categoryDocumentCounts(request, group.id).catch(() => null);
   const chain = chainOf(groups, group);
   const owns = ownsOwners(groups, group);
   const nameOf = (id: string) => users.find((u) => u.userId === id)?.name ?? id;
@@ -95,6 +105,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       idpGroupIds: effectiveIdpGroupIds(groups, group) ?? [],
     },
     candidates: moveCandidates(groups, group.id),
+    documentCounts,
     group,
     inheritedOwners: owns
       ? []
@@ -174,6 +185,23 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         });
         break;
       }
+      case "save-document-types": {
+        const next = field("documentTypes") as CategoryDocumentTypes;
+        if (!Object.values(CategoryDocumentTypes).includes(next)) {
+          return data({ intent, invalid: true, ok: false } as const, { status: 400 });
+        }
+        const groups = await listGroups(request);
+        const group = groups.find((g) => g.id === groupId);
+        if (!group) throw data("category not found", { status: 404 });
+        const counts = await categoryDocumentCounts(request, groupId).catch(() => null);
+        const stranded = counts ? strandedBy(counts, next) : 0;
+        // No silent move and no orphans: narrowing waits until the documents are out.
+        if (stranded > 0) {
+          return data({ intent, ok: false, stranded } as const, { status: 409 });
+        }
+        await setCategoryDocumentTypes(request, groupId, next);
+        break;
+      }
       default: {
         throw data("unrecognized intent", { status: 400 });
       }
@@ -188,12 +216,34 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
 type Result =
   | { failure: Failure; intent: string; ok: false }
   | { intent: string; invalid: true; ok: false }
+  | { intent: string; ok: false; stranded: number }
   | { intent: string; ok: true };
 
 const failureOf = (fetcher: { data?: Result; state: string }) =>
   fetcher.state === "idle" && fetcher.data && !fetcher.data.ok && "failure" in fetcher.data
     ? fetcher.data.failure
     : undefined;
+
+/** Which catalog holds the documents a narrowing would strand: policies first, else procedures. */
+const findKind = (
+  counts: { policies: number; procedures: number } | null,
+  next: CategoryDocumentTypes,
+): "policy" | "procedure" => {
+  const policies = counts && !acceptsDocumentType(next, "POLICY") ? counts.policies : 0;
+  return policies > 0 ? "policy" : "procedure";
+};
+
+/** The catalog filtered to the category, where each document's actions can move it. */
+const findThem = (
+  path: readonly string[],
+  counts: { policies: number; procedures: number } | null,
+  next: CategoryDocumentTypes,
+): string => {
+  const query = new URLSearchParams();
+  if (path[0]) query.set("category", path[0]);
+  if (path[1]) query.set("subcategory", path.at(-1) ?? path[1]);
+  return `${findKind(counts, next) === "policy" ? "/policies" : "/procedures"}?${query.toString()}`;
+};
 
 const CHIP = "flex h-7 items-center gap-1.5 rounded-full bg-sunken px-2.5 text-sm";
 
@@ -206,15 +256,20 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
   const save = useFetcher<Result>();
   const audience = useFetcher<Result>();
+  const documentTypesFetcher = useFetcher<Result>();
   const [cadence, setCadence] = useState<string>(
     loaderData.group ? loaderData.group.reviewCadence : "NONE",
   );
   const [owners, setOwners] = useState<readonly string[]>(
     loaderData.group ? loaderData.group.owners : [],
   );
+  const [documentTypes, setDocumentTypes] = useState<CategoryDocumentTypes>(
+    loaderData.group ? documentTypesOf(loaderData.group) : CategoryDocumentTypes.Both,
+  );
   const [everyone, setEveryone] = useState(loaderData.group ? loaderData.audience.everyone : false);
   const [slug, setSlug] = useState(loaderData.group ? loaderData.group.slug : "");
   const dangerId = useId();
+  const documentTypesId = useId();
   const audienceId = useId();
 
   if (!loaderData.group) {
@@ -236,6 +291,18 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
   const { candidates, group, inheritedOwners, owns, path, templates, userOptions, workflows } =
     loaderData;
   const nameOf = (id: string) => userOptions.find((u) => u.value === id)?.label ?? id;
+  // The form's own check, or the service's when it refused anyway.
+  const refused =
+    documentTypesFetcher.state === "idle" &&
+    documentTypesFetcher.data &&
+    !documentTypesFetcher.data.ok &&
+    "stranded" in documentTypesFetcher.data
+      ? documentTypesFetcher.data.stranded
+      : 0;
+  const stranded = Math.max(
+    loaderData.documentCounts ? strandedBy(loaderData.documentCounts, documentTypes) : 0,
+    refused,
+  );
   const saved = save.state === "idle" && save.data?.ok;
   const invalid = save.state === "idle" && save.data && !save.data.ok && "invalid" in save.data;
 
@@ -384,6 +451,58 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
           </Button>
         </div>
       </save.Form>
+
+      <documentTypesFetcher.Form
+        aria-labelledby={documentTypesId}
+        className="flex flex-col gap-3 rounded-[10px] border border-border bg-surface p-4"
+        method="post"
+      >
+        <input name="intent" type="hidden" value="save-document-types" />
+        <input name="documentTypes" type="hidden" value={documentTypes} />
+        <b id={documentTypesId}>{t("categories.documentTypes.title")}</b>
+        <p className="text-sm text-muted">{t("categories.documentTypes.description")}</p>
+        <RadioGroup
+          className="flex flex-wrap gap-x-5 gap-y-2"
+          onValueChange={(value) => setDocumentTypes(value as CategoryDocumentTypes)}
+          value={documentTypes}
+        >
+          {Object.values(CategoryDocumentTypes).map((value) => (
+            <RadioItem key={value} value={value}>
+              {t(`categories.documentTypes.${value}`)}
+            </RadioItem>
+          ))}
+        </RadioGroup>
+        {stranded > 0 ? (
+          <Banner title={t("categories.documentTypes.strandedTitle")} tone="warn">
+            {t("categories.documentTypes.stranded", { count: stranded })}{" "}
+            <Link to={findThem(path, loaderData.documentCounts, documentTypes)}>
+              {t(
+                `categories.documentTypes.find.${findKind(loaderData.documentCounts, documentTypes)}`,
+              )}
+            </Link>
+          </Banner>
+        ) : null}
+        {failureOf(documentTypesFetcher) ? (
+          <Banner
+            failure={failureOf(documentTypesFetcher)}
+            title={t("categories.failed")}
+            tone="danger"
+          />
+        ) : null}
+        <div className="flex items-center justify-end gap-2.5">
+          {documentTypesFetcher.state === "idle" && documentTypesFetcher.data?.ok ? (
+            <span className="font-semibold text-ok">{t("categories.saved")}</span>
+          ) : null}
+          <Button
+            busy={documentTypesFetcher.state !== "idle"}
+            disabled={stranded > 0}
+            type="submit"
+            variant="secondary"
+          >
+            {t("categories.documentTypes.save")}
+          </Button>
+        </div>
+      </documentTypesFetcher.Form>
 
       <audience.Form
         aria-labelledby={audienceId}

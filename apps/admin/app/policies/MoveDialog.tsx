@@ -1,5 +1,11 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import {
+  acceptsDocumentType,
+  type CategoryDocumentTypes,
+  documentTypesOf,
+  refusalKey,
+} from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import {
   Banner,
@@ -12,13 +18,14 @@ import {
   notify,
   Select,
 } from "@steward-web/ui";
-import { documentTypeBasePath, type PolicyDetail } from "@steward-web/ui/domain";
+import { DocumentType, documentTypeBasePath, type PolicyDetail } from "@steward-web/ui/domain";
 import { useEffect, useState } from "react";
 import { useFetcher, useNavigate } from "react-router";
 
 import { refusalIn, useGovernanceFetcher, useNouns } from "./useGovernance";
 
 interface Section {
+  documentTypes?: CategoryDocumentTypes;
   id: string;
   path: string;
 }
@@ -53,10 +60,22 @@ export const MoveDialog = ({ detail, onDone }: { detail: PolicyDetail; onDone: (
     void navigate(`${documentTypeBasePath(detail.documentType)}/${encodeURIComponent(moved)}`);
   }, [detail.documentType, moved, navigate, onDone, t]);
 
-  const options = (sections.data?.sections ?? []).map((section) => ({
-    label: section.path,
-    value: section.id,
-  }));
+  // A section that does not hold this kind of document stays in the list, greyed out with why
+  // (#87); the service refuses the move too.
+  const kind = detail.documentType === DocumentType.Procedure ? "PROCEDURE" : "POLICY";
+  const options = (sections.data?.sections ?? []).map((section) => {
+    const holds = acceptsDocumentType(documentTypesOf(section), kind);
+    return {
+      disabled: !holds,
+      label: holds
+        ? section.path
+        : t("governance.move.refused", {
+            path: section.path,
+            why: t(`governance.move.holds.${refusalKey(documentTypesOf(section))}`),
+          }),
+      value: section.id,
+    };
+  });
 
   return (
     <DialogContent

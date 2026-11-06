@@ -1,6 +1,13 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { DocumentType, Sensitivity } from "@steward-web/api-client";
+import {
+  acceptsDocumentType,
+  type CategoryDocumentTypes,
+  DocumentType,
+  documentTypesOf,
+  refusalKey,
+  Sensitivity,
+} from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
@@ -148,10 +155,17 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
   const choosing = stepper && step === 1;
   const category = loaderData.categories.find((c) => c.id === draft.groupId);
   const subcategories = category?.subcategories ?? [];
-  const homeId =
-    draft.subcategoryId && subcategories.some((s) => s.id === draft.subcategoryId)
-      ? draft.subcategoryId
-      : draft.groupId;
+  const subcategory = subcategories.find((s) => s.id === draft.subcategoryId);
+  const homeId = subcategory ? subcategory.id : draft.groupId;
+  // What the chosen home holds (#87): a category that does not hold this type is greyed out, a
+  // container stays open so its children can be reached, and the form will not submit into it.
+  const kind = procedure ? "PROCEDURE" : "POLICY";
+  const holds = (choice?: { documentTypes?: CategoryDocumentTypes }) =>
+    acceptsDocumentType(documentTypesOf(choice ?? {}), kind);
+  const why = (choice: { documentTypes?: CategoryDocumentTypes }) =>
+    t(`new.holds.${refusalKey(documentTypesOf(choice))}`);
+  const home = subcategory ?? category;
+  const homeRefuses = home !== undefined && !holds(home);
 
   return (
     <div
@@ -280,11 +294,18 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
                   <option disabled value="">
                     {t("new.fields.choose")}
                   </option>
-                  {loaderData.categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
+                  {loaderData.categories.map((c) => {
+                    const reachable = c.subcategories.some((s) => holds(s));
+                    return (
+                      <option disabled={!holds(c) && !reachable} key={c.id} value={c.id}>
+                        {holds(c)
+                          ? c.name
+                          : reachable
+                            ? t("new.holds.reach", { name: c.name, why: why(c) })
+                            : t("new.holds.refused", { name: c.name, why: why(c) })}
+                      </option>
+                    );
+                  })}
                 </select>
               </Labelled>
               <Labelled id={ids.subcategory} label={t("new.fields.subcategory")}>
@@ -297,13 +318,18 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
                 >
                   <option value="">{t("new.fields.noSubcategory")}</option>
                   {subcategories.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
+                    <option disabled={!holds(s)} key={s.id} value={s.id}>
+                      {holds(s) ? s.name : t("new.holds.refused", { name: s.name, why: why(s) })}
                     </option>
                   ))}
                 </select>
               </Labelled>
             </div>
+            {homeRefuses ? (
+              <p className="text-sm text-danger" role="alert">
+                {t("new.holds.cannot", { name: home.name, why: why(home) })}
+              </p>
+            ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
               <Labelled id={ids.template} label={t("new.fields.template")}>
                 <select
@@ -369,7 +395,11 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
             <Button asChild className="h-10 px-4" variant="secondary">
               <Link to={procedure ? "/procedures" : "/policies"}>{t("new.cancel")}</Link>
             </Button>
-            <Button className="h-10 px-[18px]" disabled={fetcher.state !== "idle"} type="submit">
+            <Button
+              className="h-10 px-[18px]"
+              disabled={fetcher.state !== "idle" || homeRefuses}
+              type="submit"
+            >
               {t(`new.create.${noun}`)}
             </Button>
           </div>

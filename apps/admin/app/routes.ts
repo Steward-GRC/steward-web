@@ -61,6 +61,7 @@ export default [
   route("resources/access-simulate", "routes/resources.access-simulate.tsx"),
   route("resources/sections", "routes/resources.sections.tsx"),
   route("resources/user-search", "routes/resources.user-search.tsx"),
+  route("resources/subject-search", "routes/resources.subject-search.tsx"),
   route("audit", "routes/audit.tsx"),
   route("shortcuts", "routes/shortcuts.tsx"),
   // The shell's designed destinations that aren't built yet (H2, H14): each answers "Coming

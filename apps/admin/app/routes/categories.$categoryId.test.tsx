@@ -152,3 +152,62 @@ describe("Category directory, Details & Defaults (A3)", () => {
     expect(await screen.findByText("Category not found")).toBeInTheDocument();
   });
 });
+
+const form = () => screen.findByRole("form", { name: "Documents this category holds" });
+
+describe("Category document types (#87)", () => {
+  it("offers both, policies only, procedures only and none, with the current one chosen", async () => {
+    openCategory({
+      documentCounts: { policies: 0, procedures: 0 },
+      group: { ...EXPENSES, documentTypes: "POLICIES" },
+    });
+    const card = await form();
+    expect(within(card).getByRole("radio", { name: "Policies and procedures" })).not.toBeChecked();
+    expect(within(card).getByRole("radio", { name: "Policies only" })).toBeChecked();
+    expect(within(card).getByRole("radio", { name: "Procedures only" })).not.toBeChecked();
+    expect(within(card).getByRole("radio", { name: /None/ })).not.toBeChecked();
+  });
+
+  it("reads a category with no setting as holding both", async () => {
+    openCategory({ documentCounts: { policies: 0, procedures: 0 } });
+    const card = await form();
+    expect(within(card).getByRole("radio", { name: "Policies and procedures" })).toBeChecked();
+  });
+
+  it("saves a change that strands nothing", async () => {
+    const posted = openCategory({
+      documentCounts: { policies: 0, procedures: 0 },
+      group: { ...EXPENSES, documentTypes: "BOTH" },
+    });
+    const card = await form();
+    await userEvent.click(within(card).getByRole("radio", { name: /None/ }));
+    await userEvent.click(within(card).getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => expect(last(posted).get("intent")).toBe("save-document-types"));
+    expect(last(posted).get("documentTypes")).toBe("NONE");
+  });
+
+  it("refuses to narrow while documents would be stranded, with the count and where to find them", async () => {
+    const posted = openCategory({
+      documentCounts: { policies: 3, procedures: 2 },
+      group: { ...EXPENSES, documentTypes: "BOTH" },
+    });
+    const card = await form();
+    await userEvent.click(within(card).getByRole("radio", { name: "Policies only" }));
+    expect(within(card).getByText(/2 documents/)).toBeInTheDocument();
+    expect(
+      within(card).getByRole("link", { name: "Find them in the procedure catalog" }),
+    ).toHaveAttribute("href", "/procedures?category=Finance&subcategory=Expenses");
+    expect(within(card).getByRole("button", { name: "Save" })).toBeDisabled();
+    expect(posted).toHaveLength(0);
+  });
+
+  it("lets a widening through even when the category holds documents", async () => {
+    openCategory({
+      documentCounts: { policies: 3, procedures: 0 },
+      group: { ...EXPENSES, documentTypes: "POLICIES" },
+    });
+    const card = await form();
+    await userEvent.click(within(card).getByRole("radio", { name: "Policies and procedures" }));
+    expect(within(card).getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+});

@@ -33,6 +33,7 @@ import {
   BreakGlassRevealDocument,
   CategoryChildrenDocument,
   CategoryDocument,
+  CategoryDocumentCountsDocument,
   type CategoryFieldsFragment,
   CategoryRulesetDocument,
   CategoryTreeDocument,
@@ -148,6 +149,7 @@ import {
   SetCaseStatusDocument,
   SetCategoryCadenceDocument,
   SetCategoryDefaultsDocument,
+  SetCategoryDocumentTypesDocument,
   SetCategoryGovernanceDocument,
   SetCategoryRulesetDocument,
   SetContactBlockArchivedDocument,
@@ -662,6 +664,15 @@ export const liveEdge: Edge = {
       slug: root.slug,
       subcategories: all.filter((c) => c.parentId === root.id).map((c) => c.name),
     }));
+  },
+  async categoryDocumentCounts(categoryId, cookie) {
+    const data = await gatewayFetch(
+      CategoryDocumentCountsDocument,
+      { categoryId },
+      "CategoryDocumentCounts",
+      { cookie },
+    );
+    return data.categoryDocumentCounts;
   },
   async categoryRuleset(categoryId, cookie) {
     const data = await gatewayFetch(CategoryRulesetDocument, { categoryId }, "CategoryRuleset", {
@@ -1832,6 +1843,15 @@ export const liveEdge: Edge = {
         { cookie },
       );
       current = data.setCategoryDefaults;
+    }
+    if (input.documentTypes !== undefined) {
+      const data = await gatewayFetch(
+        SetCategoryDocumentTypesDocument,
+        { documentTypes: input.documentTypes, id: input.id },
+        "SetCategoryDocumentTypes",
+        { cookie },
+      );
+      current = data.setCategoryDocumentTypes;
     }
     if (
       input.ackEveryone !== undefined ||

@@ -22,6 +22,8 @@ import type {
   CaseOutcome,
   CaseQueue,
   CaseStatus,
+  CategoryDocumentCounts,
+  CategoryDocumentTypes,
   CompletionReport,
   ContactBlock,
   ContactBlockInput,
@@ -180,6 +182,7 @@ export {
   BreachDecision,
   CaseOutcome,
   CaseStatus,
+  CategoryDocumentTypes,
   DocumentType,
   InformationKind,
   MergeItemKind,
@@ -204,6 +207,7 @@ export {
   Sensitivity,
   SignalType,
 } from "./generated/schema";
+export type { CategoryDocumentCounts } from "./generated/schema";
 export type { NotificationPreferences, Passkey, UserLabel } from "./views";
 export type {
   AckStatus,
@@ -400,6 +404,8 @@ export interface Edge {
   breakGlassReveal(policyId: string, reason: string, cookie?: string): Promise<BreakGlassGrant>;
   /** The library's category tree. Rejects with `GatewayError` when signed out. */
   categories(cookie?: string): Promise<readonly Category[]>;
+  /** How many policies and procedures a category holds now, for the settings form's check before it narrows what the category accepts. Site admins. */
+  categoryDocumentCounts(categoryId: string, cookie?: string): Promise<CategoryDocumentCounts>;
   /** One category's own ordered access rules (A5); its ancestors' rules are read the same way.
    *  Group managers and template admins. */
   categoryRuleset(categoryId: string, cookie?: string): Promise<readonly RaciRule[]>;
@@ -1123,6 +1129,9 @@ export interface UpdateGroupSettingsInput {
   defaultTemplateId?: null | string;
   defaultTemplateNone?: boolean;
   defaultWorkflowId?: null | string;
+  /** Which document types the category holds. Narrowing is refused while documents would be
+   *  stranded (see `categoryDocumentCounts`). */
+  documentTypes?: CategoryDocumentTypes;
   /** Unset leaves it unchanged; null or an array both carry an explicit override (null means
    *  "no exclusions", not "inherit" — there is no way to go back to inherited here either). */
   exclusionGroupIds?: null | readonly string[];

@@ -472,6 +472,7 @@ export type Category = {
   readonly defaultTemplateId?: Maybe<Scalars["ID"]["output"]>;
   readonly defaultTemplateNone: Scalars["Boolean"]["output"];
   readonly defaultWorkflowId?: Maybe<Scalars["ID"]["output"]>;
+  readonly documentTypes: CategoryDocumentTypes;
   readonly exclusionGroupIds?: Maybe<ReadonlyArray<Scalars["String"]["output"]>>;
   readonly id: Scalars["ID"]["output"];
   readonly idpGroupIds?: Maybe<ReadonlyArray<Scalars["String"]["output"]>>;
@@ -493,6 +494,19 @@ export type CategoryApproversInput = {
   readonly approverIds: ReadonlyArray<Scalars["ID"]["input"]>;
   readonly categoryId: Scalars["ID"]["input"];
 };
+
+export type CategoryDocumentCounts = {
+  readonly __typename?: "CategoryDocumentCounts";
+  readonly policies: Scalars["Int"]["output"];
+  readonly procedures: Scalars["Int"]["output"];
+};
+
+export enum CategoryDocumentTypes {
+  Both = "BOTH",
+  None = "NONE",
+  Policies = "POLICIES",
+  Procedures = "PROCEDURES",
+}
 
 export type CategoryPref = {
   readonly __typename?: "CategoryPref";
@@ -1079,6 +1093,7 @@ export type Mutation = {
   readonly setCaseStatus: ReportCase;
   readonly setCategoryCadence: NotificationSettings;
   readonly setCategoryDefaults: Category;
+  readonly setCategoryDocumentTypes: Category;
   /**
    * Persists governance fields on a category. idpGroupIds and exclusionGroupIds
    * are IdP group names. Pass an empty list to explicitly set "no audience" /
@@ -1699,6 +1714,11 @@ export type MutationSetCategoryDefaultsArgs = {
   id: Scalars["ID"]["input"];
 };
 
+export type MutationSetCategoryDocumentTypesArgs = {
+  documentTypes: CategoryDocumentTypes;
+  id: Scalars["ID"]["input"];
+};
+
 export type MutationSetCategoryGovernanceArgs = {
   ackEveryone?: InputMaybe<Scalars["Boolean"]["input"]>;
   ackTriggers: AckTrigger;
@@ -2221,6 +2241,7 @@ export type Query = {
   readonly category?: Maybe<Category>;
   readonly categoryApprovers: ReadonlyArray<User>;
   readonly categoryChildren: ReadonlyArray<Category>;
+  readonly categoryDocumentCounts: CategoryDocumentCounts;
   readonly categoryRuleset: CategoryRuleset;
   readonly categoryTree: ReadonlyArray<Category>;
   readonly completionReport: CompletionReport;
@@ -2449,6 +2470,10 @@ export type QueryCategoryApproversArgs = {
 
 export type QueryCategoryChildrenArgs = {
   parentId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
+export type QueryCategoryDocumentCountsArgs = {
+  categoryId: Scalars["ID"]["input"];
 };
 
 export type QueryCategoryRulesetArgs = {

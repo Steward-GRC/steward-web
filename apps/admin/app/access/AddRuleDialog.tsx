@@ -11,37 +11,43 @@ import {
   DialogFooter,
   DialogTrigger,
   Field,
-  Input,
+  type PickerOption,
   RadioGroup,
   RadioItem,
-  Select,
+  SearchPicker,
 } from "@steward-web/ui";
 import { type FormEvent, useState } from "react";
 
-import type { AccessPerson } from "./access.server";
+import { useSubjectSearch } from "./useSubjectSearch";
 
 const KINDS = [RaciSubjectKind.Everyone, RaciSubjectKind.Group, RaciSubjectKind.User] as const;
 
 export interface AddRuleDialogProps {
   disabled?: boolean;
   onAdd: (subjectKind: RaciSubjectKind, subjectRef: string) => void;
-  people: readonly AccessPerson[];
 }
 
 /**
- * "+ Add rule" (A5) in the standard dialog frame: who the rule is for (everyone, a directory
- * group by name, or one person), then the rule joins the bottom of the category's own rules
- * with every action blank, ready to be filled in and moved.
+ * "+ Add rule" (A5) in the standard dialog frame: who the rule is for (everyone, a group, or one
+ * person), then the rule joins the bottom of the category's own rules with every action blank,
+ * ready to be filled in and moved. A group or a person is found by typing (#88): the search
+ * runs on the server for the kind chosen and the rule keeps the person's id, never their name.
  */
-export const AddRuleDialog = ({ disabled, onAdd, people }: AddRuleDialogProps) => {
+export const AddRuleDialog = ({ disabled, onAdd }: AddRuleDialogProps) => {
   const { t } = useTranslation("admin");
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<RaciSubjectKind>(RaciSubjectKind.Group);
-  const [group, setGroup] = useState("");
-  const [person, setPerson] = useState("");
+  const [group, setGroup] = useState<null | PickerOption>(null);
+  const [person, setPerson] = useState<null | PickerOption>(null);
+  const searchGroups = useSubjectSearch("group");
+  const searchPeople = useSubjectSearch("user");
 
   const subjectRef =
-    kind === RaciSubjectKind.Group ? group.trim() : kind === RaciSubjectKind.User ? person : "";
+    kind === RaciSubjectKind.Group
+      ? (group?.id ?? "")
+      : kind === RaciSubjectKind.User
+        ? (person?.id ?? "")
+        : "";
   const ready = kind === RaciSubjectKind.Everyone || subjectRef !== "";
 
   const submit = (event: FormEvent) => {
@@ -49,8 +55,8 @@ export const AddRuleDialog = ({ disabled, onAdd, people }: AddRuleDialogProps) =
     if (!ready) return;
     onAdd(kind, subjectRef);
     setOpen(false);
-    setGroup("");
-    setPerson("");
+    setGroup(null);
+    setPerson(null);
   };
 
   return (
@@ -87,26 +93,23 @@ export const AddRuleDialog = ({ disabled, onAdd, people }: AddRuleDialogProps) =
               </RadioGroup>
             </fieldset>
             {kind === RaciSubjectKind.Group ? (
-              <Field hint={t("access.addRule.groupHint")} label={t("access.addRule.groupName")}>
-                <Input
-                  autoComplete="off"
-                  onChange={(event) => setGroup(event.target.value)}
+              <Field hint={t("access.addRule.groupHint")} label={t("access.addRule.group")}>
+                <SearchPicker
+                  label={t("access.addRule.group")}
+                  onChange={setGroup}
+                  placeholder={t("access.addRule.groupPlaceholder")}
+                  search={searchGroups}
                   value={group}
                 />
               </Field>
             ) : null}
             {kind === RaciSubjectKind.User ? (
               <Field label={t("access.addRule.person")}>
-                <Select
-                  onValueChange={setPerson}
-                  options={people.map((entry) => ({
-                    label: t("access.simulator.personOption", {
-                      email: entry.email,
-                      name: entry.name,
-                    }),
-                    value: entry.id,
-                  }))}
+                <SearchPicker
+                  label={t("access.addRule.person")}
+                  onChange={setPerson}
                   placeholder={t("access.addRule.personPlaceholder")}
+                  search={searchPeople}
                   value={person}
                 />
               </Field>

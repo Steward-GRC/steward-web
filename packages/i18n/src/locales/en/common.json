@@ -71,6 +71,14 @@
     "saving": "Saving…",
     "updatedJustNow": "Updated just now"
   },
+  "picker": {
+    "capped": "Showing the first {{count}}. Keep typing to narrow it down.",
+    "failed": "Search isn't available right now.",
+    "idTail": "ID …{{tail}}",
+    "keepTyping": "Type at least {{count}} characters to search.",
+    "noMatch": "No match for “{{query}}”.",
+    "searching": "Searching…"
+  },
   "table": {
     "filterBar": "Search and filters",
     "noMatches": "Nothing matches “{{query}}”.",
