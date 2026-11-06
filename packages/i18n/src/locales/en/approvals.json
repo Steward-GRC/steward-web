@@ -19,6 +19,19 @@
       "body": "Policy and approval actions appear here as they happen."
     }
   },
+  "flow": {
+    "due": "Due {{date}}",
+    "label": "Approval flow",
+    "publish": "Publish",
+    "state": {
+      "current": "Waiting",
+      "done": "Done",
+      "rejected": "Rejected",
+      "upcoming": "Not started"
+    },
+    "submitted": "Submitted",
+    "you": "you"
+  },
   "inbox": {
     "cardDue": "{{stage}} · {{n}} of {{total}} · due {{date}}",
     "columns": {

@@ -4,9 +4,17 @@ import { SignalType } from "@steward-web/api-client";
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { formatDayMonth, useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
-import { cn, CopyId, EmptyState, Tabs, TabsContent, TabsList, TabsTrigger } from "@steward-web/ui";
 import {
-  ApprovalStepper,
+  cn,
+  CopyId,
+  EmptyState,
+  FlowView,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@steward-web/ui";
+import {
   DecisionPanel,
   DiffView,
   DocumentType,
@@ -25,6 +33,7 @@ import { data, Link } from "react-router";
 
 import type { Route } from "./+types/approvals.$number";
 
+import { flowStepsOf, submittedFrom } from "../approvals/approvalFlow";
 import {
   decideApproval,
   getWorkflowStatus,
@@ -195,6 +204,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const { match, meId, policyVersionId, preview, review, task, workflow } = loaderData;
   const inReview = statusOf(workflow.status) === IN_REVIEW;
   const current = workflow.stageNames[workflow.currentStageIdx] ?? "";
+  const submitted = submittedFrom(review.history);
   const eyebrow = [match.category, match.subcategory].filter(Boolean).join(" · ");
   const deciding = Boolean(task) && inReview && !decided;
   const appendixLabel = (appendix: { letter: string; title: string }) =>
@@ -282,7 +292,31 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
         </span>
       </div>
 
-      <ApprovalStepper stages={stepperStagesOf(workflow, meId)} />
+      <FlowView
+        end={{
+          id: "publish",
+          state: statusOf(workflow.status) === "PUBLISHED" ? "done" : "upcoming",
+          title: t("flow.publish"),
+        }}
+        label={t("flow.label")}
+        start={{
+          id: "submitted",
+          state: "done",
+          title: t("flow.submitted"),
+          when: submitted.at ? formatDayMonth(submitted.at) : null,
+          who: submitted.by,
+        }}
+        stateLabels={{
+          current: t("flow.state.current"),
+          done: t("flow.state.done"),
+          rejected: t("flow.state.rejected"),
+          upcoming: t("flow.state.upcoming"),
+        }}
+        steps={flowStepsOf(stepperStagesOf(workflow, meId), {
+          dueText: task?.dueAt ? t("flow.due", { date: formatDayMonth(task.dueAt) }) : null,
+          youLabel: t("flow.you"),
+        })}
+      />
 
       <div className="grid items-start gap-6">
         <Tabs onValueChange={setView} value={view}>
