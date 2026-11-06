@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import { QuickLogin } from "./QuickLogin";
+import { QuickLogin, QuickLoginBar } from "./QuickLogin";
 
 const renderPicker = (users: Parameters<typeof QuickLogin>[0]["users"]) => {
   const Stub = createRoutesStub([
@@ -34,5 +34,20 @@ describe("QuickLogin", () => {
   it("renders nothing until the server lists accounts", () => {
     renderPicker([]);
     expect(screen.queryByText("Dev login, test users only")).not.toBeInTheDocument();
+  });
+});
+
+describe("QuickLoginBar", () => {
+  it("is a strip across the top that names the dev login, like the environment banner", () => {
+    render(<QuickLoginBar enabled />);
+    const bar = screen.getByTestId("dev-login-bar");
+    expect(bar).toHaveTextContent("Dev login, test users only");
+    expect(bar).toHaveClass("h-7");
+    expect(bar).toHaveAttribute("data-dev-quick-login-bar");
+  });
+
+  it("renders nothing when the dev login is off", () => {
+    const { container } = render(<QuickLoginBar enabled={false} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

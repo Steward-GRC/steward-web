@@ -228,6 +228,14 @@ describe("AdminShell for someone with less than site admin", () => {
 });
 
 describe("AdminShell banners and footer", () => {
+  it("puts the dev login bar across the very top, above the environment banner", () => {
+    renderShell(alice, "/", { devLogin: <div data-testid="dev-login-bar">Dev login</div> });
+    const bar = screen.getByTestId("dev-login-bar");
+    const env = screen.getByTestId("environment-banner");
+    expect(bar.compareDocumentPosition(env) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("banner").closest("[style]")).toHaveStyle("--shell-top: 113px");
+  });
+
   it("has the environment banner, the footer and the accessibility button", () => {
     renderShell(alice);
     expect(screen.getByTestId("environment-banner")).toHaveTextContent("Test environment");

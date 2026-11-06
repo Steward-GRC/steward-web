@@ -81,6 +81,8 @@ export interface StaffShellProps {
   children: ReactNode;
   config: ShellConfig;
   counts?: { approvals?: number };
+  /** The dev login bar (dev builds only): a 28 px strip across the very top, above everything. */
+  devLogin?: ReactNode;
   /** An active "act as" session (H9): the acting-as banner sits above everything. */
   impersonation?: { expiresAt: string; targetName: string } | null;
   /** Compliance reporting is on for this install (`STEWARD_REPORTING=true`). */
@@ -101,6 +103,7 @@ export const StaffShell = ({
   children,
   config,
   counts = {},
+  devLogin,
   impersonation = null,
   reporting = false,
   secondFactorNudge = false,
@@ -126,7 +129,7 @@ export const StaffShell = ({
   const adminUrl = signedIn && canOpenAdmin(identity) ? config.adminUrl : undefined;
   // The canvas frames size boxes content-box: a 56 px header plus its 1 px rule is 57 px.
   // The acting-as banner adds its 44 px.
-  const top = 57 + (config.environment ? 28 : 0) + (impersonation ? 44 : 0);
+  const top = 57 + (devLogin ? 28 : 0) + (config.environment ? 28 : 0) + (impersonation ? 44 : 0);
   const style = { "--shell-top": `${top}px` } as CSSProperties;
 
   return (
@@ -135,6 +138,7 @@ export const StaffShell = ({
       <div className="flex min-h-dvh flex-col" style={style}>
         <SkipLink />
         <div className="sticky top-0 z-[var(--z-header)]">
+          {devLogin}
           {impersonation ? <ActingAsBanner session={impersonation} /> : null}
           <EnvironmentBanner name={config.environment} />
           <header className="flex h-[57px] items-center gap-1.5 border-b border-border-strong bg-surface px-1.5 lg:gap-3 lg:px-[14px] xl:gap-[14px] xl:px-4">

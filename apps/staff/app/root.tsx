@@ -119,6 +119,7 @@ export const Layout = ({ children }: { children: ReactNode }) => (
 export default function App({ loaderData }: Route.ComponentProps) {
   // Sign-in and the other gates sit outside the shell as a centred card (2-layout-and-navigation.s5).
   const gate = useIsGate();
+  const devLogin = loaderData.quickLoginOn ? <QuickLoginBar enabled /> : null;
   const { identity, shell, siteSettings } = loaderData;
   useAccessRevalidation(identity.id !== "");
   const preview = loaderData.gatePreview === "G11";
@@ -126,8 +127,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
   if (preview || statusGateFor({ app: "staff", identity, settings: siteSettings })) {
     return (
       <IdentityProvider identity={identity}>
-        <GateShell environment={shell.config.environment}>
-          <QuickLoginBar enabled={loaderData.quickLoginOn} />
+        <GateShell devLogin={devLogin} environment={shell.config.environment}>
           <DevelopmentUiIssueButton app="staff" enabled={loaderData.devUiIssueCopy} />
           <MaintenanceGate
             adminUrl={preview || identity.isSiteAdmin ? shell.config.adminUrl : undefined}
@@ -141,10 +141,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
     return (
       <IdentityProvider identity={loaderData.identity}>
         <GateShell
+          devLogin={devLogin}
           banners={loaderData.siteSettings}
           environment={loaderData.shell.config.environment}
         >
-          <QuickLoginBar enabled={loaderData.quickLoginOn} />
           <DevelopmentUiIssueButton app="staff" enabled={loaderData.devUiIssueCopy} />
           <Outlet />
         </GateShell>
@@ -154,6 +154,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
   return (
     <IdentityProvider identity={loaderData.identity}>
       <StaffShell
+        devLogin={devLogin}
         banners={loaderData.siteSettings}
         categories={loaderData.shell.categories}
         config={loaderData.shell.config}
@@ -162,7 +163,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
         reporting={loaderData.shell.reporting}
         secondFactorNudge={loaderData.shell.secondFactorNudge}
       >
-        <QuickLoginBar enabled={loaderData.quickLoginOn} />
         <DevelopmentUiIssueButton app="staff" enabled={loaderData.devUiIssueCopy} />
         <RoutePending>
           <Outlet />
@@ -180,9 +180,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
 export const ErrorBoundary = () => {
   const loaderData = useRouteLoaderData<typeof loader>("root");
   const gate = useIsGate();
+  const devLogin = loaderData?.quickLoginOn ? <QuickLoginBar enabled /> : null;
   if (!loaderData || gate) {
     return (
-      <GateShell environment={loaderData?.shell.config.environment ?? null}>
+      <GateShell devLogin={devLogin} environment={loaderData?.shell.config.environment ?? null}>
         <RouteErrorBoundary />
       </GateShell>
     );
@@ -190,6 +191,7 @@ export const ErrorBoundary = () => {
   return (
     <IdentityProvider identity={loaderData.identity}>
       <StaffShell
+        devLogin={devLogin}
         banners={loaderData.siteSettings}
         categories={loaderData.shell.categories}
         config={loaderData.shell.config}
