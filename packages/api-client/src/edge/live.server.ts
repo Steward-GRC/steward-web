@@ -398,6 +398,7 @@ const assembleDetail = async (
     bodyText: version ? bodyTextFromContent(version.contentJson) : "",
     bodyUnreadable: version ? !readableContent(version.contentJson) : false,
     canBreakGlass: policy.viewerCan.canBreakGlass,
+    canEdit: policy.viewerCan.edit,
     category: names.category,
     contacts: attachments.policyContactBlocks,
     contentObfuscated: policy.viewerCan.contentObfuscated,
@@ -1427,6 +1428,31 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.revokeUserSessions;
+  },
+  async startDraft(policyId, cookie) {
+    const { policy } = await gatewayFetch(PolicyDocument, { id: policyId }, "Policy", { cookie });
+    if (!policy) return null;
+    const sourceId = policy.currentDraftVersionId ?? policy.currentPublishedVersionId;
+    if (!sourceId) return null;
+    const { policyVersion } = await gatewayFetch(
+      PolicyVersionDocument,
+      { id: sourceId },
+      "PolicyVersion",
+      { cookie },
+    );
+    if (!policyVersion) return null;
+    if (policy.currentDraftVersionId) return policyVersion;
+    const saved = await gatewayFetch(
+      SaveDraftDocument,
+      {
+        contentJson: policyVersion.contentJson,
+        policyId,
+        templateVersionId: policyVersion.templateVersionId || null,
+      },
+      "SaveDraft",
+      { cookie },
+    );
+    return saved.saveDraft;
   },
   async saveDraft(policyId, contentJson, templateVersionId, cookie) {
     const data = await gatewayFetch(

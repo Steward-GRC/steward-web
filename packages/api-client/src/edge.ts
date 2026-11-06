@@ -839,6 +839,10 @@ export interface Edge {
     rotate?: boolean,
     cookie?: string,
   ): Promise<DomainVerification>;
+  /** Makes sure a policy has a working draft to edit: the one it already has, or a new one saved
+   *  from its published version (the service copies the appendices forward). Null when the
+   *  policy can't be found or has nothing to start from. */
+  startDraft(policyId: string, cookie?: string): Promise<null | PolicyVersion>;
   /** Starts acting as a user for up to 30 minutes, with a reason (D19). Site-admin only. */
   startImpersonation(
     userId: string,

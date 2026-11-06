@@ -17,7 +17,7 @@ import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, scrollBehavior, StatusPill } from "@steward-web/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { data, useFetcher, useLocation, useNavigate } from "react-router";
+import { data, redirect, useFetcher, useLocation, useNavigate } from "react-router";
 
 import type { Route } from "./+types/drafts.$policyId";
 
@@ -35,6 +35,7 @@ import {
   isDraftInReview,
   reorderAppendices,
   saveDraft,
+  startDraft,
   submitDraftForReview,
   updateAppendix,
 } from "../authoring/authoring.server";
@@ -127,6 +128,13 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
       case "discard": {
         await discardDraft(request, policyId);
         return data({ intent, ok: true } as const);
+      }
+      case "edit": {
+        // Edit from the reader: make sure there is a working draft (from the published version
+        // when there is none), then open the editor on it.
+        const started = await startDraft(request, policyId);
+        if (!started) throw new Response("Not Found", { status: 404 });
+        return redirect(`/drafts/${policyId}`);
       }
       case "reorder-appendices": {
         const orderedIds = String(form.get("orderedIds") ?? "")

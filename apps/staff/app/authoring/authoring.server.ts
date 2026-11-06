@@ -45,6 +45,10 @@ export const getDraftVersion = (
 export const createPolicy = (request: Request, input: CreatePolicyInput): Promise<Policy> =>
   edge.createPolicy(input, cookieOf(request));
 
+/** The policy's working draft, started from its published version when it has none. */
+export const startDraft = (request: Request, policyId: string): Promise<null | PolicyVersion> =>
+  edge.startDraft(policyId, cookieOf(request));
+
 export const saveDraft = (
   request: Request,
   policyId: string,

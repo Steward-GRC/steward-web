@@ -1,9 +1,18 @@
 import { DocumentType, PolicyStatus, Sensitivity } from "@steward-web/api-client";
 import { formatDate, formatDateTime, formatTime, useTranslation } from "@steward-web/i18n";
-import { ChevronDown, ChevronLeft, Eye, EyeOff, History, Printer, Sparkles } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  History,
+  Pencil,
+  Printer,
+  Sparkles,
+} from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
-import { Link, useFetcher, useLocation, useRevalidator } from "react-router";
+import { Link, useFetcher, useLocation, useRevalidator, useSubmit } from "react-router";
 
 import { useRegisterCommandActions } from "#ui/commands/CommandActions";
 // Copyright 2026 The Steward Authors
@@ -423,6 +432,9 @@ const HISTORY_ID = "reader-history";
 
 export interface PolicyReaderProps {
   detail: PolicyDetail;
+  /** Where the staff app posts `intent=edit` to start (or reopen) the working draft and open
+   *  the editor. Given only when the viewer can edit; without it there is no Edit. */
+  editAction?: string;
   /** The admin console's governance items (A11), drawn in the Actions menu after a separator.
    *  The staff reader leaves it out. */
   governance?: ReactNode;
@@ -461,6 +473,7 @@ const usePrinting = (): Date | null => {
  */
 export const PolicyReader = ({
   detail,
+  editAction,
   governance,
   organisation,
   viewerName,
@@ -504,7 +517,12 @@ export const PolicyReader = ({
   }, [hash]);
   const showHistory = () =>
     document.querySelector(`#${HISTORY_ID}`)?.scrollIntoView({ behavior: scrollBehavior() });
+  const submit = useSubmit();
+  const edit = () => {
+    if (editAction) void submit({ intent: "edit" }, { action: editAction, method: "post" });
+  };
   useRegisterCommandActions([
+    { allowed: Boolean(editAction), id: "edit", label: t("reader.actions.edit"), run: edit },
     { id: "print", label: t("reader.actions.print"), run: () => globalThis.print() },
     { id: "history", label: t("reader.actions.history"), run: showHistory, shortcut: "history" },
   ]);
@@ -587,6 +605,12 @@ export const PolicyReader = ({
             </button>
           </MenuTrigger>
           <MenuContent align="end">
+            {editAction ? (
+              <MenuItem onSelect={edit}>
+                <Pencil aria-hidden="true" className="size-4" />
+                {t("reader.actions.edit")}
+              </MenuItem>
+            ) : null}
             <MenuItem onSelect={() => globalThis.print()}>
               <Printer aria-hidden="true" className="size-4" />
               {t("reader.actions.print")}
