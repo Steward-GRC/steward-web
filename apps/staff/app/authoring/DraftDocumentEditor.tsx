@@ -4,6 +4,7 @@ import {
   LexicalDocumentView,
   type SerializedDocument,
   type StewardEditorProps,
+  uploadEditorImage,
 } from "@steward-web/editor-steward";
 import { useTranslation } from "@steward-web/i18n";
 import { lazy, Suspense, useSyncExternalStore } from "react";
@@ -38,7 +39,7 @@ export const DraftDocumentEditor = ({ ready, ...props }: DraftDocumentEditorProp
   if (!hydrated || !ready) return fallback(props.initialDocument);
   return (
     <Suspense fallback={fallback(props.initialDocument)}>
-      <StewardEditor {...props} />
+      <StewardEditor uploadImage={uploadEditorImage} {...props} />
     </Suspense>
   );
 };

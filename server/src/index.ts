@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { createRequestHandler, type ServerBuild } from "react-router";
 
+import { isAssetRoute, proxyAssets } from "./assetProxy.ts";
 import { attachCollabProxy } from "./collabProxy.ts";
 import { createReadinessChecker, handleHealthRoute, resolveBuildInfo } from "./health.ts";
 import { proxyQuery } from "./queryProxy.ts";
@@ -71,6 +72,11 @@ const server = createServer((request, response) => {
 
   if (url === "/query" && request.method === "POST") {
     void proxyQuery(request, response, GATEWAY_URL);
+    return;
+  }
+
+  if (isAssetRoute(url, request.method)) {
+    void proxyAssets(request, response, GATEWAY_URL);
     return;
   }
 

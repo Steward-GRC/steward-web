@@ -9,7 +9,10 @@ const SESSION_COOKIE = "steward_sid";
  * authenticated `/query` requires in `X-CSRF-Token`. The browser never holds the token, so the
  * proxy asks for it here. Empty when there is no live session; the gateway then answers 401.
  */
-const csrfTokenFor = async (cookie: string | undefined, gatewayUrl: string): Promise<string> => {
+export const csrfTokenFor = async (
+  cookie: string | undefined,
+  gatewayUrl: string,
+): Promise<string> => {
   const hasSession = cookie
     ?.split(";")
     .some((part) => part.trim().startsWith(`${SESSION_COOKIE}=`));
