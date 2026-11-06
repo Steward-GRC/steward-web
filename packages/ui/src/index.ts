@@ -16,6 +16,7 @@ export {
   type ShortcutId,
   SHORTCUTS,
 } from "./commands/shortcuts";
+export { ShortcutsPage } from "./commands/ShortcutsPage";
 export {
   ApproverPill,
   type ApproverState,

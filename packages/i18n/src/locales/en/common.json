@@ -59,7 +59,12 @@
     "inbox": "Open the inbox",
     "magicLinks": "Magic links",
     "openPalette": "Open the command bar",
-    "retire": "Retire this document"
+    "retire": "Retire this document",
+    "shortcuts": "Show the keyboard shortcuts"
+  },
+  "shortcutsPage": {
+    "title": "Keyboard shortcuts",
+    "description": "Keys that work anywhere in the app, except while you are typing in a field or a dialog is open. Some only apply on a page that offers them. Press ? to open this page."
   },
   "status": {
     "loading": "Loading…",

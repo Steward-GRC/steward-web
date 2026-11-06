@@ -129,6 +129,17 @@ const renderAt = (
   render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
 };
 
+const contact = (id: string) => ({
+  department: "Facilities",
+  email: "dave@example.org",
+  hours: "Mon-Fri",
+  id,
+  label: `Contact ${id}`,
+  name: "Dave",
+  phone: "+44 0000 000000",
+  role: "Owner",
+});
+
 describe("PolicyReader", () => {
   it("heads the page with the back link, the breadcrumb, serif title and number", () => {
     renderAt(baseDetail);
@@ -507,6 +518,25 @@ describe("PolicyReader", () => {
     expect(screen.getByRole("tab", { name: "Definitions 1" })).toBeInTheDocument();
     for (const tab of [/Related/, /References/, /Contacts/, /Changes/])
       expect(screen.queryByRole("tab", { name: tab })).toBeNull();
+  });
+
+  it("counts each tab from its own list: 1 related, 2 references, 2 contacts (bug log 49)", () => {
+    renderAt({
+      ...baseDetail,
+      contacts: [contact("c-1"), contact("c-2")],
+      references: [
+        { id: "r-1", kind: ReferenceKind.Standard, label: "One" },
+        { id: "r-2", kind: ReferenceKind.Standard, label: "Two" },
+      ],
+      related: [{ number: "POL-X-000001", policyId: "p-4", title: "Other" }],
+    });
+    for (const [name, count] of [
+      ["Definitions 1", "1"],
+      ["Related 1", "1"],
+      ["References 2", "2"],
+      ["Contacts 2", "2"],
+    ] as const)
+      expect(within(screen.getByRole("tab", { name })).getByText(count)).toBeInTheDocument();
   });
 
   it("shows the history timeline grouped by version", () => {

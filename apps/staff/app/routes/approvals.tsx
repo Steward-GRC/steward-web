@@ -3,6 +3,8 @@
 import type { WorkflowStatus } from "@steward-web/api-client";
 
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
+import { useTranslation } from "@steward-web/i18n";
+import { useRegisterNavActions } from "@steward-web/shell";
 import { DocumentType } from "@steward-web/ui/domain";
 import { listPolicies } from "@steward-web/ui/domain/server";
 
@@ -58,6 +60,16 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 };
 
 export default function ApprovalsRoute({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("approvals");
+  const next = loaderData.pending[0];
+  useRegisterNavActions([
+    {
+      allowed: next !== undefined,
+      id: "review-next",
+      label: t("inbox.reviewNext"),
+      to: next?.href ?? "/approvals",
+    },
+  ]);
   return (
     <ApprovalsInbox
       inProgress={loaderData.inProgress}

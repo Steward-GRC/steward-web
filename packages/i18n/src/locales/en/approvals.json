@@ -63,6 +63,7 @@
     },
     "phoneGroup": "{{title}} · {{count}}",
     "review": "Review",
+    "reviewNext": "Review the next approval",
     "stageN": "Stage {{n}} of {{total}}",
     "stageOf": "{{stage}} · {{n}} of {{total}}",
     "submittedBy": "{{name}} · {{date}}",

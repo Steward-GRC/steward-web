@@ -21,6 +21,9 @@ import { AcknowledgeList } from "./AcknowledgeList";
 // The Home and Library canvas's cards: the surface, a 1 px border, 10 px corners.
 /** How many rows each home list shows before it links to its full list page. */
 const HOME_LIST_CAP = 5;
+/** The boxes share the row equally (bug log 61): thirds, or halves when access hides one. They
+ *  stack below the md breakpoint. Full class names so Tailwind finds them. */
+const listColumns: Record<number, string> = { 2: "md:grid-cols-2", 3: "md:grid-cols-3" };
 const rowAction =
   "flex h-8 flex-none items-center rounded-md bg-primary px-3 text-sm font-semibold text-on-primary hover:bg-primary-hover hover:text-on-primary";
 
@@ -267,6 +270,7 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
   const { t } = useTranslation("approvals");
   const { ack, approvals, drafts, library, obligations } = data;
   const reader = drafts === null && approvals === null;
+  const listCount = [drafts, approvals, obligations].filter(Boolean).length;
 
   if (reader) {
     return (
@@ -280,7 +284,10 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
   return (
     <div className="flex flex-col gap-[22px] px-4 py-7 text-base text-ink sm:px-8">
       <Heading email={data.email} />
-      <div className="grid gap-3.5 sm:grid-cols-3">
+      <div
+        className={`grid grid-cols-1 gap-3.5 ${listColumns[listCount] ?? ""}`}
+        data-testid="home-cards"
+      >
         {drafts ? (
           <StatCard
             icon={<PencilLine aria-hidden="true" className="size-[1.15em]" />}
@@ -313,7 +320,10 @@ export const MyWork = ({ data }: { data: MyWorkData }) => {
         {library ? <Library library={library} /> : <div />}
         {ack ? <Compliance ack={ack} /> : null}
       </div>
-      <div className="grid gap-4" data-testid="home-lists">
+      <div
+        className={`grid grid-cols-1 gap-4 ${listColumns[listCount] ?? ""}`}
+        data-testid="home-lists"
+      >
         {drafts ? (
           <List
             empty={t("myWork.drafts.empty")}

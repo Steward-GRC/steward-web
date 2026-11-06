@@ -40,3 +40,15 @@ describe("the shortcut registry", () => {
     expect(formatShortcut("Mod+K", false)).toBe("Ctrl+K");
   });
 });
+
+describe("a symbol shortcut", () => {
+  it("matches ? with or without Shift, and still refuses Ctrl", () => {
+    expect(matchesShortcut(new KeyboardEvent("keydown", { key: "?" }), "?")).toBe(true);
+    expect(matchesShortcut(new KeyboardEvent("keydown", { key: "?", shiftKey: true }), "?")).toBe(
+      true,
+    );
+    expect(matchesShortcut(new KeyboardEvent("keydown", { ctrlKey: true, key: "?" }), "?")).toBe(
+      false,
+    );
+  });
+});

@@ -70,7 +70,7 @@ export const QuickLoginBar = ({ enabled }: QuickLoginBarProps) => {
       data-dev-quick-login-bar={DEV_QUICK_LOGIN_MARKER}
       data-testid="dev-login-bar"
     >
-      <span className="rounded-[3px] bg-[#e2a336] px-[7px] py-px font-mono text-[11px] font-semibold tracking-[.06em] text-[#261b25]">
+      <span className="rounded-[3px] bg-accent px-[7px] py-px font-mono text-[11px] font-semibold tracking-[.06em] text-on-accent">
         DEV
       </span>
       {t("quickLogin.bannerTitle")}

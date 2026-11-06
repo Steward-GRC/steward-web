@@ -205,7 +205,7 @@ export const Tally = ({
 }: { size?: "lg" | "sm" } & ComponentProps<"span">) => (
   <span
     className={cn(
-      "inline-flex items-center justify-center rounded-md bg-accent font-mono font-bold text-[#261b25] tabular-nums",
+      "inline-flex items-center justify-center rounded-md bg-accent font-mono font-bold text-on-accent tabular-nums",
       size === "lg" ? "px-2.5 py-0.5 text-[22px] leading-tight" : "min-w-6 px-1.5 text-sm",
       className,
     )}
@@ -219,7 +219,7 @@ export const Tally = ({
 export const CountBadge = ({ children, className, ...props }: ComponentProps<"span">) => (
   <span
     className={cn(
-      "inline-flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-accent px-1.5 text-2xs font-bold text-[#261b25]",
+      "inline-flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-accent px-1.5 text-2xs font-bold text-on-accent",
       className,
     )}
     {...props}

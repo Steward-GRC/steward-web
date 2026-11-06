@@ -4,6 +4,7 @@
       "description": "Start a new policy or procedure to see it here.",
       "title": "No drafts yet"
     },
+    "importAction": "Import policies from a CSV",
     "new": "New",
     "search": "Search drafts",
     "showAll": "Show all ({{count}})",

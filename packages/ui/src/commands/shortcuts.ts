@@ -20,6 +20,7 @@ export const SHORTCUTS = {
   magicLinks: { keys: "Shift+M", label: "shortcuts.magicLinks" },
   openPalette: { keys: "Mod+K", label: "shortcuts.openPalette" },
   retire: { keys: "Shift+R", label: "shortcuts.retire" },
+  shortcuts: { keys: "?", label: "shortcuts.shortcuts" },
 } as const satisfies Record<string, ShortcutSpec>;
 
 export type ShortcutId = keyof typeof SHORTCUTS;
@@ -44,7 +45,9 @@ export const matchesShortcut = (event: KeyboardEvent, keys: string): boolean => 
   const wantsShift = parts.includes("Shift");
   return (
     event.key.toLowerCase() === key.toLowerCase() &&
-    event.shiftKey === wantsShift &&
+    // A symbol such as "?" needs Shift on some layouts and not on others, so Shift only counts
+    // for letters.
+    (!/^[a-z]$/i.test(key) || event.shiftKey === wantsShift) &&
     (event.metaKey || event.ctrlKey) === wantsModifier &&
     !event.altKey
   );

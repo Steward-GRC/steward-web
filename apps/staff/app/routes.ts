@@ -52,6 +52,7 @@ export default [
   route("drafts/:number/revise", "routes/drafts.$number.revise.tsx"),
   route("approvals", "routes/approvals.tsx"),
   route("audit", "routes/audit.tsx"),
+  route("shortcuts", "routes/shortcuts.tsx"),
   route("approvals/:number", "routes/approvals.$number.tsx"),
   route("resources/ai-health", "routes/resources.ai-health.tsx"),
   route("resources/review-threads", "routes/resources.review-threads.tsx"),
