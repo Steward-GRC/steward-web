@@ -140,7 +140,21 @@
       "comment": "Decision comment",
       "commentHint": "Required to approve or reject…",
       "commentPhone": "Decision comment (required)",
+      "command": {
+        "approve": "I approve",
+        "reject": "I reject"
+      },
       "commentRequired": "A comment is required for this decision.",
+      "dialog": {
+        "approve": {
+          "description": "Your approval and comment are recorded against your name.",
+          "title": "Approve this version"
+        },
+        "reject": {
+          "description": "Your rejection and comment are recorded against your name and sent back to the author.",
+          "title": "Reject this version"
+        }
+      },
       "phoneNote": "Approve is enabled once you've written a comment.",
       "recorded": "Your decision and comment are recorded against your name.",
       "reject": "Reject",

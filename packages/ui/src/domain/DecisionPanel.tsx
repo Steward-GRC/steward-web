@@ -4,6 +4,17 @@ import { useTranslation } from "@steward-web/i18n";
 import { type ReactNode, useId, useState } from "react";
 import { Form } from "react-router";
 
+import { useRegisterCommandActions } from "#ui/commands/CommandActions";
+import { Button } from "#ui/components/Button";
+import { Field } from "#ui/components/Field";
+import { Textarea } from "#ui/components/Input";
+import {
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+} from "#ui/components/Overlays";
 import { cn } from "#ui/lib/cn";
 
 export interface DecisionPanelProps {
@@ -20,6 +31,89 @@ export interface DecisionPanelProps {
 const decide =
   "h-[48px] rounded-[8px] text-[15px] font-semibold disabled:cursor-not-allowed disabled:opacity-50 md:h-[42px] md:rounded-md md:text-base";
 
+type Decision = "approve" | "reject";
+
+/**
+ * The decision dialog the command bar opens ("I approve" / "I reject", bug log 57): the same
+ * required comment and the same fields as the panel, with the one chosen decision to confirm.
+ */
+const DecisionDialog = ({
+  busy,
+  children,
+  decision,
+  error,
+  onClose,
+}: {
+  busy?: boolean;
+  children?: ReactNode;
+  decision: Decision | null;
+  error?: ReactNode;
+  onClose: () => void;
+}) => {
+  const { t } = useTranslation(["approvals", "common"]);
+  const [comment, setComment] = useState("");
+  const ready = comment.trim().length > 0 && !busy;
+  return (
+    <Dialog
+      onOpenChange={(next) => {
+        if (!next) {
+          setComment("");
+          onClose();
+        }
+      }}
+      open={decision !== null}
+    >
+      {decision ? (
+        <DialogContent
+          busy={busy}
+          description={t(`approvals:review.decision.dialog.${decision}.description`)}
+          hasInput
+          title={t(`approvals:review.decision.dialog.${decision}.title`)}
+          tone={decision === "reject" ? "danger" : "primary"}
+        >
+          <Form method="post">
+            <DialogBody>
+              {children}
+              <Field
+                hint={t("approvals:review.decision.commentHint")}
+                label={t("approvals:review.decision.comment")}
+              >
+                <Textarea
+                  name="comment"
+                  onChange={(event) => setComment(event.target.value)}
+                  required
+                  value={comment}
+                />
+              </Field>
+              {error ? (
+                <p className="mt-2 text-sm font-medium text-danger" role="alert">
+                  {error}
+                </p>
+              ) : null}
+            </DialogBody>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button disabled={busy} type="button" variant="secondary">
+                  {t("common:actions.cancel")}
+                </Button>
+              </DialogClose>
+              <Button
+                disabled={!ready}
+                name="intent"
+                type="submit"
+                value={decision}
+                variant={decision === "reject" ? "danger" : "primary"}
+              >
+                {t(`approvals:review.decision.${decision}`)}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </DialogContent>
+      ) : null}
+    </Dialog>
+  );
+};
+
 /**
  * The decision panel (U25): sticky beside the diff on a desktop and a pinned footer on a phone
  * (U25m). "Decision comment" is required, so Reject (outlined danger) and Approve (primary)
@@ -33,6 +127,13 @@ export const DecisionPanel = ({ busy, children, className, error, note }: Decisi
   const commentId = useId();
   const hintId = useId();
   const ready = comment.trim().length > 0 && !busy;
+  const [dialog, setDialog] = useState<Decision | null>(null);
+  // The panel exists only while the person may decide here, so these are on the command bar
+  // exactly when the page's own buttons are (same permissions).
+  useRegisterCommandActions([
+    { id: "approve", label: t("review.decision.command.approve"), run: () => setDialog("approve") },
+    { id: "reject", label: t("review.decision.command.reject"), run: () => setDialog("reject") },
+  ]);
   return (
     <section
       aria-labelledby={titleId}
@@ -105,6 +206,9 @@ export const DecisionPanel = ({ busy, children, className, error, note }: Decisi
         <p className="text-xs text-muted max-md:hidden">{t("review.decision.recorded")}</p>
         <p className="text-xs text-muted md:hidden">{t("review.decision.phoneNote")}</p>
       </Form>
+      <DecisionDialog busy={busy} decision={dialog} error={error} onClose={() => setDialog(null)}>
+        {children}
+      </DecisionDialog>
     </section>
   );
 };
