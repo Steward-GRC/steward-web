@@ -24,6 +24,8 @@ export interface ApprovalStepperProps {
 export interface StepperApprover {
   comment?: null | string;
   decidedAt?: null | string;
+  /** The group whose seat this is; null or absent for an individual seat. */
+  groupId?: null | string;
   isYou?: boolean;
   name: string;
   role?: null | string;
@@ -35,6 +37,8 @@ export type StepperApproverState = "approved" | "pending" | "rejected";
 /** An "approve as a group" unit's tally on a stage: "Finance team — majority: 2/3". */
 export interface StepperGroup {
   approved: readonly string[];
+  /** Matches the `groupId` of the group's seats. */
+  id?: string;
   name: string;
   pending: readonly string[];
   quorum: "all" | "majority" | "one";

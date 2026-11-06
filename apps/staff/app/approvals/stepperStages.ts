@@ -38,6 +38,7 @@ const QUORUMS = new Set(["all", "majority", "one"]);
 const approverOf = (seat: Seat, meId: string): StepperApprover => ({
   comment: seat.comment ?? null,
   decidedAt: seat.decidedAt ?? null,
+  groupId: seat.groupId ?? null,
   isYou: seat.userId === meId,
   name: seat.name ?? seat.userId,
   state: seat.state as StepperApprover["state"],
@@ -50,6 +51,7 @@ const groupOf = (unit: Unit, seats: readonly Seat[]): StepperGroup => {
   const status = unit.status.toLowerCase();
   return {
     approved: names("approved"),
+    id: unit.groupId,
     name: unit.groupName ?? unit.groupId,
     pending: names("pending"),
     quorum: (QUORUMS.has(unit.quorum) ? unit.quorum : "one") as StepperGroup["quorum"],

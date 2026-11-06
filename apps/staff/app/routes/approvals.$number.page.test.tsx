@@ -100,9 +100,9 @@ describe("the approval review page (U25)", () => {
     const items = within(flow).getAllByRole("listitem");
     expect(items[0]).toHaveTextContent("Submitted");
     expect(items[1]).toHaveTextContent(
-      /^Finance review, .*: Done\. “Thirty days matches our month-end close\.”$/,
+      /^Dave, Finance review, .*: Done\. “Thirty days matches our month-end close\.”$/,
     );
-    expect(items[2]).toHaveTextContent(/^Final approval, .* · you.*: Waiting$/);
+    expect(items[2]).toHaveTextContent(/^.* · you, Final approval.*: Waiting$/);
     expect(items[2]).toHaveAttribute("aria-current", "step");
     expect(items.at(-1)).toHaveTextContent("Publish");
   });

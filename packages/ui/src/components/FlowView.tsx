@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Check, CircleDashed, Clock, X } from "lucide-react";
+import { Check, ChevronDown, CircleDashed, Clock, X } from "lucide-react";
+import { useState } from "react";
 
 import { cn } from "#ui/lib/cn";
 import { PHONE, useMediaQuery } from "#ui/lib/media";
@@ -8,13 +9,15 @@ import { PHONE, useMediaQuery } from "#ui/lib/media";
 import {
   type FlowEdgeState,
   flowLayoutOf,
+  type FlowMember,
   type FlowNode,
   type FlowNodeState,
   type FlowOrientation,
   type FlowStep,
+  NODE_H,
 } from "./flowLayout";
 
-export type { FlowNode, FlowNodeState, FlowStep } from "./flowLayout";
+export type { FlowMember, FlowNode, FlowNodeState, FlowStep } from "./flowLayout";
 
 export interface FlowViewProps {
   /** The last box, if the flow has an end ("Publish"). */
@@ -48,6 +51,13 @@ const BOX: Record<FlowNodeState, string> = {
   upcoming: "border-dashed border-border-strong bg-surface opacity-60",
 };
 
+const FRAME: Record<FlowNodeState, string> = {
+  current: "border-accent-line",
+  done: "border-primary",
+  rejected: "border-danger",
+  upcoming: "border-dashed border-border-strong opacity-60",
+};
+
 const Mark = ({ state }: { state: FlowNodeState }) => {
   const Icon =
     state === "done"
@@ -71,11 +81,47 @@ const Mark = ({ state }: { state: FlowNodeState }) => {
   );
 };
 
-/** What a screen reader gets for one box: "Legal, Carol, 2 Oct: Done". */
+const memberSpoken = (m: FlowMember, stateLabels: FlowViewProps["stateLabels"]): string =>
+  `${[m.name, m.when].filter(Boolean).join(", ")}: ${stateLabels[m.state]}`;
+
+/**
+ * What a screen reader gets for one box: "Legal team, Review, 2/3: Waiting", then a group's
+ * members, each with their own state.
+ */
 const spoken = (node: FlowNode, stateLabels: FlowViewProps["stateLabels"]): string =>
-  `${[node.title, node.who, node.when].filter(Boolean).join(", ")}: ${stateLabels[node.state]}${
-    node.comment ? `. “${node.comment}”` : ""
+  `${[node.title, node.description, node.tally, node.who, node.when]
+    .filter(Boolean)
+    .join(", ")}: ${stateLabels[node.state]}${node.comment ? `. “${node.comment}”` : ""}${
+    node.members?.length
+      ? `. ${node.members.map((m) => memberSpoken(m, stateLabels)).join("; ")}`
+      : ""
   }`;
+
+const Members = ({
+  id,
+  members,
+  stateLabels,
+  title,
+}: {
+  id: string;
+  members: readonly FlowMember[];
+  stateLabels: FlowViewProps["stateLabels"];
+  title: string;
+}) => (
+  <ul aria-label={title} className="m-0 list-none border-t border-border p-0" id={id}>
+    {members.map((m) => (
+      <li className="flex h-9 flex-col justify-center px-3" key={m.id}>
+        <span className="flex items-center gap-1.5 text-xs font-medium">
+          <Mark state={m.state} />
+          <span className="truncate">{m.name}</span>
+        </span>
+        <span className="truncate pl-5 text-xs text-muted">
+          {[stateLabels[m.state], m.when].filter(Boolean).join(" · ")}
+        </span>
+      </li>
+    ))}
+  </ul>
+);
 
 /**
  * A read-only flow: boxes joined by lines, drawn with SVG and CSS (not an editor). It always
@@ -100,20 +146,31 @@ export const FlowView = ({
     ...steps,
     ...(end ? [{ id: "end", nodes: [end] }] : []),
   ];
-  const layout = flowLayoutOf(all, resolved);
-  const spokenNodes = all.flatMap((s) => s.nodes);
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const toggle = (id: string) =>
+    setExpanded((previous) => {
+      const next = new Set(previous);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  const layout = flowLayoutOf(all, resolved, expanded);
 
   return (
     <div className="max-w-full overflow-x-auto overflow-y-hidden pb-1">
       <ol aria-label={label} className="sr-only">
-        {spokenNodes.map((node) => (
-          <li aria-current={node.state === "current" ? "step" : undefined} key={node.id}>
-            {spoken(node, stateLabels)}
-          </li>
-        ))}
+        {all.flatMap((step) => [
+          ...step.nodes.map((node) => (
+            <li aria-current={node.state === "current" ? "step" : undefined} key={node.id}>
+              {spoken(node, stateLabels)}
+            </li>
+          )),
+          ...(layout.frames.some((f) => f.id === `frame:${step.id}`) &&
+          (step.tallyLabel ?? step.tally)
+            ? [<li key={`frame:${step.id}`}>{step.tallyLabel ?? step.tally}</li>]
+            : []),
+        ])}
       </ol>
       <div
-        aria-hidden="true"
         className="relative mx-auto"
         data-flow-canvas=""
         data-orientation={resolved}
@@ -139,32 +196,102 @@ export const FlowView = ({
               />
             ))}
         </svg>
-        {layout.nodes.map((node) => (
+        {layout.frames.map((frame) => (
           <div
-            className={cn(
-              "absolute flex flex-col justify-center gap-0.5 overflow-hidden rounded-lg border-2 px-3 py-1.5 text-ink",
-              BOX[node.state],
-            )}
-            data-flow-node={node.id}
-            data-state={node.state}
-            data-step={node.stepIndex}
-            key={node.id}
+            aria-hidden="true"
+            className={cn("absolute rounded-xl border", FRAME[frame.state])}
+            data-flow-frame={frame.id}
+            data-state={frame.state}
+            key={frame.id}
             style={{
-              height: rem(node.h),
-              left: rem(node.x),
-              top: rem(node.y),
-              width: rem(node.w),
+              height: rem(frame.h),
+              left: rem(frame.x),
+              top: rem(frame.y),
+              width: rem(frame.w),
             }}
-            title={spoken(node, stateLabels)}
           >
-            <span className="flex items-center gap-1.5 text-sm font-semibold">
-              <Mark state={node.state} />
-              <span className="truncate">{node.title}</span>
-            </span>
-            {node.who ? <span className="truncate text-xs">{node.who}</span> : null}
-            {node.when ? <span className="truncate text-xs text-muted">{node.when}</span> : null}
+            {frame.tally ? (
+              <span className="absolute left-2 top-0.5 text-xs font-semibold text-ink">
+                {frame.tally}
+              </span>
+            ) : null}
           </div>
         ))}
+        {layout.nodes.map((node) => {
+          const isGroup = node.members !== undefined;
+          const open = isGroup && expanded.has(node.id);
+          const lines = (
+            <>
+              <span className="flex items-center gap-1.5 text-sm font-semibold">
+                <Mark state={node.state} />
+                <span className="truncate">{node.title}</span>
+                {node.tally ? (
+                  <span className="ml-auto shrink-0 rounded-full bg-sunken px-1.5 text-xs font-semibold">
+                    {node.tally}
+                  </span>
+                ) : null}
+                {isGroup ? (
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-180")}
+                  />
+                ) : null}
+              </span>
+              {node.description ? (
+                <span className="truncate text-xs">{node.description}</span>
+              ) : null}
+              {node.who ? <span className="truncate text-xs">{node.who}</span> : null}
+              {node.when ? <span className="truncate text-xs text-muted">{node.when}</span> : null}
+            </>
+          );
+          return (
+            <div
+              aria-hidden={isGroup ? undefined : true}
+              className={cn(
+                "absolute overflow-hidden rounded-lg border-2 text-ink",
+                BOX[node.state],
+              )}
+              data-flow-node={node.id}
+              data-state={node.state}
+              data-step={node.stepIndex}
+              key={node.id}
+              style={{
+                height: rem(node.h),
+                left: rem(node.x),
+                top: rem(node.y),
+                width: rem(node.w),
+              }}
+              title={spoken(node, stateLabels)}
+            >
+              {isGroup ? (
+                <>
+                  <button
+                    aria-controls={open ? `${node.id}-members` : undefined}
+                    aria-expanded={open}
+                    className="flex w-full cursor-pointer flex-col justify-center gap-0.5 px-3 py-1.5 text-left focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
+                    onClick={() => toggle(node.id)}
+                    style={{ height: rem(NODE_H - 4) }}
+                    type="button"
+                  >
+                    {lines}
+                  </button>
+                  {open ? (
+                    <Members
+                      id={`${node.id}-members`}
+                      members={node.members ?? []}
+                      stateLabels={stateLabels}
+                      title={node.title}
+                    />
+                  ) : null}
+                </>
+              ) : (
+                <div className="flex h-full flex-col justify-center gap-0.5 px-3 py-1.5">
+                  {lines}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
