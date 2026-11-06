@@ -44,6 +44,7 @@ import type {
   LiveEvent,
   MergeAccountsResult,
   MfaFactor,
+  MovePolicyItem,
   NoticeRecipient,
   NoticeStatus,
   NotifCadence,
@@ -207,7 +208,7 @@ export {
   Sensitivity,
   SignalType,
 } from "./generated/schema";
-export type { CategoryDocumentCounts } from "./generated/schema";
+export type { CategoryDocumentCounts, MovePolicyItem } from "./generated/schema";
 export type { NotificationPreferences, Passkey, UserLabel } from "./views";
 export type {
   AckStatus,
@@ -610,6 +611,12 @@ export interface Edge {
   mintSsoTestLink(input: MintSsoTestLinkInput, cookie?: string): Promise<MintedSsoTestLink>;
   /** Re-parents a group (and its subtree). A null newParentId promotes it to a root. */
   moveGroup(groupId: string, newParentId: null | string, cookie?: string): Promise<Group>;
+  /** Moves several policies and procedures to another category together; all or nothing, and each is renumbered in the target's sequence. Site admins. */
+  movePolicies(
+    policyIds: readonly string[],
+    homeCategoryId: string,
+    cookie?: string,
+  ): Promise<readonly MovePolicyItem[]>;
   /** Moves a policy to another category, which renumbers it (D6). */
   movePolicy(
     policyId: string,
@@ -672,6 +679,12 @@ export interface Edge {
     targetUserId: string,
     cookie?: string,
   ): Promise<AccountMergePreview>;
+  /** What moving these documents to the category would do, number by number, or why one cannot move. Changes nothing. Site admins. */
+  previewMovePolicies(
+    policyIds: readonly string[],
+    homeCategoryId: string,
+    cookie?: string,
+  ): Promise<readonly MovePolicyItem[]>;
   /** A read-only dry run of `deleteUser`. Site-admin only. */
   previewUserDeletion(userId: string, cookie?: string): Promise<UserDeletionPreview>;
   /** Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content. */

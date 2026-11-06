@@ -186,7 +186,7 @@ describe("Category document types (#87)", () => {
     expect(last(posted).get("documentTypes")).toBe("NONE");
   });
 
-  it("refuses to narrow while documents would be stranded, with the count and where to find them", async () => {
+  it("refuses to narrow while documents would be stranded, with the count and where to move them", async () => {
     const posted = openCategory({
       documentCounts: { policies: 3, procedures: 2 },
       group: { ...EXPENSES, documentTypes: "BOTH" },
@@ -194,9 +194,10 @@ describe("Category document types (#87)", () => {
     const card = await form();
     await userEvent.click(within(card).getByRole("radio", { name: "Policies only" }));
     expect(within(card).getByText(/2 documents/)).toBeInTheDocument();
-    expect(
-      within(card).getByRole("link", { name: "Find them in the procedure catalog" }),
-    ).toHaveAttribute("href", "/procedures?category=Finance&subcategory=Expenses");
+    expect(within(card).getByRole("link", { name: "Move them now" })).toHaveAttribute(
+      "href",
+      "/categories/c-expenses/move?next=POLICIES",
+    );
     expect(within(card).getByRole("button", { name: "Save" })).toBeDisabled();
     expect(posted).toHaveLength(0);
   });

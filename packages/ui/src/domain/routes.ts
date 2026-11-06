@@ -48,3 +48,7 @@ export const categoryPath = (id: string): string => {
   if (id === "new") throw new Error('"new" is reserved by the add-category form and is not an id');
   return `/categories/${encodeURIComponent(id)}`;
 };
+
+/** The page that moves a category's documents out, a batch at a time. */
+export const moveDocumentsPath = (id: string, strandedBy?: string): string =>
+  `${categoryPath(id)}/move${strandedBy ? `?next=${encodeURIComponent(strandedBy)}` : ""}`;

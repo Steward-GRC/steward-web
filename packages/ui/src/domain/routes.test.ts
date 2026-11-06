@@ -9,6 +9,7 @@ import {
   categoryPath,
   draftPath,
   isReservedDraftSegment,
+  moveDocumentsPath,
   newCategoryPath,
   recordPath,
 } from "./routes";
@@ -75,5 +76,12 @@ describe("category addresses", () => {
     expect(categoryPath("a/b c")).toBe("/categories/a%2Fb%20c");
     expect(() => categoryPath("")).toThrow();
     expect(() => categoryPath("new")).toThrow(/reserved/);
+  });
+});
+
+describe("moveDocumentsPath (#87)", () => {
+  it("is the category's move page, with the setting the move is making room for", () => {
+    expect(moveDocumentsPath("c-exp")).toBe("/categories/c-exp/move");
+    expect(moveDocumentsPath("c-exp", "POLICIES")).toBe("/categories/c-exp/move?next=POLICIES");
   });
 });

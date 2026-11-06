@@ -2,12 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { Group, ReviewCadence } from "@steward-web/api-client";
 
-import {
-  acceptsDocumentType,
-  CategoryDocumentTypes,
-  documentTypesOf,
-  strandedBy,
-} from "@steward-web/api-client";
+import { CategoryDocumentTypes, documentTypesOf, strandedBy } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
@@ -27,7 +22,7 @@ import {
   Select,
   TypeToConfirm,
 } from "@steward-web/ui";
-import { categoriesPath } from "@steward-web/ui/domain";
+import { categoriesPath, moveDocumentsPath } from "@steward-web/ui/domain";
 import { Lock, X } from "lucide-react";
 import { useId, useState } from "react";
 import { data, Link, redirect, useFetcher } from "react-router";
@@ -98,6 +93,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   // Below a top-level department the owners are that department's, read-only.
   const department = chain[1];
 
+  const moved = Number(new URL(request.url).searchParams.get("moved")) || 0;
   return {
     audience: {
       everyone: effectiveAckEveryone(groups, group),
@@ -106,6 +102,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     },
     candidates: moveCandidates(groups, group.id),
     documentCounts,
+    moved,
     group,
     inheritedOwners: owns
       ? []
@@ -224,27 +221,6 @@ const failureOf = (fetcher: { data?: Result; state: string }) =>
     ? fetcher.data.failure
     : undefined;
 
-/** Which catalog holds the documents a narrowing would strand: policies first, else procedures. */
-const findKind = (
-  counts: { policies: number; procedures: number } | null,
-  next: CategoryDocumentTypes,
-): "policy" | "procedure" => {
-  const policies = counts && !acceptsDocumentType(next, "POLICY") ? counts.policies : 0;
-  return policies > 0 ? "policy" : "procedure";
-};
-
-/** The catalog filtered to the category, where each document's actions can move it. */
-const findThem = (
-  path: readonly string[],
-  counts: { policies: number; procedures: number } | null,
-  next: CategoryDocumentTypes,
-): string => {
-  const query = new URLSearchParams();
-  if (path[0]) query.set("category", path[0]);
-  if (path[1]) query.set("subcategory", path.at(-1) ?? path[1]);
-  return `${findKind(counts, next) === "policy" ? "/policies" : "/procedures"}?${query.toString()}`;
-};
-
 const CHIP = "flex h-7 items-center gap-1.5 rounded-full bg-sunken px-2.5 text-sm";
 
 /**
@@ -313,6 +289,10 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
         <h1 className="text-[26px] leading-[1.3] font-semibold">{group.name}</h1>
         <p className="text-base text-muted">{t("categories.subtitle")}</p>
       </header>
+
+      {loaderData.moved > 0 ? (
+        <Banner title={t("categories.move.done", { count: loaderData.moved })} tone="ok" />
+      ) : null}
 
       <save.Form
         aria-label={t("categories.detailsLabel")}
@@ -475,10 +455,8 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
         {stranded > 0 ? (
           <Banner title={t("categories.documentTypes.strandedTitle")} tone="warn">
             {t("categories.documentTypes.stranded", { count: stranded })}{" "}
-            <Link to={findThem(path, loaderData.documentCounts, documentTypes)}>
-              {t(
-                `categories.documentTypes.find.${findKind(loaderData.documentCounts, documentTypes)}`,
-              )}
+            <Link to={moveDocumentsPath(group.id, documentTypes)}>
+              {t("categories.documentTypes.move")}
             </Link>
           </Banner>
         ) : null}

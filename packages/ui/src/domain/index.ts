@@ -73,6 +73,7 @@ export {
   categoryPath,
   draftPath,
   isReservedDraftSegment,
+  moveDocumentsPath,
   newCategoryPath,
   recordPath,
   type RecordRef,
