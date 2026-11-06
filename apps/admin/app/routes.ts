@@ -36,6 +36,7 @@ export default [
   route("categories", "routes/categories.tsx"),
   route("categories/new", "routes/categories.new.tsx"),
   route("categories/:categoryId", "routes/categories.$categoryId.tsx"),
+  route("categories/:categoryId/move", "routes/categories.$categoryId.move.tsx"),
   route("platform-groups", "routes/platform-groups.tsx"),
   route("contact-library", "routes/contact-library.tsx"),
   route("references-library", "routes/references-library.tsx"),

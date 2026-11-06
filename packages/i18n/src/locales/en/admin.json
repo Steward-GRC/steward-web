@@ -745,6 +745,37 @@
   "categories": {
     "subtitle": "Org hierarchy, review cadence, and inherited defaults.",
     "search": "Search categories",
+    "move": {
+      "title": "Move documents out of {{name}}",
+      "subtitle": "Pick the documents, then where they go. You see each new number before anything moves.",
+      "back": "Back to {{name}}",
+      "tableLabel": "Documents in {{name}}",
+      "selectAll": "Select all documents",
+      "select": "Select {{title}}",
+      "columns": {
+        "number": "Number",
+        "title": "Title",
+        "type": "Type",
+        "newNumber": "New number",
+        "result": "Result"
+      },
+      "empty": "No documents left in {{name}}.",
+      "types": {
+        "POLICY": "Policy",
+        "PROCEDURE": "Procedure"
+      },
+      "target": "Move to",
+      "targetPlaceholder": "Choose a category",
+      "preview": "Preview",
+      "previewLabel": "What would move",
+      "confirm_one": "Move {{count}} document",
+      "confirm_other": "Move {{count}} documents",
+      "ok": "Moves",
+      "refused": "{{path}} ({{why}})",
+      "done_one": "Moved {{count}} document.",
+      "done_other": "Moved {{count}} documents.",
+      "failed": "Couldn't move these documents"
+    },
     "documentTypes": {
       "title": "Documents this category holds",
       "description": "Policies, procedures, both, or none: a category that holds none only holds child categories (new drafts and moves are sent to a child). To narrow it later, move the documents it would no longer accept out first.",
@@ -756,10 +787,7 @@
       "strandedTitle": "Move the documents out first",
       "stranded_one": "1 document in this category would no longer be accepted. Move it to another category, then change this.",
       "stranded_other": "{{count}} documents in this category would no longer be accepted. Move them to another category, then change this.",
-      "find": {
-        "policy": "Find them in the policy catalog",
-        "procedure": "Find them in the procedure catalog"
-      }
+      "move": "Move them now"
     },
     "columns": {
       "category": "Category",

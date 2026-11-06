@@ -1491,6 +1491,23 @@ export type MoveCategoryMutation = {
   };
 };
 
+export type MovePoliciesMutationVariables = Exact<{
+  policyIds: ReadonlyArray<string | number> | string | number;
+  homeCategoryId: string | number;
+}>;
+
+export type MovePoliciesMutation = {
+  readonly movePolicies: {
+    readonly moved: ReadonlyArray<{
+      readonly policyId: string;
+      readonly title: string;
+      readonly number: string;
+      readonly newNumber: string | null;
+      readonly refusal: string | null;
+    }>;
+  };
+};
+
 export type MovePolicyMutationVariables = Exact<{
   policyId: string | number;
   homeCategoryId: string | number;
@@ -1947,6 +1964,23 @@ export type PreviewAccountMergeQuery = {
       readonly detail: string;
     }>;
     readonly warnings: ReadonlyArray<{ readonly code: string; readonly message: string }>;
+  };
+};
+
+export type PreviewMovePoliciesQueryVariables = Exact<{
+  policyIds: ReadonlyArray<string | number> | string | number;
+  homeCategoryId: string | number;
+}>;
+
+export type PreviewMovePoliciesQuery = {
+  readonly previewMovePolicies: {
+    readonly items: ReadonlyArray<{
+      readonly policyId: string;
+      readonly title: string;
+      readonly number: string;
+      readonly newNumber: string | null;
+      readonly refusal: string | null;
+    }>;
   };
 };
 
@@ -9514,6 +9548,80 @@ export const MoveCategoryDocument = {
     },
   ],
 } as unknown as DocumentNode<MoveCategoryMutation, MoveCategoryMutationVariables>;
+export const MovePoliciesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "MovePolicies" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "homeCategoryId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "movePolicies" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyIds" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "homeCategoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "homeCategoryId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "moved" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                      { kind: "Field", name: { kind: "Name", value: "title" } },
+                      { kind: "Field", name: { kind: "Name", value: "number" } },
+                      { kind: "Field", name: { kind: "Name", value: "newNumber" } },
+                      { kind: "Field", name: { kind: "Name", value: "refusal" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MovePoliciesMutation, MovePoliciesMutationVariables>;
 export const MovePolicyDocument = {
   kind: "Document",
   definitions: [
@@ -10749,6 +10857,80 @@ export const PreviewAccountMergeDocument = {
     },
   ],
 } as unknown as DocumentNode<PreviewAccountMergeQuery, PreviewAccountMergeQueryVariables>;
+export const PreviewMovePoliciesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PreviewMovePolicies" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "homeCategoryId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "previewMovePolicies" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyIds" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "homeCategoryId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "homeCategoryId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "items" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                      { kind: "Field", name: { kind: "Name", value: "title" } },
+                      { kind: "Field", name: { kind: "Name", value: "number" } },
+                      { kind: "Field", name: { kind: "Name", value: "newNumber" } },
+                      { kind: "Field", name: { kind: "Name", value: "refusal" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PreviewMovePoliciesQuery, PreviewMovePoliciesQueryVariables>;
 export const PreviewUserDeletionDocument = {
   kind: "Document",
   definitions: [

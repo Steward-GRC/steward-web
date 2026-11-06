@@ -663,6 +663,30 @@ describe("liveEdge.updateGroupSettings", () => {
   });
 });
 
+describe("liveEdge moving several documents at once (#87)", () => {
+  const item = {
+    newNumber: "POL-FIN-000009",
+    number: "POL-EXP-000001",
+    policyId: "p-1",
+    refusal: null,
+    title: "T",
+  };
+
+  it("previews what each would get, changing nothing", async () => {
+    const calls = routeGateway({
+      PreviewMovePolicies: () => ({ previewMovePolicies: { items: [item] } }),
+    });
+    expect(await liveEdge.previewMovePolicies(["p-1"], "c-fin")).toEqual([item]);
+    expect(calls[0]?.variables).toEqual({ homeCategoryId: "c-fin", policyIds: ["p-1"] });
+  });
+
+  it("moves them together and answers the new numbers", async () => {
+    const calls = routeGateway({ MovePolicies: () => ({ movePolicies: { moved: [item] } }) });
+    expect(await liveEdge.movePolicies(["p-1"], "c-fin")).toEqual([item]);
+    expect(calls[0]?.operation).toBe("MovePolicies");
+  });
+});
+
 describe("liveEdge category document types (#87)", () => {
   it("sets what a category holds with its own mutation, leaving the others alone", async () => {
     const current = category("c-fin", "Finance");

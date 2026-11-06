@@ -14,6 +14,7 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/definitions-library": "shell:titles.admin.definitions",
   "routes/categories": "shell:titles.admin.directory",
   "routes/categories.$categoryId": "shell:titles.admin.category",
+  "routes/categories.$categoryId.move": "shell:titles.admin.moveDocuments",
   "routes/categories.new": "shell:titles.admin.newCategory",
   "routes/home": "shell:titles.admin.overview",
   "routes/magic-links": "shell:titles.admin.magicLinks",

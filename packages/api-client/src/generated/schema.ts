@@ -947,6 +947,25 @@ export type MfaFactor = {
   readonly label?: Maybe<Scalars["String"]["output"]>;
 };
 
+export type MovePoliciesPreview = {
+  readonly __typename?: "MovePoliciesPreview";
+  readonly items: ReadonlyArray<MovePolicyItem>;
+};
+
+export type MovePoliciesResult = {
+  readonly __typename?: "MovePoliciesResult";
+  readonly moved: ReadonlyArray<MovePolicyItem>;
+};
+
+export type MovePolicyItem = {
+  readonly __typename?: "MovePolicyItem";
+  readonly newNumber?: Maybe<Scalars["String"]["output"]>;
+  readonly number: Scalars["String"]["output"];
+  readonly policyId: Scalars["ID"]["output"];
+  readonly refusal?: Maybe<Scalars["String"]["output"]>;
+  readonly title: Scalars["String"]["output"];
+};
+
 export type Mutation = {
   readonly __typename?: "Mutation";
   /**
@@ -1020,6 +1039,7 @@ export type Mutation = {
   readonly issueCollabToken: IssueCollabTokenPayload;
   readonly mergeAccounts: MergeAccountsResult;
   readonly moveCategory: Category;
+  readonly movePolicies: MovePoliciesResult;
   readonly movePolicy: Policy;
   readonly postCaseMessage: ThreadMessage;
   readonly publishDraft: PolicyVersion;
@@ -1501,6 +1521,11 @@ export type MutationMergeAccountsArgs = {
 export type MutationMoveCategoryArgs = {
   categoryId: Scalars["ID"]["input"];
   newParentId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
+export type MutationMovePoliciesArgs = {
+  homeCategoryId: Scalars["ID"]["input"];
+  policyIds: ReadonlyArray<Scalars["ID"]["input"]>;
 };
 
 export type MutationMovePolicyArgs = {
@@ -2318,6 +2343,7 @@ export type Query = {
   readonly policyVersionSummary?: Maybe<PolicySummaryResult>;
   readonly policyVersions: ReadonlyArray<PolicyVersion>;
   readonly previewAccountMerge: AccountMergePreview;
+  readonly previewMovePolicies: MovePoliciesPreview;
   readonly previewUserDeletion: UserDeletionPreview;
   readonly references: ReadonlyArray<Reference>;
   readonly relatedPolicies: ReadonlyArray<RelatedPolicy>;
@@ -2616,6 +2642,11 @@ export type QueryPolicyVersionsArgs = {
 export type QueryPreviewAccountMergeArgs = {
   sourceUserId: Scalars["ID"]["input"];
   targetUserId: Scalars["ID"]["input"];
+};
+
+export type QueryPreviewMovePoliciesArgs = {
+  homeCategoryId: Scalars["ID"]["input"];
+  policyIds: ReadonlyArray<Scalars["ID"]["input"]>;
 };
 
 export type QueryPreviewUserDeletionArgs = {

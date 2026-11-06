@@ -82,6 +82,7 @@ export type {
   MfaFactor,
   MintedSsoTestLink,
   MintSsoTestLinkInput,
+  MovePolicyItem,
   NotificationPreferences,
   Obligation,
   Organization,

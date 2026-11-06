@@ -88,6 +88,7 @@ import {
   MeDocument,
   MergeAccountsDocument,
   MoveCategoryDocument,
+  MovePoliciesDocument,
   MovePolicyDocument,
   MyAckSummaryDocument,
   MyDraftsDocument,
@@ -109,6 +110,7 @@ import {
   PolicyVersionSummaryDocument,
   PostCaseMessageDocument,
   PreviewAccountMergeDocument,
+  PreviewMovePoliciesDocument,
   PreviewUserDeletionDocument,
   PublishDraftDocument,
   PublishTemplateVersionDocument,
@@ -1110,6 +1112,15 @@ export const liveEdge: Edge = {
     );
     return data.moveCategory;
   },
+  async movePolicies(policyIds, homeCategoryId, cookie) {
+    const data = await gatewayFetch(
+      MovePoliciesDocument,
+      { homeCategoryId, policyIds: [...policyIds] },
+      "MovePolicies",
+      { cookie },
+    );
+    return data.movePolicies.moved;
+  },
   async movePolicy(policyId, homeCategoryId, cookie) {
     const data = await gatewayFetch(
       MovePolicyDocument,
@@ -1118,6 +1129,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.movePolicy;
+  },
+  async previewMovePolicies(policyIds, homeCategoryId, cookie) {
+    const data = await gatewayFetch(
+      PreviewMovePoliciesDocument,
+      { homeCategoryId, policyIds: [...policyIds] },
+      "PreviewMovePolicies",
+      { cookie },
+    );
+    return data.previewMovePolicies.items;
   },
   async myAckSummary(cookie) {
     const { myAckSummary } = await gatewayFetch(MyAckSummaryDocument, {}, "MyAckSummary", {
