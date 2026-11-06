@@ -223,6 +223,11 @@ describe("PolicyReader", () => {
       expect(within(outline).getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
   });
 
+  it("lays the reader's tabs out in equal-width columns, whatever their labels", () => {
+    renderAt(baseDetail);
+    expect(screen.getByRole("tablist")).toHaveClass("grid-flow-col", "auto-cols-fr");
+  });
+
   it("links a defined term to its definition", async () => {
     renderAt(baseDetail);
     await userEvent.click(screen.getByRole("button", { name: "shared desk" }));

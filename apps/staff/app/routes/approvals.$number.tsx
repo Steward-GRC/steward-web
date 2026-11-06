@@ -298,7 +298,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Tabs onValueChange={setView} value={view}>
-          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-border-strong p-0">
+          <TabsList className="grid h-auto w-full auto-cols-fr grid-flow-col justify-start gap-1 overflow-x-auto rounded-none border-b border-border-strong p-0">
             {firstVersion ? null : (
               <TabsTrigger className={tab} value="changes">
                 {t("review.tabs.changes")}

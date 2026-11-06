@@ -668,7 +668,7 @@ export const PolicyReader = ({
       {reading ? (
         <Tabs onValueChange={setView} value={view}>
           <div className="flex flex-wrap items-center gap-1 border-b border-border-strong">
-            <TabsList className="h-auto gap-1 rounded-none p-0">
+            <TabsList className="inline-grid h-auto auto-cols-fr grid-flow-col gap-1 rounded-none p-0">
               <TabsTrigger className={tab} value="view">
                 {t("reader.tabs.view")}
               </TabsTrigger>

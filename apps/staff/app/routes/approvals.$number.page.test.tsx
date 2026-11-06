@@ -148,6 +148,11 @@ describe("the review page's head and tabs (U25)", () => {
     expect(screen.getByText("60").tagName).toBe("DEL");
   });
 
+  it("lays the review tabs out in equal-width columns", () => {
+    renderReview(() => {});
+    expect(screen.getByRole("tablist")).toHaveClass("grid-flow-col", "auto-cols-fr");
+  });
+
   it("shows the version under review, and its history, on their own tabs", async () => {
     renderReview(() => {});
     await userEvent.click(screen.getByRole("tab", { name: "Upcoming version (under review)" }));
