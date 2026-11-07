@@ -9,6 +9,7 @@ import {
   parseDocument,
   type ReworkChoice,
   type ReworkRequest,
+  sameContent,
   type SerializedDocument,
   serializeDocument,
   type StewardEditorHandle,
@@ -442,7 +443,12 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         : "live";
   const serialized = serializeDocument(content);
   const saveState: SaveStateKind =
-    saveFetcher.state === "idle" ? (serialized === lastSaved ? "saved" : "unsaved") : "saving";
+    saveFetcher.state === "idle"
+      ? // the editor reports its own canonical form of what was stored, so compare content
+        sameContent(serialized, lastSaved)
+        ? "saved"
+        : "unsaved"
+      : "saving";
   const saveDraftNow = () =>
     void saveFetcher.submit(
       { contentJson: serialized, intent: "save", templateVersionId: draft.templateVersionId ?? "" },
