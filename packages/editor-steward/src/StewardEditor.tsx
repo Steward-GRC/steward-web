@@ -294,7 +294,6 @@ export const StewardEditor = ({
         strings={strings}
         toolbar={review && readOnly ? [] : reduceToolbar(toolbar)}
         toolbarActions={toolbarActions}
-        toolbarRows={1}
         tools={[...BASE_TOOLS]}
       >
         {review && (review.threads.length > 0 || review.onAdd) ? (

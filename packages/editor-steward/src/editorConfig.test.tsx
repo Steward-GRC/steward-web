@@ -190,11 +190,16 @@ describe("what the editor shows in Steward", () => {
     expect(names).toContain("ai");
   });
 
-  it("puts the headings in the same toolbar row as bold (bug log 181)", async () => {
+  // Bug log 181 put the headings in row 1; the owner found that one row runs off a narrow editor
+  // (188) and asked for the two rows back: text formats on the first, headings and the rest on the
+  // second.
+  it("keeps the toolbar in two rows, the headings in the second (bug log 188)", async () => {
     await mount();
     await toolbarButtons();
+    expect(rowOf("bold")).not.toBeNull();
     expect(rowOf("h1")).not.toBeNull();
-    expect(rowOf("h5")).toBe(rowOf("bold"));
+    expect(rowOf("h1")).not.toBe(rowOf("bold"));
+    for (const heading of ["h2", "h3", "h4", "h5"]) expect(rowOf(heading)).toBe(rowOf("h1"));
   });
 
   it("shows only what an editor reduced the base to", async () => {
