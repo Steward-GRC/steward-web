@@ -11,6 +11,13 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { StewardCollaboration } from "./collab/stewardCollaboration";
+import {
+  BASE_CARDS,
+  BASE_COLORS,
+  BASE_TOOLS,
+  reduceToolbar,
+  type StewardToolbarItem,
+} from "./editorConfig";
 
 import {
   createAiToolbarAction,
@@ -48,6 +55,8 @@ export interface StewardEditorProps {
   className?: string;
   /** The room to edit in, or null to edit alone. Fixed for the life of the mount. */
   collaboration?: null | StewardCollaboration;
+  /** Reduce Steward's base format buttons for this editor. It can only take buttons away. */
+  toolbar?: readonly StewardToolbarItem[];
   /** The stored document. Seeds a collaborative room only when the room is still empty. */
   initialDocument?: SerializedDocument;
   onChange?: (document: SerializedDocument) => void;
@@ -162,6 +171,7 @@ export const StewardEditor = ({
   placeholder,
   readOnly = false,
   review,
+  toolbar,
   uploadImage,
 }: StewardEditorProps) => {
   const { t } = useTranslation("authoring");
@@ -271,7 +281,9 @@ export const StewardEditor = ({
   return (
     <div className={className} ref={cursorsContainerRef} style={EDITOR_THEME}>
       <KoenigComposer
+        cards={[...BASE_CARDS]}
         collaboration={koenigCollaboration}
+        colors={BASE_COLORS}
         comments={commentThreads}
         customNodes={STEWARD_NODES}
         darkMode={dark}
@@ -280,8 +292,9 @@ export const StewardEditor = ({
         initialEditorState={initialEditorState}
         onError={handleError}
         strings={strings}
-        toolbar={review && readOnly ? [] : undefined}
+        toolbar={review && readOnly ? [] : reduceToolbar(toolbar)}
         toolbarActions={toolbarActions}
+        tools={[...BASE_TOOLS]}
       >
         {review && (review.threads.length > 0 || review.onAdd) ? (
           <div className="flex flex-col items-start gap-6 lg:flex-row">

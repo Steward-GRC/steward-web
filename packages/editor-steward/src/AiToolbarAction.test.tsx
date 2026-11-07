@@ -138,7 +138,9 @@ describe("The AI action on the selection toolbar", () => {
     await mount({ onRework: vi.fn() });
     await select(0, 8);
     const button = await aiButton();
-    expect(button.closest("ul")?.querySelector('[data-kg-toolbar-button="bold"]')).not.toBeNull();
+    // 1.2.0's toolbar has rows; the button and the format buttons share the toolbar, not a row
+    const toolbar = button.closest("[data-kg-toolbar-row]")?.parentElement ?? button.closest("ul");
+    expect(toolbar?.querySelector('[data-kg-toolbar-button="bold"]')).not.toBeNull();
   });
 
   it("offers nothing for an empty selection", async () => {
