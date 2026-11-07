@@ -21,6 +21,17 @@ import {
 import { LexicalDocumentView } from "./LexicalDocumentView";
 import { StewardEditor, type StewardEditorHandle } from "./StewardEditor";
 
+const codeText = (document: SerializedDocument): string => {
+  const parts: string[] = [];
+  const walk = (node: { children?: unknown[]; text?: string; type: string }, inCode: boolean) => {
+    const code = inCode || node.type === "code";
+    if (code && node.type !== "code" && typeof node.text === "string") parts.push(node.text);
+    for (const child of node.children ?? []) walk(child as typeof node, code);
+  };
+  walk(document.root, false);
+  return parts.join("");
+};
+
 const fixture = parseDocument(JSON.stringify(originalDocument))!;
 
 const mount = async (props: Partial<Parameters<typeof StewardEditor>[0]> = {}) => {
@@ -49,7 +60,15 @@ describe("StewardEditor", () => {
   it("hands back the document it loaded, with every node kept", async () => {
     const { handle } = await mount();
     const document = handle.getDocument();
-    expect(countNodeTypes(document)).toEqual(countNodeTypes(fixture));
+    // Editor 1.2.0 highlights code in the state it reports, so a code block comes back as several
+    // code-highlight nodes (bug log 174; steward-core accepts the type). Everything else is kept
+    // exactly, and the code's text is the same.
+    const { "code-highlight": returned = 0, ...kept } = countNodeTypes(document);
+    const { "code-highlight": loaded = 0, ...expected } = countNodeTypes(fixture);
+    expect(kept).toEqual(expected);
+    expect(returned).toBeGreaterThanOrEqual(loaded);
+    expect(codeText(fixture)).not.toBe("");
+    expect(codeText(document)).toBe(codeText(fixture));
     expect(JSON.stringify(document)).toContain(
       '"footnoteId":"5f0c2a8e-1d2b-4c1a-9a51-3c1f0e6b7d42"',
     );
@@ -118,7 +137,11 @@ describe("StewardEditor theme", () => {
 
   it("sets the site's tokens on the editor's box", async () => {
     await mount();
-    const box = document.querySelector<HTMLElement>(".koenig-lexical")!.parentElement!;
+    // the package wraps the editor in layout-only boxes, so the themed box is the first ancestor
+    // that carries the tokens
+    const box = document
+      .querySelector<HTMLElement>(".koenig-lexical")!
+      .closest<HTMLElement>("[style*='--kg-accent-color']")!;
     expect(box.style.getPropertyValue("--kg-selection-color")).toBe("var(--color-primary)");
     expect(box.style.getPropertyValue("--kg-font-size")).toBe("var(--text-doc)");
   });
