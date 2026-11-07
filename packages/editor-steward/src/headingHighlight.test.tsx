@@ -4,8 +4,15 @@
 // would still write the colour onto a heading's text, so the editor takes it back off.
 /* oxlint-disable testing-library/no-node-access, testing-library/no-container */
 import { render, waitFor } from "@testing-library/react";
-import { $getRoot, $isElementNode, $isTextNode, type LexicalEditor } from "lexical";
-import { describe, expect, it } from "vitest";
+import {
+  $getRoot,
+  $isElementNode,
+  $isTextNode,
+  createEditor,
+  type LexicalEditor,
+  TextNode,
+} from "lexical";
+import { describe, expect, it, vi } from "vitest";
 
 import type { SerializedDocument, SerializedNode } from "./document/tree";
 
@@ -118,5 +125,27 @@ describe("highlight on headings (bug log 191)", () => {
     expect(
       styles(handle.getDocument()).find(([words]) => words === "Everyone who travels")?.[1],
     ).toContain("background-color");
+  });
+});
+
+describe("the heading guard is registered once per editor", () => {
+  // The draft screen hands the editor a new onReady on every render, so the editor reports itself
+  // again each time. Registering a node transform marks every text node dirty and runs an editor
+  // update, which re-renders the screen: registering again each time is a render loop.
+  it("does not register again when the host re-renders", async () => {
+    const prototype = Object.getPrototypeOf(createEditor()) as LexicalEditor;
+    const registered = vi.spyOn(prototype, "registerNodeTransform");
+    const initial = documentOf(heading(1, "Purpose"), paragraph(text("Words")));
+    const view = render(<StewardEditor initialDocument={initial} onReady={() => {}} />);
+    await waitFor(() =>
+      expect(view.container.querySelector("[data-lexical-editor]")).not.toBeNull(),
+    );
+    const forText = () => registered.mock.calls.filter(([klass]) => klass === TextNode).length;
+    const first = forText();
+    for (let index = 0; index < 4; index++) {
+      view.rerender(<StewardEditor initialDocument={initial} onReady={() => {}} />);
+    }
+    expect(forText()).toBe(first);
+    registered.mockRestore();
   });
 });

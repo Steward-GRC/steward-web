@@ -1,6 +1,8 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import "node-koenig-editor/styles.css";
+import type { LexicalEditor } from "lexical";
+
 import { useLocale, useTranslation } from "@steward-web/i18n";
 import {
   type FileUploader,
@@ -203,6 +205,7 @@ export const StewardEditor = ({
   const lang = locale === "en" ? "en-US" : locale;
   const apiRef = useRef<KoenigEditorAPI | null>(null);
   const stopHeadingGuard = useRef<(() => void) | null>(null);
+  const guardedEditor = useRef<LexicalEditor | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
   const savedSelection: SavedReplace = useRef(null);
   const useFileUpload = useImageUploader(
@@ -283,8 +286,13 @@ export const StewardEditor = ({
     (api: KoenigEditorAPI) => {
       apiRef.current = api;
       // a heading can't be highlighted (bug log 191)
-      stopHeadingGuard.current?.();
-      stopHeadingGuard.current = api ? registerHeadingHighlightGuard(api.editorInstance) : null;
+      // once per editor: the host hands over a new onReady on every render, so this runs on every
+      // render, and registering a transform runs an editor update that renders the host again
+      if (api && guardedEditor.current !== api.editorInstance) {
+        stopHeadingGuard.current?.();
+        guardedEditor.current = api.editorInstance;
+        stopHeadingGuard.current = registerHeadingHighlightGuard(api.editorInstance);
+      }
       onReady?.({
         getDocument: () =>
           stripMarks(api.editorInstance.getEditorState().toJSON() as SerializedDocument),
