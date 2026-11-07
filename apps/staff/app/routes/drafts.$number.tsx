@@ -311,10 +311,20 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const collabSession = useCollabSession(draft?.id ?? null, collabCallbacks);
   const { touch: touchCollab } = collabSession;
 
+  // Until the person touches the editor, whatever it reports is the document as loaded: its own
+  // form of the stored one, or the room's. That is both the content and what counts as saved, so
+  // a draft never opens as "Unsaved changes" (bug log 175), however the editor words the document
+  // (table fields, a trailing empty paragraph) and however late the room's content arrives (171).
+  const touchedRef = useRef(false);
+  const markTouched = useCallback(() => {
+    touchedRef.current = true;
+  }, []);
+
   const onDocumentChange = useCallback(
     (next: SerializedDocument) => {
       contentRef.current = next;
       setContent(next);
+      if (!touchedRef.current) setLastSaved(serializeDocument(next));
       touchCollab();
     },
     [touchCollab],
@@ -326,11 +336,20 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   // The editor is mounted while the room answers, and an empty editor in a room it has not synced
   // reports an empty document. Only a live or solo editor counts as ready.
   useEffect(() => {
-    if (collabSession.mode !== "pending" && editorRef.current) setEditorReady(true);
+    if (collabSession.mode === "pending" || !editorRef.current) return;
+    // what the room held while the editor was connecting was not reported; take it now
+    if (collabSession.mode === "live" && !touchedRef.current) {
+      const reported = editorRef.current.getDocument();
+      contentRef.current = reported;
+      setContent(reported);
+      setLastSaved(serializeDocument(reported));
+    }
+    setEditorReady(true);
   }, [collabSession.mode]);
   const handedOver = (location.state as { aiApply?: { entries: ChangeEntry[] } } | null)?.aiApply;
   useEffect(() => {
     if (!handedOver || !editorReady) return;
+    markTouched();
     const next = applyChangeSet(contentRef.current, outline, handedOver.entries);
     if (editorRef.current) editorRef.current.setDocument(next);
     else onDocumentChange(next);
@@ -348,6 +367,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
   /** Replace the document: through the editor when it's mounted, so a live room syncs it. */
   const replaceDocument = (next: SerializedDocument) => {
+    markTouched();
     if (editorRef.current) {
       editorRef.current.setDocument(next);
       return;
@@ -545,22 +565,33 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         <div className="flex min-w-0 flex-col gap-4">
           {/* the editor adds no padding of its own (bug log 178), so this is the whole margin: 48px */}
           <Card className="px-6 py-8 sm:px-12 sm:py-8">
-            <DraftDocumentEditor
-              collaboration={collabSession.mode === "solo" ? null : collabSession.collaboration}
-              connecting={collabSession.mode === "pending"}
-              initialDocument={initialDocument}
-              // a room that fell back to solo needs a fresh editor without it; pending to live
-              // keeps the same editor, bound to the room before its content arrives
-              key={collabSession.mode === "solo" ? "solo" : "room"}
-              onChange={collabSession.mode === "pending" ? ignoreWhileConnecting : onDocumentChange}
-              onReady={(handle) => {
-                editorRef.current = handle;
-                if (collabSession.mode !== "pending") setEditorReady(true);
-              }}
-              onRework={aiHealth.available && !collabReadOnly && !inReview ? onRework : undefined}
-              readOnly={collabReadOnly}
-              review={comments}
-            />
+            <div
+              onBeforeInputCapture={markTouched}
+              onClickCapture={markTouched}
+              onCutCapture={markTouched}
+              onDropCapture={markTouched}
+              onKeyDownCapture={markTouched}
+              onPasteCapture={markTouched}
+            >
+              <DraftDocumentEditor
+                collaboration={collabSession.mode === "solo" ? null : collabSession.collaboration}
+                connecting={collabSession.mode === "pending"}
+                initialDocument={initialDocument}
+                // a room that fell back to solo needs a fresh editor without it; pending to live
+                // keeps the same editor, bound to the room before its content arrives
+                key={collabSession.mode === "solo" ? "solo" : "room"}
+                onChange={
+                  collabSession.mode === "pending" ? ignoreWhileConnecting : onDocumentChange
+                }
+                onReady={(handle) => {
+                  editorRef.current = handle;
+                  if (collabSession.mode !== "pending") setEditorReady(true);
+                }}
+                onRework={aiHealth.available && !collabReadOnly && !inReview ? onRework : undefined}
+                readOnly={collabReadOnly}
+                review={comments}
+              />
+            </div>
           </Card>
         </div>
 
