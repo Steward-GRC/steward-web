@@ -534,7 +534,8 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="flex min-w-0 flex-col gap-4">
-          <Card className="px-6 py-8 sm:px-[72px] sm:pt-11 sm:pb-14">
+          {/* the editor adds no padding of its own (bug log 178), so this is the whole margin: 48px */}
+          <Card className="px-6 py-8 sm:px-12 sm:py-8">
             <DraftDocumentEditor
               collaboration={collabSession.mode === "live" ? collabSession.collaboration : null}
               initialDocument={initialDocument}
