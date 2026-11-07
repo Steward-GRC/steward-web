@@ -32,6 +32,7 @@ import {
 } from "./editorConfig";
 import { describeEditorError } from "./editorErrors";
 import { EDITOR_THEME, isDarkTheme } from "./editorTheme";
+import { registerHeadingHighlightGuard } from "./headingHighlight";
 import { STEWARD_NODES } from "./nodes";
 import {
   createCommentToolbarAction,
@@ -201,6 +202,7 @@ export const StewardEditor = ({
   const { locale } = useLocale();
   const lang = locale === "en" ? "en-US" : locale;
   const apiRef = useRef<KoenigEditorAPI | null>(null);
+  const stopHeadingGuard = useRef<(() => void) | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
   const savedSelection: SavedReplace = useRef(null);
   const useFileUpload = useImageUploader(
@@ -280,6 +282,9 @@ export const StewardEditor = ({
   const registerAPI = useCallback(
     (api: KoenigEditorAPI) => {
       apiRef.current = api;
+      // a heading can't be highlighted (bug log 191)
+      stopHeadingGuard.current?.();
+      stopHeadingGuard.current = api ? registerHeadingHighlightGuard(api.editorInstance) : null;
       onReady?.({
         getDocument: () =>
           stripMarks(api.editorInstance.getEditorState().toJSON() as SerializedDocument),
@@ -296,6 +301,8 @@ export const StewardEditor = ({
   useEffect(() => {
     apiRef.current?.editorInstance.setEditable(!readOnly);
   }, [readOnly]);
+
+  useEffect(() => () => stopHeadingGuard.current?.(), []);
 
   const handleChange = useCallback(
     (json: unknown) => {
