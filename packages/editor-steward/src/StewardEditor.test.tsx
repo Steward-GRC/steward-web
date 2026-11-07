@@ -12,12 +12,12 @@ import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import originalDocument from "./__fixtures__/originalDocument.json";
-import { countNodeTypes, parseDocument, type SerializedDocument } from "./document/tree";
 import {
   missingRequiredSections,
   scaffoldFromTemplate,
   type TemplateSectionOutline,
 } from "./document";
+import { countNodeTypes, parseDocument, type SerializedDocument } from "./document/tree";
 import { LexicalDocumentView } from "./LexicalDocumentView";
 import { StewardEditor, type StewardEditorHandle } from "./StewardEditor";
 
@@ -28,7 +28,7 @@ const codeText = (document: SerializedDocument): string => {
     if (code && node.type !== "code" && typeof node.text === "string") parts.push(node.text);
     for (const child of node.children ?? []) walk(child as typeof node, code);
   };
-  walk(document.root, false);
+  walk(document.root as Parameters<typeof walk>[0], false);
   return parts.join("");
 };
 

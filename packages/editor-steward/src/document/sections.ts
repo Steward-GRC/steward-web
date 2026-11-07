@@ -73,7 +73,7 @@ export const paragraphsFromText = (value: string): SerializedNode[] => {
 };
 
 /** A heading's title as the required check reads it: stray spaces ignored, nothing else. */
-const exactTitle = (value: string): string => value.trim().replace(/\s+/g, " ");
+const exactTitle = (value: string): string => value.trim().replaceAll(/\s+/g, " ");
 
 /** Where a section's heading is, only when it is still its title, letter for letter. */
 const findExactHeading = (children: readonly SerializedNode[], title: string): number =>

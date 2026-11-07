@@ -81,12 +81,16 @@ const select = async (from: number, to: number) => {
 // the toolbar names its heading buttons h1 to h5; the option calls them heading1 to heading5
 const buttonName = (item: string) => item.replace(/^heading(\d)$/, "h$1");
 
+/** The list a toolbar button sits in, so two buttons can be compared for sharing a row. */
+const rowOf = (name: string) =>
+  document.querySelector(`[data-kg-toolbar-button="${CSS.escape(name)}"]`)?.parentElement;
+
 /** The toolbar's buttons once a word is selected, by the package's own names, in order. */
 const toolbarButtons = async (): Promise<string[]> => {
   await select(0, 8);
   await waitFor(() => expect(document.querySelector("[data-kg-toolbar-button]")).not.toBeNull());
   return [...document.querySelectorAll("[data-kg-toolbar-button]")].map(
-    (item) => item.getAttribute("data-kg-toolbar-button") ?? "",
+    (item) => (item as HTMLElement).dataset.kgToolbarButton ?? "",
   );
 };
 
@@ -100,7 +104,7 @@ const slashMenuLabels = async (): Promise<string[]> => {
     });
   });
   await act(async () => {
-    window.dispatchEvent(new KeyboardEvent("keypress", { key: "/" }));
+    globalThis.dispatchEvent(new KeyboardEvent("keypress", { key: "/" }));
   });
   await act(async () => {
     editor.dispatchCommand(CONTROLLED_TEXT_INSERTION_COMMAND, "/");
@@ -109,7 +113,7 @@ const slashMenuLabels = async (): Promise<string[]> => {
     expect(document.querySelectorAll("[data-kg-card-menu-item]").length).toBeGreaterThan(0),
   );
   return [...document.querySelectorAll("[data-kg-card-menu-item]")].map(
-    (item) => item.getAttribute("data-kg-card-menu-item") ?? "",
+    (item) => (item as HTMLElement).dataset.kgCardMenuItem ?? "",
   );
 };
 
@@ -172,7 +176,8 @@ const slashMenuWithoutCode = async () => {
       },
     },
   });
-  return (await slashMenuLabels()).map((label) => label.toLowerCase());
+  const labels = await slashMenuLabels();
+  return labels.map((label) => label.toLowerCase());
 };
 
 describe("what the editor shows in Steward", () => {
@@ -180,7 +185,7 @@ describe("what the editor shows in Steward", () => {
     await mount({ onRework: vi.fn() });
     const names = await toolbarButtons();
     expect(names.filter((name) => name !== "ai").toSorted()).toEqual(
-      BASE_TOOLBAR.map(buttonName).toSorted(),
+      BASE_TOOLBAR.map((item) => buttonName(item)).toSorted(),
     );
     expect(names).toContain("ai");
   });
@@ -188,15 +193,14 @@ describe("what the editor shows in Steward", () => {
   it("puts the headings in the same toolbar row as bold (bug log 181)", async () => {
     await mount();
     await toolbarButtons();
-    const row = (name: string) =>
-      document.querySelector(`[data-kg-toolbar-button="${name}"]`)?.parentElement;
-    expect(row("h1")).toBeDefined();
-    expect(row("h5")).toBe(row("bold"));
+    expect(rowOf("h1")).not.toBeNull();
+    expect(rowOf("h5")).toBe(rowOf("bold"));
   });
 
   it("shows only what an editor reduced the base to", async () => {
     await mount({ toolbar: ["bold", "link"] });
-    expect((await toolbarButtons()).toSorted()).toEqual(["bold", "link"]);
+    const buttons = await toolbarButtons();
+    expect(buttons.toSorted()).toEqual(["bold", "link"]);
   });
 
   it("has no integrated preview and no emoji picker", async () => {
@@ -215,7 +219,8 @@ describe("what the editor shows in Steward", () => {
         },
       },
     });
-    const labels = (await slashMenuLabels()).map((label) => label.toLowerCase());
+    const shown = await slashMenuLabels();
+    const labels = shown.map((label) => label.toLowerCase());
     for (const dropped of ["gallery", "header", "emoji", "audio", "markdown"]) {
       expect(labels, `${dropped} should not be offered`).not.toContain(dropped);
     }

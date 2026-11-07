@@ -129,9 +129,14 @@ describe("missingRequiredSections", () => {
   // bug log 173: a required section is met only when its heading is still there, unchanged, with
   // real text under it. A sub-heading may come first, but a sub-heading alone is not content.
   it("does not count a sub-heading with no text after it as content", () => {
-    expect(missingRequiredSections(wrapRoot([heading("Purpose"), heading("Detail", 2)]), outline)).toEqual(["Purpose"]);
     expect(
-      missingRequiredSections(wrapRoot([heading("Purpose"), heading("Detail", 2), paragraph()]), outline),
+      missingRequiredSections(wrapRoot([heading("Purpose"), heading("Detail", 2)]), outline),
+    ).toEqual(["Purpose"]);
+    expect(
+      missingRequiredSections(
+        wrapRoot([heading("Purpose"), heading("Detail", 2), paragraph()]),
+        outline,
+      ),
     ).toEqual(["Purpose"]);
   });
 
@@ -146,8 +151,12 @@ describe("missingRequiredSections", () => {
   });
 
   it("treats a change of letter case in the heading as a rename", () => {
-    expect(missingRequiredSections(wrapRoot([heading("purpose"), paragraph("Why")]), outline)).toEqual(["Purpose"]);
-    expect(missingRequiredSections(wrapRoot([heading("PURPOSE"), paragraph("Why")]), outline)).toEqual(["Purpose"]);
+    expect(
+      missingRequiredSections(wrapRoot([heading("purpose"), paragraph("Why")]), outline),
+    ).toEqual(["Purpose"]);
+    expect(
+      missingRequiredSections(wrapRoot([heading("PURPOSE"), paragraph("Why")]), outline),
+    ).toEqual(["Purpose"]);
   });
 
   it("ignores stray spaces around a heading that is otherwise unchanged", () => {
@@ -156,7 +165,9 @@ describe("missingRequiredSections", () => {
   });
 
   it("fails a required section whose heading was deleted, even with text where it was", () => {
-    expect(missingRequiredSections(wrapRoot([paragraph("Why"), heading("Scope")]), outline)).toEqual(["Purpose"]);
+    expect(
+      missingRequiredSections(wrapRoot([paragraph("Why"), heading("Scope")]), outline),
+    ).toEqual(["Purpose"]);
   });
 });
 
@@ -182,11 +193,9 @@ describe("resetRequiredSections", () => {
     ]);
     const reset = resetRequiredSections(document, required);
     expect(headings(reset)).toEqual(["Purpose", "Scope", "Policy"]);
-    expect(reset.root.children.filter((n) => n.type === "paragraph").map((n) => extractTitle(n))).toEqual([
-      "Why",
-      "",
-      "Do this",
-    ]);
+    expect(
+      reset.root.children.filter((n) => n.type === "paragraph").map((n) => extractTitle(n)),
+    ).toEqual(["Why", "", "Do this"]);
   });
 
   it("gives a renamed heading its title back and keeps the text under it", () => {
@@ -212,10 +221,15 @@ describe("resetRequiredSections", () => {
   });
 
   it("restores a heading whose only change is its letter case", () => {
-    const document = wrapRoot([heading("purpose"), paragraph("Why"), heading("Scope"), heading("Policy")]);
+    const document = wrapRoot([
+      heading("purpose"),
+      paragraph("Why"),
+      heading("Scope"),
+      heading("Policy"),
+    ]);
     const reset = resetRequiredSections(document, required);
     expect(headings(reset)).toEqual(["Purpose", "Scope", "Policy"]);
-    expect(extractTitle(reset.root.children[1]!)).toBe("Why");
+    expect(extractTitle(reset.root.children.at(1)!)).toBe("Why");
   });
 
   it("inserts a fresh heading, and leaves the others as they are, when it cannot tell which was renamed", () => {
@@ -240,7 +254,11 @@ describe("resetRequiredSections", () => {
   });
 
   it("scaffolds the required headings when there is no document", () => {
-    expect(headings(resetRequiredSections(undefined, required))).toEqual(["Purpose", "Scope", "Policy"]);
+    expect(headings(resetRequiredSections(undefined, required))).toEqual([
+      "Purpose",
+      "Scope",
+      "Policy",
+    ]);
   });
 });
 

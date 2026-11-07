@@ -11,13 +11,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { StewardCollaboration } from "./collab/stewardCollaboration";
-import {
-  BASE_CARDS,
-  BASE_COLORS,
-  BASE_TOOLS,
-  reduceToolbar,
-  type StewardToolbarItem,
-} from "./editorConfig";
 
 import {
   createAiToolbarAction,
@@ -27,6 +20,13 @@ import {
 } from "./AiToolbarAction";
 import { stripMarks } from "./document/marks";
 import { parseDocument, type SerializedDocument, serializeDocument } from "./document/tree";
+import {
+  BASE_CARDS,
+  BASE_COLORS,
+  BASE_TOOLS,
+  reduceToolbar,
+  type StewardToolbarItem,
+} from "./editorConfig";
 import { describeEditorError } from "./editorErrors";
 import { EDITOR_THEME, isDarkTheme } from "./editorTheme";
 import { STEWARD_NODES } from "./nodes";
@@ -55,8 +55,6 @@ export interface StewardEditorProps {
   className?: string;
   /** The room to edit in, or null to edit alone. Fixed for the life of the mount. */
   collaboration?: null | StewardCollaboration;
-  /** Reduce Steward's base format buttons for this editor. It can only take buttons away. */
-  toolbar?: readonly StewardToolbarItem[];
   /** The stored document. Seeds a collaborative room only when the room is still empty. */
   initialDocument?: SerializedDocument;
   onChange?: (document: SerializedDocument) => void;
@@ -79,6 +77,8 @@ export interface StewardEditorProps {
    * toolbar. The highlights are never part of the stored document.
    */
   review?: ReviewComments;
+  /** Reduce Steward's base format buttons for this editor. It can only take buttons away. */
+  toolbar?: readonly StewardToolbarItem[];
   /** Stores an image and answers its URL. Without one the image card says uploads are off. */
   uploadImage?: (file: File) => Promise<string>;
 }
