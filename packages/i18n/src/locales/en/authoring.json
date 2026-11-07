@@ -50,6 +50,12 @@
       "title": "Appendices",
       "titleLabel": "Appendix {{letter}} title"
     },
+    "wordCount": {
+      "readLessThanMinute": "Less than a minute",
+      "readMinutes": "{minutes} min read",
+      "word": "{count} word",
+      "words": "{count} words"
+    },
     "cardError": "The {card} card could not be shown. Remove it and add it again, or reload the page if it comes back.",
     "coAuthored": "Co-authored — others with author access in this category can edit.",
     "comments": {

@@ -93,6 +93,9 @@
       "pendingBody": "Please take a moment to read this policy, then confirm you've reviewed it.",
       "pendingTitle": "Please review and confirm"
     },
+    "readMinutes": "{{count}} min read",
+    "wordCount_one": "{{count}} word",
+    "wordCount_other": "{{count}} words",
     "actions": {
       "continueDraft": "Continue draft",
       "edit": "Edit",

@@ -135,6 +135,13 @@ describe("StewardEditor theme", () => {
     document.documentElement.className = "";
   });
 
+  it("shows the word count and reading time while writing (bug log 172)", async () => {
+    await mount();
+    // the fixture's first paragraph and the rest of the document, counted by the editor itself
+    expect(await screen.findByText(/^\d+ words?$/)).toBeInTheDocument();
+    expect(screen.getByText(/min read$/)).toBeInTheDocument();
+  });
+
   it("checks spelling in US English for the default English", async () => {
     await mount();
     const box = screen.getAllByRole("textbox")[0]!;

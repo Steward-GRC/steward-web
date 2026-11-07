@@ -7,6 +7,7 @@ import {
   KoenigComposer,
   KoenigEditor,
   type KoenigEditorAPI,
+  useKoenigWordCount,
 } from "node-koenig-editor";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -168,6 +169,18 @@ const useDarkTheme = (): boolean => {
  * Steward's wording. Browser only; render it behind a client boundary and show
  * `LexicalDocumentView` until it loads.
  */
+/** The words and the reading time of what is being written, live (bug log 172). */
+const EditorWordCount = () => {
+  const { readingTimeLabel, wordsLabel } = useKoenigWordCount();
+  return (
+    <p className="mt-4 flex gap-2 text-sm text-muted" data-word-count="">
+      <span>{wordsLabel}</span>
+      <span aria-hidden="true">·</span>
+      <span>{readingTimeLabel}</span>
+    </p>
+  );
+};
+
 export const StewardEditor = ({
   className,
   collaboration = null,
@@ -238,7 +251,18 @@ export const StewardEditor = ({
         : undefined,
     [review],
   );
-  const strings = useMemo(() => ({ errorFallback: t("editor.cardError") }), [t]);
+  const strings = useMemo(
+    () => ({
+      errorFallback: t("editor.cardError"),
+      wordCount: {
+        readLessThanMinute: t("editor.wordCount.readLessThanMinute"),
+        readMinutes: t("editor.wordCount.readMinutes"),
+        word: t("editor.wordCount.word"),
+        words: t("editor.wordCount.words"),
+      },
+    }),
+    [t],
+  );
   const dark = useDarkTheme();
   const handleError = useCallback(
     (error: Error) => {
@@ -282,12 +306,15 @@ export const StewardEditor = ({
   );
 
   const editor = (
-    <KoenigEditor
-      onChange={handleChange}
-      placeholderText={placeholder ?? t("editor.placeholder")}
-      readOnly={readOnly}
-      registerAPI={registerAPI}
-    />
+    <>
+      <KoenigEditor
+        onChange={handleChange}
+        placeholderText={placeholder ?? t("editor.placeholder")}
+        readOnly={readOnly}
+        registerAPI={registerAPI}
+      />
+      <EditorWordCount />
+    </>
   );
 
   return (

@@ -37,6 +37,7 @@ import { AckBanner } from "./AckBanner";
 import { AiSummaryCard } from "./AiSummaryCard";
 import { CompareVersions } from "./CompareVersions";
 import { DocumentStatusPill } from "./DocumentStatusPill";
+import { readingMinutes, wordsInBlocks } from "./documentWords";
 import { useFavorites } from "./favorites";
 import { OutlineCard } from "./OutlineCard";
 import { documentTypeBasePath, documentTypeCopy, hasWorkingDraft } from "./policy";
@@ -573,6 +574,12 @@ export const PolicyReader = ({
     related: detail.related.length,
   };
   const hasBody = detail.body.length > 0 || detail.appendices.length > 0;
+  // the words and reading time of the body (bug log 172), as the editor shows them while writing
+  const bodyWords = wordsInBlocks(detail.body);
+  const readLength =
+    bodyWords > 0 && !detail.bodyUnreadable
+      ? { minutes: readingMinutes(bodyWords), words: bodyWords }
+      : null;
   const shape = bodyShape(detail.body);
   const redactedLabel = t("reader.redacted.label", {
     parts: [
@@ -608,6 +615,13 @@ export const PolicyReader = ({
               {t("reader.versionLine", { number: detail.number, version: detail.version })}
             </CopyId>
             {detail.sensitivity === Sensitivity.Sensitive ? <SensitivityBadge sensitive /> : null}
+            {readLength ? (
+              <span className="flex gap-2 text-sm text-muted">
+                <span>{t("reader.wordCount", { count: readLength.words })}</span>
+                <span aria-hidden="true">·</span>
+                <span>{t("reader.readMinutes", { count: readLength.minutes })}</span>
+              </span>
+            ) : null}
           </span>
         </div>
         <button
