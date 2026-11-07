@@ -206,8 +206,7 @@ export const StewardEditor = ({
   const { locale } = useLocale();
   const lang = locale === "en" ? "en-US" : locale;
   const apiRef = useRef<KoenigEditorAPI | null>(null);
-  const stopHeadingGuard = useRef<(() => void) | null>(null);
-  const guardedEditor = useRef<LexicalEditor | null>(null);
+  const [lexicalEditor, setLexicalEditor] = useState<LexicalEditor | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
   const savedSelection: SavedReplace = useRef(null);
   const refusalText = useCallback(
@@ -294,14 +293,8 @@ export const StewardEditor = ({
   const registerAPI = useCallback(
     (api: KoenigEditorAPI) => {
       apiRef.current = api;
-      // a heading can't be highlighted (bug log 191)
-      // once per editor: the host hands over a new onReady on every render, so this runs on every
-      // render, and registering a transform runs an editor update that renders the host again
-      if (api && guardedEditor.current !== api.editorInstance) {
-        stopHeadingGuard.current?.();
-        guardedEditor.current = api.editorInstance;
-        stopHeadingGuard.current = registerHeadingHighlightGuard(api.editorInstance);
-      }
+      // handed to an effect below, which registers the heading guard (bug log 191)
+      setLexicalEditor(api ? api.editorInstance : null);
       onReady?.({
         getDocument: () =>
           stripMarks(api.editorInstance.getEditorState().toJSON() as SerializedDocument),
@@ -319,7 +312,13 @@ export const StewardEditor = ({
     apiRef.current?.editorInstance.setEditable(!readOnly);
   }, [readOnly]);
 
-  useEffect(() => () => stopHeadingGuard.current?.(), []);
+  // A heading can't be highlighted (bug log 191). An effect keyed on the editor, so React's
+  // development double mount stops it and starts it again, and a host that re-renders does not
+  // register it again (each registration runs an editor update).
+  useEffect(
+    () => (lexicalEditor ? registerHeadingHighlightGuard(lexicalEditor) : undefined),
+    [lexicalEditor],
+  );
 
   const handleChange = useCallback(
     (json: unknown) => {

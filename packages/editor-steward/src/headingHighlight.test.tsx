@@ -12,6 +12,7 @@ import {
   type LexicalEditor,
   TextNode,
 } from "lexical";
+import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { SerializedDocument, SerializedNode } from "./document/tree";
@@ -147,5 +148,45 @@ describe("the heading guard is registered once per editor", () => {
     }
     expect(forText()).toBe(first);
     registered.mockRestore();
+  });
+});
+
+describe("the heading guard survives React's StrictMode (bug log 191, reopened)", () => {
+  // In development React mounts, unmounts and mounts again. The guard was registered once and
+  // stopped by the simulated unmount, so on a fresh page it was not there at all.
+  it("still takes a highlight off a heading after the double mount", async () => {
+    let handle: StewardEditorHandle | undefined;
+    const view = render(
+      <StrictMode>
+        <StewardEditor
+          initialDocument={documentOf(heading(1, "Purpose"), paragraph(text("Words")))}
+          onReady={(ready) => {
+            handle = ready;
+          }}
+        />
+      </StrictMode>,
+    );
+    await waitFor(() => expect(handle).toBeDefined());
+    const box = view.container.querySelector("[data-lexical-editor]") as unknown as {
+      __lexicalEditor: LexicalEditor;
+    };
+    box.__lexicalEditor.update(
+      () => {
+        for (const block of $getRoot().getChildren()) {
+          if (!$isElementNode(block)) continue;
+          for (const run of block.getChildren()) {
+            if ($isTextNode(run)) run.setStyle(HIGHLIGHT);
+          }
+        }
+      },
+      { discrete: true },
+    );
+    await waitFor(() => {
+      const found = styles(handle!.getDocument());
+      expect(found.find(([words]) => words === "Purpose")?.[1]).toBe("");
+    });
+    expect(styles(handle!.getDocument()).find(([words]) => words === "Words")?.[1]).toContain(
+      "background-color",
+    );
   });
 });
