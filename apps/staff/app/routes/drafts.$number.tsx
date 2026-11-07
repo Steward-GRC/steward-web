@@ -590,8 +590,10 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="flex min-w-0 flex-col gap-4">
-          {/* the editor adds no padding of its own (bug log 178), so this is the whole margin: 48px */}
-          <Card className="px-6 py-8 sm:px-12 sm:py-8">
+          {/* The editor adds no padding of its own (bug log 178), so this is the whole margin: 48px.
+              `isolate` makes the card its own stacking context: a selected card's controls sit at
+              z-index 1000 inside the editor and would otherwise draw over the sticky header (194). */}
+          <Card className="isolate px-6 py-8 sm:px-12 sm:py-8">
             <div
               onBeforeInputCapture={markTouched}
               onClickCapture={markTouched}
