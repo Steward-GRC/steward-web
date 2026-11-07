@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { Server as HttpServer } from "node:http";
 import type { Plugin, UserConfig } from "vite";
 
 import react from "@vitejs/plugin-react";
@@ -7,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { isAssetRoute, proxyAssets } from "../../../server/src/assetProxy.ts";
+import { attachCollabProxy } from "../../../server/src/collabProxy.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
@@ -168,6 +170,27 @@ export const developmentAssetProxy = (gatewayUrl: string | undefined): Plugin =>
             }
             next();
           });
+        },
+      }
+    : {}),
+});
+
+/**
+ * The co-editing socket (`/collab/ws/<draft>`) on the Vite dev server (bug log 171). The built
+ * image's Node server relays it to the gateway; `react-router dev` had no such route, so no socket
+ * ever opened and every draft quietly fell back to solo editing. This attaches the same relay to
+ * the dev server's HTTP server, aimed at GATEWAY_URL, and leaves the dev server's own hot-reload
+ * socket alone. Dev only; with no gateway address the plugin does nothing.
+ */
+export const developmentCollabProxy = (gatewayUrl: string | undefined): Plugin => ({
+  name: "steward-dev-collab-proxy",
+  ...(gatewayUrl
+    ? {
+        configureServer(server) {
+          if (server.httpServer) {
+            // the dev server is plain HTTP (https and http2 are not configured here)
+            attachCollabProxy(server.httpServer as HttpServer, gatewayUrl, { refuseOthers: false });
+          }
         },
       }
     : {}),

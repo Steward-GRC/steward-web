@@ -602,7 +602,15 @@ importers:
         specifier: workspace:*
         version: link:../vite-config
 
-  packages/vite-config: {}
+  packages/vite-config:
+    dependencies:
+      ws:
+        specifier: ^8.22.0
+        version: 8.22.1
+    devDependencies:
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.2
 
   server:
     dependencies:

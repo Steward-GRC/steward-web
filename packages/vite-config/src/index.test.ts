@@ -7,6 +7,7 @@ import { existsSync } from "node:fs";
 import { createServer } from "node:http";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { WebSocket, WebSocketServer } from "ws";
 
 import {
   brandPublicDirectory,
@@ -14,6 +15,7 @@ import {
   buildInfoDefines,
   chooseDevelopmentQuickLogin,
   developmentAssetProxy,
+  developmentCollabProxy,
   sharedAliases,
 } from "./index";
 
@@ -142,5 +144,44 @@ describe("developmentAssetProxy (bug log 182)", () => {
 
   it("does nothing without a gateway address", () => {
     expect(developmentAssetProxy("").configureServer).toBeUndefined();
+  });
+});
+
+describe("developmentCollabProxy (bug log 171)", () => {
+  const servers: Server[] = [];
+  afterEach(() => {
+    for (const server of servers.splice(0)) server.close();
+  });
+
+  it("does nothing without a gateway address", () => {
+    expect(developmentCollabProxy("").configureServer).toBeUndefined();
+  });
+
+  it("relays /collab/ws/<draft> from the dev server to the gateway and leaves other upgrades", async () => {
+    const gatewayServer = createServer();
+    const gatewayWss = new WebSocketServer({ server: gatewayServer });
+    gatewayWss.on("connection", (socket) => socket.on("message", (data) => socket.send(data)));
+    await new Promise<void>((resolve) => gatewayServer.listen(0, "127.0.0.1", resolve));
+    servers.push(gatewayServer);
+    const gatewayPort = (gatewayServer.address() as AddressInfo).port;
+
+    const developmentServer = createServer();
+    servers.push(developmentServer);
+    const plugin = developmentCollabProxy(`http://127.0.0.1:${gatewayPort}/query`);
+    (plugin.configureServer as (server: unknown) => void)({ httpServer: developmentServer });
+    await new Promise<void>((resolve) => developmentServer.listen(0, "127.0.0.1", resolve));
+    const developmentPort = (developmentServer.address() as AddressInfo).port;
+
+    const room = new WebSocket(`ws://127.0.0.1:${developmentPort}/collab/ws/draft-1`);
+    await new Promise<void>((resolve, reject) => {
+      room.once("open", () => resolve());
+      room.once("error", reject);
+    });
+    const echoed = new Promise<Buffer>((resolve) =>
+      room.once("message", (data) => resolve(data as Buffer)),
+    );
+    room.send(Buffer.from([7, 8]));
+    expect([...(await echoed)]).toEqual([7, 8]);
+    room.close();
   });
 });

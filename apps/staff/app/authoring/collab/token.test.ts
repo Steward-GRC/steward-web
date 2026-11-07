@@ -3,7 +3,14 @@
 // Token-lifetime tests.
 import { describe, expect, it } from "vitest";
 
-import { isStale, MIN_REFRESH_DELAY_MS, REFRESH_LEAD_MS, refreshDelayMs } from "./token";
+import {
+  isStale,
+  MIN_REFRESH_DELAY_MS,
+  REFRESH_LEAD_MS,
+  refreshDelayMs,
+  settleTokenRequests,
+  type TokenRequest,
+} from "./token";
 
 const now = Date.parse("2026-09-03T12:00:00Z");
 const at = (offsetMs: number): string => new Date(now + offsetMs).toISOString();
@@ -43,5 +50,38 @@ describe("token", () => {
     // Better to spend a mint than a connect attempt guaranteed to 401.
     expect(isStale("", now)).toBe(true);
     expect(isStale("whenever", now)).toBe(true);
+  });
+});
+
+const pending = () => {
+  const calls: string[] = [];
+  const request = (name: string): TokenRequest => ({
+    reject: () => calls.push(`${name} rejected`),
+    resolve: (token) => calls.push(`${name} got ${token.token}`),
+  });
+  return { calls, requests: [request("first"), request("second")] };
+};
+
+describe("settleTokenRequests (bug log 171)", () => {
+  const token = { expiresAt: "2026-09-03T12:05:00Z", token: "t1", wsUrl: "/collab/ws/d" };
+
+  // React's StrictMode starts the room twice in development, so two requests wait on one fetcher
+  // that only ever delivers the last answer. Settling just one left the live one waiting forever.
+  it("answers every waiting request, not just the first", () => {
+    const { calls, requests } = pending();
+    settleTokenRequests(requests, { token });
+    expect(calls).toEqual(["first got t1", "second got t1"]);
+    expect(requests).toHaveLength(0);
+  });
+
+  it("refuses every waiting request on a refusal", () => {
+    const { calls, requests } = pending();
+    settleTokenRequests(requests, { error: new Error("refused") });
+    expect(calls).toEqual(["first rejected", "second rejected"]);
+    expect(requests).toHaveLength(0);
+  });
+
+  it("does nothing when nothing is waiting", () => {
+    expect(() => settleTokenRequests([], { token })).not.toThrow();
   });
 });

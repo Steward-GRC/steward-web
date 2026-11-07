@@ -142,3 +142,43 @@ describe("attachCollabProxy", () => {
     expect(result.code).toBe(1000);
   });
 });
+
+describe("attachCollabProxy beside other upgrade handlers (bug log 171)", () => {
+  // The dev server's own hot-reload socket shares the HTTP server, so the proxy must leave every
+  // upgrade that is not a collab room to whoever else listens.
+  it("leaves a non-collab upgrade alone when told to, and still relays a collab room", async () => {
+    upstream = createServer();
+    const upstreamWss = new WebSocketServer({ server: upstream });
+    upstreamWss.on("connection", (ws) => ws.on("message", (data) => ws.send(data)));
+    const { url: upstreamUrl } = await listen(upstream);
+
+    proxy = createServer();
+    const others = new WebSocketServer({ noServer: true });
+    others.on("connection", (ws) => ws.send("hot-reload"));
+    proxy.on("upgrade", (request, socket, head) => {
+      if (!request.url?.startsWith("/collab/ws/")) {
+        others.handleUpgrade(request, socket, head, (ws) => others.emit("connection", ws));
+      }
+    });
+    attachCollabProxy(proxy, `http://${new URL(upstreamUrl).host}/query`, { refuseOthers: false });
+    const { url: proxyUrl } = await listen(proxy);
+
+    const hmr = new WebSocket(`${proxyUrl}/hmr`);
+    sockets.push(hmr);
+    const greeting = nextMessage(hmr);
+    await opened(hmr);
+    const hello = await greeting;
+    expect(String(hello.data)).toBe("hot-reload");
+    // and the proxy does not tear that socket down behind the other handler's back
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(hmr.readyState).toBe(WebSocket.OPEN);
+
+    const room = new WebSocket(`${proxyUrl}/collab/ws/draft-1`);
+    sockets.push(room);
+    await opened(room);
+    const echoed = nextMessage(room);
+    room.send(Buffer.from([1, 2, 3]));
+    const reply = await echoed;
+    expect(Buffer.from(reply.data as Buffer)).toEqual(Buffer.from([1, 2, 3]));
+  });
+});

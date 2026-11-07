@@ -43,6 +43,7 @@ import {
   updateAppendix,
 } from "../authoring/authoring.server";
 import { issueCollabToken } from "../authoring/collab/collab.server";
+import { settleTokenRequests, type TokenRequest } from "../authoring/collab/token";
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
 import { ActionsMenu, AiMenu, SubmitForApproval } from "../authoring/EditorActions";
@@ -241,22 +242,22 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const reviewJob = useAiJob(reviewJobId, reviewFetcher.state !== "idle");
 
   const collabFetcher = useFetcher<typeof action>();
-  const collabResolvers = useRef<
-    { reject: (error: unknown) => void; resolve: (token: CollabToken) => void }[]
-  >([]);
+  const collabResolvers = useRef<TokenRequest[]>([]);
 
   useEffect(() => {
     if (collabFetcher.state !== "idle" || !collabFetcher.data) return;
-    const resolver = collabResolvers.current.shift();
-    if (!resolver) return;
     if (collabFetcher.data.ok && "token" in collabFetcher.data) {
-      resolver.resolve({
-        expiresAt: collabFetcher.data.expiresAt,
-        token: collabFetcher.data.token,
-        wsUrl: collabFetcher.data.wsUrl,
+      settleTokenRequests(collabResolvers.current, {
+        token: {
+          expiresAt: collabFetcher.data.expiresAt,
+          token: collabFetcher.data.token,
+          wsUrl: collabFetcher.data.wsUrl,
+        },
       });
     } else {
-      resolver.reject(new Error("the collab token request was refused"));
+      settleTokenRequests(collabResolvers.current, {
+        error: new Error("the collab token request was refused"),
+      });
     }
   }, [collabFetcher.data, collabFetcher.state]);
 
