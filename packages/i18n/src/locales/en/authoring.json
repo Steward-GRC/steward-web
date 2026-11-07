@@ -50,6 +50,9 @@
       "title": "Appendices",
       "titleLabel": "Appendix {{letter}} title"
     },
+    "autosave": {
+      "failed": "Couldn't auto-save — use Save draft"
+    },
     "wordCount": {
       "readLessThanMinute": "Less than a minute",
       "readMinutes": "{minutes} min read",

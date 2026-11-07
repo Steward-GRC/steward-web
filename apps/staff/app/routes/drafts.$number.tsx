@@ -65,6 +65,7 @@ import {
   resetRequiredSections,
 } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
+import { useAutosave } from "../authoring/useAutosave";
 import { listReviewThreads } from "../review/reviewThreads.server";
 import { useReviewComments } from "../review/useReviewComments";
 
@@ -74,6 +75,9 @@ interface SectionPayload {
   text: string;
   title: string;
 }
+
+/** How long the content must be still before the draft saves itself. */
+const AUTOSAVE_AFTER_MS = 2000;
 
 /** Changes the editor reports while it waits for its room are not the document: it is still empty. */
 const ignoreWhileConnecting = () => {};
@@ -357,6 +361,26 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per handed-over result
   }, [editorReady, handedOver]);
 
+  // The draft saves itself a moment after the person stops typing (bug log 192). It keys on the
+  // content, so the editor wording the document again does not start a save.
+  const autosaveContent = serializeDocument(content);
+  useAutosave({
+    content: autosaveContent,
+    delayMs: AUTOSAVE_AFTER_MS,
+    enabled: Boolean(draft) && editorReady && !collabReadOnly && !inReview,
+    save: () =>
+      void saveFetcher.submit(
+        {
+          contentJson: autosaveContent,
+          intent: "save",
+          templateVersionId: draft?.templateVersionId ?? "",
+        },
+        { method: "post" },
+      ),
+    saved: sameContent(autosaveContent, lastSaved),
+    saving: saveFetcher.state !== "idle",
+  });
+
   if (!draft) {
     return (
       <div className="p-6">
@@ -557,6 +581,9 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
       {inReview ? <p className="text-sm text-muted">{t("editor.review.inReview")}</p> : null}
       {aiNotice ? <Banner title={aiNotice} tone="warn" /> : null}
+      {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
+        <Banner title={t("editor.autosave.failed")} tone="warn" />
+      ) : null}
       {collabNotice ? (
         <Banner title={collabNotice} tone={collabReadOnly ? "info" : "warn"} />
       ) : null}
