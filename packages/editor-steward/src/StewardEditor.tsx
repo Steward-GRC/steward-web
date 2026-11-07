@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import "node-koenig-editor/styles.css";
-import { useTranslation } from "@steward-web/i18n";
+import { useLocale, useTranslation } from "@steward-web/i18n";
 import {
   type FileUploader,
   KoenigComposer,
@@ -175,6 +175,10 @@ export const StewardEditor = ({
   uploadImage,
 }: StewardEditorProps) => {
   const { t } = useTranslation("authoring");
+  // The browser checks spelling in this language. The default English is the bare `en` tag, which
+  // a browser may check against any English; the app's spelling is US English ("organization").
+  const { locale } = useLocale();
+  const lang = locale === "en" ? "en-US" : locale;
   const apiRef = useRef<KoenigEditorAPI | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
   const savedSelection: SavedReplace = useRef(null);
@@ -290,6 +294,7 @@ export const StewardEditor = ({
         editable={!readOnly}
         fileUploader={fileUploader}
         initialEditorState={initialEditorState}
+        lang={lang}
         onError={handleError}
         strings={strings}
         toolbar={review && readOnly ? [] : reduceToolbar(toolbar)}

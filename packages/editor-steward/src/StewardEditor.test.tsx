@@ -135,6 +135,13 @@ describe("StewardEditor theme", () => {
     document.documentElement.className = "";
   });
 
+  it("checks spelling in US English for the default English", async () => {
+    await mount();
+    const box = screen.getAllByRole("textbox")[0]!;
+    expect(box).toHaveAttribute("lang", "en-US");
+    expect(box).not.toHaveAttribute("spellcheck", "false");
+  });
+
   it("sets the site's tokens on the editor's box", async () => {
     await mount();
     // the package wraps the editor in layout-only boxes, so the themed box is the first ancestor
