@@ -732,6 +732,39 @@ SPDX-License-Identifier: Apache-2.0
 
 /* The flow view's line into the current step: dashes marching toward the step. The base layer
    above stills it under reduced motion, and the switch removes it. */
+/* Unlayered on purpose: the package's own stylesheet is unlayered, and an unlayered rule beats any
+   layered one whatever its specificity, so this is where it can outrank the package's text-red. */
+/* An upload the editor refused (bug log 195). The package draws it as bare red text in the card's
+   button, and the file card as a red paragraph with role alert; this dresses both as Steward's own danger notice (the Banner's soft background, danger bar
+   and ink text), so it reads the same in light, dark and high contrast. */
+.koenig-lexical [data-testid="media-placeholder-errors"],
+.koenig-lexical [data-kg-card] p[role="alert"] {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  max-width: 90%;
+  margin-top: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-left: 4px solid var(--color-danger);
+  border-radius: 0.5rem;
+  background: var(--color-danger-soft);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+}
+.koenig-lexical [data-testid="media-placeholder-errors"]::before,
+.koenig-lexical [data-kg-card] p[role="alert"]::before {
+  content: "";
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: var(--color-danger);
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 16h.01'/><path d='M12 8v4'/><path d='M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z'/></svg>")
+    center / contain no-repeat;
+}
 @keyframes stw-flow-march {
   to {
     stroke-dashoffset: -14;

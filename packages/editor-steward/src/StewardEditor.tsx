@@ -43,6 +43,7 @@ import {
   ReviewThreadsPanel,
 } from "./ReviewComments";
 import { ImageUploadError } from "./uploadImage";
+import { uploadRefusal } from "./uploadMessages";
 
 /** What a host can do with a mounted editor. */
 export interface StewardEditorHandle {
@@ -106,7 +107,7 @@ const UPLOAD_TYPES = {
 const useImageUploader = (
   uploadImage: StewardEditorProps["uploadImage"],
   unavailable: string,
-  failed: string,
+  refusalText: (serverText?: string) => string,
 ): FileUploader["useFileUpload"] =>
   // A hook factory the cards call as `useFileUpload("image")`; its identity is stable per
   // upload function so the cards' effects don't re-run on every render.
@@ -130,16 +131,17 @@ const useImageUploader = (
             setState({ errors: [], isLoading: false, progress: 100 });
             return urls.map((url, index) => ({ fileName: list[index]?.name, url }));
           } catch (error) {
-            // The gateway's own refusal (too large, not an allowed image) when it gave one.
-            const message =
-              error instanceof ImageUploadError ? (error.gatewayText ?? failed) : failed;
+            // One clear sentence for every refusal, from what the server said (bug log 195).
+            const message = refusalText(
+              error instanceof ImageUploadError ? error.gatewayText : undefined,
+            );
             setState({ errors: [{ message }], isLoading: false, progress: 0 });
             return null;
           }
         }, []);
         return { ...state, upload };
       },
-    [uploadImage, unavailable, failed],
+    [uploadImage, unavailable, refusalText],
   );
 
 const prefersDark = () => globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
@@ -208,10 +210,17 @@ export const StewardEditor = ({
   const guardedEditor = useRef<LexicalEditor | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
   const savedSelection: SavedReplace = useRef(null);
+  const refusalText = useCallback(
+    (serverText?: string) => {
+      const { key, values } = uploadRefusal(serverText);
+      return t(key, values);
+    },
+    [t],
+  );
   const useFileUpload = useImageUploader(
     uploadImage,
     t("editor.imageUploadUnavailable"),
-    t("editor.imageUploadFailed"),
+    refusalText,
   );
   const fileUploader = useMemo(() => ({ fileTypes: UPLOAD_TYPES, useFileUpload }), [useFileUpload]);
   // Fixed at mount: the composer reads its initial state and collaboration mode once.
