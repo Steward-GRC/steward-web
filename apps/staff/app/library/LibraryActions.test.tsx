@@ -64,16 +64,15 @@ describe("the library's header actions (U3, U4)", () => {
     expect(screen.queryByRole("link")).toBeNull();
   });
 
-  it("explains why New is unavailable to a reader, instead of hiding them", () => {
+  it("shows a reader no New button and no message", () => {
     renderFor(person(["policy.read"]), DocumentType.Policy);
-    expect(screen.queryByRole("link", { name: "New policy" })).toBeNull();
-    const button = screen.getByRole("button", { name: "New policy" });
-    expect(button).toHaveAttribute("aria-disabled", "true");
-    expect(button).toHaveAccessibleDescription(
-      "You need the author role to create policies. Ask a site admin.",
-    );
-    expect(
-      screen.getByText("You need the author role to create policies. Ask a site admin."),
-    ).toBeVisible();
+    expect(screen.queryByRole("button", { name: "New policy" })).toBeNull();
+    expect(screen.queryByText(/author role/)).toBeNull();
+  });
+
+  it("shows a reader no New procedure button and no message either", () => {
+    renderFor(person(["policy.read"]), DocumentType.Procedure);
+    expect(screen.queryByRole("button", { name: "New procedure" })).toBeNull();
+    expect(screen.queryByText(/author role/)).toBeNull();
   });
 });

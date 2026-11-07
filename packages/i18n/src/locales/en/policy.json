@@ -7,8 +7,6 @@
   "library": {
     "actions": {
       "import": "Import",
-      "needsAuthorPolicy": "You need the author role to create policies. Ask a site admin.",
-      "needsAuthorProcedure": "You need the author role to create procedures. Ask a site admin.",
       "newPolicy": "New policy",
       "newProcedure": "New procedure"
     },
