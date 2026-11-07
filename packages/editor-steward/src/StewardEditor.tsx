@@ -24,6 +24,7 @@ import {
   BASE_CARDS,
   BASE_COLORS,
   BASE_TOOLS,
+  FILE_ICONS,
   reduceToolbar,
   type StewardToolbarItem,
 } from "./editorConfig";
@@ -292,6 +293,7 @@ export const StewardEditor = ({
         customNodes={STEWARD_NODES}
         darkMode={dark}
         editable={!readOnly}
+        fileIcons={FILE_ICONS}
         fileUploader={fileUploader}
         initialEditorState={initialEditorState}
         lang={lang}

@@ -90,3 +90,10 @@ export const reduceToolbar = (requested?: readonly StewardToolbarItem[]): Stewar
   requested === undefined
     ? [...BASE_TOOLBAR]
     : BASE_TOOLBAR.filter((item) => requested.includes(item));
+
+/**
+ * The file card's type icons are always shown in Steward, with no way to switch them off (bug log
+ * 187). The package leaves them on when nothing is set; this says so on purpose, so a later change
+ * to the package's default can't turn them off here.
+ */
+export const FILE_ICONS = {} as const;

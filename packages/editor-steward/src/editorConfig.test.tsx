@@ -9,7 +9,13 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { SerializedDocument } from "./document/tree";
 
-import { BASE_COLORS, BASE_TOOLBAR, HIGHLIGHT_YELLOW, reduceToolbar } from "./editorConfig";
+import {
+  BASE_COLORS,
+  BASE_TOOLBAR,
+  FILE_ICONS,
+  HIGHLIGHT_YELLOW,
+  reduceToolbar,
+} from "./editorConfig";
 import { StewardEditor, type StewardEditorHandle } from "./StewardEditor";
 
 const DOCUMENT: SerializedDocument = {
@@ -200,6 +206,30 @@ describe("what the editor shows in Steward", () => {
     expect(rowOf("h1")).not.toBeNull();
     expect(rowOf("h1")).not.toBe(rowOf("bold"));
     for (const heading of ["h2", "h3", "h4", "h5"]) expect(rowOf(heading)).toBe(rowOf("h1"));
+  });
+
+  it("always shows a file card's type icon (bug log 187)", async () => {
+    const withFile: SerializedDocument = {
+      root: {
+        ...DOCUMENT.root,
+        children: [
+          ...DOCUMENT.root.children,
+          {
+            fileCaption: "",
+            fileName: "report.pdf",
+            fileSize: 2048,
+            fileTitle: "A file",
+            src: "/files/report.pdf",
+            type: "file",
+            version: 1,
+          },
+        ],
+      },
+    };
+    await mount({ initialDocument: withFile });
+    await waitFor(() => expect(document.querySelector("[data-kg-file-icon]")).not.toBeNull());
+    expect(document.querySelector("[data-kg-file-icon]")?.querySelector("svg")).not.toBeNull();
+    expect(FILE_ICONS).not.toBe(false);
   });
 
   it("shows only what an editor reduced the base to", async () => {
