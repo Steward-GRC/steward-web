@@ -115,6 +115,27 @@ describe("required sections (U11)", () => {
     expect(items[2]).toHaveTextContent("3. Visitor records · empty");
   });
 
+  // bug log 173: one action puts the required headings back
+  it("offers one reset action when the host says a required heading is missing or renamed", async () => {
+    const onReset = vi.fn();
+    render(
+      <RequiredSections
+        onReset={onReset}
+        sections={[
+          { filled: true, title: "1. Purpose" },
+          { filled: false, title: "2. Scope" },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reset required sections" }));
+    expect(onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows no reset action unless the host offers one", () => {
+    render(<RequiredSections sections={[{ filled: false, title: "1. Purpose" }]} />);
+    expect(screen.queryByRole("button", { name: "Reset required sections" })).not.toBeInTheDocument();
+  });
+
   it("is green when everything's filled", () => {
     render(<RequiredSections sections={[{ filled: true, title: "1. Purpose" }]} />);
     expect(screen.getByRole("region", { name: "Required sections" })).toHaveAttribute(

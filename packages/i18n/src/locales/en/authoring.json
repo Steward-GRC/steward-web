@@ -104,6 +104,7 @@
     "required": {
       "count": "{{filled}} of {{total}}",
       "empty": "empty",
+      "reset": "Reset required sections",
       "title": "Required sections"
     },
     "review": {

@@ -9,6 +9,7 @@ export {
   fillEmptySections,
   insertSectionAfter,
   missingRequiredSections,
+  resetRequiredSections,
   paragraphsFromText,
   scaffoldFromTemplate,
   type SectionText,

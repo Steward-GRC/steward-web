@@ -1,12 +1,14 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 /* oxlint-disable testing-library/no-node-access, testing-library/no-container */
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import { $getRoot, $isElementNode, CONTROLLED_TEXT_INSERTION_COMMAND, type LexicalEditor } from "lexical";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import originalDocument from "./__fixtures__/originalDocument.json";
 import { countNodeTypes, parseDocument, type SerializedDocument } from "./document/tree";
+import { missingRequiredSections, scaffoldFromTemplate, type TemplateSectionOutline } from "./document";
 import { LexicalDocumentView } from "./LexicalDocumentView";
 import { StewardEditor, type StewardEditorHandle } from "./StewardEditor";
 
@@ -145,6 +147,55 @@ describe("LexicalDocumentView", () => {
     );
     expect(renderToString(<LexicalDocumentView document={document} />)).not.toContain(
       "javascript:",
+    );
+  });
+});
+
+// bug log 173: the required-sections list follows the text as it is typed. The screen keeps the
+// document the editor reports and checks it on every render, so what has to hold is that each
+// change is reported with the text in it.
+describe("StewardEditor reports every change, for the required-sections list", () => {
+  const outline: TemplateSectionOutline[] = [
+    { key: "purpose", level: 2, order: 1, required: true, title: "Purpose" },
+    { key: "scope", level: 2, order: 2, required: true, title: "Scope" },
+  ];
+
+  it("reports a typed section as filled, and an emptied one as missing again", async () => {
+    const seen: SerializedDocument[] = [];
+    await mount({
+      initialDocument: scaffoldFromTemplate(outline),
+      onChange: (next) => seen.push(next),
+    });
+    expect(missingRequiredSections(scaffoldFromTemplate(outline), outline)).toEqual([
+      "Purpose",
+      "Scope",
+    ]);
+    const editor = (
+      document.querySelector("[data-lexical-editor]") as unknown as { __lexicalEditor: LexicalEditor }
+    ).__lexicalEditor;
+
+    await act(async () => {
+      editor.update(() => {
+        const root = $getRoot();
+        const heading = root.getChildren()[0]!;
+        const body = heading.getNextSibling();
+        if ($isElementNode(body)) body.selectStart();
+      });
+    });
+    await act(async () => {
+      editor.dispatchCommand(CONTROLLED_TEXT_INSERTION_COMMAND, "Why this exists.");
+    });
+    await waitFor(() => expect(seen.length).toBeGreaterThan(0));
+    expect(missingRequiredSections(seen.at(-1), outline)).toEqual(["Scope"]);
+
+    await act(async () => {
+      editor.update(() => {
+        const body = $getRoot().getChildren()[0]!.getNextSibling();
+        if ($isElementNode(body)) body.clear();
+      });
+    });
+    await waitFor(() =>
+      expect(missingRequiredSections(seen.at(-1), outline)).toEqual(["Purpose", "Scope"]),
     );
   });
 });

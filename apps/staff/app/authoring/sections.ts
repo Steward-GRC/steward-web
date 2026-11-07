@@ -22,6 +22,7 @@ import type { ChangeEntry } from "./ai/results";
 
 export {
   missingRequiredSections,
+  resetRequiredSections,
   type SectionText,
   type SerializedDocument,
   type TemplateSectionOutline,

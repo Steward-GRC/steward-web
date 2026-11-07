@@ -60,6 +60,7 @@ import {
   applyChangeSet,
   draftDocument,
   missingRequiredSections,
+  resetRequiredSections,
 } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
 import { listReviewThreads } from "../review/reviewThreads.server";
@@ -344,8 +345,13 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     onDocumentChange(next);
   };
 
+  /** Put the missing or renamed required headings back; all the text stays. */
+  const resetRequired = () => replaceDocument(resetRequiredSections(contentRef.current, outline));
+
   const sectionTexts = aiSections(content, outline);
   const missing = missingRequiredSections(content, outline);
+  // a required heading that is missing or renamed can be put back; an empty section cannot
+  const resettable = resetRequiredSections(content, outline) !== content;
   const sectionsJson = JSON.stringify(
     sectionTexts.map((s) => ({ sectionKey: s.key, text: s.text, title: s.title })),
   );
@@ -543,6 +549,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         <div className="flex flex-col gap-3.5">
           {outlineRequired.length > 0 ? (
             <RequiredSections
+              onReset={resettable ? resetRequired : undefined}
               sections={outlineRequired.map((section) => ({
                 filled: !missing.includes(section.title),
                 title: section.title,

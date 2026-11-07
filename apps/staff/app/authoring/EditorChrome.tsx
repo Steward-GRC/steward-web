@@ -164,8 +164,11 @@ export const EditorHeader = ({
 
 /** "Required sections" (U11): a tick per filled section, a cross and "· empty" per empty one. */
 export const RequiredSections = ({
+  onReset,
   sections,
 }: {
+  /** Put the missing or renamed required headings back. Offered only when there are some. */
+  onReset?: () => void;
   sections: readonly { filled: boolean; title: string }[];
 }) => {
   const { t } = useTranslation("authoring");
@@ -205,6 +208,13 @@ export const RequiredSections = ({
           </li>
         ))}
       </ul>
+      {onReset ? (
+        <div className="px-2.5 pb-2.5">
+          <Button onClick={onReset} size="sm" type="button" variant="secondary">
+            {t("editor.required.reset")}
+          </Button>
+        </div>
+      ) : null}
     </Card>
   );
 };
