@@ -69,4 +69,10 @@ describe("the library's header actions (U3, U4)", () => {
     expect(screen.queryByRole("button", { name: "New policy" })).toBeNull();
     expect(screen.queryByText(/author role/)).toBeNull();
   });
+
+  it("shows a reader no New procedure button and no message either", () => {
+    renderFor(person(["policy.read"]), DocumentType.Procedure);
+    expect(screen.queryByRole("button", { name: "New procedure" })).toBeNull();
+    expect(screen.queryByText(/author role/)).toBeNull();
+  });
 });
