@@ -139,9 +139,12 @@ export const EditorHeader = ({
 }) => {
   const { t } = useTranslation("authoring");
   return (
-    <div className="flex flex-col gap-3.5">
-      <div className="flex flex-wrap items-start gap-3.5">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+    <div className="@container flex flex-col gap-3.5">
+      {/* The buttons sit above the breadcrumb, title and number until the header is wide enough
+          for a row, then beside them (bug log 198). The container's own width decides, not the
+          window's: the sidebar takes a share of it. */}
+      <div className="flex flex-col-reverse gap-3.5 @4xl:flex-row @4xl:items-start">
+        <div className="flex min-w-0 flex-col gap-1 @4xl:min-w-[22rem] @4xl:flex-1">
           {breadcrumb}
           <h1 className="font-serif text-[30px] leading-[38px] font-semibold">{title}</h1>
           <span className="flex flex-wrap items-center gap-2.5">
@@ -150,7 +153,7 @@ export const EditorHeader = ({
             <SaveState state={saveState} />
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 @4xl:justify-end">
           {presence}
           {actions}
         </div>
