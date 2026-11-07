@@ -12,6 +12,7 @@ import type {
   KoenigCardName,
   KoenigColorSetting,
   KoenigColorSlot,
+  KoenigColorSwatch,
   KoenigTool,
   KoenigToolbarItem,
 } from "node-koenig-editor";
@@ -74,12 +75,51 @@ export const BASE_TOOLS = [
  */
 export const HIGHLIGHT_YELLOW = "#fff59d";
 
-export const BASE_COLORS: Partial<Record<KoenigColorSlot, KoenigColorSetting>> = {
-  highlight: {
-    none: false,
-    palette: [{ label: "Yellow", value: HIGHLIGHT_YELLOW }],
-    picker: false,
-  },
+/** The callout's fixed set: one soft status colour each, from Steward's own tokens (bug log 193). */
+export const CALLOUT_COLORS: readonly KoenigColorSwatch[] = [
+  { label: "Info", value: "#e5eaf6" },
+  { label: "Success", value: "#e4efe2" },
+  { label: "Warning", value: "#faeed3" },
+  { label: "Danger", value: "#f8e3e0" },
+  { label: "Neutral", value: "#ede7e8" },
+];
+
+/** The same five, stronger, for a table's header and the like. */
+const STRONG_COLORS: readonly KoenigColorSwatch[] = [
+  { label: "Info", value: "#2d4c99" },
+  { label: "Success", value: "#2c6a34" },
+  { label: "Warning", value: "#875400" },
+  { label: "Danger", value: "#a3342c" },
+  { label: "Neutral", value: "#5f5560" },
+];
+
+const INK_COLORS: readonly KoenigColorSwatch[] = [{ label: "Text", value: "#261b25" }];
+const PRIMARY_COLORS: readonly KoenigColorSwatch[] = [{ label: "Steward", value: "#5d2a5b" }];
+
+/** A fixed list: no colour wheel, and no "no colour" choice. */
+const fixed = (palette: readonly KoenigColorSwatch[]): KoenigColorSetting => ({
+  none: false,
+  palette: [...palette],
+  picker: false,
+});
+
+/**
+ * Every colour control in Steward offers a short fixed list and never a colour wheel (bug log
+ * 193). Typed over every slot, so a slot the package adds fails to compile until it is given one.
+ */
+export const BASE_COLORS: Record<KoenigColorSlot, KoenigColorSetting> = {
+  buttonBackground: fixed(PRIMARY_COLORS),
+  buttonText: fixed([{ label: "White", value: "#ffffff" }]),
+  calloutBackground: fixed(CALLOUT_COLORS),
+  calloutText: fixed(INK_COLORS),
+  headerBackground: fixed(PRIMARY_COLORS),
+  headerButton: fixed(PRIMARY_COLORS),
+  headerButtonText: fixed([{ label: "White", value: "#ffffff" }]),
+  headerText: fixed([{ label: "White", value: "#ffffff" }]),
+  highlight: fixed([{ label: "Yellow", value: HIGHLIGHT_YELLOW }]),
+  tableBand: fixed(CALLOUT_COLORS),
+  tableBrand: fixed(STRONG_COLORS),
+  textColor: fixed(INK_COLORS),
 };
 
 /**

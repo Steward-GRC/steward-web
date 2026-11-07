@@ -12,6 +12,7 @@ import type { SerializedDocument } from "./document/tree";
 import {
   BASE_COLORS,
   BASE_TOOLBAR,
+  CALLOUT_COLORS,
   FILE_ICONS,
   FILE_UPLOAD_RULE,
   HIGHLIGHT_YELLOW,
@@ -243,6 +244,28 @@ describe("what the editor shows in Steward", () => {
     expect(FILE_UPLOAD_RULE.mimeTypes).toContain("application/pdf");
     expect(FILE_UPLOAD_RULE.mimeTypes).not.toContain("text/html");
     expect(FILE_UPLOAD_RULE.maxSize).toBe(10 * 1024 * 1024);
+  });
+
+  it("offers no colour wheel and no 'no colour' choice anywhere (bug log 193)", () => {
+    const slots = Object.keys(BASE_COLORS);
+    // every slot the package has: a new one added by the package fails typecheck in editorConfig
+    expect(slots.length).toBeGreaterThanOrEqual(12);
+    for (const [slot, setting] of Object.entries(BASE_COLORS)) {
+      expect(setting.picker, `${slot} picker`).toBe(false);
+      expect(setting.none, `${slot} none`).toBe(false);
+      expect(setting.palette?.length ?? 0, `${slot} swatches`).toBeGreaterThan(0);
+    }
+  });
+
+  it("gives the callout the approved set: info, success, warning, danger and neutral (bug log 193)", () => {
+    expect(CALLOUT_COLORS.map((swatch) => swatch.label)).toEqual([
+      "Info",
+      "Success",
+      "Warning",
+      "Danger",
+      "Neutral",
+    ]);
+    expect(BASE_COLORS.calloutBackground?.palette).toEqual(CALLOUT_COLORS);
   });
 
   it("shows only what an editor reduced the base to", async () => {
