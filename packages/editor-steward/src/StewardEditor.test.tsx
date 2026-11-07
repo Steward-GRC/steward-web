@@ -2,13 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 /* oxlint-disable testing-library/no-node-access, testing-library/no-container */
 import { act, render, screen, waitFor } from "@testing-library/react";
-import { $getRoot, $isElementNode, CONTROLLED_TEXT_INSERTION_COMMAND, type LexicalEditor } from "lexical";
+import {
+  $getRoot,
+  $isElementNode,
+  CONTROLLED_TEXT_INSERTION_COMMAND,
+  type LexicalEditor,
+} from "lexical";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import originalDocument from "./__fixtures__/originalDocument.json";
 import { countNodeTypes, parseDocument, type SerializedDocument } from "./document/tree";
-import { missingRequiredSections, scaffoldFromTemplate, type TemplateSectionOutline } from "./document";
+import {
+  missingRequiredSections,
+  scaffoldFromTemplate,
+  type TemplateSectionOutline,
+} from "./document";
 import { LexicalDocumentView } from "./LexicalDocumentView";
 import { StewardEditor, type StewardEditorHandle } from "./StewardEditor";
 
@@ -171,7 +180,9 @@ describe("StewardEditor reports every change, for the required-sections list", (
       "Scope",
     ]);
     const editor = (
-      document.querySelector("[data-lexical-editor]") as unknown as { __lexicalEditor: LexicalEditor }
+      document.querySelector("[data-lexical-editor]") as unknown as {
+        __lexicalEditor: LexicalEditor;
+      }
     ).__lexicalEditor;
 
     await act(async () => {

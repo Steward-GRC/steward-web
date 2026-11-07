@@ -1,14 +1,19 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
+import type { AddressInfo } from "node:net";
+
 import { existsSync } from "node:fs";
+import { createServer } from "node:http";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   brandPublicDirectory,
   buildInfo,
   buildInfoDefines,
   chooseDevelopmentQuickLogin,
+  developmentAssetProxy,
   sharedAliases,
 } from "./index";
 
@@ -90,5 +95,52 @@ describe("brandPublicDirectory", () => {
     expect(brandPublicDirectory()).toMatch(/packages[/\\]ui[/\\]public$/);
     expect(existsSync(path.join(brandPublicDirectory(), "favicon.ico"))).toBe(true);
     expect(existsSync(path.join(brandPublicDirectory(), "site.webmanifest"))).toBe(true);
+  });
+});
+
+describe("developmentAssetProxy (bug log 182)", () => {
+  const servers: Server[] = [];
+  afterEach(() => {
+    for (const server of servers.splice(0)) server.close();
+  });
+  const listen = async (
+    handler: (request: IncomingMessage, response: ServerResponse) => void,
+  ): Promise<string> => {
+    const server = createServer(handler);
+    servers.push(server);
+    await new Promise<void>((resolve) => server.listen(0, "localhost", resolve));
+    return `http://localhost:${(server.address() as AddressInfo).port}`;
+  };
+
+  it("answers the editor's /api/assets upload from the dev server, through to the gateway", async () => {
+    let upstream = "";
+    const gateway = await listen((request, response) => {
+      upstream = `${request.method} ${request.url}`;
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ id: "a1", url: "/api/assets/a1" }));
+    });
+    const plugin = developmentAssetProxy(`${gateway}/query`);
+    let middleware: ((q: IncomingMessage, r: ServerResponse, next: () => void) => void) | undefined;
+    (plugin.configureServer as (server: unknown) => void)({
+      middlewares: { use: (handler: typeof middleware) => (middleware = handler) },
+    });
+    const development = await listen((request, response) =>
+      middleware?.(request, response, () => {
+        response.writeHead(404);
+        response.end();
+      }),
+    );
+
+    const uploaded = await fetch(`${development}/api/assets`, { body: "x", method: "POST" });
+    expect(uploaded.status).toBe(200);
+    expect(await uploaded.json()).toEqual({ id: "a1", url: "/api/assets/a1" });
+    expect(upstream).toBe("POST /api/assets");
+
+    const elsewhere = await fetch(`${development}/somewhere-else`);
+    expect(elsewhere.status).toBe(404);
+  });
+
+  it("does nothing without a gateway address", () => {
+    expect(developmentAssetProxy("").configureServer).toBeUndefined();
   });
 });

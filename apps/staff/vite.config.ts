@@ -6,6 +6,7 @@ import {
   buildInfoDefines,
   chooseDevelopmentQuickLogin,
   chooseDevelopmentUiIssueButton,
+  developmentAssetProxy,
   sharedAliases,
   testConfig,
 } from "@steward-web/vite-config";
@@ -14,7 +15,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig(({ command }) => ({
   define: buildInfoDefines(),
-  plugins: [tailwindcss(), reactRouter()],
+  plugins: [tailwindcss(), reactRouter(), developmentAssetProxy(process.env.GATEWAY_URL)],
   publicDir: brandPublicDirectory(),
   resolve: {
     alias: sharedAliases(chooseDevelopmentUiIssueButton(), chooseDevelopmentQuickLogin(command)),

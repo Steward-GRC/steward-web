@@ -138,6 +138,13 @@ describe("the editor's selection colour (#72)", () => {
     expect(ratio(get("primary"), get("surface"))).toBeGreaterThanOrEqual(3);
   });
 
+  it("keeps highlighted text dark in every theme (bug log 168)", () => {
+    expect(css).toMatch(
+      /\.koenig-lexical \[style\*="background-color: #fff59d" i\][^{]*\{[^}]*color: #261b25/,
+    );
+    expect(ratio("#261b25", "#fff59d")).toBeGreaterThanOrEqual(7);
+  });
+
   it("keeps a visible outline on selected cards in high contrast, where shadows are off", () => {
     expect(css).toMatch(/\.hc \.koenig-lexical[^{]*\{[^}]*outline/);
   });

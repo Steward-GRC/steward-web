@@ -68,8 +68,11 @@ export const BASE_TOOLS = [
   "shortcuts",
 ] as const satisfies readonly KoenigTool[];
 
-/** The yellow Steward's highlight uses: one swatch, no picker, no "no colour" choice. */
-export const HIGHLIGHT_YELLOW = "#ffeb3b";
+/**
+ * The light yellow Steward's highlight uses: one swatch, no picker, no "no colour" choice. Its dark
+ * text rule is in packages/ui steward.css and must carry the same value.
+ */
+export const HIGHLIGHT_YELLOW = "#fff59d";
 
 export const BASE_COLORS: Partial<Record<KoenigColorSlot, KoenigColorSetting>> = {
   highlight: {
@@ -83,9 +86,7 @@ export const BASE_COLORS: Partial<Record<KoenigColorSlot, KoenigColorSetting>> =
  * An editor's own toolbar: the base, reduced to what it asks for. Nothing outside the base is
  * ever shown, and the base's order is kept. Asking for nothing in particular gives the base.
  */
-export const reduceToolbar = (
-  requested?: readonly StewardToolbarItem[],
-): StewardToolbarItem[] =>
+export const reduceToolbar = (requested?: readonly StewardToolbarItem[]): StewardToolbarItem[] =>
   requested === undefined
     ? [...BASE_TOOLBAR]
     : BASE_TOOLBAR.filter((item) => requested.includes(item));

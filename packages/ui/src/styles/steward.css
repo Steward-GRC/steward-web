@@ -691,6 +691,12 @@ SPDX-License-Identifier: Apache-2.0
     outline: 3px solid var(--kg-selection-color, var(--primary));
     outline-offset: -3px;
   }
+  /* Steward's one highlight is a light yellow stored in the document, so it is the same in every
+     theme. Dark mode has light text, which would vanish on it: text inside a highlight always
+     takes the dark ink. Keep the value in step with HIGHLIGHT_YELLOW in editor-steward. */
+  .koenig-lexical [style*="background-color: #fff59d" i] {
+    color: #261b25;
+  }
   a {
     color: var(--primary);
     text-underline-offset: 2px;

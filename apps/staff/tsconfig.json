@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    // vite.config.ts reaches server/src/assetProxy.ts (real .ts imports, run by Node).
+    "allowImportingTsExtensions": true,
     "rootDirs": [".", "./.react-router/types"],
     "types": [
       "node",

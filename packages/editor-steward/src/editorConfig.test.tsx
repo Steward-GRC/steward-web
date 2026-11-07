@@ -84,9 +84,7 @@ const buttonName = (item: string) => item.replace(/^heading(\d)$/, "h$1");
 /** The toolbar's buttons once a word is selected, by the package's own names, in order. */
 const toolbarButtons = async (): Promise<string[]> => {
   await select(0, 8);
-  await waitFor(() =>
-    expect(document.querySelector("[data-kg-toolbar-button]")).not.toBeNull(),
-  );
+  await waitFor(() => expect(document.querySelector("[data-kg-toolbar-button]")).not.toBeNull());
   return [...document.querySelectorAll("[data-kg-toolbar-button]")].map(
     (item) => item.getAttribute("data-kg-toolbar-button") ?? "",
   );
@@ -185,6 +183,15 @@ describe("what the editor shows in Steward", () => {
       BASE_TOOLBAR.map(buttonName).toSorted(),
     );
     expect(names).toContain("ai");
+  });
+
+  it("puts the headings in the same toolbar row as bold (bug log 181)", async () => {
+    await mount();
+    await toolbarButtons();
+    const row = (name: string) =>
+      document.querySelector(`[data-kg-toolbar-button="${name}"]`)?.parentElement;
+    expect(row("h1")).toBeDefined();
+    expect(row("h5")).toBe(row("bold"));
   });
 
   it("shows only what an editor reduced the base to", async () => {

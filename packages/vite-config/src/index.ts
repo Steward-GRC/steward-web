@@ -1,10 +1,12 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { UserConfig } from "vite";
+import type { Plugin, UserConfig } from "vite";
 
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { isAssetRoute, proxyAssets } from "../../../server/src/assetProxy.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
@@ -145,4 +147,28 @@ export const packageConfig = (
   plugins: [react()],
   resolve: { alias: sharedAliases() },
   test: testConfig(directory),
+});
+
+/**
+ * The editor's image routes (`/api/assets`) on the Vite dev server. In the built image the Node
+ * server answers them; `react-router dev` has no such route, so an upload got a 404 and the editor
+ * said the image could not be uploaded (bug log 182). This hands the same two routes to the same
+ * proxy the image uses, aimed at GATEWAY_URL (the mock server in local runs). Dev only; with no
+ * gateway address there is nothing to proxy to and the plugin does nothing.
+ */
+export const developmentAssetProxy = (gatewayUrl: string | undefined): Plugin => ({
+  name: "steward-dev-asset-proxy",
+  ...(gatewayUrl
+    ? {
+        configureServer(server) {
+          server.middlewares.use((request, response, next) => {
+            if (isAssetRoute(request.url ?? "", request.method)) {
+              void proxyAssets(request, response, gatewayUrl);
+              return;
+            }
+            next();
+          });
+        },
+      }
+    : {}),
 });
