@@ -25,11 +25,15 @@ const useHydrated = (): boolean =>
   );
 
 export interface DraftDocumentEditorProps extends StewardEditorProps {
-  /** Hold the editor back (show the read-only view) until this is true. */
-  ready: boolean;
+  /**
+   * The room is still answering. The editor is already mounted and bound to it, but kept out of
+   * sight while the read-only document shows, so the room's content is drawn as it arrives rather
+   * than being missed (bug log 171). Leave it false for an editor that is not in a room.
+   */
+  connecting?: boolean;
 }
 
-export const DraftDocumentEditor = ({ ready, ...props }: DraftDocumentEditorProps) => {
+export const DraftDocumentEditor = ({ connecting = false, ...props }: DraftDocumentEditorProps) => {
   const { t } = useTranslation("authoring");
   const hydrated = useHydrated();
   const fallback = (document?: SerializedDocument) => (
@@ -37,14 +41,19 @@ export const DraftDocumentEditor = ({ ready, ...props }: DraftDocumentEditorProp
       <LexicalDocumentView document={document} />
     </div>
   );
-  if (!hydrated || !ready) return fallback(props.initialDocument);
+  if (!hydrated) return fallback(props.initialDocument);
   return (
-    <Suspense fallback={fallback(props.initialDocument)}>
-      <StewardEditor
-        onError={(summary) => recordUiIssueError("render", `editor: ${summary}`)}
-        uploadImage={uploadEditorImage}
-        {...props}
-      />
-    </Suspense>
+    <>
+      {connecting ? fallback(props.initialDocument) : null}
+      <div aria-hidden={connecting || undefined} hidden={connecting}>
+        <Suspense fallback={fallback(props.initialDocument)}>
+          <StewardEditor
+            onError={(summary) => recordUiIssueError("render", `editor: ${summary}`)}
+            uploadImage={uploadEditorImage}
+            {...props}
+          />
+        </Suspense>
+      </div>
+    </>
   );
 };

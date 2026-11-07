@@ -12,9 +12,12 @@ import { CollabSession, type CollabToken } from "./session";
 /**
  * How the editor mounts for this draft, decided once per draft:
  *
- * - `pending`: still finding out; show the read-only view.
- * - `live`: the room answered; mount the editor in it. The room's document is the source of
- *   truth and the snapshot path carries persistence.
+ * - `pending`: still finding out. The editor is already bound to the room (held out of sight,
+ *   with the read-only view showing) so the room's content is drawn as it arrives: Lexical draws
+ *   a shared document only through change observers, never one that is already populated when
+ *   the editor mounts (bug log 171).
+ * - `live`: the room answered; the editor is shown. The room's document is the source of truth
+ *   and the snapshot path carries persistence.
  * - `solo`: no room (no token, an unreachable relay, or no answer in time); mount the editor
  *   alone and save through the page's own save path.
  *
@@ -24,7 +27,7 @@ import { CollabSession, type CollabToken } from "./session";
 export type CollabMode = "live" | "pending" | "solo";
 
 export interface CollabSessionResult {
-  /** The room to hand the editor while `mode` is `live`, otherwise null. */
+  /** The room to hand the editor while `mode` is `pending` or `live`; null once it is `solo`. */
   collaboration: null | StewardCollaboration;
   /** Everyone else in the draft's room, as the server names and colours them. */
   collaborators: Collaborator[];
@@ -82,16 +85,17 @@ export const useCollabSession = (
     const room = createStewardCollaboration(document, awareness);
     let decided: CollabMode = "pending";
     let stopped = false;
+    // handed over at once so the editor binds before any content arrives
+    setCollaboration(room);
 
     const decide = (next: "live" | "solo") => {
       if (stopped || decided !== "pending") return;
       decided = next;
-      if (next === "live") {
-        setCollaboration(room);
-      } else {
+      if (next === "solo") {
         // Editing alone: a session left running would checkpoint a document the room never
-        // saw over the peers' work, so close it.
+        // saw over the peers' work, so close it, and the editor leaves the room.
         sessionRef.current?.stop();
+        setCollaboration(null);
       }
       setMode(next);
     };

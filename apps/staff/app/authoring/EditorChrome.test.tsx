@@ -133,7 +133,9 @@ describe("required sections (U11)", () => {
 
   it("shows no reset action unless the host offers one", () => {
     render(<RequiredSections sections={[{ filled: false, title: "1. Purpose" }]} />);
-    expect(screen.queryByRole("button", { name: "Reset required sections" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Reset required sections" }),
+    ).not.toBeInTheDocument();
   });
 
   it("is green when everything's filled", () => {

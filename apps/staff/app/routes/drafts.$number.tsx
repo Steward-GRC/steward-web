@@ -75,6 +75,9 @@ interface SectionPayload {
   title: string;
 }
 
+/** Changes the editor reports while it waits for its room are not the document: it is still empty. */
+const ignoreWhileConnecting = () => {};
+
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const identity = await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const [policy, aiHealth] = await Promise.all([
@@ -320,6 +323,11 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   // A result handed back from Generate (U30) or Revise (U31): applied once the editor is up,
   // through it so a live room syncs it, then dropped from the history entry.
   const [editorReady, setEditorReady] = useState(false);
+  // The editor is mounted while the room answers, and an empty editor in a room it has not synced
+  // reports an empty document. Only a live or solo editor counts as ready.
+  useEffect(() => {
+    if (collabSession.mode !== "pending" && editorRef.current) setEditorReady(true);
+  }, [collabSession.mode]);
   const handedOver = (location.state as { aiApply?: { entries: ChangeEntry[] } } | null)?.aiApply;
   useEffect(() => {
     if (!handedOver || !editorReady) return;
@@ -538,17 +546,19 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
           {/* the editor adds no padding of its own (bug log 178), so this is the whole margin: 48px */}
           <Card className="px-6 py-8 sm:px-12 sm:py-8">
             <DraftDocumentEditor
-              collaboration={collabSession.mode === "live" ? collabSession.collaboration : null}
+              collaboration={collabSession.mode === "solo" ? null : collabSession.collaboration}
+              connecting={collabSession.mode === "pending"}
               initialDocument={initialDocument}
-              key={collabSession.mode}
-              onChange={onDocumentChange}
+              // a room that fell back to solo needs a fresh editor without it; pending to live
+              // keeps the same editor, bound to the room before its content arrives
+              key={collabSession.mode === "solo" ? "solo" : "room"}
+              onChange={collabSession.mode === "pending" ? ignoreWhileConnecting : onDocumentChange}
               onReady={(handle) => {
                 editorRef.current = handle;
-                setEditorReady(true);
+                if (collabSession.mode !== "pending") setEditorReady(true);
               }}
               onRework={aiHealth.available && !collabReadOnly && !inReview ? onRework : undefined}
               readOnly={collabReadOnly}
-              ready={collabSession.mode !== "pending"}
               review={comments}
             />
           </Card>

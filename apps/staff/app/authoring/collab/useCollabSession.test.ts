@@ -22,7 +22,9 @@ describe("useCollabSession", () => {
     expect(result.current.collaboration).toBeNull();
   });
 
-  it("waits for the room before mounting the editor", () => {
+  // Lexical draws a room's document only as it changes, so the editor has to be bound to the room
+  // before the room's content arrives (bug log 171). The room is handed over while connecting.
+  it("hands the editor its room while it is still connecting", async () => {
     const { result, unmount } = renderHook(() =>
       useCollabSession(
         "draft-1",
@@ -30,6 +32,7 @@ describe("useCollabSession", () => {
       ),
     );
     expect(result.current.mode).toBe("pending");
+    await waitFor(() => expect(result.current.collaboration).not.toBeNull());
     unmount();
   });
 
@@ -54,6 +57,7 @@ describe("useCollabSession", () => {
       ),
     );
     await waitFor(() => expect(result.current.mode).toBe("solo"));
+    expect(result.current.collaboration).toBeNull();
     unmount();
   });
 });
