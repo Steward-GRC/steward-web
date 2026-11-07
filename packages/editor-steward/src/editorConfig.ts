@@ -97,3 +97,53 @@ export const reduceToolbar = (requested?: readonly StewardToolbarItem[]): Stewar
  * to the package's default can't turn them off here.
  */
 export const FILE_ICONS = {} as const;
+
+/**
+ * What the file card accepts: the attachments people would normally send by email (bug log 187).
+ * Never web or program files (HTML, SVG, XML, scripts, executables), archives, or Office files with
+ * macros. This is the picker's and the drop's filter; the server checks the bytes itself
+ * (steward-core#36). The list follows the proposed default there, and the admin setting that will
+ * switch kinds off is steward-web#246.
+ */
+export const FILE_UPLOAD_RULE = {
+  extensions: [
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "csv",
+    "ppt",
+    "pptx",
+    "odt",
+    "ods",
+    "odp",
+    "rtf",
+    "txt",
+    "md",
+    "mp4",
+    "m4v",
+    "mov",
+    "webm",
+  ],
+  maxSize: 10 * 1024 * 1024,
+  mimeTypes: [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.oasis.opendocument.text",
+    "application/vnd.oasis.opendocument.spreadsheet",
+    "application/vnd.oasis.opendocument.presentation",
+    "application/rtf",
+    "text/plain",
+    "text/markdown",
+    "video/mp4",
+    "video/quicktime",
+    "video/webm",
+  ],
+} as const;

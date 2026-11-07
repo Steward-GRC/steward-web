@@ -25,6 +25,7 @@ import {
   BASE_COLORS,
   BASE_TOOLS,
   FILE_ICONS,
+  FILE_UPLOAD_RULE,
   reduceToolbar,
   type StewardToolbarItem,
 } from "./editorConfig";
@@ -84,8 +85,14 @@ export interface StewardEditorProps {
   uploadImage?: (file: File) => Promise<string>;
 }
 
-// What steward-core stores (SVG is refused: served inline it is a stored-XSS vector).
-const IMAGE_TYPES = {
+// What the cards offer to upload: the file card's attachments and the image card's images. SVG is
+// refused: served inline it is a stored-XSS vector.
+const UPLOAD_TYPES = {
+  file: {
+    ...FILE_UPLOAD_RULE,
+    extensions: [...FILE_UPLOAD_RULE.extensions],
+    mimeTypes: [...FILE_UPLOAD_RULE.mimeTypes],
+  },
   image: {
     extensions: ["gif", "jpg", "jpeg", "png", "webp"],
     mimeTypes: ["image/gif", "image/jpeg", "image/png", "image/webp"],
@@ -188,7 +195,7 @@ export const StewardEditor = ({
     t("editor.imageUploadUnavailable"),
     t("editor.imageUploadFailed"),
   );
-  const fileUploader = useMemo(() => ({ fileTypes: IMAGE_TYPES, useFileUpload }), [useFileUpload]);
+  const fileUploader = useMemo(() => ({ fileTypes: UPLOAD_TYPES, useFileUpload }), [useFileUpload]);
   // Fixed at mount: the composer reads its initial state and collaboration mode once.
   const [initialEditorState] = useState(() =>
     initialDocument ? serializeDocument(initialDocument) : undefined,
