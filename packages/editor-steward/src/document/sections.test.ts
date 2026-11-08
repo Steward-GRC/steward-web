@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   applySectionText,
+  describeReset,
   ensureTemplateSections,
   extractSections,
   fillEmptySections,
@@ -390,5 +391,39 @@ describe("insertSectionAfter", () => {
     const result = insertSectionAfter(document, outline, undefined, "Annex", "Extra.");
     expect(headings(result)).toEqual(["Purpose", "Annex"]);
     expect(result.root.children.at(-1)).toEqual(paragraph("Extra."));
+  });
+});
+
+describe("describeReset (bug log 203)", () => {
+  const required: TemplateSectionOutline[] = [
+    { key: "purpose", level: 2, order: 0, required: true, title: "Purpose" },
+    { key: "scope", level: 2, order: 1, required: true, title: "Scope" },
+    { key: "notes", level: 2, order: 2, required: false, title: "Notes" },
+  ];
+
+  it("says which required headings it put back and which it found already there", () => {
+    const document = wrapRoot([heading("Purpose", 2), paragraph("Why")]);
+    expect(describeReset(document, required)).toEqual({
+      kept: ["Purpose"],
+      otherLevel: [],
+      restored: ["Scope"],
+    });
+  });
+
+  it("says when a heading it kept sits at another level than the template's", () => {
+    const document = wrapRoot([heading("Purpose", 1), heading("Scope", 2)]);
+    expect(describeReset(document, required)).toEqual({
+      kept: ["Purpose", "Scope"],
+      otherLevel: ["Purpose"],
+      restored: [],
+    });
+  });
+
+  it("puts every required heading back in an empty document", () => {
+    expect(describeReset(undefined, required)).toEqual({
+      kept: [],
+      otherLevel: [],
+      restored: ["Purpose", "Scope"],
+    });
   });
 });

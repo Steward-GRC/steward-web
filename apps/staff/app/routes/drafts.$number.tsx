@@ -16,7 +16,7 @@ import {
 } from "@steward-web/editor-steward";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import { Banner, Button, Card, scrollBehavior, StatusPill } from "@steward-web/ui";
+import { Banner, Button, Card, notify, scrollBehavior, StatusPill } from "@steward-web/ui";
 import { draftPath, RecordBreadcrumb } from "@steward-web/ui/domain";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, redirect, useFetcher, useLocation, useNavigate } from "react-router";
@@ -56,10 +56,12 @@ import {
   RequiredSections,
   type SaveStateKind,
 } from "../authoring/EditorChrome";
+import { resetSummaryText } from "../authoring/resetSummary";
 import {
   aiSections,
   applyAiText,
   applyChangeSet,
+  describeReset,
   draftDocument,
   incompleteButtons,
   missingRequiredSections,
@@ -401,7 +403,12 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   };
 
   /** Put the missing or renamed required headings back; all the text stays. */
-  const resetRequired = () => replaceDocument(resetRequiredSections(contentRef.current, outline));
+  const resetRequired = () => {
+    const summary = describeReset(contentRef.current, outline);
+    replaceDocument(resetRequiredSections(contentRef.current, outline));
+    // say what it did, so a heading it found already there is not mistaken for one it missed
+    notify.info(t("editor.required.resetTitle"), { description: resetSummaryText(t, summary) });
+  };
 
   const sectionTexts = aiSections(content, outline);
   const missing = missingRequiredSections(content, outline);

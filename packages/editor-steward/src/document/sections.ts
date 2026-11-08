@@ -201,6 +201,31 @@ export const resetRequiredSections = (
   return changed ? { ...current, root: { ...current.root, children } } : current;
 };
 
+/**
+ * What Reset does to a document, in words the screen can say: the required headings it puts back,
+ * the ones that were already there and stay as written, and, of those, the ones written at another
+ * level than the template's (Reset never changes a level the author chose).
+ */
+export const describeReset = (
+  current: SerializedDocument | undefined,
+  sections: readonly TemplateSectionOutline[],
+): { kept: string[]; otherLevel: string[]; restored: string[] } => {
+  const children = current?.root.children ?? [];
+  const result = { kept: [] as string[], otherLevel: [] as string[], restored: [] as string[] };
+  for (const section of ordered(sections).filter((entry) => entry.required)) {
+    const at = findExactHeading(children, section.title);
+    if (at === -1) {
+      result.restored.push(section.title);
+      continue;
+    }
+    result.kept.push(section.title);
+    if (headingLevel(children[at]!) !== clampLevel(section.level)) {
+      result.otherLevel.push(section.title);
+    }
+  }
+  return result;
+};
+
 /** Each template section's body as plain text, in template order: what the AI features read. */
 export const extractSections = (
   document: SerializedDocument | undefined,
