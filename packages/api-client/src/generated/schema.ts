@@ -1193,6 +1193,7 @@ export type Mutation = {
    */
   readonly setUserAiQueryLimit: AiUserQueryLimit;
   readonly setUserPolicyOverride: User;
+  readonly setWorkflowVetoEnabled: WorkflowDef;
   readonly shredAuditSubject: AuditShredResult;
   /**
    * Deliver an approver decision to an active run. The actor is bound from
@@ -1952,6 +1953,11 @@ export type MutationSetUserPolicyOverrideArgs = {
   effect?: InputMaybe<OverrideEffect>;
   policyNumber: Scalars["String"]["input"];
   userId: Scalars["ID"]["input"];
+};
+
+export type MutationSetWorkflowVetoEnabledArgs = {
+  enabled: Scalars["Boolean"]["input"];
+  id: Scalars["ID"]["input"];
 };
 
 export type MutationShredAuditSubjectArgs = {
@@ -3269,6 +3275,7 @@ export type StageAssignee = {
   readonly name?: Maybe<Scalars["String"]["output"]>;
   readonly state: Scalars["String"]["output"];
   readonly userId: Scalars["String"]["output"];
+  readonly veto: Scalars["Boolean"]["output"];
 };
 
 export type StageEligibleAssignees = {
@@ -3578,6 +3585,7 @@ export type WorkflowDef = {
   readonly name: Scalars["String"]["output"];
   readonly stages: ReadonlyArray<WorkflowStageDef>;
   readonly version: Scalars["Int"]["output"];
+  readonly vetoEnabled: Scalars["Boolean"]["output"];
 };
 
 export type WorkflowStageDef = {
@@ -3591,6 +3599,8 @@ export type WorkflowStageDef = {
   readonly quorum: Scalars["String"]["output"];
   readonly rejectOnSlaBreach?: Maybe<Scalars["Boolean"]["output"]>;
   readonly slaDays?: Maybe<Scalars["Int"]["output"]>;
+  readonly vetoApproverIds: ReadonlyArray<Scalars["ID"]["output"]>;
+  readonly vetoGroupIds: ReadonlyArray<Scalars["ID"]["output"]>;
 };
 
 export type WorkflowStageInput = {
@@ -3603,6 +3613,8 @@ export type WorkflowStageInput = {
   readonly quorum: Scalars["String"]["input"];
   readonly rejectOnSlaBreach?: InputMaybe<Scalars["Boolean"]["input"]>;
   readonly slaDays?: InputMaybe<Scalars["Int"]["input"]>;
+  readonly vetoApproverIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
+  readonly vetoGroupIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
 };
 
 export type WorkflowStatus = {

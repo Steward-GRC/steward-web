@@ -154,6 +154,7 @@ import {
   RevokeMySessionsDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
+  RunVetoesDocument,
   SaveAppendixDraftDocument,
   SaveDraftDocument,
   SearchAndAnswerDocument,
@@ -181,6 +182,7 @@ import {
   SetReviewThreadResolvedDocument,
   SetTypeCadenceDocument,
   SetUserPolicyOverrideDocument,
+  SetWorkflowVetoEnabledDocument,
   SignalWorkflowDocument,
   SimulateCategoryDocument,
   SpCertificateDocument,
@@ -215,6 +217,7 @@ import {
   WorkflowDefDocument,
   WorkflowDefsDocument,
   WorkflowStatusDocument,
+  WorkflowVetoesDocument,
 } from "../generated/graphql";
 import {
   type CategoryDocumentTypes,
@@ -2239,6 +2242,35 @@ export const liveEdge: Edge = {
   async verifyDomain(domain, cookie) {
     const data = await gatewayFetch(VerifyDomainDocument, { domain }, "VerifyDomain", { cookie });
     return data.verifyDomain;
+  },
+  async runVetoes(policyVersionId, cookie) {
+    try {
+      const data = await gatewayFetch(RunVetoesDocument, { policyVersionId }, "RunVetoes", {
+        cookie,
+      });
+      return data.workflowStatus.stageAssignees.map((seats) =>
+        seats.filter((seat) => seat.veto).map((seat) => seat.userId),
+      );
+    } catch {
+      return [];
+    }
+  },
+  async setWorkflowVetoEnabled(id, enabled, cookie) {
+    const data = await gatewayFetch(
+      SetWorkflowVetoEnabledDocument,
+      { enabled, id },
+      "SetWorkflowVetoEnabled",
+      { cookie },
+    );
+    return data.setWorkflowVetoEnabled.vetoEnabled;
+  },
+  async workflowVetoes(cookie) {
+    try {
+      const data = await gatewayFetch(WorkflowVetoesDocument, {}, "WorkflowVetoes", { cookie });
+      return data.workflowDefs;
+    } catch {
+      return [];
+    }
   },
   async workflowDef(id, cookie) {
     const data = await gatewayFetch(WorkflowDefDocument, { id }, "WorkflowDef", { cookie });

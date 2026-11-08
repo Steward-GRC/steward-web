@@ -146,6 +146,7 @@ export type {
   WorkflowStageDef,
   WorkflowStageInput,
   WorkflowStatus,
+  WorkflowVeto,
 } from "./edge";
 export {
   AckTrigger,

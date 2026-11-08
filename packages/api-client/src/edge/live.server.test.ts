@@ -1553,3 +1553,59 @@ describe("liveEdge.issueAppendixCollabToken", () => {
     expect(calls[0]?.variables).toEqual({ appendixId: "a-1" });
   });
 });
+
+describe("liveEdge veto approvers (steward-web#256)", () => {
+  it("reads which workflows opt in and who holds a veto, from a side query", async () => {
+    routeGateway({
+      WorkflowVetoes: () => ({
+        workflowDefs: [
+          {
+            id: "w-1",
+            stages: [{ id: "s-1", vetoApproverIds: ["u-1"], vetoGroupIds: ["g-1"] }],
+            vetoEnabled: true,
+          },
+        ],
+      }),
+    });
+    expect(await liveEdge.workflowVetoes()).toEqual([
+      {
+        id: "w-1",
+        stages: [{ id: "s-1", vetoApproverIds: ["u-1"], vetoGroupIds: ["g-1"] }],
+        vetoEnabled: true,
+      },
+    ]);
+  });
+
+  it("reads as no vetoes when the gateway refuses the side query", async () => {
+    routeGateway({});
+    expect(await liveEdge.workflowVetoes()).toEqual([]);
+    expect(await liveEdge.runVetoes("v-1")).toEqual([]);
+  });
+
+  it("reads the seats of a run that hold a veto, per stage", async () => {
+    routeGateway({
+      RunVetoes: () => ({
+        workflowStatus: {
+          stageAssignees: [
+            [
+              { userId: "u-1", veto: false },
+              { userId: "u-2", veto: true },
+            ],
+            [{ userId: "u-3", veto: false }],
+          ],
+        },
+      }),
+    });
+    expect(await liveEdge.runVetoes("v-1")).toEqual([["u-2"], []]);
+  });
+
+  it("opts a workflow in or out", async () => {
+    const calls = routeGateway({
+      SetWorkflowVetoEnabled: () => ({
+        setWorkflowVetoEnabled: { id: "w-1", vetoEnabled: true },
+      }),
+    });
+    expect(await liveEdge.setWorkflowVetoEnabled("w-1", true)).toBe(true);
+    expect(calls[0]?.variables).toEqual({ enabled: true, id: "w-1" });
+  });
+});
