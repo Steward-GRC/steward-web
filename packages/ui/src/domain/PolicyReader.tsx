@@ -510,7 +510,9 @@ export const PolicyReader = ({
   const [summaryOn, setSummaryOn] = useState(false);
   const [highlighted, setHighlighted] = useState<string>();
   const [outlineCollapsed, setOutlineCollapsed] = useState(false);
-  const ackState = ackBannerState(detail.ack);
+  // A procedure has no acknowledgement, whatever the backend sends (bug log 213).
+  const ackState =
+    detail.documentType === DocumentType.Procedure ? "hidden" : ackBannerState(detail.ack);
   const redaction = redactionState(detail);
   // The grant the break-glass dialog won, while it lasts; the gateway can't yet say after a
   // reload when a grant ends (steward-gateway#58), so the bar shows only after a reveal here.
