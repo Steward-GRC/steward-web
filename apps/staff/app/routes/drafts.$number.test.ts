@@ -352,4 +352,38 @@ describe("drafts.$number loader: review state", () => {
     const result = await runLoader();
     expect(result.inReview).toBe(true);
   });
+
+  it("names the approvers on the current step, so the author can write to one of them", async () => {
+    routeGateway({
+      ...editorHandlers("draft", "APPROVAL_STATUS_IN_REVIEW"),
+      WorkflowStatus: () => ({
+        workflowStatus: {
+          currentStageIdx: 1,
+          runId: "run-1",
+          stageAssignees: [
+            [{ groupId: null, name: "Dave", state: "approved", userId: "u-4" }],
+            [
+              { groupId: null, name: "Charlie", state: "pending", userId: "u-2" },
+              { groupId: null, name: "Alice", state: "pending", userId: "u-1" },
+              { groupId: null, name: "Charlie", state: "pending", userId: "u-2" },
+            ],
+          ],
+          stageNames: ["Review", "Final"],
+          stageUnitProgress: [[], []],
+          status: "APPROVAL_STATUS_IN_REVIEW",
+        },
+      }),
+    });
+    const result = await runLoader();
+    expect(result.approvers).toEqual([
+      { id: "u-2", name: "Charlie" },
+      { id: "u-1", name: "Alice" },
+    ]);
+  });
+
+  it("has no approvers to write to when the draft is not in review", async () => {
+    routeGateway(editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"));
+    const result = await runLoader();
+    expect(result.approvers).toEqual([]);
+  });
 });

@@ -37,6 +37,7 @@ import {
   isDraftInReview,
   policyIdOfNumber,
   reorderAppendices,
+  reviewApprovers,
   saveDraft,
   startDraft,
   submitDraftForReview,
@@ -100,7 +101,17 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const inReview = draft ? await isDraftInReview(request, draft) : false;
   // What approvers wrote on this version, shown on the text they wrote it on.
   const threads = draft ? await listReviewThreads(request, draft.id) : [];
-  return { aiHealth, draft, inReview, meId: identity.id, policy, templateVersion, threads };
+  const approvers = draft && inReview ? await reviewApprovers(request, draft) : [];
+  return {
+    aiHealth,
+    approvers,
+    draft,
+    inReview,
+    meId: identity.id,
+    policy,
+    templateVersion,
+    threads,
+  };
 };
 
 export const action = async ({ params, request }: Route.ActionArgs) => {

@@ -137,6 +137,35 @@ export const isDraftInReview = async (request: Request, draft: PolicyVersion): P
   }
 };
 
+/** An approver the author can write to: someone with a seat on the step the run is at. */
+export interface ReviewApprover {
+  id: string;
+  name: string;
+}
+
+/**
+ * The approvers on the step the draft's run is at, each once, for the author to write to one of
+ * them. Nobody when the run can't be read or is not in review.
+ */
+export const reviewApprovers = async (
+  request: Request,
+  draft: PolicyVersion,
+): Promise<ReviewApprover[]> => {
+  try {
+    const run = await edge.workflowStatus(draft.id, cookieOf(request));
+    if (run.status !== ApprovalStatus.ApprovalStatusInReview) return [];
+    const seats = run.stageAssignees[run.currentStageIdx] ?? [];
+    const seen = new Set<string>();
+    return seats.flatMap((seat) => {
+      if (seen.has(seat.userId)) return [];
+      seen.add(seat.userId);
+      return [{ id: seat.userId, name: seat.name }];
+    });
+  } catch {
+    return [];
+  }
+};
+
 export const discardDraft = (request: Request, policyId: string): Promise<boolean> =>
   edge.discardDraft(policyId, cookieOf(request));
 
