@@ -165,6 +165,7 @@ export type AddReviewThreadMutationVariables = Exact<{
   occurrence: number;
   body: string;
   suggestedText?: string | null | undefined;
+  toUserId?: string | number | null | undefined;
 }>;
 
 export type AddReviewThreadMutation = {
@@ -174,6 +175,7 @@ export type AddReviewThreadMutation = {
     readonly quote: string;
     readonly occurrence: number;
     readonly resolved: boolean;
+    readonly approverUserId: string;
     readonly createdAt: string;
     readonly messages: ReadonlyArray<{
       readonly id: string;
@@ -709,6 +711,7 @@ export type CloseReviewSuggestionMutation = {
     readonly quote: string;
     readonly occurrence: number;
     readonly resolved: boolean;
+    readonly approverUserId: string;
     readonly createdAt: string;
     readonly messages: ReadonlyArray<{
       readonly id: string;
@@ -809,6 +812,7 @@ export type CounterReviewSuggestionMutation = {
     readonly quote: string;
     readonly occurrence: number;
     readonly resolved: boolean;
+    readonly approverUserId: string;
     readonly createdAt: string;
     readonly messages: ReadonlyArray<{
       readonly id: string;
@@ -1508,6 +1512,12 @@ export type ManagedGroupMembersQuery = {
     readonly memberships: ReadonlyArray<{ readonly groupId: string; readonly source: string }>;
   }>;
 };
+
+export type MarkVersionReviewedMutationVariables = Exact<{
+  policyVersionId: string | number;
+}>;
+
+export type MarkVersionReviewedMutation = { readonly markVersionReviewed: boolean };
 
 export type MeQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -2355,6 +2365,7 @@ export type ReplyReviewThreadMutation = {
     readonly quote: string;
     readonly occurrence: number;
     readonly resolved: boolean;
+    readonly approverUserId: string;
     readonly createdAt: string;
     readonly messages: ReadonlyArray<{
       readonly id: string;
@@ -2602,6 +2613,7 @@ export type ReviewThreadFieldsFragment = {
   readonly quote: string;
   readonly occurrence: number;
   readonly resolved: boolean;
+  readonly approverUserId: string;
   readonly createdAt: string;
   readonly messages: ReadonlyArray<{
     readonly id: string;
@@ -2637,6 +2649,7 @@ export type ReviewThreadsQuery = {
     readonly quote: string;
     readonly occurrence: number;
     readonly resolved: boolean;
+    readonly approverUserId: string;
     readonly createdAt: string;
     readonly messages: ReadonlyArray<{
       readonly id: string;
@@ -3213,6 +3226,7 @@ export type SetReviewThreadResolvedMutation = {
     readonly quote: string;
     readonly occurrence: number;
     readonly resolved: boolean;
+    readonly approverUserId: string;
     readonly createdAt: string;
     readonly messages: ReadonlyArray<{
       readonly id: string;
@@ -3803,6 +3817,19 @@ export type VerifyDomainMutation = {
     readonly allowLocal: boolean;
     readonly secretReentryRequired: boolean;
   };
+};
+
+export type VersionChangesSinceReviewQueryVariables = Exact<{
+  policyVersionId: string | number;
+}>;
+
+export type VersionChangesSinceReviewQuery = {
+  readonly versionChangesSinceReview: ReadonlyArray<{
+    readonly sectionKey: string;
+    readonly sectionTitle: string;
+    readonly changeType: string;
+    readonly wordDiffHtml: string | null;
+  }>;
 };
 
 export type WebauthnRegisterBeginMutationVariables = Exact<{ [key: string]: never }>;
@@ -4398,6 +4425,7 @@ export const ReviewThreadFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "quote" } },
           { kind: "Field", name: { kind: "Name", value: "occurrence" } },
           { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "approverUserId" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           {
             kind: "Field",
@@ -5330,6 +5358,11 @@ export const AddReviewThreadDocument = {
           variable: { kind: "Variable", name: { kind: "Name", value: "suggestedText" } },
           type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
         },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "toUserId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
       ],
       selectionSet: {
         kind: "SelectionSet",
@@ -5363,6 +5396,11 @@ export const AddReviewThreadDocument = {
                 name: { kind: "Name", value: "suggestedText" },
                 value: { kind: "Variable", name: { kind: "Name", value: "suggestedText" } },
               },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "toUserId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "toUserId" } },
+              },
             ],
             selectionSet: {
               kind: "SelectionSet",
@@ -5386,6 +5424,7 @@ export const AddReviewThreadDocument = {
           { kind: "Field", name: { kind: "Name", value: "quote" } },
           { kind: "Field", name: { kind: "Name", value: "occurrence" } },
           { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "approverUserId" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           {
             kind: "Field",
@@ -6894,6 +6933,7 @@ export const CloseReviewSuggestionDocument = {
           { kind: "Field", name: { kind: "Name", value: "quote" } },
           { kind: "Field", name: { kind: "Name", value: "occurrence" } },
           { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "approverUserId" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           {
             kind: "Field",
@@ -7215,6 +7255,7 @@ export const CounterReviewSuggestionDocument = {
           { kind: "Field", name: { kind: "Name", value: "quote" } },
           { kind: "Field", name: { kind: "Name", value: "occurrence" } },
           { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "approverUserId" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           {
             kind: "Field",
@@ -9775,6 +9816,42 @@ export const ManagedGroupMembersDocument = {
     },
   ],
 } as unknown as DocumentNode<ManagedGroupMembersQuery, ManagedGroupMembersQueryVariables>;
+export const MarkVersionReviewedDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "MarkVersionReviewed" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "markVersionReviewed" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MarkVersionReviewedMutation, MarkVersionReviewedMutationVariables>;
 export const MeDocument = {
   kind: "Document",
   definitions: [
@@ -12520,6 +12597,7 @@ export const ReplyReviewThreadDocument = {
           { kind: "Field", name: { kind: "Name", value: "quote" } },
           { kind: "Field", name: { kind: "Name", value: "occurrence" } },
           { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "approverUserId" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           {
             kind: "Field",
@@ -13160,6 +13238,7 @@ export const ReviewThreadsDocument = {
           { kind: "Field", name: { kind: "Name", value: "quote" } },
           { kind: "Field", name: { kind: "Name", value: "occurrence" } },
           { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "approverUserId" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           {
             kind: "Field",
@@ -15318,6 +15397,7 @@ export const SetReviewThreadResolvedDocument = {
           { kind: "Field", name: { kind: "Name", value: "quote" } },
           { kind: "Field", name: { kind: "Name", value: "occurrence" } },
           { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "approverUserId" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           {
             kind: "Field",
@@ -17492,6 +17572,54 @@ export const VerifyDomainDocument = {
     },
   ],
 } as unknown as DocumentNode<VerifyDomainMutation, VerifyDomainMutationVariables>;
+export const VersionChangesSinceReviewDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "VersionChangesSinceReview" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versionChangesSinceReview" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "sectionKey" } },
+                { kind: "Field", name: { kind: "Name", value: "sectionTitle" } },
+                { kind: "Field", name: { kind: "Name", value: "changeType" } },
+                { kind: "Field", name: { kind: "Name", value: "wordDiffHtml" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  VersionChangesSinceReviewQuery,
+  VersionChangesSinceReviewQueryVariables
+>;
 export const WebauthnRegisterBeginDocument = {
   kind: "Document",
   definitions: [

@@ -1039,6 +1039,7 @@ export type Mutation = {
    * the edit grant again before minting).
    */
   readonly issueCollabToken: IssueCollabTokenPayload;
+  readonly markVersionReviewed: Scalars["Boolean"]["output"];
   readonly mergeAccounts: MergeAccountsResult;
   readonly moveCategory: Category;
   readonly movePolicies: MovePoliciesResult;
@@ -1300,6 +1301,7 @@ export type MutationAddReviewThreadArgs = {
   policyVersionId: Scalars["ID"]["input"];
   quote: Scalars["String"]["input"];
   suggestedText?: InputMaybe<Scalars["String"]["input"]>;
+  toUserId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type MutationAddUserToGroupArgs = {
@@ -1523,6 +1525,10 @@ export type MutationGrantRootArgs = {
 
 export type MutationIssueCollabTokenArgs = {
   input: IssueCollabTokenInput;
+};
+
+export type MutationMarkVersionReviewedArgs = {
+  policyVersionId: Scalars["ID"]["input"];
 };
 
 export type MutationMergeAccountsArgs = {
@@ -2429,6 +2435,7 @@ export type Query = {
   readonly userFactors: ReadonlyArray<MfaFactor>;
   readonly users: UserPage;
   readonly verifyAuditChain: AuditChainVerification;
+  readonly versionChangesSinceReview: ReadonlyArray<SectionDiff>;
   /**
    * viewerIsApprover is true when the signed-in user holds RACI Approve in any
    * category (rule-granted or owner); drives the staff Approvals-section eligibility.
@@ -2759,6 +2766,10 @@ export type QueryVerifyAuditChainArgs = {
   toRecordId: Scalars["String"]["input"];
 };
 
+export type QueryVersionChangesSinceReviewArgs = {
+  policyVersionId: Scalars["ID"]["input"];
+};
+
 export type QueryWorkflowDefArgs = {
   id: Scalars["ID"]["input"];
 };
@@ -2993,6 +3004,7 @@ export type ReviewSuggestion = {
 
 export type ReviewThread = {
   readonly __typename?: "ReviewThread";
+  readonly approverUserId: Scalars["ID"]["output"];
   readonly createdAt: Scalars["DateTime"]["output"];
   readonly id: Scalars["ID"]["output"];
   readonly messages: ReadonlyArray<ReviewMessage>;

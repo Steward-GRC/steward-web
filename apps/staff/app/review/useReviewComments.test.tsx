@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import { useReviewComments } from "./useReviewComments";
 
 const thread: ReviewThread = {
+  approverUserId: "user-charlie",
   createdAt: "2026-11-06T12:00:00Z",
   id: "thread-1",
   messages: [],

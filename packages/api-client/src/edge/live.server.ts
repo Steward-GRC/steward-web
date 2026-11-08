@@ -87,6 +87,7 @@ import {
   LatestTemplateVersionDocument,
   ListUserSessionsDocument,
   ManagedGroupMembersDocument,
+  MarkVersionReviewedDocument,
   MeDocument,
   MergeAccountsDocument,
   MoveCategoryDocument,
@@ -196,6 +197,7 @@ import {
   UsersDocument,
   VerifyAuditChainDocument,
   VerifyDomainDocument,
+  VersionChangesSinceReviewDocument,
   WebauthnRegisterBeginDocument,
   WebauthnRegisterFinishDocument,
   WorkflowDefDocument,
@@ -581,10 +583,10 @@ export const liveEdge: Edge = {
     );
     return data.counterReviewSuggestion;
   },
-  async addReviewThread(policyVersionId, quote, occurrence, body, suggestedText, cookie) {
+  async addReviewThread(policyVersionId, quote, occurrence, body, suggestedText, toUserId, cookie) {
     const data = await gatewayFetch(
       AddReviewThreadDocument,
-      { body, occurrence, policyVersionId, quote, suggestedText },
+      { body, occurrence, policyVersionId, quote, suggestedText, toUserId },
       "AddReviewThread",
       { cookie },
     );
@@ -1449,6 +1451,24 @@ export const liveEdge: Edge = {
       contentJson: policyVersion.contentJson,
       version: semanticVersion(policyVersion.versionNo),
     };
+  },
+  async markVersionReviewed(policyVersionId, cookie) {
+    const data = await gatewayFetch(
+      MarkVersionReviewedDocument,
+      { policyVersionId },
+      "MarkVersionReviewed",
+      { cookie },
+    );
+    return data.markVersionReviewed;
+  },
+  async versionChangesSinceReview(policyVersionId, cookie) {
+    const data = await gatewayFetch(
+      VersionChangesSinceReviewDocument,
+      { policyVersionId },
+      "VersionChangesSinceReview",
+      { cookie },
+    );
+    return data.versionChangesSinceReview;
   },
   async versionDiff(fromVersionId, toVersionId, cookie) {
     const data = await gatewayFetch(

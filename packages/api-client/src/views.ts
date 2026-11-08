@@ -350,6 +350,8 @@ export interface ReviewSuggestion {
  * place the highlight again in the stored document.
  */
 export interface ReviewThread {
+  /** The approver the thread is with; the policy's authors see it too. */
+  readonly approverUserId: string;
   readonly createdAt: string;
   readonly id: string;
   readonly messages: readonly ReviewMessage[];
