@@ -12,7 +12,7 @@ import type {
   PolicyContact,
   PolicyDefinition,
   PolicyReference,
-  RelatedPolicy,
+  RelatedItem,
 } from "./policyReaderModel";
 
 import { policyPath } from "./policy";
@@ -86,7 +86,7 @@ export const DefinitionsPanel = ({
 };
 
 /** The related panel (U14): the other documents this one links to, title over number. */
-export const RelatedPanel = ({ related }: { related: readonly RelatedPolicy[] }) => {
+export const RelatedPanel = ({ related }: { related: readonly RelatedItem[] }) => {
   const { t } = useTranslation("policy");
   return (
     <Panel
@@ -95,11 +95,12 @@ export const RelatedPanel = ({ related }: { related: readonly RelatedPolicy[] })
     >
       <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {related.map((r) => (
-          <li key={r.policyId}>
+          <li key={`${r.policyId}-${r.label ?? ""}`}>
             <Link
               className={cn(item, "flex flex-col gap-0.5 px-3 py-2.5 hover:bg-sunken")}
               to={policyPath({ number: r.number })}
             >
+              {r.label ? <span className="text-xs text-muted">{r.label}</span> : null}
               <span className="text-sm font-semibold text-primary">{r.title}</span>
               <span className="font-mono text-xs text-muted">{r.number}</span>
             </Link>

@@ -110,6 +110,7 @@ export type {
   Reference,
   ReferenceInput,
   ReferenceUrlCheck,
+  RelatedItem,
   RelatedLinkChoice,
   RelatedPolicy,
   RelationshipType,
