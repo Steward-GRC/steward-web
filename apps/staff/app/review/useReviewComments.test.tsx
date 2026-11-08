@@ -21,7 +21,10 @@ const thread: ReviewThread = {
 };
 
 /** Mounts the hook under a router and hands back what it returns and what it posts. */
-const setup = (side: "AUTHOR" | "REVIEWER") => {
+const setup = (
+  side: "AUTHOR" | "REVIEWER",
+  extra: { recipients?: readonly { id: string; name: string }[] } = {},
+) => {
   const posted = vi.fn();
   let comments: ReviewComments | undefined;
   const Probe = () => {
@@ -31,6 +34,7 @@ const setup = (side: "AUTHOR" | "REVIEWER") => {
       policyVersionId: "v-4",
       side,
       threads: [thread],
+      ...extra,
     });
     return null;
   };
@@ -94,6 +98,29 @@ describe("useReviewComments", () => {
         outcome: "NOT_AGREED",
         reason: "The law says seven.",
         threadId: "thread-1",
+      }),
+    );
+  });
+
+  it("hands on the approvers the author can write to, and posts the one chosen", async () => {
+    const people = [{ id: "user-charlie", name: "Charlie" }];
+    const { comments, posted } = setup("AUTHOR", { recipients: people });
+    await waitFor(() => expect(comments()).toBeDefined());
+    expect(comments().recipients).toEqual(people);
+    await comments().onAdd?.({
+      body: "Is this right?",
+      occurrence: 1,
+      quote: "seven years",
+      toUserId: "user-charlie",
+    });
+    await waitFor(() =>
+      expect(posted).toHaveBeenCalledWith({
+        body: "Is this right?",
+        intent: "add",
+        occurrence: "1",
+        policyVersionId: "v-4",
+        quote: "seven years",
+        toUserId: "user-charlie",
       }),
     );
   });

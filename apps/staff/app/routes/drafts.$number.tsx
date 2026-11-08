@@ -220,11 +220,13 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const { t: tAi } = useTranslation("ai");
   const location = useLocation();
   const navigate = useNavigate();
-  const { draft, inReview, meId, policy, templateVersion, threads } = loaderData;
+  const { approvers, draft, inReview, meId, policy, templateVersion, threads } = loaderData;
   const comments = useReviewComments({
-    canAdd: false,
+    // while the version is in review the author can write to one of its approvers
+    canAdd: inReview && approvers.length > 0,
     meId,
     policyVersionId: draft?.id ?? "",
+    recipients: approvers,
     side: "AUTHOR",
     threads,
   });

@@ -159,7 +159,7 @@ export const reviewApprovers = async (
     return seats.flatMap((seat) => {
       if (seen.has(seat.userId)) return [];
       seen.add(seat.userId);
-      return [{ id: seat.userId, name: seat.name }];
+      return [{ id: seat.userId, name: seat.name ?? seat.userId }];
     });
   } catch {
     return [];
