@@ -253,7 +253,10 @@ describe("what the editor shows in Steward", () => {
     expect(slots.length).toBeGreaterThanOrEqual(12);
     for (const [slot, setting] of Object.entries(BASE_COLORS)) {
       expect(setting.picker, `${slot} picker`).toBe(false);
-      expect(setting.none, `${slot} none`).toBe(false);
+      // a table cell and a border can go back to no colour: a coloured cell has to be undoable
+      if (slot !== "tableCell" && slot !== "tableBorder") {
+        expect(setting.none, `${slot} none`).toBe(false);
+      }
       expect(setting.palette?.length ?? 0, `${slot} swatches`).toBeGreaterThan(0);
     }
   });
@@ -329,5 +332,33 @@ describe("the options for the 1.3 package (bug log 169, 176, 183, 193)", () => {
   it("keeps the Code card off the menus and turns Markdown paste on", () => {
     expect(MENU_HIDDEN).toEqual(["code"]);
     expect(PASTE_MARKDOWN).toBe(true);
+  });
+});
+
+describe("the table's cell and border colours (bug log 184)", () => {
+  it("offers only the soft status colours for a cell, and can go back to no colour", () => {
+    const cell = BASE_COLORS.tableCell;
+    expect(cell.picker).toBe(false);
+    expect(cell.none).not.toBe(false);
+    expect(cell.palette?.map((swatch) => swatch.label)).toEqual([
+      "Info",
+      "Success",
+      "Warning",
+      "Danger",
+      "Neutral",
+    ]);
+  });
+
+  it("uses real colours, not variables, because a cell colour is saved as an inline style", () => {
+    for (const slot of [BASE_COLORS.tableCell, BASE_COLORS.tableBorder]) {
+      expect(slot.palette?.every((swatch) => /^#[\da-f]{6}$/i.test(swatch.value))).toBe(true);
+    }
+  });
+
+  it("offers only the strong status colours for a border, with the default line still there", () => {
+    const border = BASE_COLORS.tableBorder;
+    expect(border.picker).toBe(false);
+    expect(border.none).not.toBe(false);
+    expect(border.palette).toHaveLength(5);
   });
 });
