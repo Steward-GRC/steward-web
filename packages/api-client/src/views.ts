@@ -58,8 +58,20 @@ export interface AckSummary {
   readonly required: number;
 }
 
+/** Someone who saved or published an appendix; former staff stay listed, with `active` false. */
+export interface AppendixContributorView {
+  readonly active: boolean;
+  readonly name: string;
+  readonly userId: string;
+}
+
 /** An appendix of a policy or procedure with its own life: a draft beside what is published. */
 export interface AppendixEntry {
+  /**
+   * Everyone who ever saved or published it, active or not, in the order they first did. Empty
+   * for anyone who may not see the diff.
+   */
+  readonly contributors?: readonly AppendixContributorView[];
   readonly draft?: AppendixRowView | null;
   readonly id: string;
   /** The place among the live appendices; null while retired. */
@@ -67,6 +79,8 @@ export interface AppendixEntry {
   readonly orderIndex: number;
   readonly policyId: string;
   readonly published?: AppendixRowView | null;
+  /** The published rows, latest first, for the Published tab's drop-down. */
+  readonly publishedVersions?: readonly AppendixRowView[];
   readonly retiredAt?: null | string;
   readonly versions: readonly AppendixRowView[];
 }

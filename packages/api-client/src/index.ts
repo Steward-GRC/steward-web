@@ -27,6 +27,7 @@ export type {
   AiJobStatus,
   AiSettings,
   Appendix,
+  AppendixContributorView,
   AppendixEntry,
   AppendixRowView,
   AskAnswer,

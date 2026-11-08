@@ -180,12 +180,11 @@ afterEach(() => {
 });
 
 describe("the appendix page loader", () => {
-  it("opens the appendix of the letter in the address, with its diff when it has a draft", async () => {
+  it("opens the appendix of the letter in the address", async () => {
     const withDraft = appendix("a-1", "A", { draft: row("DRAFT", 2, "Rates (next)", "More.") });
     const calls = routeGateway(handlers([withDraft, appendix("a-2", "B")]));
     const result = await loader(call(null, "A") as unknown as Parameters<typeof loader>[0]);
     expect(result.appendix.id).toBe("a-1");
-    expect(result.diff).toHaveLength(1);
     expect(calls.find((c) => c.operation === "PolicyAppendices")?.variables).toMatchObject({
       includeRetired: true,
       policyId: "p-1",

@@ -999,7 +999,7 @@ export type CreatePolicyMutation = {
 
 export type CreatePolicyAppendixMutationVariables = Exact<{
   policyId: string | number;
-  title: string;
+  title?: string | null | undefined;
   contentJson: string;
 }>;
 
@@ -1045,6 +1045,23 @@ export type CreatePolicyAppendixMutation = {
       readonly updatedBy: string;
       readonly publishedAt: string | null;
       readonly publishedBy: string | null;
+    }>;
+    readonly publishedVersions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+    readonly contributors: ReadonlyArray<{
+      readonly userId: string;
+      readonly name: string;
+      readonly active: boolean;
     }>;
   };
 };
@@ -2031,6 +2048,23 @@ export type PolicyAppendicesQuery = {
       readonly publishedAt: string | null;
       readonly publishedBy: string | null;
     }>;
+    readonly publishedVersions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+    readonly contributors: ReadonlyArray<{
+      readonly userId: string;
+      readonly name: string;
+      readonly active: boolean;
+    }>;
   }>;
 };
 
@@ -2075,6 +2109,23 @@ export type PolicyAppendixFieldsFragment = {
     readonly updatedBy: string;
     readonly publishedAt: string | null;
     readonly publishedBy: string | null;
+  }>;
+  readonly publishedVersions: ReadonlyArray<{
+    readonly id: string;
+    readonly versionNo: number;
+    readonly state: Types.AppendixState;
+    readonly title: string;
+    readonly contentJson: string;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+    readonly updatedBy: string;
+    readonly publishedAt: string | null;
+    readonly publishedBy: string | null;
+  }>;
+  readonly contributors: ReadonlyArray<{
+    readonly userId: string;
+    readonly name: string;
+    readonly active: boolean;
   }>;
 };
 
@@ -2409,6 +2460,23 @@ export type PublishAppendixMutation = {
       readonly publishedAt: string | null;
       readonly publishedBy: string | null;
     }>;
+    readonly publishedVersions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+    readonly contributors: ReadonlyArray<{
+      readonly userId: string;
+      readonly name: string;
+      readonly active: boolean;
+    }>;
   };
 };
 
@@ -2708,6 +2776,23 @@ export type ReorderPolicyAppendicesMutation = {
       readonly publishedAt: string | null;
       readonly publishedBy: string | null;
     }>;
+    readonly publishedVersions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+    readonly contributors: ReadonlyArray<{
+      readonly userId: string;
+      readonly name: string;
+      readonly active: boolean;
+    }>;
   }>;
 };
 
@@ -2992,6 +3077,23 @@ export type RestoreAppendixMutation = {
       readonly publishedAt: string | null;
       readonly publishedBy: string | null;
     }>;
+    readonly publishedVersions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+    readonly contributors: ReadonlyArray<{
+      readonly userId: string;
+      readonly name: string;
+      readonly active: boolean;
+    }>;
   };
 };
 
@@ -3041,6 +3143,23 @@ export type RetireAppendixMutation = {
       readonly updatedBy: string;
       readonly publishedAt: string | null;
       readonly publishedBy: string | null;
+    }>;
+    readonly publishedVersions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+    readonly contributors: ReadonlyArray<{
+      readonly userId: string;
+      readonly name: string;
+      readonly active: boolean;
     }>;
   };
 };
@@ -3239,6 +3358,23 @@ export type SaveAppendixDraftMutation = {
       readonly updatedBy: string;
       readonly publishedAt: string | null;
       readonly publishedBy: string | null;
+    }>;
+    readonly publishedVersions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+    readonly contributors: ReadonlyArray<{
+      readonly userId: string;
+      readonly name: string;
+      readonly active: boolean;
     }>;
   };
 };
@@ -5104,6 +5240,28 @@ export const PolicyAppendixFieldsFragmentDoc = {
               kind: "SelectionSet",
               selections: [
                 { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishedVersions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contributors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "active" } },
               ],
             },
           },
@@ -8863,10 +9021,7 @@ export const CreatePolicyAppendixDocument = {
         {
           kind: "VariableDefinition",
           variable: { kind: "Variable", name: { kind: "Name", value: "title" } },
-          type: {
-            kind: "NonNullType",
-            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
-          },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
         },
         {
           kind: "VariableDefinition",
@@ -8969,6 +9124,28 @@ export const CreatePolicyAppendixDocument = {
               kind: "SelectionSet",
               selections: [
                 { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishedVersions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contributors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "active" } },
               ],
             },
           },
@@ -12257,6 +12434,28 @@ export const PolicyAppendicesDocument = {
               ],
             },
           },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishedVersions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contributors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "active" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -13171,6 +13370,28 @@ export const PublishAppendixDocument = {
               kind: "SelectionSet",
               selections: [
                 { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishedVersions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contributors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "active" } },
               ],
             },
           },
@@ -14313,6 +14534,28 @@ export const ReorderPolicyAppendicesDocument = {
               ],
             },
           },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishedVersions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contributors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "active" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -14980,6 +15223,28 @@ export const RestoreAppendixDocument = {
               ],
             },
           },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishedVersions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contributors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "active" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -15084,6 +15349,28 @@ export const RetireAppendixDocument = {
               kind: "SelectionSet",
               selections: [
                 { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishedVersions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contributors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "active" } },
               ],
             },
           },
@@ -15662,6 +15949,28 @@ export const SaveAppendixDraftDocument = {
               kind: "SelectionSet",
               selections: [
                 { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishedVersions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contributors" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "userId" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "active" } },
               ],
             },
           },

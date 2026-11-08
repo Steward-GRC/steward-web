@@ -13,4 +13,12 @@ fragment PolicyAppendixFields on PolicyAppendix {
   versions {
     ...AppendixVersionFields
   }
+  publishedVersions {
+    ...AppendixVersionFields
+  }
+  contributors {
+    userId
+    name
+    active
+  }
 }

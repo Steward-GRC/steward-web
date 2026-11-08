@@ -172,10 +172,6 @@ export const discardDraft = (request: Request, policyId: string): Promise<boolea
 export const listAppendices = (request: Request, policyId: string) =>
   edge.policyAppendices(policyId, true, cookieOf(request));
 
-/** An appendix's draft against what is published; empty when the caller may not see it. */
-export const getAppendixDiff = (request: Request, id: string) =>
-  edge.appendixDiff(id, cookieOf(request)).catch(() => []);
-
 export const createAppendixDraft = (
   request: Request,
   policyId: string,

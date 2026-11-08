@@ -265,11 +265,10 @@
     "appendix": {
       "back": "Back to the {{title}} draft",
       "backRead": "Back to {{title}}",
-      "diff": {
-        "empty": "Nothing has changed from the published appendix.",
-        "title": "Changes from the published appendix"
+      "contributors": {
+        "former": "{{name}} (no longer active)",
+        "label": "Contributors"
       },
-      "draftNote": "This is a draft. Readers still see the published appendix until you publish.",
       "failed": "The appendix could not be saved.",
       "publish": "Publish",
       "published": "Published",
@@ -278,8 +277,17 @@
       "retire": "Retire",
       "retired": "This appendix is retired: readers do not see it. Restore it to bring it back.",
       "supporting": "An appendix is supporting material, not policy. Readers cannot comment on it.",
+      "tabs": {
+        "draft": "Draft",
+        "published": "Published"
+      },
       "titleLabel": "Appendix title",
-      "unpublished": "Not published yet"
+      "unpublished": "Not published yet",
+      "version": {
+        "choose": "Published version",
+        "earlier": "v{{version}} · {{when}}",
+        "latest": "v{{version}} · {{when}} (latest)"
+      }
     }
   },
   "import": {
