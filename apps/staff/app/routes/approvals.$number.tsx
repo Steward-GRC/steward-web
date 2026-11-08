@@ -72,11 +72,17 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const publishedId = found?.currentPublishedVersionId ?? null;
   const draftId = found ? (found.currentDraftVersionId ?? null) : policyVersionId;
-  // Each part of the review reads on its own: one that fails leaves its tab saying so.
+  // Each part of the review reads on its own: one that fails leaves its tab saying so. A
+  // comparison that fails is not an empty one (bug log 208): the service refuses a draft saved
+  // without its template version, and the tab has to say it could not compare.
+  let diffFailed = false;
   const [workflow, diff, upcoming, detail, threads] = await Promise.all([
     getWorkflowStatus(request, policyVersionId),
     publishedId && draftId && publishedId !== draftId
-      ? getVersionDiff(publishedId, draftId, cookie).catch(() => [])
+      ? getVersionDiff(publishedId, draftId, cookie).catch(() => {
+          diffFailed = true;
+          return null;
+        })
       : Promise.resolve(null),
     draftId ? getVersionDocument(draftId, cookie).catch(() => null) : Promise.resolve(null),
     found ? getPolicyDetail(found.documentType, found.number, cookie).catch(() => null) : null,
@@ -110,6 +116,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     preview: coming ? { stageNumber: coming.stageIndex + 1 } : null,
     review: {
       diff,
+      diffFailed,
       // With the library row, a missing published version means this is the first one; without
       // it (a draft the library hides from this approver), the published version isn't known.
       first: Boolean(found) && (!publishedId || publishedId === draftId),
@@ -190,7 +197,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   // against (a first version, or a published version that isn't known), and no history for a
   // first version or one without entries yet.
   const early = "review" in loaderData ? loaderData.review : null;
-  const hasChanges = early !== null && early.diff !== null;
+  const hasChanges = early !== null && (early.diff !== null || early.diffFailed);
   const hasHistory = early !== null && !early.first && early.history.length > 0;
   const [view, setView] = useState(hasChanges ? "changes" : "upcoming");
   // Inline comments on the version under review: whoever holds a seat on it comments and
@@ -199,6 +206,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
     canAdd: "task" in loaderData && Boolean(loaderData.task),
     meId: "meId" in loaderData ? loaderData.meId : "",
     policyVersionId: "policyVersionId" in loaderData ? loaderData.policyVersionId : "",
+    side: "REVIEWER",
     threads: "threads" in loaderData ? loaderData.threads : [],
   });
 
@@ -353,7 +361,9 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
             <TabsTrigger empty={!hasChanges} value="changes">
               {t("review.tabs.changes")}
             </TabsTrigger>
-            <TabsTrigger value="upcoming">{t("review.tabs.upcoming")}</TabsTrigger>
+            <TabsTrigger value="upcoming">
+              {review.first ? t("review.tabs.proposed") : t("review.tabs.upcoming")}
+            </TabsTrigger>
             <TabsTrigger empty={!hasHistory} value="history">
               {t("review.tabs.history")}
             </TabsTrigger>
@@ -363,6 +373,11 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
               <DiffView sections={review.diff} />
             </TabsContent>
           )}
+          {review.diffFailed ? (
+            <TabsContent className="mt-3.5" value="changes">
+              <Unavailable>{t("review.changes.unavailable")}</Unavailable>
+            </TabsContent>
+          ) : null}
           <TabsContent className="mt-3.5" value="upcoming">
             {review.upcoming && commentable ? (
               <DraftDocumentEditor initialDocument={commentable} readOnly review={comments} />

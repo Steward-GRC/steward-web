@@ -57,6 +57,38 @@ describe("the editor header (U11)", () => {
   });
 });
 
+const header = (status?: "draft" | "in-review") =>
+  inRouter(
+    <EditorHeader
+      actions={null}
+      breadcrumb={<nav aria-label="Breadcrumb">Workplace · Facilities</nav>}
+      meta="POL-EXPENSES-000002 · in review"
+      presence={null}
+      saveState="saved"
+      status={status}
+      title="Expenses Policy"
+    />,
+  );
+
+describe("the editor header follows the real status (bug log 205)", () => {
+  it("shows Draft, and only Draft, for a draft", () => {
+    header("draft");
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(screen.queryByText("In review")).toBeNull();
+  });
+
+  it("shows In review in place of Draft once the draft is submitted", () => {
+    header("in-review");
+    expect(screen.getByText("In review")).toBeInTheDocument();
+    expect(screen.queryByText("Draft")).toBeNull();
+  });
+
+  it("is a draft when nothing says otherwise", () => {
+    header();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+  });
+});
+
 describe("the editor header's layout (bug log 198)", () => {
   // jsdom has no layout, so this holds the structure that decides it: the header measures its own
   // width (not the window's, which the sidebar eats into), stacks the buttons above the identity

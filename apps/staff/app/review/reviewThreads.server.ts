@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { ReviewThread } from "@steward-web/api-client";
+import type { ReviewThread, SuggestionOutcome } from "@steward-web/api-client";
 
 import edge from "@steward-web/edge.server";
 
@@ -15,8 +15,23 @@ export const listReviewThreads = (
 
 const text = (form: FormData, name: string): string => String(form.get(name) ?? "");
 
+const OUTCOMES: ReadonlySet<string> = new Set([
+  "AGREED",
+  "CHANGED",
+  "NOT_AGREED",
+  "REMOVED",
+  "WITHDRAWN",
+]);
+
 /** What the review-thread form can ask for. */
-export const REVIEW_THREAD_INTENTS = ["add", "delete", "reply", "resolve"] as const;
+export const REVIEW_THREAD_INTENTS = [
+  "add",
+  "close",
+  "counter",
+  "delete",
+  "reply",
+  "resolve",
+] as const;
 export type ReviewThreadIntent = (typeof REVIEW_THREAD_INTENTS)[number];
 
 /** Does one review-thread change, as the signed-in person; the service decides who may. */
@@ -30,8 +45,24 @@ export const changeReviewThread = async (request: Request, form: FormData): Prom
         text(form, "quote"),
         Number(text(form, "occurrence")),
         text(form, "body"),
+        text(form, "suggestedText").trim() || undefined,
         cookie,
       );
+      return;
+    }
+    case "close": {
+      const outcome = text(form, "outcome");
+      if (!OUTCOMES.has(outcome)) throw new Response("Bad Request", { status: 400 });
+      await edge.closeReviewSuggestion(
+        text(form, "threadId"),
+        outcome as SuggestionOutcome,
+        text(form, "reason").trim() || undefined,
+        cookie,
+      );
+      return;
+    }
+    case "counter": {
+      await edge.counterReviewSuggestion(text(form, "threadId"), text(form, "text"), cookie);
       return;
     }
     case "delete": {

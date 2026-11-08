@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const edge = vi.hoisted(() => ({
   addReviewThread: vi.fn(async () => ({})),
+  closeReviewSuggestion: vi.fn(async () => ({})),
+  counterReviewSuggestion: vi.fn(async () => ({})),
   deleteReviewThread: vi.fn(async () => true),
   replyReviewThread: vi.fn(async () => ({})),
   reviewThreads: vi.fn(async () => [] as unknown[]),
@@ -37,7 +39,81 @@ describe("changeReviewThread", () => {
         quote: "seven years",
       }),
     );
-    expect(edge.addReviewThread).toHaveBeenCalledWith("v-4", "seven years", 2, "Why?", "session=1");
+    expect(edge.addReviewThread).toHaveBeenCalledWith(
+      "v-4",
+      "seven years",
+      2,
+      "Why?",
+      undefined,
+      "session=1",
+    );
+  });
+
+  it("starts a thread with a suggested text, and treats a blank one as none", async () => {
+    const fields = {
+      body: "Shorter?",
+      intent: "add",
+      occurrence: "1",
+      policyVersionId: "v-4",
+      quote: "seven years",
+    };
+    await changeReviewThread(request, form({ ...fields, suggestedText: "six years" }));
+    expect(edge.addReviewThread).toHaveBeenLastCalledWith(
+      "v-4",
+      "seven years",
+      1,
+      "Shorter?",
+      "six years",
+      "session=1",
+    );
+    await changeReviewThread(request, form({ ...fields, suggestedText: "  " }));
+    expect(edge.addReviewThread).toHaveBeenLastCalledWith(
+      "v-4",
+      "seven years",
+      1,
+      "Shorter?",
+      undefined,
+      "session=1",
+    );
+  });
+
+  it("counters a suggestion and closes it with an outcome and a reason", async () => {
+    await changeReviewThread(
+      request,
+      form({ intent: "counter", text: "five years", threadId: "t-1" }),
+    );
+    expect(edge.counterReviewSuggestion).toHaveBeenCalledWith("t-1", "five years", "session=1");
+    await changeReviewThread(
+      request,
+      form({
+        intent: "close",
+        outcome: "NOT_AGREED",
+        reason: "The law says seven.",
+        threadId: "t-1",
+      }),
+    );
+    expect(edge.closeReviewSuggestion).toHaveBeenLastCalledWith(
+      "t-1",
+      "NOT_AGREED",
+      "The law says seven.",
+      "session=1",
+    );
+    await changeReviewThread(
+      request,
+      form({ intent: "close", outcome: "CHANGED", threadId: "t-1" }),
+    );
+    expect(edge.closeReviewSuggestion).toHaveBeenLastCalledWith(
+      "t-1",
+      "CHANGED",
+      undefined,
+      "session=1",
+    );
+  });
+
+  it("refuses an outcome it doesn't know", async () => {
+    await expect(
+      changeReviewThread(request, form({ intent: "close", outcome: "NUKED", threadId: "t-1" })),
+    ).rejects.toMatchObject({ status: 400 });
   });
 
   it("replies, resolves, reopens and deletes", async () => {

@@ -11,6 +11,7 @@ import {
   $getSelection,
   $isRangeSelection,
   $isTextNode,
+  type RangeSelection,
   type TextNode,
 } from "lexical";
 
@@ -62,15 +63,12 @@ export const $selectionAnchor = (): null | TextAnchor => {
   return { occurrence, quote };
 };
 
-/**
- * Marks the thread's text with its id. False, changing nothing, when the quote has no such match
- * (the text was edited). Call inside `editor.update`.
- */
-export const $anchorThread = (id: string, { occurrence, quote }: TextAnchor): boolean => {
+/** A selection over the nth match of the quote, or null when the text has no such match. */
+const $rangeOf = ({ occurrence, quote }: TextAnchor): null | RangeSelection => {
   const nodes = textNodes();
   const text = nodes.map((node) => node.getTextContent()).join("");
   const start = nthIndexOf(text, quote, occurrence);
-  if (start < 0) return false;
+  if (start < 0) return null;
   const end = start + quote.length;
   let from: { node: TextNode; offset: number } | null = null;
   let to: { node: TextNode; offset: number } | null = null;
@@ -84,10 +82,31 @@ export const $anchorThread = (id: string, { occurrence, quote }: TextAnchor): bo
     }
     before += size;
   }
-  if (!from || !to || !$isTextNode(from.node) || !$isTextNode(to.node)) return false;
+  if (!from || !to || !$isTextNode(from.node) || !$isTextNode(to.node)) return null;
   const selection = $createRangeSelection();
   selection.anchor.set(from.node.getKey(), from.offset, "text");
   selection.focus.set(to.node.getKey(), to.offset, "text");
+  return selection;
+};
+
+/**
+ * Marks the thread's text with its id. False, changing nothing, when the quote has no such match
+ * (the text was edited). Call inside `editor.update`.
+ */
+export const $anchorThread = (id: string, anchor: TextAnchor): boolean => {
+  const selection = $rangeOf(anchor);
+  if (!selection) return false;
   $wrapSelectionInMarkNode(selection, false, id);
+  return true;
+};
+
+/**
+ * Puts `text` in place of the nth match of the quote, whatever formatting runs across it. False,
+ * changing nothing, when the quote has no such match. Call inside `editor.update`.
+ */
+export const $replaceQuote = (anchor: TextAnchor, text: string): boolean => {
+  const selection = $rangeOf(anchor);
+  if (!selection) return false;
+  selection.insertText(text);
   return true;
 };

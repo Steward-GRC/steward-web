@@ -173,3 +173,289 @@ describe("review threads in the editor", () => {
     expect(screen.queryByRole("button", { name: "Comment" })).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------------------------
+// Suggested changes on a thread (#253): replacement text for the quote, taken in turns.
+
+const suggestion = (overrides: Record<string, unknown> = {}) => ({
+  closedBy: null,
+  closedText: null,
+  outcome: null,
+  reason: null,
+  rounds: [
+    {
+      by: "REVIEWER",
+      createdAt: "2026-11-06T12:00:00Z",
+      text: "six years",
+      userId: "user-charlie",
+    },
+  ],
+  text: "six years",
+  turn: "AUTHOR",
+  ...overrides,
+});
+
+const withSuggestion = (
+  over: Record<string, unknown> = {},
+  thread: Partial<ReviewThreadView> = {},
+): ReviewThreadView =>
+  ({ ...THREAD, resolved: false, suggestion: suggestion(over), ...thread }) as ReviewThreadView;
+
+const asSide = (
+  side: "AUTHOR" | "REVIEWER",
+  overrides: Partial<ReviewComments> = {},
+): ReviewComments =>
+  comments({
+    onClose: vi.fn(),
+    onCounter: vi.fn(),
+    renderDiff: (before: string, after: string) => `[${before} -> ${after}]`,
+    side,
+    ...overrides,
+  });
+
+const documentText = (handle: StewardEditorHandle): string => {
+  const words: string[] = [];
+  const walk = (node: { children?: unknown[]; text?: unknown }) => {
+    if (typeof node.text === "string") words.push(node.text);
+    for (const child of node.children ?? []) walk(child as typeof node);
+  };
+  walk(handle.getDocument().root);
+  return words.join("");
+};
+
+const highlighted = () =>
+  waitFor(() =>
+    expect(document.querySelectorAll("mark[data-kg-comment-ids]").length).toBeGreaterThan(0),
+  );
+
+const closed = (outcome: string, extra: Record<string, unknown> = {}) =>
+  withSuggestion(
+    { closedBy: "user-bob", closedText: "six years", outcome, ...extra },
+    { resolved: true },
+  );
+
+const select = async () => {
+  await act(async () => {
+    lexicalEditor().update(() => {
+      const text = $getRoot().getAllTextNodes()[0];
+      if ($isTextNode(text)) text.select(5, 12);
+    });
+    await Promise.resolve();
+  });
+};
+
+const open = async (onAdd: NonNullable<ReviewComments["onAdd"]>) => {
+  // editable here: the card is the same; a read-only editor shows it once the base allows it
+  await mount({ review: asSide("REVIEWER", { onAdd, threads: [] }) });
+  await act(async () => {
+    lexicalEditor().update(() => {
+      const text = $getRoot().getAllTextNodes()[0];
+      if ($isTextNode(text)) text.select(5, 12);
+    });
+    await Promise.resolve();
+  });
+  await userEvent.click(await screen.findByRole("button", { name: "Comment" }));
+};
+
+describe("a suggestion on a thread", () => {
+  it("shows the change, the round and whose turn it is", async () => {
+    await mount({ review: asSide("AUTHOR", { threads: [withSuggestion()] }) });
+    const panel = await screen.findByRole("region", { name: "Comments" });
+    expect(within(panel).getByText("[seven years -> six years]")).toBeInTheDocument();
+    expect(within(panel).getByText("Waiting for the author")).toBeInTheDocument();
+  });
+
+  it("counts the rounds and lists the earlier ones", async () => {
+    const rounds = [
+      { by: "REVIEWER", createdAt: "x", text: "six years", userId: "user-charlie" },
+      { by: "AUTHOR", createdAt: "x", text: "five years", userId: "user-bob" },
+    ];
+    await mount({
+      review: asSide("REVIEWER", {
+        threads: [withSuggestion({ rounds, text: "five years", turn: "REVIEWER" })],
+      }),
+    });
+    const panel = await screen.findByRole("region", { name: "Comments" });
+    expect(within(panel).getByText(/Round 2/)).toBeInTheDocument();
+    expect(within(panel).getByText("Waiting for the reviewer")).toBeInTheDocument();
+    expect(within(panel).getByText("Earlier rounds")).toBeInTheDocument();
+  });
+
+  it("offers the author change, remove, counter and not agreed, and puts the text in the document", async () => {
+    const review = asSide("AUTHOR", { threads: [withSuggestion()] });
+    const handle = await mount({ review });
+    await highlighted();
+    for (const name of ["Change it", "Remove the note", "Counter", "Not agreed"]) {
+      expect(await screen.findByRole("button", { name })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole("button", { name: "Accept" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Change it" }));
+    await waitFor(() => expect(review.onClose).toHaveBeenCalledWith("thread-1", "CHANGED"));
+    expect(documentText(handle)).toContain("Then keep six years more.");
+    expect(documentText(handle)).toContain("for seven years.");
+  });
+
+  it("removes the note without touching the text", async () => {
+    const review = asSide("AUTHOR", { threads: [withSuggestion()] });
+    const handle = await mount({ review });
+    await highlighted();
+    await userEvent.click(await screen.findByRole("button", { name: "Remove the note" }));
+    await waitFor(() =>
+      expect(review.onClose).toHaveBeenCalledWith("thread-1", "REMOVED", undefined),
+    );
+    expect(documentText(handle)).toContain("Then keep seven years more.");
+  });
+
+  it("counters with other text", async () => {
+    const review = asSide("AUTHOR", { threads: [withSuggestion()] });
+    await mount({ review });
+    await userEvent.click(await screen.findByRole("button", { name: "Counter" }));
+    const field = screen.getByRole("textbox", { name: "Counter text" });
+    await userEvent.clear(field);
+    await userEvent.type(field, "five years");
+    await userEvent.click(screen.getByRole("button", { name: "Send counter" }));
+    expect(review.onCounter).toHaveBeenCalledWith("thread-1", "five years");
+  });
+
+  it("needs a reason to end it as not agreed", async () => {
+    const review = asSide("AUTHOR", { threads: [withSuggestion()] });
+    await mount({ review });
+    await userEvent.click(await screen.findByRole("button", { name: "Not agreed" }));
+    const end = screen.getByRole("button", { name: "End as not agreed" });
+    expect(end).toBeDisabled();
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Why it is not agreed" }),
+      "The law says seven.",
+    );
+    await userEvent.click(end);
+    expect(review.onClose).toHaveBeenCalledWith("thread-1", "NOT_AGREED", "The law says seven.");
+  });
+
+  it("offers the reviewer accept on their turn, which agrees without changing the text", async () => {
+    const turn = withSuggestion({
+      rounds: [
+        { by: "REVIEWER", createdAt: "x", text: "six years", userId: "user-charlie" },
+        { by: "AUTHOR", createdAt: "x", text: "five years", userId: "user-bob" },
+      ],
+      text: "five years",
+      turn: "REVIEWER",
+    });
+    const review = asSide("REVIEWER", { threads: [turn] });
+    const handle = await mount({ readOnly: true, review });
+    expect(screen.queryByRole("button", { name: "Change it" })).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: "Accept" }));
+    await waitFor(() =>
+      expect(review.onClose).toHaveBeenCalledWith("thread-1", "AGREED", undefined),
+    );
+    expect(documentText(handle)).toContain("Then keep seven years more.");
+  });
+
+  it("lets the reviewer who proposed withdraw while it is the author's turn, and nothing else", async () => {
+    const review = asSide("REVIEWER", { threads: [withSuggestion()] });
+    await mount({ readOnly: true, review });
+    expect(await screen.findByRole("button", { name: "Withdraw" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Counter" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Withdraw" }));
+    expect(review.onClose).toHaveBeenCalledWith("thread-1", "WITHDRAWN", undefined);
+  });
+
+  it("keeps the thread and says so when the close is refused", async () => {
+    const review = asSide("AUTHOR", {
+      onClose: vi.fn().mockRejectedValue(new Error("not your turn")),
+      threads: [withSuggestion()],
+    });
+    await mount({ review });
+    await userEvent.click(await screen.findByRole("button", { name: "Remove the note" }));
+    expect(
+      await screen.findByText("The suggestion could not be closed. Try again."),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("closed suggestions", () => {
+  it("lists them under Closed with the outcome, who closed them and the change", async () => {
+    await mount({ review: asSide("AUTHOR", { threads: [closed("CHANGED")] }) });
+    const panel = await screen.findByRole("region", { name: "Comments" });
+    expect(within(panel).getByText("Closed (1)")).toBeInTheDocument();
+    expect(within(panel).getByText("Changed")).toBeInTheDocument();
+    expect(within(panel).getByText("[seven years -> six years]")).toBeInTheDocument();
+  });
+
+  it("gives the reason of one that was not agreed", async () => {
+    await mount({
+      review: asSide("AUTHOR", {
+        threads: [closed("NOT_AGREED", { reason: "The law says seven." })],
+      }),
+    });
+    expect(await screen.findByText("Reason: The law says seven.")).toBeInTheDocument();
+  });
+
+  it("leaves no highlight on a closed suggestion", async () => {
+    await mount({ review: asSide("AUTHOR", { threads: [closed("REMOVED")] }) });
+    await screen.findByText("Closed (1)");
+    expect(document.querySelectorAll("mark[data-kg-comment-ids]")).toHaveLength(0);
+  });
+
+  it("offers the author an agreed text still to apply, and applies it", async () => {
+    const review = asSide("AUTHOR", { threads: [closed("AGREED")] });
+    const handle = await mount({ review });
+    await userEvent.click(await screen.findByRole("button", { name: "Apply the agreed text" }));
+    await waitFor(() => expect(documentText(handle)).toContain("Then keep six years more."));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Apply the agreed text" })).toBeNull(),
+    );
+  });
+});
+
+describe("who sees which toolbar", () => {
+  // Needs the base editor to show a read-only action in a non-editable editor (node-koenig-editor,
+  // toolbar actions with readOnly: true). Remove `.fails` once Steward pins that release.
+  it.fails("gives the reviewer one button, Comment, and no formatting", async () => {
+    await mount({
+      readOnly: true,
+      review: asSide("REVIEWER", { onAdd: vi.fn(), threads: [] }),
+    });
+    await select();
+    expect(await screen.findByRole("button", { name: "Comment" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Bold" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Italic" })).toBeNull();
+  });
+
+  it("gives the author the formatting buttons and no Comment button", async () => {
+    await mount({ review: asSide("AUTHOR", { threads: [] }) });
+    await select();
+    expect(await screen.findByRole("button", { name: "Bold" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Comment" })).toBeNull();
+  });
+});
+
+describe("the Comment card with a suggested text", () => {
+  it("starts with the selected words, so a change to them is the suggestion", async () => {
+    const onAdd = vi.fn();
+    await open(onAdd);
+    const field = await screen.findByRole("textbox", { name: "Suggested text (optional)" });
+    expect(field).toHaveValue("records");
+    await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Better word?");
+    await userEvent.clear(field);
+    await userEvent.type(field, "documents");
+    await userEvent.click(screen.getByRole("button", { name: "Comment", description: "" }));
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith({
+        body: "Better word?",
+        occurrence: 1,
+        quote: "records",
+        suggestedText: "documents",
+      }),
+    );
+  });
+
+  it("sends no suggestion when the words are left as they are", async () => {
+    const onAdd = vi.fn();
+    await open(onAdd);
+    await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Why?");
+    await userEvent.click(screen.getByRole("button", { name: "Comment", description: "" }));
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith({ body: "Why?", occurrence: 1, quote: "records" }),
+    );
+  });
+});

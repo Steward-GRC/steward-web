@@ -996,7 +996,9 @@ export type Mutation = {
   readonly changeOrgProtocol: Organization;
   readonly checkReport: ReporterView;
   readonly closeCase: ReportCase;
+  readonly closeReviewSuggestion: ReviewThread;
   readonly completeOnboarding: User;
+  readonly counterReviewSuggestion: ReviewThread;
   readonly createAuditLegalHold: AuditLegalHold;
   readonly createCategory: Category;
   readonly createContactBlock: ContactBlock;
@@ -1297,6 +1299,7 @@ export type MutationAddReviewThreadArgs = {
   occurrence: Scalars["Int"]["input"];
   policyVersionId: Scalars["ID"]["input"];
   quote: Scalars["String"]["input"];
+  suggestedText?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MutationAddUserToGroupArgs = {
@@ -1350,12 +1353,23 @@ export type MutationCloseCaseArgs = {
   outcome: CaseOutcome;
 };
 
+export type MutationCloseReviewSuggestionArgs = {
+  outcome: SuggestionOutcome;
+  reason?: InputMaybe<Scalars["String"]["input"]>;
+  threadId: Scalars["ID"]["input"];
+};
+
 export type MutationCompleteOnboardingArgs = {
   acceptTerms: Scalars["Boolean"]["input"];
   email?: InputMaybe<Scalars["String"]["input"]>;
   firstName?: InputMaybe<Scalars["String"]["input"]>;
   lastName?: InputMaybe<Scalars["String"]["input"]>;
   username?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type MutationCounterReviewSuggestionArgs = {
+  text: Scalars["String"]["input"];
+  threadId: Scalars["ID"]["input"];
 };
 
 export type MutationCreateAuditLegalHoldArgs = {
@@ -2966,6 +2980,17 @@ export type ReviewMessage = {
   readonly id: Scalars["ID"]["output"];
 };
 
+export type ReviewSuggestion = {
+  readonly __typename?: "ReviewSuggestion";
+  readonly closedBy?: Maybe<Scalars["ID"]["output"]>;
+  readonly closedText?: Maybe<Scalars["String"]["output"]>;
+  readonly outcome?: Maybe<SuggestionOutcome>;
+  readonly reason?: Maybe<Scalars["String"]["output"]>;
+  readonly rounds: ReadonlyArray<SuggestionRound>;
+  readonly text: Scalars["String"]["output"];
+  readonly turn: SuggestionSide;
+};
+
 export type ReviewThread = {
   readonly __typename?: "ReviewThread";
   readonly createdAt: Scalars["DateTime"]["output"];
@@ -2975,6 +3000,7 @@ export type ReviewThread = {
   readonly policyVersionId: Scalars["ID"]["output"];
   readonly quote: Scalars["String"]["output"];
   readonly resolved: Scalars["Boolean"]["output"];
+  readonly suggestion?: Maybe<ReviewSuggestion>;
 };
 
 export type RiskAssessment = {
@@ -3233,6 +3259,27 @@ export type SubscriptionAiJobResultArgs = {
 export type SubscriptionLiveEventsArgs = {
   topics?: InputMaybe<ReadonlyArray<Scalars["String"]["input"]>>;
 };
+
+export enum SuggestionOutcome {
+  Agreed = "AGREED",
+  Changed = "CHANGED",
+  NotAgreed = "NOT_AGREED",
+  Removed = "REMOVED",
+  Withdrawn = "WITHDRAWN",
+}
+
+export type SuggestionRound = {
+  readonly __typename?: "SuggestionRound";
+  readonly by: SuggestionSide;
+  readonly createdAt: Scalars["DateTime"]["output"];
+  readonly text: Scalars["String"]["output"];
+  readonly userId: Scalars["ID"]["output"];
+};
+
+export enum SuggestionSide {
+  Author = "AUTHOR",
+  Reviewer = "REVIEWER",
+}
 
 export type SwapAssigneeInput = {
   readonly currentUserId: Scalars["ID"]["input"];

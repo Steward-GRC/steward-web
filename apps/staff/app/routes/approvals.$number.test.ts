@@ -18,7 +18,8 @@ const routeGateway = (handlers: Record<string, Handler>) => {
       const operation = /^(?:query|mutation) (\w+)/m.exec(body.query)?.[1] ?? "";
       const handler = handlers[operation];
       if (!handler) return Promise.resolve(Response.json({ errors: [{ message: operation }] }));
-      return Promise.resolve(Response.json({ data: handler(body.variables) }));
+      const result = handler(body.variables) as Record<string, unknown>;
+      return Promise.resolve(Response.json("errors" in result ? result : { data: result }));
     }),
   );
 };
@@ -215,5 +216,79 @@ describe("approvals.$number loader: the review", () => {
       },
       task: null,
     });
+  });
+
+  // bug log 208: a draft saved without its template version cannot be compared (the service says
+  // "fetch template version: not found"). The screen used to read that as "nothing changed".
+  it("says the comparison failed instead of showing an empty one", async () => {
+    routeGateway({
+      CategoryTree: () => ({
+        categoryTree: [category("c-fin", "Finance"), category("c-expenses", "Expenses", "c-fin")],
+      }),
+      DiffVersions: () => ({
+        data: null,
+        errors: [
+          {
+            extensions: { code: "INTERNAL" },
+            message: "fetch template version: not found",
+            path: ["diffVersions"],
+          },
+        ],
+      }),
+      Me: () => ({ me: approver }),
+      PendingTasks: () => ({ pendingTasks: [] }),
+      Policies: () => ({ policies: [expenses] }),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          contentJson: "[]",
+          createdAt: null,
+          id: "version-3",
+          policyId: "p-1",
+          publishedAt: null,
+          status: "in_review",
+          templateVersionId: "",
+          versionNo: 3,
+        },
+      }),
+      UpcomingApprovals: () => ({ upcomingApprovals: [] }),
+      WorkflowStatus: () => inReview,
+    });
+
+    const result = await load("POL-EXPENSES-000002");
+
+    expect(result.data).toMatchObject({ review: { diff: null, diffFailed: true } });
+  });
+
+  it("is a first publish only when there is no published version to compare with", async () => {
+    routeGateway({
+      CategoryTree: () => ({
+        categoryTree: [category("c-fin", "Finance"), category("c-expenses", "Expenses", "c-fin")],
+      }),
+      Me: () => ({ me: approver }),
+      PendingTasks: () => ({ pendingTasks: [] }),
+      Policies: () => ({
+        policies: [{ ...expenses, currentPublishedVersionId: null }],
+      }),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          contentJson: "[]",
+          createdAt: null,
+          id: "version-3",
+          policyId: "p-1",
+          publishedAt: null,
+          status: "in_review",
+          templateVersionId: "",
+          versionNo: 1,
+        },
+      }),
+      UpcomingApprovals: () => ({ upcomingApprovals: [] }),
+      WorkflowStatus: () => inReview,
+    });
+
+    const result = await load("POL-EXPENSES-000002");
+
+    expect(result.data).toMatchObject({ review: { diff: null, diffFailed: false, first: true } });
   });
 });
