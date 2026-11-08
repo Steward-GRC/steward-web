@@ -211,7 +211,9 @@
     "tabs": {
       "changes": "Changes vs the current published version",
       "history": "History",
+      "markReviewed": "Mark as reviewed",
       "proposed": "Proposed Publish",
+      "since": "Changes since you last reviewed",
       "upcoming": "Upcoming version (under review)"
     },
     "upcoming": {

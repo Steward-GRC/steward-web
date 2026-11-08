@@ -260,6 +260,83 @@ describe("approvals.$number loader: the review", () => {
     expect(result.data).toMatchObject({ review: { diff: null, diffFailed: true } });
   });
 
+  it("brings what changed since this approver last reviewed, apart from the comparison with the published version", async () => {
+    routeGateway({
+      CategoryTree: () => ({
+        categoryTree: [category("c-fin", "Finance"), category("c-expenses", "Expenses", "c-fin")],
+      }),
+      DiffVersions: () => ({ diffVersions: [] }),
+      Me: () => ({ me: approver }),
+      PendingTasks: () => ({ pendingTasks: [] }),
+      Policies: () => ({ policies: [expenses] }),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          contentJson: "[]",
+          createdAt: null,
+          id: "version-3",
+          policyId: "p-1",
+          publishedAt: null,
+          status: "in_review",
+          templateVersionId: "",
+          versionNo: 3,
+        },
+      }),
+      UpcomingApprovals: () => ({ upcomingApprovals: [] }),
+      VersionChangesSinceReview: (variables) => {
+        expect(variables).toEqual({ policyVersionId: "version-3" });
+        return {
+          versionChangesSinceReview: [
+            {
+              changeType: "changed",
+              sectionKey: "claim",
+              sectionTitle: "Claim",
+              wordDiffHtml: "<ins>30</ins>",
+            },
+          ],
+        };
+      },
+      WorkflowStatus: () => inReview,
+    });
+    const result = await load("POL-EXPENSES-000002");
+    expect(result.data).toMatchObject({
+      review: { sinceReview: [{ changeType: "changed", sectionKey: "claim" }] },
+    });
+  });
+
+  it("has nothing since the last review for someone with no seat, or when it cannot be read", async () => {
+    routeGateway({
+      CategoryTree: () => ({
+        categoryTree: [category("c-fin", "Finance"), category("c-expenses", "Expenses", "c-fin")],
+      }),
+      DiffVersions: () => ({ diffVersions: [] }),
+      Me: () => ({ me: approver }),
+      PendingTasks: () => ({ pendingTasks: [] }),
+      Policies: () => ({ policies: [expenses] }),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          contentJson: "[]",
+          createdAt: null,
+          id: "version-3",
+          policyId: "p-1",
+          publishedAt: null,
+          status: "in_review",
+          templateVersionId: "",
+          versionNo: 3,
+        },
+      }),
+      UpcomingApprovals: () => ({ upcomingApprovals: [] }),
+      VersionChangesSinceReview: () => ({
+        data: null,
+        errors: [{ extensions: { code: "PERMISSION_DENIED" }, message: "forbidden" }],
+      }),
+      WorkflowStatus: () => inReview,
+    });
+    const result = await load("POL-EXPENSES-000002");
+    expect(result.data).toMatchObject({ review: { sinceReview: [] } });
+  });
+
   it("is a first publish only when there is no published version to compare with", async () => {
     routeGateway({
       CategoryTree: () => ({

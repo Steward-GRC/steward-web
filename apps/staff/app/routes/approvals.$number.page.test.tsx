@@ -40,6 +40,7 @@ const loaderData = {
         versionLabel: "3",
       },
     ],
+    sinceReview: [],
     upcoming: {
       appendices: [],
       blocks: [
@@ -318,5 +319,63 @@ describe("sending comments from the review page", () => {
     await userEvent.click(within(panel).getByRole("button", { name: "Send comments" }));
     expect(await screen.findByText("Your comments were sent to the author.")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Your decision" })).toBeInTheDocument();
+  });
+});
+
+const openReview = (data: Record<string, unknown>) => {
+  const reviewed = vi.fn();
+  const Stub = createRoutesStub([
+    {
+      Component: () => (
+        <ApprovalReviewRoute
+          {...({ actionData: undefined, loaderData: data } as unknown as Props)}
+        />
+      ),
+      path: "/approvals/:number",
+    },
+    {
+      action: async ({ request }) => {
+        reviewed(Object.fromEntries(await request.formData()));
+        return null;
+      },
+      path: "/resources/review-threads",
+    },
+  ]);
+  render(<Stub initialEntries={["/approvals/POL-EXPENSES-000002"]} />);
+  return reviewed;
+};
+
+describe("what changed since the approver last reviewed", () => {
+  const since = [
+    {
+      changeType: "changed",
+      sectionKey: "making-a-claim",
+      sectionTitle: "2. Making a claim",
+      wordDiffHtml: "File your claim within <del>30</del> <ins>21</ins> days.",
+    },
+    { changeType: "unchanged", sectionKey: "scope", sectionTitle: "1. Scope", wordDiffHtml: "" },
+  ];
+  const withChanges = { ...loaderData, review: { ...loaderData.review, sinceReview: since } };
+
+  it("opens on it, as its own tab, when something changed", () => {
+    openReview(withChanges);
+    const tab = screen.getByRole("tab", { name: "Changes since you last reviewed" });
+    expect(tab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("21")).toBeVisible();
+    // an unchanged section is not shown
+    expect(screen.queryByText("1. Scope")).toBeNull();
+  });
+
+  it("is not a tab when nothing changed since", () => {
+    openReview(loaderData);
+    expect(screen.queryByRole("tab", { name: "Changes since you last reviewed" })).toBeNull();
+  });
+
+  it("marks the version reviewed", async () => {
+    const posted = openReview(withChanges);
+    await userEvent.click(screen.getByRole("button", { name: "Mark as reviewed" }));
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith({ intent: "reviewed", policyVersionId: "version-3" }),
+    );
   });
 });

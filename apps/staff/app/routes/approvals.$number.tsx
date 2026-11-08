@@ -32,7 +32,7 @@ import {
 } from "@steward-web/ui/domain/server";
 import { Check, ChevronLeft } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import { data, Link } from "react-router";
+import { data, Link, useFetcher } from "react-router";
 
 import type { Route } from "./+types/approvals.$number";
 
@@ -45,7 +45,7 @@ import {
 } from "../approvals/approvals.server";
 import { stepperStagesOf } from "../approvals/stepperStages";
 import { ReviewerDocument } from "../authoring/DraftDocumentEditor";
-import { listReviewThreads } from "../review/reviewThreads.server";
+import { listChangesSinceReview, listReviewThreads } from "../review/reviewThreads.server";
 import { useReviewComments } from "../review/useReviewComments";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
@@ -77,7 +77,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   // comparison that fails is not an empty one (bug log 208): the service refuses a draft saved
   // without its template version, and the tab has to say it could not compare.
   let diffFailed = false;
-  const [workflow, diff, upcoming, detail, threads] = await Promise.all([
+  const [workflow, diff, upcoming, detail, threads, sinceReview] = await Promise.all([
     getWorkflowStatus(request, policyVersionId),
     publishedId && draftId && publishedId !== draftId
       ? getVersionDiff(publishedId, draftId, cookie).catch(() => {
@@ -88,6 +88,8 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     draftId ? getVersionDocument(draftId, cookie).catch(() => null) : Promise.resolve(null),
     found ? getPolicyDetail(found.documentType, found.number, cookie).catch(() => null) : null,
     draftId ? listReviewThreads(request, draftId) : Promise.resolve([]),
+    // what changed since this approver last reviewed it; none for anyone without a seat
+    draftId ? listChangesSinceReview(request, draftId) : Promise.resolve([]),
   ]);
   const task = pendingTasks.find((t) => t.policyVersionId === policyVersionId) ?? null;
   const coming = task
@@ -122,6 +124,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       // it (a draft the library hides from this approver), the published version isn't known.
       first: Boolean(found) && (!publishedId || publishedId === draftId),
       history: detail?.history ?? [],
+      sinceReview,
       upcoming,
     },
     task,
@@ -212,7 +215,10 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const early = "review" in loaderData ? loaderData.review : null;
   const hasChanges = early !== null && (early.diff !== null || early.diffFailed);
   const hasHistory = early !== null && !early.first && early.history.length > 0;
-  const [view, setView] = useState(hasChanges ? "changes" : "upcoming");
+  // what changed since this approver last reviewed it comes first when there is any
+  const hasSince = early !== null && early.sinceReview.some((s) => s.changeType !== "unchanged");
+  const [view, setView] = useState(hasSince ? "since" : hasChanges ? "changes" : "upcoming");
+  const reviewedFetcher = useFetcher();
   // Inline comments on the version under review: whoever holds a seat on it comments and
   // replies; the drafter sees the same threads in the editor.
   const comments = useReviewComments({
@@ -371,6 +377,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
       <div className="grid items-start gap-6">
         <Tabs onValueChange={setView} value={view}>
           <TabsList stretch>
+            {hasSince ? <TabsTrigger value="since">{t("review.tabs.since")}</TabsTrigger> : null}
             <TabsTrigger empty={!hasChanges} value="changes">
               {t("review.tabs.changes")}
             </TabsTrigger>
@@ -381,6 +388,27 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
               {t("review.tabs.history")}
             </TabsTrigger>
           </TabsList>
+          {hasSince ? (
+            <TabsContent className="mt-3.5" value="since">
+              <div className="flex flex-col gap-3">
+                <DiffView
+                  sections={review.sinceReview.filter((s) => s.changeType !== "unchanged")}
+                />
+                <button
+                  className="self-start rounded-md border border-border px-3 py-1.5 text-base font-medium text-primary hover:bg-sunken"
+                  onClick={() =>
+                    reviewedFetcher.submit(
+                      { intent: "reviewed", policyVersionId },
+                      { action: "/resources/review-threads", method: "post" },
+                    )
+                  }
+                  type="button"
+                >
+                  {t("review.tabs.markReviewed")}
+                </button>
+              </div>
+            </TabsContent>
+          ) : null}
           {review.diff === null ? null : (
             <TabsContent className="mt-3.5" value="changes">
               <DiffView sections={review.diff} />
