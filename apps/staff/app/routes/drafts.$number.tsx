@@ -144,7 +144,8 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const created = await createAppendixDraft(
           request,
           String(form.get("policyId") ?? policyId),
-          "Untitled appendix",
+          // blank: the service names it after its place, "Appendix A", "Appendix B"... (bug log 218)
+          "",
           JSON.stringify({ text: "" }),
         );
         return redirect(draftPath(params.number, `appendices/${created.letter ?? created.id}`));

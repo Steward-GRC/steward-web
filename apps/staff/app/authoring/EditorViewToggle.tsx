@@ -14,15 +14,19 @@ const keyOf = (personId: string) => `steward-web:staff:editor-view:${personId}`;
  * browser: it is never sent into the collaboration room, so one person's choice does not change
  * what another sees (bug log 228).
  */
-export const useEditorView = (personId: string): [EditorView, (view: EditorView) => void] => {
-  const [view, setView] = useState<EditorView>("unified");
+export const useEditorView = (
+  personId: string,
+  fallback: EditorView = "unified",
+): [EditorView, (view: EditorView) => void] => {
+  const [view, setView] = useState<EditorView>(fallback);
   useEffect(() => {
     try {
-      setView(localStorage.getItem(keyOf(personId)) === "diff" ? "diff" : "unified");
+      const stored = localStorage.getItem(keyOf(personId));
+      setView(stored === "diff" || stored === "unified" ? stored : fallback);
     } catch {
-      setView("unified");
+      setView(fallback);
     }
-  }, [personId]);
+  }, [fallback, personId]);
   const choose = useCallback(
     (next: EditorView) => {
       setView(next);

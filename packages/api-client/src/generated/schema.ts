@@ -262,6 +262,13 @@ export type AppendixCollabToken = {
   readonly wsUrl: Scalars["String"]["output"];
 };
 
+export type AppendixContributor = {
+  readonly __typename?: "AppendixContributor";
+  readonly active: Scalars["Boolean"]["output"];
+  readonly name: Scalars["String"]["output"];
+  readonly userId: Scalars["ID"]["output"];
+};
+
 export enum AppendixState {
   Draft = "DRAFT",
   Published = "PUBLISHED",
@@ -270,6 +277,7 @@ export enum AppendixState {
 export type AppendixVersion = {
   readonly __typename?: "AppendixVersion";
   readonly contentJson: Scalars["String"]["output"];
+  readonly contributors: ReadonlyArray<AppendixContributor>;
   readonly createdAt: Scalars["String"]["output"];
   readonly createdBy: Scalars["ID"]["output"];
   readonly id: Scalars["ID"]["output"];
@@ -1460,7 +1468,7 @@ export type MutationCreatePolicyArgs = {
 export type MutationCreatePolicyAppendixArgs = {
   contentJson: Scalars["String"]["input"];
   policyId: Scalars["ID"]["input"];
-  title: Scalars["String"]["input"];
+  title?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MutationCreateReferenceArgs = {
@@ -2269,6 +2277,7 @@ export type Policy = {
 
 export type PolicyAppendix = {
   readonly __typename?: "PolicyAppendix";
+  readonly contributors: ReadonlyArray<AppendixContributor>;
   readonly createdAt: Scalars["String"]["output"];
   readonly createdBy: Scalars["ID"]["output"];
   readonly draft?: Maybe<AppendixVersion>;
@@ -2277,6 +2286,7 @@ export type PolicyAppendix = {
   readonly orderIndex: Scalars["Int"]["output"];
   readonly policyId: Scalars["ID"]["output"];
   readonly published?: Maybe<AppendixVersion>;
+  readonly publishedVersions: ReadonlyArray<AppendixVersion>;
   readonly retiredAt?: Maybe<Scalars["String"]["output"]>;
   readonly retiredBy?: Maybe<Scalars["ID"]["output"]>;
   readonly versions: ReadonlyArray<AppendixVersion>;
@@ -2584,6 +2594,7 @@ export type QueryAiJobResultContentArgs = {
 };
 
 export type QueryAppendixDiffArgs = {
+  contentJson?: InputMaybe<Scalars["String"]["input"]>;
   id: Scalars["ID"]["input"];
 };
 
