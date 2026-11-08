@@ -165,6 +165,7 @@ import {
   SetGlobalSettingsDocument,
   SetNotificationChannelsDocument,
   SetPolicyOwnerDocument,
+  SetPolicyTemplateDocument,
   SetReferenceArchivedDocument,
   SetReviewThreadResolvedDocument,
   SetTypeCadenceDocument,
@@ -846,6 +847,17 @@ export const liveEdge: Edge = {
       "CreatePolicy",
       { cookie },
     );
+    // Freeform is blank: creating without a template takes the category's default, so a freeform
+    // policy is set to no template straight after, which starts its untouched draft again, empty.
+    if (input.freeform) {
+      const freeform = await gatewayFetch(
+        SetPolicyTemplateDocument,
+        { none: true, policyId: data.createPolicy.id },
+        "SetPolicyTemplate",
+        { cookie },
+      );
+      return policyView(freeform.setPolicyTemplate, cookie);
+    }
     return policyView(data.createPolicy, cookie);
   },
   async createReference(input, cookie) {

@@ -58,4 +58,18 @@ describe("drafts.new action", () => {
     };
     expect(answer.data.ok).toBe(false);
   });
+
+  it("creates a freeform policy when no template is chosen, and a templated one when one is", async () => {
+    createPolicy.mockResolvedValue({ id: "policy-1", number: "POL-FINANCE-000001" });
+    await submit({ categoryId: "category-finance", templateId: "__no_template__", title: "Hello" });
+    expect(createPolicy).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ freeform: true, templateId: null }),
+    );
+    await submit({ categoryId: "category-finance", templateId: "template-1", title: "Hello" });
+    expect(createPolicy).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ freeform: false, templateId: "template-1" }),
+    );
+  });
 });

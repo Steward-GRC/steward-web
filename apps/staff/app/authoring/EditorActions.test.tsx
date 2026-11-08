@@ -54,6 +54,16 @@ describe("Submit for approval (D37)", () => {
     expect(screen.getByText("2 buttons are incomplete.")).toBeInTheDocument();
   });
 
+  it("blocks the submit with a toast while the document has no text (bug log 210)", async () => {
+    inRouter(<SubmitForApproval document={document} empty missing={[]} />);
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      await screen.findByText("A document with no content can't be submitted."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Write something in it first.")).toBeInTheDocument();
+  });
+
   it("names the workflow when it's known", async () => {
     inRouter(<SubmitForApproval document={document} missing={[]} workflow="Finance sign-off" />);
     await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));

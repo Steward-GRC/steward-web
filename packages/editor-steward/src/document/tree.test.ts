@@ -2,7 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { documentText, nodeText, parseDocument, serializeDocument, wrapRoot } from "./tree";
+import {
+  documentHasText,
+  documentText,
+  nodeText,
+  parseDocument,
+  serializeDocument,
+  wrapRoot,
+} from "./tree";
 
 describe("parseDocument", () => {
   it("reads a stored Lexical editor state", () => {
@@ -73,5 +80,32 @@ describe("documentText", () => {
       },
     ]);
     expect(documentText(document)).toBe("Purpose\n\nWhy it exists.\n\nOne\nTwo");
+  });
+});
+
+const paragraph = (value: string) => ({
+  children: value ? [{ text: value, type: "text", version: 1 }] : [],
+  type: "paragraph",
+  version: 1,
+});
+
+describe("documentHasText (bug log 210)", () => {
+  it("is false for a blank document and for spaces alone", () => {
+    expect(documentHasText(wrapRoot([]))).toBe(false);
+    expect(documentHasText(wrapRoot([paragraph("")]))).toBe(false);
+    expect(documentHasText(wrapRoot([paragraph(" ".repeat(3)), paragraph("\n ")]))).toBe(false);
+  });
+
+  it("is true for one character of text anywhere", () => {
+    expect(documentHasText(wrapRoot([paragraph(""), paragraph("x")]))).toBe(true);
+  });
+
+  it("counts the text a card holds, such as a callout", () => {
+    expect(
+      documentHasText(wrapRoot([{ calloutText: "<p>Note</p>", type: "callout", version: 1 }])),
+    ).toBe(true);
+    expect(
+      documentHasText(wrapRoot([{ calloutText: "<p> </p>", type: "callout", version: 1 }])),
+    ).toBe(false);
   });
 });

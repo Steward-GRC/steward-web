@@ -72,6 +72,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       documentType,
       homeGroupId: categoryId,
       sensitivity,
+      freeform: templateId === NO_TEMPLATE,
       templateId: templateId === NO_TEMPLATE ? null : templateId,
       title,
     });
@@ -166,6 +167,13 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
     t(`new.holds.${refusalKey(documentTypesOf(choice))}`);
   const home = subcategory ?? category;
   const homeRefuses = home !== undefined && !holds(home);
+  // The template a policy starts from here: the category's (or the nearest above it that sets
+  // one) when that template can be chosen, else freeform ("" in the form).
+  const templateOf = (choice?: { defaultTemplateId?: string }) =>
+    choice?.defaultTemplateId &&
+    loaderData.templates.some((template) => template.id === choice.defaultTemplateId)
+      ? choice.defaultTemplateId
+      : "";
 
   return (
     <div
@@ -286,7 +294,16 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
                   className={control}
                   id={ids.category}
                   onChange={(event) =>
-                    setDraft((d) => ({ ...d, groupId: event.target.value, subcategoryId: "" }))
+                    setDraft((d) => ({
+                      ...d,
+                      groupId: event.target.value,
+                      subcategoryId: "",
+                      // the category's default template is what the policy starts from; the author
+                      // can change it to another template or to freeform
+                      templateId: templateOf(
+                        loaderData.categories.find((c) => c.id === event.target.value),
+                      ),
+                    }))
                   }
                   required
                   value={draft.groupId}
@@ -313,7 +330,15 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
                   className={control}
                   disabled={subcategories.length === 0}
                   id={ids.subcategory}
-                  onChange={(event) => set("subcategoryId", event.target.value)}
+                  onChange={(event) =>
+                    setDraft((d) => ({
+                      ...d,
+                      subcategoryId: event.target.value,
+                      templateId: templateOf(
+                        subcategories.find((s) => s.id === event.target.value) ?? category,
+                      ),
+                    }))
+                  }
                   value={draft.subcategoryId ?? ""}
                 >
                   <option value="">{t("new.fields.noSubcategory")}</option>

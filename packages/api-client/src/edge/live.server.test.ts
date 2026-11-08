@@ -979,6 +979,79 @@ describe("liveEdge.versionDocument", () => {
   });
 });
 
+describe("liveEdge: creating a policy", () => {
+  const gatewayPolicy = {
+    ackAudienceOverride: null,
+    ackTriggers: "ON_PUBLISH",
+    currentDraftVersionId: "v-1",
+    currentPublishedVersionId: null,
+    currentVersionNo: 0,
+    currentVersionStatus: "draft",
+    documentType: "POLICY",
+    homeCategoryId: "category-finance",
+    id: "p-1",
+    number: "POL-FINANCE-000001",
+    ownerName: "Bob",
+    ownerUserId: "u-1",
+    retiredAt: null,
+    sensitivity: "STANDARD",
+    templateId: null,
+    templateNone: false,
+    title: "Hello",
+    updatedAt: "2026-11-08T00:00:00Z",
+    viewerCan: {
+      ack: false,
+      approve: false,
+      canBreakGlass: false,
+      contentObfuscated: false,
+      edit: true,
+      read: true,
+      submit: true,
+    },
+  };
+
+  it("asks for the template that was chosen and does nothing more", async () => {
+    const calls = routeGateway({
+      CategoryTree: () => ({ categoryTree: [] }),
+      CreatePolicy: () => ({ createPolicy: gatewayPolicy }),
+    });
+    await liveEdge.createPolicy({
+      homeGroupId: "category-finance",
+      sensitivity: "STANDARD" as never,
+      templateId: "template-1",
+      title: "Hello",
+    });
+    const writes = calls.filter(
+      (call) => /Policy/.test(call.operation) && !/Categor/.test(call.operation),
+    );
+    expect(writes.map((call) => call.operation)).toEqual(["CreatePolicy"]);
+    expect(writes[0]?.variables).toMatchObject({ templateId: "template-1" });
+  });
+
+  it("makes a freeform policy by setting it to no template right after it is created", async () => {
+    const calls = routeGateway({
+      CategoryTree: () => ({ categoryTree: [] }),
+      CreatePolicy: () => ({ createPolicy: gatewayPolicy }),
+      SetPolicyTemplate: () => ({ setPolicyTemplate: { ...gatewayPolicy, templateNone: true } }),
+    });
+    const policy = await liveEdge.createPolicy({
+      freeform: true,
+      homeGroupId: "category-finance",
+      sensitivity: "STANDARD" as never,
+      title: "Hello",
+    });
+    expect(
+      calls
+        .filter((call) => /Policy/.test(call.operation) && !/Categor/.test(call.operation))
+        .map((call) => [call.operation, call.variables]),
+    ).toEqual([
+      ["CreatePolicy", expect.objectContaining({ homeCategoryId: "category-finance" })],
+      ["SetPolicyTemplate", { none: true, policyId: "p-1" }],
+    ]);
+    expect(policy.templateNone).toBe(true);
+  });
+});
+
 describe("liveEdge: inline review threads", () => {
   const thread = {
     createdAt: "2026-11-06T12:00:00Z",
