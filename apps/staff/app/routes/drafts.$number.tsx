@@ -9,6 +9,7 @@ import {
   parseDocument,
   type ReworkChoice,
   type ReworkRequest,
+  sameContent,
   type SerializedDocument,
   serializeDocument,
   type StewardEditorHandle,
@@ -42,6 +43,7 @@ import {
   updateAppendix,
 } from "../authoring/authoring.server";
 import { issueCollabToken } from "../authoring/collab/collab.server";
+import { settleTokenRequests, type TokenRequest } from "../authoring/collab/token";
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
 import { ActionsMenu, AiMenu, SubmitForApproval } from "../authoring/EditorActions";
@@ -59,9 +61,12 @@ import {
   applyAiText,
   applyChangeSet,
   draftDocument,
+  incompleteButtons,
   missingRequiredSections,
+  resetRequiredSections,
 } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
+import { useAutosave } from "../authoring/useAutosave";
 import { listReviewThreads } from "../review/reviewThreads.server";
 import { useReviewComments } from "../review/useReviewComments";
 
@@ -71,6 +76,12 @@ interface SectionPayload {
   text: string;
   title: string;
 }
+
+/** How long the content must be still before the draft saves itself. */
+const AUTOSAVE_AFTER_MS = 2000;
+
+/** Changes the editor reports while it waits for its room are not the document: it is still empty. */
+const ignoreWhileConnecting = () => {};
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const identity = await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
@@ -239,22 +250,22 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const reviewJob = useAiJob(reviewJobId, reviewFetcher.state !== "idle");
 
   const collabFetcher = useFetcher<typeof action>();
-  const collabResolvers = useRef<
-    { reject: (error: unknown) => void; resolve: (token: CollabToken) => void }[]
-  >([]);
+  const collabResolvers = useRef<TokenRequest[]>([]);
 
   useEffect(() => {
     if (collabFetcher.state !== "idle" || !collabFetcher.data) return;
-    const resolver = collabResolvers.current.shift();
-    if (!resolver) return;
     if (collabFetcher.data.ok && "token" in collabFetcher.data) {
-      resolver.resolve({
-        expiresAt: collabFetcher.data.expiresAt,
-        token: collabFetcher.data.token,
-        wsUrl: collabFetcher.data.wsUrl,
+      settleTokenRequests(collabResolvers.current, {
+        token: {
+          expiresAt: collabFetcher.data.expiresAt,
+          token: collabFetcher.data.token,
+          wsUrl: collabFetcher.data.wsUrl,
+        },
       });
     } else {
-      resolver.reject(new Error("the collab token request was refused"));
+      settleTokenRequests(collabResolvers.current, {
+        error: new Error("the collab token request was refused"),
+      });
     }
   }, [collabFetcher.data, collabFetcher.state]);
 
@@ -305,10 +316,20 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const collabSession = useCollabSession(draft?.id ?? null, collabCallbacks);
   const { touch: touchCollab } = collabSession;
 
+  // Until the person touches the editor, whatever it reports is the document as loaded: its own
+  // form of the stored one, or the room's. That is both the content and what counts as saved, so
+  // a draft never opens as "Unsaved changes" (bug log 175), however the editor words the document
+  // (table fields, a trailing empty paragraph) and however late the room's content arrives (171).
+  const touchedRef = useRef(false);
+  const markTouched = useCallback(() => {
+    touchedRef.current = true;
+  }, []);
+
   const onDocumentChange = useCallback(
     (next: SerializedDocument) => {
       contentRef.current = next;
       setContent(next);
+      if (!touchedRef.current) setLastSaved(serializeDocument(next));
       touchCollab();
     },
     [touchCollab],
@@ -317,15 +338,49 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   // A result handed back from Generate (U30) or Revise (U31): applied once the editor is up,
   // through it so a live room syncs it, then dropped from the history entry.
   const [editorReady, setEditorReady] = useState(false);
+  // The editor is mounted while the room answers, and an empty editor in a room it has not synced
+  // reports an empty document. Only a live or solo editor counts as ready.
+  useEffect(() => {
+    if (collabSession.mode === "pending" || !editorRef.current) return;
+    // what the room held while the editor was connecting was not reported; take it now
+    if (collabSession.mode === "live" && !touchedRef.current) {
+      const reported = editorRef.current.getDocument();
+      contentRef.current = reported;
+      setContent(reported);
+      setLastSaved(serializeDocument(reported));
+    }
+    setEditorReady(true);
+  }, [collabSession.mode]);
   const handedOver = (location.state as { aiApply?: { entries: ChangeEntry[] } } | null)?.aiApply;
   useEffect(() => {
     if (!handedOver || !editorReady) return;
+    markTouched();
     const next = applyChangeSet(contentRef.current, outline, handedOver.entries);
     if (editorRef.current) editorRef.current.setDocument(next);
     else onDocumentChange(next);
     void navigate(location.pathname, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per handed-over result
   }, [editorReady, handedOver]);
+
+  // The draft saves itself a moment after the person stops typing (bug log 192). It keys on the
+  // content, so the editor wording the document again does not start a save.
+  const autosaveContent = serializeDocument(content);
+  useAutosave({
+    content: autosaveContent,
+    delayMs: AUTOSAVE_AFTER_MS,
+    enabled: Boolean(draft) && editorReady && !collabReadOnly && !inReview,
+    save: () =>
+      void saveFetcher.submit(
+        {
+          contentJson: autosaveContent,
+          intent: "save",
+          templateVersionId: draft?.templateVersionId ?? "",
+        },
+        { method: "post" },
+      ),
+    saved: sameContent(autosaveContent, lastSaved),
+    saving: saveFetcher.state !== "idle",
+  });
 
   if (!draft) {
     return (
@@ -337,6 +392,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
   /** Replace the document: through the editor when it's mounted, so a live room syncs it. */
   const replaceDocument = (next: SerializedDocument) => {
+    markTouched();
     if (editorRef.current) {
       editorRef.current.setDocument(next);
       return;
@@ -344,8 +400,13 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     onDocumentChange(next);
   };
 
+  /** Put the missing or renamed required headings back; all the text stays. */
+  const resetRequired = () => replaceDocument(resetRequiredSections(contentRef.current, outline));
+
   const sectionTexts = aiSections(content, outline);
   const missing = missingRequiredSections(content, outline);
+  // a required heading that is missing or renamed can be put back; an empty section cannot
+  const resettable = resetRequiredSections(content, outline) !== content;
   const sectionsJson = JSON.stringify(
     sectionTexts.map((s) => ({ sectionKey: s.key, text: s.text, title: s.title })),
   );
@@ -436,7 +497,12 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         : "live";
   const serialized = serializeDocument(content);
   const saveState: SaveStateKind =
-    saveFetcher.state === "idle" ? (serialized === lastSaved ? "saved" : "unsaved") : "saving";
+    saveFetcher.state === "idle"
+      ? // the editor reports its own canonical form of what was stored, so compare content
+        sameContent(serialized, lastSaved)
+        ? "saved"
+        : "unsaved"
+      : "saving";
   const saveDraftNow = () =>
     void saveFetcher.submit(
       { contentJson: serialized, intent: "save", templateVersionId: draft.templateVersionId ?? "" },
@@ -481,6 +547,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               <SubmitForApproval
                 disabled={collabReadOnly}
                 document={{ number: policy.number, title: policy.title }}
+                incompleteButtons={incompleteButtons(content)}
                 missing={missing}
                 published={firstPublish ? undefined : policy.version}
               />
@@ -516,33 +583,53 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
 
       {inReview ? <p className="text-sm text-muted">{t("editor.review.inReview")}</p> : null}
       {aiNotice ? <Banner title={aiNotice} tone="warn" /> : null}
+      {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
+        <Banner title={t("editor.autosave.failed")} tone="warn" />
+      ) : null}
       {collabNotice ? (
         <Banner title={collabNotice} tone={collabReadOnly ? "info" : "warn"} />
       ) : null}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="flex min-w-0 flex-col gap-4">
-          <Card className="px-6 py-8 sm:px-[72px] sm:pt-11 sm:pb-14">
-            <DraftDocumentEditor
-              collaboration={collabSession.mode === "live" ? collabSession.collaboration : null}
-              initialDocument={initialDocument}
-              key={collabSession.mode}
-              onChange={onDocumentChange}
-              onReady={(handle) => {
-                editorRef.current = handle;
-                setEditorReady(true);
-              }}
-              onRework={aiHealth.available && !collabReadOnly && !inReview ? onRework : undefined}
-              readOnly={collabReadOnly}
-              ready={collabSession.mode !== "pending"}
-              review={comments}
-            />
+          {/* The editor adds no padding of its own (bug log 178), so this is the whole margin: 48px.
+              `isolate` makes the card its own stacking context: a selected card's controls sit at
+              z-index 1000 inside the editor and would otherwise draw over the sticky header (194). */}
+          <Card className="isolate px-6 py-8 sm:px-12 sm:py-8">
+            <div
+              onBeforeInputCapture={markTouched}
+              onClickCapture={markTouched}
+              onCutCapture={markTouched}
+              onDropCapture={markTouched}
+              onKeyDownCapture={markTouched}
+              onPasteCapture={markTouched}
+            >
+              <DraftDocumentEditor
+                collaboration={collabSession.mode === "solo" ? null : collabSession.collaboration}
+                connecting={collabSession.mode === "pending"}
+                initialDocument={initialDocument}
+                // a room that fell back to solo needs a fresh editor without it; pending to live
+                // keeps the same editor, bound to the room before its content arrives
+                key={collabSession.mode === "solo" ? "solo" : "room"}
+                onChange={
+                  collabSession.mode === "pending" ? ignoreWhileConnecting : onDocumentChange
+                }
+                onReady={(handle) => {
+                  editorRef.current = handle;
+                  if (collabSession.mode !== "pending") setEditorReady(true);
+                }}
+                onRework={aiHealth.available && !collabReadOnly && !inReview ? onRework : undefined}
+                readOnly={collabReadOnly}
+                review={comments}
+              />
+            </div>
           </Card>
         </div>
 
         <div className="flex flex-col gap-3.5">
           {outlineRequired.length > 0 ? (
             <RequiredSections
+              onReset={resettable ? resetRequired : undefined}
               sections={outlineRequired.map((section) => ({
                 filled: !missing.includes(section.title),
                 title: section.title,

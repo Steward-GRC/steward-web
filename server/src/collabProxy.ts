@@ -39,17 +39,24 @@ export const collabUpstreamOrigin = (gatewayUrl: string): string => {
  * re-checks the session cookie and the collab token itself; this relay is a byte-for-byte
  * pass-through in both directions and never parses a frame.
  */
-export const attachCollabProxy = (server: Server, gatewayUrl: string): void => {
+export const attachCollabProxy = (
+  server: Server,
+  gatewayUrl: string,
+  { refuseOthers = true }: { refuseOthers?: boolean } = {},
+): void => {
   const wss = new WebSocketServer({ noServer: true });
   const upstreamOrigin = collabUpstreamOrigin(gatewayUrl);
 
   server.on("upgrade", (request: IncomingMessage, socket: Socket, head: Buffer) => {
     const url = new URL(request.url ?? "", "http://localhost");
     if (!url.pathname.startsWith(COLLAB_PATH_PREFIX)) {
-      // This server has no other upgrade route; refuse cleanly rather than leaving the
-      // socket open with nothing to answer it.
-      socket.write("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
-      socket.destroy();
+      // The image server has no other upgrade route, so it refuses cleanly rather than leaving
+      // the socket open with nothing to answer it. The dev server shares its HTTP server with its
+      // own hot-reload socket, so it passes `refuseOthers: false` and leaves those to it.
+      if (refuseOthers) {
+        socket.write("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
+        socket.destroy();
+      }
       return;
     }
 

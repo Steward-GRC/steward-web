@@ -38,6 +38,15 @@ describe("Submit for approval (D37)", () => {
     await vi.waitFor(() => expect(posted).toHaveBeenCalledWith({ intent: "submit-review" }));
   });
 
+  it("blocks the submit and says so while a button has no label or link (bug log 183)", async () => {
+    inRouter(<SubmitForApproval document={document} incompleteButtons={2} missing={[]} />);
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Give every button a label and a link before submitting. 2 buttons are incomplete.",
+    );
+  });
+
   it("names the workflow when it's known", async () => {
     inRouter(<SubmitForApproval document={document} missing={[]} workflow="Finance sign-off" />);
     await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));

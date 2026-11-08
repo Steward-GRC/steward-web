@@ -1,6 +1,8 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    // vite-config reaches server/src/assetProxy.ts, which Node runs with real .ts imports.
+    "allowImportingTsExtensions": true,
     "types": ["node"]
   },
   "include": ["scripts/**/*.mjs", "*.config.ts", "packages/vite-config/src/**/*.ts"]

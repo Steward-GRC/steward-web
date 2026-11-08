@@ -28,11 +28,12 @@ import {
   Toaster,
 } from "@steward-web/ui";
 import stewardCss from "@steward-web/ui/steward.css?url";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Links, Meta, Outlet, redirect, Scripts, useRouteLoaderData } from "react-router";
 
 import type { Route } from "./+types/root";
 
+import { warmEditor } from "./authoring/warmEditor";
 import { staffShellData } from "./shell/shellData.server";
 import { PAGE_TITLES } from "./titles";
 
@@ -122,6 +123,17 @@ export default function App({ loaderData }: Route.ComponentProps) {
   const developmentLogin = loaderData.quickLoginOn ? <QuickLoginBar enabled /> : null;
   const { identity, shell, siteSettings } = loaderData;
   useAccessRevalidation(identity.id !== "");
+  // fetch the editor's chunk while the app is idle, so a draft opens with it already cached
+  useEffect(() => {
+    if (identity.id === "") return;
+    const idle =
+      globalThis.requestIdleCallback ?? ((run: () => void) => globalThis.setTimeout(run, 2000));
+    const handle = idle(() => void warmEditor());
+    return () => {
+      if (globalThis.cancelIdleCallback) globalThis.cancelIdleCallback(handle);
+      else globalThis.clearTimeout(handle);
+    };
+  }, [identity.id]);
   const preview = loaderData.gatePreview === "G11";
   // Maintenance closes the whole staff app (G11); site admins get the way to the admin portal.
   if (preview || statusGateFor({ app: "staff", identity, settings: siteSettings })) {

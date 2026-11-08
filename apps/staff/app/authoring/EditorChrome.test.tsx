@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+/* oxlint-disable testing-library/no-node-access */
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
@@ -53,6 +54,65 @@ describe("the editor header (U11)", () => {
         "Co-authored — others with author access in this category can edit. · Draft a starting point, write from scratch, or select any text to rewrite it.",
       ),
     ).toBeInTheDocument();
+  });
+});
+
+describe("the editor header's layout (bug log 198)", () => {
+  // jsdom has no layout, so this holds the structure that decides it: the header measures its own
+  // width (not the window's, which the sidebar eats into), stacks the buttons above the identity
+  // block until a row fits, and only then puts them side by side. The identity block had a zero
+  // flex basis, so in a wrapping row it could never move to its own line and was crushed instead.
+  it("stacks the buttons above the breadcrumb, title and number until a row fits", () => {
+    inRouter(
+      <EditorHeader
+        actions={<button type="button">Submit for approval</button>}
+        breadcrumb={<nav aria-label="Breadcrumb">Workplace · Facilities</nav>}
+        meta="POL-FACILITIES-000004 · draft"
+        presence={null}
+        saveState="saved"
+        title="Visitor Sign-in Policy"
+      />,
+    );
+    const heading = screen.getByRole("heading", { level: 1 });
+    const identity = heading.parentElement!;
+    const row = identity.parentElement!;
+    const root = row.parentElement!;
+    expect(root).toHaveClass("@container");
+    // buttons first (above) while stacked, side by side with the identity on the left once wide
+    expect(row).toHaveClass("flex-col-reverse", "@4xl:flex-row");
+    expect(row.className).not.toMatch(/(^|\s)flex-wrap(\s|$)/);
+    // the identity block only grows to fill the row once it is one
+    expect(identity.className).not.toMatch(/(^|\s)flex-1(\s|$)/);
+    expect(identity).toHaveClass("@4xl:flex-1");
+    // and in a row it is never narrower than 22rem: the buttons wrap inside their own group first
+    expect(identity).toHaveClass("@4xl:min-w-[22rem]");
+  });
+});
+
+describe("the room state's place (bug log 199)", () => {
+  it("sits in the number line right after the number and Draft, and wraps with that line", () => {
+    inRouter(
+      <EditorHeader
+        actions={<button type="button">Submit for approval</button>}
+        breadcrumb={<nav aria-label="Breadcrumb">Workplace · Facilities</nav>}
+        meta="POL-EXPENSES-000002 · draft"
+        presence={<span data-testid="room">Live</span>}
+        saveState="saved"
+        title="Expenses Policy"
+      />,
+    );
+    const meta = screen.getByText("POL-EXPENSES-000002 · draft");
+    const line = meta.parentElement!;
+    expect(line).toHaveClass("flex-wrap");
+    const room = screen.getByTestId("room");
+    expect(line).toContainElement(room);
+    const order = [...line.children].map((child) => child.textContent ?? "");
+    const at = order.findIndex((text) => text.includes("Live"));
+    expect(at).toBeGreaterThan(order.findIndex((text) => text.includes("Draft")));
+    // not in the buttons' group any more
+    expect(
+      screen.getByRole("button", { name: "Submit for approval" }).parentElement,
+    ).not.toContainElement(room);
   });
 });
 
@@ -113,6 +173,29 @@ describe("required sections (U11)", () => {
     expect(items[0]).toHaveAttribute("data-filled", "true");
     expect(items[2]).toHaveAttribute("data-filled", "false");
     expect(items[2]).toHaveTextContent("3. Visitor records · empty");
+  });
+
+  // bug log 173: one action puts the required headings back
+  it("offers one reset action when the host says a required heading is missing or renamed", async () => {
+    const onReset = vi.fn();
+    render(
+      <RequiredSections
+        onReset={onReset}
+        sections={[
+          { filled: true, title: "1. Purpose" },
+          { filled: false, title: "2. Scope" },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reset required sections" }));
+    expect(onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows no reset action unless the host offers one", () => {
+    render(<RequiredSections sections={[{ filled: false, title: "1. Purpose" }]} />);
+    expect(
+      screen.queryByRole("button", { name: "Reset required sections" }),
+    ).not.toBeInTheDocument();
   });
 
   it("is green when everything's filled", () => {

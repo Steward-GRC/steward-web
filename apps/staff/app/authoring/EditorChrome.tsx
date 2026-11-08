@@ -139,21 +139,22 @@ export const EditorHeader = ({
 }) => {
   const { t } = useTranslation("authoring");
   return (
-    <div className="flex flex-col gap-3.5">
-      <div className="flex flex-wrap items-start gap-3.5">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+    <div className="@container flex flex-col gap-3.5">
+      {/* The buttons sit above the breadcrumb, title and number until the header is wide enough
+          for a row, then beside them (bug log 198). The container's own width decides, not the
+          window's: the sidebar takes a share of it. */}
+      <div className="flex flex-col-reverse gap-3.5 @4xl:flex-row @4xl:items-start">
+        <div className="flex min-w-0 flex-col gap-1 @4xl:min-w-[22rem] @4xl:flex-1">
           {breadcrumb}
           <h1 className="font-serif text-[30px] leading-[38px] font-semibold">{title}</h1>
           <span className="flex flex-wrap items-center gap-2.5">
             <span className="font-mono text-sm text-muted">{meta}</span>
             <StatusPill status="draft" />
+            {presence}
             <SaveState state={saveState} />
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          {presence}
-          {actions}
-        </div>
+        <div className="flex flex-wrap items-center gap-2.5 @4xl:justify-end">{actions}</div>
       </div>
       <p className="text-sm text-muted">
         {t("editor.coAuthored")} · {t("editor.startingPoint")}
@@ -164,8 +165,11 @@ export const EditorHeader = ({
 
 /** "Required sections" (U11): a tick per filled section, a cross and "· empty" per empty one. */
 export const RequiredSections = ({
+  onReset,
   sections,
 }: {
+  /** Put the missing or renamed required headings back. Offered only when there are some. */
+  onReset?: () => void;
   sections: readonly { filled: boolean; title: string }[];
 }) => {
   const { t } = useTranslation("authoring");
@@ -205,6 +209,13 @@ export const RequiredSections = ({
           </li>
         ))}
       </ul>
+      {onReset ? (
+        <div className="px-2.5 pb-2.5">
+          <Button onClick={onReset} size="sm" type="button" variant="secondary">
+            {t("editor.required.reset")}
+          </Button>
+        </div>
+      ) : null}
     </Card>
   );
 };

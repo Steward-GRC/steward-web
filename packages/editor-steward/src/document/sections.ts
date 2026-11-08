@@ -72,6 +72,13 @@ export const paragraphsFromText = (value: string): SerializedNode[] => {
   return blocks.map((block) => ({ ...emptyParagraph(), children: [textNode(block)] }));
 };
 
+/** A heading's title as the required check reads it: stray spaces ignored, nothing else. */
+const exactTitle = (value: string): string => value.trim().replaceAll(/\s+/g, " ");
+
+/** Where a section's heading is, only when it is still its title, letter for letter. */
+const findExactHeading = (children: readonly SerializedNode[], title: string): number =>
+  children.findIndex((node) => isHeading(node) && exactTitle(nodeText(node)) === exactTitle(title));
+
 const findHeading = (children: readonly SerializedNode[], title: string): number =>
   children.findIndex((node) => isHeading(node) && norm(nodeText(node)) === norm(title));
 
@@ -132,12 +139,66 @@ export const missingRequiredSections = (
   return sections
     .filter((section) => {
       if (!section.required) return false;
-      const start = findHeading(children, section.title);
+      const start = findExactHeading(children, section.title);
       if (start === -1) return true;
       const end = sectionEnd(children, start);
       return !children.slice(start + 1, end).some((node) => !isHeading(node) && hasText(node));
     })
     .map((section) => section.title);
+};
+
+/**
+ * Put a document's required headings back, quickly: a required heading that is missing or was
+ * renamed is restored, in template order, and every other node, text included, stays as it is.
+ * A renamed heading is told from an author's own by where it sits (the only heading of the
+ * section's level between its neighbours that is not any template heading): it gets its title
+ * back and keeps its text. When that is not clear, a fresh heading and an empty paragraph go in
+ * before the next required heading that is present. Sections that are not required are not added.
+ */
+export const resetRequiredSections = (
+  current: SerializedDocument | undefined,
+  sections: readonly TemplateSectionOutline[],
+): SerializedDocument => {
+  const required = ordered(sections).filter((section) => section.required);
+  if (!current) return scaffoldFromTemplate(required);
+  let children = [...current.root.children];
+  let changed = false;
+  const templateTitles = new Set(sections.map((section) => exactTitle(section.title)));
+
+  for (const [index, section] of required.entries()) {
+    if (findExactHeading(children, section.title) !== -1) continue;
+    changed = true;
+    const before = required
+      .slice(0, index)
+      .map((earlier) => findExactHeading(children, earlier.title))
+      .filter((position) => position !== -1);
+    const after = required
+      .slice(index + 1)
+      .map((later) => findExactHeading(children, later.title))
+      .filter((position) => position !== -1);
+    const from = before.length > 0 ? Math.max(...before) + 1 : 0;
+    const to = after.length > 0 ? Math.min(...after) : children.length;
+    const candidates: number[] = [];
+    for (let position = from; position < to; position++) {
+      const node = children[position]!;
+      if (
+        isHeading(node) &&
+        headingLevel(node) === clampLevel(section.level) &&
+        !templateTitles.has(exactTitle(nodeText(node)))
+      ) {
+        candidates.push(position);
+      }
+    }
+    if (candidates.length === 1) {
+      const position = candidates[0]!;
+      children = children.map((node, at) =>
+        at === position ? { ...node, children: [textNode(section.title)] } : node,
+      );
+    } else {
+      children.splice(to, 0, headingNode(section.title, section.level), emptyParagraph());
+    }
+  }
+  return changed ? { ...current, root: { ...current.root, children } } : current;
 };
 
 /** Each template section's body as plain text, in template order: what the AI features read. */

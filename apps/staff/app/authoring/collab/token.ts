@@ -13,6 +13,7 @@
 // (whenever it happens) already has a valid one.
 //
 // This module is pure arithmetic so the timing rules can be tested without clocks or sockets.
+import type { CollabToken } from "./session";
 
 /** Refresh this far ahead of `exp`, so a slow mint still lands in time. */
 export const REFRESH_LEAD_MS = 60_000;
@@ -44,4 +45,27 @@ export const isStale = (expiresAt: string, now: number): boolean => {
   const expiry = Date.parse(expiresAt);
   if (Number.isNaN(expiry)) return true;
   return expiry - now <= REFRESH_LEAD_MS;
+};
+
+/** One caller waiting for a minted token. */
+export interface TokenRequest {
+  reject: (error: unknown) => void;
+  resolve: (token: CollabToken) => void;
+}
+
+/**
+ * Answers every request waiting on a token with the one response that arrived. Several can wait
+ * at once: in development React's StrictMode starts the room twice, and both ask through one
+ * fetcher that only ever delivers its last answer. Answering only the first left the live room
+ * waiting for ever, so it gave up and every draft edited solo (bug log 171). The tokens are for
+ * the same person and draft, so one answer serves them all. The list is emptied.
+ */
+export const settleTokenRequests = (
+  pending: TokenRequest[],
+  outcome: { error: Error } | { token: CollabToken },
+): void => {
+  for (const request of pending.splice(0)) {
+    if ("token" in outcome) request.resolve(outcome.token);
+    else request.reject(outcome.error);
+  }
 };

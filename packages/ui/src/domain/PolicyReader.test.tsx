@@ -158,6 +158,18 @@ describe("PolicyReader", () => {
     expect(screen.getByText("POL-FINANCE-001 · v2.0.0")).toHaveClass("font-mono");
   });
 
+  it("says how many words the policy has and how long it takes to read (bug log 172)", () => {
+    renderAt(baseDetail);
+    // the fixture's body: 20 words, so under one reading speed's minute
+    expect(screen.getByText("20 words")).toBeInTheDocument();
+    expect(screen.getByText("1 min read")).toBeInTheDocument();
+  });
+
+  it("shows no count for a policy with no body", () => {
+    renderAt({ ...baseDetail, body: [] });
+    expect(screen.queryByText(/\d+ words?$/)).toBeNull();
+  });
+
   it("stars the policy and opens the Actions menu", async () => {
     renderAt(baseDetail);
     const star = screen.getByRole("button", { name: "Star" });

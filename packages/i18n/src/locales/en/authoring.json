@@ -50,6 +50,15 @@
       "title": "Appendices",
       "titleLabel": "Appendix {{letter}} title"
     },
+    "autosave": {
+      "failed": "Couldn't auto-save — use Save draft"
+    },
+    "wordCount": {
+      "readLessThanMinute": "Less than a minute",
+      "readMinutes": "{minutes} min read",
+      "word": "{count} word",
+      "words": "{count} words"
+    },
     "cardError": "The {card} card could not be shown. Remove it and add it again, or reload the page if it comes back.",
     "coAuthored": "Co-authored — others with author access in this category can edit.",
     "comments": {
@@ -84,6 +93,14 @@
     },
     "draftWord": "draft",
     "imageUploadFailed": "The image couldn't be uploaded. Try again.",
+    "upload": {
+      "empty": "That file is empty. Choose a different file.",
+      "failed": "The file couldn't be uploaded. Try again in a moment.",
+      "mismatch": "The contents of \"{{name}}\" don't match its file type. Check the file and try again.",
+      "notAllowed": "This kind of file can't be uploaded here. Use a PDF, Word, Excel, PowerPoint, text, image or video file.",
+      "tooLarge": "That file is too large. The most you can upload is {{limit}}.",
+      "tooLargeAny": "That file is too large. Choose a smaller one."
+    },
     "imageUploadUnavailable": "Image uploads aren't available here yet. Paste an image link with /image instead.",
     "loading": "Loading the editor",
     "nextVersion": {
@@ -104,6 +121,7 @@
     "required": {
       "count": "{{filled}} of {{total}}",
       "empty": "empty",
+      "reset": "Reset required sections",
       "title": "Required sections"
     },
     "review": {
@@ -132,9 +150,12 @@
     "submit": {
       "action": "Submit for approval",
       "approvers": "its approvers",
+      "buttonsIncomplete_one": "{{count}} button is incomplete.",
+      "buttonsIncomplete_other": "{{count}} buttons are incomplete.",
       "changeType": "Change type",
       "description": "{{title}} ({{number}}) goes to {{workflow}}. You can't edit it while it's in review.",
       "empty": "Empty: {{sections}}",
+      "fillButtons": "Give every button a label and a link before submitting.",
       "fillRequired": "Fill every required section before submitting.",
       "keepEditing": "Keep editing",
       "lowering": "Lowering it needs a reason",

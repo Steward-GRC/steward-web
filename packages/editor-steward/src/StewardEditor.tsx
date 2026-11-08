@@ -1,12 +1,15 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import "node-koenig-editor/styles.css";
-import { useTranslation } from "@steward-web/i18n";
+import type { LexicalEditor } from "lexical";
+
+import { useLocale, useTranslation } from "@steward-web/i18n";
 import {
   type FileUploader,
   KoenigComposer,
   KoenigEditor,
   type KoenigEditorAPI,
+  useKoenigWordCount,
 } from "node-koenig-editor";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -20,8 +23,21 @@ import {
 } from "./AiToolbarAction";
 import { stripMarks } from "./document/marks";
 import { parseDocument, type SerializedDocument, serializeDocument } from "./document/tree";
+import {
+  BASE_CARDS,
+  BASE_COLORS,
+  BASE_TOOLS,
+  BUTTON_CARD,
+  FILE_ICONS,
+  FILE_UPLOAD_RULE,
+  MENU_HIDDEN,
+  PASTE_MARKDOWN,
+  reduceToolbar,
+  type StewardToolbarItem,
+} from "./editorConfig";
 import { describeEditorError } from "./editorErrors";
 import { EDITOR_THEME, isDarkTheme } from "./editorTheme";
+import { registerHeadingHighlightGuard } from "./headingHighlight";
 import { STEWARD_NODES } from "./nodes";
 import {
   createCommentToolbarAction,
@@ -30,6 +46,7 @@ import {
   ReviewThreadsPanel,
 } from "./ReviewComments";
 import { ImageUploadError } from "./uploadImage";
+import { uploadRefusal } from "./uploadMessages";
 
 /** What a host can do with a mounted editor. */
 export interface StewardEditorHandle {
@@ -70,12 +87,20 @@ export interface StewardEditorProps {
    * toolbar. The highlights are never part of the stored document.
    */
   review?: ReviewComments;
+  /** Reduce Steward's base format buttons for this editor. It can only take buttons away. */
+  toolbar?: readonly StewardToolbarItem[];
   /** Stores an image and answers its URL. Without one the image card says uploads are off. */
   uploadImage?: (file: File) => Promise<string>;
 }
 
-// What steward-core stores (SVG is refused: served inline it is a stored-XSS vector).
-const IMAGE_TYPES = {
+// What the cards offer to upload: the file card's attachments and the image card's images. SVG is
+// refused: served inline it is a stored-XSS vector.
+const UPLOAD_TYPES = {
+  file: {
+    ...FILE_UPLOAD_RULE,
+    extensions: [...FILE_UPLOAD_RULE.extensions],
+    mimeTypes: [...FILE_UPLOAD_RULE.mimeTypes],
+  },
   image: {
     extensions: ["gif", "jpg", "jpeg", "png", "webp"],
     mimeTypes: ["image/gif", "image/jpeg", "image/png", "image/webp"],
@@ -85,7 +110,7 @@ const IMAGE_TYPES = {
 const useImageUploader = (
   uploadImage: StewardEditorProps["uploadImage"],
   unavailable: string,
-  failed: string,
+  refusalText: (serverText?: string) => string,
 ): FileUploader["useFileUpload"] =>
   // A hook factory the cards call as `useFileUpload("image")`; its identity is stable per
   // upload function so the cards' effects don't re-run on every render.
@@ -109,16 +134,17 @@ const useImageUploader = (
             setState({ errors: [], isLoading: false, progress: 100 });
             return urls.map((url, index) => ({ fileName: list[index]?.name, url }));
           } catch (error) {
-            // The gateway's own refusal (too large, not an allowed image) when it gave one.
-            const message =
-              error instanceof ImageUploadError ? (error.gatewayText ?? failed) : failed;
+            // One clear sentence for every refusal, from what the server said (bug log 195).
+            const message = refusalText(
+              error instanceof ImageUploadError ? error.gatewayText : undefined,
+            );
             setState({ errors: [{ message }], isLoading: false, progress: 0 });
             return null;
           }
         }, []);
         return { ...state, upload };
       },
-    [uploadImage, unavailable, failed],
+    [uploadImage, unavailable, refusalText],
   );
 
 const prefersDark = () => globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
@@ -151,6 +177,18 @@ const useDarkTheme = (): boolean => {
  * Steward's wording. Browser only; render it behind a client boundary and show
  * `LexicalDocumentView` until it loads.
  */
+/** The words and the reading time of what is being written, live (bug log 172). */
+const EditorWordCount = () => {
+  const { readingTimeLabel, wordsLabel } = useKoenigWordCount();
+  return (
+    <p className="mt-4 flex gap-2 text-sm text-muted" data-word-count="">
+      <span>{wordsLabel}</span>
+      <span aria-hidden="true">·</span>
+      <span>{readingTimeLabel}</span>
+    </p>
+  );
+};
+
 export const StewardEditor = ({
   className,
   collaboration = null,
@@ -162,18 +200,31 @@ export const StewardEditor = ({
   placeholder,
   readOnly = false,
   review,
+  toolbar,
   uploadImage,
 }: StewardEditorProps) => {
   const { t } = useTranslation("authoring");
+  // The browser checks spelling in this language. The default English is the bare `en` tag, which
+  // a browser may check against any English; the app's spelling is US English ("organization").
+  const { locale } = useLocale();
+  const lang = locale === "en" ? "en-US" : locale;
   const apiRef = useRef<KoenigEditorAPI | null>(null);
+  const [lexicalEditor, setLexicalEditor] = useState<LexicalEditor | null>(null);
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
   const savedSelection: SavedReplace = useRef(null);
+  const refusalText = useCallback(
+    (serverText?: string) => {
+      const { key, values } = uploadRefusal(serverText);
+      return t(key, values);
+    },
+    [t],
+  );
   const useFileUpload = useImageUploader(
     uploadImage,
     t("editor.imageUploadUnavailable"),
-    t("editor.imageUploadFailed"),
+    refusalText,
   );
-  const fileUploader = useMemo(() => ({ fileTypes: IMAGE_TYPES, useFileUpload }), [useFileUpload]);
+  const fileUploader = useMemo(() => ({ fileTypes: UPLOAD_TYPES, useFileUpload }), [useFileUpload]);
   // Fixed at mount: the composer reads its initial state and collaboration mode once.
   const [initialEditorState] = useState(() =>
     initialDocument ? serializeDocument(initialDocument) : undefined,
@@ -216,7 +267,18 @@ export const StewardEditor = ({
         : undefined,
     [review],
   );
-  const strings = useMemo(() => ({ errorFallback: t("editor.cardError") }), [t]);
+  const strings = useMemo(
+    () => ({
+      errorFallback: t("editor.cardError"),
+      wordCount: {
+        readLessThanMinute: t("editor.wordCount.readLessThanMinute"),
+        readMinutes: t("editor.wordCount.readMinutes"),
+        word: t("editor.wordCount.word"),
+        words: t("editor.wordCount.words"),
+      },
+    }),
+    [t],
+  );
   const dark = useDarkTheme();
   const handleError = useCallback(
     (error: Error) => {
@@ -234,6 +296,8 @@ export const StewardEditor = ({
   const registerAPI = useCallback(
     (api: KoenigEditorAPI) => {
       apiRef.current = api;
+      // handed to an effect below, which registers the heading guard (bug log 191)
+      setLexicalEditor(api ? api.editorInstance : null);
       onReady?.({
         getDocument: () =>
           stripMarks(api.editorInstance.getEditorState().toJSON() as SerializedDocument),
@@ -251,6 +315,14 @@ export const StewardEditor = ({
     apiRef.current?.editorInstance.setEditable(!readOnly);
   }, [readOnly]);
 
+  // A heading can't be highlighted (bug log 191). An effect keyed on the editor, so React's
+  // development double mount stops it and starts it again, and a host that re-renders does not
+  // register it again (each registration runs an editor update).
+  useEffect(
+    () => (lexicalEditor ? registerHeadingHighlightGuard(lexicalEditor) : undefined),
+    [lexicalEditor],
+  );
+
   const handleChange = useCallback(
     (json: unknown) => {
       const document = parseDocument(JSON.stringify(json));
@@ -260,28 +332,39 @@ export const StewardEditor = ({
   );
 
   const editor = (
-    <KoenigEditor
-      onChange={handleChange}
-      placeholderText={placeholder ?? t("editor.placeholder")}
-      readOnly={readOnly}
-      registerAPI={registerAPI}
-    />
+    <>
+      <KoenigEditor
+        onChange={handleChange}
+        placeholderText={placeholder ?? t("editor.placeholder")}
+        readOnly={readOnly}
+        registerAPI={registerAPI}
+      />
+      <EditorWordCount />
+    </>
   );
 
   return (
     <div className={className} ref={cursorsContainerRef} style={EDITOR_THEME}>
       <KoenigComposer
+        buttonCard={BUTTON_CARD}
+        cards={[...BASE_CARDS]}
         collaboration={koenigCollaboration}
+        colors={BASE_COLORS}
         comments={commentThreads}
         customNodes={STEWARD_NODES}
         darkMode={dark}
         editable={!readOnly}
+        fileIcons={FILE_ICONS}
         fileUploader={fileUploader}
         initialEditorState={initialEditorState}
+        lang={lang}
+        menuHidden={[...MENU_HIDDEN]}
         onError={handleError}
+        pasteMarkdown={PASTE_MARKDOWN}
         strings={strings}
-        toolbar={review && readOnly ? [] : undefined}
+        toolbar={review && readOnly ? [] : reduceToolbar(toolbar)}
         toolbarActions={toolbarActions}
+        tools={[...BASE_TOOLS]}
       >
         {review && (review.threads.length > 0 || review.onAdd) ? (
           <div className="flex flex-col items-start gap-6 lg:flex-row">
