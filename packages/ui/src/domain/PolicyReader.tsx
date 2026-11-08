@@ -3,7 +3,7 @@ import { formatDate, formatDateTime, formatTime, useTranslation } from "@steward
 import { ChevronLeft, Eye, EyeOff, History, Pencil, Printer, Sparkles } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
-import { Link, useFetcher, useLocation, useRevalidator, useSubmit } from "react-router";
+import { Link, useFetcher, useLocation, useNavigate, useRevalidator } from "react-router";
 
 import { useRegisterCommandActions } from "#ui/commands/CommandActions";
 // Copyright 2026 The Steward Authors
@@ -543,12 +543,14 @@ export const PolicyReader = ({
   }, [hash]);
   const showHistory = () =>
     document.querySelector(`#${HISTORY_ID}`)?.scrollIntoView({ behavior: scrollBehavior() });
-  const submit = useSubmit();
+  const navigate = useNavigate();
   const editLabel = hasWorkingDraft(detail)
     ? t("reader.actions.continueDraft")
     : t("reader.actions.edit");
+  // Edit opens the edit screen and nothing else; the draft starts there, on "Start editing"
+  // (bug log 219).
   const edit = () => {
-    if (editAction) void submit({ intent: "edit" }, { action: editAction, method: "post" });
+    if (editAction) void navigate(editAction);
   };
   const notices = noticesFor(detail, t, editAction ? edit : undefined);
   useRegisterCommandActions([

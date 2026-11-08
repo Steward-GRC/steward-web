@@ -20,6 +20,7 @@ import {
   DecisionPanel,
   DiffView,
   DocumentType,
+  PolicyAppendices,
   PolicyDocument,
   PolicyReaderHistory,
   RecordBreadcrumb,
@@ -424,7 +425,14 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           ) : null}
           <TabsContent className="mt-3.5" value="upcoming">
             {review.upcoming && commentable ? (
-              <ReviewerDocument initialDocument={commentable} review={comments} />
+              <>
+                <ReviewerDocument initialDocument={commentable} review={comments} />
+                <PolicyAppendices
+                  appendices={review.upcoming.appendices}
+                  appendixLabel={appendixLabel}
+                  definitions={[]}
+                />
+              </>
             ) : review.upcoming ? (
               <PolicyDocument
                 appendices={review.upcoming.appendices}

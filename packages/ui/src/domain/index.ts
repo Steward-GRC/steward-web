@@ -35,7 +35,7 @@ export {
   PolicyStatus,
   Sensitivity,
 } from "./policy";
-export { PolicyDocument, type PolicyDocumentProps } from "./PolicyDocument";
+export { PolicyAppendices, PolicyDocument, type PolicyDocumentProps } from "./PolicyDocument";
 export { PolicyLibrary, type PolicyLibraryProps } from "./PolicyLibrary";
 export { PolicyReader, type PolicyReaderProps } from "./PolicyReader";
 export { PolicyReaderHistory } from "./PolicyReaderHistory";

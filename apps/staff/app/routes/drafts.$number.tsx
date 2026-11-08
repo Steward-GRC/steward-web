@@ -49,7 +49,7 @@ import { issueCollabToken } from "../authoring/collab/collab.server";
 import { settleTokenRequests, type TokenRequest } from "../authoring/collab/token";
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
-import { ActionsMenu, AiMenu, SubmitForApproval } from "../authoring/EditorActions";
+import { ActionsMenu, SubmitForApproval } from "../authoring/EditorActions";
 import {
   AppendicesPanel,
   EditorHeader,
@@ -71,6 +71,7 @@ import {
   missingRequiredSections,
   resetRequiredSections,
 } from "../authoring/sections";
+import { StartEditing } from "../authoring/StartEditing";
 import { useAiHealth } from "../authoring/useAiHealth";
 import { draftCanSave, useAutosave } from "../authoring/useAutosave";
 import { listReviewThreads } from "../review/reviewThreads.server";
@@ -220,7 +221,32 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
   }
 };
 
-export default function DraftEditor({ loaderData }: Route.ComponentProps) {
+/**
+ * With no working draft the screen is the start page (bug log 219): Edit made none. The editor
+ * is keyed by its draft so that it opens on the draft's own content once Start editing has made
+ * one, not on the empty document the start page had.
+ */
+export default function DraftRoute(props: Route.ComponentProps) {
+  const { appendices, draft, policy } = props.loaderData;
+  if (!draft) {
+    return (
+      <StartEditing
+        appendices={appendices.map((appendix) => ({
+          draft: Boolean(appendix.draft),
+          id: appendix.id,
+          letter: appendix.letter ?? "",
+          published: Boolean(appendix.published),
+          retired: Boolean(appendix.retiredAt),
+          title: (appendix.draft ?? appendix.published)?.title ?? "",
+        }))}
+        policy={policy}
+      />
+    );
+  }
+  return <DraftEditor key={draft.id} {...props} />;
+}
+
+const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
   const { t } = useTranslation("authoring");
   const { t: tAi } = useTranslation("ai");
   const location = useLocation();
@@ -412,13 +438,8 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     saving: saveFetcher.state !== "idle",
   });
 
-  if (!draft) {
-    return (
-      <div className="p-6">
-        <Banner title="This policy has no working draft." tone="info" />
-      </div>
-    );
-  }
+  // DraftRoute shows the start page when there is none.
+  if (!draft) return null;
 
   /** Replace the document: through the editor when it's mounted, so a live room syncs it. */
   const replaceDocument = (next: SerializedDocument) => {
@@ -549,25 +570,6 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
       <EditorHeader
         actions={
           <>
-            <AiMenu
-              available={aiHealth.available && !inReview}
-              emptyDraft={emptyDraft}
-              onChoose={(choice) => {
-                const handOver = { state: { sections: sectionTexts } };
-                if (choice === "generate")
-                  void navigate(draftPath(policy.number, "generate"), handOver);
-                if (choice === "improve")
-                  void navigate(draftPath(policy.number, "revise"), handOver);
-                if (choice === "rewrite") setRewriteOpen(true);
-                if (choice === "review") startReview();
-                if (choice === "result") {
-                  setReviewSeen(reviewJobId);
-                  setReviewOpen(true);
-                }
-              }}
-              reason={aiHealth.reason}
-              status={aiStatus}
-            />
             <Button
               className="h-[38px] px-3.5"
               disabled={saveFetcher.state !== "idle" || collabReadOnly}
@@ -587,6 +589,25 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               />
             ) : null}
             <ActionsMenu
+              ai={{
+                available: aiHealth.available && !inReview,
+                emptyDraft,
+                onChoose: (choice) => {
+                  const handOver = { state: { sections: sectionTexts } };
+                  if (choice === "generate")
+                    void navigate(draftPath(policy.number, "generate"), handOver);
+                  if (choice === "improve")
+                    void navigate(draftPath(policy.number, "revise"), handOver);
+                  if (choice === "rewrite") setRewriteOpen(true);
+                  if (choice === "review") startReview();
+                  if (choice === "result") {
+                    setReviewSeen(reviewJobId);
+                    setReviewOpen(true);
+                  }
+                },
+                reason: aiHealth.reason,
+                status: aiStatus,
+              }}
               inReview={inReview}
               published={firstPublish ? undefined : policy.version}
             />
@@ -723,4 +744,4 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
       />
     </div>
   );
-}
+};

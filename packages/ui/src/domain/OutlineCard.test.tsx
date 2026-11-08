@@ -64,11 +64,26 @@ describe("the reader outline (U7)", () => {
 
   it("starts on the first section and counts only the top-level ones", () => {
     render(<OutlineCard items={items} />);
-    expect(screen.getByRole("link", { name: "1 Purpose" })).toHaveAttribute(
-      "aria-current",
-      "location",
-    );
     expect(screen.getByText("1 of 5")).toBeInTheDocument();
+  });
+
+  it("highlights no entry, however far the reader has scrolled", () => {
+    render(<OutlineCard items={items} />);
+    const outline = screen.getByRole("navigation", { name: "On this page" });
+    expect(within(outline).queryAllByRole("link", { current: true })).toHaveLength(0);
+    act(() =>
+      observed?.([
+        {
+          boundingClientRect: { top: 40 } as DOMRectReadOnly,
+          isIntersecting: true,
+          target: headings.get("scope")!,
+        },
+      ]),
+    );
+    expect(within(outline).queryAllByRole("link", { current: true })).toHaveLength(0);
+    for (const link of within(outline).getAllByRole("link")) {
+      expect(link.className).not.toContain("bg-primary-soft");
+    }
   });
 
   it("tracks the section being read", () => {
@@ -81,10 +96,6 @@ describe("the reader outline (U7)", () => {
           target: headings.get("responsibilities")!,
         },
       ]),
-    );
-    expect(screen.getByRole("link", { name: "4 Responsibilities" })).toHaveAttribute(
-      "aria-current",
-      "location",
     );
     expect(screen.getByText("4 of 5")).toBeInTheDocument();
   });
