@@ -53,6 +53,13 @@
     "autosave": {
       "failed": "Couldn't auto-save — use Save draft"
     },
+    "withdraw": {
+      "action": "Withdraw",
+      "description": "The approvers stop reviewing it and it goes back to Draft. Your changes stay.",
+      "keep": "Keep in review",
+      "menu": "Withdraw from review…",
+      "title": "Withdraw from review?"
+    },
     "wordCount": {
       "readLessThanMinute": "Less than a minute",
       "readMinutes": "{minutes} min read",

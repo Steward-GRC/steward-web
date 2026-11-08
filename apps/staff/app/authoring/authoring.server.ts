@@ -8,6 +8,7 @@ import {
   type Group,
   type Policy,
   type PolicyVersion,
+  SignalType,
   type Template,
   type TemplateVersion,
 } from "@steward-web/api-client";
@@ -99,6 +100,24 @@ export const submitDraftForReview = async (
     policy.currentDraftVersionId,
     policy.id,
     policy.homeGroupId,
+    cookieOf(request),
+  );
+};
+
+/**
+ * Takes the submission back from review: the draft stays as it is and goes back to Draft. The run
+ * is the one the version is in; the author needs no task to withdraw.
+ */
+export const withdrawFromReview = async (request: Request, policyId: string): Promise<boolean> => {
+  const policy = await edge.policy(policyId, cookieOf(request));
+  if (!policy?.currentDraftVersionId) throw new Response("Not Found", { status: 404 });
+  const run = await edge.workflowStatus(policy.currentDraftVersionId, cookieOf(request));
+  return edge.signalWorkflow(
+    policy.currentDraftVersionId,
+    run.runId,
+    "",
+    SignalType.SignalTypeWithdraw,
+    "",
     cookieOf(request),
   );
 };

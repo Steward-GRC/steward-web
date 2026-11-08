@@ -246,6 +246,37 @@ describe("drafts.$number action: submit-review", () => {
   });
 });
 
+describe("drafts.$number action: withdraw", () => {
+  it("withdraws the submission from the run it is in, and keeps the draft", async () => {
+    const calls = routeGateway({
+      ...editorHandlers("draft", "APPROVAL_STATUS_IN_REVIEW"),
+      SignalWorkflow: () => ({ signalWorkflow: true }),
+    });
+
+    const result = await runAction({ intent: "withdraw" });
+
+    expect(result.data).toEqual({ intent: "withdraw", ok: true });
+    const signal = calls.find((c) => c.operation === "SignalWorkflow")?.variables;
+    expect(signal).toMatchObject({
+      policyVersionId: "v-9",
+      signal: "SIGNAL_TYPE_WITHDRAW",
+    });
+    expect(calls.map((c) => c.operation)).not.toContain("DiscardDraft");
+  });
+
+  it("refuses without signalling when the policy has no working draft", async () => {
+    const calls = routeGateway({
+      ...editorHandlers("draft", "APPROVAL_STATUS_IN_REVIEW"),
+      Policy: () => ({ policy: { ...gatewayPolicy, currentDraftVersionId: null } }),
+    });
+
+    const result = await runAction({ intent: "withdraw" });
+
+    expect(result.data).toMatchObject({ intent: "withdraw", ok: false });
+    expect(calls.map((c) => c.operation)).not.toContain("SignalWorkflow");
+  });
+});
+
 describe("drafts.$number action: publish", () => {
   it("no longer publishes directly: a draft publishes through its approval (5-screens.s9)", async () => {
     const calls = routeGateway({

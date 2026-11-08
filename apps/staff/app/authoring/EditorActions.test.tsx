@@ -142,6 +142,26 @@ describe("Actions (U11) and Discard draft (D3)", () => {
   });
 });
 
+describe("Withdraw from review", () => {
+  it("is in the Actions menu while the draft is in review, and takes the submission back", async () => {
+    const posted = inRouter(<ActionsMenu inReview />);
+    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Withdraw from review…" }));
+    const dialog = screen.getByRole("dialog", { name: "Withdraw from review?" });
+    expect(dialog).toHaveAccessibleDescription(
+      "The approvers stop reviewing it and it goes back to Draft. Your changes stay.",
+    );
+    await userEvent.click(within(dialog).getByRole("button", { name: "Withdraw" }));
+    await vi.waitFor(() => expect(posted).toHaveBeenCalledWith({ intent: "withdraw" }));
+  });
+
+  it("is not offered for a draft that is not in review", async () => {
+    inRouter(<ActionsMenu inReview={false} />);
+    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    expect(screen.queryByRole("menuitem", { name: "Withdraw from review…" })).toBeNull();
+  });
+});
+
 describe("the AI menu (U27)", () => {
   it("offers Improve draft, Rewrite a section and Review draft", async () => {
     const choose = vi.fn();

@@ -41,6 +41,7 @@ import {
   startDraft,
   submitDraftForReview,
   updateAppendix,
+  withdrawFromReview,
 } from "../authoring/authoring.server";
 import { issueCollabToken } from "../authoring/collab/collab.server";
 import { settleTokenRequests, type TokenRequest } from "../authoring/collab/token";
@@ -188,6 +189,10 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const title = String(form.get("title") ?? "");
         const text = String(form.get("text") ?? "");
         await updateAppendix(request, id, title, JSON.stringify({ text }));
+        return data({ intent, ok: true } as const);
+      }
+      case "withdraw": {
+        await withdrawFromReview(request, policyId);
         return data({ intent, ok: true } as const);
       }
       default: {
