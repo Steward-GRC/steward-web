@@ -89,6 +89,33 @@ describe("the editor header's layout (bug log 198)", () => {
   });
 });
 
+describe("the room state's place (bug log 199)", () => {
+  it("sits in the number line right after the number and Draft, and wraps with that line", () => {
+    inRouter(
+      <EditorHeader
+        actions={<button type="button">Submit for approval</button>}
+        breadcrumb={<nav aria-label="Breadcrumb">Workplace · Facilities</nav>}
+        meta="POL-EXPENSES-000002 · draft"
+        presence={<span data-testid="room">Live</span>}
+        saveState="saved"
+        title="Expenses Policy"
+      />,
+    );
+    const meta = screen.getByText("POL-EXPENSES-000002 · draft");
+    const line = meta.parentElement!;
+    expect(line).toHaveClass("flex-wrap");
+    const room = screen.getByTestId("room");
+    expect(line).toContainElement(room);
+    const order = [...line.children].map((child) => child.textContent ?? "");
+    const at = order.findIndex((text) => text.includes("Live"));
+    expect(at).toBeGreaterThan(order.findIndex((text) => text.includes("Draft")));
+    // not in the buttons' group any more
+    expect(
+      screen.getByRole("button", { name: "Submit for approval" }).parentElement,
+    ).not.toContainElement(room);
+  });
+});
+
 describe("the save state (U11)", () => {
   it.each([
     ["saving", "Saving…"],

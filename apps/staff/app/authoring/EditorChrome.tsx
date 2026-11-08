@@ -150,11 +150,11 @@ export const EditorHeader = ({
           <span className="flex flex-wrap items-center gap-2.5">
             <span className="font-mono text-sm text-muted">{meta}</span>
             <StatusPill status="draft" />
+            {presence}
             <SaveState state={saveState} />
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 @4xl:justify-end">
-          {presence}
           {actions}
         </div>
       </div>
