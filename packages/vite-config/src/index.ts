@@ -125,6 +125,33 @@ export const sharedAliases = (
 });
 
 /**
+ * The libraries the editor's chunk needs, for Vite's `optimizeDeps.include` and `resolve.dedupe`
+ * (bug log 201). The editor loads after the page, so Vite finds these only when the first draft
+ * opens, re-optimizes, reloads the page mid-session and can serve two copies of Yjs or Lexical.
+ * Naming them up front bundles them once, when the dev server starts. The ones only the editor
+ * package depends on are written `package > dependency`.
+ */
+export const editorDependencies = () => ({
+  dedupe: ["yjs", "lexical", "y-protocols", "lib0"],
+  include: [
+    // the app's own dependencies
+    "yjs",
+    "y-websocket",
+    "y-protocols/awareness",
+    "lib0/decoding",
+    "lib0/encoding",
+    // only the editor package depends on these
+    ...[
+      "node-koenig-editor",
+      "lexical",
+      "@lexical/mark",
+      "@lexical/react/LexicalComposerContext",
+      "@lexical/rich-text",
+    ].map((name) => `@steward-web/editor-steward > ${name}`),
+  ],
+});
+
+/**
  * The folder both apps serve as their Vite public directory: the designed favicons, touch icon,
  * and web manifest (decision 1-brand-and-voice.s6). One copy, so the two apps
  * can't drift apart.

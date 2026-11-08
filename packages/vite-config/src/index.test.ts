@@ -16,6 +16,7 @@ import {
   chooseDevelopmentQuickLogin,
   developmentAssetProxy,
   developmentCollabProxy,
+  editorDependencies,
   sharedAliases,
 } from "./index";
 
@@ -24,6 +25,25 @@ describe("sharedAliases", () => {
     const aliases = sharedAliases();
     expect(aliases["@steward-web/edge.server"]).toMatch(/api-client.*edge\/live\.server\.ts$/);
     expect(Object.keys(aliases).filter((name) => /mock/i.test(name))).toEqual([]);
+  });
+});
+
+describe("editorDependencies (bug log 201)", () => {
+  // The editor loads as its own chunk after the page. Left to be discovered, Vite re-optimizes its
+  // dependencies when the first draft opens, reloads the page mid-session and can serve two copies
+  // of Yjs or Lexical, whose constructor checks then fail and a shared document is applied twice.
+  it("pre-bundles the editor's runtime libraries so none is discovered late", () => {
+    const { include } = editorDependencies();
+    for (const name of ["yjs", "y-websocket", "y-protocols/awareness", "lib0/decoding"]) {
+      expect(include).toContain(name);
+    }
+    for (const name of ["lexical", "node-koenig-editor"]) {
+      expect(include).toContain(`@steward-web/editor-steward > ${name}`);
+    }
+  });
+
+  it("keeps one copy of the libraries that must be single", () => {
+    expect(editorDependencies().dedupe).toEqual(expect.arrayContaining(["yjs", "lexical"]));
   });
 });
 
