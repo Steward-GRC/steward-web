@@ -11,7 +11,7 @@ import {
 } from "lexical";
 import { describe, expect, it } from "vitest";
 
-import { $anchorThread, $selectionAnchor, nthIndexOf } from "./reviewAnchors";
+import { $anchorThread, $replaceQuote, $selectionAnchor, nthIndexOf } from "./reviewAnchors";
 
 const editorWith = (...paragraphs: string[]): LexicalEditor => {
   const editor = createEditor({
@@ -122,5 +122,36 @@ describe("reading the anchor of a selection", () => {
       { discrete: true },
     );
     expect(anchor).toBeNull();
+  });
+});
+
+describe("$replaceQuote", () => {
+  const textOf = (editor: LexicalEditor) =>
+    editor.getEditorState().read(() => $getRoot().getTextContent());
+
+  it("puts new text where the nth match of the quote was", () => {
+    const editor = editorWith("seven years then seven years");
+    let done = false;
+    editor.update(
+      () => {
+        done = $replaceQuote({ occurrence: 2, quote: "seven years" }, "six years");
+      },
+      { discrete: true },
+    );
+    expect(done).toBe(true);
+    expect(textOf(editor)).toBe("seven years then six years");
+  });
+
+  it("leaves the document alone when the quote has no such match", () => {
+    const editor = editorWith("seven years");
+    let done = true;
+    editor.update(
+      () => {
+        done = $replaceQuote({ occurrence: 2, quote: "seven years" }, "six years");
+      },
+      { discrete: true },
+    );
+    expect(done).toBe(false);
+    expect(textOf(editor)).toBe("seven years");
   });
 });
