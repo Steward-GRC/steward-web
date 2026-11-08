@@ -1,0 +1,5 @@
+query PolicyAppendices($policyId: ID!, $includeRetired: Boolean) {
+  policyAppendices(policyId: $policyId, includeRetired: $includeRetired) {
+    ...PolicyAppendixFields
+  }
+}

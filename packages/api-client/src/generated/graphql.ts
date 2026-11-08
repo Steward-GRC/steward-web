@@ -284,6 +284,19 @@ export type AiJobResultContentQuery = {
   readonly aiJobResultContent: { readonly operation: string; readonly resultJson: string };
 };
 
+export type AppendixDiffQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+export type AppendixDiffQuery = {
+  readonly appendixDiff: ReadonlyArray<{
+    readonly sectionKey: string;
+    readonly sectionTitle: string;
+    readonly changeType: string;
+    readonly wordDiffHtml: string | null;
+  }>;
+};
+
 export type AppendixFieldsFragment = {
   readonly id: string;
   readonly policyVersionId: string;
@@ -291,6 +304,19 @@ export type AppendixFieldsFragment = {
   readonly contentJson: string;
   readonly orderIndex: number;
   readonly letter: string;
+};
+
+export type AppendixVersionFieldsFragment = {
+  readonly id: string;
+  readonly versionNo: number;
+  readonly state: Types.AppendixState;
+  readonly title: string;
+  readonly contentJson: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly updatedBy: string;
+  readonly publishedAt: string | null;
+  readonly publishedBy: string | null;
 };
 
 export type ArchiveWorkflowDefMutationVariables = Exact<{
@@ -959,6 +985,58 @@ export type CreatePolicyMutation = {
       readonly canBreakGlass: boolean;
       readonly ack: boolean;
     };
+  };
+};
+
+export type CreatePolicyAppendixMutationVariables = Exact<{
+  policyId: string | number;
+  title: string;
+  contentJson: string;
+}>;
+
+export type CreatePolicyAppendixMutation = {
+  readonly createPolicyAppendix: {
+    readonly id: string;
+    readonly policyId: string;
+    readonly letter: string | null;
+    readonly orderIndex: number;
+    readonly retiredAt: string | null;
+    readonly published: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly draft: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly versions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
   };
 };
 
@@ -1884,6 +1962,101 @@ export type PolicyQuery = {
   } | null;
 };
 
+export type PolicyAppendicesQueryVariables = Exact<{
+  policyId: string | number;
+  includeRetired?: boolean | null | undefined;
+}>;
+
+export type PolicyAppendicesQuery = {
+  readonly policyAppendices: ReadonlyArray<{
+    readonly id: string;
+    readonly policyId: string;
+    readonly letter: string | null;
+    readonly orderIndex: number;
+    readonly retiredAt: string | null;
+    readonly published: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly draft: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly versions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+  }>;
+};
+
+export type PolicyAppendixFieldsFragment = {
+  readonly id: string;
+  readonly policyId: string;
+  readonly letter: string | null;
+  readonly orderIndex: number;
+  readonly retiredAt: string | null;
+  readonly published: {
+    readonly id: string;
+    readonly versionNo: number;
+    readonly state: Types.AppendixState;
+    readonly title: string;
+    readonly contentJson: string;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+    readonly updatedBy: string;
+    readonly publishedAt: string | null;
+    readonly publishedBy: string | null;
+  } | null;
+  readonly draft: {
+    readonly id: string;
+    readonly versionNo: number;
+    readonly state: Types.AppendixState;
+    readonly title: string;
+    readonly contentJson: string;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+    readonly updatedBy: string;
+    readonly publishedAt: string | null;
+    readonly publishedBy: string | null;
+  } | null;
+  readonly versions: ReadonlyArray<{
+    readonly id: string;
+    readonly versionNo: number;
+    readonly state: Types.AppendixState;
+    readonly title: string;
+    readonly contentJson: string;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+    readonly updatedBy: string;
+    readonly publishedAt: string | null;
+    readonly publishedBy: string | null;
+  }>;
+};
+
 export type PolicyAttachmentsQueryVariables = Exact<{
   policyId: string | number;
 }>;
@@ -2113,6 +2286,56 @@ export type PreviewUserDeletionQuery = {
       readonly blocksDelete: boolean;
     }>;
     readonly warnings: ReadonlyArray<{ readonly code: string; readonly message: string }>;
+  };
+};
+
+export type PublishAppendixMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type PublishAppendixMutation = {
+  readonly publishAppendix: {
+    readonly id: string;
+    readonly policyId: string;
+    readonly letter: string | null;
+    readonly orderIndex: number;
+    readonly retiredAt: string | null;
+    readonly published: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly draft: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly versions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
   };
 };
 
@@ -2353,6 +2576,57 @@ export type ReorderAppendicesMutation = {
   }>;
 };
 
+export type ReorderPolicyAppendicesMutationVariables = Exact<{
+  policyId: string | number;
+  orderedIds: ReadonlyArray<string | number> | string | number;
+}>;
+
+export type ReorderPolicyAppendicesMutation = {
+  readonly reorderPolicyAppendices: ReadonlyArray<{
+    readonly id: string;
+    readonly policyId: string;
+    readonly letter: string | null;
+    readonly orderIndex: number;
+    readonly retiredAt: string | null;
+    readonly published: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly draft: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly versions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+  }>;
+};
+
 export type ReplyReviewThreadMutationVariables = Exact<{
   threadId: string | number;
   body: string;
@@ -2587,6 +2861,106 @@ export type ResolveUserLabelsQuery = {
   }>;
 };
 
+export type RestoreAppendixMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type RestoreAppendixMutation = {
+  readonly restoreAppendix: {
+    readonly id: string;
+    readonly policyId: string;
+    readonly letter: string | null;
+    readonly orderIndex: number;
+    readonly retiredAt: string | null;
+    readonly published: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly draft: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly versions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+  };
+};
+
+export type RetireAppendixMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type RetireAppendixMutation = {
+  readonly retireAppendix: {
+    readonly id: string;
+    readonly policyId: string;
+    readonly letter: string | null;
+    readonly orderIndex: number;
+    readonly retiredAt: string | null;
+    readonly published: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly draft: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly versions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+  };
+};
+
 export type RetirePolicyMutationVariables = Exact<{
   id: string | number;
 }>;
@@ -2720,6 +3094,58 @@ export type RevokeUserSessionsMutationVariables = Exact<{
 }>;
 
 export type RevokeUserSessionsMutation = { readonly revokeUserSessions: number };
+
+export type SaveAppendixDraftMutationVariables = Exact<{
+  id: string | number;
+  title: string;
+  contentJson: string;
+}>;
+
+export type SaveAppendixDraftMutation = {
+  readonly saveAppendixDraft: {
+    readonly id: string;
+    readonly policyId: string;
+    readonly letter: string | null;
+    readonly orderIndex: number;
+    readonly retiredAt: string | null;
+    readonly published: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly draft: {
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    } | null;
+    readonly versions: ReadonlyArray<{
+      readonly id: string;
+      readonly versionNo: number;
+      readonly state: Types.AppendixState;
+      readonly title: string;
+      readonly contentJson: string;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly updatedBy: string;
+      readonly publishedAt: string | null;
+      readonly publishedBy: string | null;
+    }>;
+  };
+};
 
 export type SaveDraftMutationVariables = Exact<{
   policyId: string | number;
@@ -4222,6 +4648,101 @@ export const OrganizationFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<OrganizationFieldsFragment, unknown>;
+export const AppendixVersionFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AppendixVersionFieldsFragment, unknown>;
+export const PolicyAppendixFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyAppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyAppendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "published" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draft" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PolicyAppendixFieldsFragment, unknown>;
 export const AppendixFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -5800,6 +6321,51 @@ export const AiJobResultContentDocument = {
     },
   ],
 } as unknown as DocumentNode<AiJobResultContentQuery, AiJobResultContentQueryVariables>;
+export const AppendixDiffDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "AppendixDiff" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "appendixDiff" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "sectionKey" } },
+                { kind: "Field", name: { kind: "Name", value: "sectionTitle" } },
+                { kind: "Field", name: { kind: "Name", value: "changeType" } },
+                { kind: "Field", name: { kind: "Name", value: "wordDiffHtml" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AppendixDiffQuery, AppendixDiffQueryVariables>;
 export const ArchiveWorkflowDefDocument = {
   kind: "Document",
   definitions: [
@@ -7777,6 +8343,139 @@ export const CreatePolicyDocument = {
     },
   ],
 } as unknown as DocumentNode<CreatePolicyMutation, CreatePolicyMutationVariables>;
+export const CreatePolicyAppendixDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CreatePolicyAppendix" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "title" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "createPolicyAppendix" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "title" },
+                value: { kind: "Variable", name: { kind: "Name", value: "title" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "contentJson" },
+                value: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyAppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyAppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyAppendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "published" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draft" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreatePolicyAppendixMutation, CreatePolicyAppendixMutationVariables>;
 export const CreateReferenceDocument = {
   kind: "Document",
   definitions: [
@@ -10898,6 +11597,123 @@ export const PolicyDocument = {
     },
   ],
 } as unknown as DocumentNode<PolicyQuery, PolicyQueryVariables>;
+export const PolicyAppendicesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PolicyAppendices" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "includeRetired" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyAppendices" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "includeRetired" },
+                value: { kind: "Variable", name: { kind: "Name", value: "includeRetired" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyAppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyAppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyAppendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "published" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draft" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PolicyAppendicesQuery, PolicyAppendicesQueryVariables>;
 export const PolicyAttachmentsDocument = {
   kind: "Document",
   definitions: [
@@ -11585,6 +12401,113 @@ export const PreviewUserDeletionDocument = {
     },
   ],
 } as unknown as DocumentNode<PreviewUserDeletionQuery, PreviewUserDeletionQueryVariables>;
+export const PublishAppendixDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "PublishAppendix" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "publishAppendix" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyAppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyAppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyAppendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "published" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draft" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PublishAppendixMutation, PublishAppendixMutationVariables>;
 export const PublishDraftDocument = {
   kind: "Document",
   definitions: [
@@ -12570,6 +13493,135 @@ export const ReorderAppendicesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReorderAppendicesMutation, ReorderAppendicesMutationVariables>;
+export const ReorderPolicyAppendicesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ReorderPolicyAppendices" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "orderedIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "reorderPolicyAppendices" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "orderedIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "orderedIds" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyAppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyAppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyAppendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "published" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draft" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ReorderPolicyAppendicesMutation,
+  ReorderPolicyAppendicesMutationVariables
+>;
 export const ReplyReviewThreadDocument = {
   kind: "Document",
   definitions: [
@@ -13127,6 +14179,220 @@ export const ResolveUserLabelsDocument = {
     },
   ],
 } as unknown as DocumentNode<ResolveUserLabelsQuery, ResolveUserLabelsQueryVariables>;
+export const RestoreAppendixDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RestoreAppendix" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "restoreAppendix" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyAppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyAppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyAppendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "published" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draft" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RestoreAppendixMutation, RestoreAppendixMutationVariables>;
+export const RetireAppendixDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RetireAppendix" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "retireAppendix" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyAppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyAppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyAppendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "published" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draft" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RetireAppendixMutation, RetireAppendixMutationVariables>;
 export const RetirePolicyDocument = {
   kind: "Document",
   definitions: [
@@ -13520,6 +14786,139 @@ export const RevokeUserSessionsDocument = {
     },
   ],
 } as unknown as DocumentNode<RevokeUserSessionsMutation, RevokeUserSessionsMutationVariables>;
+export const SaveAppendixDraftDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SaveAppendixDraft" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "title" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "saveAppendixDraft" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "title" },
+                value: { kind: "Variable", name: { kind: "Name", value: "title" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "contentJson" },
+                value: { kind: "Variable", name: { kind: "Name", value: "contentJson" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "PolicyAppendixFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AppendixVersionFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "AppendixVersion" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "contentJson" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedBy" } },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PolicyAppendixFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyAppendix" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyId" } },
+          { kind: "Field", name: { kind: "Name", value: "letter" } },
+          { kind: "Field", name: { kind: "Name", value: "orderIndex" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "published" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "draft" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "versions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AppendixVersionFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SaveAppendixDraftMutation, SaveAppendixDraftMutationVariables>;
 export const SaveDraftDocument = {
   kind: "Document",
   definitions: [

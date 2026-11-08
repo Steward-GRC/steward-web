@@ -1,0 +1,5 @@
+mutation RetireAppendix($id: ID!) {
+  retireAppendix(id: $id) {
+    ...PolicyAppendixFields
+  }
+}

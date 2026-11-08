@@ -1,0 +1,5 @@
+mutation SaveAppendixDraft($id: ID!, $title: String!, $contentJson: String!) {
+  saveAppendixDraft(id: $id, title: $title, contentJson: $contentJson) {
+    ...PolicyAppendixFields
+  }
+}

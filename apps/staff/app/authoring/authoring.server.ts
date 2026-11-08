@@ -1,7 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
-  type Appendix,
   ApprovalStatus,
   type CreatePolicyInput,
   DocumentType,
@@ -169,26 +168,35 @@ export const reviewApprovers = async (
 export const discardDraft = (request: Request, policyId: string): Promise<boolean> =>
   edge.discardDraft(policyId, cookieOf(request));
 
-export const addAppendix = (
+/** A policy's appendices with their drafts and history, retired ones included. */
+export const listAppendices = (request: Request, policyId: string) =>
+  edge.policyAppendices(policyId, true, cookieOf(request));
+
+/** An appendix's draft against what is published; empty when the caller may not see it. */
+export const getAppendixDiff = (request: Request, id: string) =>
+  edge.appendixDiff(id, cookieOf(request)).catch(() => []);
+
+export const createAppendixDraft = (
   request: Request,
-  policyVersionId: string,
+  policyId: string,
   title: string,
   contentJson: string,
-): Promise<Appendix> => edge.addAppendix(policyVersionId, title, contentJson, cookieOf(request));
+) => edge.createAppendix(policyId, title, contentJson, cookieOf(request));
 
-export const updateAppendix = (
+export const saveAppendix = (request: Request, id: string, title: string, contentJson: string) =>
+  edge.saveAppendixDraft(id, title, contentJson, cookieOf(request));
+
+export const publishAppendix = (request: Request, id: string) =>
+  edge.publishAppendix(id, cookieOf(request));
+
+export const retireAppendix = (request: Request, id: string) =>
+  edge.retireAppendix(id, cookieOf(request));
+
+export const restoreAppendix = (request: Request, id: string) =>
+  edge.restoreAppendix(id, cookieOf(request));
+
+export const reorderPolicyAppendices = (
   request: Request,
-  id: string,
-  title: string,
-  contentJson: string,
-): Promise<Appendix> => edge.updateAppendix(id, title, contentJson, cookieOf(request));
-
-export const deleteAppendix = (request: Request, id: string): Promise<boolean> =>
-  edge.deleteAppendix(id, cookieOf(request));
-
-export const reorderAppendices = (
-  request: Request,
-  policyVersionId: string,
+  policyId: string,
   orderedIds: readonly string[],
-): Promise<readonly Appendix[]> =>
-  edge.reorderAppendices(policyVersionId, orderedIds, cookieOf(request));
+) => edge.reorderPolicyAppendices(policyId, orderedIds, cookieOf(request));

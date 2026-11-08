@@ -1,0 +1,5 @@
+mutation RestoreAppendix($id: ID!) {
+  restoreAppendix(id: $id) {
+    ...PolicyAppendixFields
+  }
+}

@@ -28,20 +28,21 @@ import { AiReviewSheet, RewriteSectionDialog, SuggestionSheet } from "../authori
 import { type ChangeEntry, parseReviewResult } from "../authoring/ai/results";
 import { useAiJob } from "../authoring/ai/useAiJob";
 import {
-  addAppendix,
-  deleteAppendix,
+  createAppendixDraft,
   discardDraft,
   getDraftVersion,
   getLatestTemplateVersion,
   getPolicyByNumber,
   isDraftInReview,
+  listAppendices,
   policyIdOfNumber,
-  reorderAppendices,
+  reorderPolicyAppendices,
+  restoreAppendix,
+  retireAppendix,
   reviewApprovers,
   saveDraft,
   startDraft,
   submitDraftForReview,
-  updateAppendix,
   withdrawFromReview,
 } from "../authoring/authoring.server";
 import { issueCollabToken } from "../authoring/collab/collab.server";
@@ -100,11 +101,13 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     policy.templateId ? getLatestTemplateVersion(request, policy.templateId) : null,
   ]);
   const inReview = draft ? await isDraftInReview(request, draft) : false;
+  const appendices = await listAppendices(request, policy.id).catch(() => []);
   // What approvers wrote on this version, shown on the text they wrote it on.
   const threads = draft ? await listReviewThreads(request, draft.id) : [];
   const approvers = draft && inReview ? await reviewApprovers(request, draft) : [];
   return {
     aiHealth,
+    appendices,
     approvers,
     draft,
     inReview,
@@ -124,14 +127,14 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
   try {
     switch (intent) {
       case "add-appendix": {
-        const policyVersionId = String(form.get("policyVersionId") ?? "");
-        await addAppendix(
+        // A new appendix starts as a draft of its own: open its page to write it.
+        const created = await createAppendixDraft(
           request,
-          policyVersionId,
+          String(form.get("policyId") ?? policyId),
           "Untitled appendix",
           JSON.stringify({ text: "" }),
         );
-        return data({ intent, ok: true } as const);
+        return redirect(draftPath(params.number, `appendices/${created.letter ?? created.id}`));
       }
       case "assist": {
         const sectionKey = String(form.get("sectionKey") ?? "");
@@ -153,10 +156,6 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const payload = await issueCollabToken(request, policyId, draftId, templateVersionId);
         return data({ intent, ok: true, ...payload } as const);
       }
-      case "delete-appendix": {
-        await deleteAppendix(request, String(form.get("appendixId") ?? ""));
-        return data({ intent, ok: true } as const);
-      }
       case "discard": {
         await discardDraft(request, policyId);
         return data({ intent, ok: true } as const);
@@ -172,7 +171,19 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const orderedIds = String(form.get("orderedIds") ?? "")
           .split(",")
           .filter(Boolean);
-        await reorderAppendices(request, String(form.get("policyVersionId") ?? ""), orderedIds);
+        await reorderPolicyAppendices(
+          request,
+          String(form.get("policyId") ?? policyId),
+          orderedIds,
+        );
+        return data({ intent, ok: true } as const);
+      }
+      case "restore-appendix": {
+        await restoreAppendix(request, String(form.get("appendixId") ?? ""));
+        return data({ intent, ok: true } as const);
+      }
+      case "retire-appendix": {
+        await retireAppendix(request, String(form.get("appendixId") ?? ""));
         return data({ intent, ok: true } as const);
       }
       case "review": {
@@ -196,13 +207,6 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const { runId } = await submitDraftForReview(request, policyId);
         return data({ intent, ok: true, runId } as const);
       }
-      case "update-appendix": {
-        const id = String(form.get("appendixId") ?? "");
-        const title = String(form.get("title") ?? "");
-        const text = String(form.get("text") ?? "");
-        await updateAppendix(request, id, title, JSON.stringify({ text }));
-        return data({ intent, ok: true } as const);
-      }
       case "withdraw": {
         await withdrawFromReview(request, policyId);
         return data({ intent, ok: true } as const);
@@ -221,7 +225,8 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const { t: tAi } = useTranslation("ai");
   const location = useLocation();
   const navigate = useNavigate();
-  const { approvers, draft, inReview, meId, policy, templateVersion, threads } = loaderData;
+  const { appendices, approvers, draft, inReview, meId, policy, templateVersion, threads } =
+    loaderData;
   const comments = useReviewComments({
     // while the version is in review the author can write to one of its approvers
     canAdd: inReview && approvers.length > 0,
@@ -663,13 +668,16 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
             />
           ) : null}
           <AppendicesPanel
-            appendices={draft.appendices.map((appendix) => ({
+            appendices={appendices.map((appendix) => ({
+              draft: Boolean(appendix.draft),
               id: appendix.id,
-              letter: appendix.letter,
-              text: (JSON.parse(appendix.contentJson || "{}") as { text?: string }).text ?? "",
-              title: appendix.title,
+              letter: appendix.letter ?? "",
+              published: Boolean(appendix.published),
+              retired: Boolean(appendix.retiredAt),
+              title: (appendix.draft ?? appendix.published)?.title ?? "",
             }))}
-            draftId={draft.id}
+            number={policy.number}
+            policyId={policy.id}
           />
           <NextVersion
             firstPublish={firstPublish}

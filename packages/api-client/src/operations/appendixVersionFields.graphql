@@ -1,0 +1,12 @@
+fragment AppendixVersionFields on AppendixVersion {
+  id
+  versionNo
+  state
+  title
+  contentJson
+  createdAt
+  updatedAt
+  updatedBy
+  publishedAt
+  publishedBy
+}

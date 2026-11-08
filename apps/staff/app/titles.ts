@@ -10,6 +10,7 @@ export const PAGE_TITLES: Readonly<Record<string, string>> = {
   "routes/approvals.$number": "shell:titles.staff.review",
   "routes/drafts": "shell:titles.staff.drafts",
   "routes/drafts.$number": "shell:titles.staff.draft",
+  "routes/drafts.$number.appendices.$letter": "shell:titles.staff.appendix",
   "routes/drafts.$number.generate": "shell:titles.staff.generateDraft",
   "routes/drafts.$number.revise": "shell:titles.staff.reviseDraft",
   "routes/drafts.import": "shell:titles.staff.importPolicies",

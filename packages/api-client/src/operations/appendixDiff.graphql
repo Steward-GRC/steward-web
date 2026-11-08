@@ -1,0 +1,8 @@
+query AppendixDiff($id: ID!) {
+  appendixDiff(id: $id) {
+    sectionKey
+    sectionTitle
+    changeType
+    wordDiffHtml
+  }
+}

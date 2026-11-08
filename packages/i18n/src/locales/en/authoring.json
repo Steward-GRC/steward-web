@@ -38,6 +38,9 @@
       "delete": "Delete appendix",
       "deleteDescription": "{{name}} and its content will be removed from this draft.",
       "deleteTitle": "Delete this appendix?",
+      "draftBadge": "Draft",
+      "edit": "Edit",
+      "editLabel": "Edit appendix {{letter}}",
       "empty": "No appendices yet. Add one to attach supplementary material.",
       "keep": "Keep appendix",
       "move": {
@@ -45,10 +48,19 @@
         "up": "Move appendix {{letter}} up"
       },
       "name": "Appendix {{letter}}: {{title}}",
+      "restore": "Restore",
+      "restoreLabel": "Restore appendix {{title}}",
+      "retire": "Retire",
+      "retireButton": "Retire appendix",
+      "retireDescription": "{{name}} is kept and hidden from readers. You can restore it.",
+      "retireLabel": "Retire appendix {{letter}}",
+      "retireTitle": "Retire this appendix?",
+      "retired": "Retired appendices",
       "save": "Save appendix",
       "textLabel": "Appendix {{letter}} text",
       "title": "Appendices",
-      "titleLabel": "Appendix {{letter}} title"
+      "titleLabel": "Appendix {{letter}} title",
+      "unpublishedBadge": "Not published"
     },
     "autosave": {
       "failed": "Couldn't auto-save — use Save draft"
@@ -211,6 +223,25 @@
       "title": "Submit for approval?",
       "why": "Why {{change}}",
       "workedOut": "Worked out by Steward"
+    },
+    "appendix": {
+      "back": "Back to the {{title}} draft",
+      "backRead": "Back to {{title}}",
+      "diff": {
+        "empty": "Nothing has changed from the published appendix.",
+        "title": "Changes from the published appendix"
+      },
+      "draftNote": "This is a draft. Readers still see the published appendix until you publish.",
+      "failed": "The appendix could not be saved.",
+      "publish": "Publish",
+      "published": "Published",
+      "publishedAt": "Published {{when}}",
+      "restore": "Restore",
+      "retire": "Retire",
+      "retired": "This appendix is retired: readers do not see it. Restore it to bring it back.",
+      "supporting": "An appendix is supporting material, not policy. Readers cannot comment on it.",
+      "titleLabel": "Appendix title",
+      "unpublished": "Not published yet"
     }
   },
   "import": {

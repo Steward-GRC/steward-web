@@ -107,7 +107,11 @@
     "appendices": {
       "empty": "No appendices.",
       "heading": "Appendix {{letter}}: {{title}}",
-      "title": "Appendices"
+      "title": "Appendices",
+      "notPolicy": {
+        "label": "Not policy",
+        "text": "This appendix is supporting material, not policy."
+      }
     },
     "back": {
       "policies": "Policies",

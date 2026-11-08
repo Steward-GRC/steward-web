@@ -419,6 +419,62 @@ describe("liveEdge.policyDetail", () => {
     expect(readOnly?.canEdit).toBe(false);
   });
 
+  it("draws an appendix written in the editor as blocks, and an old plain one as text", async () => {
+    const lexical = JSON.stringify({
+      root: {
+        children: [
+          {
+            children: [{ text: "Written in the editor.", type: "text", version: 1 }],
+            type: "paragraph",
+            version: 1,
+          },
+        ],
+        direction: null,
+        format: "",
+        indent: 0,
+        type: "root",
+        version: 1,
+      },
+    });
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [
+            {
+              contentJson: lexical,
+              id: "a-1",
+              letter: "A",
+              orderIndex: 0,
+              policyVersionId: "v-2",
+              title: "New",
+            },
+            {
+              contentJson: JSON.stringify({ text: "Old." }),
+              id: "a-2",
+              letter: "B",
+              orderIndex: 1,
+              policyVersionId: "v-2",
+              title: "Old",
+            },
+          ],
+          contentJson: JSON.stringify([{ sectionKey: "purpose", text: "Why.", title: "Purpose" }]),
+          createdAt: "2026-08-05T00:00:00Z",
+          id: "v-2",
+          policyId: "p-1",
+          publishedAt: "2026-08-12T00:00:00Z",
+          status: "published",
+          templateVersionId: "",
+          versionNo: 2,
+        },
+      }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.appendices[0]?.blocks?.length).toBeGreaterThan(0);
+    expect(detail?.appendices[1]).toMatchObject({ text: "Old." });
+    expect(detail?.appendices[1]?.blocks).toBeUndefined();
+  });
+
   it("reads AI as unavailable when the health check itself fails", async () => {
     routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
@@ -1331,5 +1387,90 @@ describe("recordPolicyExport", () => {
     expect(await liveEdge.recordPolicyExport("policy-9", "PRINT", false)).toBe(false);
     expect(await liveEdge.recordPolicyExport("policy-9", "PRINT", false)).toBe(false);
     expect(calls).toHaveLength(1);
+  });
+});
+
+const row = (state: string, versionNo: number, title: string) => ({
+  contentJson: JSON.stringify({ text: "x" }),
+  createdAt: "2026-11-01T00:00:00Z",
+  id: `r-${String(versionNo)}`,
+  publishedAt: state === "PUBLISHED" ? "2026-11-02T00:00:00Z" : null,
+  publishedBy: state === "PUBLISHED" ? "u-1" : null,
+  state,
+  title,
+  updatedAt: "2026-11-02T00:00:00Z",
+  updatedBy: "u-1",
+  versionNo,
+});
+
+describe("liveEdge: the appendix life cycle", () => {
+  const appendix = {
+    draft: row("DRAFT", 2, "Rates (next)"),
+    id: "a-1",
+    letter: "A",
+    orderIndex: 0,
+    policyId: "p-1",
+    published: row("PUBLISHED", 1, "Rates"),
+    retiredAt: null,
+    versions: [row("PUBLISHED", 1, "Rates"), row("DRAFT", 2, "Rates (next)")],
+  };
+
+  it("lists a policy's appendices, with the retired ones when asked", async () => {
+    const calls = routeGateway({ PolicyAppendices: () => ({ policyAppendices: [appendix] }) });
+    const list = await liveEdge.policyAppendices("p-1", true);
+    expect(list[0]).toMatchObject({ draft: { title: "Rates (next)" }, letter: "A" });
+    expect(calls.find((c) => c.operation === "PolicyAppendices")?.variables).toEqual({
+      includeRetired: true,
+      policyId: "p-1",
+    });
+  });
+
+  it("creates, saves, publishes, retires, restores and reorders through the gateway", async () => {
+    const calls = routeGateway({
+      CreatePolicyAppendix: () => ({ createPolicyAppendix: appendix }),
+      PublishAppendix: () => ({ publishAppendix: appendix }),
+      ReorderPolicyAppendices: () => ({ reorderPolicyAppendices: [appendix] }),
+      RestoreAppendix: () => ({ restoreAppendix: appendix }),
+      RetireAppendix: () => ({ retireAppendix: appendix }),
+      SaveAppendixDraft: () => ({ saveAppendixDraft: appendix }),
+    });
+    await liveEdge.createAppendix("p-1", "Rates", "{}");
+    await liveEdge.saveAppendixDraft("a-1", "Rates", "{}");
+    await liveEdge.publishAppendix("a-1");
+    await liveEdge.retireAppendix("a-1");
+    await liveEdge.restoreAppendix("a-1");
+    await liveEdge.reorderPolicyAppendices("p-1", ["a-1"]);
+    expect(calls.map((c) => c.operation)).toEqual([
+      "CreatePolicyAppendix",
+      "SaveAppendixDraft",
+      "PublishAppendix",
+      "RetireAppendix",
+      "RestoreAppendix",
+      "ReorderPolicyAppendices",
+    ]);
+    expect(calls[1]?.variables).toEqual({ contentJson: "{}", id: "a-1", title: "Rates" });
+  });
+
+  it("asks for the diff of a draft against what is published", async () => {
+    routeGateway({
+      AppendixDiff: () => ({
+        appendixDiff: [
+          {
+            changeType: "changed",
+            sectionKey: "body",
+            sectionTitle: "body",
+            wordDiffHtml: "<ins>x</ins>",
+          },
+        ],
+      }),
+    });
+    expect(await liveEdge.appendixDiff("a-1")).toEqual([
+      {
+        changeType: "changed",
+        sectionKey: "body",
+        sectionTitle: "body",
+        wordDiffHtml: "<ins>x</ins>",
+      },
+    ]);
   });
 });

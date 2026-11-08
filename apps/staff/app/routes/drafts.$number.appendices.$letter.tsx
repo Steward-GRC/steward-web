@@ -1,0 +1,246 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+import { PERMISSIONS } from "@steward-web/auth";
+import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
+import {
+  sameContent,
+  type SerializedDocument,
+  serializeDocument,
+} from "@steward-web/editor-steward";
+import { useTranslation } from "@steward-web/i18n";
+import { refusalOf } from "@steward-web/shell";
+import { Banner, Button, Card } from "@steward-web/ui";
+import { draftPath, WordDiff } from "@steward-web/ui/domain";
+import { useCallback, useState } from "react";
+import { data, Link, useFetcher } from "react-router";
+
+import type { Route } from "./+types/drafts.$number.appendices.$letter";
+
+import { appendixDocument } from "../authoring/appendixDocument";
+import {
+  getAppendixDiff,
+  getPolicyByNumber,
+  listAppendices,
+  publishAppendix,
+  restoreAppendix,
+  retireAppendix,
+  saveAppendix,
+} from "../authoring/authoring.server";
+import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
+import { SaveState, type SaveStateKind } from "../authoring/EditorChrome";
+import { useAutosave } from "../authoring/useAutosave";
+
+/** How long the content must be still before the appendix saves itself. */
+const AUTOSAVE_AFTER_MS = 2000;
+
+export const loader = async ({ params, request }: Route.LoaderArgs) => {
+  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
+  const policy = await getPolicyByNumber(request, params.number);
+  if (!policy?.viewerCan.edit) throw new Response("Not Found", { status: 404 });
+  const appendices = await listAppendices(request, policy.id);
+  // A live appendix is opened by its letter; a retired one has none, so by its id.
+  const appendix = appendices.find(
+    (a) => a.letter?.toUpperCase() === params.letter.toUpperCase() || a.id === params.letter,
+  );
+  if (!appendix) throw new Response("Not Found", { status: 404 });
+  const diff = appendix.draft ? await getAppendixDiff(request, appendix.id) : [];
+  return { appendix, diff, policy };
+};
+
+export const action = async ({ params, request }: Route.ActionArgs) => {
+  await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
+  const policy = await getPolicyByNumber(request, params.number);
+  if (!policy?.viewerCan.edit) throw new Response("Not Found", { status: 404 });
+  const appendices = await listAppendices(request, policy.id);
+  const appendix = appendices.find(
+    (a) => a.letter?.toUpperCase() === params.letter.toUpperCase() || a.id === params.letter,
+  );
+  if (!appendix) throw new Response("Not Found", { status: 404 });
+  const form = await request.formData();
+  const intent = String(form.get("intent") ?? "");
+  try {
+    switch (intent) {
+      case "publish": {
+        await publishAppendix(request, appendix.id);
+        return data({ intent, ok: true });
+      }
+      case "restore": {
+        await restoreAppendix(request, appendix.id);
+        return data({ intent, ok: true });
+      }
+      case "retire": {
+        await retireAppendix(request, appendix.id);
+        return data({ intent, ok: true });
+      }
+      case "save": {
+        await saveAppendix(
+          request,
+          appendix.id,
+          String(form.get("title") ?? ""),
+          String(form.get("contentJson") ?? ""),
+        );
+        return data({ intent, ok: true });
+      }
+      default: {
+        throw new Response("Bad Request", { status: 400 });
+      }
+    }
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    return data({ error: refusalOf(error), intent, ok: false as const }, { status: 400 });
+  }
+};
+
+export default function AppendixRoute({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("authoring");
+  const { appendix, diff, policy } = loaderData;
+  const current = appendix.draft ?? appendix.published;
+  const retired = Boolean(appendix.retiredAt);
+  const initialDocument = appendixDocument(current?.contentJson);
+  const [title, setTitle] = useState(current?.title ?? "");
+  const [content, setContent] = useState<SerializedDocument>(initialDocument);
+  const [lastSaved, setLastSaved] = useState(serializeDocument(initialDocument));
+  const [touched, setTouched] = useState(false);
+  const [editorReady, setEditorReady] = useState(false);
+  const saveFetcher = useFetcher<typeof action>();
+  const actionFetcher = useFetcher<typeof action>();
+
+  const serialized = serializeDocument(content);
+  const titleChanged = title !== (current?.title ?? "");
+  const dirty = !sameContent(serialized, lastSaved) || titleChanged;
+  const saving = saveFetcher.state !== "idle";
+  const saveState: SaveStateKind = saving ? "saving" : dirty ? "unsaved" : "saved";
+
+  const save = useCallback(() => {
+    setLastSaved(serialized);
+    void saveFetcher.submit({ contentJson: serialized, intent: "save", title }, { method: "post" });
+  }, [saveFetcher, serialized, title]);
+
+  useAutosave({
+    content: `${title}\n${serialized}`,
+    delayMs: AUTOSAVE_AFTER_MS,
+    enabled: editorReady && touched && !retired,
+    save,
+    saved: !dirty,
+    saving,
+  });
+
+  const published = appendix.published;
+  const hasDraft = Boolean(appendix.draft) || dirty;
+  const letter = appendix.letter ?? "";
+  const changed = diff.filter((section) => section.changeType !== "unchanged");
+
+  return (
+    <div className="flex flex-col gap-3.5 px-4 pt-[22px] pb-8 text-ink sm:px-8">
+      <Link
+        className="text-sm font-medium text-muted hover:underline"
+        to={draftPath(policy.number)}
+      >
+        {t("editor.appendix.back", { title: policy.title })}
+      </Link>
+      <div className="flex flex-wrap items-start gap-3.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <h1 className="font-serif text-[30px] leading-[38px] font-semibold">
+            {letter ? `${letter}. ` : ""}
+            {title || current?.title}
+          </h1>
+          <span className="flex flex-wrap items-center gap-2.5 text-sm text-muted">
+            <span className="font-mono">{policy.number}</span>
+            <span>
+              {published
+                ? t("editor.appendix.publishedAt", {
+                    when: new Date(published.publishedAt ?? "").toLocaleDateString(),
+                  })
+                : t("editor.appendix.unpublished")}
+            </span>
+            <SaveState state={saveState} />
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {retired ? (
+            <actionFetcher.Form method="post">
+              <input name="intent" type="hidden" value="restore" />
+              <Button type="submit" variant="secondary">
+                {t("editor.appendix.restore")}
+              </Button>
+            </actionFetcher.Form>
+          ) : (
+            <>
+              <actionFetcher.Form method="post">
+                <input name="intent" type="hidden" value="retire" />
+                <Button type="submit" variant="secondary">
+                  {t("editor.appendix.retire")}
+                </Button>
+              </actionFetcher.Form>
+              <actionFetcher.Form method="post">
+                <input name="intent" type="hidden" value="publish" />
+                <Button disabled={!hasDraft || dirty || saving} type="submit">
+                  {t("editor.appendix.publish")}
+                </Button>
+              </actionFetcher.Form>
+            </>
+          )}
+        </div>
+      </div>
+
+      <Banner title={t("editor.appendix.supporting")} tone="info" />
+      {retired ? <Banner title={t("editor.appendix.retired")} tone="warn" /> : null}
+      {appendix.draft && published ? (
+        <Banner title={t("editor.appendix.draftNote")} tone="info" />
+      ) : null}
+      {saveFetcher.data && !saveFetcher.data.ok ? (
+        <Banner title={t("editor.appendix.failed")} tone="warn" />
+      ) : null}
+
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-3">
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {t("editor.appendix.titleLabel")}
+            <input
+              className="h-10 rounded-md border border-border bg-surface px-3 text-base font-normal"
+              onChange={(event) => {
+                setTouched(true);
+                setTitle(event.target.value);
+              }}
+              readOnly={retired}
+              value={title}
+            />
+          </label>
+          <Card className="isolate px-6 py-8 sm:px-12 sm:py-8">
+            <div
+              onBeforeInputCapture={() => setTouched(true)}
+              onClickCapture={() => setTouched(true)}
+              onKeyDownCapture={() => setTouched(true)}
+              onPasteCapture={() => setTouched(true)}
+            >
+              <DraftDocumentEditor
+                initialDocument={initialDocument}
+                onChange={setContent}
+                onReady={() => setEditorReady(true)}
+                readOnly={retired}
+              />
+            </div>
+          </Card>
+        </div>
+        {appendix.draft && published ? (
+          <Card
+            aria-label={t("editor.appendix.diff.title")}
+            className="flex flex-col gap-2 p-4"
+            role="region"
+          >
+            <h2 className="text-sm font-semibold">{t("editor.appendix.diff.title")}</h2>
+            {changed.length === 0 ? (
+              <p className="text-sm text-muted">{t("editor.appendix.diff.empty")}</p>
+            ) : (
+              changed.map((section) => (
+                <p className="text-sm leading-relaxed" key={section.sectionKey}>
+                  <WordDiff html={section.wordDiffHtml ?? ""} />
+                </p>
+              ))
+            )}
+          </Card>
+        ) : null}
+      </div>
+    </div>
+  );
+}
