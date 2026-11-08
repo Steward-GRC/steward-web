@@ -131,6 +131,8 @@ export const BASE_COLORS: Record<KoenigColorSlot, KoenigColorSetting> = {
   headerText: fixed([{ label: "White", value: "#ffffff" }]),
   highlight: fixed([{ label: "Yellow", value: HIGHLIGHT_YELLOW }]),
   tableBand: fixed(TABLE_BAND_COLORS),
+  tableBorder: { ...fixed(STRONG_COLORS), none: true },
+  tableCell: { ...fixed(TABLE_BAND_COLORS), none: true },
   tableBrand: fixed(STRONG_COLORS),
   textColor: fixed(INK_COLORS),
 };
