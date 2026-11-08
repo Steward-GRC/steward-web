@@ -17,7 +17,13 @@ export interface CategoryChoice extends TemplateDefault {
 
 type ChoiceGroup = Pick<
   Group,
-  "defaultTemplateId" | "defaultTemplateNone" | "documentTypes" | "id" | "name" | "parentId"
+  | "defaultTemplateId"
+  | "defaultTemplateLocked"
+  | "defaultTemplateNone"
+  | "documentTypes"
+  | "id"
+  | "name"
+  | "parentId"
 >;
 
 /** What a new policy starts from here, when the category or one above it sets it. */
@@ -26,6 +32,8 @@ interface TemplateDefault {
   defaultTemplateId?: string;
   /** Set to no template: a new policy here is freeform. */
   defaultTemplateNone?: true;
+  /** The category that sets the template locks it: authors here must use it (steward-web#262). */
+  templateLocked?: true;
 }
 
 /** What a group holds, when the service says; otherwise nothing, which reads as both. */
@@ -47,7 +55,12 @@ export const categoryChoices = (groups: readonly ChoiceGroup[]): CategoryChoice[
       current = current.parentId ? byId.get(current.parentId) : undefined
     ) {
       if (current.defaultTemplateNone) return { defaultTemplateNone: true };
-      if (current.defaultTemplateId) return { defaultTemplateId: current.defaultTemplateId };
+      if (current.defaultTemplateId) {
+        return {
+          defaultTemplateId: current.defaultTemplateId,
+          ...(current.defaultTemplateLocked ? { templateLocked: true as const } : {}),
+        };
+      }
     }
     return {};
   };

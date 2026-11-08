@@ -73,7 +73,11 @@ const withDefault = (
   id: string,
   name: string,
   parentId: null | string,
-  defaults: { defaultTemplateId?: string; defaultTemplateNone?: boolean },
+  defaults: {
+    defaultTemplateId?: string;
+    defaultTemplateLocked?: boolean;
+    defaultTemplateNone?: boolean;
+  },
 ) => ({ defaultTemplateNone: false, id, name, parentId, ...defaults }) as never;
 
 describe("categoryChoices default templates (bug log 210)", () => {
@@ -108,5 +112,40 @@ describe("categoryChoices default templates (bug log 210)", () => {
     const [people] = categoryChoices([withDefault("ppl", "People", null, {})]);
     expect(people?.defaultTemplateId).toBeUndefined();
     expect(people?.defaultTemplateNone).toBeUndefined();
+  });
+});
+
+describe("categoryChoices template lock (steward-web#262)", () => {
+  it("carries the lock of the category that sets the template, to its subcategories too", () => {
+    const [finance] = categoryChoices([
+      withDefault("fin", "Finance", null, {
+        defaultTemplateId: "tpl-1",
+        defaultTemplateLocked: true,
+      }),
+      withDefault("exp", "Expenses", "fin", {}),
+    ]);
+    expect(finance?.templateLocked).toBe(true);
+    expect(finance?.subcategories[0]).toMatchObject({
+      defaultTemplateId: "tpl-1",
+      templateLocked: true,
+    });
+  });
+
+  it("is not locked by a parent's lock once the subcategory sets its own template", () => {
+    const [finance] = categoryChoices([
+      withDefault("fin", "Finance", null, {
+        defaultTemplateId: "tpl-1",
+        defaultTemplateLocked: true,
+      }),
+      withDefault("exp", "Expenses", "fin", { defaultTemplateId: "tpl-2" }),
+    ]);
+    expect(finance?.subcategories[0]?.templateLocked).toBeUndefined();
+  });
+
+  it("is not locked where nothing locks", () => {
+    const [people] = categoryChoices([
+      withDefault("ppl", "People", null, { defaultTemplateId: "tpl-1" }),
+    ]);
+    expect(people?.templateLocked).toBeUndefined();
   });
 });

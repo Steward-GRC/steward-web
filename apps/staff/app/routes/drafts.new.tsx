@@ -174,6 +174,8 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
     loaderData.templates.some((template) => template.id === choice.defaultTemplateId)
       ? choice.defaultTemplateId
       : "";
+  // A category that locks its template fixes it: no freeform, no other template.
+  const templateLocked = home?.templateLocked === true && templateOf(home) !== "";
 
   return (
     <div
@@ -359,18 +361,27 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
               <Labelled id={ids.template} label={t("new.fields.template")}>
                 <select
                   className={control}
+                  disabled={templateLocked}
                   id={ids.template}
-                  name="templateId"
+                  name={templateLocked ? undefined : "templateId"}
                   onChange={(event) => set("templateId", event.target.value)}
                   value={draft.templateId || NO_TEMPLATE}
                 >
-                  <option value={NO_TEMPLATE}>{t("new.fields.templateNone")}</option>
+                  {templateLocked ? null : (
+                    <option value={NO_TEMPLATE}>{t("new.fields.templateNone")}</option>
+                  )}
                   {loaderData.templates.map((template) => (
                     <option key={template.id} value={template.id}>
                       {template.name}
                     </option>
                   ))}
                 </select>
+                {templateLocked ? (
+                  <>
+                    <input name="templateId" type="hidden" value={draft.templateId} />
+                    <span className="text-sm text-muted">{t("new.fields.templateLocked")}</span>
+                  </>
+                ) : null}
               </Labelled>
               <div className="flex flex-col gap-[5px]">
                 <span className="text-sm font-medium" id={`${ids.template}-sensitivity`}>
