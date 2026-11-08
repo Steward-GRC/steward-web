@@ -125,10 +125,10 @@ describe("reading the anchor of a selection", () => {
   });
 });
 
-describe("$replaceQuote", () => {
-  const textOf = (editor: LexicalEditor) =>
-    editor.getEditorState().read(() => $getRoot().getTextContent());
+const textOf = (editor: LexicalEditor) =>
+  editor.getEditorState().read(() => $getRoot().getTextContent());
 
+describe("$replaceQuote", () => {
   it("puts new text where the nth match of the quote was", () => {
     const editor = editorWith("seven years then seven years");
     let done = false;

@@ -41,8 +41,8 @@ import { registerHeadingHighlightGuard } from "./headingHighlight";
 import { STEWARD_NODES } from "./nodes";
 import {
   createCommentToolbarAction,
-  type ReviewComments,
   isClosedSuggestion,
+  type ReviewComments,
   ReviewThreadAnchors,
   ReviewThreadsPanel,
 } from "./ReviewComments";

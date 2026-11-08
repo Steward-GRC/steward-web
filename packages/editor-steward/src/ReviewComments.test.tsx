@@ -228,6 +228,35 @@ const highlighted = () =>
     expect(document.querySelectorAll("mark[data-kg-comment-ids]").length).toBeGreaterThan(0),
   );
 
+const closed = (outcome: string, extra: Record<string, unknown> = {}) =>
+  withSuggestion(
+    { closedBy: "user-bob", closedText: "six years", outcome, ...extra },
+    { resolved: true },
+  );
+
+const select = async () => {
+  await act(async () => {
+    lexicalEditor().update(() => {
+      const text = $getRoot().getAllTextNodes()[0];
+      if ($isTextNode(text)) text.select(5, 12);
+    });
+    await Promise.resolve();
+  });
+};
+
+const open = async (onAdd: ReturnType<typeof vi.fn>) => {
+  // editable here: the card is the same; a read-only editor shows it once the base allows it
+  await mount({ review: asSide("REVIEWER", { onAdd, threads: [] }) });
+  await act(async () => {
+    lexicalEditor().update(() => {
+      const text = $getRoot().getAllTextNodes()[0];
+      if ($isTextNode(text)) text.select(5, 12);
+    });
+    await Promise.resolve();
+  });
+  await userEvent.click(await screen.findByRole("button", { name: "Comment" }));
+};
+
 describe("a suggestion on a thread", () => {
   it("shows the change, the round and whose turn it is", async () => {
     await mount({ review: asSide("AUTHOR", { threads: [withSuggestion()] }) });
@@ -261,9 +290,7 @@ describe("a suggestion on a thread", () => {
     }
     expect(screen.queryByRole("button", { name: "Accept" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Change it" }));
-    await waitFor(() =>
-      expect(review.onClose).toHaveBeenCalledWith("thread-1", "CHANGED", undefined),
-    );
+    await waitFor(() => expect(review.onClose).toHaveBeenCalledWith("thread-1", "CHANGED"));
     expect(documentText(handle)).toContain("Then keep six years more.");
     expect(documentText(handle)).toContain("for seven years.");
   });
@@ -346,12 +373,6 @@ describe("a suggestion on a thread", () => {
 });
 
 describe("closed suggestions", () => {
-  const closed = (outcome: string, extra: Record<string, unknown> = {}) =>
-    withSuggestion(
-      { closedBy: "user-bob", closedText: "six years", outcome, ...extra },
-      { resolved: true },
-    );
-
   it("lists them under Closed with the outcome, who closed them and the change", async () => {
     await mount({ review: asSide("AUTHOR", { threads: [closed("CHANGED")] }) });
     const panel = await screen.findByRole("region", { name: "Comments" });
@@ -387,16 +408,6 @@ describe("closed suggestions", () => {
 });
 
 describe("who sees which toolbar", () => {
-  const select = async () => {
-    await act(async () => {
-      lexicalEditor().update(() => {
-        const text = $getRoot().getAllTextNodes()[0];
-        if ($isTextNode(text)) text.select(5, 12);
-      });
-      await Promise.resolve();
-    });
-  };
-
   // Needs the base editor to show a read-only action in a non-editable editor (node-koenig-editor,
   // toolbar actions with readOnly: true). Remove `.fails` once Steward pins that release.
   it.fails("gives the reviewer one button, Comment, and no formatting", async () => {
@@ -419,18 +430,6 @@ describe("who sees which toolbar", () => {
 });
 
 describe("the Comment card with a suggested text", () => {
-  const open = async (onAdd: ReturnType<typeof vi.fn>) => {
-    await mount({ readOnly: true, review: asSide("REVIEWER", { onAdd, threads: [] }) });
-    await act(async () => {
-      lexicalEditor().update(() => {
-        const text = $getRoot().getAllTextNodes()[0];
-        if ($isTextNode(text)) text.select(5, 12);
-      });
-      await Promise.resolve();
-    });
-    await userEvent.click(await screen.findByRole("button", { name: "Comment" }));
-  };
-
   it("starts with the selected words, so a change to them is the suggestion", async () => {
     const onAdd = vi.fn();
     await open(onAdd);
