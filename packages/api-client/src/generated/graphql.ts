@@ -1502,6 +1502,18 @@ export type ImpersonationStatusQuery = {
   } | null;
 };
 
+export type IssueAppendixCollabTokenMutationVariables = Exact<{
+  appendixId: string | number;
+}>;
+
+export type IssueAppendixCollabTokenMutation = {
+  readonly issueAppendixCollabToken: {
+    readonly token: string;
+    readonly wsUrl: string;
+    readonly expiresAt: string;
+  };
+};
+
 export type IssueCollabTokenMutationVariables = Exact<{
   policyId: string | number;
   draftId: string | number;
@@ -10255,6 +10267,53 @@ export const ImpersonationStatusDocument = {
     },
   ],
 } as unknown as DocumentNode<ImpersonationStatusQuery, ImpersonationStatusQueryVariables>;
+export const IssueAppendixCollabTokenDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "IssueAppendixCollabToken" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "appendixId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "issueAppendixCollabToken" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "appendixId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "appendixId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "token" } },
+                { kind: "Field", name: { kind: "Name", value: "wsUrl" } },
+                { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  IssueAppendixCollabTokenMutation,
+  IssueAppendixCollabTokenMutationVariables
+>;
 export const IssueCollabTokenDocument = {
   kind: "Document",
   definitions: [

@@ -1536,3 +1536,20 @@ describe("liveEdge: the appendix life cycle", () => {
     ]);
   });
 });
+
+describe("liveEdge.issueAppendixCollabToken", () => {
+  it("asks for a token for the appendix's own room", async () => {
+    const calls = routeGateway({
+      IssueAppendixCollabToken: () => ({
+        issueAppendixCollabToken: {
+          expiresAt: "2026-11-08T00:05:00Z",
+          token: "t",
+          wsUrl: "/collab/ws/appendix%3Aa-1",
+        },
+      }),
+    });
+    const issued = await liveEdge.issueAppendixCollabToken("a-1");
+    expect(issued.wsUrl).toBe("/collab/ws/appendix%3Aa-1");
+    expect(calls[0]?.variables).toEqual({ appendixId: "a-1" });
+  });
+});

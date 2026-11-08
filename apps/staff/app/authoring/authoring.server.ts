@@ -200,3 +200,7 @@ export const reorderPolicyAppendices = (
   policyId: string,
   orderedIds: readonly string[],
 ) => edge.reorderPolicyAppendices(policyId, orderedIds, cookieOf(request));
+
+/** A token for the appendix's own co-editing room. */
+export const issueAppendixToken = (request: Request, appendixId: string) =>
+  edge.issueAppendixCollabToken(appendixId, cookieOf(request));

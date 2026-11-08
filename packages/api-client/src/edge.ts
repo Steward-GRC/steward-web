@@ -602,6 +602,7 @@ export interface Edge {
    *  needed to prefill a connection form. Site-admin only. */
   importIdpMetadata(url: string, cookie?: string): Promise<ImportedIdpMetadata>;
   /** Issues a short-lived websocket token for the co-editing session. Refused unless the caller holds edit access to the draft. */
+  issueAppendixCollabToken(appendixId: string, cookie?: string): Promise<IssueCollabTokenPayload>;
   issueCollabToken(input: IssueCollabTokenInput, cookie?: string): Promise<IssueCollabTokenPayload>;
   /** A template's current (newest) version, with its section outline. Null for a template with no version yet. */
   latestTemplateVersion(templateId: string, cookie?: string): Promise<null | TemplateVersion>;

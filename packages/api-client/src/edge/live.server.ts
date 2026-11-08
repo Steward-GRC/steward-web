@@ -86,6 +86,7 @@ import {
   GrantRootDocument,
   GroupMappingsDocument,
   ImpersonationStatusDocument,
+  IssueAppendixCollabTokenDocument,
   IssueCollabTokenDocument,
   LatestTemplateVersionDocument,
   ListUserSessionsDocument,
@@ -1171,6 +1172,15 @@ export const liveEdge: Edge = {
   },
   async importIdpMetadata(url, cookie) {
     return gatewayRestFetch("/admin/idp/import-metadata", { url }, "ImportIdpMetadata", { cookie });
+  },
+  async issueAppendixCollabToken(appendixId, cookie) {
+    const data = await gatewayFetch(
+      IssueAppendixCollabTokenDocument,
+      { appendixId },
+      "IssueAppendixCollabToken",
+      { cookie },
+    );
+    return data.issueAppendixCollabToken;
   },
   async issueCollabToken(input, cookie) {
     const data = await gatewayFetch(
