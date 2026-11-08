@@ -154,9 +154,7 @@ export const EditorHeader = ({
             <SaveState state={saveState} />
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5 @4xl:justify-end">
-          {actions}
-        </div>
+        <div className="flex flex-wrap items-center gap-2.5 @4xl:justify-end">{actions}</div>
       </div>
       <p className="text-sm text-muted">
         {t("editor.coAuthored")} · {t("editor.startingPoint")}
