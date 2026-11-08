@@ -306,7 +306,8 @@
       "subcategory": "Subcategory",
       "template": "Template",
       "templateNone": "No template (freeform)",
-      "title": "Title"
+      "title": "Title",
+      "templateLocked": "Set by the category: authors use this template."
     },
     "noCategories": {
       "body": "An admin needs to create category groups in the Admin console first.",

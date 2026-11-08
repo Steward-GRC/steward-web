@@ -132,6 +132,8 @@ export interface Group {
   readonly ackEveryoneSet: boolean;
   readonly ackTriggers: AckTrigger;
   readonly defaultTemplateId?: null | string;
+  /** Authors must use the default template: freeform and any other are refused. */
+  readonly defaultTemplateLocked?: boolean;
   readonly defaultTemplateNone: boolean;
   readonly defaultWorkflowId?: null | string;
   /** Which document types the category holds; NONE is a container for child categories. */

@@ -557,6 +557,7 @@ export interface Edge {
   discardDraft(policyId: string, cookie?: string): Promise<boolean>;
   /** Discards (deletes) a draft template version. Published versions can't be discarded. Site-admin only. */
   discardTemplateVersion(id: string, cookie?: string): Promise<boolean>;
+
   /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
   draftVersion(policyId: string, cookie?: string): Promise<null | PolicyVersion>;
   /** The platform email transport's non-secret configuration and whether a sending key is
@@ -880,6 +881,8 @@ export interface Edge {
     rules: readonly RaciRuleInput[],
     cookie?: string,
   ): Promise<readonly RaciRule[]>;
+  /** Locks (or unlocks) the template a category names, so authors must use it. Site admin only. */
+  setCategoryTemplateLock(id: string, locked: boolean, cookie?: string): Promise<boolean>;
   /** Archive (true) or restore (false) a contact-block library entry. */
   setContactBlockArchived(id: string, archived: boolean, cookie?: string): Promise<ContactBlock>;
   /** Archive (true) or restore (false) a definitions-library entry. */
@@ -1209,6 +1212,8 @@ export interface UpdateGroupSettingsInput {
   ackEveryone?: boolean;
   ackTriggers?: AckTrigger;
   defaultTemplateId?: null | string;
+  /** Authors must use the default template. Unset leaves it as it is. */
+  defaultTemplateLocked?: boolean;
   defaultTemplateNone?: boolean;
   defaultWorkflowId?: null | string;
   /** Which document types the category holds. Narrowing is refused while documents would be

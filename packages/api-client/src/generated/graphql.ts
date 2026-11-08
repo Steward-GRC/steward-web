@@ -595,6 +595,15 @@ export type CategoryRulesetQuery = {
   };
 };
 
+export type CategoryTemplateLocksQueryVariables = Exact<{ [key: string]: never }>;
+
+export type CategoryTemplateLocksQuery = {
+  readonly categoryTree: ReadonlyArray<{
+    readonly id: string;
+    readonly defaultTemplateLocked: boolean;
+  }>;
+};
+
 export type CategoryTreeQueryVariables = Exact<{
   rootId?: string | number | null | undefined;
 }>;
@@ -3496,6 +3505,18 @@ export type SetCategoryRulesetMutation = {
       readonly approve: Types.RaciGrant;
       readonly author: Types.RaciGrant;
     }>;
+  };
+};
+
+export type SetCategoryTemplateLockMutationVariables = Exact<{
+  id: string | number;
+  locked: boolean;
+}>;
+
+export type SetCategoryTemplateLockMutation = {
+  readonly setCategoryTemplateLock: {
+    readonly id: string;
+    readonly defaultTemplateLocked: boolean;
   };
 };
 
@@ -7074,6 +7095,32 @@ export const CategoryRulesetDocument = {
     },
   ],
 } as unknown as DocumentNode<CategoryRulesetQuery, CategoryRulesetQueryVariables>;
+export const CategoryTemplateLocksDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "CategoryTemplateLocks" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "categoryTree" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "defaultTemplateLocked" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CategoryTemplateLocksQuery, CategoryTemplateLocksQueryVariables>;
 export const CategoryTreeDocument = {
   kind: "Document",
   definitions: [
@@ -16189,6 +16236,65 @@ export const SetCategoryRulesetDocument = {
     },
   ],
 } as unknown as DocumentNode<SetCategoryRulesetMutation, SetCategoryRulesetMutationVariables>;
+export const SetCategoryTemplateLockDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetCategoryTemplateLock" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "locked" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setCategoryTemplateLock" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "locked" },
+                value: { kind: "Variable", name: { kind: "Name", value: "locked" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "defaultTemplateLocked" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SetCategoryTemplateLockMutation,
+  SetCategoryTemplateLockMutationVariables
+>;
 export const SetContactBlockArchivedDocument = {
   kind: "Document",
   definitions: [

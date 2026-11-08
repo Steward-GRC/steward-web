@@ -490,6 +490,7 @@ export type Category = {
   readonly ackEveryoneSet: Scalars["Boolean"]["output"];
   readonly ackTriggers: AckTrigger;
   readonly defaultTemplateId?: Maybe<Scalars["ID"]["output"]>;
+  readonly defaultTemplateLocked: Scalars["Boolean"]["output"];
   readonly defaultTemplateNone: Scalars["Boolean"]["output"];
   readonly defaultWorkflowId?: Maybe<Scalars["ID"]["output"]>;
   readonly documentTypes: CategoryDocumentTypes;
@@ -1156,6 +1157,7 @@ export type Mutation = {
    */
   readonly setCategoryGovernance: Category;
   readonly setCategoryRuleset: CategoryRuleset;
+  readonly setCategoryTemplateLock: Category;
   readonly setContactBlockArchived: ContactBlock;
   readonly setDefinitionArchived: DefinitionEntry;
   readonly setDigestWindow: NotificationSettings;
@@ -1838,6 +1840,11 @@ export type MutationSetCategoryGovernanceArgs = {
 export type MutationSetCategoryRulesetArgs = {
   categoryId: Scalars["ID"]["input"];
   rules: ReadonlyArray<RaciRuleInput>;
+};
+
+export type MutationSetCategoryTemplateLockArgs = {
+  id: Scalars["ID"]["input"];
+  locked: Scalars["Boolean"]["input"];
 };
 
 export type MutationSetContactBlockArchivedArgs = {

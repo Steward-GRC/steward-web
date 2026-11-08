@@ -886,7 +886,8 @@
       "submit": "Create category",
       "cancel": "Cancel",
       "failed": "Couldn't create this category"
-    }
+    },
+    "templateLocked": "Authors must use this template"
   },
   "workflows": {
     "title": "Workflows",

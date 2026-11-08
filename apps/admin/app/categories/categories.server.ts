@@ -254,6 +254,7 @@ export interface GroupSettingsPatch {
   ackEveryone: boolean;
   ackTriggers: AckTrigger;
   defaultTemplateId: null | string;
+  defaultTemplateLocked?: boolean;
   defaultTemplateNone: boolean;
   defaultWorkflowId: null | string;
   exclusionGroupIds: null | readonly string[];

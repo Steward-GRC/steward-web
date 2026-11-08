@@ -1,0 +1,9 @@
+# Which categories lock their default template, asked on its own so a gateway that does not carry
+# the field yet (steward-gateway#88) leaves every other category read untouched; a refusal reads
+# as "nothing is locked".
+query CategoryTemplateLocks {
+  categoryTree {
+    id
+    defaultTemplateLocked
+  }
+}

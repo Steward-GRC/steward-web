@@ -310,3 +310,45 @@ describe("the template follows the category (bug log 210)", () => {
     expect(screen.getByLabelText("Template")).toHaveValue("__no_template__");
   });
 });
+
+describe("a category that locks its template (steward-web#262)", () => {
+  const locked = {
+    ...loaderData,
+    categories: [
+      {
+        defaultTemplateId: "tpl-1",
+        id: "w",
+        name: "Workplace",
+        subcategories: [],
+        templateLocked: true,
+      },
+      { defaultTemplateId: "tpl-1", id: "o", name: "Open", subcategories: [] },
+    ],
+  };
+
+  it("shows the template as fixed, with no freeform and no other template to choose", async () => {
+    openForm("/drafts/new/policy", locked);
+    await userEvent.selectOptions(await screen.findByLabelText("Category"), "w");
+    const template = screen.getByLabelText("Template");
+    expect(template).toBeDisabled();
+    expect(template).toHaveValue("tpl-1");
+    expect(screen.getByText("Set by the category: authors use this template.")).toBeInTheDocument();
+  });
+
+  it("sends the locked template when the policy is created", async () => {
+    const posted = openForm("/drafts/new/policy", locked);
+    await userEvent.type(await screen.findByLabelText("Title"), "Hello");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "w");
+    await userEvent.click(screen.getByRole("button", { name: "Create policy" }));
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith(expect.objectContaining({ templateId: "tpl-1" })),
+    );
+  });
+
+  it("lets the template be chosen again in a category that does not lock", async () => {
+    openForm("/drafts/new/policy", locked);
+    await userEvent.selectOptions(await screen.findByLabelText("Category"), "w");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "o");
+    expect(screen.getByLabelText("Template")).toBeEnabled();
+  });
+});

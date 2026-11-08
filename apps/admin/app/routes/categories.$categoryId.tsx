@@ -154,6 +154,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
           ackEveryone: group.ackEveryone,
           ackTriggers: group.ackTriggers,
           defaultTemplateId: template === NO_TEMPLATE ? null : template,
+          defaultTemplateLocked: template !== NO_TEMPLATE && form.get("templateLocked") === "on",
           defaultTemplateNone: template === NO_TEMPLATE,
           defaultWorkflowId: workflow === NO_WORKFLOW ? null : workflow,
           exclusionGroupIds: group.exclusionGroupIds ?? null,
@@ -362,6 +363,14 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
             ]}
           />
         </Field>
+        <label className="flex items-center gap-2 self-end pb-2 text-sm">
+          <input
+            defaultChecked={group.defaultTemplateLocked === true}
+            name="templateLocked"
+            type="checkbox"
+          />
+          {t("categories.templateLocked")}
+        </label>
         <Field label={t("categories.defaultWorkflow")}>
           <Select
             className="h-[38px]"

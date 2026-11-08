@@ -124,6 +124,9 @@ enum CategoryDocumentTypes {
 
 extend type Category {
   documentTypes: CategoryDocumentTypes!
+  # Authors creating under this category (or one that inherits its template) must use the default
+  # template: freeform and any other template are refused. Proposed in steward-gateway#88.
+  defaultTemplateLocked: Boolean!
 }
 
 extend type Query {
@@ -232,4 +235,9 @@ extend type Mutation {
   # Site admin only: removes the appendix and its history.
   deleteAppendixForever(id: ID!): Boolean!
   reorderPolicyAppendices(policyId: ID!, orderedIds: [ID!]!): [PolicyAppendix!]!
+}
+
+extend type Mutation {
+  # Site admin only. The category must name a default template to lock.
+  setCategoryTemplateLock(id: ID!, locked: Boolean!): Category!
 }
