@@ -244,7 +244,7 @@ const select = async () => {
   });
 };
 
-const open = async (onAdd: ReturnType<typeof vi.fn>) => {
+const open = async (onAdd: NonNullable<ReviewComments["onAdd"]>) => {
   // editable here: the card is the same; a read-only editor shows it once the base allows it
   await mount({ review: asSide("REVIEWER", { onAdd, threads: [] }) });
   await act(async () => {

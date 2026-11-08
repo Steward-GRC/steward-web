@@ -209,6 +209,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     canAdd: false,
     meId,
     policyVersionId: draft?.id ?? "",
+    side: "AUTHOR",
     threads,
   });
   const aiHealth = useAiHealth({

@@ -199,6 +199,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
     canAdd: "task" in loaderData && Boolean(loaderData.task),
     meId: "meId" in loaderData ? loaderData.meId : "",
     policyVersionId: "policyVersionId" in loaderData ? loaderData.policyVersionId : "",
+    side: "REVIEWER",
     threads: "threads" in loaderData ? loaderData.threads : [],
   });
 
