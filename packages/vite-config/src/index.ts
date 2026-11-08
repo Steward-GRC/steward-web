@@ -4,6 +4,7 @@ import type { Server as HttpServer } from "node:http";
 import type { Plugin, UserConfig } from "vite";
 
 import react from "@vitejs/plugin-react";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -75,6 +76,23 @@ export const chooseDevelopmentQuickLogin = (
   };
 };
 
+/**
+ * The short commit of the checkout the code is run from, read once when the config loads, so a dev
+ * server shows what it runs and can be compared with main (steward-web#217). Undefined with no git.
+ */
+const gitCommit = (): string | undefined => {
+  try {
+    const out = execFileSync("git", ["rev-parse", "--short", "HEAD"], {
+      cwd: here,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return out === "" ? undefined : out;
+  } catch {
+    return undefined;
+  }
+};
+
 export interface BuildInfo {
   commit: string;
   version: string;
@@ -87,8 +105,11 @@ const stamped = (value: string | undefined, fallback: string): string =>
  * The app's own version and commit, from the image's VERSION and COMMIT build arguments. A
  * build with no COMMIT (a CI build outside the image) falls back to GitHub's `GITHUB_SHA`.
  */
-export const buildInfo = (environment: NodeJS.ProcessEnv = process.env): BuildInfo => ({
-  commit: stamped(environment.COMMIT, stamped(environment.GITHUB_SHA, "unknown")),
+export const buildInfo = (
+  environment: NodeJS.ProcessEnv = process.env,
+  fromGit: () => string | undefined = gitCommit,
+): BuildInfo => ({
+  commit: stamped(environment.COMMIT, stamped(environment.GITHUB_SHA, fromGit() ?? "unknown")),
   version: stamped(environment.VERSION, "dev"),
 });
 
