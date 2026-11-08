@@ -1,7 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
-  type Appendix,
   ApprovalStatus,
   type CreatePolicyInput,
   DocumentType,
@@ -168,30 +167,6 @@ export const reviewApprovers = async (
 
 export const discardDraft = (request: Request, policyId: string): Promise<boolean> =>
   edge.discardDraft(policyId, cookieOf(request));
-
-export const addAppendix = (
-  request: Request,
-  policyVersionId: string,
-  title: string,
-  contentJson: string,
-): Promise<Appendix> => edge.addAppendix(policyVersionId, title, contentJson, cookieOf(request));
-
-export const updateAppendix = (
-  request: Request,
-  id: string,
-  title: string,
-  contentJson: string,
-): Promise<Appendix> => edge.updateAppendix(id, title, contentJson, cookieOf(request));
-
-export const deleteAppendix = (request: Request, id: string): Promise<boolean> =>
-  edge.deleteAppendix(id, cookieOf(request));
-
-export const reorderAppendices = (
-  request: Request,
-  policyVersionId: string,
-  orderedIds: readonly string[],
-): Promise<readonly Appendix[]> =>
-  edge.reorderAppendices(policyVersionId, orderedIds, cookieOf(request));
 
 /** A policy's appendices with their drafts and history, retired ones included. */
 export const listAppendices = (request: Request, policyId: string) =>
