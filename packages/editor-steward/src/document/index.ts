@@ -6,6 +6,7 @@ export { incompleteButtons } from "./buttons";
 export { sameContent } from "./comparable";
 export {
   applySectionText,
+  describeReset,
   ensureTemplateSections,
   extractSections,
   fillEmptySections,

@@ -8,6 +8,7 @@
 // before the content arrives. The draft screen therefore mounts it while the room is connecting.
 /* oxlint-disable testing-library/no-node-access, testing-library/no-container */
 import { act, render, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Awareness } from "y-protocols/awareness";
 import { applyUpdate, Doc, encodeStateAsUpdate } from "yjs";
@@ -97,5 +98,45 @@ describe("a window that joins a room that already has content", () => {
     const handleB = mountB(collabB);
     await waitFor(() => expect(handleB()).toBeDefined());
     await waitFor(() => expect(JSON.stringify(handleB()!.getDocument())).toContain("Purpose"));
+  });
+});
+
+// bug log 201: opening a draft showed its first heading repeated hundreds of times. A window that
+// opens a stored room, again and again, in React's development double mount, has to end with one
+// copy of the document every time.
+describe("a stored room that is opened again and again", () => {
+  it("never multiplies the document", async () => {
+    const documentA = await startRoom();
+    let state = encodeStateAsUpdate(documentA);
+    const counts: number[] = [];
+    for (let open = 0; open < 4; open++) {
+      const documentB = new Doc();
+      const collabB = createStewardCollaboration(documentB, new Awareness(documentB));
+      const box = document.createElement("div");
+      document.body.append(box);
+      let handle: StewardEditorHandle | undefined;
+      render(
+        <StrictMode>
+          <StewardEditor
+            collaboration={collabB}
+            initialDocument={scaffoldFromTemplate(outline)}
+            onReady={(ready) => {
+              handle = ready;
+            }}
+          />
+        </StrictMode>,
+        { container: box },
+      );
+      await waitFor(() => expect(handle).toBeDefined());
+      await act(async () => {
+        applyUpdate(documentB, state, "remote");
+        collabB.attach(synced);
+      });
+      await waitFor(() => expect(JSON.stringify(handle!.getDocument())).toContain("Purpose"));
+      counts.push(JSON.stringify(handle!.getDocument()).split("Purpose").length - 1);
+      state = encodeStateAsUpdate(documentB);
+      box.remove();
+    }
+    expect(counts).toEqual([1, 1, 1, 1]);
   });
 });

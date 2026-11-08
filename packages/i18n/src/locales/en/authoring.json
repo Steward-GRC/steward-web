@@ -122,6 +122,10 @@
       "count": "{{filled}} of {{total}}",
       "empty": "empty",
       "reset": "Reset required sections",
+      "resetKept": "Already there, left as you wrote it: {{titles}}.",
+      "resetLevel": "{{titles}} stays at your heading level, not the template's.",
+      "resetPutBack": "Put back: {{titles}}.",
+      "resetTitle": "Required sections reset",
       "title": "Required sections"
     },
     "review": {

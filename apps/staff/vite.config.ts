@@ -8,6 +8,7 @@ import {
   chooseDevelopmentUiIssueButton,
   developmentAssetProxy,
   developmentCollabProxy,
+  editorDependencies,
   sharedAliases,
   testConfig,
 } from "@steward-web/vite-config";
@@ -16,6 +17,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig(({ command }) => ({
   define: buildInfoDefines(),
+  optimizeDeps: { include: editorDependencies().include },
   plugins: [
     tailwindcss(),
     reactRouter(),
@@ -24,6 +26,7 @@ export default defineConfig(({ command }) => ({
   ],
   publicDir: brandPublicDirectory(),
   resolve: {
+    dedupe: editorDependencies().dedupe,
     alias: sharedAliases(chooseDevelopmentUiIssueButton(), chooseDevelopmentQuickLogin(command)),
   },
   // Pinned so the documented URLs hold whichever app starts first; a busy port fails

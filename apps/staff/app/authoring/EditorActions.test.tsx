@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { Toaster } from "@steward-web/ui";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
@@ -19,7 +20,12 @@ const inRouter = (node: React.ReactNode, answer: () => unknown = () => ({ ok: tr
       path: "/",
     },
   ]);
-  render(<Stub />);
+  render(
+    <>
+      <Stub />
+      <Toaster />
+    </>,
+  );
   return posted;
 };
 
@@ -38,13 +44,14 @@ describe("Submit for approval (D37)", () => {
     await vi.waitFor(() => expect(posted).toHaveBeenCalledWith({ intent: "submit-review" }));
   });
 
-  it("blocks the submit and says so while a button has no label or link (bug log 183)", async () => {
+  it("blocks the submit with a toast while a button has no label or link (bug log 183, 202)", async () => {
     inRouter(<SubmitForApproval document={document} incompleteButtons={2} missing={[]} />);
     await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Give every button a label and a link before submitting. 2 buttons are incomplete.",
-    );
+    expect(
+      await screen.findByText("Give every button a label and a link before submitting."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("2 buttons are incomplete.")).toBeInTheDocument();
   });
 
   it("names the workflow when it's known", async () => {
@@ -91,9 +98,12 @@ describe("Submit for approval (D37)", () => {
     inRouter(<SubmitForApproval document={document} missing={["3. Visitor records"]} />);
     await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Fill every required section before submitting. Empty: 3. Visitor records",
-    );
+    // a toast, drawn at the app root: a box inside the header would be placed against the header,
+    // whose container makes it the containing block for anything fixed (bug log 202)
+    expect(
+      await screen.findByText("Fill every required section before submitting."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Empty: 3. Visitor records")).toBeInTheDocument();
   });
 
   it("explains a refusal for a group with no workflow", async () => {
