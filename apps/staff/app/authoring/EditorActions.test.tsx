@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import { ActionsMenu, AiMenu, SubmitForApproval } from "./EditorActions";
+import { ActionsMenu, SubmitForApproval } from "./EditorActions";
 
 const inRouter = (node: React.ReactNode, answer: () => unknown = () => ({ ok: true })) => {
   const posted = vi.fn();
@@ -172,28 +172,49 @@ describe("Withdraw from review", () => {
   });
 });
 
-describe("the AI menu (U27)", () => {
-  it("offers Improve draft, Rewrite a section and Review draft", async () => {
+const open = async () => {
+  await userEvent.click(screen.getByRole("button", { name: /^Actions/ }));
+};
+
+describe("the AI actions inside the Actions menu (U27, bug log 220)", () => {
+  it("has no separate AI button", () => {
+    inRouter(<ActionsMenu ai={{ available: true, onChoose: () => {} }} inReview={false} />);
+    expect(screen.queryByRole("button", { name: /^AI/ })).toBeNull();
+  });
+
+  it("offers Improve draft, Rewrite a section and Review draft, ahead of Discard draft", async () => {
     const choose = vi.fn();
-    render(<AiMenu available onChoose={choose} />);
-    await userEvent.click(screen.getByRole("button", { name: "AI" }));
+    inRouter(<ActionsMenu ai={{ available: true, onChoose: choose }} inReview={false} />);
+    await open();
     const items = screen.getAllByRole("menuitem").map((item) => item.textContent);
-    expect(items).toEqual(["Improve draft…", "Rewrite a section…", "Review draft"]);
+    expect(items).toEqual([
+      "Improve draft…",
+      "Rewrite a section…",
+      "Review draft",
+      "Discard draft…",
+    ]);
     await userEvent.click(screen.getByRole("menuitem", { name: "Review draft" }));
     expect(choose).toHaveBeenCalledWith("review");
   });
 
   it("offers Generate a draft on an empty draft", async () => {
     const choose = vi.fn();
-    render(<AiMenu available emptyDraft onChoose={choose} />);
-    await userEvent.click(screen.getByRole("button", { name: "AI" }));
+    inRouter(
+      <ActionsMenu ai={{ available: true, emptyDraft: true, onChoose: choose }} inReview={false} />,
+    );
+    await open();
     await userEvent.click(screen.getByRole("menuitem", { name: "Generate a draft…" }));
     expect(choose).toHaveBeenCalledWith("generate");
   });
 
-  it("says it's working while an AI task runs", () => {
-    render(<AiMenu available onChoose={() => {}} status="working" />);
-    expect(screen.getByRole("button", { name: "AI, working" })).toHaveAttribute(
+  it("says on the Actions button that an AI task is working", () => {
+    inRouter(
+      <ActionsMenu
+        ai={{ available: true, onChoose: () => {}, status: "working" }}
+        inReview={false}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Actions, AI working" })).toHaveAttribute(
       "aria-busy",
       "true",
     );
@@ -201,26 +222,46 @@ describe("the AI menu (U27)", () => {
 
   it("pulses when a result is ready, and offers it in the menu", async () => {
     const choose = vi.fn();
-    render(<AiMenu available onChoose={choose} status="ready" />);
-    const button = screen.getByRole("button", { name: "AI, result ready" });
+    inRouter(
+      <ActionsMenu ai={{ available: true, onChoose: choose, status: "ready" }} inReview={false} />,
+    );
+    const button = screen.getByRole("button", { name: "Actions, AI result ready" });
     expect(button).toHaveAttribute("data-ready", "true");
     await userEvent.click(button);
     await userEvent.click(screen.getByRole("menuitem", { name: "AI result ready to review" }));
     expect(choose).toHaveBeenCalledWith("result");
   });
 
-  it("is off with the reason when AI is unavailable", () => {
-    render(<AiMenu available={false} onChoose={() => {}} reason="disabled_by_admin" />);
-    const button = screen.getByRole("button", { name: "AI" });
-    expect(button).toHaveAttribute("aria-disabled", "true");
-    expect(button).toHaveAccessibleDescription("AI turned off by an administrator");
+  it("shows the AI items off, with the reason, when AI is unavailable", async () => {
+    inRouter(
+      <ActionsMenu
+        ai={{ available: false, onChoose: () => {}, reason: "disabled_by_admin" }}
+        inReview={false}
+      />,
+    );
+    await open();
+    const off = screen.getByRole("menuitem", { name: /AI turned off by an administrator/ });
+    expect(off).toHaveAttribute("aria-disabled", "true");
+    expect(screen.queryByRole("menuitem", { name: "Review draft" })).toBeNull();
   });
 
-  it("says when the AI limit is reached", () => {
-    render(<AiMenu available={false} onChoose={() => {}} reason="limit_reached" />);
-    expect(screen.getByRole("button", { name: "AI" })).toHaveAccessibleDescription(
-      "AI limit reached",
+  it("says when the AI limit is reached", async () => {
+    inRouter(
+      <ActionsMenu
+        ai={{ available: false, onChoose: () => {}, reason: "limit_reached" }}
+        inReview={false}
+      />,
     );
+    await open();
+    expect(screen.getByRole("menuitem", { name: /AI limit reached/ })).toBeInTheDocument();
+  });
+
+  it("leaves the AI out when the screen gives none", async () => {
+    inRouter(<ActionsMenu inReview={false} />);
+    await open();
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
+      "Discard draft…",
+    ]);
   });
 });
 
