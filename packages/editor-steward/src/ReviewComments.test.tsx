@@ -234,6 +234,25 @@ const closed = (outcome: string, extra: Record<string, unknown> = {}) =>
     { resolved: true },
   );
 
+/** Selects text the way a person does in a read-only editor: a DOM selection and its change event. */
+const selectInDocument = async () => {
+  const root = lexicalEditor().getRootElement() as HTMLElement;
+  await act(async () => {
+    root.focus();
+    const node = document.createTreeWalker(root, NodeFilter.SHOW_TEXT).nextNode() as Node;
+    const range = document.createRange();
+    range.setStart(node, 5);
+    range.setEnd(node, 12);
+    const selection = globalThis.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+  await act(async () => {
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+};
+
 const select = async () => {
   await act(async () => {
     lexicalEditor().update(() => {
@@ -408,14 +427,12 @@ describe("closed suggestions", () => {
 });
 
 describe("who sees which toolbar", () => {
-  // Needs the base editor to show a read-only action in a non-editable editor (node-koenig-editor,
-  // toolbar actions with readOnly: true). Remove `.fails` once Steward pins that release.
-  it.fails("gives the reviewer one button, Comment, and no formatting", async () => {
+  it("gives the reviewer one button, Comment, and no formatting", async () => {
     await mount({
       readOnly: true,
       review: asSide("REVIEWER", { onAdd: vi.fn(), threads: [] }),
     });
-    await select();
+    await selectInDocument();
     expect(await screen.findByRole("button", { name: "Comment" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Bold" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Italic" })).toBeNull();

@@ -217,6 +217,8 @@ export const createCommentToolbarAction = (
   Icon: BubbleIcon,
   id: "comment",
   label,
+  // it works on the selection and changes no text, so a read-only editor shows it
+  readOnly: true,
 });
 
 const showChange = (comments: ReviewComments, before: string, after: string): ReactNode =>
