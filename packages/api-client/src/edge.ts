@@ -313,6 +313,8 @@ export interface CreateGroupInput {
 
 export interface CreatePolicyInput {
   documentType?: DocumentType;
+  /** A policy with no template at all: it starts blank, and the category's default is not applied. */
+  freeform?: boolean;
   homeGroupId: string;
   sensitivity: Sensitivity;
   templateId?: null | string;
