@@ -27,8 +27,11 @@ import {
   BASE_CARDS,
   BASE_COLORS,
   BASE_TOOLS,
+  BUTTON_CARD,
   FILE_ICONS,
   FILE_UPLOAD_RULE,
+  MENU_HIDDEN,
+  PASTE_MARKDOWN,
   reduceToolbar,
   type StewardToolbarItem,
 } from "./editorConfig";
@@ -343,6 +346,7 @@ export const StewardEditor = ({
   return (
     <div className={className} ref={cursorsContainerRef} style={EDITOR_THEME}>
       <KoenigComposer
+        buttonCard={BUTTON_CARD}
         cards={[...BASE_CARDS]}
         collaboration={koenigCollaboration}
         colors={BASE_COLORS}
@@ -354,7 +358,9 @@ export const StewardEditor = ({
         fileUploader={fileUploader}
         initialEditorState={initialEditorState}
         lang={lang}
+        menuHidden={[...MENU_HIDDEN]}
         onError={handleError}
+        pasteMarkdown={PASTE_MARKDOWN}
         strings={strings}
         toolbar={review && readOnly ? [] : reduceToolbar(toolbar)}
         toolbarActions={toolbarActions}

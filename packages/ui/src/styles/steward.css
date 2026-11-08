@@ -737,7 +737,7 @@ SPDX-License-Identifier: Apache-2.0
 /* An upload the editor refused (bug log 195). The package draws it as bare red text in the card's
    button, and the file card as a red paragraph with role alert; this dresses both as Steward's own danger notice (the Banner's soft background, danger bar
    and ink text), so it reads the same in light, dark and high contrast. */
-.koenig-lexical [data-testid="media-placeholder-errors"],
+.koenig-lexical [data-kg-upload-error],
 .koenig-lexical [data-kg-card] p[role="alert"] {
   display: flex;
   gap: 0.625rem;
@@ -755,7 +755,7 @@ SPDX-License-Identifier: Apache-2.0
   line-height: 1.4;
   text-align: left;
 }
-.koenig-lexical [data-testid="media-placeholder-errors"]::before,
+.koenig-lexical [data-kg-upload-error]::before,
 .koenig-lexical [data-kg-card] p[role="alert"]::before {
   content: "";
   flex: none;

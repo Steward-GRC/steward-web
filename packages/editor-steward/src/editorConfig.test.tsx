@@ -12,10 +12,13 @@ import type { SerializedDocument } from "./document/tree";
 import {
   BASE_COLORS,
   BASE_TOOLBAR,
+  BUTTON_CARD,
   CALLOUT_COLORS,
   FILE_ICONS,
   FILE_UPLOAD_RULE,
   HIGHLIGHT_YELLOW,
+  MENU_HIDDEN,
+  PASTE_MARKDOWN,
   reduceToolbar,
 } from "./editorConfig";
 import { StewardEditor, type StewardEditorHandle } from "./StewardEditor";
@@ -171,10 +174,8 @@ describe("Steward's base editor set", () => {
   });
 });
 
-// Package gap (to be filed on node-koenig-editor): the Code entry comes from the code plugin, not
-// from the `cards` list, so Steward cannot take it out of the slash menu while keeping code
-// blocks it already stores. This test says what is wanted and is expected to fail until the
-// package has an option for it.
+// The Code entry comes from the code plugin; the package option menuHidden keeps it off the menus
+// while a stored code block still opens (bug log 169).
 const slashMenuWithoutCode = async () => {
   await mount({
     initialDocument: {
@@ -301,8 +302,32 @@ describe("what the editor shows in Steward", () => {
   });
 });
 
-describe("the Code slash entry (package gap)", () => {
-  it.fails("is not offered", async () => {
+describe("the Code slash entry (bug log 169)", () => {
+  it("is not offered", async () => {
     expect(await slashMenuWithoutCode()).not.toContain("code");
+  });
+});
+
+describe("the options for the 1.3 package (bug log 169, 176, 183, 193)", () => {
+  it("offers the callout as token pairs, each with its ink, from one control", () => {
+    const palette = BASE_COLORS.calloutBackground.palette ?? [];
+    expect(palette.map((swatch) => swatch.value)).toEqual([
+      "var(--color-info-soft)",
+      "var(--color-ok-soft)",
+      "var(--color-warn-soft)",
+      "var(--color-danger-soft)",
+      "var(--color-neutral-soft)",
+    ]);
+    expect(palette.every((swatch) => swatch.ink === "var(--color-ink)")).toBe(true);
+    expect(BASE_COLORS.calloutBackground.picker).toBe(false);
+  });
+
+  it("hides the button's colours and emoji and requires its label and link", () => {
+    expect(BUTTON_CARD).toEqual({ colors: false, emoji: false, required: true });
+  });
+
+  it("keeps the Code card off the menus and turns Markdown paste on", () => {
+    expect(MENU_HIDDEN).toEqual(["code"]);
+    expect(PASTE_MARKDOWN).toBe(true);
   });
 });

@@ -75,8 +75,21 @@ export const BASE_TOOLS = [
  */
 export const HIGHLIGHT_YELLOW = "#fff59d";
 
-/** The callout's fixed set: one soft status colour each, from Steward's own tokens (bug log 193). */
+/**
+ * The callout's fixed set (bug log 193): one soft status colour each, as Steward's own tokens with
+ * the ink that goes with them, so a callout follows light, dark and high contrast and is chosen
+ * as a pair from one control.
+ */
 export const CALLOUT_COLORS: readonly KoenigColorSwatch[] = [
+  { ink: "var(--color-ink)", label: "Info", value: "var(--color-info-soft)" },
+  { ink: "var(--color-ink)", label: "Success", value: "var(--color-ok-soft)" },
+  { ink: "var(--color-ink)", label: "Warning", value: "var(--color-warn-soft)" },
+  { ink: "var(--color-ink)", label: "Danger", value: "var(--color-danger-soft)" },
+  { ink: "var(--color-ink)", label: "Neutral", value: "var(--color-neutral-soft)" },
+];
+
+/** The same five as plain colours, for a table's banding. */
+const TABLE_BAND_COLORS: readonly KoenigColorSwatch[] = [
   { label: "Info", value: "#e5eaf6" },
   { label: "Success", value: "#e4efe2" },
   { label: "Warning", value: "#faeed3" },
@@ -117,10 +130,22 @@ export const BASE_COLORS: Record<KoenigColorSlot, KoenigColorSetting> = {
   headerButtonText: fixed([{ label: "White", value: "#ffffff" }]),
   headerText: fixed([{ label: "White", value: "#ffffff" }]),
   highlight: fixed([{ label: "Yellow", value: HIGHLIGHT_YELLOW }]),
-  tableBand: fixed(CALLOUT_COLORS),
+  tableBand: fixed(TABLE_BAND_COLORS),
   tableBrand: fixed(STRONG_COLORS),
   textColor: fixed(INK_COLORS),
 };
+
+/**
+ * The button card (bug log 183): its look is Steward's, so no colour or emoji controls, and the
+ * label and the link are required.
+ */
+export const BUTTON_CARD = { colors: false, emoji: false, required: true } as const;
+
+/** Cards left off the "+" and slash menus; a stored one still opens (bug log 169). */
+export const MENU_HIDDEN = ["code"] as const;
+
+/** Plain text written in Markdown becomes headings and lists on paste (bug log 176). */
+export const PASTE_MARKDOWN = true;
 
 /**
  * An editor's own toolbar: the base, reduced to what it asks for. Nothing outside the base is

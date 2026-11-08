@@ -148,7 +148,7 @@ describe("the editor's selection colour (#72)", () => {
   it("draws an upload refusal as Steward's danger notice, from its tokens (bug log 195)", () => {
     // the image card's placeholder and the file card's alert paragraph share one rule
     const refusal =
-      /\.koenig-lexical \[data-testid="media-placeholder-errors"\],\s*\.koenig-lexical \[data-kg-card\] p\[role="alert"\]\s*\{([^}]*)\}/.exec(
+      /\.koenig-lexical \[data-kg-upload-error\],\s*\.koenig-lexical \[data-kg-card\] p\[role="alert"\]\s*\{([^}]*)\}/.exec(
         css,
       )?.[1] ?? "";
     expect(refusal).toContain("var(--color-danger-soft)");
