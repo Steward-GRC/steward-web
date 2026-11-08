@@ -451,12 +451,14 @@ describe("drafts.$number loader: the published text for the live diff (bug log 2
 
   it("hands back the published version's text to compare the draft with", async () => {
     routeGateway(handlers());
-    expect((await runLoader()).published).toBe(published);
+    const result = await runLoader();
+    expect(result.published).toBe(published);
   });
 
   it("has none for a document never published", async () => {
     routeGateway(editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"));
-    expect((await runLoader()).published).toBeNull();
+    const result = await runLoader();
+    expect(result.published).toBeNull();
   });
 
   it("opens the editor without a diff when the published text can't be read", async () => {
@@ -467,7 +469,8 @@ describe("drafts.$number loader: the published text for the live diff (bug log 2
           ? { errors: [{ message: "gone" }] }
           : { policyVersion: draftVersion("draft") },
     });
-    expect((await runLoader()).published).toBeNull();
+    const result = await runLoader();
+    expect(result.published).toBeNull();
   });
 });
 
