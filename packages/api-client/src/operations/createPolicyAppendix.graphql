@@ -1,0 +1,5 @@
+mutation CreatePolicyAppendix($policyId: ID!, $title: String!, $contentJson: String!) {
+  createPolicyAppendix(policyId: $policyId, title: $title, contentJson: $contentJson) {
+    ...PolicyAppendixFields
+  }
+}

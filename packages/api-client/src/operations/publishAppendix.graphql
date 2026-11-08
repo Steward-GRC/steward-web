@@ -1,0 +1,5 @@
+mutation PublishAppendix($id: ID!) {
+  publishAppendix(id: $id) {
+    ...PolicyAppendixFields
+  }
+}

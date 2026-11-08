@@ -1,0 +1,16 @@
+fragment PolicyAppendixFields on PolicyAppendix {
+  id
+  policyId
+  letter
+  orderIndex
+  retiredAt
+  published {
+    ...AppendixVersionFields
+  }
+  draft {
+    ...AppendixVersionFields
+  }
+  versions {
+    ...AppendixVersionFields
+  }
+}
