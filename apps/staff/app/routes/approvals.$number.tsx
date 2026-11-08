@@ -39,6 +39,7 @@ import type { Route } from "./+types/approvals.$number";
 import { flowStepsOf, submittedFrom } from "../approvals/approvalFlow";
 import {
   decideApproval,
+  getRunVetoes,
   getWorkflowStatus,
   listPendingTasks,
   listUpcomingApprovals,
@@ -77,8 +78,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   // comparison that fails is not an empty one (bug log 208): the service refuses a draft saved
   // without its template version, and the tab has to say it could not compare.
   let diffFailed = false;
-  const [workflow, diff, upcoming, detail, threads, sinceReview] = await Promise.all([
+  const [workflow, vetoes, diff, upcoming, detail, threads, sinceReview] = await Promise.all([
     getWorkflowStatus(request, policyVersionId),
+    getRunVetoes(request, policyVersionId),
     publishedId && draftId && publishedId !== draftId
       ? getVersionDiff(publishedId, draftId, cookie).catch(() => {
           diffFailed = true;
@@ -129,6 +131,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     },
     task,
     threads,
+    vetoes,
     workflow,
   });
 };
@@ -243,7 +246,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
     );
   }
 
-  const { match, meId, policyVersionId, preview, review, task, workflow } = loaderData;
+  const { match, meId, policyVersionId, preview, review, task, vetoes, workflow } = loaderData;
   const inReview = statusOf(workflow.status) === IN_REVIEW;
   const current = workflow.stageNames[workflow.currentStageIdx] ?? "";
   const submitted = submittedFrom(review.history);
@@ -367,7 +370,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           rejected: t("flow.state.rejected"),
           upcoming: t("flow.state.upcoming"),
         }}
-        steps={flowStepsOf(stepperStagesOf(workflow, meId), {
+        steps={flowStepsOf(stepperStagesOf(workflow, meId, vetoes), {
           dueText: task?.dueAt ? t("flow.due", { date: formatDayMonth(task.dueAt) }) : null,
           voteLabel: (approved, needed) => t("flow.vote", { approved, needed }),
           youLabel: t("flow.you"),

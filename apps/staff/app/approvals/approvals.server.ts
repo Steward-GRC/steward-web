@@ -25,6 +25,12 @@ export const getWorkflowStatus = (
   policyVersionId: string,
 ): Promise<WorkflowStatus> => edge.workflowStatus(policyVersionId, cookieOf(request));
 
+/** The user ids holding a veto on each stage of a version's run; none where the gateway has none. */
+export const getRunVetoes = (
+  request: Request,
+  policyVersionId: string,
+): Promise<readonly (readonly string[])[]> => edge.runVetoes(policyVersionId, cookieOf(request));
+
 /** Delivers the viewer's approve/reject decision. The actor is bound server-side. */
 export const decideApproval = (
   request: Request,

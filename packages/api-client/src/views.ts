@@ -16,11 +16,13 @@ import type {
   AckTrigger,
   CategoryDocumentTypes,
   DocumentType,
+  WorkflowStatus as GeneratedWorkflowStatus,
   PolicyViewerCan,
   ReferenceKind,
   RelatedPolicy,
   ReviewCadence,
   Sensitivity,
+  StageAssignee,
 } from "./generated/schema";
 
 /**
@@ -454,3 +456,22 @@ export type WorkflowDef = NonNullable<WorkflowDefQuery["workflowDef"]>;
 
 /** One stage of a workflow definition's approval chain. */
 export type WorkflowStageDef = WorkflowDef["stages"][number];
+
+/**
+ * A run's approval status as the queries read it. The schema's seat also carries `veto`, which
+ * the status query leaves out (it is read on its own, see `runVetoes`), so it is not required here.
+ */
+export type WorkflowStatus = {
+  readonly stageAssignees: readonly (readonly Omit<StageAssignee, "veto">[])[];
+} & Omit<GeneratedWorkflowStatus, "stageAssignees">;
+
+/** Who holds a veto on a workflow's stages, and whether the workflow opts in (steward-web#256). */
+export interface WorkflowVeto {
+  readonly id: string;
+  readonly stages: readonly {
+    readonly id: string;
+    readonly vetoApproverIds: readonly string[];
+    readonly vetoGroupIds: readonly string[];
+  }[];
+  readonly vetoEnabled: boolean;
+}

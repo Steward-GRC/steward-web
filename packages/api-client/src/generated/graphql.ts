@@ -3116,6 +3116,18 @@ export type RevokeUserSessionsMutationVariables = Exact<{
 
 export type RevokeUserSessionsMutation = { readonly revokeUserSessions: number };
 
+export type RunVetoesQueryVariables = Exact<{
+  policyVersionId: string | number;
+}>;
+
+export type RunVetoesQuery = {
+  readonly workflowStatus: {
+    readonly stageAssignees: ReadonlyArray<
+      ReadonlyArray<{ readonly userId: string; readonly veto: boolean }>
+    >;
+  };
+};
+
 export type SaveAppendixDraftMutationVariables = Exact<{
   id: string | number;
   title: string;
@@ -3803,6 +3815,15 @@ export type SetUserPolicyOverrideMutation = {
   };
 };
 
+export type SetWorkflowVetoEnabledMutationVariables = Exact<{
+  id: string | number;
+  enabled: boolean;
+}>;
+
+export type SetWorkflowVetoEnabledMutation = {
+  readonly setWorkflowVetoEnabled: { readonly id: string; readonly vetoEnabled: boolean };
+};
+
 export type SignalWorkflowMutationVariables = Exact<{
   policyVersionId: string | number;
   runId: string | number;
@@ -4480,6 +4501,20 @@ export type WorkflowStatusQuery = {
       }>
     >;
   };
+};
+
+export type WorkflowVetoesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type WorkflowVetoesQuery = {
+  readonly workflowDefs: ReadonlyArray<{
+    readonly id: string;
+    readonly vetoEnabled: boolean;
+    readonly stages: ReadonlyArray<{
+      readonly id: string;
+      readonly vetoApproverIds: ReadonlyArray<string>;
+      readonly vetoGroupIds: ReadonlyArray<string>;
+    }>;
+  }>;
 };
 
 export const AuditRecordFieldsFragmentDoc = {
@@ -14892,6 +14927,58 @@ export const RevokeUserSessionsDocument = {
     },
   ],
 } as unknown as DocumentNode<RevokeUserSessionsMutation, RevokeUserSessionsMutationVariables>;
+export const RunVetoesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "RunVetoes" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "workflowStatus" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "stageAssignees" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "veto" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RunVetoesQuery, RunVetoesQueryVariables>;
 export const SaveAppendixDraftDocument = {
   kind: "Document",
   definitions: [
@@ -17386,6 +17473,65 @@ export const SetUserPolicyOverrideDocument = {
     },
   ],
 } as unknown as DocumentNode<SetUserPolicyOverrideMutation, SetUserPolicyOverrideMutationVariables>;
+export const SetWorkflowVetoEnabledDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetWorkflowVetoEnabled" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "enabled" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setWorkflowVetoEnabled" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "enabled" },
+                value: { kind: "Variable", name: { kind: "Name", value: "enabled" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "vetoEnabled" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SetWorkflowVetoEnabledMutation,
+  SetWorkflowVetoEnabledMutationVariables
+>;
 export const SignalWorkflowDocument = {
   kind: "Document",
   definitions: [
@@ -19691,3 +19837,41 @@ export const WorkflowStatusDocument = {
     },
   ],
 } as unknown as DocumentNode<WorkflowStatusQuery, WorkflowStatusQueryVariables>;
+export const WorkflowVetoesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "WorkflowVetoes" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "workflowDefs" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "vetoEnabled" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "stages" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "id" } },
+                      { kind: "Field", name: { kind: "Name", value: "vetoApproverIds" } },
+                      { kind: "Field", name: { kind: "Name", value: "vetoGroupIds" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<WorkflowVetoesQuery, WorkflowVetoesQueryVariables>;

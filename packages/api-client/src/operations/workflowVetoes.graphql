@@ -1,0 +1,14 @@
+# Which workflows opt in to veto approvers and who holds one on each stage, asked on its own so a
+# gateway that does not carry the fields yet (steward-workflow#26) leaves every other workflow
+# read untouched; a refusal reads as "no vetoes".
+query WorkflowVetoes {
+  workflowDefs {
+    id
+    vetoEnabled
+    stages {
+      id
+      vetoApproverIds
+      vetoGroupIds
+    }
+  }
+}

@@ -261,7 +261,9 @@
     },
     "submitted": "Submitted",
     "submittedBy": "{{name}} · {{date}}",
-    "you": "· you"
+    "you": "· you",
+    "veto": "Veto",
+    "byVeto": "(by veto)"
   },
   "toAcknowledge": {
     "action": "Read & acknowledge",
