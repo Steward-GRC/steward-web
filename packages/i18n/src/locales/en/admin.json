@@ -1433,7 +1433,8 @@
         "category": "Category",
         "create": "Create definition",
         "save": "Save definition",
-        "failed": "Couldn't save this definition"
+        "failed": "Couldn't save this definition",
+        "duplicate": "A definition with this title already exists"
       },
       "delete": {
         "title": "Delete this definition?",

@@ -322,7 +322,7 @@ export interface PolicyDetail {
   readonly priorVersion?: null | PolicyVersionSummary;
   readonly published?: null | string;
   readonly references: readonly PolicyReference[];
-  readonly related: readonly RelatedPolicy[];
+  readonly related: readonly RelatedItem[];
   /** A newer version being worked on beside the published one, for the revision notice (U10). */
   readonly revision?: { readonly status: PolicyStatus; readonly version: string } | null;
   readonly sensitivity: Sensitivity;
@@ -369,6 +369,9 @@ export interface PolicyVersionSummary {
   readonly toVersionId?: string;
   readonly version: string;
 }
+
+/** A related policy; `label` is how it relates to this one ("supersedes", "is related by"). */
+export type RelatedItem = { readonly label?: string } & RelatedPolicy;
 
 /** A related policy the author picked, with the relationship type. */
 export interface RelatedLinkChoice {

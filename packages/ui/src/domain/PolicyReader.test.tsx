@@ -1026,3 +1026,38 @@ describe("Edit on the reader (bug log 59)", () => {
     });
   });
 });
+
+describe("a related item's relationship (bug log 227)", () => {
+  it("says how it relates, next to its title and number", async () => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => (
+          <CommandActionsProvider>
+            <PolicyReader
+              detail={{
+                ...baseDetail,
+                related: [
+                  {
+                    label: "supersedes",
+                    number: "POL-A-000001",
+                    policyId: "p-a",
+                    title: "Old policy",
+                  },
+                  { number: "POL-B-000001", policyId: "p-b", title: "Plain link" },
+                ],
+              }}
+              viewerName="Bob Author"
+            />
+          </CommandActionsProvider>
+        ),
+        path: "/policies/:number",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
+    await userEvent.click(screen.getByRole("tab", { name: /Related/ }));
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).getByText("supersedes")).toBeInTheDocument();
+    expect(within(panel).getByText("Plain link")).toBeInTheDocument();
+    expect(within(panel).getAllByRole("listitem")).toHaveLength(2);
+  });
+});

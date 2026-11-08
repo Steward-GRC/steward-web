@@ -439,50 +439,72 @@ const assembleDetail = async (
   const publishedId = policy.currentPublishedVersionId ?? null;
   const versionId = publishedId ?? policy.currentDraftVersionId ?? null;
   const acks = policy.documentType === DocumentType.Policy && publishedId !== null;
-  const [version, attachments, versions, ack, auditPage, summary, ai] = await Promise.all([
-    versionId
-      ? gatewayFetch(PolicyVersionDocument, { id: versionId }, "PolicyVersion", { cookie }).then(
-          (d) => d.policyVersion ?? null,
-        )
-      : null,
-    gatewayFetch(PolicyAttachmentsDocument, { policyId: policy.id }, "PolicyAttachments", {
-      cookie,
-    }),
-    gatewayFetch(PolicyVersionsDocument, { policyId: policy.id }, "PolicyVersions", {
-      cookie,
-    }).then((d) => d.policyVersions),
-    acks && policy.viewerCan.ack
-      ? gatewayFetch(AckStatusDocument, { policyVersionId: publishedId }, "AckStatus", {
-          cookie,
-        }).then((d) => d.ackStatus)
-      : null,
-    // The audit log is gated on audit.read (or managing a group); a plain reader is refused,
-    // and reads the history off the published versions instead.
-    gatewayFetch(AuditLogDocument, { subject: `policy:${policy.id}` }, "AuditLog", {
-      cookie,
-    }).catch((error: unknown) => {
-      if (isPermissionDenied(error)) return null;
-      throw error;
-    }),
-    // A missing or unreadable summary just leaves the AI summary toggle out.
-    publishedId
-      ? gatewayFetch(
-          PolicyVersionSummaryDocument,
-          { versionId: publishedId },
-          "PolicyVersionSummary",
-          { cookie },
-        ).then(
-          (d) => d.policyVersionSummary ?? null,
-          () => null,
-        )
-      : null,
-    // aiHealth answers a down service as unavailable rather than failing; a failed call reads
-    // the same way, so the reader's AI pieces say so instead of breaking the page.
-    gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie }).then(
-      (d) => ({ available: d.aiHealth.available, reason: d.aiHealth.reason ?? null }),
-      () => ({ available: false, reason: "ai_service_unavailable" }),
-    ),
-  ]);
+  const [version, attachments, versions, ack, auditPage, summary, ai, versionLinks] =
+    await Promise.all([
+      versionId
+        ? gatewayFetch(PolicyVersionDocument, { id: versionId }, "PolicyVersion", { cookie }).then(
+            (d) => d.policyVersion ?? null,
+          )
+        : null,
+      gatewayFetch(PolicyAttachmentsDocument, { policyId: policy.id }, "PolicyAttachments", {
+        cookie,
+      }),
+      gatewayFetch(PolicyVersionsDocument, { policyId: policy.id }, "PolicyVersions", {
+        cookie,
+      }).then((d) => d.policyVersions),
+      acks && policy.viewerCan.ack
+        ? gatewayFetch(AckStatusDocument, { policyVersionId: publishedId }, "AckStatus", {
+            cookie,
+          }).then((d) => d.ackStatus)
+        : null,
+      // The audit log is gated on audit.read (or managing a group); a plain reader is refused,
+      // and reads the history off the published versions instead.
+      gatewayFetch(AuditLogDocument, { subject: `policy:${policy.id}` }, "AuditLog", {
+        cookie,
+      }).catch((error: unknown) => {
+        if (isPermissionDenied(error)) return null;
+        throw error;
+      }),
+      // A missing or unreadable summary just leaves the AI summary toggle out.
+      publishedId
+        ? gatewayFetch(
+            PolicyVersionSummaryDocument,
+            { versionId: publishedId },
+            "PolicyVersionSummary",
+            { cookie },
+          ).then(
+            (d) => d.policyVersionSummary ?? null,
+            () => null,
+          )
+        : null,
+      // aiHealth answers a down service as unavailable rather than failing; a failed call reads
+      // the same way, so the reader's AI pieces say so instead of breaking the page.
+      gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie }).then(
+        (d) => ({ available: d.aiHealth.available, reason: d.aiHealth.reason ?? null }),
+        () => ({ available: false, reason: "ai_service_unavailable" }),
+      ),
+      // What the published version links to, for how each related policy relates (bug log 227);
+      // a failed read leaves the plain related list.
+      publishedId
+        ? gatewayFetch(
+            PolicyVersionLinksDocument,
+            { policyVersionId: publishedId },
+            "PolicyVersionLinks",
+            { cookie },
+          ).then(
+            (d) => d.policyVersionLinks,
+            () => null,
+          )
+        : null,
+    ]);
+  const related = versionLinks
+    ? versionLinks.related.map((link) => ({
+        label: link.label,
+        number: link.number,
+        policyId: link.policyId,
+        title: link.title,
+      }))
+    : attachments.relatedPolicies;
   const history = auditPage
     ? historyFromAuditLog(
         auditPage.auditLog.records,
@@ -556,7 +578,7 @@ const assembleDetail = async (
         : null,
     published: publishedId ? (version?.publishedAt ?? null) : null,
     references: attachments.policyReferences,
-    related: attachments.relatedPolicies,
+    related,
     revision: draft
       ? { status: policyStatusOf(false, draft.status), version: semanticVersion(draft.versionNo) }
       : null,

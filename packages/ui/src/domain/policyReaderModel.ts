@@ -13,6 +13,7 @@ export type {
   PolicySectionDiff,
   PolicyVersionOption,
   PolicyVersionSummary,
+  RelatedItem,
   RelatedPolicy,
 } from "@steward-web/api-client";
 export { ReferenceKind } from "@steward-web/api-client";

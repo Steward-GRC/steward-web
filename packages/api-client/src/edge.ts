@@ -241,6 +241,7 @@ export type {
   PolicySectionDiff,
   PolicyVersionOption,
   PolicyVersionSummary,
+  RelatedItem,
   RelatedLinkChoice,
   RelationshipType,
   ReviewMessage,

@@ -1660,3 +1660,78 @@ describe("liveEdge: what a version links to (bug log 227)", () => {
     ]);
   });
 });
+
+const handlers = (links: Record<string, Handler>): Record<string, Handler> => ({
+  ...treeHandlers,
+  AckStatus: () => ({ ackStatus: { ackedAt: null, acknowledged: false } }),
+  AuditLog: () => ({ auditLog: { nextPageToken: "", records: [] } }),
+  PolicyAttachments: () => ({
+    policyContactBlocks: [],
+    policyDefinitionEntries: [],
+    policyReferences: [],
+    relatedPolicies: [{ number: "FIN-009", policyId: "p-9", title: "Plain link" }],
+  }),
+  PolicyByNumber: () => ({ policyByNumber: policy({}) }),
+  PolicyVersion: () => ({
+    policyVersion: {
+      appendices: [],
+      contentJson: "",
+      createdAt: "2026-08-05T00:00:00Z",
+      id: "v-2",
+      policyId: "p-1",
+      publishedAt: "2026-08-12T00:00:00Z",
+      status: "published",
+      templateVersionId: "",
+      versionNo: 2,
+    },
+  }),
+  PolicyVersions: () => ({ policyVersions: [{ id: "v-2", status: "published", versionNo: 2 }] }),
+  ...links,
+});
+
+describe("liveEdge.policyDetail: related items read with their relationship (bug log 227)", () => {
+  it("carries each link's type as it reads from this side, the inverse for a link made elsewhere", async () => {
+    routeGateway(
+      handlers({
+        PolicyVersionLinks: () => ({
+          policyVersionLinks: {
+            contacts: [],
+            definitions: [],
+            editable: false,
+            policyVersionId: "v-2",
+            references: [],
+            related: [
+              {
+                direction: "OUTGOING",
+                label: "supersedes",
+                number: "FIN-002",
+                policyId: "p-2",
+                title: "Old",
+                type: "supersedes",
+              },
+              {
+                direction: "INCOMING",
+                label: "is related by",
+                number: "FIN-003",
+                policyId: "p-3",
+                title: "Other",
+                type: "related-by",
+              },
+            ],
+          },
+        }),
+      }),
+    );
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.related).toEqual([
+      { label: "supersedes", number: "FIN-002", policyId: "p-2", title: "Old" },
+      { label: "is related by", number: "FIN-003", policyId: "p-3", title: "Other" },
+    ]);
+  });
+
+  it("falls back to the plain related list when the links can't be read", async () => {
+    routeGateway(handlers({ PolicyVersionLinks: () => ({ errors: [{ message: "gone" }] }) }));
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.related).toEqual([{ number: "FIN-009", policyId: "p-9", title: "Plain link" }]);
+  });
+});
