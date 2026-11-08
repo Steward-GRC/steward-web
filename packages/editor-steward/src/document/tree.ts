@@ -129,7 +129,33 @@ export const countNodeTypes = (document: SerializedDocument): Record<string, num
   return counts;
 };
 
+/** The words in a card's HTML field: the tags and the entity for a space taken out. */
+const htmlText = (value: unknown): string =>
+  typeof value === "string"
+    ? value
+        .replaceAll(/<[^>]*>/g, "")
+        .replaceAll("&nbsp;", " ")
+        .trim()
+    : "";
+
+/**
+ * The text a card keeps in its own fields, as HTML: a toggle's heading and content, each item of a
+ * toggle group, and a callout's text. These cards cannot be left empty, so they count as content
+ * (bug log 204).
+ */
+const cardText = (node: SerializedNode): string => {
+  if (node.type === "toggle") return htmlText(node.heading) + htmlText(node.content);
+  if (node.type === "callout") return htmlText(node.calloutText);
+  if (node.type === "toggle-group" && Array.isArray(node.items)) {
+    return (node.items as { content?: unknown; heading?: unknown }[])
+      .map((item) => htmlText(item?.heading) + htmlText(item?.content))
+      .join("");
+  }
+  return "";
+};
+
 /** True when a node or anything under it carries non-blank text. */
 export const hasText = (node: SerializedNode): boolean =>
   (typeof node.text === "string" && node.text.trim() !== "") ||
+  cardText(node) !== "" ||
   (node.children ?? []).some((child) => hasText(child));

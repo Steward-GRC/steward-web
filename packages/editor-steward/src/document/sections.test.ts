@@ -29,6 +29,13 @@ const text = (value: string): SerializedNode => ({
   type: "text",
   version: 1,
 });
+const card = (type: string, fields: Record<string, unknown>) => ({
+  ...fields,
+  type,
+  version: 1,
+});
+const purposeWith = (node: ReturnType<typeof card>) =>
+  wrapRoot([heading("Purpose"), node, heading("Scope")]);
 const heading = (title: string, level = 1): SerializedNode => ({
   children: [text(title)],
   direction: null,
@@ -100,6 +107,52 @@ describe("missingRequiredSections", () => {
   it("counts text under a deeper sub-heading as part of the section", () => {
     const document = wrapRoot([heading("Purpose"), heading("Detail", 2), paragraph("Why")]);
     expect(missingRequiredSections(document, outline)).toEqual([]);
+  });
+
+  describe("cards that hold text of their own count as content (bug log 204)", () => {
+    it("counts a toggle with a heading or content", () => {
+      expect(
+        missingRequiredSections(
+          purposeWith(card("toggle", { content: "", heading: "<p>Why</p>" })),
+          outline,
+        ),
+      ).toEqual([]);
+      expect(
+        missingRequiredSections(
+          purposeWith(card("toggle", { content: "<p>Because</p>", heading: "" })),
+          outline,
+        ),
+      ).toEqual([]);
+    });
+
+    it("counts a toggle group with text in any item", () => {
+      const group = card("toggle-group", {
+        items: [
+          { content: "", heading: "" },
+          { content: "<p>Because</p>", heading: "Why" },
+        ],
+      });
+      expect(missingRequiredSections(purposeWith(group), outline)).toEqual([]);
+    });
+
+    it("counts a callout with text", () => {
+      expect(
+        missingRequiredSections(
+          purposeWith(card("callout", { calloutText: "<p>Note</p>" })),
+          outline,
+        ),
+      ).toEqual([]);
+    });
+
+    it("does not count an empty toggle, group or callout, or one with only markup", () => {
+      for (const empty of [
+        card("toggle", { content: "<p></p>", heading: "" }),
+        card("toggle-group", { items: [{ content: "", heading: "<br>" }] }),
+        card("callout", { calloutText: "<p><br></p>" }),
+      ]) {
+        expect(missingRequiredSections(purposeWith(empty), outline)).toEqual(["Purpose"]);
+      }
+    });
   });
 
   it("does not count text that belongs to the next sibling section", () => {
