@@ -475,6 +475,98 @@ describe("liveEdge.policyDetail", () => {
     expect(detail?.appendices[1]?.blocks).toBeUndefined();
   });
 
+  describe.each([
+    ["policy", DocumentType.Policy, "POL-EXPENSES-000002"],
+    ["procedure", DocumentType.Procedure, "PRC-TRAVEL-000003"],
+  ])("a %s with a version in review (bug log 215)", (_label, documentType, number) => {
+    const inReview = (edit: boolean, publishedId: null | string) => ({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      PolicyByNumber: () => ({
+        policyByNumber: policy({
+          currentDraftVersionId: "v-3",
+          currentPublishedVersionId: publishedId,
+          documentType,
+          number,
+          viewerCan: { ...viewerCan, edit },
+        }),
+      }),
+      PolicyVersion: (v: Record<string, unknown>) => ({
+        policyVersion: {
+          appendices: [],
+          contentJson: JSON.stringify([
+            {
+              sectionKey: "purpose",
+              text: v.id === "v-3" ? "The submitted words." : "The published words.",
+              title: "Purpose",
+            },
+          ]),
+          createdAt: "2026-08-05T00:00:00Z",
+          id: v.id,
+          policyId: "p-1",
+          publishedAt: v.id === "v-2" ? "2026-08-12T00:00:00Z" : null,
+          status: v.id === "v-3" ? "in_review" : "published",
+          templateVersionId: "",
+          versionNo: v.id === "v-3" ? 0 : 2,
+        },
+      }),
+      PolicyVersions: () => ({
+        policyVersions: [
+          ...(publishedId
+            ? [
+                {
+                  createdAt: "2026-08-05T00:00:00Z",
+                  id: "v-2",
+                  publishedAt: "2026-08-12T00:00:00Z",
+                  status: "published",
+                  versionNo: 2,
+                },
+              ]
+            : []),
+          {
+            createdAt: "2026-10-05T00:00:00Z",
+            id: "v-3",
+            publishedAt: null,
+            status: "in_review",
+            versionNo: 0,
+          },
+        ],
+      }),
+    });
+
+    it("shows the published version, never the one in review", async () => {
+      routeGateway(inReview(true, "v-2"));
+      const detail = await liveEdge.policyDetail(documentType, number);
+      expect(JSON.stringify(detail?.body)).toContain("The published words.");
+      expect(JSON.stringify(detail?.body)).not.toContain("The submitted words.");
+      expect(detail?.status).toBe("PUBLISHED");
+    });
+
+    it("tells someone who can edit about the version in review, with where it is", async () => {
+      routeGateway(inReview(true, "v-2"));
+      const detail = await liveEdge.policyDetail(documentType, number);
+      expect(detail?.revision).toMatchObject({ status: "IN_REVIEW" });
+    });
+
+    it("tells someone who cannot edit nothing about it", async () => {
+      routeGateway(inReview(false, "v-2"));
+      const detail = await liveEdge.policyDetail(documentType, number);
+      expect(detail?.revision).toBeNull();
+    });
+
+    it("never published: shows no content, only the way to the version, to an editor", async () => {
+      routeGateway(inReview(true, null));
+      const detail = await liveEdge.policyDetail(documentType, number);
+      expect(detail?.body).toEqual([]);
+      expect(detail?.version).toBe("");
+      expect(detail?.revision).toMatchObject({ status: "IN_REVIEW" });
+    });
+
+    it("never published: is not there at all for someone who cannot edit", async () => {
+      routeGateway(inReview(false, null));
+      expect(await liveEdge.policyDetail(documentType, number)).toBeNull();
+    });
+  });
+
   it("reads AI as unavailable when the health check itself fails", async () => {
     routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");

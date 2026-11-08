@@ -275,7 +275,8 @@
       },
       "draftRevision": {
         "body": "A newer version, v{{revision}}, is being drafted. You're reading the published v{{version}}.",
-        "continue": "Continue editing",
+        "bodyUnpublished": "Nothing has been published yet. v{{revision}} is a saved draft.",
+        "continue": "View the current draft",
         "savedTitle": "This {{noun}} has a saved draft",
         "title": "A draft revision is in progress"
       },
@@ -285,7 +286,9 @@
       },
       "inReviewRevision": {
         "body": "v{{revision}} is waiting on approval. You're reading the published v{{version}}.",
-        "title": "A new version is in review"
+        "bodyUnpublished": "Nothing has been published yet. v{{revision}} is waiting on approval.",
+        "title": "Your {{noun}} has a version in review",
+        "view": "View your submitted version"
       },
       "more_one": "+{{count}} more notice",
       "more_other": "+{{count}} more notices",

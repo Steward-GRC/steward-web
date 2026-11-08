@@ -347,54 +347,54 @@ const RevealedBar = ({ onHide, until }: { onHide: () => void; until: string }) =
   );
 };
 
-/** The draft and revision notices (U10) this detail calls for, in their fixed order. */
+/**
+ * The draft and revision notices (U10) this detail calls for, in their fixed order. The reader
+ * always shows the latest published version; the one area about a draft or a version in review
+ * is for someone who can edit (bug log 215), and is how they find it from here.
+ */
 const noticesFor = (
   detail: PolicyDetail,
   t: (key: string, values?: Record<string, unknown>) => string,
-  continueDraft?: () => void,
+  openDraft?: () => void,
 ): ReaderNotice[] => {
   const notices: ReaderNotice[] = [];
-  const revision = detail.revision;
+  const revision = openDraft ? detail.revision : null;
+  const unpublished = detail.currentVersionId === null;
+  const noun = documentTypeCopy(detail.documentType).noun;
+  const button = (label: string) =>
+    openDraft ? (
+      <button className="font-semibold hover:underline" onClick={openDraft} type="button">
+        {label}
+      </button>
+    ) : undefined;
   if (revision?.status === PolicyStatus.InReview) {
     notices.push({
-      body: t("reader.notices.inReviewRevision.body", {
-        revision: revision.version,
-        version: detail.version,
-      }),
+      action: button(t("reader.notices.inReviewRevision.view")),
+      body: t(
+        unpublished
+          ? "reader.notices.inReviewRevision.bodyUnpublished"
+          : "reader.notices.inReviewRevision.body",
+        { revision: revision.version, version: detail.version },
+      ),
       id: "inReviewRevision",
-      title: t("reader.notices.inReviewRevision.title"),
+      title: t("reader.notices.inReviewRevision.title", { noun }),
       tone: "info",
     });
   } else if (revision?.status === PolicyStatus.Draft) {
-    // Someone who can edit gets the way back into the one shared draft (#75).
     notices.push({
-      ...(continueDraft
-        ? {
-            action: (
-              <button
-                className="font-semibold hover:underline"
-                onClick={continueDraft}
-                type="button"
-              >
-                {t("reader.notices.draftRevision.continue")}
-              </button>
-            ),
-          }
-        : {}),
-      body: t("reader.notices.draftRevision.body", {
-        revision: revision.version,
-        version: detail.version,
-      }),
+      action: button(t("reader.notices.draftRevision.continue")),
+      body: t(
+        unpublished
+          ? "reader.notices.draftRevision.bodyUnpublished"
+          : "reader.notices.draftRevision.body",
+        { revision: revision.version, version: detail.version },
+      ),
       id: "draftRevision",
-      title: continueDraft
-        ? t("reader.notices.draftRevision.savedTitle", {
-            noun: documentTypeCopy(detail.documentType).noun,
-          })
-        : t("reader.notices.draftRevision.title"),
+      title: t("reader.notices.draftRevision.savedTitle", { noun }),
       tone: "neutral",
     });
   }
-  if (detail.status === PolicyStatus.InReview) {
+  if (detail.status === PolicyStatus.InReview && !revision) {
     notices.push({
       body: t("reader.notices.inReview.body"),
       id: "inReview",

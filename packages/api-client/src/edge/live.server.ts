@@ -427,7 +427,9 @@ const assembleDetail = async (
   cookie?: string,
 ): Promise<PolicyDetail> => {
   const publishedId = policy.currentPublishedVersionId ?? null;
-  const versionId = publishedId ?? policy.currentDraftVersionId ?? null;
+  // The reader shows the latest published version, never one that is only a draft or in review
+  // (bug log 215); someone who can edit finds that version through `revision`.
+  const versionId = publishedId;
   const acks = policy.documentType === DocumentType.Policy && publishedId !== null;
   const [version, attachments, versions, ack, auditPage, summary, ai] = await Promise.all([
     versionId
@@ -495,7 +497,7 @@ const assembleDetail = async (
   const names = categoryNames(index, policy.homeCategoryId);
   const draftId = policy.currentDraftVersionId ?? null;
   const draft =
-    publishedId && draftId && draftId !== publishedId
+    policy.viewerCan.edit && draftId && draftId !== publishedId
       ? versions.find((v) => v.id === draftId)
       : undefined;
   const body = version ? documentBlocksFromContent(version.contentJson) : [];
@@ -551,7 +553,7 @@ const assembleDetail = async (
       ? { status: policyStatusOf(false, draft.status), version: semanticVersion(draft.versionNo) }
       : null,
     sensitivity: policy.sensitivity,
-    status: policyStatusOf(publishedId !== null, version?.status),
+    status: policyStatusOf(publishedId !== null, version?.status ?? draft?.status),
     subcategory: names.subcategory,
     summary: summary ? { generatedAt: summary.generatedAt, text: summary.summaryText } : null,
     title: policy.title,
@@ -1479,9 +1481,11 @@ export const liveEdge: Edge = {
         },
       ),
     ]);
-    return found && found.documentType === documentType
-      ? assembleDetail(found, index, cookie)
-      : null;
+    // A policy nobody has published is not for readers: only someone who can edit it finds it.
+    const readable =
+      found?.documentType === documentType &&
+      (Boolean(found.currentPublishedVersionId) || found.viewerCan.edit);
+    return found && readable ? assembleDetail(found, index, cookie) : null;
   },
   async recordPolicyExport(policyId, kind, includeHistory, cookie) {
     if (exportAuditMissing) return false;
