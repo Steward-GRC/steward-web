@@ -6,7 +6,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ShellConfig } from "../shellConfig";
 
@@ -150,6 +150,22 @@ describe("StaffShell header (H1)", () => {
       "Sign out",
     ]);
     expect(screen.getByRole("form", { name: "Sign out" })).toHaveAttribute("method", "post");
+  });
+});
+
+describe("Sign out from the account menu (bug log 216)", () => {
+  it("submits the sign-out form when the item is chosen, rather than closing the menu first", async () => {
+    renderShell(bob);
+    const submitted = vi.fn((event: Event) => event.preventDefault());
+    document.addEventListener("submit", submitted, true);
+    try {
+      await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Sign out" }));
+      expect(submitted).toHaveBeenCalledOnce();
+      expect((submitted.mock.calls[0]![0].target as HTMLFormElement).method).toBe("post");
+    } finally {
+      document.removeEventListener("submit", submitted, true);
+    }
   });
 });
 

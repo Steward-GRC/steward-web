@@ -4,7 +4,7 @@ import { useIdentity } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
 import { cn, Menu, MenuContent, MenuItem, MenuTrigger, Tooltip } from "@steward-web/ui";
 import { ArrowLeft, Bell, Info, Smartphone, User } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { Link, useHref } from "react-router";
 
 import { AboutDiagnostics } from "./AboutDiagnostics";
@@ -26,10 +26,18 @@ const initialOf = (identity: { firstName: string; name: string; username: string
 const SignOutItem = () => {
   const { t } = useTranslation("auth");
   const action = useHref("/sign-out");
+  const form = useRef<HTMLFormElement>(null);
+  // Choosing a menu item closes the menu and takes its content, this form included, out of the
+  // page; a browser then drops the submit the button's own click would have made. So submit
+  // here, first, and keep the menu open until the page navigates away (bug log 216).
+  const submit = (event: Event) => {
+    event.preventDefault();
+    form.current?.requestSubmit();
+  };
   return (
-    <form action={action} aria-label={t("signOut")} method="post">
-      <MenuItem asChild className={itemClass}>
-        <button className="w-full text-left" type="submit">
+    <form action={action} aria-label={t("signOut")} method="post" ref={form}>
+      <MenuItem asChild className={itemClass} onSelect={submit}>
+        <button className="w-full text-left" type="button">
           <ArrowLeft aria-hidden="true" />
           {t("signOut")}
         </button>
