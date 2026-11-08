@@ -1,6 +1,8 @@
 import type { DocumentBlock, InlineRun } from "@steward-web/api-client";
 
-import { Fragment, type ReactNode } from "react";
+import { useTranslation } from "@steward-web/i18n";
+import { Fragment, type ReactNode, useEffect, useState } from "react";
+import { useLocation } from "react-router";
 
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
@@ -151,6 +153,188 @@ const Runs = ({
   </>
 );
 
+/**
+ * A list of blocks in the reading style. The body numbers its headings; an appendix does not.
+ */
+const BlockList = ({
+  blocks,
+  definitions,
+  numbered,
+  onTerm,
+}: {
+  blocks: readonly DocumentBlock[];
+  definitions: readonly PolicyDefinition[];
+  numbered: Map<number, Numbered> | null;
+  onTerm?: (definition: PolicyDefinition) => void;
+}) => (
+  <>
+    {blocks.map((block, index) => {
+      switch (block.kind) {
+        case "heading": {
+          const heading = numbered?.get(index) ?? {
+            id: `appendix-heading-${index}`,
+            number: "",
+            text: block.text,
+          };
+          const label = heading.number ? `${heading.number} ${block.text}` : block.text;
+          if (block.depth === 1) {
+            return (
+              <h2
+                className="mt-7 mb-2 scroll-mt-4 text-[22px] leading-[30px] font-semibold first:mt-0 sm:text-[26px] sm:leading-[34px]"
+                id={heading.id}
+                key={index}
+              >
+                {label}
+              </h2>
+            );
+          }
+          return (
+            <h3
+              className="mt-5 mb-1.5 scroll-mt-4 text-[19px] leading-[28px] font-semibold sm:text-[21px] sm:leading-[30px]"
+              id={heading.id}
+              key={index}
+            >
+              {label}
+            </h3>
+          );
+        }
+        case "list": {
+          const List = block.ordered ? "ol" : "ul";
+          return (
+            <List
+              className={`mb-5 max-w-[68ch] pl-6 ${block.ordered ? "list-decimal" : "list-disc"}`}
+              key={index}
+            >
+              {block.items.map((runs, item) => (
+                <li key={item}>
+                  <Runs definitions={definitions} onTerm={onTerm} runs={runs} />
+                </li>
+              ))}
+            </List>
+          );
+        }
+        case "paragraph": {
+          return (
+            <p className="mb-5 max-w-[68ch] whitespace-pre-line text-pretty" key={index}>
+              <Runs definitions={definitions} onTerm={onTerm} runs={block.runs} />
+            </p>
+          );
+        }
+        case "quote": {
+          return (
+            <blockquote
+              className="mb-5 max-w-[68ch] border-l-[3px] border-border-strong pl-4 text-muted"
+              key={index}
+            >
+              <Runs definitions={definitions} onTerm={onTerm} runs={block.runs} />
+            </blockquote>
+          );
+        }
+        case "table": {
+          const [head, ...rest] = block.rows[0]?.header ? block.rows : [undefined, ...block.rows];
+          return (
+            <div className="mb-6 overflow-x-auto" key={index}>
+              <table className="w-full border-collapse font-sans text-[15px] leading-[22px]">
+                {head ? (
+                  <thead>
+                    <tr>
+                      {head.cells.map((cell, column) => (
+                        <th
+                          className="border-b-[1.5px] border-border-strong bg-sunken px-3 py-[9px] text-left font-semibold"
+                          key={column}
+                        >
+                          {cell}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                ) : null}
+                <tbody>
+                  {rest.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {row!.cells.map((cell, column) => (
+                        <td className="border-b border-border px-3 py-[9px] align-top" key={column}>
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+      }
+    })}
+  </>
+);
+
+/**
+ * An appendix: supporting material, so it starts folded and opens when asked for (by its
+ * heading, the outline or an address pointing at it), and always begins with a note that it is
+ * not policy.
+ */
+const AppendixSection = ({
+  appendix,
+  definitions,
+  first,
+  label,
+  onTerm,
+}: {
+  appendix: PolicyAppendix;
+  definitions: readonly PolicyDefinition[];
+  first: boolean;
+  label: string;
+  onTerm?: (definition: PolicyDefinition) => void;
+}) => {
+  const { t } = useTranslation("policy");
+  const id = appendixId(appendix);
+  const [open, setOpen] = useState(false);
+  const { hash } = useLocation();
+  // An address, or the outline, pointing at the appendix opens it.
+  useEffect(() => {
+    const opens = () => {
+      if (hash.slice(1) === id || globalThis.location.hash.slice(1) === id) {
+        setOpen(true);
+        document.querySelector(`#${CSS.escape(id)}`)?.scrollIntoView();
+      }
+    };
+    opens();
+    globalThis.addEventListener("hashchange", opens);
+    return () => globalThis.removeEventListener("hashchange", opens);
+  }, [hash, id]);
+  return (
+    <details
+      className={first ? "border-t border-border-strong pt-6" : "pt-6"}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+      open={open}
+    >
+      <summary
+        className="mb-2 scroll-mt-4 cursor-pointer text-[20px] leading-[28px] font-semibold sm:text-[22px] sm:leading-[30px]"
+        id={id}
+      >
+        {label}
+      </summary>
+      <aside
+        aria-label={t("reader.appendices.notPolicy.label")}
+        className="mb-4 max-w-[68ch] rounded-md bg-sunken px-3 py-2 font-sans text-sm text-muted"
+      >
+        {t("reader.appendices.notPolicy.text")}
+      </aside>
+      {appendix.blocks && appendix.blocks.length > 0 ? (
+        <BlockList
+          blocks={appendix.blocks}
+          definitions={definitions}
+          numbered={null}
+          onTerm={onTerm}
+        />
+      ) : (
+        <p className="max-w-[68ch] whitespace-pre-line">{appendix.text}</p>
+      )}
+    </details>
+  );
+};
+
 export interface PolicyDocumentProps {
   appendices: readonly PolicyAppendix[];
   appendixLabel: (appendix: PolicyAppendix) => string;
@@ -180,116 +364,16 @@ export const PolicyDocument = ({
       data-read-aloud=""
       id="body"
     >
-      {blocks.map((block, index) => {
-        switch (block.kind) {
-          case "heading": {
-            const heading = numbered.get(index)!;
-            const label = heading.number ? `${heading.number} ${block.text}` : block.text;
-            if (block.depth === 1) {
-              return (
-                <h2
-                  className="mt-7 mb-2 scroll-mt-4 text-[22px] leading-[30px] font-semibold first:mt-0 sm:text-[26px] sm:leading-[34px]"
-                  id={heading.id}
-                  key={index}
-                >
-                  {label}
-                </h2>
-              );
-            }
-            return (
-              <h3
-                className="mt-5 mb-1.5 scroll-mt-4 text-[19px] leading-[28px] font-semibold sm:text-[21px] sm:leading-[30px]"
-                id={heading.id}
-                key={index}
-              >
-                {label}
-              </h3>
-            );
-          }
-          case "list": {
-            const List = block.ordered ? "ol" : "ul";
-            return (
-              <List
-                className={`mb-5 max-w-[68ch] pl-6 ${block.ordered ? "list-decimal" : "list-disc"}`}
-                key={index}
-              >
-                {block.items.map((runs, item) => (
-                  <li key={item}>
-                    <Runs definitions={definitions} onTerm={onTerm} runs={runs} />
-                  </li>
-                ))}
-              </List>
-            );
-          }
-          case "paragraph": {
-            return (
-              <p className="mb-5 max-w-[68ch] whitespace-pre-line text-pretty" key={index}>
-                <Runs definitions={definitions} onTerm={onTerm} runs={block.runs} />
-              </p>
-            );
-          }
-          case "quote": {
-            return (
-              <blockquote
-                className="mb-5 max-w-[68ch] border-l-[3px] border-border-strong pl-4 text-muted"
-                key={index}
-              >
-                <Runs definitions={definitions} onTerm={onTerm} runs={block.runs} />
-              </blockquote>
-            );
-          }
-          case "table": {
-            const [head, ...rest] = block.rows[0]?.header ? block.rows : [undefined, ...block.rows];
-            return (
-              <div className="mb-6 overflow-x-auto" key={index}>
-                <table className="w-full border-collapse font-sans text-[15px] leading-[22px]">
-                  {head ? (
-                    <thead>
-                      <tr>
-                        {head.cells.map((cell, column) => (
-                          <th
-                            className="border-b-[1.5px] border-border-strong bg-sunken px-3 py-[9px] text-left font-semibold"
-                            key={column}
-                          >
-                            {cell}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                  ) : null}
-                  <tbody>
-                    {rest.map((row, rowIndex) => (
-                      <tr key={rowIndex}>
-                        {row!.cells.map((cell, column) => (
-                          <td
-                            className="border-b border-border px-3 py-[9px] align-top"
-                            key={column}
-                          >
-                            {cell}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          }
-        }
-      })}
+      <BlockList blocks={blocks} definitions={definitions} numbered={numbered} onTerm={onTerm} />
       {appendices.map((appendix, index) => (
-        <section
-          className={index === 0 ? "border-t border-border-strong pt-6" : "pt-6"}
+        <AppendixSection
+          appendix={appendix}
+          definitions={definitions}
+          first={index === 0}
           key={appendix.id}
-        >
-          <h2
-            className="mb-2 scroll-mt-4 text-[20px] leading-[28px] font-semibold sm:text-[22px] sm:leading-[30px]"
-            id={appendixId(appendix)}
-          >
-            {appendixLabel(appendix)}
-          </h2>
-          <p className="max-w-[68ch] whitespace-pre-line">{appendix.text}</p>
-        </section>
+          label={appendixLabel(appendix)}
+          onTerm={onTerm}
+        />
       ))}
     </article>
   );

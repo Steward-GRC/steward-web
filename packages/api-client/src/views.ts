@@ -245,6 +245,8 @@ export interface Policy {
 }
 
 export interface PolicyAppendix {
+  /** The appendix written in the editor, drawn with its formatting; absent for plain text. */
+  readonly blocks?: readonly DocumentBlock[];
   readonly id: string;
   readonly letter: string;
   readonly text: string;

@@ -419,6 +419,62 @@ describe("liveEdge.policyDetail", () => {
     expect(readOnly?.canEdit).toBe(false);
   });
 
+  it("draws an appendix written in the editor as blocks, and an old plain one as text", async () => {
+    const lexical = JSON.stringify({
+      root: {
+        children: [
+          {
+            children: [{ text: "Written in the editor.", type: "text", version: 1 }],
+            type: "paragraph",
+            version: 1,
+          },
+        ],
+        direction: null,
+        format: "",
+        indent: 0,
+        type: "root",
+        version: 1,
+      },
+    });
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [
+            {
+              contentJson: lexical,
+              id: "a-1",
+              letter: "A",
+              orderIndex: 0,
+              policyVersionId: "v-2",
+              title: "New",
+            },
+            {
+              contentJson: JSON.stringify({ text: "Old." }),
+              id: "a-2",
+              letter: "B",
+              orderIndex: 1,
+              policyVersionId: "v-2",
+              title: "Old",
+            },
+          ],
+          contentJson: JSON.stringify([{ sectionKey: "purpose", text: "Why.", title: "Purpose" }]),
+          createdAt: "2026-08-05T00:00:00Z",
+          id: "v-2",
+          policyId: "p-1",
+          publishedAt: "2026-08-12T00:00:00Z",
+          status: "published",
+          templateVersionId: "",
+          versionNo: 2,
+        },
+      }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.appendices[0]?.blocks?.length).toBeGreaterThan(0);
+    expect(detail?.appendices[1]).toMatchObject({ text: "Old." });
+    expect(detail?.appendices[1]?.blocks).toBeUndefined();
+  });
+
   it("reads AI as unavailable when the health check itself fails", async () => {
     routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");

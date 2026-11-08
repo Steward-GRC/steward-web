@@ -470,12 +470,16 @@ const assembleDetail = async (
           required: policy.viewerCan.ack,
         }
       : null,
-    appendices: (version?.appendices ?? []).map((a) => ({
-      id: a.id,
-      letter: a.letter,
-      text: appendixText(a.contentJson),
-      title: a.title,
-    })),
+    appendices: (version?.appendices ?? []).map((a) => {
+      const blocks = documentBlocksFromContent(a.contentJson);
+      return {
+        ...(blocks.length > 0 ? { blocks } : {}),
+        id: a.id,
+        letter: a.letter,
+        text: appendixText(a.contentJson),
+        title: a.title,
+      };
+    }),
     body,
     bodyText: version ? bodyTextFromContent(version.contentJson) : "",
     bodyUnreadable: version ? !readableContent(version.contentJson) : false,

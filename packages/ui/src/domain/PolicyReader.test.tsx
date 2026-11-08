@@ -262,14 +262,70 @@ describe("PolicyReader", () => {
     expect(within(article).getByRole("cell", { name: "Book ahead." })).toBeVisible();
   });
 
-  it("reads appendices as sections after the body, not an accordion", () => {
+  it("lists the appendices after the body, each folded until opened", async () => {
     renderAt(baseDetail);
     const article = screen.getByRole("article");
-    expect(
-      within(article).getByRole("heading", { level: 2, name: "Appendix A: Per-diem rates" }),
-    ).toBeVisible();
+    const summary = within(article).getByText("Appendix A: Per-diem rates");
+    expect(within(article).getByText("Per-diem rates.")).not.toBeVisible();
+    await userEvent.click(summary);
     expect(within(article).getByText("Per-diem rates.")).toBeVisible();
-    expect(screen.queryByText(/Appendices A:/)).toBeNull();
+  });
+
+  it("starts every appendix with a note that it is supporting material, not policy", async () => {
+    renderAt(baseDetail);
+    const article = screen.getByRole("article");
+    await userEvent.click(within(article).getByText("Appendix A: Per-diem rates"));
+    expect(within(article).getByRole("complementary", { name: /not policy/i })).toHaveTextContent(
+      "This appendix is supporting material, not policy.",
+    );
+  });
+
+  it("draws an appendix written in the editor with its formatting", async () => {
+    renderAt({
+      ...baseDetail,
+      appendices: [
+        {
+          blocks: [
+            { depth: 2, kind: "heading", sectionKey: "x", text: "Limits" },
+            {
+              items: [[{ text: "Up to $2,000" }], [{ bold: true, text: "Over $20,000" }]],
+              kind: "list",
+              ordered: false,
+            },
+          ],
+          id: "appendix-1",
+          letter: "A",
+          text: "",
+          title: "Approval limits",
+        },
+      ],
+    });
+    const article = screen.getByRole("article");
+    await userEvent.click(within(article).getByText("Appendix A: Approval limits"));
+    expect(within(article).getByRole("heading", { name: "Limits" })).toBeVisible();
+    expect(
+      within(article)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["Up to $2,000", "Over $20,000"]);
+  });
+
+  it("opens the appendix an address points to", () => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => <PolicyReader detail={baseDetail} viewerName="Erin Reader" />,
+        path: "/policies/:number",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies/POL-FINANCE-001#appendix-a"]} />);
+    expect(screen.getByText("Per-diem rates.")).toBeVisible();
+  });
+
+  it("opens the appendix the outline chooses", async () => {
+    renderAt(baseDetail);
+    const outline = screen.getByRole("navigation", { name: "On this page" });
+    await userEvent.click(within(outline).getByText("Appendix A: Per-diem rates"));
+    expect(screen.getByText("Per-diem rates.")).toBeVisible();
   });
 
   it("lists the sections and appendices in the On this page outline", () => {
