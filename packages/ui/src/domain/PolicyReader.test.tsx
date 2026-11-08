@@ -585,12 +585,10 @@ describe("PolicyReader", () => {
     expect(screen.queryByRole("status", { name: /Revealed for you until/ })).toBeNull();
   });
 
-  it("says a new version is in review beside the published one", () => {
+  it("tells a reader nothing about a version in review", () => {
     renderAt({ ...baseDetail, revision: { status: PolicyStatus.InReview, version: "3.0.0" } });
-    expect(screen.getByText("A new version is in review")).toBeInTheDocument();
-    expect(
-      screen.getByText("v3.0.0 is waiting on approval. You're reading the published v2.0.0."),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("A new version is in review")).toBeNull();
+    expect(screen.queryByText(/waiting on approval/)).toBeNull();
   });
 
   it("shows a notice for a superseded version, none for a published one", () => {
@@ -989,12 +987,12 @@ describe("Edit on the reader (bug log 59)", () => {
       revision: { status: PolicyStatus.Draft, version: "3.0.0" },
     };
 
-    it("says so in a banner with Continue editing, for someone who can edit", async () => {
+    it("says so in a banner with View the current draft, for someone who can edit", async () => {
       mountEditable("/drafts/POL-FINANCE-001", withDraft);
       const banner = screen.getByRole("note");
       expect(within(banner).getByText("This policy has a saved draft")).toBeInTheDocument();
       posted.mockClear();
-      await userEvent.click(within(banner).getByRole("button", { name: "Continue editing" }));
+      await userEvent.click(within(banner).getByRole("button", { name: "View the current draft" }));
       expect(await screen.findByText("Editor")).toBeInTheDocument();
       expect(posted).not.toHaveBeenCalled();
     });
@@ -1013,16 +1011,65 @@ describe("Edit on the reader (bug log 59)", () => {
       expect(screen.getByText("This procedure has a saved draft")).toBeInTheDocument();
     });
 
-    it("keeps the plain notice, and no button, for someone who can't edit", () => {
+    it("shows nothing about a draft to someone who can't edit", () => {
       mountEditable(undefined, withDraft);
-      expect(screen.getByText("A draft revision is in progress")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Continue editing" })).toBeNull();
+      expect(screen.queryByText("A draft revision is in progress")).toBeNull();
+      expect(screen.queryByRole("note")).toBeNull();
+      expect(screen.queryByRole("button", { name: "View the current draft" })).toBeNull();
     });
 
     it("keeps Edit when there is no draft", async () => {
       mountEditable("/drafts/POL-FINANCE-001");
       expect(offered()).toContain("Edit");
-      expect(screen.queryByRole("button", { name: "Continue editing" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "View the current draft" })).toBeNull();
+    });
+  });
+
+  describe.each([
+    ["policy", DocumentType.Policy, "POL-FINANCE-001", "policy"],
+    ["procedure", DocumentType.Procedure, "PRC-A-000001", "procedure"],
+  ])("with a %s version in review (bug log 215)", (_label, documentType, number, noun) => {
+    const inReview = {
+      ...baseDetail,
+      documentType,
+      revision: { status: PolicyStatus.InReview, version: "3.0.0" },
+    };
+
+    it("gives the author one area to open the submitted version, still reading the published one", async () => {
+      mountEditable(`/drafts/${number}`, inReview);
+      const area = screen.getByRole("note");
+      expect(within(area).getByText(`Your ${noun} has a version in review`)).toBeInTheDocument();
+      expect(within(area).getByText(/v3\.0\.0 is waiting on approval/)).toBeInTheDocument();
+      posted.mockClear();
+      await userEvent.click(
+        within(area).getByRole("button", { name: "View your submitted version" }),
+      );
+      expect(await screen.findByText("Editor")).toBeInTheDocument();
+      expect(posted).not.toHaveBeenCalled();
+    });
+
+    it("shows a draft and a version in review in the same single area", () => {
+      mountEditable(`/drafts/${number}`, inReview);
+      expect(screen.getAllByRole("note")).toHaveLength(1);
+    });
+
+    it("shows nothing about it to someone who can't edit", () => {
+      mountEditable(undefined, inReview);
+      expect(screen.queryByRole("note")).toBeNull();
+      expect(screen.queryByRole("button", { name: "View your submitted version" })).toBeNull();
+    });
+
+    it("says, before anything is published, that there is no published version yet", () => {
+      mountEditable(`/drafts/${number}`, {
+        ...inReview,
+        body: [],
+        currentVersionId: null,
+        status: PolicyStatus.InReview,
+        version: "",
+      });
+      const area = screen.getByRole("note");
+      expect(within(area).getByText(/Nothing has been published yet/)).toBeInTheDocument();
+      expect(screen.queryByText(/You're reading the published/)).toBeNull();
     });
   });
 });
