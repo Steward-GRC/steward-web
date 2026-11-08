@@ -338,7 +338,7 @@ describe("drafts.$number action: the appendices", () => {
     expect(response.headers.get("location")).toBe("/drafts/FIN-001/appendices/B");
     expect(calls.find((c) => c.operation === "CreatePolicyAppendix")?.variables).toMatchObject({
       policyId: "p-1",
-      title: "Untitled appendix",
+      title: "",
     });
   });
 

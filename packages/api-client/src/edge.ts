@@ -216,6 +216,7 @@ export type { NotificationPreferences, Passkey, UserLabel } from "./views";
 export type {
   AckStatus,
   AckSummary,
+  AppendixContributorView,
   AppendixEntry,
   AppendixRowView,
   AskAnswer,

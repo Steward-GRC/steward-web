@@ -14,6 +14,13 @@ describe("each person's own view of the changes (bug log 228)", () => {
     expect(result.current[0]).toBe("unified");
   });
 
+  it("starts on the view the page asks for, until the person has chosen", () => {
+    const { result } = renderHook(() => useEditorView("u-1", "diff"));
+    expect(result.current[0]).toBe("diff");
+    act(() => result.current[1]("unified"));
+    expect(renderHook(() => useEditorView("u-1", "diff")).result.current[0]).toBe("unified");
+  });
+
   it("keeps the choice for that person on this browser", () => {
     const view = renderHook(() => useEditorView("u-1"));
     act(() => view.result.current[1]("diff"));
