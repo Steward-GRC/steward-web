@@ -420,6 +420,12 @@ describe("PolicyReader", () => {
     expect(screen.queryByText("Acknowledged")).not.toBeInTheDocument();
   });
 
+  it("never offers an acknowledgement on a procedure, even when the backend says one is required (bug log 213)", () => {
+    renderAt({ ...baseDetail, documentType: DocumentType.Procedure });
+    expect(screen.queryByRole("button", { name: "Acknowledge" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
   it("redacts a sensitive policy's body but keeps its shape (U9)", () => {
     renderAt({
       ...baseDetail,

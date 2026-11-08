@@ -379,3 +379,27 @@ describe("what changed since the approver last reviewed", () => {
     );
   });
 });
+
+describe("the approval review page for a procedure (bug log 213)", () => {
+  const procedure = {
+    ...loaderData,
+    match: {
+      ...loaderData.match,
+      category: "Travel",
+      documentType: "PROCEDURE",
+      number: "PRC-TRAVEL-000003",
+      subcategory: "Booking",
+      title: "Travel Booking",
+      version: "4",
+    },
+  };
+
+  it("shows the approval flow and the three decision buttons, and no acknowledgement", () => {
+    renderReview(() => {}, procedure);
+    expect(screen.getByRole("list", { name: "Approval flow" })).toBeInTheDocument();
+    const panel = screen.getByRole("region", { name: "Your decision" });
+    expect(within(panel).getByRole("button", { name: "Approve" })).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "Reject" })).toBeInTheDocument();
+    expect(screen.queryByText(/acknowledg/i)).not.toBeInTheDocument();
+  });
+});

@@ -387,3 +387,42 @@ describe("drafts.$number loader: review state", () => {
     expect(result.approvers).toEqual([]);
   });
 });
+
+describe("drafts.$number for a procedure (bug log 213)", () => {
+  const procedure = { ...gatewayPolicy, documentType: "PROCEDURE", number: "PRC-TRAVEL-000003" };
+  const asProcedure = (versionStatus: string, approvalStatus: string): Record<string, Handler> => ({
+    ...editorHandlers(versionStatus, approvalStatus),
+    Policy: () => ({ policy: procedure }),
+    PolicyByNumber: () => ({ policyByNumber: procedure }),
+  });
+  const number = "PRC-TRAVEL-000003";
+  const loadProcedure = () =>
+    loader({
+      params: { number },
+      request: new Request(`https://staff.steward.example/drafts/${number}`),
+    } as unknown as LoaderArguments);
+
+  it("opens the editor from the procedure's number and reports it in review", async () => {
+    const calls = routeGateway(asProcedure("draft", "APPROVAL_STATUS_IN_REVIEW"));
+    const result = await loadProcedure();
+    expect(result.policy.documentType).toBe("PROCEDURE");
+    expect(result.inReview).toBe(true);
+    expect(calls.find((c) => c.operation === "PolicyByNumber")?.variables).toEqual({ number });
+  });
+
+  it("submits the procedure's working draft for approval like a policy's", async () => {
+    const calls = routeGateway({
+      ...asProcedure("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+      SubmitWorkflow: () => ({ submitWorkflow: { runId: "run-1" } }),
+    });
+    const result = (await action({
+      params: { number },
+      request: post({ intent: "submit-review" }),
+    } as unknown as ActionArguments)) as { data: unknown };
+    expect(result.data).toEqual({ intent: "submit-review", ok: true, runId: "run-1" });
+    expect(calls.find((c) => c.operation === "SubmitWorkflow")?.variables).toMatchObject({
+      policyId: "p-1",
+      policyVersionId: "v-9",
+    });
+  });
+});

@@ -5,7 +5,6 @@ import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { refusalOf } from "@steward-web/shell";
 import { DocumentType, PolicyReader } from "@steward-web/ui/domain";
 import {
-  acknowledgePolicy,
   breakGlassReveal,
   getPolicyDetail,
   recordPolicyPrint,
@@ -30,16 +29,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const cookie = request.headers.get("cookie") ?? undefined;
   const form = await request.formData();
   const intent = form.get("intent");
-  if (intent !== "acknowledge" && intent !== "breakGlass" && intent !== "recordExport") {
+  if (intent !== "breakGlass" && intent !== "recordExport") {
     throw new Response("Bad Request", { status: 400 });
   }
 
   try {
-    if (intent === "acknowledge") {
-      const policyVersionId = String(form.get("policyVersionId") ?? "");
-      await acknowledgePolicy(policyVersionId, cookie);
-      return data({ ok: true });
-    }
     if (intent === "recordExport") {
       // The gateway knows the policy's sensitivity and the caller; this only says it was printed.
       await recordPolicyPrint(
