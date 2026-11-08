@@ -1193,6 +1193,10 @@ export type Mutation = {
    */
   readonly setUserAiQueryLimit: AiUserQueryLimit;
   readonly setUserPolicyOverride: User;
+  readonly setVersionContacts: PolicyVersionLinks;
+  readonly setVersionDefinitions: PolicyVersionLinks;
+  readonly setVersionReferences: PolicyVersionLinks;
+  readonly setVersionRelated: PolicyVersionLinks;
   readonly setWorkflowVetoEnabled: WorkflowDef;
   readonly shredAuditSubject: AuditShredResult;
   /**
@@ -1955,6 +1959,26 @@ export type MutationSetUserPolicyOverrideArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationSetVersionContactsArgs = {
+  contactBlockIds: ReadonlyArray<Scalars["ID"]["input"]>;
+  policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationSetVersionDefinitionsArgs = {
+  definitionIds: ReadonlyArray<Scalars["ID"]["input"]>;
+  policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationSetVersionReferencesArgs = {
+  policyVersionId: Scalars["ID"]["input"];
+  referenceIds: ReadonlyArray<Scalars["ID"]["input"]>;
+};
+
+export type MutationSetVersionRelatedArgs = {
+  links: ReadonlyArray<RelatedLinkInput>;
+  policyVersionId: Scalars["ID"]["input"];
+};
+
 export type MutationSetWorkflowVetoEnabledArgs = {
   enabled: Scalars["Boolean"]["input"];
   id: Scalars["ID"]["input"];
@@ -2319,6 +2343,16 @@ export type PolicyVersion = {
   readonly versionNo: Scalars["Int"]["output"];
 };
 
+export type PolicyVersionLinks = {
+  readonly __typename?: "PolicyVersionLinks";
+  readonly contacts: ReadonlyArray<ContactBlock>;
+  readonly definitions: ReadonlyArray<DefinitionEntry>;
+  readonly editable: Scalars["Boolean"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly references: ReadonlyArray<Reference>;
+  readonly related: ReadonlyArray<RelatedLink>;
+};
+
 export type PolicyViewerCan = {
   readonly __typename?: "PolicyViewerCan";
   readonly ack: Scalars["Boolean"]["output"];
@@ -2457,6 +2491,7 @@ export type Query = {
   readonly policyDiff: PolicyDiff;
   readonly policyReferences: ReadonlyArray<Reference>;
   readonly policyVersion?: Maybe<PolicyVersion>;
+  readonly policyVersionLinks: PolicyVersionLinks;
   /**
    * Read a previously-stored, publish-time policy summary for a version (see
    * PolicySummaryResult), so a viewer's summary panel can read it instead of
@@ -2483,6 +2518,7 @@ export type Query = {
    * auto-applied.
    */
   readonly relatedPolicySuggestions: ReadonlyArray<RelatedPolicySuggestion>;
+  readonly relationshipTypes: ReadonlyArray<RelationshipTypeInfo>;
   readonly renderedContent: RenderedContent;
   readonly reportAttachment: ReportAttachmentContent;
   readonly reportCase: ReportCase;
@@ -2768,6 +2804,10 @@ export type QueryPolicyVersionArgs = {
   id: Scalars["ID"]["input"];
 };
 
+export type QueryPolicyVersionLinksArgs = {
+  policyVersionId: Scalars["ID"]["input"];
+};
+
 export type QueryPolicyVersionSummaryArgs = {
   versionId: Scalars["ID"]["input"];
 };
@@ -2983,6 +3023,26 @@ export type ReindexResult = {
   readonly versionId: Scalars["ID"]["output"];
 };
 
+export enum RelatedDirection {
+  Incoming = "INCOMING",
+  Outgoing = "OUTGOING",
+}
+
+export type RelatedLink = {
+  readonly __typename?: "RelatedLink";
+  readonly direction: RelatedDirection;
+  readonly label: Scalars["String"]["output"];
+  readonly number: Scalars["String"]["output"];
+  readonly policyId: Scalars["ID"]["output"];
+  readonly title: Scalars["String"]["output"];
+  readonly type: Scalars["ID"]["output"];
+};
+
+export type RelatedLinkInput = {
+  readonly policyId: Scalars["ID"]["input"];
+  readonly type: Scalars["ID"]["input"];
+};
+
 export type RelatedPolicy = {
   readonly __typename?: "RelatedPolicy";
   readonly number: Scalars["String"]["output"];
@@ -2998,6 +3058,14 @@ export type RelatedPolicySuggestion = {
   readonly policyId: Scalars["ID"]["output"];
   readonly policyTitle: Scalars["String"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
+};
+
+export type RelationshipTypeInfo = {
+  readonly __typename?: "RelationshipTypeInfo";
+  readonly id: Scalars["ID"]["output"];
+  readonly inverseId: Scalars["ID"]["output"];
+  readonly inverseLabel: Scalars["String"]["output"];
+  readonly label: Scalars["String"]["output"];
 };
 
 export type RenamePolicyResult = {

@@ -90,6 +90,8 @@ import type {
   Policy,
   PolicyDetail,
   PolicySectionDiff,
+  RelatedLinkChoice,
+  RelationshipType,
   ReviewThread,
   SecondFactor,
   SuggestionOutcome,
@@ -99,6 +101,7 @@ import type {
   UserLabel,
   UserPage,
   VersionDocument,
+  VersionLinks,
   Workflow,
   WorkflowDef,
   WorkflowStatus,
@@ -237,6 +240,8 @@ export type {
   PolicySectionDiff,
   PolicyVersionOption,
   PolicyVersionSummary,
+  RelatedLinkChoice,
+  RelationshipType,
   ReviewMessage,
   ReviewSuggestion,
   ReviewThread,
@@ -249,6 +254,7 @@ export type {
   User,
   UserPage,
   VersionDocument,
+  VersionLinks,
   Workflow,
   WorkflowDef,
   WorkflowStageDef,
@@ -712,6 +718,8 @@ export interface Edge {
     number: string,
     cookie?: string,
   ): Promise<null | PolicyDetail>;
+  /** The library items one version links to (see `VersionLinks`). */
+  policyVersionLinks(policyVersionId: string, cookie?: string): Promise<VersionLinks>;
   /** Posts a message the reporter can see in the two-way thread. Officers only. */
   postCaseMessage(caseId: string, body: string, cookie?: string): Promise<ThreadMessage>;
   /**
@@ -766,6 +774,8 @@ export interface Edge {
   ): Promise<RiskAssessment>;
   /** The reusable references/standards library (admin), active only unless includeArchived. */
   references(includeArchived?: boolean, cookie?: string): Promise<readonly Reference[]>;
+  /** The fixed list of relationship types, each with its inverse. */
+  relationshipTypes(cookie?: string): Promise<readonly RelationshipType[]>;
   /** Removes the caller's authenticator app ("totp"); the email code can't be removed. */
   removeMyFactor(kind: string, cookie?: string): Promise<boolean>;
   /** Removes one of the caller's passkeys. */
@@ -934,6 +944,30 @@ export interface Edge {
     effect: null | OverrideEffect,
     cookie?: string,
   ): Promise<User>;
+  /** Replaces the contacts a version links to, in the order given. Only while it is editable. */
+  setVersionContacts(
+    policyVersionId: string,
+    contactBlockIds: readonly string[],
+    cookie?: string,
+  ): Promise<VersionLinks>;
+  /** Replaces the definitions a version links to. Only while it is editable. */
+  setVersionDefinitions(
+    policyVersionId: string,
+    definitionIds: readonly string[],
+    cookie?: string,
+  ): Promise<VersionLinks>;
+  /** Replaces the references a version links to, in the order given. Only while editable. */
+  setVersionReferences(
+    policyVersionId: string,
+    referenceIds: readonly string[],
+    cookie?: string,
+  ): Promise<VersionLinks>;
+  /** Replaces the related policies a version links to, each with a type. Only while editable. */
+  setVersionRelated(
+    policyVersionId: string,
+    links: readonly RelatedLinkChoice[],
+    cookie?: string,
+  ): Promise<VersionLinks>;
   /** Opts a workflow in or out of veto approvers. Template admins and above. */
   setWorkflowVetoEnabled(id: string, enabled: boolean, cookie?: string): Promise<boolean>;
   /**

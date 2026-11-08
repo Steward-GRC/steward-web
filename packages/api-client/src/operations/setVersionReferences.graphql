@@ -1,0 +1,5 @@
+mutation SetVersionReferences($policyVersionId: ID!, $referenceIds: [ID!]!) {
+  setVersionReferences(policyVersionId: $policyVersionId, referenceIds: $referenceIds) {
+    ...VersionLinksFields
+  }
+}
