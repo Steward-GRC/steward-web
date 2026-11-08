@@ -201,6 +201,8 @@
       "changeType": "Change type",
       "description": "{{title}} ({{number}}) goes to {{workflow}}. You can't edit it while it's in review.",
       "empty": "Empty: {{sections}}",
+      "emptyDocument": "A document with no content can't be submitted.",
+      "emptyDocumentHint": "Write something in it first.",
       "fillButtons": "Give every button a label and a link before submitting.",
       "fillRequired": "Fill every required section before submitting.",
       "keepEditing": "Keep editing",

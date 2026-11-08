@@ -22,6 +22,7 @@ import type { ChangeEntry } from "./ai/results";
 
 export {
   describeReset,
+  documentHasText,
   incompleteButtons,
   missingRequiredSections,
   resetRequiredSections,

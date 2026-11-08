@@ -270,3 +270,43 @@ describe("after a successful create (bug log: the Create button hung on a slow c
     expect(localStorage.length).toBe(0);
   });
 });
+
+describe("the template follows the category (bug log 210)", () => {
+  const categoriesWithDefaults = {
+    ...loaderData,
+    categories: [
+      { defaultTemplateId: "tpl-1", id: "w", name: "Workplace", subcategories: [] },
+      { id: "p", name: "People", subcategories: [] },
+      { defaultTemplateNone: true, id: "n", name: "Notices", subcategories: [] },
+    ],
+  };
+
+  it("preselects the category's default template when the category is chosen", async () => {
+    openForm("/drafts/new/policy", categoriesWithDefaults);
+    await userEvent.selectOptions(await screen.findByLabelText("Category"), "w");
+    expect(screen.getByLabelText("Template")).toHaveValue("tpl-1");
+  });
+
+  it("lets the author change it to freeform afterwards", async () => {
+    const posted = openForm("/drafts/new/policy", categoriesWithDefaults);
+    await userEvent.type(await screen.findByLabelText("Title"), "Hello");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "w");
+    await userEvent.selectOptions(screen.getByLabelText("Template"), "__no_template__");
+    await userEvent.click(screen.getByRole("button", { name: "Create policy" }));
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith(
+        expect.objectContaining({ templateId: "__no_template__" }),
+      ),
+    );
+  });
+
+  it("starts freeform for a category with no default, or set to no template", async () => {
+    openForm("/drafts/new/policy", categoriesWithDefaults);
+    await userEvent.selectOptions(await screen.findByLabelText("Category"), "w");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "p");
+    expect(screen.getByLabelText("Template")).toHaveValue("__no_template__");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "w");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "n");
+    expect(screen.getByLabelText("Template")).toHaveValue("__no_template__");
+  });
+});

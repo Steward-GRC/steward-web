@@ -182,6 +182,7 @@ const ChangePicker = ({ published }: { published: string }) => {
 export const SubmitForApproval = ({
   disabled,
   document,
+  empty = false,
   incompleteButtons = 0,
   missing,
   published,
@@ -190,6 +191,8 @@ export const SubmitForApproval = ({
 }: {
   disabled?: boolean;
   document: { number: string; title: string };
+  /** The document holds no text at all, so it cannot go for review (bug log 210). */
+  empty?: boolean;
   /** Button cards with an empty label or link (bug log 183); the submit waits until none is. */
   incompleteButtons?: number;
   missing: readonly string[];
@@ -211,7 +214,11 @@ export const SubmitForApproval = ({
         onClick={() => {
           // a toast, not a box in the header: the header's container would hold a fixed box
           // against itself instead of the window (bug log 202)
-          if (missing.length > 0) {
+          if (empty) {
+            notify.warning(t("editor.submit.emptyDocument"), {
+              description: t("editor.submit.emptyDocumentHint"),
+            });
+          } else if (missing.length > 0) {
             notify.warning(t("editor.submit.fillRequired"), {
               description: t("editor.submit.empty", { sections: missing.join(", ") }),
             });

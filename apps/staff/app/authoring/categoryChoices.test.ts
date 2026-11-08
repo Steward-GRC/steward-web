@@ -68,3 +68,45 @@ describe("categoryChoices", () => {
     ]);
   });
 });
+
+const withDefault = (
+  id: string,
+  name: string,
+  parentId: null | string,
+  defaults: { defaultTemplateId?: string; defaultTemplateNone?: boolean },
+) => ({ defaultTemplateNone: false, id, name, parentId, ...defaults }) as never;
+
+describe("categoryChoices default templates (bug log 210)", () => {
+  it("carries a category's default template, and a subcategory inherits its parent's", () => {
+    const [finance] = categoryChoices([
+      withDefault("fin", "Finance", null, { defaultTemplateId: "tpl-1" }),
+      withDefault("exp", "Expenses", "fin", {}),
+    ]);
+    expect(finance?.defaultTemplateId).toBe("tpl-1");
+    expect(finance?.subcategories[0]?.defaultTemplateId).toBe("tpl-1");
+  });
+
+  it("lets a subcategory have its own default over its parent's", () => {
+    const [finance] = categoryChoices([
+      withDefault("fin", "Finance", null, { defaultTemplateId: "tpl-1" }),
+      withDefault("exp", "Expenses", "fin", { defaultTemplateId: "tpl-2" }),
+    ]);
+    expect(finance?.subcategories[0]?.defaultTemplateId).toBe("tpl-2");
+  });
+
+  it("says freeform where the category is set to no template, and stops inheriting there", () => {
+    const [phones] = categoryChoices([
+      withDefault("dev", "Devices", null, { defaultTemplateId: "tpl-2" }),
+      withDefault("ph", "Phones", "dev", { defaultTemplateNone: true }),
+    ]);
+    expect(phones?.defaultTemplateId).toBe("tpl-2");
+    expect(phones?.subcategories[0]).toMatchObject({ defaultTemplateNone: true });
+    expect(phones?.subcategories[0]?.defaultTemplateId).toBeUndefined();
+  });
+
+  it("has no default where nothing in the chain sets one", () => {
+    const [people] = categoryChoices([withDefault("ppl", "People", null, {})]);
+    expect(people?.defaultTemplateId).toBeUndefined();
+    expect(people?.defaultTemplateNone).toBeUndefined();
+  });
+});

@@ -3195,6 +3195,44 @@ export type SetPolicyOwnerMutationVariables = Exact<{
 
 export type SetPolicyOwnerMutation = { readonly setPolicyOwner: { readonly id: string } };
 
+export type SetPolicyTemplateMutationVariables = Exact<{
+  policyId: string | number;
+  templateId?: string | number | null | undefined;
+  none: boolean;
+}>;
+
+export type SetPolicyTemplateMutation = {
+  readonly setPolicyTemplate: {
+    readonly id: string;
+    readonly number: string;
+    readonly title: string;
+    readonly documentType: Types.DocumentType;
+    readonly sensitivity: Types.Sensitivity;
+    readonly ownerUserId: string;
+    readonly ownerName: string | null;
+    readonly homeCategoryId: string;
+    readonly ackTriggers: Types.AckTrigger | null;
+    readonly ackAudienceOverride: ReadonlyArray<string> | null;
+    readonly templateId: string | null;
+    readonly templateNone: boolean;
+    readonly currentDraftVersionId: string | null;
+    readonly currentPublishedVersionId: string | null;
+    readonly currentVersionNo: number | null;
+    readonly currentVersionStatus: string | null;
+    readonly updatedAt: string | null;
+    readonly retiredAt: string | null;
+    readonly viewerCan: {
+      readonly read: boolean;
+      readonly edit: boolean;
+      readonly submit: boolean;
+      readonly approve: boolean;
+      readonly contentObfuscated: boolean;
+      readonly canBreakGlass: boolean;
+      readonly ack: boolean;
+    };
+  };
+};
+
 export type SetReferenceArchivedMutationVariables = Exact<{
   id: string | number;
   archived: boolean;
@@ -15269,6 +15307,115 @@ export const SetPolicyOwnerDocument = {
     },
   ],
 } as unknown as DocumentNode<SetPolicyOwnerMutation, SetPolicyOwnerMutationVariables>;
+export const SetPolicyTemplateDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetPolicyTemplate" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "none" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setPolicyTemplate" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "templateId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "templateId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "none" },
+                value: { kind: "Variable", name: { kind: "Name", value: "none" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "AuthoringPolicyFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuthoringPolicyFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Policy" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "number" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "documentType" } },
+          { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerName" } },
+          { kind: "Field", name: { kind: "Name", value: "homeCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackAudienceOverride" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "viewerCan" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "read" } },
+                { kind: "Field", name: { kind: "Name", value: "edit" } },
+                { kind: "Field", name: { kind: "Name", value: "submit" } },
+                { kind: "Field", name: { kind: "Name", value: "approve" } },
+                { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
+                { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
+                { kind: "Field", name: { kind: "Name", value: "ack" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetPolicyTemplateMutation, SetPolicyTemplateMutationVariables>;
 export const SetReferenceArchivedDocument = {
   kind: "Document",
   definitions: [

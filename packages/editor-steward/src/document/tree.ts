@@ -154,6 +154,9 @@ const cardText = (node: SerializedNode): string => {
   return "";
 };
 
+/** True when a document holds at least one character of text; spaces alone do not count. */
+export const documentHasText = (document: SerializedDocument): boolean => hasText(document.root);
+
 /** True when a node or anything under it carries non-blank text. */
 export const hasText = (node: SerializedNode): boolean =>
   (typeof node.text === "string" && node.text.trim() !== "") ||
