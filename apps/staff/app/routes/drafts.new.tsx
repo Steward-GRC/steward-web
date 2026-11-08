@@ -14,16 +14,8 @@ import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
 import { Banner, Button, Card, cn, EmptyState } from "@steward-web/ui";
 import { draftPath } from "@steward-web/ui/domain";
-import { type ReactNode, useEffect, useId, useState } from "react";
-import {
-  data,
-  Link,
-  redirect,
-  useFetcher,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { data, Link, redirect, useFetcher, useParams, useSearchParams } from "react-router";
 
 import type { Route } from "./+types/drafts.new";
 
@@ -83,7 +75,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       templateId: templateId === NO_TEMPLATE ? null : templateId,
       title,
     });
-    return data({ ok: true, number: policy.number, policyId: policy.id } as const);
+    // The router sends the author on once the create has answered, so the page does not navigate
+    // by itself while it is still refreshing its data (that overlap dropped the draft on a slow
+    // connection and left the form showing).
+    return redirect(draftPath(policy.number));
   } catch (error) {
     return data({ error: refusalOf(error), ok: false } as const, { status: 400 });
   }
@@ -113,7 +108,6 @@ const Labelled = ({ children, id, label }: { children: ReactNode; id: string; la
 export default function NewDraft({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("authoring");
   const fetcher = useFetcher<typeof action>();
-  const navigate = useNavigate();
   const [parameters] = useSearchParams();
   const fixedType = documentTypeOfSlug(useParams().type);
   const [step, setStep] = useState<1 | 2>(1);
@@ -137,17 +131,23 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
 
   useResumableDraft(draft, { isEmpty: !newPolicyDraftHasContent(draft) });
 
+  // The created policy is on its way (the action redirects): the unsent form is no longer needed.
+  // A refused create keeps it, so the person can fix it and try again.
+  const created = useRef(false);
   useEffect(() => {
-    if (fetcher.data?.ok) {
-      clearLocalDraft();
-      void navigate(draftPath(fetcher.data.number));
-    }
-  }, [fetcher.data, navigate]);
+    created.current = fetcher.state !== "idle" && fetcher.formMethod === "POST";
+  }, [fetcher.state, fetcher.formMethod]);
+  useEffect(
+    () => () => {
+      if (created.current) clearLocalDraft();
+    },
+    [],
+  );
 
   const set = <K extends keyof NewPolicyDraft>(key: K, value: NewPolicyDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
 
-  const failure = fetcher.data && !fetcher.data.ok ? fetcher.data : null;
+  const failure = fetcher.data && "ok" in fetcher.data && !fetcher.data.ok ? fetcher.data : null;
   const refusalMessage = useRefusalMessage(failure && "error" in failure ? failure.error : {});
   const procedure = draft.documentType === DocumentType.Procedure;
   const noun = procedure ? "procedure" : "policy";

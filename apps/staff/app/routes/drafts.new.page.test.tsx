@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createRoutesStub, useLoaderData } from "react-router";
+import { createRoutesStub, redirect, useLoaderData } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import NewDraft from "./drafts.new";
@@ -234,5 +234,39 @@ describe("New draft stepper at /drafts/new (#149)", () => {
     openForm("/drafts/new?template=tpl-1");
     await userEvent.click(await screen.findByRole("button", { name: "Continue" }));
     expect(screen.getByRole("combobox", { name: "Template" })).toHaveValue("tpl-1");
+  });
+});
+
+const createOpened = () => {
+  const Stub = createRoutesStub([
+    {
+      action: () => redirect("/drafts/POL-FINANCE-000012"),
+      Component: Page,
+      loader: () => loaderData,
+      path: "/drafts/new/:type",
+    },
+    { Component: () => <h1>The new draft</h1>, path: "/drafts/:number" },
+  ]);
+  render(<Stub initialEntries={["/drafts/new/policy"]} />);
+};
+
+describe("after a successful create (bug log: the Create button hung on a slow connection)", () => {
+  it("lands on the draft the action redirects to", async () => {
+    createOpened();
+    await userEvent.type(await screen.findByLabelText("Title"), "Hello");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "p");
+    await userEvent.click(screen.getByRole("button", { name: "Create policy" }));
+    expect(await screen.findByRole("heading", { name: "The new draft" })).toBeInTheDocument();
+  });
+
+  it("forgets the unsent form, so the next New policy starts empty", async () => {
+    createOpened();
+    await userEvent.type(await screen.findByLabelText("Title"), "Hello");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "p");
+    // the form is kept in this browser as it is filled in
+    await vi.waitFor(() => expect(localStorage.length).toBeGreaterThan(0));
+    await userEvent.click(screen.getByRole("button", { name: "Create policy" }));
+    await screen.findByRole("heading", { name: "The new draft" });
+    expect(localStorage.length).toBe(0);
   });
 });
