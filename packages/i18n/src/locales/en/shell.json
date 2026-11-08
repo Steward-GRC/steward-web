@@ -2,7 +2,9 @@
   "about": {
     "menuEntry": "About and diagnostics",
     "title": "About Steward",
-    "version": "Version {{version}} ({{commit}})"
+    "version": "Version {{version}} ({{commit}})",
+    "webBuild": "Web build: {{commit}}",
+    "mockBuild": "Mock build: {{commit}}"
   },
   "accessibility": {
     "button": "Accessibility options",

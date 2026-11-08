@@ -180,12 +180,11 @@ afterEach(() => {
 });
 
 describe("the appendix page loader", () => {
-  it("opens the appendix of the letter in the address, with its diff when it has a draft", async () => {
+  it("opens the appendix of the letter in the address", async () => {
     const withDraft = appendix("a-1", "A", { draft: row("DRAFT", 2, "Rates (next)", "More.") });
     const calls = routeGateway(handlers([withDraft, appendix("a-2", "B")]));
     const result = await loader(call(null, "A") as unknown as Parameters<typeof loader>[0]);
     expect(result.appendix.id).toBe("a-1");
-    expect(result.diff).toHaveLength(1);
     expect(calls.find((c) => c.operation === "PolicyAppendices")?.variables).toMatchObject({
       includeRetired: true,
       policyId: "p-1",
@@ -242,6 +241,29 @@ describe("the appendix page actions", () => {
       "RetireAppendix",
       "RestoreAppendix",
     ]);
+  });
+
+  it("issues a co-editing token for the appendix's own room", async () => {
+    const calls = routeGateway({
+      ...handlers([appendix("a-1", "A")]),
+      IssueAppendixCollabToken: () => ({
+        issueAppendixCollabToken: {
+          expiresAt: "2026-11-08T00:05:00Z",
+          token: "t",
+          wsUrl: "/collab/ws/appendix%3Aa-1",
+        },
+      }),
+    });
+    const result = await run({ intent: "collab-token" });
+    expect(result.data).toMatchObject({
+      intent: "collab-token",
+      ok: true,
+      token: "t",
+      wsUrl: "/collab/ws/appendix%3Aa-1",
+    });
+    expect(calls.find((c) => c.operation === "IssueAppendixCollabToken")?.variables).toEqual({
+      appendixId: "a-1",
+    });
   });
 
   it("answers the gateway's refusal with a 400", async () => {

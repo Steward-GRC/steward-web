@@ -86,6 +86,7 @@ import {
   GrantRootDocument,
   GroupMappingsDocument,
   ImpersonationStatusDocument,
+  IssueAppendixCollabTokenDocument,
   IssueCollabTokenDocument,
   LatestTemplateVersionDocument,
   ListUserSessionsDocument,
@@ -113,6 +114,7 @@ import {
   PolicyByNumberDocument,
   PolicyDocument,
   PolicyVersionDocument,
+  PolicyVersionLinksDocument,
   PolicyVersionsDocument,
   PolicyVersionSummaryDocument,
   PostCaseMessageDocument,
@@ -126,6 +128,7 @@ import {
   RecordAckDocument,
   RecordRiskAssessmentDocument,
   ReferencesDocument,
+  RelationshipTypesDocument,
   RemoveFactorDocument,
   RemoveUserFromGroupDocument,
   RemoveUserMfaFactorDocument,
@@ -153,6 +156,7 @@ import {
   RevokeMySessionsDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
+  RunVetoesDocument,
   SaveAppendixDraftDocument,
   SaveDraftDocument,
   SearchAndAnswerDocument,
@@ -180,6 +184,11 @@ import {
   SetReviewThreadResolvedDocument,
   SetTypeCadenceDocument,
   SetUserPolicyOverrideDocument,
+  SetVersionContactsDocument,
+  SetVersionDefinitionsDocument,
+  SetVersionReferencesDocument,
+  SetVersionRelatedDocument,
+  SetWorkflowVetoEnabledDocument,
   SignalWorkflowDocument,
   SimulateCategoryDocument,
   SpCertificateDocument,
@@ -214,6 +223,7 @@ import {
   WorkflowDefDocument,
   WorkflowDefsDocument,
   WorkflowStatusDocument,
+  WorkflowVetoesDocument,
 } from "../generated/graphql";
 import {
   type CategoryDocumentTypes,
@@ -431,50 +441,72 @@ const assembleDetail = async (
   // (bug log 215); someone who can edit finds that version through `revision`.
   const versionId = publishedId;
   const acks = policy.documentType === DocumentType.Policy && publishedId !== null;
-  const [version, attachments, versions, ack, auditPage, summary, ai] = await Promise.all([
-    versionId
-      ? gatewayFetch(PolicyVersionDocument, { id: versionId }, "PolicyVersion", { cookie }).then(
-          (d) => d.policyVersion ?? null,
-        )
-      : null,
-    gatewayFetch(PolicyAttachmentsDocument, { policyId: policy.id }, "PolicyAttachments", {
-      cookie,
-    }),
-    gatewayFetch(PolicyVersionsDocument, { policyId: policy.id }, "PolicyVersions", {
-      cookie,
-    }).then((d) => d.policyVersions),
-    acks && policy.viewerCan.ack
-      ? gatewayFetch(AckStatusDocument, { policyVersionId: publishedId }, "AckStatus", {
-          cookie,
-        }).then((d) => d.ackStatus)
-      : null,
-    // The audit log is gated on audit.read (or managing a group); a plain reader is refused,
-    // and reads the history off the published versions instead.
-    gatewayFetch(AuditLogDocument, { subject: `policy:${policy.id}` }, "AuditLog", {
-      cookie,
-    }).catch((error: unknown) => {
-      if (isPermissionDenied(error)) return null;
-      throw error;
-    }),
-    // A missing or unreadable summary just leaves the AI summary toggle out.
-    publishedId
-      ? gatewayFetch(
-          PolicyVersionSummaryDocument,
-          { versionId: publishedId },
-          "PolicyVersionSummary",
-          { cookie },
-        ).then(
-          (d) => d.policyVersionSummary ?? null,
-          () => null,
-        )
-      : null,
-    // aiHealth answers a down service as unavailable rather than failing; a failed call reads
-    // the same way, so the reader's AI pieces say so instead of breaking the page.
-    gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie }).then(
-      (d) => ({ available: d.aiHealth.available, reason: d.aiHealth.reason ?? null }),
-      () => ({ available: false, reason: "ai_service_unavailable" }),
-    ),
-  ]);
+  const [version, attachments, versions, ack, auditPage, summary, ai, versionLinks] =
+    await Promise.all([
+      versionId
+        ? gatewayFetch(PolicyVersionDocument, { id: versionId }, "PolicyVersion", { cookie }).then(
+            (d) => d.policyVersion ?? null,
+          )
+        : null,
+      gatewayFetch(PolicyAttachmentsDocument, { policyId: policy.id }, "PolicyAttachments", {
+        cookie,
+      }),
+      gatewayFetch(PolicyVersionsDocument, { policyId: policy.id }, "PolicyVersions", {
+        cookie,
+      }).then((d) => d.policyVersions),
+      acks && policy.viewerCan.ack
+        ? gatewayFetch(AckStatusDocument, { policyVersionId: publishedId }, "AckStatus", {
+            cookie,
+          }).then((d) => d.ackStatus)
+        : null,
+      // The audit log is gated on audit.read (or managing a group); a plain reader is refused,
+      // and reads the history off the published versions instead.
+      gatewayFetch(AuditLogDocument, { subject: `policy:${policy.id}` }, "AuditLog", {
+        cookie,
+      }).catch((error: unknown) => {
+        if (isPermissionDenied(error)) return null;
+        throw error;
+      }),
+      // A missing or unreadable summary just leaves the AI summary toggle out.
+      publishedId
+        ? gatewayFetch(
+            PolicyVersionSummaryDocument,
+            { versionId: publishedId },
+            "PolicyVersionSummary",
+            { cookie },
+          ).then(
+            (d) => d.policyVersionSummary ?? null,
+            () => null,
+          )
+        : null,
+      // aiHealth answers a down service as unavailable rather than failing; a failed call reads
+      // the same way, so the reader's AI pieces say so instead of breaking the page.
+      gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie }).then(
+        (d) => ({ available: d.aiHealth.available, reason: d.aiHealth.reason ?? null }),
+        () => ({ available: false, reason: "ai_service_unavailable" }),
+      ),
+      // What the published version links to, for how each related policy relates (bug log 227);
+      // a failed read leaves the plain related list.
+      publishedId
+        ? gatewayFetch(
+            PolicyVersionLinksDocument,
+            { policyVersionId: publishedId },
+            "PolicyVersionLinks",
+            { cookie },
+          ).then(
+            (d) => d.policyVersionLinks,
+            () => null,
+          )
+        : null,
+    ]);
+  const related = versionLinks
+    ? versionLinks.related.map((link) => ({
+        label: link.label,
+        number: link.number,
+        policyId: link.policyId,
+        title: link.title,
+      }))
+    : attachments.relatedPolicies;
   const history = auditPage
     ? historyFromAuditLog(
         auditPage.auditLog.records,
@@ -548,7 +580,7 @@ const assembleDetail = async (
         : null,
     published: publishedId ? (version?.publishedAt ?? null) : null,
     references: attachments.policyReferences,
-    related: attachments.relatedPolicies,
+    related,
     revision: draft
       ? { status: policyStatusOf(false, draft.status), version: semanticVersion(draft.versionNo) }
       : null,
@@ -622,6 +654,60 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.createPolicyAppendix;
+  },
+  async policyVersionLinks(policyVersionId, cookie) {
+    const data = await gatewayFetch(
+      PolicyVersionLinksDocument,
+      { policyVersionId },
+      "PolicyVersionLinks",
+      { cookie },
+    );
+    return data.policyVersionLinks;
+  },
+  async relationshipTypes(cookie) {
+    const data = await gatewayFetch(RelationshipTypesDocument, {}, "RelationshipTypes", {
+      cookie,
+    });
+    return data.relationshipTypes;
+  },
+  async setVersionContacts(policyVersionId, contactBlockIds, cookie) {
+    const data = await gatewayFetch(
+      SetVersionContactsDocument,
+      { contactBlockIds: [...contactBlockIds], policyVersionId },
+      "SetVersionContacts",
+      { cookie },
+    );
+    return data.setVersionContacts;
+  },
+  async setVersionDefinitions(policyVersionId, definitionIds, cookie) {
+    const data = await gatewayFetch(
+      SetVersionDefinitionsDocument,
+      { definitionIds: [...definitionIds], policyVersionId },
+      "SetVersionDefinitions",
+      { cookie },
+    );
+    return data.setVersionDefinitions;
+  },
+  async setVersionReferences(policyVersionId, referenceIds, cookie) {
+    const data = await gatewayFetch(
+      SetVersionReferencesDocument,
+      { policyVersionId, referenceIds: [...referenceIds] },
+      "SetVersionReferences",
+      { cookie },
+    );
+    return data.setVersionReferences;
+  },
+  async setVersionRelated(policyVersionId, links, cookie) {
+    const data = await gatewayFetch(
+      SetVersionRelatedDocument,
+      {
+        links: links.map((link) => ({ policyId: link.policyId, type: link.type })),
+        policyVersionId,
+      },
+      "SetVersionRelated",
+      { cookie },
+    );
+    return data.setVersionRelated;
   },
   async policyAppendices(policyId, includeRetired, cookie) {
     const data = await gatewayFetch(
@@ -1173,6 +1259,15 @@ export const liveEdge: Edge = {
   },
   async importIdpMetadata(url, cookie) {
     return gatewayRestFetch("/admin/idp/import-metadata", { url }, "ImportIdpMetadata", { cookie });
+  },
+  async issueAppendixCollabToken(appendixId, cookie) {
+    const data = await gatewayFetch(
+      IssueAppendixCollabTokenDocument,
+      { appendixId },
+      "IssueAppendixCollabToken",
+      { cookie },
+    );
+    return data.issueAppendixCollabToken;
   },
   async issueCollabToken(input, cookie) {
     const data = await gatewayFetch(
@@ -2233,6 +2328,35 @@ export const liveEdge: Edge = {
   async verifyDomain(domain, cookie) {
     const data = await gatewayFetch(VerifyDomainDocument, { domain }, "VerifyDomain", { cookie });
     return data.verifyDomain;
+  },
+  async runVetoes(policyVersionId, cookie) {
+    try {
+      const data = await gatewayFetch(RunVetoesDocument, { policyVersionId }, "RunVetoes", {
+        cookie,
+      });
+      return data.workflowStatus.stageAssignees.map((seats) =>
+        seats.filter((seat) => seat.veto).map((seat) => seat.userId),
+      );
+    } catch {
+      return [];
+    }
+  },
+  async setWorkflowVetoEnabled(id, enabled, cookie) {
+    const data = await gatewayFetch(
+      SetWorkflowVetoEnabledDocument,
+      { enabled, id },
+      "SetWorkflowVetoEnabled",
+      { cookie },
+    );
+    return data.setWorkflowVetoEnabled.vetoEnabled;
+  },
+  async workflowVetoes(cookie) {
+    try {
+      const data = await gatewayFetch(WorkflowVetoesDocument, {}, "WorkflowVetoes", { cookie });
+      return data.workflowDefs;
+    } catch {
+      return [];
+    }
   },
   async workflowDef(id, cookie) {
     const data = await gatewayFetch(WorkflowDefDocument, { id }, "WorkflowDef", { cookie });

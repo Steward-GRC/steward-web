@@ -18,14 +18,52 @@
   },
   "editor": {
     "actions": {
+      "labelReady": "Actions, AI result ready",
+      "labelWorking": "Actions, AI working",
       "menu": "Actions"
+    },
+    "links": {
+      "add": "Add",
+      "addContact": "Add a contact",
+      "addDefinition": "Add a definition",
+      "addReference": "Add a reference",
+      "contacts": "Contacts",
+      "definitions": "Definitions",
+      "failed": "The change could not be saved.",
+      "moveDown": "Move {{name}} down",
+      "moveUp": "Move {{name}} up",
+      "none": "None yet.",
+      "policy": "Policy",
+      "readOnly": "These can't be changed now: the version is no longer open for editing.",
+      "references": "References",
+      "related": "Related",
+      "relationship": "Relationship",
+      "remove": "Remove {{name}}"
+    },
+    "start": {
+      "action": "Start editing",
+      "appendixNote": {
+        "policy": "Appendices have their own life cycle. Edit them here without starting a draft of the policy.",
+        "procedure": "Appendices have their own life cycle. Edit them here without starting a draft of the procedure."
+      },
+      "page": "Edit",
+      "text": {
+        "published": "This is the published version, v{{version}}. Nothing is created until you start editing; then a working draft is made from it.",
+        "unpublished": "Nothing is created until you start editing; then a working draft is made."
+      }
+    },
+    "view": {
+      "diff": "Diff",
+      "label": "View",
+      "unified": "Unified"
+    },
+    "liveDiff": {
+      "removed": "Removed: {{text}}"
     },
     "aiMenu": {
       "generate": "Generate a draft…",
       "improve": "Improve draft…",
       "label": "AI",
-      "labelReady": "AI, result ready",
-      "labelWorking": "AI, working",
       "limitReached": "AI limit reached",
       "offByAdmin": "AI turned off by an administrator",
       "result": "AI result ready to review",
@@ -227,11 +265,10 @@
     "appendix": {
       "back": "Back to the {{title}} draft",
       "backRead": "Back to {{title}}",
-      "diff": {
-        "empty": "Nothing has changed from the published appendix.",
-        "title": "Changes from the published appendix"
+      "contributors": {
+        "former": "{{name}} (no longer active)",
+        "label": "Contributors"
       },
-      "draftNote": "This is a draft. Readers still see the published appendix until you publish.",
       "failed": "The appendix could not be saved.",
       "publish": "Publish",
       "published": "Published",
@@ -240,8 +277,17 @@
       "retire": "Retire",
       "retired": "This appendix is retired: readers do not see it. Restore it to bring it back.",
       "supporting": "An appendix is supporting material, not policy. Readers cannot comment on it.",
+      "tabs": {
+        "draft": "Draft",
+        "published": "Published"
+      },
       "titleLabel": "Appendix title",
-      "unpublished": "Not published yet"
+      "unpublished": "Not published yet",
+      "version": {
+        "choose": "Published version",
+        "earlier": "v{{version}} · {{when}}",
+        "latest": "v{{version}} · {{when}} (latest)"
+      }
     }
   },
   "import": {

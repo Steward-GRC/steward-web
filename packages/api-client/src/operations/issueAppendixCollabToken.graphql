@@ -1,0 +1,7 @@
+mutation IssueAppendixCollabToken($appendixId: ID!) {
+  issueAppendixCollabToken(appendixId: $appendixId) {
+    token
+    wsUrl
+    expiresAt
+  }
+}

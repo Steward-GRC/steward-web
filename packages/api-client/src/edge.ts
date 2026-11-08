@@ -73,7 +73,6 @@ import type {
   UpcomingApproval,
   UserDeletionPreview,
   WebauthnRegistration,
-  WorkflowStatus,
 } from "./generated/schema";
 import type {
   AckStatus,
@@ -91,6 +90,8 @@ import type {
   Policy,
   PolicyDetail,
   PolicySectionDiff,
+  RelatedLinkChoice,
+  RelationshipType,
   ReviewThread,
   SecondFactor,
   SuggestionOutcome,
@@ -100,8 +101,11 @@ import type {
   UserLabel,
   UserPage,
   VersionDocument,
+  VersionLinks,
   Workflow,
   WorkflowDef,
+  WorkflowStatus,
+  WorkflowVeto,
 } from "./views";
 
 import { DocumentType } from "./generated/schema";
@@ -175,7 +179,6 @@ export type {
   ThreadMessage,
   UpcomingApproval,
   UserDeletionPreview,
-  WorkflowStatus,
 } from "./generated/schema";
 export {
   AckTrigger,
@@ -211,10 +214,12 @@ export {
   SignalType,
 } from "./generated/schema";
 export type { CategoryDocumentCounts, MovePolicyItem } from "./generated/schema";
+export type { WorkflowStatus } from "./views";
 export type { NotificationPreferences, Passkey, UserLabel } from "./views";
 export type {
   AckStatus,
   AckSummary,
+  AppendixContributorView,
   AppendixEntry,
   AppendixRowView,
   AskAnswer,
@@ -236,6 +241,9 @@ export type {
   PolicySectionDiff,
   PolicyVersionOption,
   PolicyVersionSummary,
+  RelatedItem,
+  RelatedLinkChoice,
+  RelationshipType,
   ReviewMessage,
   ReviewSuggestion,
   ReviewThread,
@@ -248,9 +256,11 @@ export type {
   User,
   UserPage,
   VersionDocument,
+  VersionLinks,
   Workflow,
   WorkflowDef,
   WorkflowStageDef,
+  WorkflowVeto,
 } from "./views";
 export { PolicyStatus } from "./views";
 
@@ -602,6 +612,7 @@ export interface Edge {
    *  needed to prefill a connection form. Site-admin only. */
   importIdpMetadata(url: string, cookie?: string): Promise<ImportedIdpMetadata>;
   /** Issues a short-lived websocket token for the co-editing session. Refused unless the caller holds edit access to the draft. */
+  issueAppendixCollabToken(appendixId: string, cookie?: string): Promise<IssueCollabTokenPayload>;
   issueCollabToken(input: IssueCollabTokenInput, cookie?: string): Promise<IssueCollabTokenPayload>;
   /** A template's current (newest) version, with its section outline. Null for a template with no version yet. */
   latestTemplateVersion(templateId: string, cookie?: string): Promise<null | TemplateVersion>;
@@ -709,6 +720,8 @@ export interface Edge {
     number: string,
     cookie?: string,
   ): Promise<null | PolicyDetail>;
+  /** The library items one version links to (see `VersionLinks`). */
+  policyVersionLinks(policyVersionId: string, cookie?: string): Promise<VersionLinks>;
   /** Posts a message the reporter can see in the two-way thread. Officers only. */
   postCaseMessage(caseId: string, body: string, cookie?: string): Promise<ThreadMessage>;
   /**
@@ -763,6 +776,8 @@ export interface Edge {
   ): Promise<RiskAssessment>;
   /** The reusable references/standards library (admin), active only unless includeArchived. */
   references(includeArchived?: boolean, cookie?: string): Promise<readonly Reference[]>;
+  /** The fixed list of relationship types, each with its inverse. */
+  relationshipTypes(cookie?: string): Promise<readonly RelationshipType[]>;
   /** Removes the caller's authenticator app ("totp"); the email code can't be removed. */
   removeMyFactor(kind: string, cookie?: string): Promise<boolean>;
   /** Removes one of the caller's passkeys. */
@@ -836,6 +851,8 @@ export interface Edge {
   revokeRole(userId: string, role: string, cookie?: string): Promise<User>;
   /** Revokes every active session for a user. Returns how many were revoked. */
   revokeUserSessions(userId: string, reason: string, cookie?: string): Promise<number>;
+  /** The user ids holding a veto on each stage of a version's run; empty when the gateway has none. */
+  runVetoes(policyVersionId: string, cookie?: string): Promise<readonly (readonly string[])[]>;
   /** Saves the title and text into the appendix's draft (autosave). */
   saveAppendixDraft(
     id: string,
@@ -929,6 +946,32 @@ export interface Edge {
     effect: null | OverrideEffect,
     cookie?: string,
   ): Promise<User>;
+  /** Replaces the contacts a version links to, in the order given. Only while it is editable. */
+  setVersionContacts(
+    policyVersionId: string,
+    contactBlockIds: readonly string[],
+    cookie?: string,
+  ): Promise<VersionLinks>;
+  /** Replaces the definitions a version links to. Only while it is editable. */
+  setVersionDefinitions(
+    policyVersionId: string,
+    definitionIds: readonly string[],
+    cookie?: string,
+  ): Promise<VersionLinks>;
+  /** Replaces the references a version links to, in the order given. Only while editable. */
+  setVersionReferences(
+    policyVersionId: string,
+    referenceIds: readonly string[],
+    cookie?: string,
+  ): Promise<VersionLinks>;
+  /** Replaces the related policies a version links to, each with a type. Only while editable. */
+  setVersionRelated(
+    policyVersionId: string,
+    links: readonly RelatedLinkChoice[],
+    cookie?: string,
+  ): Promise<VersionLinks>;
+  /** Opts a workflow in or out of veto approvers. Template admins and above. */
+  setWorkflowVetoEnabled(id: string, enabled: boolean, cookie?: string): Promise<boolean>;
   /**
    * Delivers the calling user's approve/reject decision to an active approval run. The actor
    * is bound server-side; runId/taskId are advisory (a stale cached inbox row refuses with
@@ -1107,6 +1150,8 @@ export interface Edge {
    * the workflow service has no record (the policy was published without an approval flow).
    */
   workflowStatus(policyVersionId: string, cookie?: string): Promise<WorkflowStatus>;
+  /** Which workflows opt in to veto approvers and who holds one; empty when the gateway has none. */
+  workflowVetoes(cookie?: string): Promise<readonly WorkflowVeto[]>;
 }
 
 /** A group that approves a workflow stage as a whole: its members hold seats, the group is
@@ -1257,4 +1302,8 @@ export interface WorkflowStageInput {
   quorum: string;
   rejectOnSlaBreach?: boolean | null;
   slaDays?: null | number;
+  /** Users who hold a veto on this stage; sent only when there are some. */
+  vetoApproverIds?: readonly string[];
+  /** Group seats (by group id) whose members hold a veto on this stage. */
+  vetoGroupIds?: readonly string[];
 }

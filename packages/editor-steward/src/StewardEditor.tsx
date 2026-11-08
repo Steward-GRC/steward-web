@@ -38,6 +38,7 @@ import {
 import { describeEditorError } from "./editorErrors";
 import { EDITOR_THEME, isDarkTheme } from "./editorTheme";
 import { registerHeadingHighlightGuard } from "./headingHighlight";
+import { EDITOR_HOST_ATTRIBUTE, LiveDiff } from "./LiveDiff";
 import { STEWARD_NODES } from "./nodes";
 import {
   createCommentToolbarAction,
@@ -75,6 +76,12 @@ export interface StewardEditorProps {
   frame?: (document: ReactNode) => ReactNode;
   /** The stored document. Seeds a collaborative room only when the room is still empty. */
   initialDocument?: SerializedDocument;
+  /**
+   * Draws what has changed against this published document, on the words, while the person
+   * types (bug log 228). It is drawn on the viewer's own screen only: nothing is added to the
+   * document, so it never reaches a collaboration room. Without it the document reads plainly.
+   */
+  liveDiff?: { published: SerializedDocument } | null;
   onChange?: (document: SerializedDocument) => void;
   /**
    * Called with one short line (no stack, no document text) when the editor catches an error,
@@ -201,6 +208,7 @@ export const StewardEditor = ({
   className,
   collaboration = null,
   initialDocument,
+  liveDiff,
   onChange,
   onError,
   onReady,
@@ -356,7 +364,12 @@ export const StewardEditor = ({
   );
 
   return (
-    <div className={className} ref={cursorsContainerRef} style={EDITOR_THEME}>
+    <div
+      {...{ [EDITOR_HOST_ATTRIBUTE]: "" }}
+      className={className}
+      ref={cursorsContainerRef}
+      style={liveDiff ? { ...EDITOR_THEME, position: "relative" } : EDITOR_THEME}
+    >
       <KoenigComposer
         buttonCard={BUTTON_CARD}
         cards={[...BASE_CARDS]}
@@ -378,6 +391,7 @@ export const StewardEditor = ({
         toolbarActions={toolbarActions}
         tools={[...BASE_TOOLS]}
       >
+        {liveDiff ? <LiveDiff published={liveDiff.published} /> : null}
         {review && (review.threads.length > 0 || review.onAdd) ? (
           <div
             className={

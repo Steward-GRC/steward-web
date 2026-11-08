@@ -7,20 +7,24 @@ import type {
   MyWebauthnCredentialsQuery,
   NotificationSettingsFieldsFragment,
   NotificationSettingsQuery,
+  RelationshipTypesQuery,
   SearchAndAnswerQuery,
   SearchUsersQuery,
   UserFieldsFragment,
+  VersionLinksFieldsFragment,
   WorkflowDefQuery,
 } from "./generated/graphql";
 import type {
   AckTrigger,
   CategoryDocumentTypes,
   DocumentType,
+  WorkflowStatus as GeneratedWorkflowStatus,
   PolicyViewerCan,
   ReferenceKind,
   RelatedPolicy,
   ReviewCadence,
   Sensitivity,
+  StageAssignee,
 } from "./generated/schema";
 
 /**
@@ -54,8 +58,20 @@ export interface AckSummary {
   readonly required: number;
 }
 
+/** Someone who saved or published an appendix; former staff stay listed, with `active` false. */
+export interface AppendixContributorView {
+  readonly active: boolean;
+  readonly name: string;
+  readonly userId: string;
+}
+
 /** An appendix of a policy or procedure with its own life: a draft beside what is published. */
 export interface AppendixEntry {
+  /**
+   * Everyone who ever saved or published it, active or not, in the order they first did. Empty
+   * for anyone who may not see the diff.
+   */
+  readonly contributors?: readonly AppendixContributorView[];
   readonly draft?: AppendixRowView | null;
   readonly id: string;
   /** The place among the live appendices; null while retired. */
@@ -63,6 +79,8 @@ export interface AppendixEntry {
   readonly orderIndex: number;
   readonly policyId: string;
   readonly published?: AppendixRowView | null;
+  /** The published rows, latest first, for the Published tab's drop-down. */
+  readonly publishedVersions?: readonly AppendixRowView[];
   readonly retiredAt?: null | string;
   readonly versions: readonly AppendixRowView[];
 }
@@ -304,7 +322,7 @@ export interface PolicyDetail {
   readonly priorVersion?: null | PolicyVersionSummary;
   readonly published?: null | string;
   readonly references: readonly PolicyReference[];
-  readonly related: readonly RelatedPolicy[];
+  readonly related: readonly RelatedItem[];
   /** A newer version being worked on beside the published one, for the revision notice (U10). */
   readonly revision?: { readonly status: PolicyStatus; readonly version: string } | null;
   readonly sensitivity: Sensitivity;
@@ -351,6 +369,18 @@ export interface PolicyVersionSummary {
   readonly toVersionId?: string;
   readonly version: string;
 }
+
+/** A related policy; `label` is how it relates to this one ("supersedes", "is related by"). */
+export type RelatedItem = { readonly label?: string } & RelatedPolicy;
+
+/** A related policy the author picked, with the relationship type. */
+export interface RelatedLinkChoice {
+  readonly policyId: string;
+  readonly type: string;
+}
+
+/** A relationship type and the type the other side of the link takes. */
+export type RelationshipType = RelationshipTypesQuery["relationshipTypes"][number];
 
 /** One message of an inline review thread. */
 export interface ReviewMessage {
@@ -443,6 +473,13 @@ export interface VersionDocument {
   readonly version: string;
 }
 
+/**
+ * What one version of a policy or procedure links to from the libraries: definitions
+ * (alphabetical), related policies with a relationship type, references and contacts (in the
+ * order the author gave). `editable` is whether the caller can change them now.
+ */
+export type VersionLinks = VersionLinksFieldsFragment;
+
 /** A workflow definition selectable as a category's default. */
 export interface Workflow {
   readonly id: string;
@@ -454,3 +491,22 @@ export type WorkflowDef = NonNullable<WorkflowDefQuery["workflowDef"]>;
 
 /** One stage of a workflow definition's approval chain. */
 export type WorkflowStageDef = WorkflowDef["stages"][number];
+
+/**
+ * A run's approval status as the queries read it. The schema's seat also carries `veto`, which
+ * the status query leaves out (it is read on its own, see `runVetoes`), so it is not required here.
+ */
+export type WorkflowStatus = {
+  readonly stageAssignees: readonly (readonly Omit<StageAssignee, "veto">[])[];
+} & Omit<GeneratedWorkflowStatus, "stageAssignees">;
+
+/** Who holds a veto on a workflow's stages, and whether the workflow opts in (steward-web#256). */
+export interface WorkflowVeto {
+  readonly id: string;
+  readonly stages: readonly {
+    readonly id: string;
+    readonly vetoApproverIds: readonly string[];
+    readonly vetoGroupIds: readonly string[];
+  }[];
+  readonly vetoEnabled: boolean;
+}

@@ -403,3 +403,48 @@ describe("the approval review page for a procedure (bug log 213)", () => {
     expect(screen.queryByText(/acknowledg/i)).not.toBeInTheDocument();
   });
 });
+
+describe("the appendices on the approval page (bug log 224, 225)", () => {
+  const lexical = JSON.stringify({
+    root: {
+      children: [
+        {
+          children: [{ text: "File your claim.", type: "text", version: 1 }],
+          type: "paragraph",
+          version: 1,
+        },
+      ],
+      type: "root",
+      version: 1,
+    },
+  });
+  const withAppendix = (appendices: unknown[]) => ({
+    ...loaderData,
+    review: {
+      ...loaderData.review,
+      upcoming: { ...loaderData.review.upcoming, appendices, contentJson: lexical },
+    },
+  });
+  const desks = { blocks: [], id: "a-1", letter: "A", text: "Quiet zone.", title: "Desk zones" };
+
+  it("lists the appendices under the document for an approver with a seat, after a line", async () => {
+    renderReview(() => {}, withAppendix([desks]));
+    await userEvent.click(screen.getByRole("tab", { name: "Upcoming version (under review)" }));
+    expect(screen.getByText("Appendix A: Desk zones")).toBeVisible();
+    expect(screen.getAllByRole("separator")).toHaveLength(1);
+  });
+
+  it("draws no line, and lists nothing, when the version has no appendix", async () => {
+    renderReview(() => {}, withAppendix([]));
+    await userEvent.click(screen.getByRole("tab", { name: "Upcoming version (under review)" }));
+    expect(screen.queryByRole("separator")).toBeNull();
+    expect(screen.queryByText(/^Appendix /)).toBeNull();
+  });
+
+  it("lists them for someone with no seat too", async () => {
+    renderReview(() => {}, { ...withAppendix([desks]), task: null });
+    await userEvent.click(screen.getByRole("tab", { name: "Upcoming version (under review)" }));
+    expect(screen.getByText("Appendix A: Desk zones")).toBeVisible();
+    expect(screen.getAllByRole("separator")).toHaveLength(1);
+  });
+});

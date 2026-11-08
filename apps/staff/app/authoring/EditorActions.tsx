@@ -29,8 +29,6 @@ import { useFetcher } from "react-router";
 
 import { aiOffReason } from "./ai/aiOff";
 
-const headerButton = "h-[38px] px-3";
-
 /** What the gateway works out on submit (steward-gateway#52): shown only once it sends it. */
 export interface VersionPreview {
   change: ChangeType;
@@ -279,11 +277,35 @@ export const SubmitForApproval = ({
   );
 };
 
-/** Actions ▾ (U11): Discard draft, through D3's wording for the draft's state. */
+/** What the Actions menu needs to carry the AI actions (U27). */
+export interface AiActions {
+  available: boolean;
+  /** Offers "Generate a draft" in place of "Improve draft". */
+  emptyDraft?: boolean;
+  onChoose: (choice: AiChoice) => void;
+  /** Why the AI is off, said where its items would be. */
+  reason?: null | string;
+  status?: AiStatus;
+}
+
+export type AiChoice = "generate" | "improve" | "result" | "review" | "rewrite";
+
+/** "working" while an AI task runs, "ready" when its result waits to be looked at. */
+export type AiStatus = "idle" | "ready" | "working";
+
+/**
+ * Actions ▾ (U11): the AI actions (Generate a draft… or Improve draft…, Rewrite a section…,
+ * Review draft; U27), then Withdraw and Discard draft, through D3's wording for the draft's
+ * state. The AI has no button of its own (bug log 220): while a task runs the Actions button
+ * spins, and when its result waits it pulses with a saffron dot. With the AI off, the menu
+ * says so and why instead of its items.
+ */
 export const ActionsMenu = ({
+  ai,
   inReview,
   published,
 }: {
+  ai?: AiActions;
   inReview: boolean;
   /** The published version a discard leaves live; absent for a never-published draft. */
   published?: string;
@@ -298,16 +320,64 @@ export const ActionsMenu = ({
     : published
       ? `${t("editor.discard.published")}${live}`
       : t("editor.discard.draft");
+  const status = ai?.available ? (ai.status ?? "idle") : "idle";
+  const ready = status === "ready";
+  const aiItems: { choice: AiChoice; icon: typeof FileText }[] = [
+    { choice: ai?.emptyDraft ? "generate" : "improve", icon: FileText },
+    { choice: "rewrite", icon: PencilLine },
+    { choice: "review", icon: Check },
+  ];
   return (
     <>
       <Menu>
         <MenuTrigger asChild>
-          <Button className="h-[38px] px-2.5" variant="secondary">
+          <Button
+            aria-busy={status === "working" || undefined}
+            aria-label={
+              status === "idle"
+                ? undefined
+                : t(ready ? "editor.actions.labelReady" : "editor.actions.labelWorking")
+            }
+            className={cn(
+              "h-[38px] px-2.5",
+              ready && "motion-safe:animate-[pulse_1.6s_ease-in-out_infinite]",
+            )}
+            data-ready={ready || undefined}
+            variant="secondary"
+          >
             {t("editor.actions.menu")}
-            <ChevronDown aria-hidden="true" />
+            {status === "working" ? (
+              <Spinner aria-hidden="true" className="size-3.5" />
+            ) : ready ? (
+              <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
+            ) : (
+              <ChevronDown aria-hidden="true" />
+            )}
           </Button>
         </MenuTrigger>
         <MenuContent>
+          {ai?.available
+            ? aiItems.map(({ choice, icon: Icon }) => (
+                <MenuItem key={choice} onSelect={() => ai.onChoose(choice)}>
+                  <Icon aria-hidden="true" />
+                  {t(`editor.aiMenu.${choice}`)}
+                </MenuItem>
+              ))
+            : ai
+              ? [
+                  <MenuItem disabled key="ai-off">
+                    <Sparkles aria-hidden="true" />
+                    {t("editor.aiMenu.label")}: {t(aiOffReason(ai.reason))}
+                  </MenuItem>,
+                ]
+              : null}
+          {ai?.available && ready ? (
+            <MenuItem className="font-semibold text-primary" onSelect={() => ai.onChoose("result")}>
+              <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
+              {t("editor.aiMenu.result")}
+            </MenuItem>
+          ) : null}
+          {ai ? <MenuSeparator /> : null}
           {inReview ? (
             <MenuItem onSelect={() => setWithdrawing(true)}>{t("editor.withdraw.menu")}</MenuItem>
           ) : null}
@@ -354,109 +424,5 @@ export const ActionsMenu = ({
         </DialogContent>
       </Dialog>
     </>
-  );
-};
-
-export type AiChoice = "generate" | "improve" | "result" | "review" | "rewrite";
-
-/** "working" while an AI task runs, "ready" when its result waits to be looked at. */
-export type AiStatus = "idle" | "ready" | "working";
-
-/**
- * The AI menu (U27): Generate a draft… on an empty draft or Improve draft…, then Rewrite a section…
- * and Review draft. It spins while a task runs and pulses with a saffron dot when a result is
- * ready, adding "AI result ready to review". With AI off it's a disabled button that says why
- * on hover and focus.
- */
-export const AiMenu = ({
-  available,
-  emptyDraft = false,
-  onChoose,
-  reason,
-  status = "idle",
-}: {
-  available: boolean;
-  emptyDraft?: boolean;
-  onChoose: (choice: AiChoice) => void;
-  reason?: null | string;
-  status?: AiStatus;
-}) => {
-  const { t } = useTranslation("authoring");
-  const reasonId = useId();
-  if (!available) {
-    return (
-      <span className="group relative">
-        <Button
-          aria-describedby={reasonId}
-          aria-disabled="true"
-          className={cn(headerButton, "opacity-55")}
-          onClick={(event) => event.preventDefault()}
-          variant="secondary"
-        >
-          <Sparkles aria-hidden="true" />
-          {t("editor.aiMenu.label")}
-        </Button>
-        <span
-          className="pointer-events-none absolute top-full right-0 z-[var(--z-popover)] mt-1 hidden w-max max-w-xs rounded-md bg-ink px-2 py-1 text-xs text-surface group-focus-within:block group-hover:block"
-          id={reasonId}
-          role="tooltip"
-        >
-          {t(aiOffReason(reason))}
-        </span>
-      </span>
-    );
-  }
-  const items: { choice: AiChoice; icon: typeof FileText }[] = [
-    { choice: emptyDraft ? "generate" : "improve", icon: FileText },
-    { choice: "rewrite", icon: PencilLine },
-    { choice: "review", icon: Check },
-  ];
-  const ready = status === "ready";
-  return (
-    <Menu>
-      <MenuTrigger asChild>
-        <Button
-          aria-busy={status === "working" || undefined}
-          aria-label={
-            status === "idle"
-              ? undefined
-              : t(ready ? "editor.aiMenu.labelReady" : "editor.aiMenu.labelWorking")
-          }
-          className={cn(
-            headerButton,
-            ready && "motion-safe:animate-[pulse_1.6s_ease-in-out_infinite]",
-          )}
-          data-ready={ready || undefined}
-          variant="secondary"
-        >
-          <Sparkles aria-hidden="true" />
-          {t("editor.aiMenu.label")}
-          {status === "working" ? (
-            <Spinner aria-hidden="true" className="size-3.5" />
-          ) : ready ? (
-            <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
-          ) : (
-            <ChevronDown aria-hidden="true" />
-          )}
-        </Button>
-      </MenuTrigger>
-      <MenuContent>
-        {items.map(({ choice, icon: Icon }) => (
-          <MenuItem key={choice} onSelect={() => onChoose(choice)}>
-            <Icon aria-hidden="true" />
-            {t(`editor.aiMenu.${choice}`)}
-          </MenuItem>
-        ))}
-        {ready ? (
-          <>
-            <MenuSeparator />
-            <MenuItem className="font-semibold text-primary" onSelect={() => onChoose("result")}>
-              <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
-              {t("editor.aiMenu.result")}
-            </MenuItem>
-          </>
-        ) : null}
-      </MenuContent>
-    </Menu>
   );
 };

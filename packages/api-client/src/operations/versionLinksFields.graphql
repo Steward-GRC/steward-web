@@ -1,0 +1,45 @@
+fragment VersionLinksFields on PolicyVersionLinks {
+  policyVersionId
+  editable
+  definitions {
+    id
+    categoryId
+    term
+    definition
+    archived
+    createdByUserId
+    usedByCount
+  }
+  related {
+    policyId
+    number
+    title
+    type
+    label
+    direction
+  }
+  references {
+    id
+    label
+    kind
+    clause
+    body
+    url
+    archived
+    createdByUserId
+    usedByCount
+  }
+  contacts {
+    id
+    label
+    name
+    role
+    department
+    email
+    phone
+    hours
+    notes
+    archived
+    usedByCount
+  }
+}

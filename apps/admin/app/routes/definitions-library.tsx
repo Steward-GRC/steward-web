@@ -273,7 +273,12 @@ export default function DefinitionsLibrary({ loaderData }: Route.ComponentProps)
               {saveFetcher.data && !saveFetcher.data.ok && saveFetcher.data.intent === "save" ? (
                 <Banner
                   failure={saveFetcher.data.error}
-                  title={t("libraries.definitions.dialog.failed")}
+                  title={
+                    // the title is the definition's key in the library (bug log 227)
+                    saveFetcher.data.error.code === "ALREADY_EXISTS"
+                      ? t("libraries.definitions.dialog.duplicate")
+                      : t("libraries.definitions.dialog.failed")
+                  }
                   tone="danger"
                 />
               ) : null}

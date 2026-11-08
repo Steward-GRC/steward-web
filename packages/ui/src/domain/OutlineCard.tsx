@@ -24,7 +24,7 @@ export interface OutlineItem {
   number?: string;
 }
 
-/** Follows the heading nearest the top of the viewport as the reader scrolls. */
+/** Follows the heading nearest the top of the viewport, for the "n of N" count and progress bar only. */
 const useActiveSection = (ids: readonly string[]) => {
   const [active, setActive] = useState(ids[0]);
   const key = ids.join("|");
@@ -150,18 +150,14 @@ export const OutlineCard = ({ footer, items, onCollapsedChange }: OutlineCardPro
           id={navId}
         >
           {items.map((item) => {
-            const isActive = item.id === active;
             const sub = item.level === 2;
             return (
               <a
-                aria-current={isActive ? "location" : undefined}
                 className={cn(
                   "grid items-baseline gap-1 rounded-md px-2.5 py-[7px] no-underline hover:bg-sunken",
                   sub
                     ? "grid-cols-1 pl-[38px] text-base text-muted"
                     : "grid-cols-[28px_1fr] text-ink",
-                  isActive &&
-                    "bg-primary-soft font-semibold text-on-primary-soft hover:bg-primary-soft",
                 )}
                 data-level={sub ? 2 : 1}
                 href={`#${item.id}`}
@@ -170,12 +166,7 @@ export const OutlineCard = ({ footer, items, onCollapsedChange }: OutlineCardPro
               >
                 {sub ? null : (
                   <>
-                    <span
-                      className={cn(
-                        "font-mono text-xs font-medium",
-                        isActive ? "text-on-primary-soft" : "text-muted",
-                      )}
-                    >
+                    <span className="font-mono text-xs font-medium text-muted">
                       {item.number}
                     </span>{" "}
                   </>

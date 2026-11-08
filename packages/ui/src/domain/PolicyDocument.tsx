@@ -277,13 +277,11 @@ const BlockList = ({
 const AppendixSection = ({
   appendix,
   definitions,
-  first,
   label,
   onTerm,
 }: {
   appendix: PolicyAppendix;
   definitions: readonly PolicyDefinition[];
-  first: boolean;
   label: string;
   onTerm?: (definition: PolicyDefinition) => void;
 }) => {
@@ -304,11 +302,7 @@ const AppendixSection = ({
     return () => globalThis.removeEventListener("hashchange", opens);
   }, [hash, id]);
   return (
-    <details
-      className={first ? "border-t border-border-strong pt-6" : "pt-6"}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-      open={open}
-    >
+    <details className="pt-6" onToggle={(event) => setOpen(event.currentTarget.open)} open={open}>
       <summary
         className="mb-2 scroll-mt-4 cursor-pointer text-[20px] leading-[28px] font-semibold sm:text-[22px] sm:leading-[30px]"
         id={id}
@@ -334,6 +328,36 @@ const AppendixSection = ({
     </details>
   );
 };
+
+/**
+ * The appendices after one line that separates them from the sections above. The line is drawn
+ * only when there is an appendix to follow it, in the reader and on the approval page alike.
+ */
+export const PolicyAppendices = ({
+  appendices,
+  appendixLabel,
+  definitions,
+  onTerm,
+}: {
+  appendices: readonly PolicyAppendix[];
+  appendixLabel: (appendix: PolicyAppendix) => string;
+  definitions: readonly PolicyDefinition[];
+  onTerm?: (definition: PolicyDefinition) => void;
+}) =>
+  appendices.length === 0 ? null : (
+    <>
+      <hr className="mt-6 border-0 border-t border-border-strong" />
+      {appendices.map((appendix) => (
+        <AppendixSection
+          appendix={appendix}
+          definitions={definitions}
+          key={appendix.id}
+          label={appendixLabel(appendix)}
+          onTerm={onTerm}
+        />
+      ))}
+    </>
+  );
 
 export interface PolicyDocumentProps {
   appendices: readonly PolicyAppendix[];
@@ -365,16 +389,12 @@ export const PolicyDocument = ({
       id="body"
     >
       <BlockList blocks={blocks} definitions={definitions} numbered={numbered} onTerm={onTerm} />
-      {appendices.map((appendix, index) => (
-        <AppendixSection
-          appendix={appendix}
-          definitions={definitions}
-          first={index === 0}
-          key={appendix.id}
-          label={appendixLabel(appendix)}
-          onTerm={onTerm}
-        />
-      ))}
+      <PolicyAppendices
+        appendices={appendices}
+        appendixLabel={appendixLabel}
+        definitions={definitions}
+        onTerm={onTerm}
+      />
     </article>
   );
 };

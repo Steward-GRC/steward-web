@@ -959,12 +959,13 @@ describe("Edit on the reader (bug log 59)", () => {
     render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
   };
 
-  it("offers Edit in the Actions menu when the staff app gives it an edit action, and asks for the edit", async () => {
+  it("offers Edit in the Actions menu and opens the edit screen without starting a draft (bug log 219)", async () => {
+    posted.mockClear();
     mountEditable("/drafts/p-1");
     await userEvent.click(screen.getByRole("button", { name: "Actions" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
-    await waitFor(() => expect(posted).toHaveBeenCalled());
-    expect((posted.mock.calls[0]![0] as FormData).get("intent")).toBe("edit");
+    expect(await screen.findByText("Editor")).toBeInTheDocument();
+    expect(posted).not.toHaveBeenCalled();
   });
 
   it("registers Edit on the command bar too", async () => {
@@ -990,9 +991,10 @@ describe("Edit on the reader (bug log 59)", () => {
       mountEditable("/drafts/POL-FINANCE-001", withDraft);
       const banner = screen.getByRole("note");
       expect(within(banner).getByText("This policy has a saved draft")).toBeInTheDocument();
+      posted.mockClear();
       await userEvent.click(within(banner).getByRole("button", { name: "View the current draft" }));
-      await waitFor(() => expect(posted).toHaveBeenCalled());
-      expect((posted.mock.calls.at(-1)![0] as FormData).get("intent")).toBe("edit");
+      expect(await screen.findByText("Editor")).toBeInTheDocument();
+      expect(posted).not.toHaveBeenCalled();
     });
 
     it("turns Edit into Continue draft in the Actions menu and on the command bar", async () => {
@@ -1038,11 +1040,12 @@ describe("Edit on the reader (bug log 59)", () => {
       const area = screen.getByRole("note");
       expect(within(area).getByText(`Your ${noun} has a version in review`)).toBeInTheDocument();
       expect(within(area).getByText(/v3\.0\.0 is waiting on approval/)).toBeInTheDocument();
+      posted.mockClear();
       await userEvent.click(
         within(area).getByRole("button", { name: "View your submitted version" }),
       );
-      await waitFor(() => expect(posted).toHaveBeenCalled());
-      expect((posted.mock.calls.at(-1)![0] as FormData).get("intent")).toBe("edit");
+      expect(await screen.findByText("Editor")).toBeInTheDocument();
+      expect(posted).not.toHaveBeenCalled();
     });
 
     it("shows a draft and a version in review in the same single area", () => {
@@ -1068,5 +1071,40 @@ describe("Edit on the reader (bug log 59)", () => {
       expect(within(area).getByText(/Nothing has been published yet/)).toBeInTheDocument();
       expect(screen.queryByText(/You're reading the published/)).toBeNull();
     });
+  });
+});
+
+describe("a related item's relationship (bug log 227)", () => {
+  it("says how it relates, next to its title and number", async () => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => (
+          <CommandActionsProvider>
+            <PolicyReader
+              detail={{
+                ...baseDetail,
+                related: [
+                  {
+                    label: "supersedes",
+                    number: "POL-A-000001",
+                    policyId: "p-a",
+                    title: "Old policy",
+                  },
+                  { number: "POL-B-000001", policyId: "p-b", title: "Plain link" },
+                ],
+              }}
+              viewerName="Bob Author"
+            />
+          </CommandActionsProvider>
+        ),
+        path: "/policies/:number",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies/POL-FINANCE-001"]} />);
+    await userEvent.click(screen.getByRole("tab", { name: /Related/ }));
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).getByText("supersedes")).toBeInTheDocument();
+    expect(within(panel).getByText("Plain link")).toBeInTheDocument();
+    expect(within(panel).getAllByRole("listitem")).toHaveLength(2);
   });
 });

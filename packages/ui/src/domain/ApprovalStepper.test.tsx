@@ -200,3 +200,28 @@ describe("the approval stepper (U25)", () => {
     );
   });
 });
+
+describe("ApprovalStepper veto seats (steward-web#256)", () => {
+  const vetoed: StepperStage[] = [
+    {
+      approvers: [
+        { name: "Carol", state: "pending" },
+        { decidedAt: "2026-10-02T10:00:00Z", name: "Dave", state: "rejected", veto: true },
+      ],
+      name: "Review",
+      state: "rejected",
+    },
+  ];
+
+  it("marks a seat that holds a veto", () => {
+    render(<ApprovalStepper stages={vetoed} />);
+    const review = screen.getByRole("listitem", { name: "Review" });
+    expect(within(review).getAllByText("Veto")).toHaveLength(1);
+  });
+
+  it("says a rejected stage was ended by a veto", () => {
+    render(<ApprovalStepper orientation="vertical" stages={vetoed} />);
+    expect(screen.getByText(/Rejected by Dave/)).toBeInTheDocument();
+    expect(screen.getByText(/by veto/)).toBeInTheDocument();
+  });
+});
