@@ -1,3 +1,4 @@
+export { type BuildVersion, buildVersion } from "./buildVersion.server";
 export { instanceState } from "./instance.server";
 export { ACCESS_TOPICS, isOwnAccessChange, liveAccessResponse } from "./liveAccess.server";
 // Copyright 2026 The Steward Authors
