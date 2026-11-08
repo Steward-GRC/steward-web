@@ -16,7 +16,7 @@ import {
 } from "@steward-web/editor-steward";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
-import { Banner, Button, Card, notify, scrollBehavior, StatusPill } from "@steward-web/ui";
+import { Banner, Button, Card, notify, scrollBehavior } from "@steward-web/ui";
 import { draftPath, RecordBreadcrumb } from "@steward-web/ui/domain";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, redirect, useFetcher, useLocation, useNavigate } from "react-router";
@@ -212,6 +212,9 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     side: "AUTHOR",
     threads,
   });
+  // every place the status shows on this screen follows the version's real status (bug log 205)
+  const status = inReview ? "in-review" : "draft";
+  const statusWord = inReview ? t("editor.inReviewWord") : t("editor.draftWord");
   const aiHealth = useAiHealth({
     available: loaderData.aiHealth.available,
     reason: loaderData.aiHealth.reason ?? null,
@@ -549,9 +552,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
             >
               {t("editor.saveDraft")}
             </Button>
-            {inReview ? (
-              <StatusPill status="in-review" />
-            ) : policy.viewerCan.submit ? (
+            {inReview ? null : policy.viewerCan.submit ? (
               <SubmitForApproval
                 disabled={collabReadOnly}
                 document={{ number: policy.number, title: policy.title }}
@@ -567,13 +568,9 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
           </>
         }
         breadcrumb={
-          <RecordBreadcrumb
-            page={t("editor.draftWord")}
-            published={!firstPublish}
-            record={policy}
-          />
+          <RecordBreadcrumb page={statusWord} published={!firstPublish} record={policy} />
         }
-        meta={[policy.number, firstPublish ? "v1.0.0" : null, t("editor.draftWord")]
+        meta={[policy.number, firstPublish ? "v1.0.0" : null, statusWord]
           .filter(Boolean)
           .join(" · ")}
         presence={
@@ -586,6 +583,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
           ) : null
         }
         saveState={saveState}
+        status={status}
         title={policy.title}
       />
 

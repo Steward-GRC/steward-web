@@ -128,6 +128,7 @@ export const EditorHeader = ({
   meta,
   presence,
   saveState,
+  status = "draft",
   title,
 }: {
   actions: ReactNode;
@@ -135,6 +136,8 @@ export const EditorHeader = ({
   meta: string;
   presence: ReactNode;
   saveState: SaveStateKind;
+  /** The version's real status: a draft, or in review once it has been submitted. */
+  status?: "draft" | "in-review";
   title: string;
 }) => {
   const { t } = useTranslation("authoring");
@@ -149,7 +152,7 @@ export const EditorHeader = ({
           <h1 className="font-serif text-[30px] leading-[38px] font-semibold">{title}</h1>
           <span className="flex flex-wrap items-center gap-2.5">
             <span className="font-mono text-sm text-muted">{meta}</span>
-            <StatusPill status="draft" />
+            <StatusPill status={status} />
             {presence}
             <SaveState state={saveState} />
           </span>
