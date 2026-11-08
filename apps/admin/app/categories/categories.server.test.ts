@@ -109,8 +109,10 @@ describe("listGroups", () => {
       "Me",
       "CategoryChildren",
       "CategoryDocumentTypesAll",
+      "CategoryTemplateLocks",
       "CategoryChildren",
       "CategoryDocumentTypesAll",
+      "CategoryTemplateLocks",
     ]);
   });
 });

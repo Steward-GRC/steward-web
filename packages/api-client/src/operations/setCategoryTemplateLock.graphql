@@ -1,0 +1,6 @@
+mutation SetCategoryTemplateLock($id: ID!, $locked: Boolean!) {
+  setCategoryTemplateLock(id: $id, locked: $locked) {
+    id
+    defaultTemplateLocked
+  }
+}

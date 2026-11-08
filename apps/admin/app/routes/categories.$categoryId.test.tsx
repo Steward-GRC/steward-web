@@ -110,6 +110,25 @@ describe("Category directory, Details & Defaults (A3)", () => {
     expect(await within(card).findByText("Saved!")).toBeInTheDocument();
   });
 
+  it("offers to lock the default template, and posts the choice", async () => {
+    const posted = openCategory();
+    const card = await screen.findByRole("form", { name: "Details & Defaults" });
+    const lock = within(card).getByRole("checkbox", { name: "Authors must use this template" });
+    expect(lock).not.toBeChecked();
+    await userEvent.click(lock);
+    await userEvent.click(within(card).getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    expect(last(posted).get("templateLocked")).toBe("on");
+  });
+
+  it("shows a locked template as locked", async () => {
+    openCategory({ group: { ...EXPENSES, defaultTemplateLocked: true } });
+    const card = await screen.findByRole("form", { name: "Details & Defaults" });
+    expect(
+      within(card).getByRole("checkbox", { name: "Authors must use this template" }),
+    ).toBeChecked();
+  });
+
   it("adds and removes owners as chips", async () => {
     const posted = openCategory();
     const card = await screen.findByRole("form", { name: "Details & Defaults" });

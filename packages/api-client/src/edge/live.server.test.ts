@@ -708,6 +708,36 @@ describe("liveEdge.updateGroupSettings", () => {
     });
   });
 
+  it("sets the template lock after the defaults, only when it changes (steward-web#262)", async () => {
+    const current = category("c-fin", "Finance");
+    const calls = routeGateway({
+      Category: () => ({ category: current }),
+      CategoryTemplateLocks: () => ({ categoryTree: [] }),
+      SetCategoryDefaults: (variables) => ({ setCategoryDefaults: { ...current, ...variables } }),
+      SetCategoryTemplateLock: () => ({
+        setCategoryTemplateLock: { defaultTemplateLocked: true, id: "c-fin" },
+      }),
+    });
+    await liveEdge.updateGroupSettings({
+      defaultTemplateId: "t-1",
+      defaultTemplateLocked: true,
+      defaultTemplateNone: false,
+      id: "c-fin",
+    });
+    expect(calls.map((c) => c.operation).filter((o) => o.startsWith("SetCategory"))).toEqual([
+      "SetCategoryDefaults",
+      "SetCategoryTemplateLock",
+    ]);
+    calls.length = 0;
+    await liveEdge.updateGroupSettings({
+      defaultTemplateId: "t-1",
+      defaultTemplateLocked: false,
+      defaultTemplateNone: false,
+      id: "c-fin",
+    });
+    expect(calls.map((c) => c.operation)).not.toContain("SetCategoryTemplateLock");
+  });
+
   it("skips the governance mutation entirely when only the template/workflow defaults change", async () => {
     const current = category("c-fin", "Finance");
     const calls = routeGateway({
@@ -799,6 +829,38 @@ describe("liveEdge category document types on a gateway without the field (#87)"
     });
     await Promise.all([liveEdge.groupChildren(null), liveEdge.groupChildren("c-fin")]);
     expect(calls.filter((c) => c.operation === "CategoryDocumentTypesAll")).toHaveLength(1);
+  });
+});
+
+describe("liveEdge category template lock (steward-web#262)", () => {
+  it("reads the lock from its own query and adds it to the category", async () => {
+    routeGateway({
+      CategoryChildren: () => ({ categoryChildren: [category("c-fin", "Finance")] }),
+      CategoryTemplateLocks: () => ({
+        categoryTree: [{ defaultTemplateLocked: true, id: "c-fin" }],
+      }),
+    });
+    const [finance] = await liveEdge.groupChildren(null);
+    expect(finance?.defaultTemplateLocked).toBe(true);
+  });
+
+  it("leaves it out, so nothing is locked, when the gateway refuses the query", async () => {
+    routeGateway({
+      CategoryChildren: () => ({ categoryChildren: [category("c-fin", "Finance")] }),
+    });
+    const [finance] = await liveEdge.groupChildren(null);
+    expect(finance?.id).toBe("c-fin");
+    expect(finance?.defaultTemplateLocked).toBeUndefined();
+  });
+
+  it("sets the lock", async () => {
+    const calls = routeGateway({
+      SetCategoryTemplateLock: () => ({
+        setCategoryTemplateLock: { defaultTemplateLocked: true, id: "c-fin" },
+      }),
+    });
+    await liveEdge.setCategoryTemplateLock("c-fin", true);
+    expect(calls[0]?.variables).toEqual({ id: "c-fin", locked: true });
   });
 });
 

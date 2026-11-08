@@ -38,6 +38,7 @@ import {
   CategoryDocumentTypesAllDocument,
   type CategoryFieldsFragment,
   CategoryRulesetDocument,
+  CategoryTemplateLocksDocument,
   CategoryTreeDocument,
   ChangeOrgProtocolDocument,
   CloseCaseDocument,
@@ -166,6 +167,7 @@ import {
   SetCategoryDocumentTypesDocument,
   SetCategoryGovernanceDocument,
   SetCategoryRulesetDocument,
+  SetCategoryTemplateLockDocument,
   SetContactBlockArchivedDocument,
   SetDefinitionArchivedDocument,
   SetDigestWindowDocument,
@@ -272,22 +274,59 @@ const categoryDocumentTypes = (cookie?: string) => {
   return started;
 };
 
-/** The categories with what each holds added, where the gateway says. */
+/**
+ * Which categories lock their default template (steward-web#262), from its own query for the same
+ * reason: a gateway without the field reads as "nothing is locked".
+ */
+const locksInFlight = new Map<string, Promise<ReadonlySet<string>>>();
+const categoryTemplateLocks = (cookie?: string) => {
+  const key = cookie ?? "";
+  const running = locksInFlight.get(key);
+  if (running) return running;
+  const started = gatewayFetch(CategoryTemplateLocksDocument, {}, "CategoryTemplateLocks", {
+    cookie,
+  })
+    .then(
+      (data): ReadonlySet<string> =>
+        new Set(data.categoryTree.filter((c) => c.defaultTemplateLocked).map((c) => c.id)),
+    )
+    .catch((): ReadonlySet<string> => new Set())
+    .finally(() => {
+      locksInFlight.delete(key);
+    });
+  locksInFlight.set(key, started);
+  return started;
+};
+
+/** What the side queries add to a category. */
+interface CategoryExtras {
+  defaultTemplateLocked?: boolean;
+  documentTypes?: CategoryDocumentTypes;
+}
+
+/** The categories with what each holds and whether its template is locked, where the gateway says. */
 const withDocumentTypes = async <T extends { id: string }>(
   categories: readonly T[],
   cookie?: string,
-): Promise<({ documentTypes?: CategoryDocumentTypes } & T)[]> => {
-  const types = await categoryDocumentTypes(cookie);
+): Promise<(CategoryExtras & T)[]> => {
+  const [types, locks] = await Promise.all([
+    categoryDocumentTypes(cookie),
+    categoryTemplateLocks(cookie),
+  ]);
   return categories.map((c) => {
     const documentTypes = types.get(c.id);
-    return documentTypes ? { ...c, documentTypes } : c;
+    return {
+      ...c,
+      ...(documentTypes ? { documentTypes } : {}),
+      ...(locks.has(c.id) ? { defaultTemplateLocked: true } : {}),
+    };
   });
 };
 
 const categoryChildren = async (
   parentId: null | string,
   cookie?: string,
-): Promise<readonly ({ documentTypes?: CategoryDocumentTypes } & CategoryFieldsFragment)[]> => {
+): Promise<readonly (CategoryExtras & CategoryFieldsFragment)[]> => {
   const data = await gatewayFetch(CategoryChildrenDocument, { parentId }, "CategoryChildren", {
     cookie,
   });
@@ -304,7 +343,7 @@ const plainCategoryTree = async (cookie?: string): Promise<readonly CategoryFiel
 
 const categoryTree = async (
   cookie?: string,
-): Promise<readonly ({ documentTypes?: CategoryDocumentTypes } & CategoryFieldsFragment)[]> =>
+): Promise<readonly (CategoryExtras & CategoryFieldsFragment)[]> =>
   withDocumentTypes(await plainCategoryTree(cookie), cookie);
 
 const categoryIndex = async (cookie?: string): Promise<Map<string, CategoryNode>> => {
@@ -1481,6 +1520,15 @@ export const liveEdge: Edge = {
     });
     return data.revokeMagicLink;
   },
+  async setCategoryTemplateLock(id, locked, cookie) {
+    const data = await gatewayFetch(
+      SetCategoryTemplateLockDocument,
+      { id, locked },
+      "SetCategoryTemplateLock",
+      { cookie },
+    );
+    return data.setCategoryTemplateLock.defaultTemplateLocked;
+  },
   async setAiEnabled(enabled, cookie) {
     const data = await gatewayFetch(SetAiEnabledDocument, { enabled }, "SetAiEnabled", { cookie });
     return data.setAIEnabled;
@@ -2015,7 +2063,16 @@ export const liveEdge: Edge = {
     if (!category) {
       throw new GatewayError("UpdateGroupSettings", "category not found", { code: "NOT_FOUND" });
     }
-    let current: { documentTypes?: CategoryDocumentTypes } & CategoryFieldsFragment = category;
+    // the lock is only read when the caller sets it, to compare
+    const lockedIds =
+      input.defaultTemplateLocked === undefined
+        ? new Set<string>()
+        : await categoryTemplateLocks(cookie);
+    const locked = lockedIds.has(input.id);
+    let current: CategoryExtras & CategoryFieldsFragment = {
+      ...category,
+      ...(locked ? { defaultTemplateLocked: true } : {}),
+    };
     if (
       input.defaultTemplateId !== undefined ||
       input.defaultTemplateNone !== undefined ||
@@ -2039,6 +2096,21 @@ export const liveEdge: Edge = {
         { cookie },
       );
       current = data.setCategoryDefaults;
+    }
+    if (
+      input.defaultTemplateLocked !== undefined &&
+      input.defaultTemplateLocked !== (current.defaultTemplateLocked ?? false)
+    ) {
+      const data = await gatewayFetch(
+        SetCategoryTemplateLockDocument,
+        { id: input.id, locked: input.defaultTemplateLocked },
+        "SetCategoryTemplateLock",
+        { cookie },
+      );
+      current = {
+        ...current,
+        defaultTemplateLocked: data.setCategoryTemplateLock.defaultTemplateLocked,
+      };
     }
     if (input.documentTypes !== undefined) {
       const data = await gatewayFetch(
