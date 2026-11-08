@@ -72,11 +72,17 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const publishedId = found?.currentPublishedVersionId ?? null;
   const draftId = found ? (found.currentDraftVersionId ?? null) : policyVersionId;
-  // Each part of the review reads on its own: one that fails leaves its tab saying so.
+  // Each part of the review reads on its own: one that fails leaves its tab saying so. A
+  // comparison that fails is not an empty one (bug log 208): the service refuses a draft saved
+  // without its template version, and the tab has to say it could not compare.
+  let diffFailed = false;
   const [workflow, diff, upcoming, detail, threads] = await Promise.all([
     getWorkflowStatus(request, policyVersionId),
     publishedId && draftId && publishedId !== draftId
-      ? getVersionDiff(publishedId, draftId, cookie).catch(() => [])
+      ? getVersionDiff(publishedId, draftId, cookie).catch(() => {
+          diffFailed = true;
+          return null;
+        })
       : Promise.resolve(null),
     draftId ? getVersionDocument(draftId, cookie).catch(() => null) : Promise.resolve(null),
     found ? getPolicyDetail(found.documentType, found.number, cookie).catch(() => null) : null,
@@ -110,6 +116,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     preview: coming ? { stageNumber: coming.stageIndex + 1 } : null,
     review: {
       diff,
+      diffFailed,
       // With the library row, a missing published version means this is the first one; without
       // it (a draft the library hides from this approver), the published version isn't known.
       first: Boolean(found) && (!publishedId || publishedId === draftId),
