@@ -168,7 +168,7 @@
       "title": "Required sections"
     },
     "review": {
-      "inReview": "Sent for review. Its approvers see it in Approvals, and it publishes when the last stage approves.",
+      "inReview": "Sent for review. Its approvers see it in Approvals, and it publishes when the last stage approves. You can keep editing: each approver sees what changed since they last reviewed.",
       "publishFailed": "The draft wasn't published",
       "submitFailed": "The draft wasn't sent for review",
       "submitRefused": "This draft can't go for review yet",

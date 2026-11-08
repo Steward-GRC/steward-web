@@ -5,7 +5,7 @@
 import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useAutosave } from "./useAutosave";
+import { draftCanSave, useAutosave } from "./useAutosave";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -85,5 +85,19 @@ describe("useAutosave", () => {
     rerender({ content: "ab", saved: false });
     vi.advanceTimersByTime(1000);
     expect(save).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("draftCanSave", () => {
+  const base = { collabReadOnly: false, editorReady: true, hasDraft: true };
+
+  it("lets a draft in review keep saving: the author edits while the approvers review", () => {
+    expect(draftCanSave({ ...base })).toBe(true);
+  });
+
+  it("waits for the draft and the editor, and stops when the room is read-only", () => {
+    expect(draftCanSave({ ...base, hasDraft: false })).toBe(false);
+    expect(draftCanSave({ ...base, editorReady: false })).toBe(false);
+    expect(draftCanSave({ ...base, collabReadOnly: true })).toBe(false);
   });
 });

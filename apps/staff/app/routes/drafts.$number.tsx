@@ -69,7 +69,7 @@ import {
   resetRequiredSections,
 } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
-import { useAutosave } from "../authoring/useAutosave";
+import { draftCanSave, useAutosave } from "../authoring/useAutosave";
 import { listReviewThreads } from "../review/reviewThreads.server";
 import { useReviewComments } from "../review/useReviewComments";
 
@@ -379,7 +379,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   useAutosave({
     content: autosaveContent,
     delayMs: AUTOSAVE_AFTER_MS,
-    enabled: Boolean(draft) && editorReady && !collabReadOnly && !inReview,
+    enabled: draftCanSave({ collabReadOnly, editorReady, hasDraft: Boolean(draft) }),
     save: () =>
       void saveFetcher.submit(
         {
@@ -551,7 +551,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
             />
             <Button
               className="h-[38px] px-3.5"
-              disabled={saveFetcher.state !== "idle" || collabReadOnly || inReview}
+              disabled={saveFetcher.state !== "idle" || collabReadOnly}
               onClick={saveDraftNow}
               variant="secondary"
             >
