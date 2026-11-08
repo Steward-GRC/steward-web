@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { loader } from "./approvals.$number";
+import { action, loader } from "./approvals.$number";
 
 type Handler = (variables: Record<string, unknown>) => unknown;
 
@@ -290,5 +290,58 @@ describe("approvals.$number loader: the review", () => {
     const result = await load("POL-EXPENSES-000002");
 
     expect(result.data).toMatchObject({ review: { diff: null, diffFailed: false, first: true } });
+  });
+});
+
+const submit = (fields: Record<string, string>) => {
+  const body = new FormData();
+  for (const [name, value] of Object.entries(fields)) body.set(name, value);
+  return action({
+    request: new Request("https://staff.steward.example/approvals/POL-EXPENSES-000002", {
+      body,
+      method: "POST",
+    }),
+  } as unknown as Parameters<typeof action>[0]);
+};
+const fields = {
+  comment: "See my comments.",
+  policyVersionId: "version-3",
+  runId: "run-1",
+  taskId: "task-1",
+};
+
+describe("approvals.$number action", () => {
+  it("sends comments without deciding", async () => {
+    const asked: Record<string, unknown>[] = [];
+    routeGateway({
+      Me: () => ({ me: approver }),
+      SignalWorkflow: (variables) => {
+        asked.push(variables);
+        return { signalWorkflow: true };
+      },
+    });
+    const answer = (await submit({ ...fields, intent: "request-changes" })) as {
+      data: Record<string, unknown>;
+    };
+    expect(asked).toEqual([
+      expect.objectContaining({
+        comment: "See my comments.",
+        signal: "SIGNAL_TYPE_REQUEST_CHANGES",
+      }),
+    ]);
+    expect(answer.data).toEqual({ sent: true });
+  });
+
+  it("still records an approval and a rejection as decisions", async () => {
+    routeGateway({
+      Me: () => ({ me: approver }),
+      SignalWorkflow: () => ({ signalWorkflow: true }),
+    });
+    expect(((await submit({ ...fields, intent: "approve" })) as { data: unknown }).data).toEqual({
+      decided: "approved",
+    });
+    expect(((await submit({ ...fields, intent: "reject" })) as { data: unknown }).data).toEqual({
+      decided: "rejected",
+    });
   });
 });

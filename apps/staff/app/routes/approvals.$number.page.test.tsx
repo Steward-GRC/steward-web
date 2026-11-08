@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDayMonth } from "@steward-web/i18n";
+import { Toaster } from "@steward-web/ui";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useActionData } from "react-router";
@@ -84,7 +85,12 @@ const renderReview = (
       action: async ({ request }) => (await action(await request.formData())) ?? null,
       Component: () => {
         const actionData = useActionData();
-        return <ApprovalReviewRoute {...({ actionData, loaderData: data } as unknown as Props)} />;
+        return (
+          <>
+            <ApprovalReviewRoute {...({ actionData, loaderData: data } as unknown as Props)} />
+            <Toaster />
+          </>
+        );
       },
       path: "/approvals/:number",
     },
@@ -301,5 +307,16 @@ describe("the review page's other states (U25o)", () => {
       "Approved. Your decision and comment are recorded, and the run moves on.",
     );
     expect(screen.queryByRole("region", { name: "Your decision" })).toBeNull();
+  });
+});
+
+describe("sending comments from the review page", () => {
+  it("says the comments went, and keeps the decision panel", async () => {
+    renderReview(() => ({ sent: true }));
+    const panel = screen.getByRole("region", { name: "Your decision" });
+    await userEvent.type(within(panel).getByLabelText("Decision comment"), "See my comments.");
+    await userEvent.click(within(panel).getByRole("button", { name: "Send comments" }));
+    expect(await screen.findByText("Your comments were sent to the author.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your decision" })).toBeInTheDocument();
   });
 });

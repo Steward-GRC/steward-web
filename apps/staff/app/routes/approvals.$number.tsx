@@ -10,6 +10,7 @@ import {
   CopyId,
   EmptyState,
   FlowView,
+  notify,
   Tabs,
   TabsContent,
   TabsList,
@@ -30,7 +31,7 @@ import {
   listPolicies,
 } from "@steward-web/ui/domain/server";
 import { Check, ChevronLeft } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { data, Link } from "react-router";
 
 import type { Route } from "./+types/approvals.$number";
@@ -133,7 +134,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   await requireIdentityFromRequest(request);
   const form = await request.formData();
   const intent = form.get("intent");
-  if (intent !== "approve" && intent !== "reject") {
+  if (intent !== "approve" && intent !== "reject" && intent !== "request-changes") {
     throw new Response("Bad Request", { status: 400 });
   }
   const policyVersionId = String(form.get("policyVersionId") ?? "");
@@ -146,9 +147,16 @@ export const action = async ({ request }: Route.ActionArgs) => {
       comment,
       policyVersionId,
       runId,
-      signal: intent === "approve" ? SignalType.SignalTypeApprove : SignalType.SignalTypeReject,
+      signal:
+        intent === "approve"
+          ? SignalType.SignalTypeApprove
+          : intent === "reject"
+            ? SignalType.SignalTypeReject
+            : SignalType.SignalTypeRequestChanges,
       taskId,
     });
+    // sending comments is not a decision: the seat stays open and the page stays as it is
+    if (intent === "request-changes") return data({ sent: true as const });
     return data({ decided: intent === "approve" ? ("approved" as const) : ("rejected" as const) });
   } catch (error) {
     return data({ error: refusalOf(error) }, { status: 400 });
@@ -192,6 +200,11 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const { t } = useTranslation(["approvals", "policy"]);
   const refusal = actionData && "error" in actionData ? actionData.error : undefined;
   const decided = actionData && "decided" in actionData ? actionData.decided : undefined;
+  const sent = Boolean(actionData && "sent" in actionData);
+  // sending comments is not a decision, so the panel stays; say it went
+  useEffect(() => {
+    if (sent) notify.success(t("review.decision.sent"));
+  }, [sent, t]);
   const refusalMessage = useRefusalMessage(refusal ?? {});
   // A tab with nothing to show isn't offered: no changes when there is nothing to compare
   // against (a first version, or a published version that isn't known), and no history for a

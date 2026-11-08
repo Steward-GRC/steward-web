@@ -181,6 +181,18 @@ export const DecisionPanel = ({ busy, children, className, error, note }: Decisi
           <button
             className={cn(
               decide,
+              "flex-1 shadow-[inset_0_0_0_1.5px_var(--border-strong)] hover:bg-sunken",
+            )}
+            disabled={!ready}
+            name="intent"
+            type="submit"
+            value="request-changes"
+          >
+            {t("review.decision.sendComments")}
+          </button>
+          <button
+            className={cn(
+              decide,
               "flex-1 text-danger shadow-[inset_0_0_0_1.5px_var(--danger)] hover:bg-danger-soft",
             )}
             disabled={!ready}
