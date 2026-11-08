@@ -20,9 +20,10 @@ import {
   MenuItem,
   MenuSeparator,
   MenuTrigger,
+  notify,
   Spinner,
 } from "@steward-web/ui";
-import { Check, ChevronDown, CircleX, Dot, FileText, PencilLine, Sparkles, X } from "lucide-react";
+import { Check, ChevronDown, Dot, FileText, PencilLine, Sparkles } from "lucide-react";
 import { useId, useState } from "react";
 import { useFetcher } from "react-router";
 
@@ -200,7 +201,6 @@ export const SubmitForApproval = ({
   const { t } = useTranslation(["authoring", "common"]);
   const fetcher = useFetcher<Answer>();
   const [open, setOpen] = useState(false);
-  const [blocked, setBlocked] = useState(false);
   const busy = fetcher.state !== "idle";
   const refusal = fetcher.data && !fetcher.data.ok ? fetcher.data.error : undefined;
   return (
@@ -209,40 +209,21 @@ export const SubmitForApproval = ({
         className="h-[38px] px-4"
         disabled={disabled}
         onClick={() => {
-          if (missing.length > 0 || incompleteButtons > 0) setBlocked(true);
-          else setOpen(true);
+          // a toast, not a box in the header: the header's container would hold a fixed box
+          // against itself instead of the window (bug log 202)
+          if (missing.length > 0) {
+            notify.warning(t("editor.submit.fillRequired"), {
+              description: t("editor.submit.empty", { sections: missing.join(", ") }),
+            });
+          } else if (incompleteButtons > 0) {
+            notify.warning(t("editor.submit.fillButtons"), {
+              description: t("editor.submit.buttonsIncomplete", { count: incompleteButtons }),
+            });
+          } else setOpen(true);
         }}
       >
         {t("editor.submit.action")}
       </Button>
-      <span aria-live="polite" className="contents" role="status">
-        {blocked && (missing.length > 0 || incompleteButtons > 0) ? (
-          <span className="fixed bottom-6 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-2.5 rounded-[8px] bg-danger-soft px-3.5 py-2.5 text-base text-danger shadow-[inset_0_0_0_1px_var(--danger)]">
-            <CircleX aria-hidden="true" className="size-4 shrink-0" />
-            <span>
-              {missing.length > 0 ? (
-                <>
-                  <b>{t("editor.submit.fillRequired")}</b>{" "}
-                  {t("editor.submit.empty", { sections: missing.join(", ") })}
-                </>
-              ) : (
-                <>
-                  <b>{t("editor.submit.fillButtons")}</b>{" "}
-                  {t("editor.submit.buttonsIncomplete", { count: incompleteButtons })}
-                </>
-              )}
-            </span>
-            <button
-              aria-label={t("actions.dismiss", { ns: "common" })}
-              className="flex"
-              onClick={() => setBlocked(false)}
-              type="button"
-            >
-              <X aria-hidden="true" className="size-4" />
-            </button>
-          </span>
-        ) : null}
-      </span>
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent
           busy={busy}
