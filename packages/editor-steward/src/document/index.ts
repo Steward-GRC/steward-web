@@ -20,6 +20,7 @@ export {
 } from "./sections";
 export {
   countNodeTypes,
+  documentHasText,
   documentText,
   emptyParagraph,
   hasText,

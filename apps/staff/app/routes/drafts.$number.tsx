@@ -64,6 +64,7 @@ import {
   applyAiText,
   applyChangeSet,
   describeReset,
+  documentHasText,
   draftDocument,
   incompleteButtons,
   missingRequiredSections,
@@ -574,6 +575,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               <SubmitForApproval
                 disabled={collabReadOnly}
                 document={{ number: policy.number, title: policy.title }}
+                empty={!documentHasText(content)}
                 incompleteButtons={incompleteButtons(content)}
                 missing={missing}
                 published={firstPublish ? undefined : policy.version}
