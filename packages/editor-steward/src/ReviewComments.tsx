@@ -76,6 +76,8 @@ export interface ReviewThreadSuggestion {
 }
 
 export interface ReviewThreadView extends TextAnchor {
+  /** The approver the thread is with; the author sees every approver's threads. */
+  approverUserId?: string;
   createdAt: string;
   id: string;
   messages: readonly ReviewThreadMessage[];
@@ -543,17 +545,25 @@ const ThreadCard: FC<{
 };
 
 /** The threads beside the document; a click on a highlight makes its thread the active one. */
-export const ReviewThreadsPanel: FC<{ comments: ReviewComments }> = ({ comments }) => {
+export const ReviewThreadsPanel: FC<{
+  comments: ReviewComments;
+  /** Beside the document it is a column; under it, a full-width section headed with the count. */
+  placement?: "below" | "beside";
+}> = ({ comments, placement = "beside" }) => {
   const { t } = useTranslation("authoring");
   const api = useKoenigComments();
   const open = comments.threads.filter((thread) => !isClosedSuggestion(thread));
   const closed = comments.threads.filter(isClosedSuggestion);
+  const below = placement === "below";
+  const title = below
+    ? t("editor.comments.titleCount", { count: comments.threads.length })
+    : t("editor.comments.title");
   return (
     <section
-      aria-label={t("editor.comments.title")}
-      className="flex w-full flex-none flex-col gap-2 lg:w-72"
+      aria-label={title}
+      className={`flex w-full flex-none flex-col gap-2 ${below ? "" : "lg:w-72"}`}
     >
-      <h2 className="text-sm font-semibold text-ink">{t("editor.comments.title")}</h2>
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
       {open.length === 0 && closed.length === 0 ? (
         <p className="text-sm text-muted">{t("editor.comments.empty")}</p>
       ) : (

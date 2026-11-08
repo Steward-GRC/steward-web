@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   LexicalDocumentView,
+  type ReviewerEditorProps,
   type SerializedDocument,
   type StewardEditorProps,
   uploadEditorImage,
@@ -57,5 +58,31 @@ export const DraftDocumentEditor = ({ connecting = false, ...props }: DraftDocum
         </Suspense>
       </div>
     </>
+  );
+};
+
+// The reviewer's editor loads from the same chunk. The server and the first client render show the
+// read-only document, as the author's editor does; the page then frames it like the policy read view.
+const ReviewerEditor = lazy(async () => {
+  const { ReviewerEditor: component } = await loadEditor();
+  return { default: component };
+});
+
+export const ReviewerDocument = (props: ReviewerEditorProps) => {
+  const { t } = useTranslation("authoring");
+  const hydrated = useHydrated();
+  const fallback = (
+    <div aria-busy="true" aria-label={t("editor.loading")}>
+      <LexicalDocumentView document={props.initialDocument} />
+    </div>
+  );
+  if (!hydrated) return fallback;
+  return (
+    <Suspense fallback={fallback}>
+      <ReviewerEditor
+        onError={(summary) => recordUiIssueError("render", `editor: ${summary}`)}
+        {...props}
+      />
+    </Suspense>
   );
 };

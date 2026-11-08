@@ -106,6 +106,7 @@
       "suggestedText": "Suggested text (optional)",
       "threadLabel": "Comment on \"{{quote}}\"",
       "title": "Comments",
+      "titleCount": "Comments ({{count}})",
       "unreadable": "Hidden",
       "waitingAuthor": "Waiting for the author",
       "waitingReviewer": "Waiting for the reviewer",

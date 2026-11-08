@@ -43,7 +43,7 @@ import {
   listUpcomingApprovals,
 } from "../approvals/approvals.server";
 import { stepperStagesOf } from "../approvals/stepperStages";
-import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
+import { ReviewerDocument } from "../authoring/DraftDocumentEditor";
 import { listReviewThreads } from "../review/reviewThreads.server";
 import { useReviewComments } from "../review/useReviewComments";
 
@@ -380,7 +380,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           ) : null}
           <TabsContent className="mt-3.5" value="upcoming">
             {review.upcoming && commentable ? (
-              <DraftDocumentEditor initialDocument={commentable} readOnly review={comments} />
+              <ReviewerDocument initialDocument={commentable} review={comments} />
             ) : review.upcoming ? (
               <PolicyDocument
                 appendices={review.upcoming.appendices}

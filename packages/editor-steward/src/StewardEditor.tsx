@@ -11,7 +11,7 @@ import {
   type KoenigEditorAPI,
   useKoenigWordCount,
 } from "node-koenig-editor";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { StewardCollaboration } from "./collab/stewardCollaboration";
 
@@ -66,6 +66,13 @@ export interface StewardEditorProps {
   className?: string;
   /** The room to edit in, or null to edit alone. Fixed for the life of the mount. */
   collaboration?: null | StewardCollaboration;
+  /**
+   * Where the threads sit: beside the document (the author's screen) or under it, as one section
+   * headed with how many there are (the reviewer's screen, where a column would not fit).
+   */
+  commentsPlacement?: "below" | "beside";
+  /** Draws a frame around the document itself (not its comments), such as the reader's page. */
+  frame?: (document: ReactNode) => ReactNode;
   /** The stored document. Seeds a collaborative room only when the room is still empty. */
   initialDocument?: SerializedDocument;
   onChange?: (document: SerializedDocument) => void;
@@ -201,6 +208,8 @@ export const StewardEditor = ({
   placeholder,
   readOnly = false,
   review,
+  commentsPlacement = "beside",
+  frame,
   toolbar,
   uploadImage,
 }: StewardEditorProps) => {
@@ -370,12 +379,18 @@ export const StewardEditor = ({
         tools={[...BASE_TOOLS]}
       >
         {review && (review.threads.length > 0 || review.onAdd) ? (
-          <div className="flex flex-col items-start gap-6 lg:flex-row">
-            <div className="min-w-0 flex-1 self-stretch">{editor}</div>
+          <div
+            className={
+              commentsPlacement === "below"
+                ? "flex flex-col gap-6"
+                : "flex flex-col items-start gap-6 lg:flex-row"
+            }
+          >
+            <div className="min-w-0 flex-1 self-stretch">{frame ? frame(editor) : editor}</div>
             <ReviewThreadAnchors
               threads={review.threads.filter((thread) => !isClosedSuggestion(thread))}
             />
-            <ReviewThreadsPanel comments={review} />
+            <ReviewThreadsPanel comments={review} placement={commentsPlacement} />
           </div>
         ) : (
           editor

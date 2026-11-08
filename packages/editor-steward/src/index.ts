@@ -11,5 +11,6 @@ export {
 export * from "./document";
 export { LexicalDocumentView, type LexicalDocumentViewProps } from "./LexicalDocumentView";
 export type { ReviewComments, ReviewThreadMessage, ReviewThreadView } from "./ReviewComments";
+export type { ReviewerEditorProps } from "./ReviewerEditor";
 export type { StewardEditorHandle, StewardEditorProps } from "./StewardEditor";
 export { ImageUploadError, uploadEditorImage } from "./uploadImage";
