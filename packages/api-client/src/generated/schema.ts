@@ -255,6 +255,13 @@ export type Appendix = {
   readonly title: Scalars["String"]["output"];
 };
 
+export type AppendixCollabToken = {
+  readonly __typename?: "AppendixCollabToken";
+  readonly expiresAt: Scalars["String"]["output"];
+  readonly token: Scalars["String"]["output"];
+  readonly wsUrl: Scalars["String"]["output"];
+};
+
 export enum AppendixState {
   Draft = "DRAFT",
   Published = "PUBLISHED",
@@ -1056,6 +1063,7 @@ export type Mutation = {
   readonly grantGroupManager: User;
   readonly grantRole: User;
   readonly grantRoot: User;
+  readonly issueAppendixCollabToken: AppendixCollabToken;
   /**
    * Issue a short-lived websocket token for the Collaboration service.
    * The caller must be signed in and be able to edit the policy (collab checks
@@ -1560,6 +1568,10 @@ export type MutationGrantRoleArgs = {
 export type MutationGrantRootArgs = {
   otp: Scalars["String"]["input"];
   userId: Scalars["ID"]["input"];
+};
+
+export type MutationIssueAppendixCollabTokenArgs = {
+  appendixId: Scalars["ID"]["input"];
 };
 
 export type MutationIssueCollabTokenArgs = {

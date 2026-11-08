@@ -244,6 +244,29 @@ describe("the appendix page actions", () => {
     ]);
   });
 
+  it("issues a co-editing token for the appendix's own room", async () => {
+    const calls = routeGateway({
+      ...handlers([appendix("a-1", "A")]),
+      IssueAppendixCollabToken: () => ({
+        issueAppendixCollabToken: {
+          expiresAt: "2026-11-08T00:05:00Z",
+          token: "t",
+          wsUrl: "/collab/ws/appendix%3Aa-1",
+        },
+      }),
+    });
+    const result = await run({ intent: "collab-token" });
+    expect(result.data).toMatchObject({
+      intent: "collab-token",
+      ok: true,
+      token: "t",
+      wsUrl: "/collab/ws/appendix%3Aa-1",
+    });
+    expect(calls.find((c) => c.operation === "IssueAppendixCollabToken")?.variables).toEqual({
+      appendixId: "a-1",
+    });
+  });
+
   it("answers the gateway's refusal with a 400", async () => {
     routeGateway({
       ...handlers([appendix("a-1", "A")]),

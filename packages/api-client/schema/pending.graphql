@@ -241,3 +241,15 @@ extend type Mutation {
   # Site admin only. The category must name a default template to lock.
   setCategoryTemplateLock(id: ID!, locked: Boolean!): Category!
 }
+
+# Live co-editing inside an appendix: its own room and token, away from the policy's draft. Whoever
+# may edit the policy may join; a checkpoint becomes the appendix's draft.
+type AppendixCollabToken {
+  token: String!
+  wsUrl: String!
+  expiresAt: String!
+}
+
+extend type Mutation {
+  issueAppendixCollabToken(appendixId: ID!): AppendixCollabToken!
+}
