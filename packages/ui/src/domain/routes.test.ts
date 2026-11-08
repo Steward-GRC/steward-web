@@ -24,6 +24,9 @@ describe("draftPath", () => {
       "/drafts/POL-EXPENSES-000002/generate",
     );
     expect(draftPath("PRC-TRAVEL-000003", "revise")).toBe("/drafts/PRC-TRAVEL-000003/revise");
+    expect(draftPath("POL-EXPENSES-000002", "appendices/B")).toBe(
+      "/drafts/POL-EXPENSES-000002/appendices/B",
+    );
   });
 
   it("encodes the number", () => {

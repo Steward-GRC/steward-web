@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 /* oxlint-disable testing-library/no-node-access */
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -253,93 +253,87 @@ describe("next version (U11)", () => {
   });
 });
 
-describe("appendices (U17)", () => {
+describe("appendices (U17, and the appendix life cycle)", () => {
   const appendices = [
     {
+      draft: false,
       id: "a1",
       letter: "A",
-      text: "Visitor, contractor and delivery.",
+      published: true,
+      retired: false,
       title: "Visitor badge types",
     },
-    { id: "a2", letter: "B", text: "", title: "Reception hours" },
+    {
+      draft: true,
+      id: "a2",
+      letter: "B",
+      published: false,
+      retired: false,
+      title: "Reception hours",
+    },
+    { draft: false, id: "a3", letter: "", published: true, retired: true, title: "Old rates" },
   ];
 
-  it("lists each appendix by letter, collapsed, with Add appendix", async () => {
-    const action = inRouter(<AppendicesPanel appendices={appendices} draftId="d1" />);
-    const panel = screen.getByRole("region", { name: "Appendices" });
-    const toggles = within(panel).getAllByRole("button", { expanded: false });
-    expect(toggles.map((b) => b.textContent)).toEqual(["AVisitor badge types", "BReception hours"]);
-    await userEvent.click(within(panel).getByRole("button", { name: "Add appendix" }));
-    await vi.waitFor(() =>
-      expect(action).toHaveBeenCalledWith({ intent: "add-appendix", policyVersionId: "d1" }),
+  it("lists each live appendix by letter with a way to edit it, and Add appendix", async () => {
+    const action = inRouter(
+      <AppendicesPanel appendices={appendices} number="POL-A-000001" policyId="p1" />,
     );
-  });
-
-  it("opens one to edit its title and text, and saves it", async () => {
-    const action = inRouter(<AppendicesPanel appendices={appendices} draftId="d1" />);
-    await userEvent.click(screen.getByRole("button", { name: /Visitor badge types/ }));
-    const title = screen.getByLabelText("Appendix A title");
-    await userEvent.clear(title);
-    await userEvent.type(title, "Badge types");
-    await userEvent.click(screen.getByRole("button", { name: "Save appendix" }));
-    await vi.waitFor(() =>
-      expect(action).toHaveBeenCalledWith({
-        appendixId: "a1",
-        intent: "update-appendix",
-        text: "Visitor, contractor and delivery.",
-        title: "Badge types",
-      }),
+    const panel = screen.getByRole("region", { name: "Appendices" });
+    expect(within(panel).getByText("Visitor badge types")).toBeInTheDocument();
+    expect(within(panel).getByRole("link", { name: "Edit appendix A" })).toHaveAttribute(
+      "href",
+      "/drafts/POL-A-000001/appendices/A",
+    );
+    expect(within(panel).getByText("Not published")).toBeInTheDocument();
+    await userEvent.click(within(panel).getByRole("button", { name: "Add appendix" }));
+    await waitFor(() =>
+      expect(action).toHaveBeenCalledWith({ intent: "add-appendix", policyId: "p1" }),
     );
   });
 
   it("moves an appendix down, keeping the first from moving up", async () => {
-    const action = inRouter(<AppendicesPanel appendices={appendices} draftId="d1" />);
-    await userEvent.click(screen.getByRole("button", { name: /Visitor badge types/ }));
+    const action = inRouter(
+      <AppendicesPanel appendices={appendices} number="POL-A-000001" policyId="p1" />,
+    );
     expect(screen.getByRole("button", { name: "Move appendix A up" })).toBeDisabled();
     await userEvent.click(screen.getByRole("button", { name: "Move appendix A down" }));
-    await vi.waitFor(() =>
+    await waitFor(() =>
       expect(action).toHaveBeenCalledWith({
         intent: "reorder-appendices",
         orderedIds: "a2,a1",
-        policyVersionId: "d1",
+        policyId: "p1",
       }),
     );
   });
 
-  it("reorders by dragging one onto another", async () => {
-    const action = inRouter(<AppendicesPanel appendices={appendices} draftId="d1" />);
-    const [first, second] = within(screen.getByRole("region", { name: "Appendices" })).getAllByRole(
-      "listitem",
+  it("retires an appendix after asking", async () => {
+    const action = inRouter(
+      <AppendicesPanel appendices={appendices} number="POL-A-000001" policyId="p1" />,
     );
-    fireEvent.dragStart(second!);
-    fireEvent.dragOver(first!);
-    fireEvent.drop(first!);
-    await vi.waitFor(() =>
-      expect(action).toHaveBeenCalledWith({
-        intent: "reorder-appendices",
-        orderedIds: "a2,a1",
-        policyVersionId: "d1",
-      }),
+    await userEvent.click(screen.getByRole("button", { name: "Retire appendix B" }));
+    const dialog = screen.getByRole("dialog", { name: "Retire this appendix?" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Retire appendix" }));
+    await waitFor(() =>
+      expect(action).toHaveBeenCalledWith({ appendixId: "a2", intent: "retire-appendix" }),
     );
   });
 
-  it("asks before deleting one (D15)", async () => {
-    const action = inRouter(<AppendicesPanel appendices={appendices} draftId="d1" />);
-    await userEvent.click(screen.getByRole("button", { name: /Reception hours/ }));
-    await userEvent.click(screen.getByRole("button", { name: "Delete appendix" }));
-    const dialog = screen.getByRole("dialog", { name: "Delete this appendix?" });
-    expect(dialog).toHaveAccessibleDescription(
-      "Appendix B: Reception hours and its content will be removed from this draft.",
+  it("lists the retired appendices apart, each with Restore", async () => {
+    const action = inRouter(
+      <AppendicesPanel appendices={appendices} number="POL-A-000001" policyId="p1" />,
     );
-    expect(action).not.toHaveBeenCalled();
-    await userEvent.click(within(dialog).getByRole("button", { name: "Delete appendix" }));
-    await vi.waitFor(() =>
-      expect(action).toHaveBeenCalledWith({ appendixId: "a2", intent: "delete-appendix" }),
+    const retired = screen.getByRole("region", { name: "Retired appendices" });
+    expect(within(retired).getByText("Old rates")).toBeInTheDocument();
+    await userEvent.click(
+      within(retired).getByRole("button", { name: "Restore appendix Old rates" }),
+    );
+    await waitFor(() =>
+      expect(action).toHaveBeenCalledWith({ appendixId: "a3", intent: "restore-appendix" }),
     );
   });
 
-  it("says when there are none", () => {
-    inRouter(<AppendicesPanel appendices={[]} draftId="d1" />);
+  it("says so when there are none", () => {
+    inRouter(<AppendicesPanel appendices={[]} number="POL-A-000001" policyId="p1" />);
     expect(
       screen.getByText("No appendices yet. Add one to attach supplementary material."),
     ).toBeInTheDocument();

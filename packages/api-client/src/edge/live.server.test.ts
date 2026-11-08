@@ -1334,19 +1334,20 @@ describe("recordPolicyExport", () => {
   });
 });
 
+const row = (state: string, versionNo: number, title: string) => ({
+  contentJson: JSON.stringify({ text: "x" }),
+  createdAt: "2026-11-01T00:00:00Z",
+  id: `r-${String(versionNo)}`,
+  publishedAt: state === "PUBLISHED" ? "2026-11-02T00:00:00Z" : null,
+  publishedBy: state === "PUBLISHED" ? "u-1" : null,
+  state,
+  title,
+  updatedAt: "2026-11-02T00:00:00Z",
+  updatedBy: "u-1",
+  versionNo,
+});
+
 describe("liveEdge: the appendix life cycle", () => {
-  const row = (state: string, versionNo: number, title: string) => ({
-    contentJson: JSON.stringify({ text: "x" }),
-    createdAt: "2026-11-01T00:00:00Z",
-    id: `r-${String(versionNo)}`,
-    publishedAt: state === "PUBLISHED" ? "2026-11-02T00:00:00Z" : null,
-    publishedBy: state === "PUBLISHED" ? "u-1" : null,
-    state,
-    title,
-    updatedAt: "2026-11-02T00:00:00Z",
-    updatedBy: "u-1",
-    versionNo,
-  });
   const appendix = {
     draft: row("DRAFT", 2, "Rates (next)"),
     id: "a-1",

@@ -19,7 +19,10 @@ export const isReservedDraftSegment = (segment: string): boolean =>
 export { policyPath as recordPath } from "./policy";
 
 /** The draft editor for a record, or one of its pages (`generate`, `revise`). */
-export const draftPath = (number: string, page?: "generate" | "revise"): string => {
+export const draftPath = (
+  number: string,
+  page?: "generate" | "revise" | `appendices/${string}`,
+): string => {
   if (!number) throw new Error("A draft address needs the record number");
   if (isReservedDraftSegment(number)) {
     throw new Error(`"${number}" is reserved by the drafts area and is not a record number`);

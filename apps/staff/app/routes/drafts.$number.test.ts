@@ -291,24 +291,70 @@ describe("drafts.$number action: publish", () => {
   });
 });
 
-describe("drafts.$number action: reorder-appendices", () => {
-  it("sends the appendices in their new order", async () => {
-    const calls = routeGateway({
-      ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
-      ReorderAppendices: () => ({ reorderAppendices: [] }),
-    });
+const handlers = (extra: Record<string, Handler>) => ({
+  ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+  ...extra,
+});
 
+describe("drafts.$number action: the appendices", () => {
+  const appendix = {
+    draft: null,
+    id: "a-1",
+    letter: "A",
+    orderIndex: 0,
+    policyId: "p-1",
+    published: null,
+    retiredAt: null,
+    versions: [],
+  };
+
+  it("sends the appendices in their new order", async () => {
+    const calls = routeGateway(
+      handlers({ ReorderPolicyAppendices: () => ({ reorderPolicyAppendices: [] }) }),
+    );
     const result = await runAction({
       intent: "reorder-appendices",
-      orderedIds: "a2,a1",
-      policyVersionId: "v-9",
+      orderedIds: "a-2,a-1",
+      policyId: "p-1",
     });
+    expect(result.data).toMatchObject({ ok: true });
+    expect(calls.find((c) => c.operation === "ReorderPolicyAppendices")?.variables).toEqual({
+      orderedIds: ["a-2", "a-1"],
+      policyId: "p-1",
+    });
+  });
 
-    expect(result.data).toMatchObject({ intent: "reorder-appendices", ok: true });
-    expect(calls).toContainEqual({
-      operation: "ReorderAppendices",
-      variables: { orderedIds: ["a2", "a1"], policyVersionId: "v-9" },
+  it("adds an appendix as a draft and opens its page", async () => {
+    const calls = routeGateway(
+      handlers({
+        CreatePolicyAppendix: () => ({ createPolicyAppendix: { ...appendix, letter: "B" } }),
+      }),
+    );
+    const response = (await action({
+      params: { number: "FIN-001" },
+      request: post({ intent: "add-appendix", policyId: "p-1" }),
+    } as unknown as ActionArguments)) as Response;
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe("/drafts/FIN-001/appendices/B");
+    expect(calls.find((c) => c.operation === "CreatePolicyAppendix")?.variables).toMatchObject({
+      policyId: "p-1",
+      title: "Untitled appendix",
     });
+  });
+
+  it("retires and restores an appendix", async () => {
+    const calls = routeGateway(
+      handlers({
+        RestoreAppendix: () => ({ restoreAppendix: appendix }),
+        RetireAppendix: () => ({ retireAppendix: appendix }),
+      }),
+    );
+    await runAction({ appendixId: "a-1", intent: "retire-appendix" });
+    await runAction({ appendixId: "a-1", intent: "restore-appendix" });
+    expect(calls.map((c) => c.operation).filter((o) => o.endsWith("Appendix"))).toEqual([
+      "RetireAppendix",
+      "RestoreAppendix",
+    ]);
   });
 });
 

@@ -48,6 +48,7 @@ export default [
   route("templates", "routes/templates.tsx"),
   route("templates/:templateId", "routes/templates.$templateId.tsx"),
   route("drafts/:number", "routes/drafts.$number.tsx"),
+  route("drafts/:number/appendices/:letter", "routes/drafts.$number.appendices.$letter.tsx"),
   route("drafts/:number/generate", "routes/drafts.$number.generate.tsx"),
   route("drafts/:number/revise", "routes/drafts.$number.revise.tsx"),
   route("approvals", "routes/approvals.tsx"),

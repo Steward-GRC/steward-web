@@ -192,3 +192,36 @@ export const reorderAppendices = (
   orderedIds: readonly string[],
 ): Promise<readonly Appendix[]> =>
   edge.reorderAppendices(policyVersionId, orderedIds, cookieOf(request));
+
+/** A policy's appendices with their drafts and history, retired ones included. */
+export const listAppendices = (request: Request, policyId: string) =>
+  edge.policyAppendices(policyId, true, cookieOf(request));
+
+/** An appendix's draft against what is published; empty when the caller may not see it. */
+export const getAppendixDiff = (request: Request, id: string) =>
+  edge.appendixDiff(id, cookieOf(request)).catch(() => []);
+
+export const createAppendixDraft = (
+  request: Request,
+  policyId: string,
+  title: string,
+  contentJson: string,
+) => edge.createAppendix(policyId, title, contentJson, cookieOf(request));
+
+export const saveAppendix = (request: Request, id: string, title: string, contentJson: string) =>
+  edge.saveAppendixDraft(id, title, contentJson, cookieOf(request));
+
+export const publishAppendix = (request: Request, id: string) =>
+  edge.publishAppendix(id, cookieOf(request));
+
+export const retireAppendix = (request: Request, id: string) =>
+  edge.retireAppendix(id, cookieOf(request));
+
+export const restoreAppendix = (request: Request, id: string) =>
+  edge.restoreAppendix(id, cookieOf(request));
+
+export const reorderPolicyAppendices = (
+  request: Request,
+  policyId: string,
+  orderedIds: readonly string[],
+) => edge.reorderPolicyAppendices(policyId, orderedIds, cookieOf(request));
