@@ -5,7 +5,7 @@ import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { parse } from "graphql";
 
 import type { Edge } from "../edge";
-import type { Me, Policy, PolicyDetail, PolicySectionDiff } from "../views";
+import type { Me, Policy, PolicyDetail, PolicySectionDiff, SuggestionOutcome } from "../views";
 
 import { GatewayError, gatewayFetch } from "../gatewayFetch";
 import { gatewayRestFetch, gatewayRestUpload } from "../gatewayRestFetch";
@@ -40,9 +40,11 @@ import {
   CategoryTreeDocument,
   ChangeOrgProtocolDocument,
   CloseCaseDocument,
+  CloseReviewSuggestionDocument,
   CompleteOnboardingDocument,
   CompletionReportDocument,
   ContactBlocksDocument,
+  CounterReviewSuggestionDocument,
   CreateCategoryDocument,
   CreateContactBlockDocument,
   CreateDefinitionDocument,
@@ -200,7 +202,11 @@ import {
   WorkflowDefsDocument,
   WorkflowStatusDocument,
 } from "../generated/graphql";
-import { type CategoryDocumentTypes, DocumentType } from "../generated/schema";
+import {
+  type CategoryDocumentTypes,
+  DocumentType,
+  SuggestionOutcome as WireOutcome,
+} from "../generated/schema";
 import { semanticVersion } from "../semanticVersion";
 import { awaitAiJobResult } from "./aiJobResult.server";
 import {
@@ -220,6 +226,15 @@ import {
   toPolicyView,
 } from "./assemble";
 import { watchLiveEvents } from "./liveEvents.server";
+
+/** The view's outcome names, as the generated schema spells them. */
+const WIRE_OUTCOME: Record<SuggestionOutcome, WireOutcome> = {
+  AGREED: WireOutcome.Agreed,
+  CHANGED: WireOutcome.Changed,
+  NOT_AGREED: WireOutcome.NotAgreed,
+  REMOVED: WireOutcome.Removed,
+  WITHDRAWN: WireOutcome.Withdrawn,
+};
 
 /**
  * What each category holds (#87), from its own query so a gateway without the field
@@ -548,10 +563,28 @@ export const liveEdge: Edge = {
     );
     return data.addAppendix;
   },
-  async addReviewThread(policyVersionId, quote, occurrence, body, cookie) {
+  async closeReviewSuggestion(threadId, outcome, reason, cookie) {
+    const data = await gatewayFetch(
+      CloseReviewSuggestionDocument,
+      { outcome: WIRE_OUTCOME[outcome], reason, threadId },
+      "CloseReviewSuggestion",
+      { cookie },
+    );
+    return data.closeReviewSuggestion;
+  },
+  async counterReviewSuggestion(threadId, text, cookie) {
+    const data = await gatewayFetch(
+      CounterReviewSuggestionDocument,
+      { text, threadId },
+      "CounterReviewSuggestion",
+      { cookie },
+    );
+    return data.counterReviewSuggestion;
+  },
+  async addReviewThread(policyVersionId, quote, occurrence, body, suggestedText, cookie) {
     const data = await gatewayFetch(
       AddReviewThreadDocument,
-      { body, occurrence, policyVersionId, quote },
+      { body, occurrence, policyVersionId, quote, suggestedText },
       "AddReviewThread",
       { cookie },
     );

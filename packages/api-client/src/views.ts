@@ -332,6 +332,20 @@ export interface ReviewMessage {
 }
 
 /**
+ * Replacement text proposed for a thread's quote. The two sides take turns; once it has ended it
+ * carries the outcome, who closed it, the text and the reason.
+ */
+export interface ReviewSuggestion {
+  readonly closedBy: null | string;
+  readonly closedText: null | string;
+  readonly outcome: null | SuggestionOutcome;
+  readonly reason: null | string;
+  readonly rounds: readonly SuggestionRound[];
+  readonly text: string;
+  readonly turn: SuggestionSide;
+}
+
+/**
  * A comment thread on text in a policy version: the quoted text and which match of it (from 1)
  * place the highlight again in the stored document.
  */
@@ -343,10 +357,26 @@ export interface ReviewThread {
   readonly policyVersionId: string;
   readonly quote: string;
   readonly resolved: boolean;
+  /** Present when someone proposed replacement text for the quote. */
+  readonly suggestion?: null | ReviewSuggestion;
 }
 
 /** One of the caller's second factors: kind is "totp", "email" or "passkey". */
 export type SecondFactor = MyFactorsQuery["myFactors"][number];
+
+/** How a suggestion ended. */
+export type SuggestionOutcome = "AGREED" | "CHANGED" | "NOT_AGREED" | "REMOVED" | "WITHDRAWN";
+
+/** One round of a suggestion: who proposed which text. */
+export interface SuggestionRound {
+  readonly by: SuggestionSide;
+  readonly createdAt: string;
+  readonly text: string;
+  readonly userId: string;
+}
+
+/** Who acts on a suggestion: the policy's authors, or a reviewer on its run. */
+export type SuggestionSide = "AUTHOR" | "REVIEWER";
 
 /** A template selectable as a default or for a new draft. */
 export interface Template {
