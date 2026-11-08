@@ -54,6 +54,32 @@ export interface AckSummary {
   readonly required: number;
 }
 
+/** An appendix of a policy or procedure with its own life: a draft beside what is published. */
+export interface AppendixEntry {
+  readonly draft?: AppendixRowView | null;
+  readonly id: string;
+  /** The place among the live appendices; null while retired. */
+  readonly letter?: null | string;
+  readonly orderIndex: number;
+  readonly policyId: string;
+  readonly published?: AppendixRowView | null;
+  readonly retiredAt?: null | string;
+  readonly versions: readonly AppendixRowView[];
+}
+
+/** One row of an appendix's own version table. */
+export interface AppendixRowView {
+  readonly contentJson: string;
+  readonly id: string;
+  readonly publishedAt?: null | string;
+  readonly publishedBy?: null | string;
+  readonly state: "DRAFT" | "PUBLISHED";
+  readonly title: string;
+  readonly updatedAt: string;
+  readonly updatedBy: string;
+  readonly versionNo: number;
+}
+
 /** Ask's answer (U6): the text, its citations, and which spans of the text each one backs. */
 export type AskAnswer = SearchAndAnswerQuery["searchAndAnswer"];
 
@@ -216,32 +242,6 @@ export interface Policy {
   readonly updated: null | string;
   readonly version: string;
   readonly viewerCan: PolicyViewerCan;
-}
-
-/** One row of an appendix's own version table. */
-export interface AppendixRowView {
-  readonly contentJson: string;
-  readonly id: string;
-  readonly publishedAt?: null | string;
-  readonly publishedBy?: null | string;
-  readonly state: "DRAFT" | "PUBLISHED";
-  readonly title: string;
-  readonly updatedAt: string;
-  readonly updatedBy: string;
-  readonly versionNo: number;
-}
-
-/** An appendix of a policy or procedure with its own life: a draft beside what is published. */
-export interface AppendixEntry {
-  readonly draft?: AppendixRowView | null;
-  readonly id: string;
-  /** The place among the live appendices; null while retired. */
-  readonly letter?: null | string;
-  readonly orderIndex: number;
-  readonly policyId: string;
-  readonly published?: AppendixRowView | null;
-  readonly retiredAt?: null | string;
-  readonly versions: readonly AppendixRowView[];
 }
 
 export interface PolicyAppendix {

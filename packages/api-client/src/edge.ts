@@ -78,6 +78,7 @@ import type {
 import type {
   AckStatus,
   AckSummary,
+  AppendixEntry,
   AskAnswer,
   BreakGlassGrant,
   Category,
@@ -214,6 +215,8 @@ export type { NotificationPreferences, Passkey, UserLabel } from "./views";
 export type {
   AckStatus,
   AckSummary,
+  AppendixEntry,
+  AppendixRowView,
   AskAnswer,
   BreakGlassGrant,
   Category,
@@ -394,6 +397,8 @@ export interface Edge {
   aiJobResult(jobId: string, cookie?: string, signal?: AbortSignal): Promise<AiJobResult>;
   /** Fetches a completed async AI job's content by `AIJobStatus.resultRef`. */
   aiJobResultContent(resultRef: string, cookie?: string): Promise<AIJobResultContent>;
+  /** A draft appendix against what is published, for its edit page. Authors, site admins and compliance only. */
+  appendixDiff(id: string, cookie?: string): Promise<readonly PolicySectionDiff[]>;
   /** Archives a workflow definition. Site-admin only. */
   archiveWorkflowDef(id: string, cookie?: string): Promise<boolean>;
   /** Sets or clears (null) a case's assignee. Officers only. */
@@ -466,6 +471,13 @@ export interface Edge {
   contactBlocks(includeArchived?: boolean, cookie?: string): Promise<readonly ContactBlock[]>;
   /** Answers a suggestion, on the caller's turn, with different text; the turn passes. */
   counterReviewSuggestion(threadId: string, text: string, cookie?: string): Promise<ReviewThread>;
+  /** Starts an appendix of a policy or procedure as a draft. */
+  createAppendix(
+    policyId: string,
+    title: string,
+    contentJson: string,
+    cookie?: string,
+  ): Promise<AppendixEntry>;
   /** Adds a reusable contact block to the library. */
   createContactBlock(block: ContactBlockInput, cookie?: string): Promise<ContactBlock>;
   /** Adds a reusable, category-scoped definition entry to the library. */
@@ -543,7 +555,6 @@ export interface Edge {
   disableUser(userId: string, cookie?: string): Promise<User>;
   /** Discards a policy's working draft, leaving any published version untouched. */
   discardDraft(policyId: string, cookie?: string): Promise<boolean>;
-
   /** Discards (deletes) a draft template version. Published versions can't be discarded. Site-admin only. */
   discardTemplateVersion(id: string, cookie?: string): Promise<boolean>;
   /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
@@ -561,6 +572,7 @@ export interface Edge {
     file: { name?: string } & Blob,
     cookie?: string,
   ): Promise<{ content: string; title: string }>;
+
   /** Fetches an IdP signing certificate by URL (SSRF-guarded) and returns it as PEM. Site-admin only. */
   fetchIdpCert(url: string, cookie?: string): Promise<string>;
   /** Finishes registering a passkey, with the browser's credential and a name for it. */
@@ -682,6 +694,12 @@ export interface Edge {
   policies(documentType: DocumentType, cookie?: string): Promise<readonly Policy[]>;
   /** One policy by backend id, for the editor. Null when it doesn't exist or the caller can't see it. */
   policy(id: string, cookie?: string): Promise<null | Policy>;
+  /** A policy's appendices with their drafts and history; retired ones with `includeRetired`. */
+  policyAppendices(
+    policyId: string,
+    includeRetired: boolean,
+    cookie?: string,
+  ): Promise<readonly AppendixEntry[]>;
   /** One policy or procedure by its record number, for the editor's address. Null when there is no such record or the caller can't see it. */
   policyByNumber(number: string, cookie?: string): Promise<null | Policy>;
   /** The reader's full detail for one policy/procedure, by number. Null when there is no such document, or the caller can't see it. Rejects with `GatewayError` when signed out. */
@@ -711,6 +729,8 @@ export interface Edge {
   ): Promise<readonly MovePolicyItem[]>;
   /** A read-only dry run of `deleteUser`. Site-admin only. */
   previewUserDeletion(userId: string, cookie?: string): Promise<UserDeletionPreview>;
+  /** Makes an appendix's draft the version readers see. Authors and above. */
+  publishAppendix(id: string, cookie?: string): Promise<AppendixEntry>;
   /** Cuts the working draft as a new published version. Refused unless the caller holds edit access and every required section has content. */
   publishDraft(policyId: string, cookie?: string): Promise<PolicyVersion>;
   /** Publishes a draft template version; it becomes the template's active version for new policies. Site-admin only. */
@@ -770,6 +790,12 @@ export interface Edge {
     orderedIds: readonly string[],
     cookie?: string,
   ): Promise<readonly Appendix[]>;
+  /** Puts the appendices of a policy in a new order, which re-letters them. */
+  reorderPolicyAppendices(
+    policyId: string,
+    orderedIds: readonly string[],
+    cookie?: string,
+  ): Promise<readonly AppendixEntry[]>;
   /** Appends a message to a review thread. */
   replyReviewThread(threadId: string, body: string, cookie?: string): Promise<ReviewThread>;
   /** One case's full detail. Officers only. */
@@ -790,6 +816,10 @@ export interface Edge {
   resetUserPassword(userId: string, newPassword: string, cookie?: string): Promise<boolean>;
   /** Display names (and emails) for user ids, with no directory permission needed. */
   resolveUserLabels(ids: readonly string[], cookie?: string): Promise<readonly UserLabel[]>;
+  /** Brings a retired appendix back at the end of the list. */
+  restoreAppendix(id: string, cookie?: string): Promise<AppendixEntry>;
+  /** Retires an appendix: kept, hidden from readers, restorable. */
+  retireAppendix(id: string, cookie?: string): Promise<AppendixEntry>;
   /** Retires a policy: hidden from the catalog, outstanding acknowledgements cancelled (D10). */
   retirePolicy(id: string, cookie?: string): Promise<{ id: string }>;
   /** Retires (soft-deletes) a template: hidden from listings and pickers, but its versions keep
@@ -805,6 +835,13 @@ export interface Edge {
   revokeRole(userId: string, role: string, cookie?: string): Promise<User>;
   /** Revokes every active session for a user. Returns how many were revoked. */
   revokeUserSessions(userId: string, reason: string, cookie?: string): Promise<number>;
+  /** Saves the title and text into the appendix's draft (autosave). */
+  saveAppendixDraft(
+    id: string,
+    title: string,
+    contentJson: string,
+    cookie?: string,
+  ): Promise<AppendixEntry>;
   /** Saves the author's edits to a policy's working draft. */
   saveDraft(
     policyId: string,

@@ -27,6 +27,8 @@ export type {
   AiJobStatus,
   AiSettings,
   Appendix,
+  AppendixEntry,
+  AppendixRowView,
   AskAnswer,
   AuditChainVerification,
   AuditLogFilters,

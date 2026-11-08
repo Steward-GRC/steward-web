@@ -25,6 +25,7 @@ import {
   AiHealthDocument,
   AiJobDocument,
   AiJobResultContentDocument,
+  AppendixDiffDocument,
   ArchiveWorkflowDefDocument,
   AssignCaseDocument,
   AuditLogDocument,
@@ -50,6 +51,7 @@ import {
   CreateDefinitionDocument,
   CreateMagicLinkDocument,
   CreatePlatformGroupDocument,
+  CreatePolicyAppendixDocument,
   CreatePolicyDocument,
   CreateReferenceDocument,
   CreateTemplateDocument,
@@ -105,6 +107,7 @@ import {
   PendingTasksDocument,
   PlatformGroupsDocument,
   PoliciesDocument,
+  PolicyAppendicesDocument,
   PolicyAttachmentsDocument,
   PolicyByNumberDocument,
   PolicyDocument,
@@ -115,6 +118,7 @@ import {
   PreviewAccountMergeDocument,
   PreviewMovePoliciesDocument,
   PreviewUserDeletionDocument,
+  PublishAppendixDocument,
   PublishDraftDocument,
   PublishTemplateVersionDocument,
   ReassignUserPoliciesDocument,
@@ -130,6 +134,7 @@ import {
   RenameTemplateDocument,
   RenameUserMfaFactorDocument,
   ReorderAppendicesDocument,
+  ReorderPolicyAppendicesDocument,
   ReplyReviewThreadDocument,
   ReportCaseDocument,
   ReportCasesDocument,
@@ -138,6 +143,8 @@ import {
   ResendWelcomeEmailDocument,
   ResetUserPasswordDocument,
   ResolveUserLabelsDocument,
+  RestoreAppendixDocument,
+  RetireAppendixDocument,
   RetirePolicyDocument,
   RetireTemplateDocument,
   ReviewThreadsDocument,
@@ -145,6 +152,7 @@ import {
   RevokeMySessionsDocument,
   RevokeRoleDocument,
   RevokeUserSessionsDocument,
+  SaveAppendixDraftDocument,
   SaveDraftDocument,
   SearchAndAnswerDocument,
   SearchUsersDocument,
@@ -556,6 +564,62 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.activateOrganization;
+  },
+  async appendixDiff(id, cookie) {
+    const data = await gatewayFetch(AppendixDiffDocument, { id }, "AppendixDiff", { cookie });
+    return data.appendixDiff;
+  },
+  async createAppendix(policyId, title, contentJson, cookie) {
+    const data = await gatewayFetch(
+      CreatePolicyAppendixDocument,
+      { contentJson, policyId, title },
+      "CreatePolicyAppendix",
+      { cookie },
+    );
+    return data.createPolicyAppendix;
+  },
+  async policyAppendices(policyId, includeRetired, cookie) {
+    const data = await gatewayFetch(
+      PolicyAppendicesDocument,
+      { includeRetired, policyId },
+      "PolicyAppendices",
+      { cookie },
+    );
+    return data.policyAppendices;
+  },
+  async publishAppendix(id, cookie) {
+    const data = await gatewayFetch(PublishAppendixDocument, { id }, "PublishAppendix", {
+      cookie,
+    });
+    return data.publishAppendix;
+  },
+  async reorderPolicyAppendices(policyId, orderedIds, cookie) {
+    const data = await gatewayFetch(
+      ReorderPolicyAppendicesDocument,
+      { orderedIds: [...orderedIds], policyId },
+      "ReorderPolicyAppendices",
+      { cookie },
+    );
+    return data.reorderPolicyAppendices;
+  },
+  async restoreAppendix(id, cookie) {
+    const data = await gatewayFetch(RestoreAppendixDocument, { id }, "RestoreAppendix", {
+      cookie,
+    });
+    return data.restoreAppendix;
+  },
+  async retireAppendix(id, cookie) {
+    const data = await gatewayFetch(RetireAppendixDocument, { id }, "RetireAppendix", { cookie });
+    return data.retireAppendix;
+  },
+  async saveAppendixDraft(id, title, contentJson, cookie) {
+    const data = await gatewayFetch(
+      SaveAppendixDraftDocument,
+      { contentJson, id, title },
+      "SaveAppendixDraft",
+      { cookie },
+    );
+    return data.saveAppendixDraft;
   },
   async addAppendix(policyVersionId, title, contentJson, cookie) {
     const data = await gatewayFetch(

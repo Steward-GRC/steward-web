@@ -1398,12 +1398,22 @@ describe("liveEdge: the appendix life cycle", () => {
     routeGateway({
       AppendixDiff: () => ({
         appendixDiff: [
-          { changeType: "changed", sectionKey: "body", sectionTitle: "body", wordDiffHtml: "<ins>x</ins>" },
+          {
+            changeType: "changed",
+            sectionKey: "body",
+            sectionTitle: "body",
+            wordDiffHtml: "<ins>x</ins>",
+          },
         ],
       }),
     });
     expect(await liveEdge.appendixDiff("a-1")).toEqual([
-      { changeType: "changed", sectionKey: "body", sectionTitle: "body", wordDiffHtml: "<ins>x</ins>" },
+      {
+        changeType: "changed",
+        sectionKey: "body",
+        sectionTitle: "body",
+        wordDiffHtml: "<ins>x</ins>",
+      },
     ]);
   });
 });
