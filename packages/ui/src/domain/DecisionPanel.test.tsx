@@ -43,17 +43,17 @@ describe("the decision panel (U25)", () => {
       ),
     ).toBeInTheDocument();
     expect(within(panel).getByLabelText("Decision comment")).toHaveAccessibleDescription(
-      "Required to approve or reject…",
+      "Required to approve, reject or send comments…",
     );
     expect(
       within(panel).getByText("Your decision and comment are recorded against your name."),
     ).toBeInTheDocument();
   });
 
-  it("puts Reject before Approve, both disabled until there's a comment", async () => {
+  it("offers Send comments, Reject and Approve, all disabled until there's a comment", async () => {
     renderPanel();
     const buttons = screen.getAllByRole("button");
-    expect(buttons.map((b) => b.textContent)).toEqual(["Reject", "Approve"]);
+    expect(buttons.map((b) => b.textContent)).toEqual(["Send comments", "Reject", "Approve"]);
     for (const button of buttons) expect(button).toBeDisabled();
     await userEvent.type(screen.getByLabelText("Decision comment"), " ".repeat(3));
     for (const button of buttons) expect(button).toBeDisabled();
@@ -71,6 +71,17 @@ describe("the decision panel (U25)", () => {
     expect(form.get("intent")).toBe("approve");
     expect(form.get("comment")).toBe("Clear and fair.");
     expect(form.get("taskId")).toBe("task-1");
+  });
+
+  it("sends comments without deciding", async () => {
+    const action = vi.fn();
+    renderPanel(action);
+    await userEvent.type(screen.getByLabelText("Decision comment"), "See my comments.");
+    await userEvent.click(screen.getByRole("button", { name: "Send comments" }));
+    await vi.waitFor(() => expect(action).toHaveBeenCalledOnce());
+    const form = action.mock.calls[0]![0] as FormData;
+    expect(form.get("intent")).toBe("request-changes");
+    expect(form.get("comment")).toBe("See my comments.");
   });
 
   it("shows a refusal as an alert", () => {

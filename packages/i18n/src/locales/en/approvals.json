@@ -158,7 +158,7 @@
     "decision": {
       "approve": "Approve",
       "comment": "Decision comment",
-      "commentHint": "Required to approve or reject…",
+      "commentHint": "Required to approve, reject or send comments…",
       "commentPhone": "Decision comment (required)",
       "command": {
         "approve": "I approve",
@@ -178,6 +178,8 @@
       "phoneNote": "Approve is enabled once you've written a comment.",
       "recorded": "Your decision and comment are recorded against your name.",
       "reject": "Reject",
+      "sendComments": "Send comments",
+      "sent": "Your comments were sent to the author.",
       "title": "Your decision"
     },
     "due": "Due {{date}} · {{stage}}",
@@ -209,7 +211,9 @@
     "tabs": {
       "changes": "Changes vs the current published version",
       "history": "History",
+      "markReviewed": "Mark as reviewed",
       "proposed": "Proposed Publish",
+      "since": "Changes since you last reviewed",
       "upcoming": "Upcoming version (under review)"
     },
     "upcoming": {

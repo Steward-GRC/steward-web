@@ -234,6 +234,25 @@ const closed = (outcome: string, extra: Record<string, unknown> = {}) =>
     { resolved: true },
   );
 
+/** Selects text the way a person does in a read-only editor: a DOM selection and its change event. */
+const selectInDocument = async () => {
+  const root = lexicalEditor().getRootElement() as HTMLElement;
+  await act(async () => {
+    root.focus();
+    const node = document.createTreeWalker(root, NodeFilter.SHOW_TEXT).nextNode() as Node;
+    const range = document.createRange();
+    range.setStart(node, 5);
+    range.setEnd(node, 12);
+    const selection = globalThis.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+  await act(async () => {
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+};
+
 const select = async () => {
   await act(async () => {
     lexicalEditor().update(() => {
@@ -408,14 +427,12 @@ describe("closed suggestions", () => {
 });
 
 describe("who sees which toolbar", () => {
-  // Needs the base editor to show a read-only action in a non-editable editor (node-koenig-editor,
-  // toolbar actions with readOnly: true). Remove `.fails` once Steward pins that release.
-  it.fails("gives the reviewer one button, Comment, and no formatting", async () => {
+  it("gives the reviewer one button, Comment, and no formatting", async () => {
     await mount({
       readOnly: true,
       review: asSide("REVIEWER", { onAdd: vi.fn(), threads: [] }),
     });
-    await select();
+    await selectInDocument();
     expect(await screen.findByRole("button", { name: "Comment" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Bold" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Italic" })).toBeNull();
@@ -457,5 +474,67 @@ describe("the Comment card with a suggested text", () => {
     await waitFor(() =>
       expect(onAdd).toHaveBeenCalledWith({ body: "Why?", occurrence: 1, quote: "records" }),
     );
+  });
+});
+
+describe("the author writing to an approver", () => {
+  const recipients = [
+    { id: "user-charlie", name: "Charlie" },
+    { id: "user-alice", name: "Alice" },
+  ];
+  const openAsAuthor = async (onAdd: NonNullable<ReviewComments["onAdd"]>, people = recipients) => {
+    await mount({ review: asSide("AUTHOR", { onAdd, recipients: people, threads: [] }) });
+    await act(async () => {
+      lexicalEditor().update(() => {
+        const text = $getRoot().getAllTextNodes()[0];
+        if ($isTextNode(text)) text.select(5, 12);
+      });
+      await Promise.resolve();
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Comment" }));
+  };
+
+  it("asks which approver, and will not send until one is chosen", async () => {
+    const onAdd = vi.fn();
+    await openAsAuthor(onAdd);
+    await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Is this right?");
+    const send = screen.getByRole("button", { name: "Comment", description: "" });
+    expect(send).toBeDisabled();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Write to" }), "user-alice");
+    expect(send).toBeEnabled();
+    await userEvent.click(send);
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith({
+        body: "Is this right?",
+        occurrence: 1,
+        quote: "records",
+        toUserId: "user-alice",
+      }),
+    );
+  });
+
+  it("writes to the one approver there is, without asking", async () => {
+    const onAdd = vi.fn();
+    await openAsAuthor(onAdd, [recipients[0]!]);
+    await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Check?");
+    await userEvent.click(screen.getByRole("button", { name: "Comment", description: "" }));
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith({
+        body: "Check?",
+        occurrence: 1,
+        quote: "records",
+        toUserId: "user-charlie",
+      }),
+    );
+  });
+
+  it("labels each approver's thread with who it is with", async () => {
+    await mount({
+      review: asSide("AUTHOR", {
+        recipients,
+        threads: [withSuggestion({}, { approverUserId: "user-alice" })],
+      }),
+    });
+    expect(await screen.findByText("With Alice")).toBeInTheDocument();
   });
 });

@@ -4,6 +4,7 @@ mutation AddReviewThread(
   $occurrence: Int!
   $body: String!
   $suggestedText: String
+  $toUserId: ID
 ) {
   addReviewThread(
     policyVersionId: $policyVersionId
@@ -11,6 +12,7 @@ mutation AddReviewThread(
     occurrence: $occurrence
     body: $body
     suggestedText: $suggestedText
+    toUserId: $toUserId
   ) {
     ...ReviewThreadFields
   }

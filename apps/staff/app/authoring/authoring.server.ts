@@ -8,6 +8,7 @@ import {
   type Group,
   type Policy,
   type PolicyVersion,
+  SignalType,
   type Template,
   type TemplateVersion,
 } from "@steward-web/api-client";
@@ -104,6 +105,24 @@ export const submitDraftForReview = async (
 };
 
 /**
+ * Takes the submission back from review: the draft stays as it is and goes back to Draft. The run
+ * is the one the version is in; the author needs no task to withdraw.
+ */
+export const withdrawFromReview = async (request: Request, policyId: string): Promise<boolean> => {
+  const policy = await edge.policy(policyId, cookieOf(request));
+  if (!policy?.currentDraftVersionId) throw new Response("Not Found", { status: 404 });
+  const run = await edge.workflowStatus(policy.currentDraftVersionId, cookieOf(request));
+  return edge.signalWorkflow(
+    policy.currentDraftVersionId,
+    run.runId,
+    "",
+    SignalType.SignalTypeWithdraw,
+    "",
+    cookieOf(request),
+  );
+};
+
+/**
  * Whether the working draft is with its approvers. steward-workflow keeps the run's status on
  * the run, not on the version (core's version stays a draft), so the run is read first; the
  * version's own status answers when the run can't be read.
@@ -115,6 +134,35 @@ export const isDraftInReview = async (request: Request, draft: PolicyVersion): P
     return run.status === ApprovalStatus.ApprovalStatusInReview || byVersion;
   } catch {
     return byVersion;
+  }
+};
+
+/** An approver the author can write to: someone with a seat on the step the run is at. */
+export interface ReviewApprover {
+  id: string;
+  name: string;
+}
+
+/**
+ * The approvers on the step the draft's run is at, each once, for the author to write to one of
+ * them. Nobody when the run can't be read or is not in review.
+ */
+export const reviewApprovers = async (
+  request: Request,
+  draft: PolicyVersion,
+): Promise<ReviewApprover[]> => {
+  try {
+    const run = await edge.workflowStatus(draft.id, cookieOf(request));
+    if (run.status !== ApprovalStatus.ApprovalStatusInReview) return [];
+    const seats = run.stageAssignees[run.currentStageIdx] ?? [];
+    const seen = new Set<string>();
+    return seats.flatMap((seat) => {
+      if (seen.has(seat.userId)) return [];
+      seen.add(seat.userId);
+      return [{ id: seat.userId, name: seat.name ?? seat.userId }];
+    });
+  } catch {
+    return [];
   }
 };
 

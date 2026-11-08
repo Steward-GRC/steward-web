@@ -53,6 +53,13 @@
     "autosave": {
       "failed": "Couldn't auto-save — use Save draft"
     },
+    "withdraw": {
+      "action": "Withdraw",
+      "description": "The approvers stop reviewing it and it goes back to Draft. Your changes stay.",
+      "keep": "Keep in review",
+      "menu": "Withdraw from review…",
+      "title": "Withdraw from review?"
+    },
     "wordCount": {
       "readLessThanMinute": "Less than a minute",
       "readMinutes": "{minutes} min read",
@@ -74,6 +81,7 @@
       "button": "Comment",
       "cancel": "Cancel",
       "closeFailed": "The suggestion could not be closed. Try again.",
+      "chooseApprover": "Choose an approver",
       "closed": "Closed ({{count}})",
       "closedBy": "by {{who}}",
       "counterLabel": "Counter text",
@@ -106,9 +114,12 @@
       "suggestedText": "Suggested text (optional)",
       "threadLabel": "Comment on \"{{quote}}\"",
       "title": "Comments",
+      "titleCount": "Comments ({{count}})",
       "unreadable": "Hidden",
+      "with": "With {{name}}",
       "waitingAuthor": "Waiting for the author",
       "waitingReviewer": "Waiting for the reviewer",
+      "writeTo": "Write to",
       "you": "You"
     },
     "discard": {
@@ -160,7 +171,7 @@
       "title": "Required sections"
     },
     "review": {
-      "inReview": "Sent for review. Its approvers see it in Approvals, and it publishes when the last stage approves.",
+      "inReview": "Sent for review. Its approvers see it in Approvals, and it publishes when the last stage approves. You can keep editing: each approver sees what changed since they last reviewed.",
       "publishFailed": "The draft wasn't published",
       "submitFailed": "The draft wasn't sent for review",
       "submitRefused": "This draft can't go for review yet",

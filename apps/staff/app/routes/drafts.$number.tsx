@@ -37,10 +37,12 @@ import {
   isDraftInReview,
   policyIdOfNumber,
   reorderAppendices,
+  reviewApprovers,
   saveDraft,
   startDraft,
   submitDraftForReview,
   updateAppendix,
+  withdrawFromReview,
 } from "../authoring/authoring.server";
 import { issueCollabToken } from "../authoring/collab/collab.server";
 import { settleTokenRequests, type TokenRequest } from "../authoring/collab/token";
@@ -68,7 +70,7 @@ import {
   resetRequiredSections,
 } from "../authoring/sections";
 import { useAiHealth } from "../authoring/useAiHealth";
-import { useAutosave } from "../authoring/useAutosave";
+import { draftCanSave, useAutosave } from "../authoring/useAutosave";
 import { listReviewThreads } from "../review/reviewThreads.server";
 import { useReviewComments } from "../review/useReviewComments";
 
@@ -99,7 +101,17 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const inReview = draft ? await isDraftInReview(request, draft) : false;
   // What approvers wrote on this version, shown on the text they wrote it on.
   const threads = draft ? await listReviewThreads(request, draft.id) : [];
-  return { aiHealth, draft, inReview, meId: identity.id, policy, templateVersion, threads };
+  const approvers = draft && inReview ? await reviewApprovers(request, draft) : [];
+  return {
+    aiHealth,
+    approvers,
+    draft,
+    inReview,
+    meId: identity.id,
+    policy,
+    templateVersion,
+    threads,
+  };
 };
 
 export const action = async ({ params, request }: Route.ActionArgs) => {
@@ -190,6 +202,10 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         await updateAppendix(request, id, title, JSON.stringify({ text }));
         return data({ intent, ok: true } as const);
       }
+      case "withdraw": {
+        await withdrawFromReview(request, policyId);
+        return data({ intent, ok: true } as const);
+      }
       default: {
         throw new Response("Bad Request", { status: 400 });
       }
@@ -204,11 +220,13 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   const { t: tAi } = useTranslation("ai");
   const location = useLocation();
   const navigate = useNavigate();
-  const { draft, inReview, meId, policy, templateVersion, threads } = loaderData;
+  const { approvers, draft, inReview, meId, policy, templateVersion, threads } = loaderData;
   const comments = useReviewComments({
-    canAdd: false,
+    // while the version is in review the author can write to one of its approvers
+    canAdd: inReview && approvers.length > 0,
     meId,
     policyVersionId: draft?.id ?? "",
+    recipients: approvers,
     side: "AUTHOR",
     threads,
   });
@@ -374,7 +392,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
   useAutosave({
     content: autosaveContent,
     delayMs: AUTOSAVE_AFTER_MS,
-    enabled: Boolean(draft) && editorReady && !collabReadOnly && !inReview,
+    enabled: draftCanSave({ collabReadOnly, editorReady, hasDraft: Boolean(draft) }),
     save: () =>
       void saveFetcher.submit(
         {
@@ -546,7 +564,7 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
             />
             <Button
               className="h-[38px] px-3.5"
-              disabled={saveFetcher.state !== "idle" || collabReadOnly || inReview}
+              disabled={saveFetcher.state !== "idle" || collabReadOnly}
               onClick={saveDraftNow}
               variant="secondary"
             >

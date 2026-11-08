@@ -996,6 +996,41 @@ describe("liveEdge: inline review threads", () => {
     expect(calls).toEqual([{ operation: "ReviewThreads", variables: { policyVersionId: "v-3" } }]);
   });
 
+  it("names the approver a thread is for, reads what changed since the last review and marks it reviewed", async () => {
+    const calls = routeGateway({
+      AddReviewThread: () => ({ addReviewThread: thread }),
+      MarkVersionReviewed: () => ({ markVersionReviewed: true }),
+      VersionChangesSinceReview: () => ({
+        versionChangesSinceReview: [
+          {
+            changeType: "changed",
+            sectionKey: "scope",
+            sectionTitle: "Scope",
+            wordDiffHtml: "<ins>x</ins>",
+          },
+        ],
+      }),
+    });
+    await liveEdge.addReviewThread("v-3", "seven years", 2, "Check?", undefined, "user-charlie");
+    const changes = await liveEdge.versionChangesSinceReview("v-3");
+    expect(changes.map((c) => c.sectionKey)).toEqual(["scope"]);
+    expect(await liveEdge.markVersionReviewed("v-3")).toBe(true);
+    expect(calls.map((call) => [call.operation, call.variables])).toEqual([
+      [
+        "AddReviewThread",
+        {
+          body: "Check?",
+          occurrence: 2,
+          policyVersionId: "v-3",
+          quote: "seven years",
+          toUserId: "user-charlie",
+        },
+      ],
+      ["VersionChangesSinceReview", { policyVersionId: "v-3" }],
+      ["MarkVersionReviewed", { policyVersionId: "v-3" }],
+    ]);
+  });
+
   it("starts a thread with a suggested text, counters it and closes it", async () => {
     const calls = routeGateway({
       AddReviewThread: () => ({ addReviewThread: thread }),

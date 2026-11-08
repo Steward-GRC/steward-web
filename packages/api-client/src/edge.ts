@@ -371,6 +371,7 @@ export interface Edge {
     occurrence: number,
     body: string,
     suggestedText?: string,
+    toUserId?: string,
     cookie?: string,
   ): Promise<ReviewThread>;
   /** Adds a MANUAL membership to a platform group. Authorized for site-admins and for a LOCAL
@@ -538,9 +539,9 @@ export interface Edge {
   /** Disables an organisation's SSO connection. Does not clear its gates. Site-admin only. */
   disableOrganization(domain: string, cookie?: string): Promise<Organization>;
   disableUser(userId: string, cookie?: string): Promise<User>;
-
   /** Discards a policy's working draft, leaving any published version untouched. */
   discardDraft(policyId: string, cookie?: string): Promise<boolean>;
+
   /** Discards (deletes) a draft template version. Published versions can't be discarded. Site-admin only. */
   discardTemplateVersion(id: string, cookie?: string): Promise<boolean>;
   /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
@@ -607,6 +608,8 @@ export interface Edge {
    *  site-admin-only `users` query). Each `User` carries `memberships` so the caller can mark
    *  IdP-synced memberships read-only. */
   managedGroupMembers(groupId: string, cookie?: string): Promise<readonly User[]>;
+  /** The caller, an approver on the version's run, has reviewed the version as it is now. */
+  markVersionReviewed(policyVersionId: string, cookie?: string): Promise<boolean>;
   /** The signed-in user, or `null` when the session cookie is missing or expired. */
   me(cookie?: string): Promise<Me | null>;
   /**
@@ -1033,6 +1036,14 @@ export interface Edge {
   ): Promise<AuditChainVerification>;
   /** Checks the domain's DNS TXT record against its verification token. Site-admin only. */
   verifyDomain(domain: string, cookie?: string): Promise<Organization>;
+  /**
+   * What changed in each section of the version since the caller, an approver on its run, last
+   * reviewed it (when they last commented, replied, voted, sent comments or marked it reviewed).
+   */
+  versionChangesSinceReview(
+    policyVersionId: string,
+    cookie?: string,
+  ): Promise<readonly PolicySectionDiff[]>;
   /** The word-level diff between any two versions of one document (U19), section by section. */
   versionDiff(
     fromVersionId: string,

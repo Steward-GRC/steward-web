@@ -6,6 +6,8 @@ const edge = vi.hoisted(() => ({
   addReviewThread: vi.fn(async () => ({})),
   closeReviewSuggestion: vi.fn(async () => ({})),
   counterReviewSuggestion: vi.fn(async () => ({})),
+  markVersionReviewed: vi.fn(async () => true),
+  versionChangesSinceReview: vi.fn(async () => [] as unknown[]),
   deleteReviewThread: vi.fn(async () => true),
   replyReviewThread: vi.fn(async () => ({})),
   reviewThreads: vi.fn(async () => [] as unknown[]),
@@ -45,6 +47,7 @@ describe("changeReviewThread", () => {
       2,
       "Why?",
       undefined,
+      undefined,
       "session=1",
     );
   });
@@ -64,6 +67,7 @@ describe("changeReviewThread", () => {
       1,
       "Shorter?",
       "six years",
+      undefined,
       "session=1",
     );
     await changeReviewThread(request, form({ ...fields, suggestedText: "  " }));
@@ -73,8 +77,37 @@ describe("changeReviewThread", () => {
       1,
       "Shorter?",
       undefined,
+      undefined,
       "session=1",
     );
+  });
+
+  it("names the approver when the author starts a thread", async () => {
+    await changeReviewThread(
+      request,
+      form({
+        body: "Check this?",
+        intent: "add",
+        occurrence: "1",
+        policyVersionId: "v-4",
+        quote: "seven years",
+        toUserId: "user-charlie",
+      }),
+    );
+    expect(edge.addReviewThread).toHaveBeenLastCalledWith(
+      "v-4",
+      "seven years",
+      1,
+      "Check this?",
+      undefined,
+      "user-charlie",
+      "session=1",
+    );
+  });
+
+  it("marks a version reviewed", async () => {
+    await changeReviewThread(request, form({ intent: "reviewed", policyVersionId: "v-4" }));
+    expect(edge.markVersionReviewed).toHaveBeenCalledWith("v-4", "session=1");
   });
 
   it("counters a suggestion and closes it with an outcome and a reason", async () => {

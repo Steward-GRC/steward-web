@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { ReviewThread, SuggestionOutcome } from "@steward-web/api-client";
+import type { PolicySectionDiff, ReviewThread, SuggestionOutcome } from "@steward-web/api-client";
 
 import edge from "@steward-web/edge.server";
 
@@ -12,6 +12,13 @@ export const listReviewThreads = (
   policyVersionId: string,
 ): Promise<readonly ReviewThread[]> =>
   edge.reviewThreads(policyVersionId, cookieOf(request)).catch(() => []);
+
+/** What changed in the version since the signed-in approver last reviewed it; none for anyone else. */
+export const listChangesSinceReview = (
+  request: Request,
+  policyVersionId: string,
+): Promise<readonly PolicySectionDiff[]> =>
+  edge.versionChangesSinceReview(policyVersionId, cookieOf(request)).catch(() => []);
 
 const text = (form: FormData, name: string): string => String(form.get(name) ?? "");
 
@@ -31,6 +38,7 @@ export const REVIEW_THREAD_INTENTS = [
   "delete",
   "reply",
   "resolve",
+  "reviewed",
 ] as const;
 export type ReviewThreadIntent = (typeof REVIEW_THREAD_INTENTS)[number];
 
@@ -46,6 +54,7 @@ export const changeReviewThread = async (request: Request, form: FormData): Prom
         Number(text(form, "occurrence")),
         text(form, "body"),
         text(form, "suggestedText").trim() || undefined,
+        text(form, "toUserId") || undefined,
         cookie,
       );
       return;
@@ -79,6 +88,10 @@ export const changeReviewThread = async (request: Request, form: FormData): Prom
         text(form, "resolved") === "true",
         cookie,
       );
+      return;
+    }
+    case "reviewed": {
+      await edge.markVersionReviewed(text(form, "policyVersionId"), cookie);
       return;
     }
     default: {

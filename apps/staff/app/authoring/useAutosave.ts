@@ -21,6 +21,21 @@ export interface AutosaveOptions {
   saving: boolean;
 }
 
+/**
+ * Whether the draft may be saved now. A draft in review is saved like any other: the author keeps
+ * editing it while the approvers review, and each approver is shown what changed since they last
+ * reviewed. Only a missing draft, an editor not up yet or a read-only room stop it.
+ */
+export const draftCanSave = ({
+  collabReadOnly,
+  editorReady,
+  hasDraft,
+}: {
+  collabReadOnly: boolean;
+  editorReady: boolean;
+  hasDraft: boolean;
+}): boolean => hasDraft && editorReady && !collabReadOnly;
+
 export const useAutosave = ({
   content,
   delayMs,

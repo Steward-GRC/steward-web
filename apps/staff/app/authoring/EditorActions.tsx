@@ -284,6 +284,7 @@ export const ActionsMenu = ({
   const { t } = useTranslation("authoring");
   const fetcher = useFetcher<Answer>();
   const [discarding, setDiscarding] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
   const live = published ? ` ${t("editor.discard.stillLive", { version: published })}` : "";
   const wording = inReview
     ? `${t("editor.discard.inReview")}${live}`
@@ -300,9 +301,31 @@ export const ActionsMenu = ({
           </Button>
         </MenuTrigger>
         <MenuContent>
+          {inReview ? (
+            <MenuItem onSelect={() => setWithdrawing(true)}>{t("editor.withdraw.menu")}</MenuItem>
+          ) : null}
           <MenuItem onSelect={() => setDiscarding(true)}>{t("editor.discard.menu")}</MenuItem>
         </MenuContent>
       </Menu>
+      <Dialog onOpenChange={setWithdrawing} open={withdrawing}>
+        <DialogContent
+          busy={fetcher.state !== "idle"}
+          description={t("editor.withdraw.description")}
+          title={t("editor.withdraw.title")}
+        >
+          <fetcher.Form method="post">
+            <input name="intent" type="hidden" value="withdraw" />
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="secondary">{t("editor.withdraw.keep")}</Button>
+              </DialogClose>
+              <Button busy={fetcher.state !== "idle"} type="submit">
+                {t("editor.withdraw.action")}
+              </Button>
+            </DialogFooter>
+          </fetcher.Form>
+        </DialogContent>
+      </Dialog>
       <Dialog onOpenChange={setDiscarding} open={discarding}>
         <DialogContent
           busy={fetcher.state !== "idle"}

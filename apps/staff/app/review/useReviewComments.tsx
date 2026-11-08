@@ -18,12 +18,15 @@ export const useReviewComments = ({
   canAdd,
   meId,
   policyVersionId,
+  recipients,
   side,
   threads,
 }: {
   canAdd: boolean;
   meId: string;
   policyVersionId: string;
+  /** The approvers the author can write to, when they may start a thread. */
+  recipients?: readonly { id: string; name: string }[];
   /** Which side of a suggestion the person acts on: the screen knows (the draft is the author's). */
   side: SuggestionSide;
   threads: readonly ReviewThread[];
@@ -36,7 +39,7 @@ export const useReviewComments = ({
     return {
       meId,
       onAdd: canAdd
-        ? ({ body, occurrence, quote, suggestedText }) =>
+        ? ({ body, occurrence, quote, suggestedText, toUserId }) =>
             post({
               body,
               intent: "add",
@@ -44,6 +47,7 @@ export const useReviewComments = ({
               policyVersionId,
               quote,
               ...(suggestedText ? { suggestedText } : {}),
+              ...(toUserId ? { toUserId } : {}),
             })
         : undefined,
       onClose: (threadId, outcome, reason) =>
@@ -53,6 +57,7 @@ export const useReviewComments = ({
       onReply: (threadId, body) => post({ body, intent: "reply", threadId }),
       onResolve: (threadId, resolved) =>
         post({ intent: "resolve", resolved: String(resolved), threadId }),
+      ...(recipients ? { recipients } : {}),
       renderDiff: (before, after) => <WordDiff runs={wordDiffRuns(before, after)} />,
       side,
       threads: threads.map((thread) => ({
@@ -60,5 +65,5 @@ export const useReviewComments = ({
         messages: thread.messages.map((message) => ({ ...message })),
       })),
     };
-  }, [canAdd, meId, policyVersionId, side, submit, threads]);
+  }, [canAdd, meId, policyVersionId, recipients, side, submit, threads]);
 };

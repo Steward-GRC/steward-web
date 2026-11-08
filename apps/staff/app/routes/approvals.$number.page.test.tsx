@@ -1,6 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { formatDayMonth } from "@steward-web/i18n";
+import { Toaster } from "@steward-web/ui";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useActionData } from "react-router";
@@ -39,6 +40,7 @@ const loaderData = {
         versionLabel: "3",
       },
     ],
+    sinceReview: [],
     upcoming: {
       appendices: [],
       blocks: [
@@ -84,7 +86,12 @@ const renderReview = (
       action: async ({ request }) => (await action(await request.formData())) ?? null,
       Component: () => {
         const actionData = useActionData();
-        return <ApprovalReviewRoute {...({ actionData, loaderData: data } as unknown as Props)} />;
+        return (
+          <>
+            <ApprovalReviewRoute {...({ actionData, loaderData: data } as unknown as Props)} />
+            <Toaster />
+          </>
+        );
       },
       path: "/approvals/:number",
     },
@@ -301,5 +308,74 @@ describe("the review page's other states (U25o)", () => {
       "Approved. Your decision and comment are recorded, and the run moves on.",
     );
     expect(screen.queryByRole("region", { name: "Your decision" })).toBeNull();
+  });
+});
+
+describe("sending comments from the review page", () => {
+  it("says the comments went, and keeps the decision panel", async () => {
+    renderReview(() => ({ sent: true }));
+    const panel = screen.getByRole("region", { name: "Your decision" });
+    await userEvent.type(within(panel).getByLabelText("Decision comment"), "See my comments.");
+    await userEvent.click(within(panel).getByRole("button", { name: "Send comments" }));
+    expect(await screen.findByText("Your comments were sent to the author.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your decision" })).toBeInTheDocument();
+  });
+});
+
+const openReview = (data: Record<string, unknown>) => {
+  const reviewed = vi.fn();
+  const Stub = createRoutesStub([
+    {
+      Component: () => (
+        <ApprovalReviewRoute
+          {...({ actionData: undefined, loaderData: data } as unknown as Props)}
+        />
+      ),
+      path: "/approvals/:number",
+    },
+    {
+      action: async ({ request }) => {
+        reviewed(Object.fromEntries(await request.formData()));
+        return null;
+      },
+      path: "/resources/review-threads",
+    },
+  ]);
+  render(<Stub initialEntries={["/approvals/POL-EXPENSES-000002"]} />);
+  return reviewed;
+};
+
+describe("what changed since the approver last reviewed", () => {
+  const since = [
+    {
+      changeType: "changed",
+      sectionKey: "making-a-claim",
+      sectionTitle: "2. Making a claim",
+      wordDiffHtml: "File your claim within <del>30</del> <ins>21</ins> days.",
+    },
+    { changeType: "unchanged", sectionKey: "scope", sectionTitle: "1. Scope", wordDiffHtml: "" },
+  ];
+  const withChanges = { ...loaderData, review: { ...loaderData.review, sinceReview: since } };
+
+  it("opens on it, as its own tab, when something changed", () => {
+    openReview(withChanges);
+    const tab = screen.getByRole("tab", { name: "Changes since you last reviewed" });
+    expect(tab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("21")).toBeVisible();
+    // an unchanged section is not shown
+    expect(screen.queryByText("1. Scope")).toBeNull();
+  });
+
+  it("is not a tab when nothing changed since", () => {
+    openReview(loaderData);
+    expect(screen.queryByRole("tab", { name: "Changes since you last reviewed" })).toBeNull();
+  });
+
+  it("marks the version reviewed", async () => {
+    const posted = openReview(withChanges);
+    await userEvent.click(screen.getByRole("button", { name: "Mark as reviewed" }));
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith({ intent: "reviewed", policyVersionId: "version-3" }),
+    );
   });
 });
