@@ -10,10 +10,12 @@ import { useTranslation } from "@steward-web/i18n";
 import { recordUiIssueError } from "@steward-web/shell";
 import { lazy, Suspense, useSyncExternalStore } from "react";
 
+import { loadEditor } from "./warmEditor";
+
 // The editor needs a browser, so it never renders on the server: the server and the first
 // client render show the read-only document, and the editor's own chunk loads after
 // hydration and takes over. Routes stay server-rendered either way.
-const StewardEditor = lazy(() => import("@steward-web/editor-steward/client"));
+const StewardEditor = lazy(loadEditor);
 
 const unsubscribe = () => {};
 const subscribe = () => unsubscribe;
