@@ -133,3 +133,26 @@ describe("stepperStagesOf", () => {
     ]);
   });
 });
+
+describe("stepperStagesOf veto seats (steward-web#256)", () => {
+  const run = {
+    currentStageIdx: 0,
+    stageAssignees: [[seat("u-1", "Alice", "pending"), seat("u-2", "Dave", "rejected")]],
+    stageNames: ["Review"],
+    stageUnitProgress: [[]],
+    status: "APPROVAL_STATUS_REJECTED",
+  };
+
+  it("marks the seats that hold a veto", () => {
+    const [stage] = stepperStagesOf(run, "u-1", [["u-2"]]);
+    expect(stage?.approvers.map((a) => [a.name, a.veto === true])).toEqual([
+      ["Alice", false],
+      ["Dave", true],
+    ]);
+  });
+
+  it("marks none when the gateway reports none", () => {
+    const [stage] = stepperStagesOf(run, "u-1");
+    expect(stage?.approvers.every((a) => !a.veto)).toBe(true);
+  });
+});

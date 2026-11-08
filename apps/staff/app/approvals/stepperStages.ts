@@ -35,13 +35,14 @@ interface Unit {
 const SEAT_STATES = new Set(["approved", "pending", "rejected"]);
 const QUORUMS = new Set(["all", "majority", "one"]);
 
-const approverOf = (seat: Seat, meId: string): StepperApprover => ({
+const approverOf = (seat: Seat, meId: string, veto: boolean): StepperApprover => ({
   comment: seat.comment ?? null,
   decidedAt: seat.decidedAt ?? null,
   groupId: seat.groupId ?? null,
   isYou: seat.userId === meId,
   name: seat.name ?? seat.userId,
   state: seat.state as StepperApprover["state"],
+  ...(veto ? { veto: true } : {}),
 });
 
 const groupOf = (unit: Unit, seats: readonly Seat[]): StepperGroup => {
@@ -71,12 +72,19 @@ const stateOf = (run: Run, index: number): StepperStage["state"] => {
 };
 
 /** Each stage with its live seats (cancelled ones dropped), its state and its group units. */
-export const stepperStagesOf = (run: Run, meId: string): StepperStage[] =>
+/** `vetoes` lists, per stage, the user ids holding a veto there (none where the gateway has none). */
+export const stepperStagesOf = (
+  run: Run,
+  meId: string,
+  vetoes: readonly (readonly string[])[] = [],
+): StepperStage[] =>
   run.stageNames.map((name, index) => {
     const seats = run.stageAssignees[index] ?? [];
     const units = run.stageUnitProgress[index] ?? [];
     return {
-      approvers: seats.filter((s) => SEAT_STATES.has(s.state)).map((s) => approverOf(s, meId)),
+      approvers: seats
+        .filter((s) => SEAT_STATES.has(s.state))
+        .map((s) => approverOf(s, meId, vetoes[index]?.includes(s.userId) ?? false)),
       groups: units.map((unit) => groupOf(unit, seats)),
       name,
       state: stateOf(run, index),
