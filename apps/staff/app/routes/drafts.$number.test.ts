@@ -434,6 +434,43 @@ describe("drafts.$number loader: review state", () => {
   });
 });
 
+describe("drafts.$number loader: the published text for the live diff (bug log 228)", () => {
+  const published = JSON.stringify({ root: { children: [], type: "root" } });
+  const handlers = (): Record<string, Handler> => ({
+    ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+    PolicyByNumber: () => ({
+      policyByNumber: { ...gatewayPolicy, currentPublishedVersionId: "v-3" },
+    }),
+    PolicyVersion: (variables) => ({
+      policyVersion:
+        variables.id === "v-3"
+          ? { ...draftVersion("PUBLISHED"), contentJson: published, id: "v-3" }
+          : draftVersion("draft"),
+    }),
+  });
+
+  it("hands back the published version's text to compare the draft with", async () => {
+    routeGateway(handlers());
+    expect((await runLoader()).published).toBe(published);
+  });
+
+  it("has none for a document never published", async () => {
+    routeGateway(editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"));
+    expect((await runLoader()).published).toBeNull();
+  });
+
+  it("opens the editor without a diff when the published text can't be read", async () => {
+    routeGateway({
+      ...handlers(),
+      PolicyVersion: (variables) =>
+        variables.id === "v-3"
+          ? { errors: [{ message: "gone" }] }
+          : { policyVersion: draftVersion("draft") },
+    });
+    expect((await runLoader()).published).toBeNull();
+  });
+});
+
 describe("drafts.$number for a procedure (bug log 213)", () => {
   const procedure = { ...gatewayPolicy, documentType: "PROCEDURE", number: "PRC-TRAVEL-000003" };
   const asProcedure = (versionStatus: string, approvalStatus: string): Record<string, Handler> => ({

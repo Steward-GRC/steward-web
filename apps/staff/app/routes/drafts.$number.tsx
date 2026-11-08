@@ -18,6 +18,7 @@ import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, notify, scrollBehavior } from "@steward-web/ui";
 import { draftPath, RecordBreadcrumb } from "@steward-web/ui/domain";
+import { getVersionDocument } from "@steward-web/ui/domain/server";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, redirect, useFetcher, useLocation, useNavigate } from "react-router";
 
@@ -59,6 +60,7 @@ import {
   RequiredSections,
   type SaveStateKind,
 } from "../authoring/EditorChrome";
+import { EditorViewToggle, useEditorView } from "../authoring/EditorViewToggle";
 import { resetSummaryText } from "../authoring/resetSummary";
 import {
   aiSections,
@@ -106,6 +108,15 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   // What approvers wrote on this version, shown on the text they wrote it on.
   const threads = draft ? await listReviewThreads(request, draft.id) : [];
   const approvers = draft && inReview ? await reviewApprovers(request, draft) : [];
+  // The published text the live diff compares with; none for a first publish, or if it can't be read.
+  const published = policy.currentPublishedVersionId
+    ? await getVersionDocument(
+        policy.currentPublishedVersionId,
+        request.headers.get("cookie") ?? undefined,
+      )
+        .then((version) => version?.contentJson ?? null)
+        .catch(() => null)
+    : null;
   return {
     aiHealth,
     appendices,
@@ -114,6 +125,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     inReview,
     meId: identity.id,
     policy,
+    published,
     templateVersion,
     threads,
   };
@@ -251,8 +263,20 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
   const { t: tAi } = useTranslation("ai");
   const location = useLocation();
   const navigate = useNavigate();
-  const { appendices, approvers, draft, inReview, meId, policy, templateVersion, threads } =
-    loaderData;
+  const {
+    appendices,
+    approvers,
+    draft,
+    inReview,
+    meId,
+    policy,
+    published,
+    templateVersion,
+    threads,
+  } = loaderData;
+  // each person's own view of their changes; never shared through the room (bug log 228)
+  const [editorView, setEditorView] = useEditorView(meId);
+  const publishedDocument = useMemo(() => parseDocument(published), [published]);
   const comments = useReviewComments({
     // while the version is in review the author can write to one of its approvers
     canAdd: inReview && approvers.length > 0,
@@ -647,6 +671,11 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
           {/* The editor adds no padding of its own (bug log 178), so this is the whole margin: 48px.
               `isolate` makes the card its own stacking context: a selected card's controls sit at
               z-index 1000 inside the editor and would otherwise draw over the sticky header (194). */}
+          {publishedDocument ? (
+            <div className="flex justify-end">
+              <EditorViewToggle onChange={setEditorView} value={editorView} />
+            </div>
+          ) : null}
           <Card className="isolate px-6 py-8 sm:px-12 sm:py-8">
             <div
               onBeforeInputCapture={markTouched}
@@ -663,6 +692,11 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
                 // a room that fell back to solo needs a fresh editor without it; pending to live
                 // keeps the same editor, bound to the room before its content arrives
                 key={collabSession.mode === "solo" ? "solo" : "room"}
+                liveDiff={
+                  editorView === "diff" && publishedDocument
+                    ? { published: publishedDocument }
+                    : null
+                }
                 onChange={
                   collabSession.mode === "pending" ? ignoreWhileConnecting : onDocumentChange
                 }
