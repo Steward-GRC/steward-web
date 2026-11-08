@@ -181,6 +181,7 @@ const ChangePicker = ({ published }: { published: string }) => {
 export const SubmitForApproval = ({
   disabled,
   document,
+  incompleteButtons = 0,
   missing,
   published,
   version,
@@ -188,6 +189,8 @@ export const SubmitForApproval = ({
 }: {
   disabled?: boolean;
   document: { number: string; title: string };
+  /** Button cards with an empty label or link (bug log 183); the submit waits until none is. */
+  incompleteButtons?: number;
   missing: readonly string[];
   /** The published version this revision follows; absent for a first publish. */
   published?: string;
@@ -206,19 +209,28 @@ export const SubmitForApproval = ({
         className="h-[38px] px-4"
         disabled={disabled}
         onClick={() => {
-          if (missing.length > 0) setBlocked(true);
+          if (missing.length > 0 || incompleteButtons > 0) setBlocked(true);
           else setOpen(true);
         }}
       >
         {t("editor.submit.action")}
       </Button>
       <span aria-live="polite" className="contents" role="status">
-        {blocked && missing.length > 0 ? (
+        {blocked && (missing.length > 0 || incompleteButtons > 0) ? (
           <span className="fixed bottom-6 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-2.5 rounded-[8px] bg-danger-soft px-3.5 py-2.5 text-base text-danger shadow-[inset_0_0_0_1px_var(--danger)]">
             <CircleX aria-hidden="true" className="size-4 shrink-0" />
             <span>
-              <b>{t("editor.submit.fillRequired")}</b>{" "}
-              {t("editor.submit.empty", { sections: missing.join(", ") })}
+              {missing.length > 0 ? (
+                <>
+                  <b>{t("editor.submit.fillRequired")}</b>{" "}
+                  {t("editor.submit.empty", { sections: missing.join(", ") })}
+                </>
+              ) : (
+                <>
+                  <b>{t("editor.submit.fillButtons")}</b>{" "}
+                  {t("editor.submit.buttonsIncomplete", { count: incompleteButtons })}
+                </>
+              )}
             </span>
             <button
               aria-label={t("actions.dismiss", { ns: "common" })}

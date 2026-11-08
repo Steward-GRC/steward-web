@@ -150,9 +150,12 @@
     "submit": {
       "action": "Submit for approval",
       "approvers": "its approvers",
+      "buttonsIncomplete_one": "{{count}} button is incomplete.",
+      "buttonsIncomplete_other": "{{count}} buttons are incomplete.",
       "changeType": "Change type",
       "description": "{{title}} ({{number}}) goes to {{workflow}}. You can't edit it while it's in review.",
       "empty": "Empty: {{sections}}",
+      "fillButtons": "Give every button a label and a link before submitting.",
       "fillRequired": "Fill every required section before submitting.",
       "keepEditing": "Keep editing",
       "lowering": "Lowering it needs a reason",

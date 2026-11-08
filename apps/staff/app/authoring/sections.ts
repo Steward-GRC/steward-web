@@ -21,6 +21,7 @@ import {
 import type { ChangeEntry } from "./ai/results";
 
 export {
+  incompleteButtons,
   missingRequiredSections,
   resetRequiredSections,
   type SectionText,
