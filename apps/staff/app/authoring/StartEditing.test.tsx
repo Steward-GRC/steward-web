@@ -13,9 +13,9 @@ const policy = {
   number: "POL-EXPENSES-000002",
   title: "Expense Claims Policy",
   version: "2.0.0",
-} as never;
+};
 
-const mount = (appendices: never[] = []) => {
+const mount = (appendices: never[] = [], record: object = {}) => {
   const posted = vi.fn();
   const Stub = createRoutesStub([
     {
@@ -23,7 +23,9 @@ const mount = (appendices: never[] = []) => {
         posted(Object.fromEntries(await request.formData()));
         return { ok: true };
       },
-      Component: () => <StartEditing appendices={appendices} policy={policy} />,
+      Component: () => (
+        <StartEditing appendices={appendices} policy={{ ...policy, ...record } as never} />
+      ),
       path: "/",
     },
   ]);
@@ -49,5 +51,21 @@ describe("the edit screen before a draft exists (bug log 219)", () => {
   it("lets the appendices be added and edited with no draft", () => {
     mount();
     expect(screen.getByRole("button", { name: "Add appendix" })).toBeInTheDocument();
+  });
+
+  it("names a procedure as a procedure", () => {
+    mount([], { documentType: "PROCEDURE" });
+    expect(screen.getByText(/draft of the procedure/)).toBeInTheDocument();
+  });
+
+  it("names a policy as a policy", () => {
+    mount();
+    expect(screen.getByText(/draft of the policy/)).toBeInTheDocument();
+  });
+
+  it("does not print a bare v when no version is known", () => {
+    mount([], { version: null });
+    expect(screen.queryByText(/v\./)).toBeNull();
+    expect(screen.queryByText(/published version/)).toBeNull();
   });
 });

@@ -24,9 +24,15 @@
     },
     "start": {
       "action": "Start editing",
-      "appendixNote": "Appendices have their own life cycle. Edit them below without starting a draft of the policy.",
+      "appendixNote": {
+        "policy": "Appendices have their own life cycle. Edit them here without starting a draft of the policy.",
+        "procedure": "Appendices have their own life cycle. Edit them here without starting a draft of the procedure."
+      },
       "page": "Edit",
-      "text": "This is the published version, v{{version}}. Nothing is created until you start editing; then a working draft is made from it."
+      "text": {
+        "published": "This is the published version, v{{version}}. Nothing is created until you start editing; then a working draft is made from it.",
+        "unpublished": "Nothing is created until you start editing; then a working draft is made."
+      }
     },
     "aiMenu": {
       "generate": "Generate a draft…",
