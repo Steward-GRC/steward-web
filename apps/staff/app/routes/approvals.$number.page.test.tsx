@@ -212,19 +212,48 @@ describe("the review page's head and tabs (U25)", () => {
     ).toBeInTheDocument();
   });
 
-  it("leaves out the changes and history tabs for a first version, opening on the upcoming one", () => {
+  it("is one tab, Proposed Publish, for a first publish", () => {
     renderReview(() => {}, {
       ...loaderData,
       review: { ...loaderData.review, diff: null, first: true },
     });
-    expect(
-      screen.queryByRole("tab", { name: "Changes vs the current published version" }),
-    ).toBeNull();
-    expect(screen.queryByRole("tab", { name: "History" })).toBeNull();
-    expect(screen.getByRole("tab", { name: "Upcoming version (under review)" })).toHaveAttribute(
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Proposed Publish"]);
+    expect(screen.getByRole("tab", { name: "Proposed Publish" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
+  });
+
+  it("keeps the decision panel with a first publish, so the reviewer can still answer", () => {
+    renderReview(() => {}, {
+      ...loaderData,
+      review: { ...loaderData.review, diff: null, first: true },
+    });
+    const panel = screen.getByRole("region", { name: "Your decision" });
+    expect(within(panel).getByRole("button", { name: "Approve" })).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "Reject" })).toBeInTheDocument();
+  });
+
+  it("keeps the changes tab, and says so, when the comparison could not be loaded", async () => {
+    renderReview(() => {}, {
+      ...loaderData,
+      review: { ...loaderData.review, diff: null, diffFailed: true, first: false },
+    });
+    const tab = screen.getByRole("tab", { name: "Changes vs the current published version" });
+    expect(tab).toBeInTheDocument();
+    await userEvent.click(tab);
+    expect(
+      screen.getByText("The comparison with the published version couldn't be loaded."),
+    ).toBeVisible();
+  });
+
+  it("shows the changes and the version under review for a later version of a published policy", () => {
+    renderReview(() => {}, { ...loaderData, review: { ...loaderData.review, first: false } });
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "Changes vs the current published version",
+      "Upcoming version (under review)",
+      "History",
+    ]);
   });
 });
 

@@ -197,7 +197,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   // against (a first version, or a published version that isn't known), and no history for a
   // first version or one without entries yet.
   const early = "review" in loaderData ? loaderData.review : null;
-  const hasChanges = early !== null && early.diff !== null;
+  const hasChanges = early !== null && (early.diff !== null || early.diffFailed);
   const hasHistory = early !== null && !early.first && early.history.length > 0;
   const [view, setView] = useState(hasChanges ? "changes" : "upcoming");
   // Inline comments on the version under review: whoever holds a seat on it comments and
@@ -361,7 +361,9 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
             <TabsTrigger empty={!hasChanges} value="changes">
               {t("review.tabs.changes")}
             </TabsTrigger>
-            <TabsTrigger value="upcoming">{t("review.tabs.upcoming")}</TabsTrigger>
+            <TabsTrigger value="upcoming">
+              {review.first ? t("review.tabs.proposed") : t("review.tabs.upcoming")}
+            </TabsTrigger>
             <TabsTrigger empty={!hasHistory} value="history">
               {t("review.tabs.history")}
             </TabsTrigger>
@@ -371,6 +373,11 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
               <DiffView sections={review.diff} />
             </TabsContent>
           )}
+          {review.diffFailed ? (
+            <TabsContent className="mt-3.5" value="changes">
+              <Unavailable>{t("review.changes.unavailable")}</Unavailable>
+            </TabsContent>
+          ) : null}
           <TabsContent className="mt-3.5" value="upcoming">
             {review.upcoming && commentable ? (
               <DraftDocumentEditor initialDocument={commentable} readOnly review={comments} />
