@@ -34,6 +34,14 @@
         "unpublished": "Nothing is created until you start editing; then a working draft is made."
       }
     },
+    "view": {
+      "diff": "Diff",
+      "label": "View",
+      "unified": "Unified"
+    },
+    "liveDiff": {
+      "removed": "Removed: {{text}}"
+    },
     "aiMenu": {
       "generate": "Generate a draft…",
       "improve": "Improve draft…",
