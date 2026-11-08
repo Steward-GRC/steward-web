@@ -193,3 +193,58 @@ describe("The workflow editor (A9)", () => {
     expect(posted[0]!.get("intent")).toBe("delete");
   });
 });
+
+describe("Veto approvers in the workflow editor (steward-web#256)", () => {
+  it("is off by default, with nothing to mark until it is turned on", async () => {
+    openEditor();
+    const toggle = await screen.findByRole("checkbox", { name: "Allow veto approvers" });
+    expect(toggle).not.toBeChecked();
+    expect(screen.queryByRole("checkbox", { name: /^Can veto/ })).toBeNull();
+  });
+
+  it("marks a user and a group seat once it is on, and saves them with the stages", async () => {
+    const posted = openEditor();
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Allow veto approvers" }));
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Can veto: Dave (Finance review)" }),
+    );
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Can veto: Approvers group (Final approval)" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save workflow" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    const form = posted[0]!;
+    expect(form.get("vetoEnabled")).toBe("on");
+    const stages = JSON.parse(String(form.get("stagesJson"))) as {
+      vetoApproverIds?: string[];
+      vetoGroupIds?: string[];
+    }[];
+    expect(stages[0]?.vetoApproverIds).toEqual(["mock-user-dave"]);
+    expect(stages[1]?.vetoGroupIds).toEqual(["g-approvers"]);
+  });
+
+  it("shows what the workflow already holds", async () => {
+    openEditor({
+      veto: {
+        enabled: true,
+        stages: { "s-1": { vetoApproverIds: ["mock-user-grace"], vetoGroupIds: [] } },
+      },
+    });
+    expect(await screen.findByRole("checkbox", { name: "Allow veto approvers" })).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Can veto: Grace (Finance review)" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Can veto: Dave (Finance review)" }),
+    ).not.toBeChecked();
+  });
+
+  it("sends no veto lists when none are marked", async () => {
+    const posted = openEditor();
+    await userEvent.click(await screen.findByRole("button", { name: "Save workflow" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    expect(posted[0]!.get("vetoEnabled")).toBeNull();
+    const stages = JSON.parse(String(posted[0]!.get("stagesJson"))) as Record<string, unknown>[];
+    expect(stages.every((stage) => !("vetoApproverIds" in stage))).toBe(true);
+  });
+});

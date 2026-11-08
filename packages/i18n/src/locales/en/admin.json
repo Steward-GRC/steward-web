@@ -966,7 +966,14 @@
         "description": "No workflow matches that address.",
         "action": "Back to workflows"
       },
-      "stageGroup": "Stage {{number}}"
+      "stageGroup": "Stage {{number}}",
+      "veto": {
+        "allow": "Allow veto approvers",
+        "canVeto": "Can veto: {{name}} ({{stage}})",
+        "canVetoGroup": "Can veto: {{name}} group ({{stage}})",
+        "hint": "A veto approver's single reject ends the version as rejected, even inside a quorum. Off by default.",
+        "title": "Veto approvers"
+      }
     },
     "add": {
       "title": "New workflow",
@@ -1426,7 +1433,8 @@
         "category": "Category",
         "create": "Create definition",
         "save": "Save definition",
-        "failed": "Couldn't save this definition"
+        "failed": "Couldn't save this definition",
+        "duplicate": "A definition with this title already exists"
       },
       "delete": {
         "title": "Delete this definition?",

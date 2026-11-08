@@ -255,6 +255,20 @@ export type Appendix = {
   readonly title: Scalars["String"]["output"];
 };
 
+export type AppendixCollabToken = {
+  readonly __typename?: "AppendixCollabToken";
+  readonly expiresAt: Scalars["String"]["output"];
+  readonly token: Scalars["String"]["output"];
+  readonly wsUrl: Scalars["String"]["output"];
+};
+
+export type AppendixContributor = {
+  readonly __typename?: "AppendixContributor";
+  readonly active: Scalars["Boolean"]["output"];
+  readonly name: Scalars["String"]["output"];
+  readonly userId: Scalars["ID"]["output"];
+};
+
 export enum AppendixState {
   Draft = "DRAFT",
   Published = "PUBLISHED",
@@ -263,6 +277,7 @@ export enum AppendixState {
 export type AppendixVersion = {
   readonly __typename?: "AppendixVersion";
   readonly contentJson: Scalars["String"]["output"];
+  readonly contributors: ReadonlyArray<AppendixContributor>;
   readonly createdAt: Scalars["String"]["output"];
   readonly createdBy: Scalars["ID"]["output"];
   readonly id: Scalars["ID"]["output"];
@@ -1056,6 +1071,7 @@ export type Mutation = {
   readonly grantGroupManager: User;
   readonly grantRole: User;
   readonly grantRoot: User;
+  readonly issueAppendixCollabToken: AppendixCollabToken;
   /**
    * Issue a short-lived websocket token for the Collaboration service.
    * The caller must be signed in and be able to edit the policy (collab checks
@@ -1185,6 +1201,11 @@ export type Mutation = {
    */
   readonly setUserAiQueryLimit: AiUserQueryLimit;
   readonly setUserPolicyOverride: User;
+  readonly setVersionContacts: PolicyVersionLinks;
+  readonly setVersionDefinitions: PolicyVersionLinks;
+  readonly setVersionReferences: PolicyVersionLinks;
+  readonly setVersionRelated: PolicyVersionLinks;
+  readonly setWorkflowVetoEnabled: WorkflowDef;
   readonly shredAuditSubject: AuditShredResult;
   /**
    * Deliver an approver decision to an active run. The actor is bound from
@@ -1451,7 +1472,7 @@ export type MutationCreatePolicyArgs = {
 export type MutationCreatePolicyAppendixArgs = {
   contentJson: Scalars["String"]["input"];
   policyId: Scalars["ID"]["input"];
-  title: Scalars["String"]["input"];
+  title?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MutationCreateReferenceArgs = {
@@ -1560,6 +1581,10 @@ export type MutationGrantRoleArgs = {
 export type MutationGrantRootArgs = {
   otp: Scalars["String"]["input"];
   userId: Scalars["ID"]["input"];
+};
+
+export type MutationIssueAppendixCollabTokenArgs = {
+  appendixId: Scalars["ID"]["input"];
 };
 
 export type MutationIssueCollabTokenArgs = {
@@ -1942,6 +1967,31 @@ export type MutationSetUserPolicyOverrideArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationSetVersionContactsArgs = {
+  contactBlockIds: ReadonlyArray<Scalars["ID"]["input"]>;
+  policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationSetVersionDefinitionsArgs = {
+  definitionIds: ReadonlyArray<Scalars["ID"]["input"]>;
+  policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationSetVersionReferencesArgs = {
+  policyVersionId: Scalars["ID"]["input"];
+  referenceIds: ReadonlyArray<Scalars["ID"]["input"]>;
+};
+
+export type MutationSetVersionRelatedArgs = {
+  links: ReadonlyArray<RelatedLinkInput>;
+  policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationSetWorkflowVetoEnabledArgs = {
+  enabled: Scalars["Boolean"]["input"];
+  id: Scalars["ID"]["input"];
+};
+
 export type MutationShredAuditSubjectArgs = {
   reason: Scalars["String"]["input"];
   subjectKey: Scalars["String"]["input"];
@@ -2251,6 +2301,7 @@ export type Policy = {
 
 export type PolicyAppendix = {
   readonly __typename?: "PolicyAppendix";
+  readonly contributors: ReadonlyArray<AppendixContributor>;
   readonly createdAt: Scalars["String"]["output"];
   readonly createdBy: Scalars["ID"]["output"];
   readonly draft?: Maybe<AppendixVersion>;
@@ -2259,6 +2310,7 @@ export type PolicyAppendix = {
   readonly orderIndex: Scalars["Int"]["output"];
   readonly policyId: Scalars["ID"]["output"];
   readonly published?: Maybe<AppendixVersion>;
+  readonly publishedVersions: ReadonlyArray<AppendixVersion>;
   readonly retiredAt?: Maybe<Scalars["String"]["output"]>;
   readonly retiredBy?: Maybe<Scalars["ID"]["output"]>;
   readonly versions: ReadonlyArray<AppendixVersion>;
@@ -2299,6 +2351,16 @@ export type PolicyVersion = {
   readonly status: Scalars["String"]["output"];
   readonly templateVersionId: Scalars["ID"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
+};
+
+export type PolicyVersionLinks = {
+  readonly __typename?: "PolicyVersionLinks";
+  readonly contacts: ReadonlyArray<ContactBlock>;
+  readonly definitions: ReadonlyArray<DefinitionEntry>;
+  readonly editable: Scalars["Boolean"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly references: ReadonlyArray<Reference>;
+  readonly related: ReadonlyArray<RelatedLink>;
 };
 
 export type PolicyViewerCan = {
@@ -2439,6 +2501,7 @@ export type Query = {
   readonly policyDiff: PolicyDiff;
   readonly policyReferences: ReadonlyArray<Reference>;
   readonly policyVersion?: Maybe<PolicyVersion>;
+  readonly policyVersionLinks: PolicyVersionLinks;
   /**
    * Read a previously-stored, publish-time policy summary for a version (see
    * PolicySummaryResult), so a viewer's summary panel can read it instead of
@@ -2465,6 +2528,7 @@ export type Query = {
    * auto-applied.
    */
   readonly relatedPolicySuggestions: ReadonlyArray<RelatedPolicySuggestion>;
+  readonly relationshipTypes: ReadonlyArray<RelationshipTypeInfo>;
   readonly renderedContent: RenderedContent;
   readonly reportAttachment: ReportAttachmentContent;
   readonly reportCase: ReportCase;
@@ -2566,6 +2630,7 @@ export type QueryAiJobResultContentArgs = {
 };
 
 export type QueryAppendixDiffArgs = {
+  contentJson?: InputMaybe<Scalars["String"]["input"]>;
   id: Scalars["ID"]["input"];
 };
 
@@ -2748,6 +2813,10 @@ export type QueryPolicyReferencesArgs = {
 
 export type QueryPolicyVersionArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type QueryPolicyVersionLinksArgs = {
+  policyVersionId: Scalars["ID"]["input"];
 };
 
 export type QueryPolicyVersionSummaryArgs = {
@@ -2965,6 +3034,26 @@ export type ReindexResult = {
   readonly versionId: Scalars["ID"]["output"];
 };
 
+export enum RelatedDirection {
+  Incoming = "INCOMING",
+  Outgoing = "OUTGOING",
+}
+
+export type RelatedLink = {
+  readonly __typename?: "RelatedLink";
+  readonly direction: RelatedDirection;
+  readonly label: Scalars["String"]["output"];
+  readonly number: Scalars["String"]["output"];
+  readonly policyId: Scalars["ID"]["output"];
+  readonly title: Scalars["String"]["output"];
+  readonly type: Scalars["ID"]["output"];
+};
+
+export type RelatedLinkInput = {
+  readonly policyId: Scalars["ID"]["input"];
+  readonly type: Scalars["ID"]["input"];
+};
+
 export type RelatedPolicy = {
   readonly __typename?: "RelatedPolicy";
   readonly number: Scalars["String"]["output"];
@@ -2980,6 +3069,14 @@ export type RelatedPolicySuggestion = {
   readonly policyId: Scalars["ID"]["output"];
   readonly policyTitle: Scalars["String"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
+};
+
+export type RelationshipTypeInfo = {
+  readonly __typename?: "RelationshipTypeInfo";
+  readonly id: Scalars["ID"]["output"];
+  readonly inverseId: Scalars["ID"]["output"];
+  readonly inverseLabel: Scalars["String"]["output"];
+  readonly label: Scalars["String"]["output"];
 };
 
 export type RenamePolicyResult = {
@@ -3257,6 +3354,7 @@ export type StageAssignee = {
   readonly name?: Maybe<Scalars["String"]["output"]>;
   readonly state: Scalars["String"]["output"];
   readonly userId: Scalars["String"]["output"];
+  readonly veto: Scalars["Boolean"]["output"];
 };
 
 export type StageEligibleAssignees = {
@@ -3566,6 +3664,7 @@ export type WorkflowDef = {
   readonly name: Scalars["String"]["output"];
   readonly stages: ReadonlyArray<WorkflowStageDef>;
   readonly version: Scalars["Int"]["output"];
+  readonly vetoEnabled: Scalars["Boolean"]["output"];
 };
 
 export type WorkflowStageDef = {
@@ -3579,6 +3678,8 @@ export type WorkflowStageDef = {
   readonly quorum: Scalars["String"]["output"];
   readonly rejectOnSlaBreach?: Maybe<Scalars["Boolean"]["output"]>;
   readonly slaDays?: Maybe<Scalars["Int"]["output"]>;
+  readonly vetoApproverIds: ReadonlyArray<Scalars["ID"]["output"]>;
+  readonly vetoGroupIds: ReadonlyArray<Scalars["ID"]["output"]>;
 };
 
 export type WorkflowStageInput = {
@@ -3591,6 +3692,8 @@ export type WorkflowStageInput = {
   readonly quorum: Scalars["String"]["input"];
   readonly rejectOnSlaBreach?: InputMaybe<Scalars["Boolean"]["input"]>;
   readonly slaDays?: InputMaybe<Scalars["Int"]["input"]>;
+  readonly vetoApproverIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
+  readonly vetoGroupIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
 };
 
 export type WorkflowStatus = {

@@ -30,6 +30,8 @@ export interface StepperApprover {
   name: string;
   role?: null | string;
   state: StepperApproverState;
+  /** The seat holds a veto: its single reject ends the version. */
+  veto?: boolean;
 }
 
 export type StepperApproverState = "approved" | "pending" | "rejected";
@@ -126,6 +128,11 @@ const ApproverRow = ({
         <span>
           <b className={heavy ? "font-bold" : "font-semibold"}>{approver.name}</b>
           {roleLine ? <span className="text-muted"> {roleLine}</span> : null}
+          {approver.veto ? (
+            <span className="ml-1.5 rounded-sm bg-danger-soft px-1.5 py-px text-xs font-semibold text-danger">
+              {t("stepper.veto")}
+            </span>
+          ) : null}
         </span>
         {approver.state === "approved" ? (
           <span className="flex items-center gap-[5px] text-ok">
@@ -256,6 +263,8 @@ const StageLine = ({ stage }: { stage: StepperStage }) => {
   if (stage.state === "done" || stage.state === "rejected") {
     const state = stage.state === "done" ? "approved" : "rejected";
     const who = stage.approvers.filter((a) => a.state === state);
+    // a rejection by a seat that holds a veto ended the stage on its own
+    const vetoed = stage.state === "rejected" && who.some((a) => a.veto);
     return (
       <>
         {t(stage.state === "done" ? "stepper.approvedBy" : "stepper.rejectedBy", {
@@ -265,6 +274,7 @@ const StageLine = ({ stage }: { stage: StepperStage }) => {
             { type: "unit" },
           ),
         })}
+        {vetoed ? ` ${t("stepper.byVeto")}` : null}
       </>
     );
   }

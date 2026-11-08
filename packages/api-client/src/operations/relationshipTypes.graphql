@@ -1,0 +1,8 @@
+query RelationshipTypes {
+  relationshipTypes {
+    id
+    label
+    inverseId
+    inverseLabel
+  }
+}

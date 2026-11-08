@@ -1,0 +1,9 @@
+# Which seats of a run hold a veto, asked on its own for the same reason as WorkflowVetoes.
+query RunVetoes($policyVersionId: ID!) {
+  workflowStatus(policyVersionId: $policyVersionId) {
+    stageAssignees {
+      userId
+      veto
+    }
+  }
+}

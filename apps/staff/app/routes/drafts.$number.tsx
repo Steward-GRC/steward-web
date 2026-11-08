@@ -18,6 +18,7 @@ import { useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, notify, scrollBehavior } from "@steward-web/ui";
 import { draftPath, RecordBreadcrumb } from "@steward-web/ui/domain";
+import { getVersionDocument } from "@steward-web/ui/domain/server";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { data, redirect, useFetcher, useLocation, useNavigate } from "react-router";
 
@@ -33,6 +34,7 @@ import {
   getDraftVersion,
   getLatestTemplateVersion,
   getPolicyByNumber,
+  getVersionLinkState,
   isDraftInReview,
   listAppendices,
   policyIdOfNumber,
@@ -41,6 +43,10 @@ import {
   retireAppendix,
   reviewApprovers,
   saveDraft,
+  setVersionContacts,
+  setVersionDefinitions,
+  setVersionReferences,
+  setVersionRelated,
   startDraft,
   submitDraftForReview,
   withdrawFromReview,
@@ -49,7 +55,7 @@ import { issueCollabToken } from "../authoring/collab/collab.server";
 import { settleTokenRequests, type TokenRequest } from "../authoring/collab/token";
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
-import { ActionsMenu, AiMenu, SubmitForApproval } from "../authoring/EditorActions";
+import { ActionsMenu, SubmitForApproval } from "../authoring/EditorActions";
 import {
   AppendicesPanel,
   EditorHeader,
@@ -59,6 +65,7 @@ import {
   RequiredSections,
   type SaveStateKind,
 } from "../authoring/EditorChrome";
+import { EditorViewToggle, useEditorView } from "../authoring/EditorViewToggle";
 import { resetSummaryText } from "../authoring/resetSummary";
 import {
   aiSections,
@@ -71,8 +78,10 @@ import {
   missingRequiredSections,
   resetRequiredSections,
 } from "../authoring/sections";
+import { StartEditing } from "../authoring/StartEditing";
 import { useAiHealth } from "../authoring/useAiHealth";
 import { draftCanSave, useAutosave } from "../authoring/useAutosave";
+import { VersionLinksPanel } from "../authoring/VersionLinksPanel";
 import { listReviewThreads } from "../review/reviewThreads.server";
 import { useReviewComments } from "../review/useReviewComments";
 
@@ -105,14 +114,27 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   // What approvers wrote on this version, shown on the text they wrote it on.
   const threads = draft ? await listReviewThreads(request, draft.id) : [];
   const approvers = draft && inReview ? await reviewApprovers(request, draft) : [];
+  // The published text the live diff compares with; none for a first publish, or if it can't be read.
+  const published = policy.currentPublishedVersionId
+    ? await getVersionDocument(
+        policy.currentPublishedVersionId,
+        request.headers.get("cookie") ?? undefined,
+      )
+        .then((version) => version?.contentJson ?? null)
+        .catch(() => null)
+    : null;
+  // What the draft links to from the libraries (bug log 227); none when it can't be read.
+  const linkState = draft ? await getVersionLinkState(request, draft.id) : null;
   return {
     aiHealth,
     appendices,
     approvers,
     draft,
     inReview,
+    linkState,
     meId: identity.id,
     policy,
+    published,
     templateVersion,
     threads,
   };
@@ -131,7 +153,8 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         const created = await createAppendixDraft(
           request,
           String(form.get("policyId") ?? policyId),
-          "Untitled appendix",
+          // blank: the service names it after its place, "Appendix A", "Appendix B"... (bug log 218)
+          "",
           JSON.stringify({ text: "" }),
         );
         return redirect(draftPath(params.number, `appendices/${created.letter ?? created.id}`));
@@ -203,6 +226,43 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         await saveDraft(request, policyId, serializeDocument(document), templateVersionId);
         return data({ intent, ok: true } as const);
       }
+      case "set-contacts":
+      case "set-definitions":
+      case "set-references":
+      case "set-related": {
+        // Links belong to the working draft and go through its approval; none makes a draft.
+        const version = await getDraftVersion(request, policyId);
+        if (!version) throw new Response("Not Found", { status: 404 });
+        const ids = (field: string) =>
+          String(form.get(field) ?? "")
+            .split(",")
+            .filter(Boolean);
+        switch (intent) {
+          case "set-contacts": {
+            await setVersionContacts(request, version.id, ids("contactBlockIds"));
+            break;
+          }
+          case "set-definitions": {
+            await setVersionDefinitions(request, version.id, ids("definitionIds"));
+            break;
+          }
+          case "set-references": {
+            await setVersionReferences(request, version.id, ids("referenceIds"));
+            break;
+          }
+          default: {
+            await setVersionRelated(
+              request,
+              version.id,
+              JSON.parse(String(form.get("links") ?? "[]")) as {
+                policyId: string;
+                type: string;
+              }[],
+            );
+          }
+        }
+        return data({ intent, ok: true } as const);
+      }
       case "submit-review": {
         const { runId } = await submitDraftForReview(request, policyId);
         return data({ intent, ok: true, runId } as const);
@@ -220,13 +280,50 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
   }
 };
 
-export default function DraftEditor({ loaderData }: Route.ComponentProps) {
+/**
+ * With no working draft the screen is the start page (bug log 219): Edit made none. The editor
+ * is keyed by its draft so that it opens on the draft's own content once Start editing has made
+ * one, not on the empty document the start page had.
+ */
+export default function DraftRoute(props: Route.ComponentProps) {
+  const { appendices, draft, policy } = props.loaderData;
+  if (!draft) {
+    return (
+      <StartEditing
+        appendices={appendices.map((appendix) => ({
+          draft: Boolean(appendix.draft),
+          id: appendix.id,
+          letter: appendix.letter ?? "",
+          published: Boolean(appendix.published),
+          retired: Boolean(appendix.retiredAt),
+          title: (appendix.draft ?? appendix.published)?.title ?? "",
+        }))}
+        policy={policy}
+      />
+    );
+  }
+  return <DraftEditor key={draft.id} {...props} />;
+}
+
+const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
   const { t } = useTranslation("authoring");
   const { t: tAi } = useTranslation("ai");
   const location = useLocation();
   const navigate = useNavigate();
-  const { appendices, approvers, draft, inReview, meId, policy, templateVersion, threads } =
-    loaderData;
+  const {
+    appendices,
+    approvers,
+    draft,
+    inReview,
+    meId,
+    policy,
+    published,
+    templateVersion,
+    threads,
+  } = loaderData;
+  // each person's own view of their changes; never shared through the room (bug log 228)
+  const [editorView, setEditorView] = useEditorView(meId);
+  const publishedDocument = useMemo(() => parseDocument(published), [published]);
   const comments = useReviewComments({
     // while the version is in review the author can write to one of its approvers
     canAdd: inReview && approvers.length > 0,
@@ -412,13 +509,8 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
     saving: saveFetcher.state !== "idle",
   });
 
-  if (!draft) {
-    return (
-      <div className="p-6">
-        <Banner title="This policy has no working draft." tone="info" />
-      </div>
-    );
-  }
+  // DraftRoute shows the start page when there is none.
+  if (!draft) return null;
 
   /** Replace the document: through the editor when it's mounted, so a live room syncs it. */
   const replaceDocument = (next: SerializedDocument) => {
@@ -549,25 +641,6 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
       <EditorHeader
         actions={
           <>
-            <AiMenu
-              available={aiHealth.available && !inReview}
-              emptyDraft={emptyDraft}
-              onChoose={(choice) => {
-                const handOver = { state: { sections: sectionTexts } };
-                if (choice === "generate")
-                  void navigate(draftPath(policy.number, "generate"), handOver);
-                if (choice === "improve")
-                  void navigate(draftPath(policy.number, "revise"), handOver);
-                if (choice === "rewrite") setRewriteOpen(true);
-                if (choice === "review") startReview();
-                if (choice === "result") {
-                  setReviewSeen(reviewJobId);
-                  setReviewOpen(true);
-                }
-              }}
-              reason={aiHealth.reason}
-              status={aiStatus}
-            />
             <Button
               className="h-[38px] px-3.5"
               disabled={saveFetcher.state !== "idle" || collabReadOnly}
@@ -587,6 +660,25 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
               />
             ) : null}
             <ActionsMenu
+              ai={{
+                available: aiHealth.available && !inReview,
+                emptyDraft,
+                onChoose: (choice) => {
+                  const handOver = { state: { sections: sectionTexts } };
+                  if (choice === "generate")
+                    void navigate(draftPath(policy.number, "generate"), handOver);
+                  if (choice === "improve")
+                    void navigate(draftPath(policy.number, "revise"), handOver);
+                  if (choice === "rewrite") setRewriteOpen(true);
+                  if (choice === "review") startReview();
+                  if (choice === "result") {
+                    setReviewSeen(reviewJobId);
+                    setReviewOpen(true);
+                  }
+                },
+                reason: aiHealth.reason,
+                status: aiStatus,
+              }}
               inReview={inReview}
               published={firstPublish ? undefined : policy.version}
             />
@@ -626,6 +718,11 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
           {/* The editor adds no padding of its own (bug log 178), so this is the whole margin: 48px.
               `isolate` makes the card its own stacking context: a selected card's controls sit at
               z-index 1000 inside the editor and would otherwise draw over the sticky header (194). */}
+          {publishedDocument ? (
+            <div className="flex justify-end">
+              <EditorViewToggle onChange={setEditorView} value={editorView} />
+            </div>
+          ) : null}
           <Card className="isolate px-6 py-8 sm:px-12 sm:py-8">
             <div
               onBeforeInputCapture={markTouched}
@@ -642,6 +739,11 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
                 // a room that fell back to solo needs a fresh editor without it; pending to live
                 // keeps the same editor, bound to the room before its content arrives
                 key={collabSession.mode === "solo" ? "solo" : "room"}
+                liveDiff={
+                  editorView === "diff" && publishedDocument
+                    ? { published: publishedDocument }
+                    : null
+                }
                 onChange={
                   collabSession.mode === "pending" ? ignoreWhileConnecting : onDocumentChange
                 }
@@ -686,6 +788,15 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
+      {loaderData.linkState ? (
+        <VersionLinksPanel
+          library={loaderData.linkState.library}
+          links={loaderData.linkState.links}
+          policyId={policy.id}
+          relationshipTypes={loaderData.linkState.relationshipTypes}
+        />
+      ) : null}
+
       <RewriteSectionDialog
         busy={assistFetcher.state !== "idle"}
         onOpenChange={setRewriteOpen}
@@ -723,4 +834,4 @@ export default function DraftEditor({ loaderData }: Route.ComponentProps) {
       />
     </div>
   );
-}
+};

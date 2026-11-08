@@ -3,7 +3,7 @@
 import { type Identity, IdentityProvider, NO_ACCESS } from "@steward-web/auth";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createRoutesStub } from "react-router";
+import { createRoutesStub, data } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import { asPhone } from "../test/phone";
@@ -30,9 +30,10 @@ const DEFS = [entry("d-1", "Per diem", "c-finance", 2), entry("d-2", "Shared des
 
 type Props = Parameters<typeof DefinitionsLibrary>[0];
 
-const openDefinitions = () => {
+const openDefinitions = (answer?: unknown) => {
   const Stub = createRoutesStub([
     {
+      action: () => answer ?? null,
       Component: () => (
         <IdentityProvider identity={ADMIN}>
           <DefinitionsLibrary
@@ -99,5 +100,33 @@ describe("Definitions on a phone (7-responsive.s3)", () => {
       "In use — archive instead of deleting.",
     );
     expect(screen.getByRole("searchbox", { name: "Search definitions" })).toBeInTheDocument();
+  });
+});
+
+const create = async (answer: unknown) => {
+  openDefinitions(answer);
+  await userEvent.click(await screen.findByRole("button", { name: "New definition" }));
+  const dialog = await screen.findByRole("dialog");
+  await userEvent.type(within(dialog).getByRole("textbox", { name: "Term" }), "Per diem");
+  await userEvent.type(within(dialog).getByRole("textbox", { name: "Definition" }), "A day rate.");
+  await userEvent.click(within(dialog).getByRole("button", { name: "Create definition" }));
+  return dialog;
+};
+
+describe("a definition's title is its key (bug log 227)", () => {
+  it("says a definition with this title already exists, when the library refuses a duplicate", async () => {
+    const dialog = await create(
+      data({ error: { code: "ALREADY_EXISTS" }, intent: "save", ok: false }, { status: 400 }),
+    );
+    expect(
+      await within(dialog).findByText("A definition with this title already exists"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the general message for any other refusal", async () => {
+    const dialog = await create(
+      data({ error: { code: "INTERNAL" }, intent: "save", ok: false }, { status: 400 }),
+    );
+    expect(await within(dialog).findByText("Couldn't save this definition")).toBeInTheDocument();
   });
 });

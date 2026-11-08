@@ -1,0 +1,5 @@
+query PolicyVersionLinks($policyVersionId: ID!) {
+  policyVersionLinks(policyVersionId: $policyVersionId) {
+    ...VersionLinksFields
+  }
+}

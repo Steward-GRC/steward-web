@@ -1536,3 +1536,202 @@ describe("liveEdge: the appendix life cycle", () => {
     ]);
   });
 });
+
+describe("liveEdge.issueAppendixCollabToken", () => {
+  it("asks for a token for the appendix's own room", async () => {
+    const calls = routeGateway({
+      IssueAppendixCollabToken: () => ({
+        issueAppendixCollabToken: {
+          expiresAt: "2026-11-08T00:05:00Z",
+          token: "t",
+          wsUrl: "/collab/ws/appendix%3Aa-1",
+        },
+      }),
+    });
+    const issued = await liveEdge.issueAppendixCollabToken("a-1");
+    expect(issued.wsUrl).toBe("/collab/ws/appendix%3Aa-1");
+    expect(calls[0]?.variables).toEqual({ appendixId: "a-1" });
+  });
+});
+
+describe("liveEdge veto approvers (steward-web#256)", () => {
+  it("reads which workflows opt in and who holds a veto, from a side query", async () => {
+    routeGateway({
+      WorkflowVetoes: () => ({
+        workflowDefs: [
+          {
+            id: "w-1",
+            stages: [{ id: "s-1", vetoApproverIds: ["u-1"], vetoGroupIds: ["g-1"] }],
+            vetoEnabled: true,
+          },
+        ],
+      }),
+    });
+    expect(await liveEdge.workflowVetoes()).toEqual([
+      {
+        id: "w-1",
+        stages: [{ id: "s-1", vetoApproverIds: ["u-1"], vetoGroupIds: ["g-1"] }],
+        vetoEnabled: true,
+      },
+    ]);
+  });
+
+  it("reads as no vetoes when the gateway refuses the side query", async () => {
+    routeGateway({});
+    expect(await liveEdge.workflowVetoes()).toEqual([]);
+    expect(await liveEdge.runVetoes("v-1")).toEqual([]);
+  });
+
+  it("reads the seats of a run that hold a veto, per stage", async () => {
+    routeGateway({
+      RunVetoes: () => ({
+        workflowStatus: {
+          stageAssignees: [
+            [
+              { userId: "u-1", veto: false },
+              { userId: "u-2", veto: true },
+            ],
+            [{ userId: "u-3", veto: false }],
+          ],
+        },
+      }),
+    });
+    expect(await liveEdge.runVetoes("v-1")).toEqual([["u-2"], []]);
+  });
+
+  it("opts a workflow in or out", async () => {
+    const calls = routeGateway({
+      SetWorkflowVetoEnabled: () => ({
+        setWorkflowVetoEnabled: { id: "w-1", vetoEnabled: true },
+      }),
+    });
+    expect(await liveEdge.setWorkflowVetoEnabled("w-1", true)).toBe(true);
+    expect(calls[0]?.variables).toEqual({ enabled: true, id: "w-1" });
+  });
+});
+
+describe("liveEdge: what a version links to (bug log 227)", () => {
+  const links = {
+    contacts: [],
+    definitions: [],
+    editable: true,
+    policyVersionId: "v-1",
+    references: [],
+    related: [],
+  };
+
+  it("reads a version's links and the relationship types", async () => {
+    const calls = routeGateway({
+      PolicyVersionLinks: () => ({ policyVersionLinks: links }),
+      RelationshipTypes: () => ({
+        relationshipTypes: [
+          {
+            id: "related",
+            inverseId: "related-by",
+            inverseLabel: "is related by",
+            label: "is related to",
+          },
+        ],
+      }),
+    });
+    const read = await liveEdge.policyVersionLinks("v-1");
+    const types = await liveEdge.relationshipTypes();
+    expect(read.editable).toBe(true);
+    expect(types[0]?.inverseLabel).toBe("is related by");
+    expect(calls[0]?.variables).toEqual({ policyVersionId: "v-1" });
+  });
+
+  it("replaces each kind of link on the version, keeping the order given", async () => {
+    const calls = routeGateway({
+      SetVersionContacts: () => ({ setVersionContacts: links }),
+      SetVersionDefinitions: () => ({ setVersionDefinitions: links }),
+      SetVersionReferences: () => ({ setVersionReferences: links }),
+      SetVersionRelated: () => ({ setVersionRelated: links }),
+    });
+    await liveEdge.setVersionDefinitions("v-1", ["d-2", "d-1"]);
+    await liveEdge.setVersionRelated("v-1", [{ policyId: "p-2", type: "supersedes" }]);
+    await liveEdge.setVersionReferences("v-1", ["r-2", "r-1"]);
+    await liveEdge.setVersionContacts("v-1", ["c-2", "c-1"]);
+    expect(calls.map((c) => c.variables)).toEqual([
+      { definitionIds: ["d-2", "d-1"], policyVersionId: "v-1" },
+      { links: [{ policyId: "p-2", type: "supersedes" }], policyVersionId: "v-1" },
+      { policyVersionId: "v-1", referenceIds: ["r-2", "r-1"] },
+      { contactBlockIds: ["c-2", "c-1"], policyVersionId: "v-1" },
+    ]);
+  });
+});
+
+const handlers = (links: Record<string, Handler>): Record<string, Handler> => ({
+  ...treeHandlers,
+  AckStatus: () => ({ ackStatus: { ackedAt: null, acknowledged: false } }),
+  AuditLog: () => ({ auditLog: { nextPageToken: "", records: [] } }),
+  PolicyAttachments: () => ({
+    policyContactBlocks: [],
+    policyDefinitionEntries: [],
+    policyReferences: [],
+    relatedPolicies: [{ number: "FIN-009", policyId: "p-9", title: "Plain link" }],
+  }),
+  PolicyByNumber: () => ({ policyByNumber: policy({}) }),
+  PolicyVersion: () => ({
+    policyVersion: {
+      appendices: [],
+      contentJson: "",
+      createdAt: "2026-08-05T00:00:00Z",
+      id: "v-2",
+      policyId: "p-1",
+      publishedAt: "2026-08-12T00:00:00Z",
+      status: "published",
+      templateVersionId: "",
+      versionNo: 2,
+    },
+  }),
+  PolicyVersions: () => ({ policyVersions: [{ id: "v-2", status: "published", versionNo: 2 }] }),
+  ...links,
+});
+
+describe("liveEdge.policyDetail: related items read with their relationship (bug log 227)", () => {
+  it("carries each link's type as it reads from this side, the inverse for a link made elsewhere", async () => {
+    routeGateway(
+      handlers({
+        PolicyVersionLinks: () => ({
+          policyVersionLinks: {
+            contacts: [],
+            definitions: [],
+            editable: false,
+            policyVersionId: "v-2",
+            references: [],
+            related: [
+              {
+                direction: "OUTGOING",
+                label: "supersedes",
+                number: "FIN-002",
+                policyId: "p-2",
+                title: "Old",
+                type: "supersedes",
+              },
+              {
+                direction: "INCOMING",
+                label: "is related by",
+                number: "FIN-003",
+                policyId: "p-3",
+                title: "Other",
+                type: "related-by",
+              },
+            ],
+          },
+        }),
+      }),
+    );
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.related).toEqual([
+      { label: "supersedes", number: "FIN-002", policyId: "p-2", title: "Old" },
+      { label: "is related by", number: "FIN-003", policyId: "p-3", title: "Other" },
+    ]);
+  });
+
+  it("falls back to the plain related list when the links can't be read", async () => {
+    routeGateway(handlers({ PolicyVersionLinks: () => ({ errors: [{ message: "gone" }] }) }));
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.related).toEqual([{ number: "FIN-009", policyId: "p-9", title: "Plain link" }]);
+  });
+});

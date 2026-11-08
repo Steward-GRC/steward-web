@@ -172,10 +172,6 @@ export const discardDraft = (request: Request, policyId: string): Promise<boolea
 export const listAppendices = (request: Request, policyId: string) =>
   edge.policyAppendices(policyId, true, cookieOf(request));
 
-/** An appendix's draft against what is published; empty when the caller may not see it. */
-export const getAppendixDiff = (request: Request, id: string) =>
-  edge.appendixDiff(id, cookieOf(request)).catch(() => []);
-
 export const createAppendixDraft = (
   request: Request,
   policyId: string,
@@ -200,3 +196,62 @@ export const reorderPolicyAppendices = (
   policyId: string,
   orderedIds: readonly string[],
 ) => edge.reorderPolicyAppendices(policyId, orderedIds, cookieOf(request));
+
+/** A token for the appendix's own co-editing room. */
+export const issueAppendixToken = (request: Request, appendixId: string) =>
+  edge.issueAppendixCollabToken(appendixId, cookieOf(request));
+
+/**
+ * What a version links to from the libraries, the libraries to pick from and the relationship
+ * types. Each part reads on its own: one that fails leaves the others, and the panel is left out
+ * only when the links themselves can't be read.
+ */
+export const getVersionLinkState = async (request: Request, versionId: string) => {
+  const cookie = cookieOf(request);
+  const [links, relationshipTypes, definitions, references, contacts, policies] = await Promise.all(
+    [
+      edge.policyVersionLinks(versionId, cookie).catch(() => null),
+      edge.relationshipTypes(cookie).catch(() => []),
+      edge.definitions(null, false, cookie).catch(() => []),
+      edge.references(false, cookie).catch(() => []),
+      edge.contactBlocks(false, cookie).catch(() => []),
+      // policies and procedures both can be related
+      Promise.all([
+        edge.policies(DocumentType.Policy, cookie),
+        edge.policies(DocumentType.Procedure, cookie),
+      ])
+        .then((lists) => lists.flat())
+        .catch(() => []),
+    ],
+  );
+  if (!links) return null;
+  return {
+    library: {
+      contacts,
+      definitions,
+      policies: policies.map((policy) => ({
+        id: policy.id,
+        number: policy.number,
+        title: policy.title,
+      })),
+      references,
+    },
+    links,
+    relationshipTypes,
+  };
+};
+
+export const setVersionDefinitions = (request: Request, versionId: string, ids: string[]) =>
+  edge.setVersionDefinitions(versionId, ids, cookieOf(request));
+
+export const setVersionRelated = (
+  request: Request,
+  versionId: string,
+  links: { policyId: string; type: string }[],
+) => edge.setVersionRelated(versionId, links, cookieOf(request));
+
+export const setVersionReferences = (request: Request, versionId: string, ids: string[]) =>
+  edge.setVersionReferences(versionId, ids, cookieOf(request));
+
+export const setVersionContacts = (request: Request, versionId: string, ids: string[]) =>
+  edge.setVersionContacts(versionId, ids, cookieOf(request));

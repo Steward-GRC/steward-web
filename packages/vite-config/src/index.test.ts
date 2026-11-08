@@ -56,8 +56,11 @@ describe("buildInfo", () => {
   });
 
   it("reports dev and unknown when the build isn't stamped", () => {
-    expect(buildInfo({})).toEqual({ commit: "unknown", version: "dev" });
-    expect(buildInfo({ COMMIT: " ", VERSION: "" })).toEqual({ commit: "unknown", version: "dev" });
+    expect(buildInfo({}, () => {})).toEqual({ commit: "unknown", version: "dev" });
+    expect(buildInfo({ COMMIT: " ", VERSION: "" }, () => {})).toEqual({
+      commit: "unknown",
+      version: "dev",
+    });
   });
 
   it("defines both as string constants for the bundle", () => {
@@ -109,6 +112,29 @@ describe("buildInfo commit fallback", () => {
     expect(buildInfo({ COMMIT: "0123456789abcdef", GITHUB_SHA: "fedcba9876543210" }).commit).toBe(
       "0123456789abcdef",
     );
+  });
+});
+
+describe("buildInfo commit from git (steward-web#217)", () => {
+  it("reads the short commit of the checkout when no build argument stamps one", () => {
+    expect(buildInfo({}, () => "abc1234").commit).toBe("abc1234");
+  });
+
+  it("prefers the build arguments to git", () => {
+    expect(buildInfo({ COMMIT: "0123456789abcdef" }, () => "abc1234").commit).toBe(
+      "0123456789abcdef",
+    );
+    expect(buildInfo({ GITHUB_SHA: "fedcba9876543210" }, () => "abc1234").commit).toBe(
+      "fedcba9876543210",
+    );
+  });
+
+  it("stays unknown when there is no git around the code", () => {
+    expect(buildInfo({}, () => {}).commit).toBe("unknown");
+  });
+
+  it("asks git for a short commit by default, so a dev server shows what it runs", () => {
+    expect(buildInfo({}).commit).toMatch(/^[\da-f]{7,}$/);
   });
 });
 
