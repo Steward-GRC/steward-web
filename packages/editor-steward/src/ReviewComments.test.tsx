@@ -476,3 +476,65 @@ describe("the Comment card with a suggested text", () => {
     );
   });
 });
+
+describe("the author writing to an approver", () => {
+  const recipients = [
+    { id: "user-charlie", name: "Charlie" },
+    { id: "user-alice", name: "Alice" },
+  ];
+  const openAsAuthor = async (onAdd: NonNullable<ReviewComments["onAdd"]>, people = recipients) => {
+    await mount({ review: asSide("AUTHOR", { onAdd, recipients: people, threads: [] }) });
+    await act(async () => {
+      lexicalEditor().update(() => {
+        const text = $getRoot().getAllTextNodes()[0];
+        if ($isTextNode(text)) text.select(5, 12);
+      });
+      await Promise.resolve();
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Comment" }));
+  };
+
+  it("asks which approver, and will not send until one is chosen", async () => {
+    const onAdd = vi.fn();
+    await openAsAuthor(onAdd);
+    await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Is this right?");
+    const send = screen.getByRole("button", { name: "Comment", description: "" });
+    expect(send).toBeDisabled();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Write to" }), "user-alice");
+    expect(send).toBeEnabled();
+    await userEvent.click(send);
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith({
+        body: "Is this right?",
+        occurrence: 1,
+        quote: "records",
+        toUserId: "user-alice",
+      }),
+    );
+  });
+
+  it("writes to the one approver there is, without asking", async () => {
+    const onAdd = vi.fn();
+    await openAsAuthor(onAdd, [recipients[0]!]);
+    await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Check?");
+    await userEvent.click(screen.getByRole("button", { name: "Comment", description: "" }));
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith({
+        body: "Check?",
+        occurrence: 1,
+        quote: "records",
+        toUserId: "user-charlie",
+      }),
+    );
+  });
+
+  it("labels each approver's thread with who it is with", async () => {
+    await mount({
+      review: asSide("AUTHOR", {
+        recipients,
+        threads: [withSuggestion({}, { approverUserId: "user-alice" })],
+      }),
+    });
+    expect(await screen.findByText("With Alice")).toBeInTheDocument();
+  });
+});

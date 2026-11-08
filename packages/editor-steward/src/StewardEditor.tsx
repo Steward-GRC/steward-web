@@ -241,7 +241,7 @@ export const StewardEditor = ({
   );
   const toolbarActions = useMemo(
     () => [
-      createCommentToolbarAction(t("editor.comments.button"), review?.onAdd),
+      createCommentToolbarAction(t("editor.comments.button"), review?.onAdd, review?.recipients),
       createAiToolbarAction({
         hidden: !onRework || readOnly,
         labels: {
@@ -253,7 +253,7 @@ export const StewardEditor = ({
         saved: savedSelection,
       }),
     ],
-    [onRework, readOnly, review?.onAdd, t],
+    [onRework, readOnly, review?.onAdd, review?.recipients, t],
   );
   // The package keeps the threads' state (resolved, active) to style the highlights; the
   // service's threads are the source.

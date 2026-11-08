@@ -81,6 +81,7 @@
       "button": "Comment",
       "cancel": "Cancel",
       "closeFailed": "The suggestion could not be closed. Try again.",
+      "chooseApprover": "Choose an approver",
       "closed": "Closed ({{count}})",
       "closedBy": "by {{who}}",
       "counterLabel": "Counter text",
@@ -115,8 +116,10 @@
       "title": "Comments",
       "titleCount": "Comments ({{count}})",
       "unreadable": "Hidden",
+      "with": "With {{name}}",
       "waitingAuthor": "Waiting for the author",
       "waitingReviewer": "Waiting for the reviewer",
+      "writeTo": "Write to",
       "you": "You"
     },
     "discard": {

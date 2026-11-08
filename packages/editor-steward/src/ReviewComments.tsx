@@ -38,7 +38,9 @@ export interface ReviewComments {
    * Starts a thread on the selection. Without it there's no Comment button. `suggestedText` is
    * present only when the person changed the selected words in the form.
    */
-  onAdd?: (draft: { body: string; suggestedText?: string } & TextAnchor) => Promise<void> | void;
+  onAdd?: (
+    draft: { body: string; suggestedText?: string; toUserId?: string } & TextAnchor,
+  ) => Promise<void> | void;
   /** Ends a suggestion with an outcome (a reason for "not agreed"). Without it none can be ended. */
   onClose?: (threadId: string, outcome: SuggestionOutcome, reason?: string) => Promise<void> | void;
   /** Answers a suggestion with other text. */
@@ -46,6 +48,11 @@ export interface ReviewComments {
   onDelete?: (threadId: string) => Promise<void> | void;
   onReply: (threadId: string, body: string) => Promise<void> | void;
   onResolve: (threadId: string, resolved: boolean) => Promise<void> | void;
+  /**
+   * The approvers the author can write to, when the author starts a thread: the form then asks
+   * which one (a single approver is chosen without asking). An approver's own thread is with them.
+   */
+  recipients?: readonly { id: string; name: string }[];
   /**
    * Draws the change from the first text to the second, such as a word diff. The editor package
    * cannot import the host's kit, so without it the proposed text is shown plainly.
@@ -136,9 +143,12 @@ const Textarea: FC<{
 /** The card under the toolbar's Comment button. The selection's anchor is read when it opens. */
 const CommentCard: FC<{
   onAdd: NonNullable<ReviewComments["onAdd"]>;
+  recipients?: ReviewComments["recipients"];
   selection: KoenigToolbarSelection;
-}> = ({ onAdd, selection: { close, editor } }) => {
+}> = ({ onAdd, recipients = [], selection: { close, editor } }) => {
   const { t } = useTranslation("authoring");
+  // one approver is chosen without asking; several are asked, and nothing is sent until one is chosen
+  const [to, setTo] = useState(recipients.length === 1 ? recipients[0]!.id : "");
   const [anchor] = useState(() => editor.getEditorState().read($selectionAnchor));
   const [body, setBody] = useState("");
   // starts as the selected words: changing them is what makes the comment a suggestion
@@ -146,7 +156,7 @@ const CommentCard: FC<{
   const [busy, setBusy] = useState(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!anchor || !body.trim()) return;
+    if (!anchor || !body.trim() || (recipients.length > 0 && !to)) return;
     setBusy(true);
     try {
       const proposed = suggested.trim();
@@ -154,6 +164,7 @@ const CommentCard: FC<{
         ...anchor,
         body: body.trim(),
         ...(proposed && proposed !== anchor.quote.trim() ? { suggestedText: proposed } : {}),
+        ...(recipients.length > 0 ? { toUserId: to } : {}),
       });
       close();
     } finally {
@@ -166,6 +177,21 @@ const CommentCard: FC<{
       className="flex w-72 flex-col gap-2 rounded-[10px] border border-border bg-surface p-2.5 shadow-lg"
       onSubmit={submit}
     >
+      {recipients.length > 1 ? (
+        <select
+          aria-label={t("editor.comments.writeTo")}
+          className="w-full rounded-md border border-border bg-surface p-2 text-sm text-ink"
+          onChange={(event) => setTo(event.target.value)}
+          value={to}
+        >
+          <option value="">{t("editor.comments.chooseApprover")}</option>
+          {recipients.map((person) => (
+            <option key={person.id} value={person.id}>
+              {person.name}
+            </option>
+          ))}
+        </select>
+      ) : null}
       <Textarea
         label={t("editor.comments.button")}
         onChange={setBody}
@@ -184,7 +210,7 @@ const CommentCard: FC<{
         </button>
         <button
           className="rounded-md bg-primary px-2.5 py-1.5 text-sm font-medium text-on-primary disabled:opacity-60"
-          disabled={busy || !anchor || !body.trim()}
+          disabled={busy || !anchor || !body.trim() || (recipients.length > 0 && !to)}
           type="submit"
         >
           {t("editor.comments.send")}
@@ -209,10 +235,11 @@ const BubbleIcon: FC<{ className?: string }> = ({ className }) => (
 export const createCommentToolbarAction = (
   label: string,
   onAdd: ReviewComments["onAdd"],
+  recipients?: ReviewComments["recipients"],
 ): KoenigToolbarAction => ({
   Card: onAdd
     ? function CommentToolbarCard(selection: KoenigToolbarSelection) {
-        return <CommentCard onAdd={onAdd} selection={selection} />;
+        return <CommentCard onAdd={onAdd} recipients={recipients} selection={selection} />;
       }
     : undefined,
   hidden: !onAdd,
@@ -466,6 +493,11 @@ const ThreadCard: FC<{
   const { t } = useTranslation("authoring");
   const [reply, setReply] = useState("");
   const first = thread.messages[0];
+  // the author sees every approver's threads, so each says whose it is
+  const withName =
+    comments.side === "AUTHOR" && thread.approverUserId
+      ? comments.recipients?.find((person) => person.id === thread.approverUserId)?.name
+      : undefined;
   const send = async (event: FormEvent) => {
     event.preventDefault();
     if (!reply.trim()) return;
@@ -479,6 +511,11 @@ const ThreadCard: FC<{
         active ? "border-primary" : "border-border"
       } ${thread.resolved ? "opacity-70" : ""}`}
     >
+      {withName ? (
+        <span className="text-xs font-medium text-muted">
+          {t("editor.comments.with", { name: withName })}
+        </span>
+      ) : null}
       <button
         aria-label={t("editor.comments.threadLabel", { quote: thread.quote })}
         className="text-left text-muted italic"
