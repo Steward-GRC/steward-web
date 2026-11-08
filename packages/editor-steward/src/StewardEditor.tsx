@@ -41,6 +41,7 @@ import { registerHeadingHighlightGuard } from "./headingHighlight";
 import { STEWARD_NODES } from "./nodes";
 import {
   createCommentToolbarAction,
+  isClosedSuggestion,
   type ReviewComments,
   ReviewThreadAnchors,
   ReviewThreadsPanel,
@@ -251,18 +252,20 @@ export const StewardEditor = ({
     () =>
       review
         ? {
-            threads: review.threads.map((thread) => ({
-              createdAt: thread.createdAt,
-              id: thread.id,
-              messages: thread.messages.map((message) => ({
-                author: message.authorName ?? message.authorUserId,
-                body: message.body,
-                createdAt: message.createdAt,
-                id: message.id,
+            threads: review.threads
+              .filter((thread) => !isClosedSuggestion(thread))
+              .map((thread) => ({
+                createdAt: thread.createdAt,
+                id: thread.id,
+                messages: thread.messages.map((message) => ({
+                  author: message.authorName ?? message.authorUserId,
+                  body: message.body,
+                  createdAt: message.createdAt,
+                  id: message.id,
+                })),
+                quote: thread.quote,
+                resolved: thread.resolved,
               })),
-              quote: thread.quote,
-              resolved: thread.resolved,
-            })),
           }
         : undefined,
     [review],
@@ -369,7 +372,9 @@ export const StewardEditor = ({
         {review && (review.threads.length > 0 || review.onAdd) ? (
           <div className="flex flex-col items-start gap-6 lg:flex-row">
             <div className="min-w-0 flex-1 self-stretch">{editor}</div>
-            <ReviewThreadAnchors threads={review.threads} />
+            <ReviewThreadAnchors
+              threads={review.threads.filter((thread) => !isClosedSuggestion(thread))}
+            />
             <ReviewThreadsPanel comments={review} />
           </div>
         ) : (

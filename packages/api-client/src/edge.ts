@@ -92,6 +92,7 @@ import type {
   PolicySectionDiff,
   ReviewThread,
   SecondFactor,
+  SuggestionOutcome,
   Template,
   TemplateVersion,
   User,
@@ -233,8 +234,12 @@ export type {
   PolicyVersionOption,
   PolicyVersionSummary,
   ReviewMessage,
+  ReviewSuggestion,
   ReviewThread,
   SecondFactor,
+  SuggestionOutcome,
+  SuggestionRound,
+  SuggestionSide,
   Template,
   TemplateVersion,
   User,
@@ -365,6 +370,7 @@ export interface Edge {
     quote: string,
     occurrence: number,
     body: string,
+    suggestedText?: string,
     cookie?: string,
   ): Promise<ReviewThread>;
   /** Adds a MANUAL membership to a platform group. Authorized for site-admins and for a LOCAL
@@ -429,6 +435,17 @@ export interface Edge {
     cookie?: string,
   ): Promise<ReportCase>;
   /**
+   * Ends a suggestion with an outcome and resolves its thread. Which outcome is the caller's to
+   * choose depends on whose turn it is; NOT_AGREED needs a reason. The service does not change the
+   * document: the client applies an accepted text and saves.
+   */
+  closeReviewSuggestion(
+    threadId: string,
+    outcome: SuggestionOutcome,
+    reason?: string,
+    cookie?: string,
+  ): Promise<ReviewThread>;
+  /**
    * Finishes the CALLING person's first-run onboarding (G10): accepts the Terms of Service and
    * sets the profile fields they confirmed. The actor is the session's own cookie.
    */
@@ -444,6 +461,8 @@ export interface Edge {
   confirmMyTotpEnrolment(code: string, cookie?: string): Promise<boolean>;
   /** The reusable contact-block library (admin), active only unless includeArchived. */
   contactBlocks(includeArchived?: boolean, cookie?: string): Promise<readonly ContactBlock[]>;
+  /** Answers a suggestion, on the caller's turn, with different text; the turn passes. */
+  counterReviewSuggestion(threadId: string, text: string, cookie?: string): Promise<ReviewThread>;
   /** Adds a reusable contact block to the library. */
   createContactBlock(block: ContactBlockInput, cookie?: string): Promise<ContactBlock>;
   /** Adds a reusable, category-scoped definition entry to the library. */

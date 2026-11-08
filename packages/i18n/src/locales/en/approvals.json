@@ -203,9 +203,13 @@
       "awaiting": "Awaiting a decision",
       "title": "Approval stages"
     },
+    "changes": {
+      "unavailable": "The comparison with the published version couldn't be loaded."
+    },
     "tabs": {
       "changes": "Changes vs the current published version",
       "history": "History",
+      "proposed": "Proposed Publish",
       "upcoming": "Upcoming version (under review)"
     },
     "upcoming": {

@@ -996,6 +996,36 @@ describe("liveEdge: inline review threads", () => {
     expect(calls).toEqual([{ operation: "ReviewThreads", variables: { policyVersionId: "v-3" } }]);
   });
 
+  it("starts a thread with a suggested text, counters it and closes it", async () => {
+    const calls = routeGateway({
+      AddReviewThread: () => ({ addReviewThread: thread }),
+      CloseReviewSuggestion: () => ({ closeReviewSuggestion: thread }),
+      CounterReviewSuggestion: () => ({ counterReviewSuggestion: thread }),
+    });
+    await liveEdge.addReviewThread("v-3", "seven years", 2, "Shorter?", "six years");
+    await liveEdge.counterReviewSuggestion("thread-1", "five years");
+    await liveEdge.closeReviewSuggestion("thread-1", "NOT_AGREED", "The law says seven.");
+    await liveEdge.closeReviewSuggestion("thread-1", "CHANGED");
+    expect(calls.map((call) => [call.operation, call.variables])).toEqual([
+      [
+        "AddReviewThread",
+        {
+          body: "Shorter?",
+          occurrence: 2,
+          policyVersionId: "v-3",
+          quote: "seven years",
+          suggestedText: "six years",
+        },
+      ],
+      ["CounterReviewSuggestion", { text: "five years", threadId: "thread-1" }],
+      [
+        "CloseReviewSuggestion",
+        { outcome: "NOT_AGREED", reason: "The law says seven.", threadId: "thread-1" },
+      ],
+      ["CloseReviewSuggestion", { outcome: "CHANGED", threadId: "thread-1" }],
+    ]);
+  });
+
   it("starts, answers, resolves and deletes a thread", async () => {
     const calls = routeGateway({
       AddReviewThread: () => ({ addReviewThread: thread }),

@@ -164,6 +164,7 @@ export type AddReviewThreadMutationVariables = Exact<{
   quote: string;
   occurrence: number;
   body: string;
+  suggestedText?: string | null | undefined;
 }>;
 
 export type AddReviewThreadMutation = {
@@ -181,6 +182,20 @@ export type AddReviewThreadMutation = {
       readonly body: string;
       readonly createdAt: string;
     }>;
+    readonly suggestion: {
+      readonly text: string;
+      readonly turn: Types.SuggestionSide;
+      readonly outcome: Types.SuggestionOutcome | null;
+      readonly reason: string | null;
+      readonly closedBy: string | null;
+      readonly closedText: string | null;
+      readonly rounds: ReadonlyArray<{
+        readonly by: Types.SuggestionSide;
+        readonly text: string;
+        readonly userId: string;
+        readonly createdAt: string;
+      }>;
+    } | null;
   };
 };
 
@@ -681,6 +696,44 @@ export type CloseCaseMutation = {
   };
 };
 
+export type CloseReviewSuggestionMutationVariables = Exact<{
+  threadId: string | number;
+  outcome: Types.SuggestionOutcome;
+  reason?: string | null | undefined;
+}>;
+
+export type CloseReviewSuggestionMutation = {
+  readonly closeReviewSuggestion: {
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly quote: string;
+    readonly occurrence: number;
+    readonly resolved: boolean;
+    readonly createdAt: string;
+    readonly messages: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly authorName: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly suggestion: {
+      readonly text: string;
+      readonly turn: Types.SuggestionSide;
+      readonly outcome: Types.SuggestionOutcome | null;
+      readonly reason: string | null;
+      readonly closedBy: string | null;
+      readonly closedText: string | null;
+      readonly rounds: ReadonlyArray<{
+        readonly by: Types.SuggestionSide;
+        readonly text: string;
+        readonly userId: string;
+        readonly createdAt: string;
+      }>;
+    } | null;
+  };
+};
+
 export type CompleteOnboardingMutationVariables = Exact<{
   acceptTerms: boolean;
   username?: string | null | undefined;
@@ -742,6 +795,43 @@ export type ContactBlocksQuery = {
     readonly archived: boolean;
     readonly usedByCount: number;
   }>;
+};
+
+export type CounterReviewSuggestionMutationVariables = Exact<{
+  threadId: string | number;
+  text: string;
+}>;
+
+export type CounterReviewSuggestionMutation = {
+  readonly counterReviewSuggestion: {
+    readonly id: string;
+    readonly policyVersionId: string;
+    readonly quote: string;
+    readonly occurrence: number;
+    readonly resolved: boolean;
+    readonly createdAt: string;
+    readonly messages: ReadonlyArray<{
+      readonly id: string;
+      readonly authorUserId: string;
+      readonly authorName: string | null;
+      readonly body: string;
+      readonly createdAt: string;
+    }>;
+    readonly suggestion: {
+      readonly text: string;
+      readonly turn: Types.SuggestionSide;
+      readonly outcome: Types.SuggestionOutcome | null;
+      readonly reason: string | null;
+      readonly closedBy: string | null;
+      readonly closedText: string | null;
+      readonly rounds: ReadonlyArray<{
+        readonly by: Types.SuggestionSide;
+        readonly text: string;
+        readonly userId: string;
+        readonly createdAt: string;
+      }>;
+    } | null;
+  };
 };
 
 export type CreateCategoryMutationVariables = Exact<{
@@ -2273,6 +2363,20 @@ export type ReplyReviewThreadMutation = {
       readonly body: string;
       readonly createdAt: string;
     }>;
+    readonly suggestion: {
+      readonly text: string;
+      readonly turn: Types.SuggestionSide;
+      readonly outcome: Types.SuggestionOutcome | null;
+      readonly reason: string | null;
+      readonly closedBy: string | null;
+      readonly closedText: string | null;
+      readonly rounds: ReadonlyArray<{
+        readonly by: Types.SuggestionSide;
+        readonly text: string;
+        readonly userId: string;
+        readonly createdAt: string;
+      }>;
+    } | null;
   };
 };
 
@@ -2506,6 +2610,20 @@ export type ReviewThreadFieldsFragment = {
     readonly body: string;
     readonly createdAt: string;
   }>;
+  readonly suggestion: {
+    readonly text: string;
+    readonly turn: Types.SuggestionSide;
+    readonly outcome: Types.SuggestionOutcome | null;
+    readonly reason: string | null;
+    readonly closedBy: string | null;
+    readonly closedText: string | null;
+    readonly rounds: ReadonlyArray<{
+      readonly by: Types.SuggestionSide;
+      readonly text: string;
+      readonly userId: string;
+      readonly createdAt: string;
+    }>;
+  } | null;
 };
 
 export type ReviewThreadsQueryVariables = Exact<{
@@ -2527,6 +2645,20 @@ export type ReviewThreadsQuery = {
       readonly body: string;
       readonly createdAt: string;
     }>;
+    readonly suggestion: {
+      readonly text: string;
+      readonly turn: Types.SuggestionSide;
+      readonly outcome: Types.SuggestionOutcome | null;
+      readonly reason: string | null;
+      readonly closedBy: string | null;
+      readonly closedText: string | null;
+      readonly rounds: ReadonlyArray<{
+        readonly by: Types.SuggestionSide;
+        readonly text: string;
+        readonly userId: string;
+        readonly createdAt: string;
+      }>;
+    } | null;
   }>;
 };
 
@@ -3089,6 +3221,20 @@ export type SetReviewThreadResolvedMutation = {
       readonly body: string;
       readonly createdAt: string;
     }>;
+    readonly suggestion: {
+      readonly text: string;
+      readonly turn: Types.SuggestionSide;
+      readonly outcome: Types.SuggestionOutcome | null;
+      readonly reason: string | null;
+      readonly closedBy: string | null;
+      readonly closedText: string | null;
+      readonly rounds: ReadonlyArray<{
+        readonly by: Types.SuggestionSide;
+        readonly text: string;
+        readonly userId: string;
+        readonly createdAt: string;
+      }>;
+    } | null;
   };
 };
 
@@ -4267,6 +4413,34 @@ export const ReviewThreadFieldsFragmentDoc = {
               ],
             },
           },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "suggestion" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "text" } },
+                { kind: "Field", name: { kind: "Name", value: "turn" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rounds" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "by" } },
+                      { kind: "Field", name: { kind: "Name", value: "text" } },
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "outcome" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "closedBy" } },
+                { kind: "Field", name: { kind: "Name", value: "closedText" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -5151,6 +5325,11 @@ export const AddReviewThreadDocument = {
             type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
           },
         },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "suggestedText" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
       ],
       selectionSet: {
         kind: "SelectionSet",
@@ -5178,6 +5357,11 @@ export const AddReviewThreadDocument = {
                 kind: "Argument",
                 name: { kind: "Name", value: "body" },
                 value: { kind: "Variable", name: { kind: "Name", value: "body" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "suggestedText" },
+                value: { kind: "Variable", name: { kind: "Name", value: "suggestedText" } },
               },
             ],
             selectionSet: {
@@ -5214,6 +5398,34 @@ export const AddReviewThreadDocument = {
                 { kind: "Field", name: { kind: "Name", value: "authorName" } },
                 { kind: "Field", name: { kind: "Name", value: "body" } },
                 { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "suggestion" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "text" } },
+                { kind: "Field", name: { kind: "Name", value: "turn" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rounds" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "by" } },
+                      { kind: "Field", name: { kind: "Name", value: "text" } },
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "outcome" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "closedBy" } },
+                { kind: "Field", name: { kind: "Name", value: "closedText" } },
               ],
             },
           },
@@ -6607,6 +6819,129 @@ export const CloseCaseDocument = {
     },
   ],
 } as unknown as DocumentNode<CloseCaseMutation, CloseCaseMutationVariables>;
+export const CloseReviewSuggestionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CloseReviewSuggestion" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "outcome" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "SuggestionOutcome" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "closeReviewSuggestion" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "threadId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "outcome" },
+                value: { kind: "Variable", name: { kind: "Name", value: "outcome" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "reason" },
+                value: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReviewThreadFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReviewThreadFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReviewThread" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "quote" } },
+          { kind: "Field", name: { kind: "Name", value: "occurrence" } },
+          { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "messages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "authorName" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "suggestion" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "text" } },
+                { kind: "Field", name: { kind: "Name", value: "turn" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rounds" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "by" } },
+                      { kind: "Field", name: { kind: "Name", value: "text" } },
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "outcome" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "closedBy" } },
+                { kind: "Field", name: { kind: "Name", value: "closedText" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CloseReviewSuggestionMutation, CloseReviewSuggestionMutationVariables>;
 export const CompleteOnboardingDocument = {
   kind: "Document",
   definitions: [
@@ -6815,6 +7150,122 @@ export const ContactBlocksDocument = {
     },
   ],
 } as unknown as DocumentNode<ContactBlocksQuery, ContactBlocksQueryVariables>;
+export const CounterReviewSuggestionDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CounterReviewSuggestion" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "text" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "counterReviewSuggestion" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "threadId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "threadId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "text" },
+                value: { kind: "Variable", name: { kind: "Name", value: "text" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "ReviewThreadFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "ReviewThreadFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "ReviewThread" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "quote" } },
+          { kind: "Field", name: { kind: "Name", value: "occurrence" } },
+          { kind: "Field", name: { kind: "Name", value: "resolved" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "messages" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "authorUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "authorName" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "suggestion" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "text" } },
+                { kind: "Field", name: { kind: "Name", value: "turn" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rounds" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "by" } },
+                      { kind: "Field", name: { kind: "Name", value: "text" } },
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "outcome" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "closedBy" } },
+                { kind: "Field", name: { kind: "Name", value: "closedText" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  CounterReviewSuggestionMutation,
+  CounterReviewSuggestionMutationVariables
+>;
 export const CreateCategoryDocument = {
   kind: "Document",
   definitions: [
@@ -12084,6 +12535,34 @@ export const ReplyReviewThreadDocument = {
               ],
             },
           },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "suggestion" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "text" } },
+                { kind: "Field", name: { kind: "Name", value: "turn" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rounds" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "by" } },
+                      { kind: "Field", name: { kind: "Name", value: "text" } },
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "outcome" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "closedBy" } },
+                { kind: "Field", name: { kind: "Name", value: "closedText" } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -12693,6 +13172,34 @@ export const ReviewThreadsDocument = {
                 { kind: "Field", name: { kind: "Name", value: "authorName" } },
                 { kind: "Field", name: { kind: "Name", value: "body" } },
                 { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "suggestion" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "text" } },
+                { kind: "Field", name: { kind: "Name", value: "turn" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rounds" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "by" } },
+                      { kind: "Field", name: { kind: "Name", value: "text" } },
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "outcome" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "closedBy" } },
+                { kind: "Field", name: { kind: "Name", value: "closedText" } },
               ],
             },
           },
@@ -14823,6 +15330,34 @@ export const SetReviewThreadResolvedDocument = {
                 { kind: "Field", name: { kind: "Name", value: "authorName" } },
                 { kind: "Field", name: { kind: "Name", value: "body" } },
                 { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "suggestion" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "text" } },
+                { kind: "Field", name: { kind: "Name", value: "turn" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "rounds" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "by" } },
+                      { kind: "Field", name: { kind: "Name", value: "text" } },
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+                    ],
+                  },
+                },
+                { kind: "Field", name: { kind: "Name", value: "outcome" } },
+                { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "closedBy" } },
+                { kind: "Field", name: { kind: "Name", value: "closedText" } },
               ],
             },
           },

@@ -3,12 +3,14 @@ mutation AddReviewThread(
   $quote: String!
   $occurrence: Int!
   $body: String!
+  $suggestedText: String
 ) {
   addReviewThread(
     policyVersionId: $policyVersionId
     quote: $quote
     occurrence: $occurrence
     body: $body
+    suggestedText: $suggestedText
   ) {
     ...ReviewThreadFields
   }
