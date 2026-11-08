@@ -474,6 +474,95 @@ describe("drafts.$number loader: the published text for the live diff (bug log 2
   });
 });
 
+describe("drafts.$number: the links to the libraries (bug log 227)", () => {
+  const emptyLinks = {
+    contacts: [],
+    definitions: [],
+    editable: true,
+    policyVersionId: "v-9",
+    references: [],
+    related: [],
+  };
+  const handlers = (): Record<string, Handler> => ({
+    ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+    Contacts: () => ({ contactBlocks: [] }),
+    ContactBlocks: () => ({ contactBlocks: [] }),
+    Definitions: () => ({ definitions: [] }),
+    PolicyVersionLinks: () => ({ policyVersionLinks: emptyLinks }),
+    Policies: () => ({ policies: [] }),
+    References: () => ({ references: [] }),
+    RelationshipTypes: () => ({ relationshipTypes: [] }),
+    SetVersionContacts: () => ({ setVersionContacts: emptyLinks }),
+    SetVersionDefinitions: () => ({ setVersionDefinitions: emptyLinks }),
+    SetVersionReferences: () => ({ setVersionReferences: emptyLinks }),
+    SetVersionRelated: () => ({ setVersionRelated: emptyLinks }),
+  });
+
+  it("replaces the definitions on the working draft, not on any other version", async () => {
+    const calls = routeGateway(handlers());
+    await runAction({ definitionIds: "d-1,d-2", intent: "set-definitions" });
+    expect(calls.find((c) => c.operation === "SetVersionDefinitions")?.variables).toEqual({
+      definitionIds: ["d-1", "d-2"],
+      policyVersionId: "v-9",
+    });
+  });
+
+  it("replaces the related policies with their types", async () => {
+    const calls = routeGateway(handlers());
+    const links = [{ policyId: "p-2", type: "supersedes" }];
+    await runAction({ intent: "set-related", links: JSON.stringify(links) });
+    expect(calls.find((c) => c.operation === "SetVersionRelated")?.variables).toEqual({
+      links,
+      policyVersionId: "v-9",
+    });
+  });
+
+  it("keeps the order of references and contacts, and can empty them", async () => {
+    const calls = routeGateway(handlers());
+    await runAction({ intent: "set-references", referenceIds: "r-2,r-1" });
+    await runAction({ contactBlockIds: "", intent: "set-contacts" });
+    expect(calls.find((c) => c.operation === "SetVersionReferences")?.variables).toEqual({
+      policyVersionId: "v-9",
+      referenceIds: ["r-2", "r-1"],
+    });
+    expect(calls.find((c) => c.operation === "SetVersionContacts")?.variables).toEqual({
+      contactBlockIds: [],
+      policyVersionId: "v-9",
+    });
+  });
+
+  it("answers the gateway's refusal, as the version is no longer open", async () => {
+    routeGateway({
+      ...handlers(),
+      SetVersionDefinitions: () => ({
+        errors: [{ extensions: { code: "FAILED_PRECONDITION" }, message: "not editable" }],
+      }),
+    });
+    const result = await runAction({ definitionIds: "d-1", intent: "set-definitions" });
+    expect(result.init?.status).toBe(400);
+    expect(result.data).toMatchObject({
+      error: { code: "FAILED_PRECONDITION" },
+      intent: "set-definitions",
+      ok: false,
+    });
+  });
+
+  it("hands the screen the links, the libraries and the types", async () => {
+    routeGateway(handlers());
+    const result = await runLoader();
+    expect(result.linkState?.links.editable).toBe(true);
+  });
+
+  it("leaves the panel out when the links can't be read", async () => {
+    routeGateway({
+      ...handlers(),
+      PolicyVersionLinks: () => ({ errors: [{ message: "gone" }] }),
+    });
+    const result = await runLoader();
+    expect(result.linkState).toBeNull();
+  });
+});
+
 describe("drafts.$number for a procedure (bug log 213)", () => {
   const procedure = { ...gatewayPolicy, documentType: "PROCEDURE", number: "PRC-TRAVEL-000003" };
   const asProcedure = (versionStatus: string, approvalStatus: string): Record<string, Handler> => ({

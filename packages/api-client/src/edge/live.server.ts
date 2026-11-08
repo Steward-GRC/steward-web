@@ -114,6 +114,7 @@ import {
   PolicyByNumberDocument,
   PolicyDocument,
   PolicyVersionDocument,
+  PolicyVersionLinksDocument,
   PolicyVersionsDocument,
   PolicyVersionSummaryDocument,
   PostCaseMessageDocument,
@@ -127,6 +128,7 @@ import {
   RecordAckDocument,
   RecordRiskAssessmentDocument,
   ReferencesDocument,
+  RelationshipTypesDocument,
   RemoveFactorDocument,
   RemoveUserFromGroupDocument,
   RemoveUserMfaFactorDocument,
@@ -182,6 +184,10 @@ import {
   SetReviewThreadResolvedDocument,
   SetTypeCadenceDocument,
   SetUserPolicyOverrideDocument,
+  SetVersionContactsDocument,
+  SetVersionDefinitionsDocument,
+  SetVersionReferencesDocument,
+  SetVersionRelatedDocument,
   SetWorkflowVetoEnabledDocument,
   SignalWorkflowDocument,
   SimulateCategoryDocument,
@@ -624,6 +630,60 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.createPolicyAppendix;
+  },
+  async policyVersionLinks(policyVersionId, cookie) {
+    const data = await gatewayFetch(
+      PolicyVersionLinksDocument,
+      { policyVersionId },
+      "PolicyVersionLinks",
+      { cookie },
+    );
+    return data.policyVersionLinks;
+  },
+  async relationshipTypes(cookie) {
+    const data = await gatewayFetch(RelationshipTypesDocument, {}, "RelationshipTypes", {
+      cookie,
+    });
+    return data.relationshipTypes;
+  },
+  async setVersionContacts(policyVersionId, contactBlockIds, cookie) {
+    const data = await gatewayFetch(
+      SetVersionContactsDocument,
+      { contactBlockIds: [...contactBlockIds], policyVersionId },
+      "SetVersionContacts",
+      { cookie },
+    );
+    return data.setVersionContacts;
+  },
+  async setVersionDefinitions(policyVersionId, definitionIds, cookie) {
+    const data = await gatewayFetch(
+      SetVersionDefinitionsDocument,
+      { definitionIds: [...definitionIds], policyVersionId },
+      "SetVersionDefinitions",
+      { cookie },
+    );
+    return data.setVersionDefinitions;
+  },
+  async setVersionReferences(policyVersionId, referenceIds, cookie) {
+    const data = await gatewayFetch(
+      SetVersionReferencesDocument,
+      { policyVersionId, referenceIds: [...referenceIds] },
+      "SetVersionReferences",
+      { cookie },
+    );
+    return data.setVersionReferences;
+  },
+  async setVersionRelated(policyVersionId, links, cookie) {
+    const data = await gatewayFetch(
+      SetVersionRelatedDocument,
+      {
+        links: links.map((link) => ({ policyId: link.policyId, type: link.type })),
+        policyVersionId,
+      },
+      "SetVersionRelated",
+      { cookie },
+    );
+    return data.setVersionRelated;
   },
   async policyAppendices(policyId, includeRetired, cookie) {
     const data = await gatewayFetch(

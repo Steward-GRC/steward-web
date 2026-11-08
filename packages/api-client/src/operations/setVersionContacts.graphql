@@ -1,0 +1,5 @@
+mutation SetVersionContacts($policyVersionId: ID!, $contactBlockIds: [ID!]!) {
+  setVersionContacts(policyVersionId: $policyVersionId, contactBlockIds: $contactBlockIds) {
+    ...VersionLinksFields
+  }
+}

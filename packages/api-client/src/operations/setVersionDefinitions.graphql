@@ -1,0 +1,5 @@
+mutation SetVersionDefinitions($policyVersionId: ID!, $definitionIds: [ID!]!) {
+  setVersionDefinitions(policyVersionId: $policyVersionId, definitionIds: $definitionIds) {
+    ...VersionLinksFields
+  }
+}

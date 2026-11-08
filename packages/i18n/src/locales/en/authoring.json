@@ -22,6 +22,24 @@
       "labelWorking": "Actions, AI working",
       "menu": "Actions"
     },
+    "links": {
+      "add": "Add",
+      "addContact": "Add a contact",
+      "addDefinition": "Add a definition",
+      "addReference": "Add a reference",
+      "contacts": "Contacts",
+      "definitions": "Definitions",
+      "failed": "The change could not be saved.",
+      "moveDown": "Move {{name}} down",
+      "moveUp": "Move {{name}} up",
+      "none": "None yet.",
+      "policy": "Policy",
+      "readOnly": "These can't be changed now: the version is no longer open for editing.",
+      "references": "References",
+      "related": "Related",
+      "relationship": "Relationship",
+      "remove": "Remove {{name}}"
+    },
     "start": {
       "action": "Start editing",
       "appendixNote": {

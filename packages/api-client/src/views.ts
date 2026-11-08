@@ -7,9 +7,11 @@ import type {
   MyWebauthnCredentialsQuery,
   NotificationSettingsFieldsFragment,
   NotificationSettingsQuery,
+  RelationshipTypesQuery,
   SearchAndAnswerQuery,
   SearchUsersQuery,
   UserFieldsFragment,
+  VersionLinksFieldsFragment,
   WorkflowDefQuery,
 } from "./generated/graphql";
 import type {
@@ -368,6 +370,15 @@ export interface PolicyVersionSummary {
   readonly version: string;
 }
 
+/** A related policy the author picked, with the relationship type. */
+export interface RelatedLinkChoice {
+  readonly policyId: string;
+  readonly type: string;
+}
+
+/** A relationship type and the type the other side of the link takes. */
+export type RelationshipType = RelationshipTypesQuery["relationshipTypes"][number];
+
 /** One message of an inline review thread. */
 export interface ReviewMessage {
   readonly authorName: null | string;
@@ -458,6 +469,13 @@ export interface VersionDocument {
   readonly contentJson: string;
   readonly version: string;
 }
+
+/**
+ * What one version of a policy or procedure links to from the libraries: definitions
+ * (alphabetical), related policies with a relationship type, references and contacts (in the
+ * order the author gave). `editable` is whether the caller can change them now.
+ */
+export type VersionLinks = VersionLinksFieldsFragment;
 
 /** A workflow definition selectable as a category's default. */
 export interface Workflow {

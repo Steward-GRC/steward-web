@@ -34,6 +34,7 @@ import {
   getDraftVersion,
   getLatestTemplateVersion,
   getPolicyByNumber,
+  getVersionLinkState,
   isDraftInReview,
   listAppendices,
   policyIdOfNumber,
@@ -42,6 +43,10 @@ import {
   retireAppendix,
   reviewApprovers,
   saveDraft,
+  setVersionContacts,
+  setVersionDefinitions,
+  setVersionReferences,
+  setVersionRelated,
   startDraft,
   submitDraftForReview,
   withdrawFromReview,
@@ -76,6 +81,7 @@ import {
 import { StartEditing } from "../authoring/StartEditing";
 import { useAiHealth } from "../authoring/useAiHealth";
 import { draftCanSave, useAutosave } from "../authoring/useAutosave";
+import { VersionLinksPanel } from "../authoring/VersionLinksPanel";
 import { listReviewThreads } from "../review/reviewThreads.server";
 import { useReviewComments } from "../review/useReviewComments";
 
@@ -117,12 +123,15 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         .then((version) => version?.contentJson ?? null)
         .catch(() => null)
     : null;
+  // What the draft links to from the libraries (bug log 227); none when it can't be read.
+  const linkState = draft ? await getVersionLinkState(request, draft.id) : null;
   return {
     aiHealth,
     appendices,
     approvers,
     draft,
     inReview,
+    linkState,
     meId: identity.id,
     policy,
     published,
@@ -215,6 +224,43 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         if (!document) throw new Response("Bad Request", { status: 400 });
         const templateVersionId = String(form.get("templateVersionId") ?? "") || null;
         await saveDraft(request, policyId, serializeDocument(document), templateVersionId);
+        return data({ intent, ok: true } as const);
+      }
+      case "set-contacts":
+      case "set-definitions":
+      case "set-references":
+      case "set-related": {
+        // Links belong to the working draft and go through its approval; none makes a draft.
+        const version = await getDraftVersion(request, policyId);
+        if (!version) throw new Response("Not Found", { status: 404 });
+        const ids = (field: string) =>
+          String(form.get(field) ?? "")
+            .split(",")
+            .filter(Boolean);
+        switch (intent) {
+          case "set-contacts": {
+            await setVersionContacts(request, version.id, ids("contactBlockIds"));
+            break;
+          }
+          case "set-definitions": {
+            await setVersionDefinitions(request, version.id, ids("definitionIds"));
+            break;
+          }
+          case "set-references": {
+            await setVersionReferences(request, version.id, ids("referenceIds"));
+            break;
+          }
+          default: {
+            await setVersionRelated(
+              request,
+              version.id,
+              JSON.parse(String(form.get("links") ?? "[]")) as {
+                policyId: string;
+                type: string;
+              }[],
+            );
+          }
+        }
         return data({ intent, ok: true } as const);
       }
       case "submit-review": {
@@ -741,6 +787,15 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
           />
         </div>
       </div>
+
+      {loaderData.linkState ? (
+        <VersionLinksPanel
+          library={loaderData.linkState.library}
+          links={loaderData.linkState.links}
+          policyId={policy.id}
+          relationshipTypes={loaderData.linkState.relationshipTypes}
+        />
+      ) : null}
 
       <RewriteSectionDialog
         busy={assistFetcher.state !== "idle"}

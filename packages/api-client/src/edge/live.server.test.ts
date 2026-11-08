@@ -1609,3 +1609,54 @@ describe("liveEdge veto approvers (steward-web#256)", () => {
     expect(calls[0]?.variables).toEqual({ enabled: true, id: "w-1" });
   });
 });
+
+describe("liveEdge: what a version links to (bug log 227)", () => {
+  const links = {
+    contacts: [],
+    definitions: [],
+    editable: true,
+    policyVersionId: "v-1",
+    references: [],
+    related: [],
+  };
+
+  it("reads a version's links and the relationship types", async () => {
+    const calls = routeGateway({
+      PolicyVersionLinks: () => ({ policyVersionLinks: links }),
+      RelationshipTypes: () => ({
+        relationshipTypes: [
+          {
+            id: "related",
+            inverseId: "related-by",
+            inverseLabel: "is related by",
+            label: "is related to",
+          },
+        ],
+      }),
+    });
+    const read = await liveEdge.policyVersionLinks("v-1");
+    const types = await liveEdge.relationshipTypes();
+    expect(read.editable).toBe(true);
+    expect(types[0]?.inverseLabel).toBe("is related by");
+    expect(calls[0]?.variables).toEqual({ policyVersionId: "v-1" });
+  });
+
+  it("replaces each kind of link on the version, keeping the order given", async () => {
+    const calls = routeGateway({
+      SetVersionContacts: () => ({ setVersionContacts: links }),
+      SetVersionDefinitions: () => ({ setVersionDefinitions: links }),
+      SetVersionReferences: () => ({ setVersionReferences: links }),
+      SetVersionRelated: () => ({ setVersionRelated: links }),
+    });
+    await liveEdge.setVersionDefinitions("v-1", ["d-2", "d-1"]);
+    await liveEdge.setVersionRelated("v-1", [{ policyId: "p-2", type: "supersedes" }]);
+    await liveEdge.setVersionReferences("v-1", ["r-2", "r-1"]);
+    await liveEdge.setVersionContacts("v-1", ["c-2", "c-1"]);
+    expect(calls.map((c) => c.variables)).toEqual([
+      { definitionIds: ["d-2", "d-1"], policyVersionId: "v-1" },
+      { links: [{ policyId: "p-2", type: "supersedes" }], policyVersionId: "v-1" },
+      { policyVersionId: "v-1", referenceIds: ["r-2", "r-1"] },
+      { contactBlockIds: ["c-2", "c-1"], policyVersionId: "v-1" },
+    ]);
+  });
+});

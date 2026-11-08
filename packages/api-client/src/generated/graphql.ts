@@ -2245,6 +2245,58 @@ export type PolicyVersionFieldsFragment = {
   }>;
 };
 
+export type PolicyVersionLinksQueryVariables = Exact<{
+  policyVersionId: string | number;
+}>;
+
+export type PolicyVersionLinksQuery = {
+  readonly policyVersionLinks: {
+    readonly policyVersionId: string;
+    readonly editable: boolean;
+    readonly definitions: ReadonlyArray<{
+      readonly id: string;
+      readonly categoryId: string;
+      readonly term: string;
+      readonly definition: string;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly related: ReadonlyArray<{
+      readonly policyId: string;
+      readonly number: string;
+      readonly title: string;
+      readonly type: string;
+      readonly label: string;
+      readonly direction: Types.RelatedDirection;
+    }>;
+    readonly references: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly kind: Types.ReferenceKind;
+      readonly clause: string | null;
+      readonly body: string | null;
+      readonly url: string | null;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly contacts: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly name: string | null;
+      readonly role: string | null;
+      readonly department: string | null;
+      readonly email: string | null;
+      readonly phone: string | null;
+      readonly hours: string | null;
+      readonly notes: string | null;
+      readonly archived: boolean;
+      readonly usedByCount: number;
+    }>;
+  };
+};
+
 export type PolicyVersionSummaryQueryVariables = Exact<{
   versionId: string | number;
 }>;
@@ -2542,6 +2594,17 @@ export type ReferencesQuery = {
     readonly archived: boolean;
     readonly createdByUserId: string | null;
     readonly usedByCount: number;
+  }>;
+};
+
+export type RelationshipTypesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type RelationshipTypesQuery = {
+  readonly relationshipTypes: ReadonlyArray<{
+    readonly id: string;
+    readonly label: string;
+    readonly inverseId: string;
+    readonly inverseLabel: string;
   }>;
 };
 
@@ -3951,6 +4014,218 @@ export type SetUserPolicyOverrideMutation = {
   };
 };
 
+export type SetVersionContactsMutationVariables = Exact<{
+  policyVersionId: string | number;
+  contactBlockIds: ReadonlyArray<string | number> | string | number;
+}>;
+
+export type SetVersionContactsMutation = {
+  readonly setVersionContacts: {
+    readonly policyVersionId: string;
+    readonly editable: boolean;
+    readonly definitions: ReadonlyArray<{
+      readonly id: string;
+      readonly categoryId: string;
+      readonly term: string;
+      readonly definition: string;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly related: ReadonlyArray<{
+      readonly policyId: string;
+      readonly number: string;
+      readonly title: string;
+      readonly type: string;
+      readonly label: string;
+      readonly direction: Types.RelatedDirection;
+    }>;
+    readonly references: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly kind: Types.ReferenceKind;
+      readonly clause: string | null;
+      readonly body: string | null;
+      readonly url: string | null;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly contacts: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly name: string | null;
+      readonly role: string | null;
+      readonly department: string | null;
+      readonly email: string | null;
+      readonly phone: string | null;
+      readonly hours: string | null;
+      readonly notes: string | null;
+      readonly archived: boolean;
+      readonly usedByCount: number;
+    }>;
+  };
+};
+
+export type SetVersionDefinitionsMutationVariables = Exact<{
+  policyVersionId: string | number;
+  definitionIds: ReadonlyArray<string | number> | string | number;
+}>;
+
+export type SetVersionDefinitionsMutation = {
+  readonly setVersionDefinitions: {
+    readonly policyVersionId: string;
+    readonly editable: boolean;
+    readonly definitions: ReadonlyArray<{
+      readonly id: string;
+      readonly categoryId: string;
+      readonly term: string;
+      readonly definition: string;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly related: ReadonlyArray<{
+      readonly policyId: string;
+      readonly number: string;
+      readonly title: string;
+      readonly type: string;
+      readonly label: string;
+      readonly direction: Types.RelatedDirection;
+    }>;
+    readonly references: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly kind: Types.ReferenceKind;
+      readonly clause: string | null;
+      readonly body: string | null;
+      readonly url: string | null;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly contacts: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly name: string | null;
+      readonly role: string | null;
+      readonly department: string | null;
+      readonly email: string | null;
+      readonly phone: string | null;
+      readonly hours: string | null;
+      readonly notes: string | null;
+      readonly archived: boolean;
+      readonly usedByCount: number;
+    }>;
+  };
+};
+
+export type SetVersionReferencesMutationVariables = Exact<{
+  policyVersionId: string | number;
+  referenceIds: ReadonlyArray<string | number> | string | number;
+}>;
+
+export type SetVersionReferencesMutation = {
+  readonly setVersionReferences: {
+    readonly policyVersionId: string;
+    readonly editable: boolean;
+    readonly definitions: ReadonlyArray<{
+      readonly id: string;
+      readonly categoryId: string;
+      readonly term: string;
+      readonly definition: string;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly related: ReadonlyArray<{
+      readonly policyId: string;
+      readonly number: string;
+      readonly title: string;
+      readonly type: string;
+      readonly label: string;
+      readonly direction: Types.RelatedDirection;
+    }>;
+    readonly references: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly kind: Types.ReferenceKind;
+      readonly clause: string | null;
+      readonly body: string | null;
+      readonly url: string | null;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly contacts: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly name: string | null;
+      readonly role: string | null;
+      readonly department: string | null;
+      readonly email: string | null;
+      readonly phone: string | null;
+      readonly hours: string | null;
+      readonly notes: string | null;
+      readonly archived: boolean;
+      readonly usedByCount: number;
+    }>;
+  };
+};
+
+export type SetVersionRelatedMutationVariables = Exact<{
+  policyVersionId: string | number;
+  links: ReadonlyArray<Types.RelatedLinkInput> | Types.RelatedLinkInput;
+}>;
+
+export type SetVersionRelatedMutation = {
+  readonly setVersionRelated: {
+    readonly policyVersionId: string;
+    readonly editable: boolean;
+    readonly definitions: ReadonlyArray<{
+      readonly id: string;
+      readonly categoryId: string;
+      readonly term: string;
+      readonly definition: string;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly related: ReadonlyArray<{
+      readonly policyId: string;
+      readonly number: string;
+      readonly title: string;
+      readonly type: string;
+      readonly label: string;
+      readonly direction: Types.RelatedDirection;
+    }>;
+    readonly references: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly kind: Types.ReferenceKind;
+      readonly clause: string | null;
+      readonly body: string | null;
+      readonly url: string | null;
+      readonly archived: boolean;
+      readonly createdByUserId: string | null;
+      readonly usedByCount: number;
+    }>;
+    readonly contacts: ReadonlyArray<{
+      readonly id: string;
+      readonly label: string;
+      readonly name: string | null;
+      readonly role: string | null;
+      readonly department: string | null;
+      readonly email: string | null;
+      readonly phone: string | null;
+      readonly hours: string | null;
+      readonly notes: string | null;
+      readonly archived: boolean;
+      readonly usedByCount: number;
+    }>;
+  };
+};
+
 export type SetWorkflowVetoEnabledMutationVariables = Exact<{
   id: string | number;
   enabled: boolean;
@@ -4483,6 +4758,52 @@ export type VersionChangesSinceReviewQuery = {
     readonly sectionTitle: string;
     readonly changeType: string;
     readonly wordDiffHtml: string | null;
+  }>;
+};
+
+export type VersionLinksFieldsFragment = {
+  readonly policyVersionId: string;
+  readonly editable: boolean;
+  readonly definitions: ReadonlyArray<{
+    readonly id: string;
+    readonly categoryId: string;
+    readonly term: string;
+    readonly definition: string;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
+  }>;
+  readonly related: ReadonlyArray<{
+    readonly policyId: string;
+    readonly number: string;
+    readonly title: string;
+    readonly type: string;
+    readonly label: string;
+    readonly direction: Types.RelatedDirection;
+  }>;
+  readonly references: ReadonlyArray<{
+    readonly id: string;
+    readonly label: string;
+    readonly kind: Types.ReferenceKind;
+    readonly clause: string | null;
+    readonly body: string | null;
+    readonly url: string | null;
+    readonly archived: boolean;
+    readonly createdByUserId: string | null;
+    readonly usedByCount: number;
+  }>;
+  readonly contacts: ReadonlyArray<{
+    readonly id: string;
+    readonly label: string;
+    readonly name: string | null;
+    readonly role: string | null;
+    readonly department: string | null;
+    readonly email: string | null;
+    readonly phone: string | null;
+    readonly hours: string | null;
+    readonly notes: string | null;
+    readonly archived: boolean;
+    readonly usedByCount: number;
   }>;
 };
 
@@ -5374,6 +5695,92 @@ export const UserFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<UserFieldsFragment, unknown>;
+export const VersionLinksFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "VersionLinksFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersionLinks" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "editable" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "definitions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "related" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "type" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "direction" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "references" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contacts" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<VersionLinksFieldsFragment, unknown>;
 export const WorkflowStageDefFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -12336,6 +12743,129 @@ export const PolicyVersionDocument = {
     },
   ],
 } as unknown as DocumentNode<PolicyVersionQuery, PolicyVersionQueryVariables>;
+export const PolicyVersionLinksDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PolicyVersionLinks" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "policyVersionLinks" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "VersionLinksFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "VersionLinksFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersionLinks" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "editable" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "definitions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "related" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "type" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "direction" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "references" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contacts" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PolicyVersionLinksQuery, PolicyVersionLinksQueryVariables>;
 export const PolicyVersionSummaryDocument = {
   kind: "Document",
   definitions: [
@@ -13281,6 +13811,34 @@ export const ReferencesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReferencesQuery, ReferencesQueryVariables>;
+export const RelationshipTypesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "RelationshipTypes" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "relationshipTypes" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "inverseId" } },
+                { kind: "Field", name: { kind: "Name", value: "inverseLabel" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RelationshipTypesQuery, RelationshipTypesQueryVariables>;
 export const RemoveFactorDocument = {
   kind: "Document",
   definitions: [
@@ -17782,6 +18340,574 @@ export const SetUserPolicyOverrideDocument = {
     },
   ],
 } as unknown as DocumentNode<SetUserPolicyOverrideMutation, SetUserPolicyOverrideMutationVariables>;
+export const SetVersionContactsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetVersionContacts" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "contactBlockIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setVersionContacts" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "contactBlockIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "contactBlockIds" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "VersionLinksFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "VersionLinksFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersionLinks" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "editable" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "definitions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "related" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "type" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "direction" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "references" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contacts" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetVersionContactsMutation, SetVersionContactsMutationVariables>;
+export const SetVersionDefinitionsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetVersionDefinitions" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "definitionIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setVersionDefinitions" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "definitionIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "definitionIds" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "VersionLinksFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "VersionLinksFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersionLinks" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "editable" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "definitions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "related" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "type" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "direction" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "references" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contacts" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetVersionDefinitionsMutation, SetVersionDefinitionsMutationVariables>;
+export const SetVersionReferencesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetVersionReferences" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "referenceIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setVersionReferences" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "referenceIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "referenceIds" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "VersionLinksFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "VersionLinksFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersionLinks" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "editable" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "definitions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "related" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "type" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "direction" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "references" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contacts" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetVersionReferencesMutation, SetVersionReferencesMutationVariables>;
+export const SetVersionRelatedDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetVersionRelated" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "links" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "RelatedLinkInput" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setVersionRelated" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "policyVersionId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "policyVersionId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "links" },
+                value: { kind: "Variable", name: { kind: "Name", value: "links" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "VersionLinksFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "VersionLinksFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "PolicyVersionLinks" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "policyVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "editable" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "definitions" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                { kind: "Field", name: { kind: "Name", value: "term" } },
+                { kind: "Field", name: { kind: "Name", value: "definition" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "related" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "policyId" } },
+                { kind: "Field", name: { kind: "Name", value: "number" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "type" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "direction" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "references" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "kind" } },
+                { kind: "Field", name: { kind: "Name", value: "clause" } },
+                { kind: "Field", name: { kind: "Name", value: "body" } },
+                { kind: "Field", name: { kind: "Name", value: "url" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "createdByUserId" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "contacts" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "label" } },
+                { kind: "Field", name: { kind: "Name", value: "name" } },
+                { kind: "Field", name: { kind: "Name", value: "role" } },
+                { kind: "Field", name: { kind: "Name", value: "department" } },
+                { kind: "Field", name: { kind: "Name", value: "email" } },
+                { kind: "Field", name: { kind: "Name", value: "phone" } },
+                { kind: "Field", name: { kind: "Name", value: "hours" } },
+                { kind: "Field", name: { kind: "Name", value: "notes" } },
+                { kind: "Field", name: { kind: "Name", value: "archived" } },
+                { kind: "Field", name: { kind: "Name", value: "usedByCount" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetVersionRelatedMutation, SetVersionRelatedMutationVariables>;
 export const SetWorkflowVetoEnabledDocument = {
   kind: "Document",
   definitions: [

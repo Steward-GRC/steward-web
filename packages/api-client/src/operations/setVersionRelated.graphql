@@ -1,0 +1,5 @@
+mutation SetVersionRelated($policyVersionId: ID!, $links: [RelatedLinkInput!]!) {
+  setVersionRelated(policyVersionId: $policyVersionId, links: $links) {
+    ...VersionLinksFields
+  }
+}
