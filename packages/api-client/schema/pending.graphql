@@ -235,6 +235,7 @@ extend type Mutation {
   # Site admin only: removes the appendix and its history.
   deleteAppendixForever(id: ID!): Boolean!
   reorderPolicyAppendices(policyId: ID!, orderedIds: [ID!]!): [PolicyAppendix!]!
+}
 
 extend type Mutation {
   # Site admin only. The category must name a default template to lock.
