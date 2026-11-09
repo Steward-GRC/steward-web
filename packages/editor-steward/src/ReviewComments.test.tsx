@@ -276,6 +276,44 @@ const open = async (onAdd: NonNullable<ReviewComments["onAdd"]>) => {
   await userEvent.click(await screen.findByRole("button", { name: "Comment" }));
 };
 
+const mark = () => document.querySelector("mark[data-kg-comment-ids]")!;
+
+describe("review threads as a dialog on the author's side (bug log 241)", () => {
+  it("lists nothing beside or under the document, and says nothing about no comments", async () => {
+    await mount({ commentsPlacement: "dialog", review: comments() });
+    await waitFor(() => expect(mark()).toBeTruthy());
+    expect(screen.queryByRole("region", { name: "Comments" })).toBeNull();
+    expect(screen.queryByText(/What is this\?/)).toBeNull();
+    expect(screen.queryByText("No comments yet.")).toBeNull();
+  });
+
+  it("opens the thread in a dialog when the highlighted text is clicked, and closes it", async () => {
+    await mount({ commentsPlacement: "dialog", review: comments() });
+    await waitFor(() => expect(mark()).toBeTruthy());
+    await userEvent.click(mark());
+    const dialog = await screen.findByRole("dialog", { name: "Comment" });
+    expect(within(dialog).getByText(/What is this\?/)).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await userEvent.click(mark());
+    expect(await screen.findByRole("dialog", { name: "Comment" })).toBeInTheDocument();
+  });
+
+  it("replies from inside the dialog", async () => {
+    const review = comments();
+    await mount({ commentsPlacement: "dialog", review });
+    await waitFor(() => expect(mark()).toBeTruthy());
+    await userEvent.click(mark());
+    const dialog = await screen.findByRole("dialog", { name: "Comment" });
+    await userEvent.type(
+      within(dialog).getByRole("textbox", { name: "Reply to this comment" }),
+      "Fixed.",
+    );
+    await userEvent.click(within(dialog).getByRole("button", { name: "Reply" }));
+    expect(review.onReply).toHaveBeenCalledWith("thread-1", "Fixed.");
+  });
+});
+
 describe("a suggestion on a thread", () => {
   it("shows the change, the round and whose turn it is", async () => {
     await mount({ review: asSide("AUTHOR", { threads: [withSuggestion()] }) });

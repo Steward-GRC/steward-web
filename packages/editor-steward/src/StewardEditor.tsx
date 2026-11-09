@@ -41,10 +41,12 @@ import { registerHeadingHighlightGuard } from "./headingHighlight";
 import { EDITOR_HOST_ATTRIBUTE, LiveDiff } from "./LiveDiff";
 import { STEWARD_NODES } from "./nodes";
 import {
+  ClosedThreadsSection,
   createCommentToolbarAction,
   isClosedSuggestion,
   type ReviewComments,
   ReviewThreadAnchors,
+  ReviewThreadDialog,
   ReviewThreadsPanel,
 } from "./ReviewComments";
 import { ImageUploadError } from "./uploadImage";
@@ -74,9 +76,10 @@ export interface StewardEditorProps {
   collaboration?: null | StewardCollaboration;
   /**
    * Where the threads sit: beside the document (the author's screen) or under it, as one section
-   * headed with how many there are (the reviewer's screen, where a column would not fit).
+   * headed with how many there are (the reviewer's screen, where a column would not fit). With
+   * "dialog" nothing is listed: a click on a highlight opens its thread in a dialog.
    */
-  commentsPlacement?: "below" | "beside";
+  commentsPlacement?: "below" | "beside" | "dialog";
   /** Draws a frame around the document itself (not its comments), such as the reader's page. */
   frame?: (document: ReactNode) => ReactNode;
   /** The stored document. Seeds a collaborative room only when the room is still empty. */
@@ -425,7 +428,14 @@ export const StewardEditor = ({
             <ReviewThreadAnchors
               threads={review.threads.filter((thread) => !isClosedSuggestion(thread))}
             />
-            <ReviewThreadsPanel comments={review} placement={commentsPlacement} />
+            {commentsPlacement === "dialog" ? (
+              <>
+                <ReviewThreadDialog comments={review} />
+                <ClosedThreadsSection comments={review} />
+              </>
+            ) : (
+              <ReviewThreadsPanel comments={review} placement={commentsPlacement} />
+            )}
           </div>
         ) : (
           editor
