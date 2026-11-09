@@ -7,12 +7,20 @@ import { describe, expect, it, vi } from "vitest";
 
 import AppendixRoute from "./drafts.$number.appendices.$letter";
 
+const room = vi.hoisted(() => ({
+  collaborators: [] as { activity?: "typing"; color: string; name: string; uid: string }[],
+}));
+
+// jsdom has no elementFromPoint, which the editor's listeners call (this file's own `document`
+// helper hides the global one)
+globalThis.document.elementFromPoint ??= () => null;
+
 const collabTouch = vi.hoisted(() => vi.fn());
 vi.mock("../authoring/collab/useCollabSession", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../authoring/collab/useCollabSession")>()),
   useCollabSession: () => ({
     collaboration: null,
-    collaborators: [],
+    collaborators: room.collaborators,
     mode: "solo",
     presenceCount: 0,
     reconnecting: false,
@@ -173,5 +181,22 @@ describe("an appendix nobody changed (bug log 246)", () => {
     mount({ ...base, appendix: { ...base.appendix, draft: null } });
     expect(await screen.findByText("Second words")).toBeInTheDocument();
     expect(collabTouch).not.toHaveBeenCalled();
+  });
+});
+
+describe("who else is in the appendix (bug log 250)", () => {
+  it("names each other person and whether they are editing or typing", () => {
+    room.collaborators = [
+      { color: "#0091FF", name: "Bob Author", uid: "u-bob" },
+      { activity: "typing", color: "#E5484D", name: "Alice Admin", uid: "u-alice" },
+    ];
+    mount();
+    const list = screen.getByRole("list", { name: "Who is here" });
+    expect(
+      within(list)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Bob Author editing", "Alice Admin typing"]);
+    room.collaborators = [];
   });
 });

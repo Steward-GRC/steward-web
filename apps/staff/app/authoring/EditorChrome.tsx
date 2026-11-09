@@ -115,6 +115,39 @@ export const Presence = ({
   );
 };
 
+/**
+ * Who else is in the room and what they are doing, by display name: "Bob Author editing",
+ * "Alice Admin typing" (bug log 250). Nothing when the person is alone.
+ */
+export const CollaboratorActivity = ({
+  collaborators,
+}: {
+  collaborators: readonly Collaborator[];
+}) => {
+  const { t } = useTranslation("authoring");
+  if (collaborators.length === 0) return null;
+  return (
+    <ul
+      aria-label={t("editor.presence.here")}
+      aria-live="polite"
+      className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted"
+    >
+      {collaborators.map((person) => (
+        <li key={person.uid}>
+          <span
+            aria-hidden="true"
+            className="mr-1.5 inline-block size-2 rounded-full"
+            style={{ backgroundColor: person.color }}
+          />
+          {t(person.activity === "typing" ? "editor.presence.typing" : "editor.presence.editing", {
+            name: person.name,
+          })}
+        </li>
+      ))}
+    </ul>
+  );
+};
+
 /** The page's top (U11): breadcrumb, serif title, number and version, Draft and the save state. */
 export const EditorHeader = ({
   actions,

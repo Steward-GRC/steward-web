@@ -31,7 +31,7 @@ import {
 import { settleTokenRequests, type TokenRequest } from "../authoring/collab/token";
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
-import { SaveState, type SaveStateKind } from "../authoring/EditorChrome";
+import { CollaboratorActivity, SaveState, type SaveStateKind } from "../authoring/EditorChrome";
 import { EditorViewToggle, useEditorView } from "../authoring/EditorViewToggle";
 import { useAutosave } from "../authoring/useAutosave";
 
@@ -311,6 +311,7 @@ export default function AppendixRoute({ loaderData }: Route.ComponentProps) {
           </ul>
         </div>
       ) : null}
+      <CollaboratorActivity collaborators={collabSession.collaborators} />
 
       <Tabs onValueChange={setTab} value={published ? tab : "draft"}>
         <TabsList>

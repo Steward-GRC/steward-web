@@ -154,8 +154,20 @@ const Hanging = ({ number, text }: { number: string; text: string }) =>
     <>{text}</>
   );
 
-const Body = ({ blocks, notes }: { blocks: readonly DocumentBlock[]; notes: Notes }) => {
-  const numbered = numberHeadings(blocks);
+/** The document's blocks; the body numbers its headings, an appendix does not (as in the reader). */
+const Body = ({
+  blocks,
+  notes,
+  numbering = true,
+}: {
+  blocks: readonly DocumentBlock[];
+  notes: Notes;
+  numbering?: boolean;
+}) => {
+  const all = numberHeadings(blocks);
+  const numbered = numbering
+    ? all
+    : new Map([...all].map(([index, heading]) => [index, { ...heading, number: "" }]));
   return (
     <>
       {blocks.map((block, index) => {
@@ -372,9 +384,15 @@ export const PolicyPrint = ({
           <h2 className="break-before-page font-serif text-[12pt] font-semibold break-after-avoid">
             {t("reader.appendices.heading", { letter: appendix.letter, title: appendix.title })}
           </h2>
-          <p className="font-serif text-[9pt] leading-[13pt] whitespace-pre-line">
-            {appendix.text}
-          </p>
+          {appendix.blocks && appendix.blocks.length > 0 ? (
+            <div className="font-serif text-[9pt] leading-[13pt]">
+              <Body blocks={appendix.blocks} notes={notes} numbering={false} />
+            </div>
+          ) : (
+            <p className="font-serif text-[9pt] leading-[13pt] whitespace-pre-line">
+              {appendix.text}
+            </p>
+          )}
         </section>
       ))}
 
