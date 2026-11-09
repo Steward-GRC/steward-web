@@ -764,6 +764,7 @@ export const PolicyReader = ({
                     appendixLabel={appendixLabel}
                     blocks={detail.body}
                     definitions={detail.definitions}
+                    lastUpdated={detail.published ? formatDateTime(detail.published) : undefined}
                     onTerm={openTerm}
                   />
                 ) : (
