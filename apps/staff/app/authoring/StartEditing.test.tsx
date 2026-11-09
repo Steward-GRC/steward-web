@@ -42,6 +42,12 @@ describe("the edit screen before a draft exists (bug log 219)", () => {
     expect(posted).not.toHaveBeenCalled();
   });
 
+  it("holds the note and Start editing in a card headed Actions (bug log 256)", () => {
+    mount();
+    expect(screen.getByRole("heading", { name: "Actions" })).toBeInTheDocument();
+    expect(screen.getByText(/This is the published version, v2.0.0/)).toBeInTheDocument();
+  });
+
   it("starts the draft only when Start editing is pressed", async () => {
     const posted = mount();
     await userEvent.click(screen.getByRole("button", { name: "Start editing" }));

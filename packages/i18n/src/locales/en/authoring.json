@@ -46,6 +46,7 @@
         "policy": "Appendices have their own life cycle. Edit them here without starting a draft of the policy.",
         "procedure": "Appendices have their own life cycle. Edit them here without starting a draft of the procedure."
       },
+      "heading": "Actions",
       "page": "Edit",
       "text": {
         "published": "This is the published version, v{{version}}. Nothing is created until you start editing; then a working draft is made from it.",
