@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { DocumentType, PolicyStatus, ReferenceKind, Sensitivity } from "@steward-web/api-client";
-import { formatDate, formatTime } from "@steward-web/i18n";
+import { formatDate, formatDateTime, formatTime } from "@steward-web/i18n";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
@@ -269,6 +269,28 @@ describe("PolicyReader", () => {
     expect(within(article).getByText("Per-diem rates.")).not.toBeVisible();
     await userEvent.click(summary);
     expect(within(article).getByText("Per-diem rates.")).toBeVisible();
+  });
+
+  it("says when it was last updated under the appendices, from the published version (bug log 248)", () => {
+    renderAt({ ...baseDetail, revision: { status: PolicyStatus.Draft, version: "2.0.0" } });
+    const article = screen.getByRole("article");
+    const line = within(article).getByText(/^Last Updated:/);
+    expect(line).toHaveTextContent(`Last Updated: ${formatDateTime(baseDetail.published)}`);
+    // it comes after the appendices, not before the body
+    expect(
+      within(article).getByText("Appendix A: Per-diem rates").compareDocumentPosition(line) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("says it for a procedure too", () => {
+    renderAt({ ...baseDetail, documentType: DocumentType.Procedure });
+    expect(screen.getByText(/^Last Updated:/)).toBeInTheDocument();
+  });
+
+  it("shows no Last Updated line when there is no published date", () => {
+    renderAt({ ...baseDetail, published: null });
+    expect(screen.queryByText(/^Last Updated:/)).toBeNull();
   });
 
   it("starts every appendix with a note that it is supporting material, not policy", async () => {

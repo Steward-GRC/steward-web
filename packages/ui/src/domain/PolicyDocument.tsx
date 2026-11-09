@@ -337,16 +337,23 @@ export const PolicyAppendices = ({
   appendices,
   appendixLabel,
   definitions,
+  lastUpdated,
   onTerm,
 }: {
   appendices: readonly PolicyAppendix[];
   appendixLabel: (appendix: PolicyAppendix) => string;
   definitions: readonly PolicyDefinition[];
+  /** When the published version was last updated, already in the person's format. */
+  lastUpdated?: string;
   onTerm?: (definition: PolicyDefinition) => void;
-}) =>
-  appendices.length === 0 ? null : (
+}) => {
+  const { t } = useTranslation("policy");
+  if (appendices.length === 0 && !lastUpdated) return null;
+  return (
     <>
-      <hr className="mt-6 border-0 border-t border-border-strong" />
+      {appendices.length > 0 ? (
+        <hr className="mt-6 border-0 border-t border-border-strong" />
+      ) : null}
       {appendices.map((appendix) => (
         <AppendixSection
           appendix={appendix}
@@ -356,14 +363,22 @@ export const PolicyAppendices = ({
           onTerm={onTerm}
         />
       ))}
+      {lastUpdated ? (
+        <p className="mt-6 font-sans text-sm text-muted">
+          {t("reader.appendices.lastUpdated", { when: lastUpdated })}
+        </p>
+      ) : null}
     </>
   );
+};
 
 export interface PolicyDocumentProps {
   appendices: readonly PolicyAppendix[];
   appendixLabel: (appendix: PolicyAppendix) => string;
   blocks: readonly DocumentBlock[];
   definitions: readonly PolicyDefinition[];
+  /** When the published version was last updated, in the person's format; shown under the appendices. */
+  lastUpdated?: string;
   /** Opens a defined term's definition; without it, terms read as plain text. */
   onTerm?: (definition: PolicyDefinition) => void;
 }
@@ -378,6 +393,7 @@ export const PolicyDocument = ({
   appendixLabel,
   blocks,
   definitions,
+  lastUpdated,
   onTerm,
 }: PolicyDocumentProps) => {
   const numbered = numberHeadings(blocks);
@@ -393,6 +409,7 @@ export const PolicyDocument = ({
         appendices={appendices}
         appendixLabel={appendixLabel}
         definitions={definitions}
+        lastUpdated={lastUpdated}
         onTerm={onTerm}
       />
     </article>
