@@ -106,6 +106,7 @@
     "step": "step {{step}} of {{total}}"
   },
   "refused": "Steward couldn't start that. Try again, or ask an administrator if it keeps happening.",
+  "refusedUnavailable": "AI isn't available right now: the AI service did not answer. Try again later, or ask an administrator.",
   "reviewSheet": {
     "description": "A pre-submit gap check of this draft. Findings are advisory, and nothing in the draft changes.",
     "jump": "Jump to §{{number}}",

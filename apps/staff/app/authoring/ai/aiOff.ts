@@ -8,3 +8,12 @@ export const aiOffReason = (reason: null | string | undefined): string =>
     : reason === "limit_reached"
       ? "editor.aiMenu.limitReached"
       : "editor.aiMenu.unavailable";
+
+/**
+ * The ai string for a refused start. A fault on the gateway's side (its ai service not
+ * answering) says AI isn't available; anything else keeps the generic line.
+ */
+export const aiRefusalKey = (failure?: { code?: string; status?: number } | null) =>
+  failure?.code === "INTERNAL" || (failure?.status !== undefined && failure.status >= 500)
+    ? "refusedUnavailable"
+    : "refused";

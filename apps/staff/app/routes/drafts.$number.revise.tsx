@@ -16,7 +16,7 @@ import { data, Link, useFetcher, useLocation, useNavigate } from "react-router";
 import type { Route } from "./+types/drafts.$number.revise";
 
 import { submitPolicyRevision } from "../authoring/ai.server";
-import { aiOffReason } from "../authoring/ai/aiOff";
+import { aiOffReason, aiRefusalKey } from "../authoring/ai/aiOff";
 import { loadDraftForAi } from "../authoring/ai/aiPage.server";
 import { ChangeCard } from "../authoring/ai/ChangeCard";
 import { changeSetOf, parseRevisionResult } from "../authoring/ai/results";
@@ -145,7 +145,7 @@ export default function Revise({ loaderData }: Route.ComponentProps) {
           </Button>
         </div>
       </form>
-      {refused ? <Banner title={t("refused")} tone="danger" /> : null}
+      {refused ? <Banner title={t(aiRefusalKey(refused))} tone="danger" /> : null}
 
       {job.stage && job.stage !== "done" ? (
         <Card className="p-[18px]">
