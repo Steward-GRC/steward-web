@@ -645,3 +645,64 @@ export const ReviewThreadsPanel: FC<{
     </section>
   );
 };
+
+/** The ended suggestions, listed under the document with the agreed text still to apply. */
+export const ClosedThreadsSection: FC<{ comments: ReviewComments }> = ({ comments }) => {
+  const { t } = useTranslation("authoring");
+  const closed = comments.threads.filter(isClosedSuggestion);
+  if (closed.length === 0) return null;
+  return (
+    <details className="flex flex-col gap-2">
+      <summary className="cursor-pointer text-sm font-semibold text-ink">
+        {t("editor.comments.closed", { count: closed.length })}
+      </summary>
+      <ul className="mt-2 flex flex-col gap-2">
+        {closed.map((thread) => (
+          <ClosedCard comments={comments} key={thread.id} thread={thread} />
+        ))}
+      </ul>
+    </details>
+  );
+};
+
+/**
+ * The thread behind the highlight that was clicked, in a dialog the person closes (bug log 241).
+ * A native modal dialog sits in the top layer, so it is centred on the window whatever container
+ * the editor is in.
+ */
+export const ReviewThreadDialog: FC<{ comments: ReviewComments }> = ({ comments }) => {
+  const { t } = useTranslation("authoring");
+  const api = useKoenigComments();
+  const thread = comments.threads.find(
+    (candidate) => candidate.id === api?.activeThreadId && !isClosedSuggestion(candidate),
+  );
+  const [node, setNode] = useState<HTMLDialogElement | null>(null);
+  useEffect(() => {
+    if (!node || node.open) return;
+    if (typeof node.showModal === "function") node.showModal();
+    else node.setAttribute("open", "");
+  }, [node]);
+  if (!thread) return null;
+  const close = () => api?.controller.focusThread(null);
+  return (
+    <dialog
+      aria-label={t("editor.comments.dialogTitle")}
+      className="m-auto max-h-[85vh] w-[min(32rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-surface p-4 text-ink shadow-xl backdrop:bg-black/40"
+      onCancel={(event) => {
+        event.preventDefault();
+        close();
+      }}
+      ref={setNode}
+    >
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-ink">{t("editor.comments.dialogTitle")}</h2>
+        <button className="rounded-md px-2 py-1 text-sm text-primary" onClick={close} type="button">
+          {t("editor.comments.close")}
+        </button>
+      </div>
+      <ul className="flex flex-col gap-2">
+        <ThreadCard active comments={comments} focus={() => {}} thread={thread} />
+      </ul>
+    </dialog>
+  );
+};

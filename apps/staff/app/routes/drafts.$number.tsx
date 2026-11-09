@@ -743,6 +743,7 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
             >
               <DraftDocumentEditor
                 collaboration={collabSession.mode === "solo" ? null : collabSession.collaboration}
+                commentsPlacement="dialog"
                 connecting={collabSession.mode === "pending"}
                 initialDocument={initialDocument}
                 // a room that fell back to solo needs a fresh editor without it; pending to live
