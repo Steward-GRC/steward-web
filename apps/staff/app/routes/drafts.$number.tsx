@@ -469,14 +469,22 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
   // reports an empty document. Only a live or solo editor counts as ready.
   useEffect(() => {
     if (collabSession.mode === "pending" || !editorRef.current) return;
-    // what the room held while the editor was connecting was not reported; take it now
+    // what the room held while the editor was connecting was not reported; take it now, and again
+    // as its sync lands: the editor does not report that, and an empty document here makes the
+    // required sections and Submit read the draft as empty until the first keystroke (bug log 236)
+    let stop: (() => void) | undefined;
     if (collabSession.mode === "live" && !touchedRef.current) {
-      const reported = editorRef.current.getDocument();
-      contentRef.current = reported;
-      setContent(reported);
-      setLastSaved(serializeDocument(reported));
+      const take = (reported: SerializedDocument) => {
+        if (touchedRef.current) return;
+        contentRef.current = reported;
+        setContent(reported);
+        setLastSaved(serializeDocument(reported));
+      };
+      take(editorRef.current.getDocument());
+      stop = editorRef.current.watchDocument(take);
     }
     setEditorReady(true);
+    return stop;
   }, [collabSession.mode]);
   const handedOver = (location.state as { aiApply?: { entries: ChangeEntry[] } } | null)?.aiApply;
   useEffect(() => {
