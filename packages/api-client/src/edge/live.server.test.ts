@@ -665,6 +665,20 @@ describe("liveEdge.policyDetail", () => {
     );
   });
 
+  it("still shows the record when the compare with the prior version is refused (bug log 245)", async () => {
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      DiffVersions: () => ({
+        errors: [
+          { extensions: { code: "INTERNAL" }, message: "fetch template version: not found" },
+        ],
+      }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail).toMatchObject({ number: "FIN-001" });
+    expect(detail?.priorVersion?.diff).toEqual([]);
+  });
+
   it("answers null when the number carries a different document type", async () => {
     routeGateway({
       ...treeHandlers,
