@@ -172,6 +172,9 @@ const ChangePicker = ({ published }: { published: string }) => {
   );
 };
 
+/** How long the blocked-submit toast stays before it closes by itself (bug log 238). */
+const BLOCKED_TOAST_MS = 6000;
+
 /**
  * Submit for approval (D37). With a required section empty it says which instead of opening.
  * The dialog names the document and where it goes, shows the version Steward worked out when
@@ -215,14 +218,17 @@ export const SubmitForApproval = ({
           if (empty) {
             notify.warning(t("editor.submit.emptyDocument"), {
               description: t("editor.submit.emptyDocumentHint"),
+              duration: BLOCKED_TOAST_MS,
             });
           } else if (missing.length > 0) {
             notify.warning(t("editor.submit.fillRequired"), {
               description: t("editor.submit.empty", { sections: missing.join(", ") }),
+              duration: BLOCKED_TOAST_MS,
             });
           } else if (incompleteButtons > 0) {
             notify.warning(t("editor.submit.fillButtons"), {
               description: t("editor.submit.buttonsIncomplete", { count: incompleteButtons }),
+              duration: BLOCKED_TOAST_MS,
             });
           } else setOpen(true);
         }}
