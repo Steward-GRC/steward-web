@@ -117,6 +117,15 @@ const Sheet = () => {
 };
 
 describe("the dialog frame (Dialogs canvas)", () => {
+  it("is centred with auto margins, not a translate (bug log 237)", () => {
+    // the editor's stylesheet resets --tw-translate-x/y outside any layer, which beats a
+    // translate utility and leaves a translate-centred frame hanging from the window's centre
+    render(<Frame />);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.className).not.toMatch(/translate/);
+    expect(dialog).toHaveClass("sm:inset-0", "sm:m-auto", "sm:h-fit");
+  });
+
   it("names the dialog by its title and describes it by its one line", () => {
     render(<Frame />);
     const dialog = screen.getByRole("dialog", { name: "Discard this draft?" });

@@ -89,7 +89,7 @@ export const DialogContent = ({
     <DialogPrimitive.Content
       aria-busy={busy || undefined}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-[var(--z-dialog)] flex max-h-[90vh] flex-col overflow-y-auto rounded-t-[18px] bg-surface text-base text-ink shadow-[var(--shadow-4)] focus:outline-none sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-[calc(100vw-32px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl",
+        "fixed inset-x-0 bottom-0 z-[var(--z-dialog)] flex max-h-[90vh] flex-col overflow-y-auto rounded-t-[18px] bg-surface text-base text-ink shadow-[var(--shadow-4)] focus:outline-none sm:inset-0 sm:m-auto sm:h-fit sm:w-[calc(100vw-32px)] sm:rounded-xl",
         widths[size],
         className,
       )}
