@@ -160,10 +160,11 @@ Nothing it copies ever includes secrets, tokens, cookies, query strings or form 
 
 ## The dev quick login
 
-One button per seeded local account under the sign-in form, for local testing against a real
-gateway: one click signs in with that account's password through the same gateway
-`POST /auth/login` as the form, so a second factor is still asked for. A "Dev login, test users
-only" banner sits above the buttons, and the same banner shows as a thin bar at the top of
+A "Dev quick login" dropdown with a DEV badge under the sign-in form (the same widget Sneakers
+has), listing the seeded local accounts, for local testing against a real gateway: picking one
+signs in with that account's password through the same gateway
+`POST /auth/login` as the form, so a second factor is still asked for. The "Dev login, test users
+only" banner shows as a thin bar at the top of
 every other page while the switch is on, so a build or deployment carrying it is never mistaken
 for production.
 

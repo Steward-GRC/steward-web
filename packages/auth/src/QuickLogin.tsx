@@ -1,8 +1,8 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { Banner, Button } from "@steward-web/ui";
-import { Form } from "react-router";
+import { Badge, Select } from "@steward-web/ui";
+import { useSubmit } from "react-router";
 
 import type { QuickLoginUser } from "./signInState";
 
@@ -14,38 +14,39 @@ export interface QuickLoginProps {
 }
 
 /**
- * The dev quick login under the sign-in form: one click signs in as a seeded test account,
- * through the same gateway login as the form (so a second factor is still asked for). Every
- * account gets its own submit button in one form, so picking one is a single click, not a
- * select-then-submit. Renders nothing until the server lists accounts. Aliased in as
+ * The dev quick login under the sign-in form, the way Sneakers has it: a "Dev quick login" label
+ * with a DEV badge and one dropdown of the seeded accounts, where a pick signs in at once
+ * through the same gateway login as the form (so a second factor is still asked for). Renders
+ * nothing until the server lists accounts. The staff and admin apps share it, aliased in as
  * `@steward-web/dev-quick-login` only for builds that allow it; see `NoQuickLogin.tsx`.
  */
 export const QuickLogin = ({ next, users }: QuickLoginProps) => {
   const { t } = useTranslation("auth");
+  const submit = useSubmit();
   if (users.length === 0) return null;
 
   return (
     <div
-      className="grid gap-3 rounded-md border border-dashed border-border-strong p-4"
+      className="grid gap-1.5 rounded-md border border-dashed border-border-strong p-4"
       data-dev-quick-login={DEV_QUICK_LOGIN_MARKER}
     >
-      <Banner title={t("quickLogin.bannerTitle")} tone="warn" />
-      <Form className="grid grid-cols-2 gap-2" method="post">
-        <input name="intent" type="hidden" value="dev-quick-login" />
-        <input name="next" type="hidden" value={next} />
-        {users.map((user) => (
-          <Button
-            key={user.username}
-            name="username"
-            title={user.note}
-            type="submit"
-            value={user.username}
-            variant="secondary"
-          >
-            {user.label}
-          </Button>
-        ))}
-      </Form>
+      <div className="flex items-center gap-2 text-sm font-medium">
+        {t("quickLogin.label")}
+        <Badge shape="tag" tone="warn">
+          DEV
+        </Badge>
+      </div>
+      <Select
+        aria-label={t("quickLogin.label")}
+        onValueChange={(username) =>
+          void submit({ intent: "dev-quick-login", next, username }, { method: "post" })
+        }
+        options={users.map((user) => ({
+          label: user.note ? `${user.label} · ${user.note}` : user.label,
+          value: user.username,
+        }))}
+        placeholder={t("quickLogin.placeholder")}
+      />
     </div>
   );
 };
