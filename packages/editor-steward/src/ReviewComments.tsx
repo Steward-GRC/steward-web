@@ -598,36 +598,50 @@ export const ReviewThreadsPanel: FC<{
   return (
     <section
       aria-label={title}
-      className={`flex w-full flex-none flex-col gap-2 ${below ? "" : "lg:w-72"}`}
+      className={
+        below
+          ? "flex w-full flex-none flex-col overflow-hidden rounded-lg border border-border bg-surface text-ink shadow-[var(--shadow-3)]"
+          : "flex w-full flex-none flex-col gap-2 lg:w-72"
+      }
     >
-      <h2 className="text-sm font-semibold text-ink">{title}</h2>
-      {open.length === 0 && closed.length === 0 ? (
-        <p className="text-sm text-muted">{t("editor.comments.empty")}</p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {open.map((thread) => (
-            <ThreadCard
-              active={api?.activeThreadId === thread.id}
-              comments={comments}
-              focus={(id) => api?.controller.focusThread(id)}
-              key={thread.id}
-              thread={thread}
-            />
-          ))}
-        </ul>
-      )}
-      {closed.length > 0 ? (
-        <details className="flex flex-col gap-2">
-          <summary className="cursor-pointer text-sm font-semibold text-ink">
-            {t("editor.comments.closed", { count: closed.length })}
-          </summary>
-          <ul className="mt-2 flex flex-col gap-2">
-            {closed.map((thread) => (
-              <ClosedCard comments={comments} key={thread.id} thread={thread} />
+      <h2
+        className={
+          below
+            ? "border-b border-border-strong bg-sunken px-[18px] py-3.5 text-md font-semibold"
+            : "text-sm font-semibold text-ink"
+        }
+      >
+        {title}
+      </h2>
+      <div className={below ? "flex flex-col gap-2 px-[18px] py-4" : "contents"}>
+        {open.length === 0 && closed.length === 0 ? (
+          <p className="text-sm text-muted">{t("editor.comments.empty")}</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {open.map((thread) => (
+              <ThreadCard
+                active={api?.activeThreadId === thread.id}
+                comments={comments}
+                focus={(id) => api?.controller.focusThread(id)}
+                key={thread.id}
+                thread={thread}
+              />
             ))}
           </ul>
-        </details>
-      ) : null}
+        )}
+        {closed.length > 0 ? (
+          <details className="flex flex-col gap-2">
+            <summary className="cursor-pointer text-sm font-semibold text-ink">
+              {t("editor.comments.closed", { count: closed.length })}
+            </summary>
+            <ul className="mt-2 flex flex-col gap-2">
+              {closed.map((thread) => (
+                <ClosedCard comments={comments} key={thread.id} thread={thread} />
+              ))}
+            </ul>
+          </details>
+        ) : null}
+      </div>
     </section>
   );
 };
