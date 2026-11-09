@@ -42,9 +42,12 @@ export const useEditorView = (
 };
 
 export const EditorViewToggle = ({
+  name = "editor-view",
   onChange,
   value,
 }: {
+  /** The radio group's name; two toggles on one page need two. */
+  name?: string;
   onChange: (view: EditorView) => void;
   value: EditorView;
 }) => {
@@ -71,7 +74,7 @@ export const EditorViewToggle = ({
             <input
               checked={value === view}
               className="sr-only"
-              name="editor-view"
+              name={name}
               onChange={() => onChange(view)}
               type="radio"
               value={view}

@@ -140,6 +140,28 @@ describe("the appendix page (bug log 223)", () => {
     expect(within(screen.getByRole("tabpanel")).getByText("First words")).toBeInTheDocument();
   });
 
+  it("offers Unified or Diff on the Published tab, starting on Unified (bug log 259)", async () => {
+    mount();
+    await userEvent.click(screen.getByRole("tab", { name: "Published" }));
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).getByRole("radio", { name: "Unified" })).toBeChecked();
+    expect(within(panel).getByRole("combobox", { name: "Published version" })).toBeInTheDocument();
+  });
+
+  it("marks what the shown version changed against the one before it", async () => {
+    mount();
+    await userEvent.click(screen.getByRole("tab", { name: "Published" }));
+    const panel = screen.getByRole("tabpanel");
+    await userEvent.click(within(panel).getByRole("radio", { name: "Diff" }));
+    expect(within(panel).getByText("Second")).toHaveProperty("tagName", "INS");
+    expect(within(panel).getByText("First")).toHaveProperty("tagName", "DEL");
+    await userEvent.selectOptions(
+      within(panel).getByRole("combobox", { name: "Published version" }),
+      within(panel).getAllByRole("option")[1]!,
+    );
+    expect(within(panel).getByText(/first published version/)).toBeInTheDocument();
+  });
+
   it("lists everyone who contributed, and marks the people who are no longer active", () => {
     mount();
     const list = screen.getByRole("list", { name: "Contributors" });

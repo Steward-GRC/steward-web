@@ -3,7 +3,6 @@
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import {
-  LexicalDocumentView,
   sameContent,
   type SerializedDocument,
   serializeDocument,
@@ -32,7 +31,8 @@ import { settleTokenRequests, type TokenRequest } from "../authoring/collab/toke
 import { type CollabToken, useCollabSession } from "../authoring/collab/useCollabSession";
 import { DraftDocumentEditor } from "../authoring/DraftDocumentEditor";
 import { CollaboratorActivity, SaveState, type SaveStateKind } from "../authoring/EditorChrome";
-import { EditorViewToggle, useEditorView } from "../authoring/EditorViewToggle";
+import { type EditorView, EditorViewToggle, useEditorView } from "../authoring/EditorViewToggle";
+import { PublishedVersionView } from "../authoring/PublishedVersionView";
 import { useAutosave } from "../authoring/useAutosave";
 
 /** Changes the editor reports while it waits for its room are not the document: it is still empty. */
@@ -234,6 +234,9 @@ export default function AppendixRoute({ loaderData }: Route.ComponentProps) {
       : [];
   const [shownVersion, setShownVersion] = useState<string>();
   const shown = versions.find((version) => version.id === shownVersion) ?? versions[0];
+  // Diff on the Published tab marks what the shown version changed against the one before it
+  const earlierVersion = shown ? versions[versions.indexOf(shown) + 1] : undefined;
+  const [publishedView, setPublishedView] = useState<EditorView>("unified");
   const hasDraft = Boolean(appendix.draft) || dirty;
   const letter = appendix.letter ?? "";
 
@@ -399,9 +402,20 @@ export default function AppendixRoute({ loaderData }: Route.ComponentProps) {
                 ))}
               </select>
             </label>
+            <div className="flex justify-end">
+              <EditorViewToggle
+                name="published-view"
+                onChange={setPublishedView}
+                value={publishedView}
+              />
+            </div>
             <Card className="isolate w-full px-6 py-8 sm:px-12 sm:py-8">
               <h2 className="mb-3 font-serif text-xl font-semibold">{shown?.title}</h2>
-              <LexicalDocumentView document={appendixDocument(shown?.contentJson)} />
+              <PublishedVersionView
+                document={appendixDocument(shown?.contentJson)}
+                earlier={earlierVersion ? appendixDocument(earlierVersion.contentJson) : undefined}
+                view={publishedView}
+              />
             </Card>
           </TabsContent>
         ) : null}
