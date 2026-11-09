@@ -165,6 +165,30 @@ describe("Withdraw from review", () => {
     await vi.waitFor(() => expect(posted).toHaveBeenCalledWith({ intent: "withdraw" }));
   });
 
+  it("closes its dialog once the withdraw is done (bug log 233)", async () => {
+    const posted = inRouter(<ActionsMenu inReview />);
+    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Withdraw from review…" }));
+    const dialog = screen.getByRole("dialog", { name: "Withdraw from review?" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Withdraw" }));
+    await vi.waitFor(() => expect(posted).toHaveBeenCalled());
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Withdraw from review?" })).toBeNull(),
+    );
+  });
+
+  it("stays open and says why when the withdraw is refused (bug log 233)", async () => {
+    inRouter(<ActionsMenu inReview />, () => ({
+      error: { code: "FAILED_PRECONDITION", message: "no longer active" },
+      ok: false,
+    }));
+    await userEvent.click(screen.getByRole("button", { name: "Actions" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Withdraw from review…" }));
+    const dialog = screen.getByRole("dialog", { name: "Withdraw from review?" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Withdraw" }));
+    expect(await within(dialog).findByText("It is no longer in review.")).toBeInTheDocument();
+  });
+
   it("is not offered for a draft that is not in review", async () => {
     inRouter(<ActionsMenu inReview={false} />);
     await userEvent.click(screen.getByRole("button", { name: "Actions" }));
