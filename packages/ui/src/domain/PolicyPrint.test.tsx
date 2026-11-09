@@ -197,6 +197,34 @@ describe("PolicyPrint (R1)", () => {
     expect(history).toHaveTextContent("Carol · “Clear and ready.”");
   });
 
+  it("prints an appendix written in the editor with its blocks, not an empty page (bug log 251)", () => {
+    renderPrint({
+      appendices: [
+        {
+          blocks: [
+            { depth: 2, kind: "heading", sectionKey: "limits", text: "Limits" },
+            { kind: "paragraph", runs: [{ text: "Up to " }, { bold: true, text: "$2,000" }] },
+            {
+              items: [[{ text: "Managers" }], [{ text: "Directors" }]],
+              kind: "list",
+              ordered: false,
+            },
+          ],
+          id: "appendix-2",
+          letter: "B",
+          text: "",
+          title: "Approval limits",
+        },
+      ],
+    });
+    expect(
+      screen.getByRole("heading", { name: "Appendix B: Approval limits" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Limits" })).toBeInTheDocument();
+    expect(screen.getByText("$2,000").tagName).toBe("STRONG");
+    expect(screen.getByText("Directors")).toBeInTheDocument();
+  });
+
   it("prints only that the content is hidden when the caller can't read it", () => {
     renderPrint({ canBreakGlass: false, contentObfuscated: true });
     expect(screen.getByText("Sensitive content is hidden")).toBeInTheDocument();
