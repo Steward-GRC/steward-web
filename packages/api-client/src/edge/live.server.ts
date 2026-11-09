@@ -518,13 +518,18 @@ const assembleDetail = async (
   const prior = at > 0 ? versions[at - 1] : undefined;
   let diff: readonly PolicySectionDiff[] = [];
   if (prior && publishedId) {
-    const data = await gatewayFetch(
+    // Only the change list needs it: a version saved without a pinned template can't be
+    // compared, and the gateway refuses with an internal fault. The record still shows, without
+    // the list (bug log 245).
+    diff = await gatewayFetch(
       DiffVersionsDocument,
       { fromVersionId: prior.id, toVersionId: publishedId },
       "DiffVersions",
       { cookie },
+    ).then(
+      (data) => data.diffVersions,
+      () => [],
     );
-    diff = data.diffVersions;
   }
   const names = categoryNames(index, policy.homeCategoryId);
   const draftId = policy.currentDraftVersionId ?? null;
