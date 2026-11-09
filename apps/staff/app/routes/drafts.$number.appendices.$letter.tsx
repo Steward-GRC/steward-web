@@ -14,7 +14,7 @@ import { refusalOf } from "@steward-web/shell";
 import { Banner, Button, Card, Tabs, TabsContent, TabsList, TabsTrigger } from "@steward-web/ui";
 import { draftPath } from "@steward-web/ui/domain";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { data, Link, useFetcher } from "react-router";
+import { data, Link, redirect, useFetcher } from "react-router";
 
 import type { Route } from "./+types/drafts.$number.appendices.$letter";
 
@@ -81,7 +81,9 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
       }
       case "retire": {
         await retireAppendix(request, appendix.id);
-        return data({ intent, ok: true });
+        // Not back to this address: it holds a letter, the live appendices are renumbered, and
+        // the same address would open the next one (bug log 244).
+        return redirect(draftPath(params.number));
       }
       case "save": {
         await saveAppendix(
