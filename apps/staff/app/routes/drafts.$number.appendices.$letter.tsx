@@ -113,6 +113,9 @@ export default function AppendixRoute({ loaderData }: Route.ComponentProps) {
   const [title, setTitle] = useState(current?.title ?? "");
   const [content, setContent] = useState<SerializedDocument>(initialDocument);
   const contentRef = useRef(initialDocument);
+  // The text that is stored: the draft, or the published appendix when there is no draft.
+  const storedRef = useRef(serializeDocument(initialDocument));
+  storedRef.current = serializeDocument(initialDocument);
   const editorRef = useRef<null | StewardEditorHandle>(null);
   const [lastSaved, setLastSaved] = useState(serializeDocument(initialDocument));
   const [touched, setTouched] = useState(false);
@@ -176,7 +179,9 @@ export default function AppendixRoute({ loaderData }: Route.ComponentProps) {
       contentRef.current = next;
       setContent(next);
       if (!touchedRef.current) setLastSaved(serializeDocument(next));
-      touchCollab();
+      // Only a change is checkpointed: the editor reporting the stored text, as it does when the
+      // page opens, must not make a draft of an unchanged appendix (bug log 246).
+      if (!sameContent(serializeDocument(next), storedRef.current)) touchCollab();
     },
     [touchCollab],
   );

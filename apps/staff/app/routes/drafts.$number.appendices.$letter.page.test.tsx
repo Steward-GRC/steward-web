@@ -3,9 +3,22 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import AppendixRoute from "./drafts.$number.appendices.$letter";
+
+const collabTouch = vi.hoisted(() => vi.fn());
+vi.mock("../authoring/collab/useCollabSession", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../authoring/collab/useCollabSession")>()),
+  useCollabSession: () => ({
+    collaboration: null,
+    collaborators: [],
+    mode: "solo",
+    presenceCount: 0,
+    reconnecting: false,
+    touch: collabTouch,
+  }),
+}));
 
 const document = (words: string) =>
   JSON.stringify({
@@ -151,5 +164,14 @@ describe("the appendix page (bug log 223)", () => {
     await waitFor(() =>
       expect(localStorage.getItem("steward-web:staff:editor-view:u-1")).toBe("unified"),
     );
+  });
+});
+
+describe("an appendix nobody changed (bug log 246)", () => {
+  it("arms no checkpoint when the editor reports the text it was given", async () => {
+    collabTouch.mockClear();
+    mount({ ...base, appendix: { ...base.appendix, draft: null } });
+    expect(await screen.findByText("Second words")).toBeInTheDocument();
+    expect(collabTouch).not.toHaveBeenCalled();
   });
 });
