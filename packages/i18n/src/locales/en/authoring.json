@@ -207,11 +207,14 @@
     },
     "placeholder": "Start writing, or press / for blocks",
     "presence": {
+      "editing": "{{name}} editing",
       "group": "Editing now",
+      "here": "Who is here",
       "live": "Live",
       "published": "Published as v{{version}} — read-only",
       "reconnecting": "Reconnecting…",
-      "together": "Editing together"
+      "together": "Editing together",
+      "typing": "{{name}} typing"
     },
     "published": "Published as version {{version}}.",
     "required": {

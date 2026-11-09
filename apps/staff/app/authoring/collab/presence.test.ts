@@ -1,9 +1,18 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 // Presence-derivation tests.
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { Awareness } from "y-protocols/awareness";
+import * as Y from "yjs";
 
-import { type AwarenessState, boundUserOf, collaboratorsFrom, selfIdentityFrom } from "./presence";
+import {
+  type AwarenessState,
+  boundUserOf,
+  collaboratorsFrom,
+  selfIdentityFrom,
+  trackTyping,
+  TYPING_FOR_MS,
+} from "./presence";
 
 /** An awareness state as the relay emits it: the server-bound `user` block the relay
  *  overwrites, alongside whatever else a client's own awareness carried. */
@@ -85,5 +94,49 @@ describe("presence", () => {
       uid: "me",
     });
     expect(selfIdentityFrom(states, 5)).toBeUndefined();
+  });
+});
+
+describe("what each collaborator is doing (bug log 250)", () => {
+  it("marks a person typing when their awareness says so, and leaves the rest as editing", () => {
+    const states = new Map<number, AwarenessState>([
+      [1, state("me", "Me", "#000")],
+      [2, { ...state("u2", "Alice Admin", "#E5484D"), activity: "typing" }],
+      [3, { ...state("u3", "Bob Author", "#0091FF"), activity: "something else" }],
+    ]);
+    const people = collaboratorsFrom(states, 1);
+    expect(people.find((p) => p.uid === "u2")?.activity).toBe("typing");
+    expect(people.find((p) => p.uid === "u3")?.activity).toBeUndefined();
+  });
+});
+
+describe("telling the room we are typing (bug log 250)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("says typing on each change and goes back to editing once the typing stops", () => {
+    vi.useFakeTimers();
+    const awareness = new Awareness(new Y.Doc());
+    const typing = trackTyping(awareness);
+    expect(awareness.getLocalState()?.activity).toBeUndefined();
+    typing.touch();
+    expect(awareness.getLocalState()?.activity).toBe("typing");
+    vi.advanceTimersByTime(TYPING_FOR_MS - 1);
+    typing.touch();
+    vi.advanceTimersByTime(TYPING_FOR_MS - 1);
+    expect(awareness.getLocalState()?.activity).toBe("typing");
+    vi.advanceTimersByTime(2);
+    expect(awareness.getLocalState()?.activity).toBe("editing");
+    typing.dispose();
+  });
+
+  it("stops the timer when it is disposed", () => {
+    vi.useFakeTimers();
+    const awareness = new Awareness(new Y.Doc());
+    const typing = trackTyping(awareness);
+    const before = vi.getTimerCount();
+    typing.touch();
+    expect(vi.getTimerCount()).toBe(before + 1);
+    typing.dispose();
+    expect(vi.getTimerCount()).toBe(before);
   });
 });

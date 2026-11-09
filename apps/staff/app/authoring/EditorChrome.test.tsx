@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   AppendicesPanel,
+  CollaboratorActivity,
   EditorHeader,
   NextVersion,
   Presence,
@@ -347,5 +348,29 @@ describe("appendices (U17, and the appendix life cycle)", () => {
     expect(
       screen.getByText("No appendices yet. Add one to attach supplementary material."),
     ).toBeInTheDocument();
+  });
+});
+
+describe("CollaboratorActivity (bug log 250)", () => {
+  it("names each person and what they are doing", () => {
+    render(
+      <CollaboratorActivity
+        collaborators={[
+          { color: "#0091FF", name: "Bob Author", uid: "u-bob" },
+          { activity: "typing", color: "#E5484D", name: "Alice Admin", uid: "u-alice" },
+        ]}
+      />,
+    );
+    const list = screen.getByRole("list", { name: "Who is here" });
+    expect(
+      within(list)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Bob Author editing", "Alice Admin typing"]);
+  });
+
+  it("shows nothing when nobody else is in the room", () => {
+    render(<CollaboratorActivity collaborators={[]} />);
+    expect(screen.queryByRole("list")).toBeNull();
   });
 });
