@@ -26,7 +26,9 @@ export const staffShellData = async (request: Request, identity: Identity) => {
     signedIn && can(identity, "policy.read")
       ? listCategories(cookie).catch((): readonly Category[] => [])
       : Promise.resolve<readonly Category[]>([]),
-    signedIn && can(identity, "policy.approve")
+    // Asked of everyone who can read: a seat in a workflow does not need the approver role, and
+    // the tasks are the signed-in person's own (bug log 257).
+    signedIn && can(identity, "policy.read")
       ? listPendingTasks(request).then(
           (tasks) => tasks.length,
           () => null,
@@ -47,7 +49,10 @@ export const staffShellData = async (request: Request, identity: Identity) => {
     config: shellConfigFromEnvironment(),
     counts: {
       ...(acknowledge === null ? {} : { acknowledge }),
-      ...(approvals === null ? {} : { approvals }),
+      // Without the approver role the item shows only while something waits on the person.
+      ...(approvals === null || (approvals === 0 && !can(identity, "policy.approve"))
+        ? {}
+        : { approvals }),
     },
     impersonation: impersonation
       ? { expiresAt: impersonation.expiresAt, targetName: impersonation.targetName }

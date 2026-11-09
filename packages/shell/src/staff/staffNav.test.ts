@@ -31,6 +31,14 @@ const approvals = (count?: number) =>
     .flatMap((section) => section.items)
     .find((item) => item.id === "approvals");
 
+// A reader with no approver role, holding a seat in a workflow
+const seatHolder = (count?: number) =>
+  staffNav(
+    input({ can: (p) => p === "policy.read", counts: { approvals: count }, reporting: false }),
+  )
+    .flatMap((section) => section.items)
+    .find((item) => item.id === "approvals");
+
 const toAcknowledge = (count?: number) =>
   staffNav(input({ counts: { acknowledge: count } }))
     .flatMap((section) => section.items)
@@ -75,6 +83,12 @@ describe("staffNav", () => {
     expect(only("policy.author")).not.toContain("Approvals");
     expect(only("policy.approve")).toContain("Approvals");
     expect(only("audit.read")).toContain("Audit log");
+  });
+
+  it("shows Approvals to someone with approvals waiting on them, even without the approver role (bug log 257)", () => {
+    expect(seatHolder(2)?.badge).toBe(2);
+    expect(seatHolder(0)).toBeUndefined();
+    expect(seatHolder()).toBeUndefined();
   });
 
   it("counts what's left to acknowledge on To acknowledge, and shows no badge at zero", () => {
