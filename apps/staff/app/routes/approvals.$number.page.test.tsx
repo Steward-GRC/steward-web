@@ -312,6 +312,32 @@ describe("the review page's other states (U25o)", () => {
   });
 });
 
+describe("after the decision (bug log 240)", () => {
+  it("shows a rejection as information, not as the green success", async () => {
+    renderReview(() => ({ decided: "rejected" }));
+    const panel = screen.getByRole("region", { name: "Your decision" });
+    await userEvent.type(within(panel).getByLabelText("Decision comment"), "Not yet.");
+    await userEvent.click(within(panel).getByRole("button", { name: "Reject" }));
+    const result = await screen.findByRole("status");
+    expect(result).toHaveTextContent("Rejected.");
+    expect(result).toHaveClass("bg-info-soft");
+    expect(result).not.toHaveClass("bg-ok-soft");
+  });
+
+  it("says a version the last approval published is published, with a link back to the policy", () => {
+    renderReview(() => {}, {
+      ...loaderData,
+      review: { ...loaderData.review, diff: null, upcoming: null },
+      task: null,
+      workflow: { ...loaderData.workflow, status: "APPROVAL_STATUS_PUBLISHED" },
+    });
+    expect(screen.queryByText("The version under review couldn't be loaded.")).toBeNull();
+    const link = screen.getByRole("link", { name: "Open POL-EXPENSES-000002" });
+    expect(link).toHaveAttribute("href", "/policies/POL-EXPENSES-000002");
+    expect(screen.getByText("Published")).toBeInTheDocument();
+  });
+});
+
 describe("sending comments from the review page", () => {
   it("says the comments went, and keeps the decision panel", async () => {
     renderReview(() => ({ sent: true }));

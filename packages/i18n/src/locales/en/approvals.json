@@ -183,6 +183,11 @@
       "title": "Your decision"
     },
     "due": "Due {{date}} · {{stage}}",
+    "published": {
+      "body": "The last approval is in, so this version is now the published one.",
+      "link": "Open {{number}}",
+      "title": "Published"
+    },
     "notFound": {
       "description": "It may have been withdrawn, or you may not have access to it.",
       "title": "Approval not found"
