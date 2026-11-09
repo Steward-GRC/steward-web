@@ -101,7 +101,7 @@ export const CommandPalette = ({
         <DialogPrimitive.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-[var(--scrim)]" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
-          className="fixed top-[12vh] left-1/2 z-[var(--z-dialog)] w-[calc(100vw-32px)] max-w-[540px] -translate-x-1/2 overflow-hidden rounded-[12px] bg-surface text-base text-ink shadow-[var(--shadow-4)] focus:outline-none"
+          className="fixed inset-x-0 top-[12vh] z-[var(--z-dialog)] mx-auto w-[calc(100vw-32px)] max-w-[540px] overflow-hidden rounded-[12px] bg-surface text-base text-ink shadow-[var(--shadow-4)] focus:outline-none"
         >
           <DialogPrimitive.Title className="sr-only">{t("palette.title")}</DialogPrimitive.Title>
           <CommandPrimitive
