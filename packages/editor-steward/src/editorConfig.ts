@@ -167,8 +167,9 @@ export const FILE_ICONS = {} as const;
 
 /**
  * What the file card accepts: the attachments people would normally send by email (bug log 187).
- * Never web or program files (HTML, SVG, XML, scripts, executables), archives, or Office files with
- * macros. This is the picker's and the drop's filter; the server checks the bytes itself
+ * Pictures too (PNG, JPEG, GIF, WebP), for when one is meant to be downloaded from its card
+ * (bug log 243). Never web or program files (HTML, SVG, XML, scripts, executables), archives, or
+ * Office files with macros. This is the picker's and the drop's filter; the server checks the bytes itself
  * (steward-core#36). The list follows the proposed default there, and the admin setting that will
  * switch kinds off is steward-web#246.
  */
@@ -192,6 +193,11 @@ export const FILE_UPLOAD_RULE = {
     "m4v",
     "mov",
     "webm",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp",
   ],
   maxSize: 10 * 1024 * 1024,
   mimeTypes: [
@@ -212,5 +218,9 @@ export const FILE_UPLOAD_RULE = {
     "video/mp4",
     "video/quicktime",
     "video/webm",
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/webp",
   ],
 } as const;
