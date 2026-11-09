@@ -904,8 +904,22 @@ export const liveEdge: Edge = {
       gatewayFetch(MeDocument, {}, "Me", { cookie }),
       categoryTree(cookie),
     ]);
-    const authorable = new Set(rawMe.scopes.author);
-    return all.filter((c) => authorable.has(c.name));
+    // A grant on a category covers everything under it (the gateway authorizes down the chain),
+    // but `scopes.author` lists only the categories granted, so walk up from each one
+    // (bug log 234).
+    const granted = new Set(rawMe.scopes.author);
+    const byId = new Map(all.map((c) => [c.id, c]));
+    const covered = (category: (typeof all)[number]): boolean => {
+      for (
+        let at: (typeof all)[number] | undefined = category, steps = 0;
+        at && steps <= all.length;
+        at = at.parentId ? byId.get(at.parentId) : undefined, steps++
+      ) {
+        if (granted.has(at.name)) return true;
+      }
+      return false;
+    };
+    return all.filter((c) => covered(c));
   },
   async authorableTemplates(ownerGroupId, cookie) {
     const data = await gatewayFetch(
