@@ -12,21 +12,30 @@ import { StewardEditor, type StewardEditorProps } from "./StewardEditor";
 
 /** What a reviewer's editor takes: the version and the review. No collaboration, no AI, no toolbar. */
 export type ReviewerEditorProps = {
+  /** Drawn inside the page after the content, such as the appendices (bug log 249). */
+  footer?: ReactNode;
   review: ReviewComments;
 } & Omit<
   StewardEditorProps,
   "collaboration" | "commentsPlacement" | "onRework" | "readOnly" | "review" | "toolbar"
 >;
 
-const readerPage = (document: ReactNode) => (
+const ReaderPage: FC<{ children: ReactNode; footer: ReactNode }> = ({ children, footer }) => (
   <div
     className="rounded-[10px] border border-border bg-surface px-5 pt-8 pb-10 font-serif text-ink sm:px-14 sm:pt-10 sm:pb-12"
     data-reviewer-document=""
   >
-    {document}
+    {children}
+    {footer}
   </div>
 );
 
-export const ReviewerEditor: FC<ReviewerEditorProps> = ({ review, ...props }) => (
-  <StewardEditor {...props} commentsPlacement="below" frame={readerPage} readOnly review={review} />
+export const ReviewerEditor: FC<ReviewerEditorProps> = ({ footer, review, ...props }) => (
+  <StewardEditor
+    {...props}
+    commentsPlacement="below"
+    frame={(document) => <ReaderPage footer={footer}>{document}</ReaderPage>}
+    readOnly
+    review={review}
+  />
 );

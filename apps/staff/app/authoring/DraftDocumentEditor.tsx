@@ -74,6 +74,7 @@ export const ReviewerDocument = (props: ReviewerEditorProps) => {
   const fallback = (
     <div aria-busy="true" aria-label={t("editor.loading")}>
       <LexicalDocumentView document={props.initialDocument} />
+      {props.footer}
     </div>
   );
   if (!hydrated) return fallback;

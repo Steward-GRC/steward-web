@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { formatDayMonth } from "@steward-web/i18n";
 import { Toaster } from "@steward-web/ui";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { createRoutesStub, useActionData } from "react-router";
@@ -465,6 +465,7 @@ describe("the approval review page for a procedure (bug log 213)", () => {
   });
 });
 
+/* oxlint-disable testing-library/no-node-access */
 describe("the appendices on the approval page (bug log 224, 225)", () => {
   const lexical = JSON.stringify({
     root: {
@@ -493,6 +494,16 @@ describe("the appendices on the approval page (bug log 224, 225)", () => {
     await userEvent.click(screen.getByRole("tab", { name: "Upcoming version (under review)" }));
     expect(screen.getByText("Appendix A: Desk zones")).toBeVisible();
     expect(screen.getAllByRole("separator")).toHaveLength(1);
+  });
+
+  it("draws the appendices inside the document, in the same frame as its text (bug log 249)", async () => {
+    renderReview(() => {}, withAppendix([desks]));
+    await userEvent.click(screen.getByRole("tab", { name: "Upcoming version (under review)" }));
+    await waitFor(() =>
+      expect(
+        screen.getByText("Appendix A: Desk zones").closest("[data-reviewer-document]"),
+      ).not.toBeNull(),
+    );
   });
 
   it("draws no line, and lists nothing, when the version has no appendix", async () => {
