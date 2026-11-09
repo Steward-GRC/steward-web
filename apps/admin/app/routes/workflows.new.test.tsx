@@ -29,4 +29,16 @@ describe("New workflow (A9)", () => {
     await vi.waitFor(() => expect(posted).toHaveLength(1));
     expect(posted[0]!.get("name")).toBe("Travel sign-off");
   });
+
+  it("stacks the name above the description (bug log 253)", async () => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => <NewWorkflow {...({ actionData: undefined } as unknown as NewProps)} />,
+        path: "/workflows/new",
+      },
+    ]);
+    render(<Stub initialEntries={["/workflows/new"]} />);
+    const form = await screen.findByRole("form", { name: "New workflow" });
+    expect(form.className).not.toContain("grid-cols-2");
+  });
 });
