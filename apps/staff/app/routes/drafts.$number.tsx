@@ -25,6 +25,7 @@ import { data, redirect, useFetcher, useLocation, useNavigate } from "react-rout
 import type { Route } from "./+types/drafts.$number";
 
 import { authoringAssist, getAiHealth, submitPolicyReview } from "../authoring/ai.server";
+import { aiRefusalKey } from "../authoring/ai/aiOff";
 import { AiReviewSheet, RewriteSectionDialog, SuggestionSheet } from "../authoring/ai/AiOverlays";
 import { type ChangeEntry, parseReviewResult } from "../authoring/ai/results";
 import { useAiJob } from "../authoring/ai/useAiJob";
@@ -833,7 +834,12 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
         suggested={assistAnswer}
       />
       <AiReviewSheet
-        error={reviewJob.error ?? (reviewRefused ? tAi("refused") : null)}
+        error={
+          reviewJob.error ??
+          (reviewRefused
+            ? tAi(aiRefusalKey(reviewFetcher.data?.ok === false ? reviewFetcher.data.error : null))
+            : null)
+        }
         findings={findings}
         onJump={jumpTo}
         onOpenChange={(open) => {
