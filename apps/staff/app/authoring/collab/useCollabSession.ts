@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
-import { type Collaborator, collaboratorsFrom } from "./presence";
+import { type Collaborator, collaboratorsFrom, trackTyping } from "./presence";
 import { CONTROL_DRAFT_PUBLISHED, CONTROL_SNAPSHOT_REJECTED, describeRejection } from "./protocol";
 import { CollabSession, type CollabToken } from "./session";
 
@@ -69,6 +69,7 @@ export const useCollabSession = (
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [reconnecting, setReconnecting] = useState(false);
   const sessionRef = useRef<CollabSession | null>(null);
+  const typingRef = useRef<null | ReturnType<typeof trackTyping>>(null);
 
   // Latest-value ref so the room is not rebuilt every time the caller re-renders with new
   // closures. Written in an effect, never during render.
@@ -83,6 +84,8 @@ export const useCollabSession = (
     const document = new Y.Doc();
     const awareness = new Awareness(document);
     const room = createStewardCollaboration(document, awareness);
+    const typing = trackTyping(awareness);
+    typingRef.current = typing;
     let decided: CollabMode = "pending";
     let stopped = false;
     // handed over at once so the editor binds before any content arrives
@@ -155,6 +158,8 @@ export const useCollabSession = (
 
     return () => {
       stopped = true;
+      typing.dispose();
+      typingRef.current = null;
       globalThis.clearTimeout(giveUp);
       // stop() flushes any pending checkpoint first: the navigate-away flush point.
       session.stop();
@@ -183,7 +188,9 @@ export const useCollabSession = (
   }, [draftId]);
 
   const touch = () => {
-    if (mode === "live") sessionRef.current?.touch();
+    if (mode !== "live") return;
+    sessionRef.current?.touch();
+    typingRef.current?.touch();
   };
 
   return { collaboration, collaborators, mode, presenceCount, reconnecting, touch };
