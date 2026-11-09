@@ -452,14 +452,17 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           ) : null}
           <TabsContent className="mt-3.5" value="upcoming">
             {review.upcoming && commentable ? (
-              <>
-                <ReviewerDocument initialDocument={commentable} review={comments} />
-                <PolicyAppendices
-                  appendices={review.upcoming.appendices}
-                  appendixLabel={appendixLabel}
-                  definitions={[]}
-                />
-              </>
+              <ReviewerDocument
+                footer={
+                  <PolicyAppendices
+                    appendices={review.upcoming.appendices}
+                    appendixLabel={appendixLabel}
+                    definitions={[]}
+                  />
+                }
+                initialDocument={commentable}
+                review={comments}
+              />
             ) : review.upcoming ? (
               <PolicyDocument
                 appendices={review.upcoming.appendices}

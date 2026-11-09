@@ -3,6 +3,8 @@
 // The reviewer's editor: the Steward editor, reduced to reading the version and commenting on it.
 // Its content looks like the policy everywhere else, its comments sit under it, and it takes no edit.
 /* oxlint-disable testing-library/no-node-access, testing-library/no-container */
+import type { ReactNode } from "react";
+
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -59,10 +61,11 @@ const review = (overrides: Partial<ReviewComments> = {}): ReviewComments => ({
   ...overrides,
 });
 
-const mount = async (comments = review()) => {
+const mount = async (comments = review(), footer?: ReactNode) => {
   let handle: StewardEditorHandle | undefined;
   render(
     <ReviewerEditor
+      footer={footer}
       initialDocument={DOCUMENT}
       onReady={(ready) => {
         handle = ready;
@@ -91,6 +94,17 @@ describe("the reviewer's editor", () => {
       expect(page.classList.contains(name), name).toBe(true);
     }
     expect(page.contains(screen.getByText(/Keep records/))).toBe(true);
+  });
+
+  it("draws a footer inside the page, after the content (bug log 249)", async () => {
+    await mount(review(), <p>Appendix A: Desk zones</p>);
+    const page = document.querySelector("[data-reviewer-document]") as HTMLElement;
+    const footer = screen.getByText("Appendix A: Desk zones");
+    expect(page.contains(footer)).toBe(true);
+    expect(
+      screen.getByText(/Keep records/).compareDocumentPosition(footer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("keeps the word count outside the page, not in the box (bug log 242)", async () => {
