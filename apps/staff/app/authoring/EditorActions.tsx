@@ -24,7 +24,7 @@ import {
   Spinner,
 } from "@steward-web/ui";
 import { Check, ChevronDown, Dot, FileText, PencilLine, Sparkles } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useFetcher } from "react-router";
 
 import { aiOffReason } from "./ai/aiOff";
@@ -312,8 +312,17 @@ export const ActionsMenu = ({
 }) => {
   const { t } = useTranslation("authoring");
   const fetcher = useFetcher<Answer>();
+  const withdrawFetcher = useFetcher<Answer>();
   const [discarding, setDiscarding] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const withdrawn = withdrawFetcher.data?.ok === true;
+  const withdrawRefusal =
+    withdrawFetcher.data && !withdrawFetcher.data.ok ? withdrawFetcher.data.error : undefined;
+  // the answer is the only thing that ends the dialog: the draft stays on screen after a
+  // withdraw, so nothing else would unmount it (bug log 233)
+  useEffect(() => {
+    if (withdrawn) setWithdrawing(false);
+  }, [withdrawn]);
   const live = published ? ` ${t("editor.discard.stillLive", { version: published })}` : "";
   const wording = inReview
     ? `${t("editor.discard.inReview")}${live}`
@@ -386,21 +395,30 @@ export const ActionsMenu = ({
       </Menu>
       <Dialog onOpenChange={setWithdrawing} open={withdrawing}>
         <DialogContent
-          busy={fetcher.state !== "idle"}
+          busy={withdrawFetcher.state !== "idle"}
           description={t("editor.withdraw.description")}
           title={t("editor.withdraw.title")}
         >
-          <fetcher.Form method="post">
+          <withdrawFetcher.Form method="post">
             <input name="intent" type="hidden" value="withdraw" />
+            {withdrawRefusal ? (
+              <DialogBody>
+                <DialogNote tone="danger">
+                  {withdrawRefusal.code === "FAILED_PRECONDITION"
+                    ? t("editor.withdraw.refused")
+                    : t("editor.withdraw.failed")}
+                </DialogNote>
+              </DialogBody>
+            ) : null}
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="secondary">{t("editor.withdraw.keep")}</Button>
               </DialogClose>
-              <Button busy={fetcher.state !== "idle"} type="submit">
+              <Button busy={withdrawFetcher.state !== "idle"} type="submit">
                 {t("editor.withdraw.action")}
               </Button>
             </DialogFooter>
-          </fetcher.Form>
+          </withdrawFetcher.Form>
         </DialogContent>
       </Dialog>
       <Dialog onOpenChange={setDiscarding} open={discarding}>
