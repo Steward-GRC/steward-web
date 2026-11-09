@@ -23,7 +23,7 @@ import {
   submitPolicyReview,
   submitPolicyRevision,
 } from "../authoring/ai.server";
-import { aiOffReason } from "../authoring/ai/aiOff";
+import { aiOffReason, aiRefusalKey } from "../authoring/ai/aiOff";
 import { loadDraftForAi } from "../authoring/ai/aiPage.server";
 import { ChangeCard } from "../authoring/ai/ChangeCard";
 import {
@@ -472,7 +472,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
       {aiHealth.available ? null : (
         <Banner title={tAuthoring(aiOffReason(aiHealth.reason))} tone="warn" />
       )}
-      {refused ? <Banner title={t("refused")} tone="danger" /> : null}
+      {refused ? <Banner title={t(aiRefusalKey(refused))} tone="danger" /> : null}
 
       {step === 0 ? (
         <Card className="flex flex-col gap-3 p-4">
