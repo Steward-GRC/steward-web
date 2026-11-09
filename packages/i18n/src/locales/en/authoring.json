@@ -294,6 +294,7 @@
       "version": {
         "choose": "Published version",
         "earlier": "v{{version}} · {{when}}",
+        "first": "This is the first published version, so there is nothing earlier to compare it with.",
         "latest": "v{{version}} · {{when}} (latest)"
       }
     }
