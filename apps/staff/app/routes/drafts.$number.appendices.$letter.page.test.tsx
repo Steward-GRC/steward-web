@@ -10,6 +10,11 @@ import AppendixRoute from "./drafts.$number.appendices.$letter";
 const room = vi.hoisted(() => ({
   collaborators: [] as { activity?: "typing"; color: string; name: string; uid: string }[],
 }));
+
+// jsdom has no elementFromPoint, which the editor's listeners call (this file's own `document`
+// helper hides the global one)
+globalThis.document.elementFromPoint ??= () => null;
+
 const collabTouch = vi.hoisted(() => vi.fn());
 vi.mock("../authoring/collab/useCollabSession", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../authoring/collab/useCollabSession")>()),
