@@ -30,7 +30,9 @@ export const SaveState = ({ state }: { state: SaveStateKind }) => {
     <span
       aria-live="polite"
       className={cn(
-        "flex items-center gap-[5px] text-sm",
+        // one slot for all three states: the same width and one line, so a change of state does
+        // not move the text beside it or wrap onto another line (bug log 235)
+        "flex min-w-[7.5rem] items-center gap-[5px] text-sm whitespace-nowrap",
         state === "unsaved" ? "text-warn" : "text-muted",
       )}
       role="status"
