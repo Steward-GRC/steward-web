@@ -108,7 +108,7 @@ export const staffNav = ({ can, counts, reporting }: StaffNavInput): NavSection[
         badge: badge(counts.approvals),
         icon: Stamp,
         id: "approvals",
-        show: can("policy.approve"),
+        show: can("policy.approve") || (counts.approvals ?? 0) > 0,
         to: "/approvals",
       }),
       item({ icon: ScrollText, id: "auditLog", show: can("audit.read"), to: "/audit" }),

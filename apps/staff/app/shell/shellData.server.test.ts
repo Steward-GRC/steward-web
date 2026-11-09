@@ -69,3 +69,32 @@ describe("staffShellData's banners", () => {
     expect(data.secondFactorNudge).toBe(false);
   });
 });
+
+describe("staffShellData's approvals count (bug log 257)", () => {
+  const task = {
+    policyTitle: "P",
+    policyVersionId: "v1",
+    runId: "r1",
+    stageIndex: 0,
+    taskId: "t1",
+  };
+
+  it("counts what waits on someone who holds a seat without the approver role", async () => {
+    routeGateway({ PendingTasks: () => ({ pendingTasks: [task] }) });
+    const data = await staffShellData(request, erin);
+    expect(data.counts.approvals).toBe(1);
+  });
+
+  it("leaves the count out for a reader with nothing waiting", async () => {
+    routeGateway({ PendingTasks: () => ({ pendingTasks: [] }) });
+    const data = await staffShellData(request, erin);
+    expect(data.counts.approvals).toBeUndefined();
+  });
+
+  it("keeps a zero for an approver", async () => {
+    routeGateway({ PendingTasks: () => ({ pendingTasks: [] }) });
+    const approver = { ...erin, permissions: new Set(["policy.approve", "policy.read"]) };
+    const data = await staffShellData(request, approver);
+    expect(data.counts.approvals).toBe(0);
+  });
+});
