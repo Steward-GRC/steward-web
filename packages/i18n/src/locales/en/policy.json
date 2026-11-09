@@ -107,6 +107,7 @@
     "appendices": {
       "empty": "No appendices.",
       "heading": "Appendix {{letter}}: {{title}}",
+      "lastUpdated": "Last Updated: {{when}}",
       "title": "Appendices",
       "notPolicy": {
         "label": "Not policy",
