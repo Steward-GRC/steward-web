@@ -4,7 +4,14 @@
 // React, safe for the server and the mock gateway.
 export { incompleteButtons } from "./buttons";
 export { sameContent } from "./comparable";
-export { type BlockDiff, diffBlocks, type LiveDiff, textBlocksOf } from "./liveDiff";
+export {
+  type BlockDiff,
+  type BlockFormat,
+  blockFormatsOf,
+  diffBlocks,
+  type LiveDiff,
+  textBlocksOf,
+} from "./liveDiff";
 export {
   applySectionText,
   describeReset,

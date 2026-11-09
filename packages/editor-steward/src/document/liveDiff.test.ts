@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { diffBlocks, textBlocksOf } from "./liveDiff";
+import { blockFormatsOf, diffBlocks, textBlocksOf } from "./liveDiff";
 import { type SerializedNode, wrapRoot } from "./tree";
 
 const text = (value: string): SerializedNode => ({ text: value, type: "text" });
@@ -118,5 +118,109 @@ describe("the live diff against the published text", () => {
   it("marks everything as added when there is no published text", () => {
     const result = diffBlocks([], ["Only this."]);
     expect(result.blocks).toEqual([{ added: [[0, 10]], removed: [] }]);
+  });
+});
+
+const heading = (tag: string, ...children: SerializedNode[]): SerializedNode => ({
+  children,
+  tag,
+  type: "heading",
+});
+const bold = (value: string): SerializedNode => ({ format: 1, text: value, type: "text" });
+
+const list = (listType: string) => ({
+  children: [{ children: [text("one")], type: "listitem" }],
+  listType,
+  type: "list",
+});
+
+/** The diff of two documents, text and format, as the editor and the Published tab ask for it. */
+const compare = (before: SerializedNode[], after: SerializedNode[]) =>
+  diffBlocks(textBlocksOf(wrapRoot(before)), textBlocksOf(wrapRoot(after)), {
+    current: blockFormatsOf(wrapRoot(after)),
+    published: blockFormatsOf(wrapRoot(before)),
+  });
+
+describe("the format of each block (bug log 261)", () => {
+  it("names a heading by its level, a list item by its list, and plain text as a paragraph", () => {
+    const formats = blockFormatsOf(
+      wrapRoot([
+        heading("h1", text("Appendix A")),
+        paragraph(text("plain")),
+        {
+          children: [{ children: [text("one")], type: "listitem" }],
+          listType: "number",
+          type: "list",
+        },
+        { children: [text("said")], type: "quote" },
+      ]),
+    );
+    expect(formats.map((format) => format.kind)).toEqual([
+      "heading:h1",
+      "paragraph",
+      "listitem:number",
+      "quote",
+    ]);
+  });
+});
+
+describe("the live diff treats a format change as a change (bug log 261)", () => {
+  it("marks a heading that became plain text, though the words are the same", () => {
+    const result = compare(
+      [heading("h1", text("Appendix A")), paragraph(text("Rates."))],
+      [paragraph(text("Appendix A")), paragraph(text("Rates."))],
+    );
+    expect(result.blocks[0]!.added).toEqual([]);
+    expect(result.blocks[0]!.format).toMatchObject({
+      from: { kind: "heading:h1" },
+      to: { kind: "paragraph" },
+    });
+    expect(result.blocks[1]!.format).toBeUndefined();
+  });
+
+  it("marks a change of heading level", () => {
+    const result = compare([heading("h1", text("Scope"))], [heading("h2", text("Scope"))]);
+    expect(result.blocks[0]!.format).toMatchObject({
+      from: { kind: "heading:h1" },
+      to: { kind: "heading:h2" },
+    });
+  });
+
+  it("marks a list that changed type", () => {
+    const result = compare([list("bullet")], [list("number")]);
+    expect(result.blocks[0]!.format?.to.kind).toBe("listitem:number");
+  });
+
+  it("marks words that became bold or lost it, and a link added", () => {
+    const made = compare([paragraph(text("Pay now"))], [paragraph(bold("Pay"), text(" now"))]);
+    expect(made.blocks[0]!.format?.to.names).toEqual(["bold"]);
+    const gone = compare([paragraph(bold("Pay now"))], [paragraph(text("Pay now"))]);
+    expect(gone.blocks[0]!.format?.from.names).toEqual(["bold"]);
+    const linked = compare(
+      [paragraph(text("See policy"))],
+      [
+        paragraph(text("See "), {
+          children: [text("policy")],
+          type: "link",
+          url: "https://example.org",
+        }),
+      ],
+    );
+    expect(linked.blocks[0]!.format?.to.names).toEqual(["link"]);
+  });
+
+  it("marks a format change together with a word change in the same block", () => {
+    const result = compare(
+      [heading("h1", text("File in 60 days"))],
+      [paragraph(text("File in 30 days"))],
+    );
+    expect(result.blocks[0]!.added.length).toBeGreaterThan(0);
+    expect(result.blocks[0]!.format?.from.kind).toBe("heading:h1");
+  });
+
+  it("marks nothing when text and format are the same, or when no formats are given", () => {
+    const same = compare([heading("h1", text("Scope"))], [heading("h1", text("Scope"))]);
+    expect(same.blocks[0]!.format).toBeUndefined();
+    expect(diffBlocks(["a"], ["a"]).blocks[0]!.format).toBeUndefined();
   });
 });

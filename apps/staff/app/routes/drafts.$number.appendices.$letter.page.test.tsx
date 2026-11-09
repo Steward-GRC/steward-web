@@ -162,6 +162,36 @@ describe("the appendix page (bug log 223)", () => {
     expect(within(panel).getByText(/first published version/)).toBeInTheDocument();
   });
 
+  it("marks a heading that became plain text as a change on the Published tab (bug log 261)", async () => {
+    const heading = JSON.stringify({
+      root: {
+        children: [
+          {
+            children: [{ text: "Appendix A", type: "text", version: 1 }],
+            tag: "h1",
+            type: "heading",
+            version: 1,
+          },
+        ],
+        type: "root",
+        version: 1,
+      },
+    });
+    const v1 = { ...row(1, "PUBLISHED", ""), contentJson: heading };
+    const v2 = row(2, "PUBLISHED", "Appendix A");
+    mount({
+      ...base,
+      appendix: { ...base.appendix, published: v2, publishedVersions: [v2, v1] },
+    });
+    await userEvent.click(screen.getByRole("tab", { name: "Published" }));
+    await userEvent.click(
+      within(screen.getByRole("tabpanel")).getByRole("radio", { name: "Diff" }),
+    );
+    expect(
+      within(screen.getByRole("tabpanel")).getByText("Format changed: Heading 1 → Paragraph"),
+    ).toBeInTheDocument();
+  });
+
   it("lists everyone who contributed, and marks the people who are no longer active", () => {
     mount();
     const list = screen.getByRole("list", { name: "Contributors" });

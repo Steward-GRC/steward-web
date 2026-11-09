@@ -25,13 +25,81 @@ const inlineText = (node: SerializedNode): string => {
   return (node.children ?? []).map((child) => inlineText(child)).join("");
 };
 
-const collect = (node: SerializedNode, out: string[]): void => {
+const FORMAT_NAMES: readonly [number, string][] = [
+  [1, "bold"],
+  [2, "italic"],
+  [4, "strikethrough"],
+  [8, "underline"],
+  [16, "code"],
+  [32, "subscript"],
+  [64, "superscript"],
+  [128, "highlight"],
+];
+
+/** How a block is formatted (bug log 261): what kind of block it is, and what marks its words carry. */
+export interface BlockFormat {
+  /** The block's kind: "paragraph", "heading:h1", "listitem:bullet", "quote", "code", "tablecell". */
+  kind: string;
+  /** Where each mark runs, so a change of range counts as a change. */
+  marks: string;
+  /** The marks present, by name, in a fixed order; "link" for a link. */
+  names: string[];
+}
+
+const kindOf = (node: SerializedNode, parent: SerializedNode | undefined): string => {
+  if (node.type === "heading") return `heading:${typeof node.tag === "string" ? node.tag : "h"}`;
+  if (node.type === "listitem") {
+    const listType = typeof parent?.listType === "string" ? parent.listType : "bullet";
+    return `listitem:${listType}`;
+  }
+  if (node.type === "tablecell") return node.headerState ? "tablecell:header" : "tablecell";
+  return node.type;
+};
+
+const formatOf = (node: SerializedNode, parent: SerializedNode | undefined): BlockFormat => {
+  const runs: { fmt: number; length: number; link: string }[] = [];
+  const add = (length: number, fmt: number, link: string) => {
+    const last = runs.at(-1);
+    if (last && last.fmt === fmt && last.link === link) last.length += length;
+    else runs.push({ fmt, length, link });
+  };
+  const visit = (child: SerializedNode, link: string) => {
+    if (typeof child.text === "string") {
+      add(child.text.length, typeof child.format === "number" ? child.format : 0, link);
+    } else if (child.type === "linebreak" || child.type === "tab") add(1, 0, link);
+    else {
+      const url = typeof child.url === "string" ? child.url : "link";
+      const here = child.type === "link" || child.type === "autolink" ? url : link;
+      for (const inner of child.children ?? []) visit(inner, here);
+    }
+  };
+  for (const child of node.children ?? []) if (INLINE.has(child.type)) visit(child, "");
+  const names = new Set<string>();
+  for (const run of runs) {
+    for (const [bit, name] of FORMAT_NAMES) if (run.fmt & bit) names.add(name);
+    if (run.link) names.add("link");
+  }
+  const marked = runs.some((run) => run.fmt !== 0 || run.link !== "");
+  return {
+    kind: kindOf(node, parent),
+    marks: marked ? runs.map((run) => `${run.length}:${run.fmt}:${run.link}`).join("|") : "",
+    names: [...names].toSorted(),
+  };
+};
+
+interface Block {
+  format: BlockFormat;
+  text: string;
+}
+
+const collect = (node: SerializedNode, out: Block[], parent?: SerializedNode): void => {
   const children = node.children ?? [];
   const inline = children.filter((child) => INLINE.has(child.type));
   const text = inline.map((child) => inlineText(child)).join("");
-  if (node.type !== "root" && text !== "") out.push(text);
+  if (node.type !== "root" && text !== "") out.push({ format: formatOf(node, parent), text });
   // a card has no children; a container's blocks are taken in order
-  for (const child of children) if (!INLINE.has(child.type) && child.children) collect(child, out);
+  for (const child of children)
+    if (!INLINE.has(child.type) && child.children) collect(child, out, node);
 };
 
 /**
@@ -40,15 +108,24 @@ const collect = (node: SerializedNode, out: string[]): void => {
  * text to compare and are left out. The editor lists its blocks by the same rule.
  */
 export const textBlocksOf = (document: SerializedDocument): string[] => {
-  const out: string[] = [];
+  const out: Block[] = [];
   collect(document.root, out);
-  return out;
+  return out.map((block) => block.text);
+};
+
+/** The format of each block `textBlocksOf` lists, in the same order (bug log 261). */
+export const blockFormatsOf = (document: SerializedDocument): BlockFormat[] => {
+  const out: Block[] = [];
+  collect(document.root, out);
+  return out.map((block) => block.format);
 };
 
 /** What changed in one block of the current text. Offsets count characters in that block. */
 export interface BlockDiff {
   /** The new words, as [from, to) ranges. */
   added: [number, number][];
+  /** The block's format changed against the published one, whether or not its words did. */
+  format?: { from: BlockFormat; to: BlockFormat };
   /** Words that were published and are gone, and the offset in this block where they stood. */
   removed: { at: number; text: string }[];
 }
@@ -137,17 +214,30 @@ const wholeBlock = (text: string): BlockDiff => ({ added: [[0, text.length]], re
  * them, blocks are paired in order and compared word by word, and the ones left over are either
  * new (added whole) or gone (listed before the block that follows).
  */
-export const diffBlocks = (published: readonly string[], current: readonly string[]): LiveDiff => {
+export const diffBlocks = (
+  published: readonly string[],
+  current: readonly string[],
+  formats?: { current: readonly BlockFormat[]; published: readonly BlockFormat[] },
+): LiveDiff => {
   const blocks: BlockDiff[] = current.map(() => ({ added: [], removed: [] }));
   const removedBlocks: LiveDiff["removedBlocks"] = [];
+  // a block set against its published twin whose format differs (bug log 261)
+  const checkFormat = (oldIndex: number, newIndex: number) => {
+    const from = formats?.published[oldIndex];
+    const to = formats?.current[newIndex];
+    if (from && to && (from.kind !== to.kind || from.marks !== to.marks))
+      blocks[newIndex]!.format = { from, to };
+  };
   const anchors = commonPairs(published, current);
   const gap = (fromOld: number, toOld: number, fromNew: number, toNew: number) => {
     const paired = Math.min(toOld - fromOld, toNew - fromNew);
-    for (let offset = 0; offset < paired; offset++)
+    for (let offset = 0; offset < paired; offset++) {
       blocks[fromNew + offset] = diffWords(
         published[fromOld + offset]!,
         current[fromNew + offset]!,
       );
+      checkFormat(fromOld + offset, fromNew + offset);
+    }
     for (let index = fromNew + paired; index < toNew; index++)
       blocks[index] = wholeBlock(current[index]!);
     for (let index = fromOld + paired; index < toOld; index++)
@@ -157,6 +247,7 @@ export const diffBlocks = (published: readonly string[], current: readonly strin
   let newAt = 0;
   for (const [oldAnchor, newAnchor] of anchors) {
     gap(oldAt, oldAnchor, newAt, newAnchor);
+    checkFormat(oldAnchor, newAnchor);
     oldAt = oldAnchor + 1;
     newAt = newAnchor + 1;
   }
