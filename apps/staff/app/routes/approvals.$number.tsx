@@ -280,6 +280,10 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   if (decided) {
     // an approval is the green kind of result; a rejection is information, not a success
     const rejected = decided === "rejected";
+    // A reject ends the version when this person holds a veto on the stage, or the run is no longer
+    // in review; otherwise it is one vote in a quorum and the version stays in review (bug log 254).
+    const endsVersion = !inReview || (vetoes[workflow.currentStageIdx]?.includes(meId) ?? false);
+    const outcome = rejected && !endsVersion ? "rejectedVote" : decided;
     aside = (
       <div
         className={cn(
@@ -294,7 +298,7 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           <Check aria-hidden="true" className="size-4 flex-none" />
         )}
         <span>
-          <b>{t(`review.decided.${decided}.title`)}</b> {t(`review.decided.${decided}.body`)}
+          <b>{t(`review.decided.${outcome}.title`)}</b> {t(`review.decided.${outcome}.body`)}
         </span>
       </div>
     );

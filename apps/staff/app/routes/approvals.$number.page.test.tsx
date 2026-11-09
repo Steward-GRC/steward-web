@@ -20,6 +20,7 @@ const loaderData = {
     version: "3",
   },
   meId: "u-3",
+  vetoes: [[], []],
   policyVersionId: "version-3",
   preview: null,
   review: {
@@ -312,9 +313,41 @@ describe("the review page's other states (U25o)", () => {
   });
 });
 
+const reject = async (data: Record<string, unknown>) => {
+  renderReview(() => ({ decided: "rejected" }), data);
+  const panel = screen.getByRole("region", { name: "Your decision" });
+  await userEvent.type(within(panel).getByLabelText("Decision comment"), "Not for us.");
+  await userEvent.click(within(panel).getByRole("button", { name: "Reject" }));
+  return screen.findByRole("status");
+};
+
+describe("after a reject (bug log 254)", () => {
+  it("says a reject that is only one vote in a quorum is recorded as that vote, and the version stays in review", async () => {
+    const result = await reject({ ...loaderData, vetoes: [[], []] });
+    expect(result).toHaveTextContent(
+      "Your vote is recorded. Your rejection and comment are recorded against your name, with your comment as your reason. The version stays in review until the quorum decides.",
+    );
+    expect(result).not.toHaveTextContent("The author is told changes were requested");
+    expect(result).toHaveClass("bg-info-soft");
+  });
+
+  it("keeps the author's note for a veto approver, whose reject ends the version", async () => {
+    const result = await reject({
+      ...loaderData,
+      vetoes: [[], [loaderData.meId]],
+    });
+    expect(result).toHaveTextContent(
+      "Rejected. Your decision and comment are recorded. The author is told changes were requested.",
+    );
+  });
+});
+
 describe("after the decision (bug log 240)", () => {
   it("shows a rejection as information, not as the green success", async () => {
-    renderReview(() => ({ decided: "rejected" }));
+    renderReview(() => ({ decided: "rejected" }), {
+      ...loaderData,
+      vetoes: [[], [loaderData.meId]],
+    });
     const panel = screen.getByRole("region", { name: "Your decision" });
     await userEvent.type(within(panel).getByLabelText("Decision comment"), "Not yet.");
     await userEvent.click(within(panel).getByRole("button", { name: "Reject" }));
