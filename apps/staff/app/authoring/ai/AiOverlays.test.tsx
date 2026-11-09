@@ -173,4 +173,29 @@ describe("AI review (D13)", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Queued");
     expect(screen.queryByText("No gaps found")).toBeNull();
   });
+
+  it.each(["queued", "generating", "failed", "done"] as const)(
+    "closes with the X and Escape while the stage is %s (bug log 255)",
+    async (stage) => {
+      const onOpenChange = vi.fn();
+      render(
+        <AiReviewSheet
+          findings={[]}
+          onJump={() => {}}
+          onOpenChange={onOpenChange}
+          onRerun={() => {}}
+          open
+          sections={SECTIONS}
+          stage={stage}
+        />,
+      );
+      const sheet = screen.getByRole("dialog", { name: "AI review" });
+      expect(sheet).not.toHaveAttribute("aria-busy");
+      await userEvent.click(within(sheet).getByRole("button", { name: "Close" }));
+      expect(onOpenChange).toHaveBeenLastCalledWith(false);
+      onOpenChange.mockClear();
+      await userEvent.keyboard("{Escape}");
+      expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    },
+  );
 });
