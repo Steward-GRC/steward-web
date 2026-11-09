@@ -360,16 +360,28 @@ export const StewardEditor = ({
     [onChange],
   );
 
+  const surface = (
+    <KoenigEditor
+      onChange={handleChange}
+      placeholderText={placeholder ?? t("editor.placeholder")}
+      readOnly={readOnly}
+      registerAPI={registerAPI}
+    />
+  );
+  // the count belongs to the document, not inside a frame drawn around it (bug log 242)
   const editor = (
     <>
-      <KoenigEditor
-        onChange={handleChange}
-        placeholderText={placeholder ?? t("editor.placeholder")}
-        readOnly={readOnly}
-        registerAPI={registerAPI}
-      />
+      {surface}
       <EditorWordCount />
     </>
+  );
+  const framed = frame ? (
+    <>
+      {frame(surface)}
+      <EditorWordCount />
+    </>
+  ) : (
+    editor
   );
 
   return (
@@ -409,7 +421,7 @@ export const StewardEditor = ({
                 : "flex flex-col items-start gap-6 lg:flex-row"
             }
           >
-            <div className="min-w-0 flex-1 self-stretch">{frame ? frame(editor) : editor}</div>
+            <div className="min-w-0 flex-1 self-stretch">{framed}</div>
             <ReviewThreadAnchors
               threads={review.threads.filter((thread) => !isClosedSuggestion(thread))}
             />
