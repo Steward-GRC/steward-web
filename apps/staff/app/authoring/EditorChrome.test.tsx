@@ -30,6 +30,16 @@ const inRouter = (node: React.ReactNode, action = vi.fn()) => {
   return action;
 };
 
+describe("the save state's one slot (bug log 235)", () => {
+  it.each(["saved", "saving", "unsaved"] as const)(
+    "takes the same space and stays on one line when it says %s",
+    (state) => {
+      inRouter(<SaveState state={state} />);
+      expect(screen.getByRole("status")).toHaveClass("min-w-[7.5rem]", "whitespace-nowrap");
+    },
+  );
+});
+
 describe("the editor header (U11)", () => {
   it("shows the breadcrumb, the serif title, the number and version line, Draft and the save state", () => {
     inRouter(

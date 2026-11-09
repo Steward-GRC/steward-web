@@ -186,7 +186,6 @@
       "stillLive": "The published v{{version}} stays live.",
       "title": "Discard this draft?"
     },
-    "draftWord": "draft",
     "imageUploadFailed": "The image couldn't be uploaded. Try again.",
     "upload": {
       "empty": "That file is empty. Choose a different file.",
@@ -197,7 +196,6 @@
       "tooLargeAny": "That file is too large. Choose a smaller one."
     },
     "imageUploadUnavailable": "Image uploads aren't available here yet. Paste an image link with /image instead.",
-    "inReviewWord": "in review",
     "loading": "Loading the editor",
     "nextVersion": {
       "after": "After v{{version}}",
