@@ -485,14 +485,24 @@ describe("who sees which toolbar", () => {
 });
 
 describe("the Comment card with a suggested text", () => {
-  it("starts with the selected words, so a change to them is the suggestion", async () => {
+  it("hides the replacement field until Suggest a change is ticked, and then it starts empty", async () => {
     const onAdd = vi.fn();
     await open(onAdd);
-    const field = await screen.findByRole("textbox", { name: "Suggested text (optional)" });
-    expect(field).toHaveValue("records");
+    await screen.findByRole("textbox", { name: "Comment" });
+    expect(screen.queryByRole("textbox", { name: "Suggested text" })).toBeNull();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Suggest a change" }));
+    expect(await screen.findByRole("textbox", { name: "Suggested text" })).toHaveValue("");
+  });
+
+  it("sends a suggestion when it is ticked and the replacement is typed", async () => {
+    const onAdd = vi.fn();
+    await open(onAdd);
     await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Better word?");
-    await userEvent.clear(field);
-    await userEvent.type(field, "documents");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Suggest a change" }));
+    await userEvent.type(
+      await screen.findByRole("textbox", { name: "Suggested text" }),
+      "documents",
+    );
     await userEvent.click(screen.getByRole("button", { name: "Comment", description: "" }));
     await waitFor(() =>
       expect(onAdd).toHaveBeenCalledWith({
@@ -504,10 +514,21 @@ describe("the Comment card with a suggested text", () => {
     );
   });
 
-  it("sends no suggestion when the words are left as they are", async () => {
+  it("cannot be sent ticked with no replacement", async () => {
+    const onAdd = vi.fn();
+    await open(onAdd);
+    await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Better word?");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Suggest a change" }));
+    expect(screen.getByRole("button", { name: "Comment", description: "" })).toBeDisabled();
+  });
+
+  it("sends a plain comment when it is not ticked, and when it is ticked then unticked", async () => {
     const onAdd = vi.fn();
     await open(onAdd);
     await userEvent.type(await screen.findByRole("textbox", { name: "Comment" }), "Why?");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Suggest a change" }));
+    await userEvent.type(await screen.findByRole("textbox", { name: "Suggested text" }), "files");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Suggest a change" }));
     await userEvent.click(screen.getByRole("button", { name: "Comment", description: "" }));
     await waitFor(() =>
       expect(onAdd).toHaveBeenCalledWith({ body: "Why?", occurrence: 1, quote: "records" }),
@@ -574,5 +595,29 @@ describe("the author writing to an approver", () => {
       }),
     });
     expect(await screen.findByText("With Alice")).toBeInTheDocument();
+  });
+});
+
+describe("a suggestion in the author's dialog (bug log 247)", () => {
+  it("shows the change, the round, whose turn it is and the author's actions", async () => {
+    const rounds = [
+      { by: "REVIEWER", createdAt: "x", text: "six years", userId: "user-charlie" },
+      { by: "AUTHOR", createdAt: "x", text: "five years", userId: "user-bob" },
+      { by: "REVIEWER", createdAt: "x", text: "four years", userId: "user-charlie" },
+    ];
+    await mount({
+      commentsPlacement: "dialog",
+      review: asSide("AUTHOR", {
+        threads: [withSuggestion({ rounds, text: "four years", turn: "AUTHOR" })],
+      }),
+    });
+    await waitFor(() => expect(mark()).toBeTruthy());
+    await userEvent.click(mark());
+    const dialog = await screen.findByRole("dialog", { name: "Comment" });
+    expect(within(dialog).getByText("[seven years -> four years]")).toBeInTheDocument();
+    expect(within(dialog).getByText(/Round 3/)).toBeInTheDocument();
+    expect(within(dialog).getByText("Waiting for the author")).toBeInTheDocument();
+    for (const name of ["Change it", "Remove the note", "Counter", "Not agreed"])
+      expect(within(dialog).getByRole("button", { name })).toBeInTheDocument();
   });
 });
