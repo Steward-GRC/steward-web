@@ -93,6 +93,13 @@ describe("the reviewer's editor", () => {
     expect(page.contains(screen.getByText(/Keep records/))).toBe(true);
   });
 
+  it("keeps the word count outside the page, not in the box (bug log 242)", async () => {
+    await mount();
+    const page = document.querySelector("[data-reviewer-document]") as HTMLElement;
+    const count = await screen.findByText(/\bwords?$/);
+    expect(page.contains(count)).toBe(false);
+  });
+
   it("puts the comments under the content, headed with how many there are", async () => {
     await mount();
     const panel = await screen.findByRole("region", { name: "Comments (1)" });

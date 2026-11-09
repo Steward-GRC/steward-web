@@ -237,7 +237,9 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const hasHistory = early !== null && !early.first && early.history.length > 0;
   // what changed since this approver last reviewed it comes first when there is any
   const hasSince = early !== null && early.sinceReview.some((s) => s.changeType !== "unchanged");
-  const [view, setView] = useState(hasSince ? "since" : hasChanges ? "changes" : "upcoming");
+  const [chosen, setView] = useState(hasSince ? "since" : hasChanges ? "changes" : "upcoming");
+  // Mark as reviewed clears the changes since, and with them their tab: show another, not nothing
+  const view = chosen === "since" && !hasSince ? (hasChanges ? "changes" : "upcoming") : chosen;
   const reviewedFetcher = useFetcher();
   // Inline comments on the version under review: whoever holds a seat on it comments and
   // replies; the drafter sees the same threads in the editor.
