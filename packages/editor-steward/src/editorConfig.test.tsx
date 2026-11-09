@@ -236,13 +236,32 @@ describe("what the editor shows in Steward", () => {
   });
 
   it("offers the file card ordinary attachments and never web or program files (bug log 187)", () => {
-    for (const extension of ["pdf", "docx", "xlsx", "pptx", "txt", "md", "csv", "mp4", "webm"]) {
+    for (const extension of [
+      "pdf",
+      "docx",
+      "xlsx",
+      "pptx",
+      "txt",
+      "md",
+      "csv",
+      "mp4",
+      "webm",
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "webp",
+    ]) {
       expect(FILE_UPLOAD_RULE.extensions).toContain(extension);
     }
     for (const extension of ["html", "htm", "svg", "xml", "js", "exe", "sh", "docm", "zip"]) {
       expect(FILE_UPLOAD_RULE.extensions).not.toContain(extension);
     }
     expect(FILE_UPLOAD_RULE.mimeTypes).toContain("application/pdf");
+    // a picture can be attached as a file and downloaded from its card (bug log 243); SVG still
+    // cannot, as served inline it is a stored-XSS vector
+    expect(FILE_UPLOAD_RULE.mimeTypes).toContain("image/png");
+    expect(FILE_UPLOAD_RULE.mimeTypes).not.toContain("image/svg+xml");
     expect(FILE_UPLOAD_RULE.mimeTypes).not.toContain("text/html");
     expect(FILE_UPLOAD_RULE.maxSize).toBe(10 * 1024 * 1024);
   });
