@@ -374,6 +374,9 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
   const reviewJobId =
     reviewFetcher.data?.ok && "jobId" in reviewFetcher.data ? reviewFetcher.data.jobId : null;
   const reviewJob = useAiJob(reviewJobId, reviewFetcher.state !== "idle");
+  // a start that was refused is a failed review, not a queued one that never moves
+  const reviewRefused =
+    reviewFetcher.state === "idle" && reviewFetcher.data?.ok === false && reviewJobId === null;
 
   const collabFetcher = useFetcher<typeof action>();
   const collabResolvers = useRef<TokenRequest[]>([]);
@@ -830,7 +833,7 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
         suggested={assistAnswer}
       />
       <AiReviewSheet
-        error={reviewJob.error}
+        error={reviewJob.error ?? (reviewRefused ? tAi("refused") : null)}
         findings={findings}
         onJump={jumpTo}
         onOpenChange={(open) => {
@@ -840,7 +843,7 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
         onRerun={startReview}
         open={reviewOpen}
         sections={sectionTexts}
-        stage={reviewJob.stage ?? "queued"}
+        stage={reviewRefused ? "failed" : (reviewJob.stage ?? "queued")}
       />
     </div>
   );

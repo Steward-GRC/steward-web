@@ -279,8 +279,9 @@ export const AiReviewSheet = ({
   const working = stage !== "done";
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
+      {/* Never busy: the review only reads the draft, so the X, Escape and a click outside always
+          close it, whatever the job is doing (bug log 255). */}
       <SideSheetContent
-        busy={stage !== "done" && stage !== "failed"}
         className="sm:w-[520px]"
         description={t("reviewSheet.description")}
         title={t("reviewSheet.title")}
