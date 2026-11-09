@@ -232,15 +232,28 @@ describe("the appendix page actions", () => {
       RestoreAppendix: () => ({ restoreAppendix: appendix("a-1", "A") }),
       RetireAppendix: () => ({ retireAppendix: appendix("a-1", "A") }),
     });
-    for (const intent of ["publish", "retire", "restore"]) {
+    for (const intent of ["publish", "restore"]) {
       const result = await run({ intent });
       expect(result.data).toMatchObject({ intent, ok: true });
     }
     expect(calls.map((c) => c.operation).filter((o) => o.endsWith("Appendix"))).toEqual([
       "PublishAppendix",
-      "RetireAppendix",
       "RestoreAppendix",
     ]);
+  });
+
+  it("retires and goes back to the policy's editing page (bug log 244)", async () => {
+    // the address holds a letter, and retiring renumbers the rest: staying would open the next one
+    const calls = routeGateway({
+      ...handlers([appendix("a-1", "A")]),
+      RetireAppendix: () => ({ retireAppendix: appendix("a-1", "A") }),
+    });
+    const response = (await action(
+      call({ intent: "retire" }, "A") as unknown as Parameters<typeof action>[0],
+    )) as Response;
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe("/drafts/FIN-001");
+    expect(calls.filter((c) => c.operation === "RetireAppendix")).toHaveLength(1);
   });
 
   it("issues a co-editing token for the appendix's own room", async () => {
