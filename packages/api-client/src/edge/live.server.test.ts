@@ -782,10 +782,27 @@ describe("liveEdge.myManagedGroups", () => {
 });
 
 describe("liveEdge.authorableGroups", () => {
-  it("keeps only the categories the caller's scopes list as authorable", async () => {
-    routeGateway({ ...treeHandlers, Me: () => ({ me }) });
+  it("keeps the categories the caller's scopes list as authorable, and everything under them (bug log 234)", async () => {
+    // a grant on a category covers its subcategories at the gateway, so the list must too
+    routeGateway({
+      CategoryTree: () => ({
+        categoryTree: [...allCategories, category("c-people", "People")],
+      }),
+      Me: () => ({ me }),
+    });
     const groups = await liveEdge.authorableGroups();
-    expect(groups.map((g) => g.name)).toEqual(["Finance"]);
+    expect(groups.map((g) => g.name)).toEqual(["Finance", "Travel"]);
+  });
+
+  it("includes a subcategory two levels down", async () => {
+    routeGateway({
+      CategoryTree: () => ({
+        categoryTree: [...allCategories, category("c-air", "Air", "c-travel")],
+      }),
+      Me: () => ({ me }),
+    });
+    const groups = await liveEdge.authorableGroups();
+    expect(groups.map((g) => g.name)).toEqual(["Finance", "Travel", "Air"]);
   });
 });
 
