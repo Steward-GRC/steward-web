@@ -106,8 +106,10 @@
     "withdraw": {
       "action": "Withdraw",
       "description": "The approvers stop reviewing it and it goes back to Draft. Your changes stay.",
+      "failed": "It could not be withdrawn. Try again.",
       "keep": "Keep in review",
       "menu": "Withdraw from review…",
+      "refused": "It is no longer in review.",
       "title": "Withdraw from review?"
     },
     "wordCount": {
