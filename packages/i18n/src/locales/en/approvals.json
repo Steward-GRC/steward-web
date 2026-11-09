@@ -153,6 +153,10 @@
       "rejected": {
         "body": "Your decision and comment are recorded. The author is told changes were requested.",
         "title": "Rejected."
+      },
+      "rejectedVote": {
+        "body": "Your rejection and comment are recorded against your name, with your comment as your reason. The version stays in review until the quorum decides.",
+        "title": "Your vote is recorded."
       }
     },
     "decision": {
