@@ -41,7 +41,7 @@ export default function NewWorkflow({ actionData }: Route.ComponentProps) {
 
       <Form
         aria-label={t("workflows.add.title")}
-        className="grid gap-3 rounded-[10px] border border-border bg-surface p-4 md:grid-cols-2"
+        className="flex flex-col gap-3 rounded-[10px] border border-border bg-surface p-4"
         method="post"
       >
         <Field label={t("workflows.editor.name")}>
@@ -52,7 +52,6 @@ export default function NewWorkflow({ actionData }: Route.ComponentProps) {
         </Field>
         {actionData && !actionData.ok ? (
           <Banner
-            className="md:col-span-2"
             failure={"failure" in actionData ? actionData.failure : undefined}
             title={t("workflows.add.failed")}
             tone="danger"
@@ -60,7 +59,7 @@ export default function NewWorkflow({ actionData }: Route.ComponentProps) {
             {"validationError" in actionData ? t("workflows.editor.required") : null}
           </Banner>
         ) : null}
-        <div className="flex items-center justify-end gap-2 md:col-span-2">
+        <div className="flex items-center justify-end gap-2">
           <Button asChild variant="secondary">
             <Link to="/workflows">{t("workflows.add.cancel")}</Link>
           </Button>

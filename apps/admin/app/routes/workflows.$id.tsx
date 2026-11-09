@@ -229,7 +229,7 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
         </div>
       ) : null}
 
-      <fieldset className="grid gap-3 rounded-[10px] border border-border bg-surface p-4 md:grid-cols-2">
+      <fieldset className="flex flex-col gap-3 rounded-[10px] border border-border bg-surface p-4">
         <legend className="sr-only">{t("workflows.editor.details")}</legend>
         <Field
           error={invalid ? t("workflows.editor.required") : undefined}

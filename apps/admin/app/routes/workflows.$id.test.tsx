@@ -98,6 +98,18 @@ describe("The workflow editor (A9)", () => {
     expect(screen.queryByText("Draft")).not.toBeInTheDocument();
   });
 
+  it("stacks the name above the description, full width (bug log 253)", async () => {
+    openEditor();
+    await screen.findByRole("heading", { level: 1 });
+    const details = screen.getByRole("group", { name: "Name and description" });
+    expect(details.className).not.toContain("grid-cols-2");
+    const name = within(details).getByLabelText("Name");
+    const description = within(details).getByLabelText("Description");
+    expect(
+      name.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("shows each stage's quorum as One, Quorum or All with its explanation", async () => {
     openEditor();
     await screen.findByRole("heading", { level: 1 });
