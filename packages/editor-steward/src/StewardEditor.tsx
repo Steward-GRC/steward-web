@@ -61,6 +61,11 @@ export interface StewardEditorHandle {
   replaceSelection: (text: string) => boolean;
   /** Replace the whole document. In a collaborative session the change syncs to every peer. */
   setDocument: (document: SerializedDocument) => void;
+  /**
+   * Calls `listener` with the document after every update the editor makes, a room's sync
+   * included, which `onChange` does not report. Returns the function that stops it.
+   */
+  watchDocument: (listener: (document: SerializedDocument) => void) => () => void;
 }
 
 export interface StewardEditorProps {
@@ -326,6 +331,10 @@ export const StewardEditor = ({
           const editor = api.editorInstance;
           editor.setEditorState(editor.parseEditorState(serializeDocument(document)));
         },
+        watchDocument: (listener) =>
+          api.editorInstance.registerUpdateListener(({ editorState }) =>
+            listener(stripMarks(editorState.toJSON() as SerializedDocument)),
+          ),
       });
     },
     [onReady],
