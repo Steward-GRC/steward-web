@@ -335,7 +335,6 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
   });
   // every place the status shows on this screen follows the version's real status (bug log 205)
   const status = inReview ? "in-review" : "draft";
-  const statusWord = inReview ? t("editor.inReviewWord") : t("editor.draftWord");
   const aiHealth = useAiHealth({
     available: loaderData.aiHealth.available,
     reason: loaderData.aiHealth.reason ?? null,
@@ -693,11 +692,13 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
           </>
         }
         breadcrumb={
-          <RecordBreadcrumb page={statusWord} published={!firstPublish} record={policy} />
+          <RecordBreadcrumb
+            page={t("editor.start.page")}
+            published={!firstPublish}
+            record={policy}
+          />
         }
-        meta={[policy.number, firstPublish ? "v1.0.0" : null, statusWord]
-          .filter(Boolean)
-          .join(" · ")}
+        meta={[policy.number, firstPublish ? "v1.0.0" : null].filter(Boolean).join(" · ")}
         presence={
           collabSession.mode === "live" ? (
             <Presence
