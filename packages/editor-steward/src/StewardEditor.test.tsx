@@ -106,6 +106,32 @@ describe("StewardEditor", () => {
     expect(await screen.findByText("Replaced")).toBeInTheDocument();
   });
 
+  it("reports every update of the document to a watcher, and stops when it is stopped (bug log 236)", async () => {
+    // a room's sync reaches the editor without a change event, so the page needs to be able to ask
+    const { handle } = await mount();
+    const seen: string[] = [];
+    const stop = handle.watchDocument((document) => seen.push(JSON.stringify(document)));
+    const replacement: SerializedDocument = {
+      root: {
+        children: [
+          {
+            children: [{ text: "Synced", type: "text", version: 1 }],
+            type: "paragraph",
+            version: 1,
+          },
+        ],
+        type: "root",
+      },
+    };
+    handle.setDocument(replacement);
+    await waitFor(() => expect(seen.some((entry) => entry.includes("Synced"))).toBe(true));
+    stop();
+    const count = seen.length;
+    handle.setDocument(fixture);
+    await screen.findByText("Aspirin");
+    expect(seen).toHaveLength(count);
+  });
+
   it("offers a text box to type in, and makes it read-only on request", async () => {
     const editable = await mount();
     for (const box of await screen.findAllByRole("textbox")) {
