@@ -215,7 +215,12 @@ export const DecisionPanel = ({ busy, children, className, error, note }: Decisi
             {t("review.decision.approve")}
           </button>
         </div>
-        <p className="text-xs text-muted max-md:hidden">{t("review.decision.recorded")}</p>
+        <p
+          className="rounded-md bg-info-soft px-3 py-2 text-xs text-info max-md:hidden"
+          role="note"
+        >
+          {t("review.decision.recorded")}
+        </p>
         <p className="text-xs text-muted md:hidden">{t("review.decision.phoneNote")}</p>
       </Form>
       <DecisionDialog busy={busy} decision={dialog} error={error} onClose={() => setDialog(null)}>

@@ -22,6 +22,7 @@ import {
   DocumentType,
   PolicyAppendices,
   PolicyDocument,
+  policyPath,
   PolicyReaderHistory,
   RecordBreadcrumb,
 } from "@steward-web/ui/domain";
@@ -31,7 +32,7 @@ import {
   getVersionDocument,
   listPolicies,
 } from "@steward-web/ui/domain/server";
-import { Check, ChevronLeft } from "lucide-react";
+import { Check, ChevronLeft, Info } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { data, Link, useFetcher } from "react-router";
 
@@ -174,7 +175,17 @@ const IN_REVIEW = "IN_REVIEW";
 const statusOf = (status: string) => status.replace(/^APPROVAL_STATUS_/, "");
 
 /** U25o's notes in place of the decision panel: a left edge by weight, a title and a line. */
-const Note = ({ body, title, tone }: { body: string; title: string; tone: "info" | "neutral" }) => (
+const Note = ({
+  body,
+  link,
+  title,
+  tone,
+}: {
+  body: string;
+  link?: { label: string; to: string };
+  title: string;
+  tone: "info" | "neutral";
+}) => (
   <div
     className={cn(
       "flex flex-col gap-0.5 rounded-lg bg-surface px-4 py-3.5 text-base",
@@ -187,6 +198,11 @@ const Note = ({ body, title, tone }: { body: string; title: string; tone: "info"
   >
     <b className="font-semibold">{title}</b>
     <span className="text-muted">{body}</span>
+    {link ? (
+      <Link className="mt-1 self-start text-primary hover:underline" to={link.to}>
+        {link.label}
+      </Link>
+    ) : null}
   </div>
 );
 
@@ -260,12 +276,21 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
 
   let aside: ReactNode = null;
   if (decided) {
+    // an approval is the green kind of result; a rejection is information, not a success
+    const rejected = decided === "rejected";
     aside = (
       <div
-        className="flex items-center gap-2.5 rounded-lg bg-ok-soft px-4 py-3.5 text-base text-ok"
+        className={cn(
+          "flex items-center gap-2.5 rounded-lg px-4 py-3.5 text-base",
+          rejected ? "bg-info-soft text-info" : "bg-ok-soft text-ok",
+        )}
         role="status"
       >
-        <Check aria-hidden="true" className="size-4 flex-none" />
+        {rejected ? (
+          <Info aria-hidden="true" className="size-4 flex-none" />
+        ) : (
+          <Check aria-hidden="true" className="size-4 flex-none" />
+        )}
         <span>
           <b>{t(`review.decided.${decided}.title`)}</b> {t(`review.decided.${decided}.body`)}
         </span>
@@ -439,6 +464,23 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
                 appendixLabel={appendixLabel}
                 blocks={review.upcoming.blocks}
                 definitions={[]}
+              />
+            ) : statusOf(workflow.status) === "PUBLISHED" ? (
+              <Note
+                body={t("review.published.body")}
+                link={
+                  match.number
+                    ? {
+                        label: t("review.published.link", { number: match.number }),
+                        to: policyPath({
+                          documentType: match.documentType ?? DocumentType.Policy,
+                          number: match.number,
+                        }),
+                      }
+                    : undefined
+                }
+                title={t("review.published.title")}
+                tone="info"
               />
             ) : (
               <Unavailable>{t("review.upcoming.unavailable")}</Unavailable>

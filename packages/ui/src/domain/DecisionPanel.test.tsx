@@ -45,9 +45,12 @@ describe("the decision panel (U25)", () => {
     expect(within(panel).getByLabelText("Decision comment")).toHaveAccessibleDescription(
       "Required to approve, reject or send comments…",
     );
-    expect(
-      within(panel).getByText("Your decision and comment are recorded against your name."),
-    ).toBeInTheDocument();
+    const recorded = within(panel).getByText(
+      "Your decision and comment are recorded against your name.",
+    );
+    // an info callout (bug log 240), not a line of small print
+    expect(recorded).toHaveAttribute("role", "note");
+    expect(recorded).toHaveClass("bg-info-soft");
   });
 
   it("offers Send comments, Reject and Approve, all disabled until there's a comment", async () => {

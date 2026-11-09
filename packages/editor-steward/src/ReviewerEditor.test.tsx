@@ -108,7 +108,10 @@ describe("the reviewer's editor", () => {
 
   it("says when there are no comments yet", async () => {
     await mount(review({ threads: [] }));
-    expect(await screen.findByRole("region", { name: "Comments (0)" })).toBeInTheDocument();
+    const empty = await screen.findByRole("region", { name: "Comments (0)" });
+    expect(empty).toBeInTheDocument();
+    // boxed like the Your decision panel (bug log 240)
+    expect(empty).toHaveClass("rounded-lg", "border", "bg-surface");
     expect(screen.getByText("No comments yet.")).toBeInTheDocument();
   });
 
