@@ -151,19 +151,21 @@ const CommentCard: FC<{
   const [to, setTo] = useState(recipients.length === 1 ? recipients[0]!.id : "");
   const [anchor] = useState(() => editor.getEditorState().read($selectionAnchor));
   const [body, setBody] = useState("");
-  // starts as the selected words: changing them is what makes the comment a suggestion
-  const [suggested, setSuggested] = useState(anchor?.quote ?? "");
+  // ticking "Suggest a change" is what makes the comment a suggestion (bug log 247)
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggested, setSuggested] = useState("");
   const [busy, setBusy] = useState(false);
+  const proposed = suggested.trim();
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!anchor || !body.trim() || (recipients.length > 0 && !to)) return;
+    if (!anchor || !body.trim() || (recipients.length > 0 && !to) || (suggesting && !proposed))
+      return;
     setBusy(true);
     try {
-      const proposed = suggested.trim();
       await onAdd({
         ...anchor,
         body: body.trim(),
-        ...(proposed && proposed !== anchor.quote.trim() ? { suggestedText: proposed } : {}),
+        ...(suggesting ? { suggestedText: proposed } : {}),
         ...(recipients.length > 0 ? { toUserId: to } : {}),
       });
       close();
@@ -198,19 +200,35 @@ const CommentCard: FC<{
         placeholder={t("editor.comments.placeholder")}
         value={body}
       />
-      <Textarea
-        label={t("editor.comments.suggestedText")}
-        onChange={setSuggested}
-        placeholder={t("editor.comments.suggestedText")}
-        value={suggested}
-      />
+      <label className="flex items-center gap-2 text-sm text-ink">
+        <input
+          checked={suggesting}
+          onChange={(event) => setSuggesting(event.target.checked)}
+          type="checkbox"
+        />
+        {t("editor.comments.suggestChange")}
+      </label>
+      {suggesting ? (
+        <Textarea
+          label={t("editor.comments.suggestedText")}
+          onChange={setSuggested}
+          placeholder={t("editor.comments.suggestedPlaceholder")}
+          value={suggested}
+        />
+      ) : null}
       <div className="flex justify-end gap-2">
         <button className="rounded-md px-2.5 py-1.5 text-sm" onClick={close} type="button">
           {t("editor.comments.cancel")}
         </button>
         <button
           className="rounded-md bg-primary px-2.5 py-1.5 text-sm font-medium text-on-primary disabled:opacity-60"
-          disabled={busy || !anchor || !body.trim() || (recipients.length > 0 && !to)}
+          disabled={
+            busy ||
+            !anchor ||
+            !body.trim() ||
+            (recipients.length > 0 && !to) ||
+            (suggesting && !proposed)
+          }
           type="submit"
         >
           {t("editor.comments.send")}
