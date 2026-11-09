@@ -4,6 +4,7 @@ import { formatDayMonth } from "@steward-web/i18n";
 import { Toaster } from "@steward-web/ui";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { createRoutesStub, useActionData } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
@@ -322,6 +323,25 @@ describe("sending comments from the review page", () => {
   });
 });
 
+/** The review page that is handed new loader data when "clear" is pressed, as a revalidation does. */
+const SwitchingReview = ({
+  first,
+  then,
+}: {
+  first: Record<string, unknown>;
+  then: Record<string, unknown>;
+}) => {
+  const [data, setData] = useState(first);
+  return (
+    <>
+      <button onClick={() => setData(then)} type="button">
+        clear
+      </button>
+      <ApprovalReviewRoute {...({ actionData: undefined, loaderData: data } as unknown as Props)} />
+    </>
+  );
+};
+
 const openReview = (data: Record<string, unknown>) => {
   const reviewed = vi.fn();
   const Stub = createRoutesStub([
@@ -369,6 +389,21 @@ describe("what changed since the approver last reviewed", () => {
   it("is not a tab when nothing changed since", () => {
     openReview(loaderData);
     expect(screen.queryByRole("tab", { name: "Changes since you last reviewed" })).toBeNull();
+  });
+
+  it("falls back to another tab once nothing is left to review, not to a blank page", async () => {
+    // Mark as reviewed clears the list: the tab goes, and the view it was on must not stay blank
+    const Stub = createRoutesStub([
+      {
+        Component: () => <SwitchingReview first={withChanges} then={loaderData} />,
+        path: "/approvals/:number",
+      },
+    ]);
+    render(<Stub initialEntries={["/approvals/POL-EXPENSES-000002"]} />);
+    await userEvent.click(screen.getByRole("button", { name: "clear" }));
+    const tab = screen.getByRole("tab", { selected: true });
+    expect(tab).toHaveTextContent(/Changes vs the current published version/);
+    expect(screen.getByRole("tabpanel")).not.toBeEmptyDOMElement();
   });
 
   it("marks the version reviewed", async () => {

@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Toaster } from "@steward-web/ui";
+import { notify, Toaster } from "@steward-web/ui";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
@@ -62,6 +62,20 @@ describe("Submit for approval (D37)", () => {
       await screen.findByText("A document with no content can't be submitted."),
     ).toBeInTheDocument();
     expect(screen.getByText("Write something in it first.")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["no content", { empty: true, missing: [] as string[] }],
+    ["a missing required section", { missing: ["Purpose"] }],
+    ["an incomplete button", { incompleteButtons: 1, missing: [] as string[] }],
+  ])("closes the blocked-submit toast by itself: %s (bug log 238)", async (_name, props) => {
+    const warning = vi.spyOn(notify, "warning").mockImplementation(() => "id");
+    inRouter(<SubmitForApproval document={document} {...props} />);
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    const options = warning.mock.calls.at(-1)?.[1];
+    expect(options?.duration).toBeDefined();
+    expect(Number.isFinite(options?.duration)).toBe(true);
+    warning.mockRestore();
   });
 
   it("names the workflow when it's known", async () => {

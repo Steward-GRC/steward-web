@@ -63,6 +63,8 @@ export const ToastCard = ({ description, failure, onClose, title, tone }: ToastC
 
 export interface NotifyOptions {
   description?: ReactNode;
+  /** Milliseconds before it closes by itself; a warning or error otherwise stays until closed. */
+  duration?: number;
   failure?: Failure;
 }
 
@@ -80,8 +82,12 @@ const show =
         />
       ),
       // A toast that holds Copy diagnostics stays until it's closed, so it never times out
-      // while someone is reaching for the button.
-      { duration: tone === "warning" || tone === "error" ? Number.POSITIVE_INFINITY : 5000 },
+      // while someone is reaching for the button, unless the caller says how long it may stay.
+      {
+        duration:
+          options.duration ??
+          (tone === "warning" || tone === "error" ? Number.POSITIVE_INFINITY : 5000),
+      },
     );
 
 /** Show a toast: bottom centre, with a close button on every tone. */
