@@ -76,6 +76,25 @@ describe("the live diff in the editor (bug log 228)", () => {
     expect(marker).toHaveAttribute("data-diff-removed", "");
   });
 
+  it("marks a heading that is now plain text, with the same words (bug log 261)", async () => {
+    const heading: SerializedNode = {
+      children: [text("Appendix A")],
+      direction: null,
+      format: "",
+      indent: 0,
+      tag: "h1",
+      type: "heading",
+      version: 1,
+    };
+    await mount({
+      initialDocument: document("Appendix A", "Rates."),
+      liveDiff: { published: wrapRoot([heading, paragraph("Rates.")]) },
+    });
+    const marker = await screen.findByLabelText("Format changed: Heading 1 → Paragraph");
+    expect(marker).toHaveAttribute("data-diff-format", "");
+    expect(painted("steward-diff-added")).toEqual([]);
+  });
+
   it("shows nothing without a published text to compare to", async () => {
     await mount({});
     expect(highlights.size).toBe(0);

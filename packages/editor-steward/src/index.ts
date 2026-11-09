@@ -9,6 +9,7 @@ export {
   type StewardCollaboration,
 } from "./collab/stewardCollaboration";
 export * from "./document";
+export { formatChangeText } from "./formatChangeText";
 export { LexicalDocumentView, type LexicalDocumentViewProps } from "./LexicalDocumentView";
 export type { ReviewComments, ReviewThreadMessage, ReviewThreadView } from "./ReviewComments";
 export type { ReviewerEditorProps } from "./ReviewerEditor";

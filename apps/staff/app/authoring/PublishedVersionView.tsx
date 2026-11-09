@@ -1,7 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
+  blockFormatsOf,
   diffBlocks,
+  formatChangeText,
   LexicalDocumentView,
   type SerializedDocument,
   textBlocksOf,
@@ -31,7 +33,13 @@ export const PublishedVersionView = ({
 }) => {
   const { t } = useTranslation("authoring");
   const diff = useMemo(
-    () => (earlier ? diffBlocks(textBlocksOf(earlier), textBlocksOf(document)) : undefined),
+    () =>
+      earlier
+        ? diffBlocks(textBlocksOf(earlier), textBlocksOf(document), {
+            current: blockFormatsOf(document),
+            published: blockFormatsOf(earlier),
+          })
+        : undefined,
     [document, earlier],
   );
   const blocks = useMemo(() => textBlocksOf(document), [document]);
@@ -90,6 +98,14 @@ export const PublishedVersionView = ({
         return (
           <Fragment key={index}>
             {gone(index)}
+            {block.format ? (
+              <span
+                className="w-fit rounded-sm bg-[var(--info-soft)] px-1.5 font-sans text-xs font-semibold text-[var(--info)]"
+                data-diff-format=""
+              >
+                {formatChangeText(t, block.format)}
+              </span>
+            ) : null}
             <p>{parts}</p>
           </Fragment>
         );
