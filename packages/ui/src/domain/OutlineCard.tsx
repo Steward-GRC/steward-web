@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
 import { ChevronDown, PanelLeft } from "lucide-react";
-import { type ReactNode, useEffect, useId, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useId, useState } from "react";
 
 import { cn } from "#ui/lib/cn";
 
@@ -22,6 +22,8 @@ export interface OutlineItem {
   level?: 1 | 2;
   /** The mono number in the left column: "1", "2", "A". */
   number?: string;
+  /** Draws the line that sets the appendices apart from the sections above; on the first appendix only. */
+  separatorBefore?: boolean;
 }
 
 /** Follows the heading nearest the top of the viewport, for the "n of N" count and progress bar only. */
@@ -152,27 +154,31 @@ export const OutlineCard = ({ footer, items, onCollapsedChange }: OutlineCardPro
           {items.map((item) => {
             const sub = item.level === 2;
             return (
-              <a
-                className={cn(
-                  "grid items-baseline gap-1 rounded-md px-2.5 py-[7px] no-underline hover:bg-sunken",
-                  sub
-                    ? "grid-cols-1 pl-[38px] text-base text-muted"
-                    : "grid-cols-[28px_1fr] text-ink",
-                )}
-                data-level={sub ? 2 : 1}
-                href={`#${item.id}`}
-                key={item.id}
-                onClick={() => setMenuOpen(false)}
-              >
-                {sub ? null : (
-                  <>
-                    <span className="font-mono text-xs font-medium text-muted">
-                      {item.number}
-                    </span>{" "}
-                  </>
-                )}
-                <span>{item.label}</span>
-              </a>
+              <Fragment key={item.id}>
+                {item.separatorBefore ? (
+                  <div className="mx-2.5 my-1 border-t border-border-strong" role="separator" />
+                ) : null}
+                <a
+                  className={cn(
+                    "grid items-baseline gap-1 rounded-md px-2.5 py-[7px] no-underline hover:bg-sunken",
+                    sub
+                      ? "grid-cols-1 pl-[38px] text-base text-muted"
+                      : "grid-cols-[28px_1fr] text-ink",
+                  )}
+                  data-level={sub ? 2 : 1}
+                  href={`#${item.id}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {sub ? null : (
+                    <>
+                      <span className="font-mono text-xs font-medium text-muted">
+                        {item.number}
+                      </span>{" "}
+                    </>
+                  )}
+                  <span>{item.label}</span>
+                </a>
+              </Fragment>
             );
           })}
         </nav>

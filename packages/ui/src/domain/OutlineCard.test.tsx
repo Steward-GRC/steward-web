@@ -46,6 +46,20 @@ afterEach(() => {
 });
 
 describe("the reader outline (U7)", () => {
+  it("draws one line before the appendices, only when there are appendices (bug log 258)", () => {
+    const { rerender } = render(
+      <OutlineCard
+        items={items.map((item) =>
+          item.id === "appendix-a" ? { ...item, separatorBefore: true } : item,
+        )}
+      />,
+    );
+    const outline = screen.getByRole("navigation", { name: "On this page" });
+    expect(within(outline).getAllByRole("separator")).toHaveLength(1);
+    rerender(<OutlineCard items={items.filter((item) => item.id !== "appendix-a")} />);
+    expect(within(outline).queryByRole("separator")).toBeNull();
+  });
+
   it("lists the sections, numbered, with sub-sections indented", () => {
     render(<OutlineCard items={items} />);
     const outline = screen.getByRole("navigation", { name: "On this page" });

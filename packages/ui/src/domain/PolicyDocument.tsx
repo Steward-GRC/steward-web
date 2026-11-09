@@ -82,11 +82,12 @@ export const outlineItems = (
             level: 2,
           },
     ),
-  ...appendices.map((appendix): OutlineItem => ({
+  ...appendices.map((appendix, index): OutlineItem => ({
     id: appendixId(appendix),
     label: appendixLabel(appendix),
     level: 1,
     number: appendix.letter,
+    ...(index === 0 ? { separatorBefore: true } : {}),
   })),
 ];
 

@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import type { PolicyAppendix } from "./policyReaderModel";
 
-import { PolicyAppendices, PolicyDocument } from "./PolicyDocument";
+import { outlineItems, PolicyAppendices, PolicyDocument } from "./PolicyDocument";
 
 const appendix = (letter: string, title: string): PolicyAppendix =>
   ({ blocks: [], id: `appendix-${letter}`, letter, text: "Rates.", title }) as PolicyAppendix;
@@ -55,5 +55,13 @@ describe("the line between the sections and the appendices (bug log 225)", () =>
       ),
     );
     expect(screen.getAllByRole("separator")).toHaveLength(1);
+  });
+});
+
+describe("the line before the appendices in the outline (bug log 258)", () => {
+  it("marks the first appendix only, and nothing without appendices", () => {
+    const two = outlineItems(body, [appendix("A", "Desk zones"), appendix("B", "Rates")], label);
+    expect(two.map((item) => item.separatorBefore)).toEqual([undefined, true, undefined]);
+    expect(outlineItems(body, [], label).some((item) => item.separatorBefore)).toBe(false);
   });
 });
