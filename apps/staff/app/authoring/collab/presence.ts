@@ -20,6 +20,8 @@ export type AwarenessState = Record<string, unknown>;
 
 /** A collaborator in the room, as the SERVER describes them. */
 export interface Collaborator {
+  /** "typing" while their content is changing; absent otherwise, which reads as editing. */
+  activity?: "typing";
   /** Server-assigned cursor colour. */
   color: string;
   /** Server-resolved display name; equals uid when identity had no name. */
@@ -78,7 +80,8 @@ export const collaboratorsFrom = (
     if (clientID === selfClientID) continue;
     const who = boundUserOf(states.get(clientID));
     if (!who) continue;
-    if (!byUid.has(who.uid)) byUid.set(who.uid, who);
+    const typing = states.get(clientID)?.activity === "typing";
+    if (!byUid.has(who.uid)) byUid.set(who.uid, typing ? { ...who, activity: "typing" } : who);
   }
   return [...byUid.values()];
 };
@@ -91,3 +94,30 @@ export const selfIdentityFrom = (
   states: ReadonlyMap<number, AwarenessState>,
   selfClientID: number,
 ): Collaborator | undefined => boundUserOf(states.get(selfClientID));
+
+/** How long after the last change a person still counts as typing. */
+export const TYPING_FOR_MS = 3000;
+
+/**
+ * Tells the room what we are doing, in our awareness beside the identity the relay binds: "typing"
+ * on each change, "editing" once TYPING_FOR_MS has passed without one.
+ */
+export const trackTyping = (awareness: {
+  setLocalStateField: (field: string, value: unknown) => void;
+}): { dispose: () => void; touch: () => void } => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return {
+    dispose: () => {
+      if (timer !== undefined) clearTimeout(timer);
+      timer = undefined;
+    },
+    touch: () => {
+      awareness.setLocalStateField("activity", "typing");
+      if (timer !== undefined) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = undefined;
+        awareness.setLocalStateField("activity", "editing");
+      }, TYPING_FOR_MS);
+    },
+  };
+};
