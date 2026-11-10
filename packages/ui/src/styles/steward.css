@@ -777,46 +777,15 @@ SPDX-License-Identifier: Apache-2.0
   }
 }
 
-/* The loading mark: the page fills, the lines type, then the ribbon drops, once (2.8 s), and
-   it then holds the complete mark. It never loops: a long wait (a slow connection) would spend
-   most of its time on a part of the mark, a plain plum page with no lines. */
-@keyframes stw-fill {
+/* The loading mark is always complete; a light sweeps across the page (2.8 s loop). It never
+   builds the mark up from a part: a long wait would spend most of its time on a bare plum page. */
+@keyframes stw-sheen {
   0% {
-    transform: translateY(40px);
+    transform: translateX(0) skewX(-18deg);
   }
-  28%,
+  60%,
   100% {
-    transform: translateY(0);
-  }
-}
-@keyframes stw-l1 {
-  0%,
-  32% {
-    stroke-dashoffset: 1;
-  }
-  50%,
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes stw-l2 {
-  0%,
-  50% {
-    stroke-dashoffset: 1;
-  }
-  62%,
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes stw-rib {
-  0%,
-  66% {
-    transform: translateY(-22px);
-  }
-  80%,
-  100% {
-    transform: translateY(0);
+    transform: translateX(78px) skewX(-18deg);
   }
 }
 /* G1 is never shown for under 400 ms (Gates canvas): it fades in only after that. */
@@ -844,17 +813,8 @@ SPDX-License-Identifier: Apache-2.0
 }
 
 @layer components {
-  .stw-loader-fill {
-    animation: stw-fill 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-  .stw-loader-l1 {
-    animation: stw-l1 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-  .stw-loader-l2 {
-    animation: stw-l2 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-  .stw-loader-rib {
-    animation: stw-rib 2.8s cubic-bezier(0, 0, 0, 1) forwards;
+  .stw-loader-sheen {
+    animation: stw-sheen 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
   .stw-appear-late {
     animation: stw-appear 120ms linear 400ms both;
