@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { createRequestHandler, type ServerBuild } from "react-router";
 
+import { parseAllowedActionOrigins, withAllowedActionOrigins } from "./allowedOrigins.ts";
 import { isAssetRoute, proxyAssets } from "./assetProxy.ts";
 import { attachCollabProxy } from "./collabProxy.ts";
 import { createReadinessChecker, handleHealthRoute, resolveBuildInfo } from "./health.ts";
@@ -57,7 +58,12 @@ const checkReady = createReadinessChecker({ ping: pingGateway });
 // createRequestHandler, @remix-run/node-fetch-server's createRequestListener) lets TRUST_PROXY
 // turn on `X-Forwarded-Proto`/`X-Forwarded-Host`, which this server needs to match the protocol
 // a browser's own Origin header reports and pass React Router's same-origin action check.
-const handleRequest = createRequestHandler(() => import(serverBuildPath) as Promise<ServerBuild>);
+// ALLOWED_ACTION_ORIGINS adds hosts React Router's same-origin check accepts besides the request's
+// own, for a proxy chain that cannot forward the original scheme and host.
+const allowedActionOrigins = parseAllowedActionOrigins(process.env);
+const handleRequest = createRequestHandler(async () =>
+  withAllowedActionOrigins((await import(serverBuildPath)) as ServerBuild, allowedActionOrigins),
+);
 
 const ssrListener = createRequestListener((request: Request) => handleRequest(request), {
   trustProxy: isTrustProxyEnabled(process.env),
