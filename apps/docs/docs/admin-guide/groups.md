@@ -16,9 +16,11 @@ What this guide's [Concepts](/concepts) section calls a **category**, Steward's 
 ## 🗂️ Groups are the backbone
 
 Every policy and procedure lives in a group, and groups are arranged in a tree up to **three
-levels deep**. Choose **Categories** on the rail, then **Directory**: the tree sits in the panel
-beside the page, and picking a category there opens its **Details & Defaults**. On a narrower
-screen, where the panel is hidden, the page lists the categories instead.
+levels deep**. Choose **Categories** on the rail, then **Directory**: the page is the tree. Each
+category is a node that opens its sub-categories, and shows how many owners and sub-categories it
+has. Select a name to open its **Details & Defaults**. The **Search categories** box keeps the
+matches and the path down to them. The same tree sits in the panel beside the page on a wide
+screen.
 
 ## ➕ Create and manage a group
 
@@ -40,8 +42,16 @@ screen, where the panel is hidden, the page lists the categories instead.
 
 ## 🔀 Move a group
 
-**Move to** re-parents the category — and everything under it — to sit under a different one. A
-move that would push any part of the subtree deeper than three levels is rejected.
+Moving re-parents the category — and everything under it — to sit under a different one. A move
+that would push any part of the subtree deeper than three levels is rejected. There are three
+ways to do it:
+
+- on **Directory**, drag a category onto its new parent, or drop it on the **Drop here to make it
+  a top-level category** bar that appears while you drag;
+- on **Directory**, select **Move** on a category, choose the **New parent** (only the parents
+  that keep the branch within three levels are offered) and confirm. This works from the
+  keyboard;
+- **Move to** on the category's own page.
 
 :::warning
 Moving a group can change which defaults a document inherits, because inherited settings come
