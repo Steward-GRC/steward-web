@@ -14,49 +14,13 @@ import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
 
-const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
+import { depthOf, descendantIds, MAX_GROUP_DEPTH, subtreeHeight } from "./tree";
 
-/** The backend's own max taxonomy depth (root = depth 1); mirrored here only to grey out
- *  doomed move targets in the picker — the gateway enforces it regardless. */
-export const MAX_GROUP_DEPTH = 3;
+const cookieOf = (request: Request) => request.headers.get("cookie") ?? undefined;
 
 export { isValidSlug, slugify } from "./slug";
 
-/** Depth of a group within a flat group list (a root is depth 1). */
-export const depthOf = (groups: readonly Group[], groupId: string): number => {
-  let depth = 0;
-  let current = groups.find((g) => g.id === groupId);
-  while (current) {
-    depth += 1;
-    const parentId = current.parentId;
-    current = parentId ? groups.find((g) => g.id === parentId) : undefined;
-  }
-  return depth;
-};
-
-/** Height of a group's subtree (a leaf has height 1). */
-export const subtreeHeight = (groups: readonly Group[], groupId: string): number => {
-  const children = groups.filter((g) => g.parentId === groupId);
-  return children.length === 0
-    ? 1
-    : 1 + Math.max(...children.map((c) => subtreeHeight(groups, c.id)));
-};
-
-/** The group and all its descendants — invalid move targets (would form a cycle). */
-export const descendantIds = (groups: readonly Group[], groupId: string): Set<string> => {
-  const ids = new Set<string>([groupId]);
-  let grew = true;
-  while (grew) {
-    grew = false;
-    for (const g of groups) {
-      if (g.parentId && ids.has(g.parentId) && !ids.has(g.id)) {
-        ids.add(g.id);
-        grew = true;
-      }
-    }
-  }
-  return ids;
-};
+export { depthOf, descendantIds, MAX_GROUP_DEPTH, subtreeHeight } from "./tree";
 
 export interface GroupPath {
   /** What the category holds; missing reads as both. */

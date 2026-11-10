@@ -887,7 +887,40 @@
       "cancel": "Cancel",
       "failed": "Couldn't create this category"
     },
-    "templateLocked": "Authors must use this template"
+    "templateLocked": "Authors must use this template",
+    "tree": {
+      "label": "Category tree",
+      "expand": "Expand {{name}}",
+      "collapse": "Collapse {{name}}",
+      "owners_one": "{{count}} owner",
+      "owners_other": "{{count}} owners",
+      "children_one": "{{count}} sub-category",
+      "children_other": "{{count}} sub-categories",
+      "move": "Move",
+      "moveLabel": "Move {{name}}",
+      "dragHint": "Drag a category onto another to move it with everything under it, or use Move.",
+      "dropTop": "Drop here to make it a top-level category",
+      "noMatch": "No categories match.",
+      "dialog": {
+        "title": "Move {{name}}",
+        "description_one": "Moves {{name}} and its {{count}} sub-category with it.",
+        "description_other": "Moves {{name}} and its {{count}} sub-categories with it.",
+        "target": "New parent",
+        "depthNote": "Categories nest up to {{max}} levels. Parents that would put the moved branch deeper are not offered.",
+        "confirm": "Move",
+        "cancel": "Cancel",
+        "descriptionLeaf": "Moves {{name}} to a new parent."
+      },
+      "moved": "Moved {{name}} under {{parent}}.",
+      "movedTop": "Moved {{name}} to the top level.",
+      "refused": {
+        "depth": "That would nest {{name}} deeper than {{max}} levels.",
+        "descendant": "{{name}} can't move under one of its own sub-categories.",
+        "self": "{{name}} can't move under itself.",
+        "same": "{{name}} is already there.",
+        "failed": "Couldn't move {{name}}."
+      }
+    }
   },
   "workflows": {
     "title": "Workflows",
