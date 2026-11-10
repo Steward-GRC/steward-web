@@ -98,8 +98,8 @@ export const Lockup = ({
 };
 
 /**
- * The loading mark (2.8 s loop): the page fills with plum, the lines type left to right, then
- * the ribbon drops. With reduced motion it's the complete mark plus "Loading…".
+ * The loading mark (2.8 s, once): the page fills with plum, the lines type left to right, then
+ * the ribbon drops, and the complete mark stays. With reduced motion it's the complete mark plus "Loading…".
  */
 export const Loader = ({
   className,
@@ -148,7 +148,7 @@ export const Loader = ({
           strokeOpacity=".35"
           strokeWidth="1.5"
         />
-        <g className="stw-loader-g" clipPath={`url(#${clip})`}>
+        <g clipPath={`url(#${clip})`}>
           <rect
             className="stw-loader-fill hc:fill-white"
             fill="var(--primary)"
