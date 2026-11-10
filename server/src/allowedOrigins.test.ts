@@ -61,6 +61,7 @@ describe("the same-origin check behind a TLS-terminating proxy", () => {
   const post = async (
     options: { origins?: string[]; trustProxy: boolean },
     origin: string,
+    pathname = "/",
   ): Promise<number> => {
     const handle = createRequestHandler(withAllowedActionOrigins(baseBuild, options.origins ?? []));
     server = createServer(
@@ -71,7 +72,7 @@ describe("the same-origin check behind a TLS-terminating proxy", () => {
     await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
     const address = server.address();
     if (address == null || typeof address === "string") throw new Error("no port");
-    const response = await fetch(`http://127.0.0.1:${address.port}/`, {
+    const response = await fetch(`http://127.0.0.1:${address.port}${pathname}`, {
       body: new URLSearchParams({ a: "1" }),
       headers: {
         origin,
@@ -94,6 +95,18 @@ describe("the same-origin check behind a TLS-terminating proxy", () => {
 
   it("still rejects a different origin with the proxy trusted", async () => {
     expect(await post({ trustProxy: true }, "https://evil.example.net")).toBe(400);
+  });
+
+  // The client-side navigation path (React Router's single fetch, the "singleFetchAction" in
+  // the pod's log) runs the same check against the same list.
+  it("applies the same check to a single-fetch data request", async () => {
+    const options = { origins: ["steward.example.org"], trustProxy: false };
+    expect(await post({ trustProxy: false }, "https://steward.example.org", "/_root.data")).toBe(
+      400,
+    );
+    expect(await post(options, "https://steward.example.org", "/_root.data")).not.toBe(400);
+    await new Promise<void>((resolve) => server?.close(() => resolve()));
+    expect(await post(options, "https://evil.example.net", "/_root.data")).toBe(400);
   });
 
   it("accepts a listed host without trusting the proxy, and only that host", async () => {
