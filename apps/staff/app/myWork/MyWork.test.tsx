@@ -126,7 +126,7 @@ describe("U1: My work for an author and approver", () => {
       ["Sensitive", "1"],
     ])
       expect(within(library).getByTestId(`library-${label}`)).toHaveTextContent(`${label}${value}`);
-    expect(within(library).getByText("watermarked on export")).toBeInTheDocument();
+    expect(within(library).queryByText("watermarked on export")).toBeNull();
     expect(within(library).getByText("By category")).toBeInTheDocument();
     expect(within(library).getByRole("meter", { name: "Workplace" })).toHaveAttribute(
       "aria-valuenow",
