@@ -98,8 +98,10 @@ export const Lockup = ({
 };
 
 /**
- * The loading mark (2.8 s loop): the page fills with plum, the lines type left to right, then
- * the ribbon drops. With reduced motion it's the complete mark plus "Loading…".
+ * The loading mark: always the complete mark (the plum page, both text lines, the saffron
+ * ribbon), with a soft light sweeping across the page every 2.8 s. It never builds up from a
+ * part, so a long wait (a slow connection) never shows a bare plum page. With reduced motion
+ * it's the complete mark, still, plus "Loading…".
  */
 export const Loader = ({
   className,
@@ -139,43 +141,27 @@ export const Loader = ({
             <path d={PAGE} />
           </clipPath>
         </defs>
-        {/* High contrast draws the loading page white, as the Brand Guide's hc mark is. */}
+        {/* The complete mark, as the static Mark draws it; high contrast draws the page white. */}
+        <path className="hc:fill-white" d={PAGE} fill="var(--primary)" />
         <path
-          className="hc:stroke-white"
-          d={PAGE}
+          d="M15.5 31h17M15.5 37h10"
           fill="none"
-          stroke="var(--primary)"
-          strokeOpacity=".35"
-          strokeWidth="1.5"
+          stroke="var(--surface)"
+          strokeLinecap="round"
+          strokeWidth="3"
         />
-        <g className="stw-loader-g" clipPath={`url(#${clip})`}>
+        <path d={RIBBON} fill="var(--accent)" />
+        <g clipPath={`url(#${clip})`}>
           <rect
-            className="stw-loader-fill hc:fill-white"
-            fill="var(--primary)"
-            height="40"
-            width="48"
-            x="0"
-            y="4"
+            className="stw-loader-sheen"
+            fill="#fff"
+            fillOpacity=".28"
+            height="48"
+            transform="skewX(-18)"
+            width="9"
+            x="-14"
+            y="0"
           />
-          <path
-            className="stw-loader-l1"
-            d="M15.5 31h17"
-            pathLength={1}
-            stroke="var(--surface)"
-            strokeDasharray="1 1"
-            strokeLinecap="round"
-            strokeWidth="3"
-          />
-          <path
-            className="stw-loader-l2"
-            d="M15.5 37h10"
-            pathLength={1}
-            stroke="var(--surface)"
-            strokeDasharray="1 1"
-            strokeLinecap="round"
-            strokeWidth="3"
-          />
-          <path className="stw-loader-rib" d={RIBBON} fill="var(--accent)" />
         </g>
       </svg>
       <span className="hidden motion-reduce:inline">

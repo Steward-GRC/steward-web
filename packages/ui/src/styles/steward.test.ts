@@ -19,6 +19,13 @@ describe("the stored component recipes", () => {
     expect(rule(".doc h3")).toContain("margin-top: 1.8em");
   });
 
+  it("keeps the loading mark complete: a sweep over it, never a build-up from a part", () => {
+    expect(rule(".stw-loader-sheen")).toContain("stw-sheen");
+    for (const part of ["fill", "l1", "l2", "rib", "cycle"])
+      expect(css).not.toContain(`stw-${part}`);
+    expect(css).not.toContain("stw-loader-g");
+  });
+
   it("keeps the reading style full width (decision 2-layout-and-navigation.s9)", () => {
     expect(rule(".doc")).not.toContain("max-width");
   });
