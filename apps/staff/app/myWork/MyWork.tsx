@@ -43,17 +43,17 @@ const Heading = ({ email }: { email: string }) => {
 const Library = ({ library }: { library: LibraryOverview }) => {
   const { t } = useTranslation("approvals");
   const most = Math.max(1, ...library.byCategory.map((c) => c.count));
-  const tiles: [string, number, string?][] = [
+  const tiles: [string, number][] = [
     [t("myWork.library.policies"), library.policies],
     [t("myWork.library.published"), library.published],
     [t("myWork.library.drafts"), library.drafts],
     [t("myWork.library.inReview"), library.inReview],
-    [t("myWork.library.sensitive"), library.sensitive, t("myWork.library.sensitiveNote")],
+    [t("myWork.library.sensitive"), library.sensitive],
   ];
   return (
     <Card title={t("myWork.library.title")}>
       <div className="grid grid-cols-2 sm:grid-cols-5">
-        {tiles.map(([label, value, note]) => (
+        {tiles.map(([label, value]) => (
           <div
             className="flex flex-col gap-1 border-r border-border px-4 py-3.5 last:border-r-0"
             data-testid={`library-${label}`}
@@ -63,7 +63,6 @@ const Library = ({ library }: { library: LibraryOverview }) => {
             <Tally className="self-start" size="lg">
               {value}
             </Tally>
-            {note ? <span className="text-[11px] text-muted">{note}</span> : null}
           </div>
         ))}
       </div>
