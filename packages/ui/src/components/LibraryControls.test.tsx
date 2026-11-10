@@ -111,6 +111,18 @@ describe("the pager (U3)", () => {
   });
 });
 
+/** The page numbers and gaps the pager draws on a page. */
+const slots = (page: number) => {
+  const { unmount } = render(<Pager onPage={() => {}} page={page} pageSize={10} total={110} />);
+  const pager = screen.getByRole("navigation", { name: "Pages" });
+  const numbers = within(pager)
+    .getAllByRole("button")
+    .filter((button) => /^Page \d+$/.test(button.getAttribute("aria-label") ?? "")).length;
+  const gaps = within(pager).queryAllByText("…").length;
+  unmount();
+  return numbers + gaps;
+};
+
 describe("the pager's page jump and page size", () => {
   it("jumps to any page from a dropdown, however many pages there are", async () => {
     const onPage = vi.fn();
@@ -133,6 +145,20 @@ describe("the pager's page jump and page size", () => {
     expect(buttons).toContain("Page 35");
     expect(buttons).not.toContain("Page 9");
     expect(within(pager).getAllByText("…").length).toBe(2);
+  });
+
+  it("shows the same number of slots on every page, so the pager keeps its width", () => {
+    expect(Array.from({ length: 11 }, (_, index) => slots(index + 1))).toEqual(
+      Array.from({ length: 11 }, () => 7),
+    );
+  });
+
+  it("gives the page numbers the chevrons' height, so the row lines up", () => {
+    render(<Pager onPage={() => {}} page={2} pageSize={20} total={45} />);
+    const pager = screen.getByRole("navigation", { name: "Pages" });
+    for (const button of within(pager).getAllByRole("button"))
+      if (/^Page \d+$/.test(button.getAttribute("aria-label") ?? ""))
+        expect(button).toHaveClass("h-6");
   });
 
   it("picks how many rows a page shows", async () => {

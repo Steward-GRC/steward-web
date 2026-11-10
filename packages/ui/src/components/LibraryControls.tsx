@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { formatNumber, useTranslation } from "@steward-web/i18n";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useId } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 
 import { cn } from "#ui/lib/cn";
 
@@ -174,17 +174,30 @@ export const SortHeader = ({
   </th>
 );
 
-/** The page numbers to show: all of them when there are few, else the first, the last and the
- *  ones beside the current page, with a gap (null) where the rest are. */
+/** How many slots the page numbers take, gaps included, once there are more pages than this. */
+const SLOTS = 7;
+
+/**
+ * The page numbers to show: all of them when there are few, else always SLOTS entries (the first,
+ * the last, the ones beside the current page, and a gap, null, where the rest are). The count
+ * never changes from one page to the next, so the pager keeps its width and the button someone
+ * pressed stays where it was.
+ */
 const visiblePages = (page: number, pages: number): (null | number)[] => {
-  if (pages <= 7) return Array.from({ length: pages }, (_, index) => index + 1);
-  const keep = new Set([1, page, page - 1, page + 1, pages]);
-  const out: (null | number)[] = [];
-  for (let number = 1; number <= pages; number += 1) {
-    if (keep.has(number)) out.push(number);
-    else if (out.at(-1) !== null) out.push(null);
+  if (pages <= SLOTS) return Array.from({ length: pages }, (_, index) => index + 1);
+  if (page <= 4) return [1, 2, 3, 4, 5, null, pages];
+  if (page >= pages - 3) return [1, null, pages - 4, pages - 3, pages - 2, pages - 1, pages];
+  return [1, null, page - 1, page, page + 1, null, pages];
+};
+
+/** The nearest ancestor that scrolls, or the page itself. */
+const scrollerOf = (element: HTMLElement): { scrollBy: (options: ScrollToOptions) => void } => {
+  for (let at = element.parentElement; at; at = at.parentElement) {
+    const { overflowY } = getComputedStyle(at);
+    if ((overflowY === "auto" || overflowY === "scroll") && at.scrollHeight > at.clientHeight)
+      return at;
   }
-  return out;
+  return globalThis;
 };
 
 const PICK =
@@ -212,7 +225,35 @@ export const Pager = ({
   total: number;
 }) => {
   const { t } = useTranslation("common");
+  const root = useRef<HTMLElement>(null);
+  const pressedAt = useRef<null | number>(null);
   const pages = Math.max(1, Math.ceil(total / pageSize));
+  // A new page can have fewer rows, so the table, and the pager under it, would jump up or down
+  // away from the button just pressed. After the new rows are in, hold the pager where it was on
+  // screen: with space above it while the table is shorter, then by scrolling once that is used.
+  const [gap, setGap] = useState(0);
+  const gapNow = useRef(0);
+  useLayoutEffect(() => {
+    const element = root.current;
+    const was = pressedAt.current;
+    pressedAt.current = null;
+    if (!element || was === null) return;
+    const delta = element.getBoundingClientRect().top - was;
+    if (Math.abs(delta) < 1) return;
+    const next = gapNow.current - delta;
+    gapNow.current = Math.max(0, next);
+    setGap(gapNow.current);
+    if (next < 0) scrollerOf(element).scrollBy({ top: -next });
+  }, [page, pageSize]);
+  // A different set of rows (a filter, a search) starts the table over.
+  useLayoutEffect(() => {
+    gapNow.current = 0;
+    setGap(0);
+  }, [total]);
+  const keep = (next: () => void) => () => {
+    pressedAt.current = root.current?.getBoundingClientRect().top ?? null;
+    next();
+  };
   const first = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const last = Math.min(total, page * pageSize);
   return (
@@ -222,6 +263,8 @@ export const Pager = ({
         "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3.5 py-2.5 text-sm text-muted",
         className,
       )}
+      ref={root}
+      style={gap > 0 ? { marginTop: gap } : undefined}
     >
       <span>
         {t("pager.range", {
@@ -236,7 +279,7 @@ export const Pager = ({
             {t("pager.pageSize")}
             <select
               className={PICK}
-              onChange={(event) => onPageSize(Number(event.target.value))}
+              onChange={(event) => keep(() => onPageSize(Number(event.target.value)))()}
               value={String(pageSize)}
             >
               {pageSizes.map((size) => (
@@ -252,7 +295,7 @@ export const Pager = ({
             {t("pager.jump")}
             <select
               className={PICK}
-              onChange={(event) => onPage(Number(event.target.value))}
+              onChange={(event) => keep(() => onPage(Number(event.target.value)))()}
               value={String(page)}
             >
               {Array.from({ length: pages }, (_, index) => index + 1).map((number) => (
@@ -268,14 +311,18 @@ export const Pager = ({
             aria-label={t("pager.previous")}
             className="flex size-6 items-center justify-center rounded-sm hover:bg-sunken hover:text-ink disabled:opacity-45"
             disabled={page <= 1}
-            onClick={() => onPage(page - 1)}
+            onClick={keep(() => onPage(page - 1))}
             type="button"
           >
             <ChevronLeft aria-hidden="true" className="size-4" />
           </button>
           {visiblePages(page, pages).map((number, index) =>
             number === null ? (
-              <span aria-hidden="true" key={`gap-${index}`}>
+              <span
+                aria-hidden="true"
+                className="flex h-6 min-w-7 items-center justify-center"
+                key={`gap-${index}`}
+              >
                 …
               </span>
             ) : (
@@ -283,11 +330,11 @@ export const Pager = ({
                 aria-current={number === page ? "page" : undefined}
                 aria-label={t("pager.page", { page: number })}
                 className={cn(
-                  "min-w-6 rounded-sm px-1 hover:bg-sunken hover:text-ink",
-                  number === page && "font-bold text-ink",
+                  "h-6 min-w-7 rounded-sm px-1 tabular-nums hover:bg-sunken hover:text-ink",
+                  number === page && "bg-sunken font-semibold text-ink",
                 )}
                 key={number}
-                onClick={() => onPage(number)}
+                onClick={keep(() => onPage(number))}
                 type="button"
               >
                 {number}
@@ -298,7 +345,7 @@ export const Pager = ({
             aria-label={t("pager.next")}
             className="flex size-6 items-center justify-center rounded-sm hover:bg-sunken hover:text-ink disabled:opacity-45"
             disabled={page >= pages}
-            onClick={() => onPage(page + 1)}
+            onClick={keep(() => onPage(page + 1))}
             type="button"
           >
             <ChevronRight aria-hidden="true" className="size-4" />
