@@ -54,6 +54,14 @@ export type AiHealth = {
   readonly __typename?: "AIHealth";
   readonly available: Scalars["Boolean"]["output"];
   /**
+   * Why the model provider is unavailable, as the ai service reports it:
+   * "auth_failed" (the provider refused the credential), "provider_error" (the
+   * provider call failed) or "not_configured" (no provider is set up). Set only
+   * when reason is "provider_unavailable" and the ai service gave a reason;
+   * null otherwise.
+   */
+  readonly providerReason?: Maybe<Scalars["String"]["output"]>;
+  /**
    * Populated only when available is false: "ai_service_unavailable" (the ai
    * service is unreachable), "disabled_by_admin" (the module switch is off; ai
    * refuses every intake call while it is, site admins included), or
@@ -513,6 +521,7 @@ export type Category = {
   readonly id: Scalars["ID"]["output"];
   readonly idpGroupIds?: Maybe<ReadonlyArray<Scalars["String"]["output"]>>;
   readonly name: Scalars["String"]["output"];
+  readonly order: Scalars["Int"]["output"];
   readonly owners: ReadonlyArray<Scalars["ID"]["output"]>;
   readonly parentId?: Maybe<Scalars["ID"]["output"]>;
   readonly reviewCadence: ReviewCadence;
@@ -1104,6 +1113,7 @@ export type Mutation = {
   readonly renameTemplate: Template;
   readonly renameUserMfaFactor: Scalars["Boolean"]["output"];
   readonly reorderAppendices: ReadonlyArray<Appendix>;
+  readonly reorderCategories: ReadonlyArray<Category>;
   readonly reorderPolicyAppendices: ReadonlyArray<PolicyAppendix>;
   readonly replyReviewThread: ReviewThread;
   readonly replyToMyReport: ReporterView;
@@ -1714,6 +1724,11 @@ export type MutationRenameUserMfaFactorArgs = {
 export type MutationReorderAppendicesArgs = {
   orderedIds: ReadonlyArray<Scalars["ID"]["input"]>;
   policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationReorderCategoriesArgs = {
+  orderedIds: ReadonlyArray<Scalars["ID"]["input"]>;
+  parentId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type MutationReorderPolicyAppendicesArgs = {
@@ -2407,8 +2422,10 @@ export type Query = {
    * AIJobStatus.resultRef / AIJobResult.resultRef, set once phase=
    * AI_JOB_PHASE_SUCCEEDED). Reads the job-result envelope from Redis and
    * returns it as operation + resultJson (opaque, operation-shaped JSON — see
-   * above). Errors if resultRef doesn't resolve (not yet written, or past its
-   * TTL).
+   * above). Served only to the user who submitted the job. A resultRef that
+   * doesn't resolve (not yet written, or past its TTL), that belongs to another
+   * user's job, or whose result has no recorded owner is refused with the same
+   * not-found error.
    */
   readonly aiJobResultContent: AiJobResultContent;
   /**
@@ -3348,6 +3365,8 @@ export type SpCertificate = {
 
 export type StageAssignee = {
   readonly __typename?: "StageAssignee";
+  readonly changesRequested?: Maybe<Scalars["String"]["output"]>;
+  readonly changesRequestedAt?: Maybe<Scalars["String"]["output"]>;
   readonly comment?: Maybe<Scalars["String"]["output"]>;
   readonly decidedAt?: Maybe<Scalars["String"]["output"]>;
   readonly groupId?: Maybe<Scalars["ID"]["output"]>;
