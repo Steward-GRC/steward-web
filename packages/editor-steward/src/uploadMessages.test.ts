@@ -44,4 +44,19 @@ describe("uploadRefusal", () => {
       expect(uploadRefusal(raw)).toEqual({ key: "editor.upload.failed", values: {} });
     }
   });
+
+  it("says uploads are unavailable, in the file wording or the image wording", () => {
+    expect(uploadRefusal("Uploads are unavailable right now.", { unavailable: true })).toEqual({
+      key: "editor.upload.unavailable",
+      values: {},
+    });
+    expect(uploadRefusal(undefined, { kind: "image", unavailable: true })).toEqual({
+      key: "editor.upload.unavailableImage",
+      values: {},
+    });
+  });
+
+  it("keeps the other wording when not unavailable", () => {
+    expect(uploadRefusal("asset: empty upload", { kind: "image" }).key).toBe("editor.upload.empty");
+  });
 });

@@ -50,6 +50,41 @@ describe("uploadEditorImage", () => {
     expect((down as ImageUploadError).gatewayText).toBeUndefined();
   });
 
+  it("marks the refusal unavailable on a 503, with or without the code", async () => {
+    vi.stubGlobal("fetch", async () =>
+      Response.json(
+        { code: "uploads_unavailable", error: "Uploads are unavailable right now." },
+        { status: 503 },
+      ),
+    );
+    const coded = await uploadEditorImage(image()).catch((error: unknown) => error);
+    expect(coded).toBeInstanceOf(ImageUploadError);
+    expect((coded as ImageUploadError).unavailable).toBe(true);
+
+    vi.stubGlobal("fetch", async () => new Response("<html>down</html>", { status: 503 }));
+    const bare = await uploadEditorImage(image()).catch((error: unknown) => error);
+    expect((bare as ImageUploadError).unavailable).toBe(true);
+  });
+
+  it("marks the refusal unavailable on the code alone", async () => {
+    vi.stubGlobal("fetch", async () =>
+      Response.json({ code: "uploads_unavailable", error: "x" }, { status: 500 }),
+    );
+    const refused = await uploadEditorImage(image()).catch((error: unknown) => error);
+    expect((refused as ImageUploadError).unavailable).toBe(true);
+  });
+
+  it("does not mark other failures unavailable", async () => {
+    vi.stubGlobal("fetch", async () => Response.json({ error: "File too large" }, { status: 400 }));
+    const refused = await uploadEditorImage(image()).catch((error: unknown) => error);
+    expect((refused as ImageUploadError).unavailable).toBe(false);
+    vi.stubGlobal("fetch", async () => {
+      throw new TypeError("network down");
+    });
+    const down = await uploadEditorImage(image()).catch((error: unknown) => error);
+    expect((down as ImageUploadError).unavailable).toBe(false);
+  });
+
   it("throws when a success answer has no url", async () => {
     vi.stubGlobal("fetch", async () => Response.json({ id: "a1" }));
     await expect(uploadEditorImage(image())).rejects.toBeInstanceOf(ImageUploadError);

@@ -50,7 +50,7 @@ import {
   ReviewThreadsPanel,
 } from "./ReviewComments";
 import { ImageUploadError } from "./uploadImage";
-import { uploadRefusal } from "./uploadMessages";
+import { uploadRefusal, type UploadRefusalOptions } from "./uploadMessages";
 
 /** What a host can do with a mounted editor. */
 export interface StewardEditorHandle {
@@ -133,38 +133,43 @@ const UPLOAD_TYPES = {
 const useImageUploader = (
   uploadImage: StewardEditorProps["uploadImage"],
   unavailable: string,
-  refusalText: (serverText?: string) => string,
+  refusalText: (serverText?: string, options?: UploadRefusalOptions) => string,
 ): FileUploader["useFileUpload"] =>
   // A hook factory the cards call as `useFileUpload("image")`; its identity is stable per
   // upload function so the cards' effects don't re-run on every render.
   useMemo(
     () =>
-      function useFileUpload() {
+      function useFileUpload(kind?: string) {
         const [state, setState] = useState<{
           errors: { message: string }[];
           isLoading: boolean;
           progress: number;
         }>({ errors: [], isLoading: false, progress: 0 });
-        const upload = useCallback(async (files: File[] | FileList) => {
-          const list = [...files];
-          if (!uploadImage) {
-            setState({ errors: [{ message: unavailable }], isLoading: false, progress: 0 });
-            return null;
-          }
-          setState({ errors: [], isLoading: true, progress: 0 });
-          try {
-            const urls = await Promise.all(list.map((file) => uploadImage(file)));
-            setState({ errors: [], isLoading: false, progress: 100 });
-            return urls.map((url, index) => ({ fileName: list[index]?.name, url }));
-          } catch (error) {
-            // One clear sentence for every refusal, from what the server said (bug log 195).
-            const message = refusalText(
-              error instanceof ImageUploadError ? error.gatewayText : undefined,
-            );
-            setState({ errors: [{ message }], isLoading: false, progress: 0 });
-            return null;
-          }
-        }, []);
+        const upload = useCallback(
+          async (files: File[] | FileList) => {
+            const list = [...files];
+            if (!uploadImage) {
+              setState({ errors: [{ message: unavailable }], isLoading: false, progress: 0 });
+              return null;
+            }
+            setState({ errors: [], isLoading: true, progress: 0 });
+            try {
+              const urls = await Promise.all(list.map((file) => uploadImage(file)));
+              setState({ errors: [], isLoading: false, progress: 100 });
+              return urls.map((url, index) => ({ fileName: list[index]?.name, url }));
+            } catch (error) {
+              // One clear sentence for every refusal, from what the server said (bug log 195).
+              const refused = error instanceof ImageUploadError ? error : undefined;
+              const message = refusalText(refused?.gatewayText, {
+                kind: kind === "image" ? "image" : "file",
+                unavailable: refused?.unavailable ?? false,
+              });
+              setState({ errors: [{ message }], isLoading: false, progress: 0 });
+              return null;
+            }
+          },
+          [kind],
+        );
         return { ...state, upload };
       },
     [uploadImage, unavailable, refusalText],
@@ -239,8 +244,8 @@ export const StewardEditor = ({
   const cursorsContainerRef = useRef<HTMLDivElement | null>(null);
   const savedSelection: SavedReplace = useRef(null);
   const refusalText = useCallback(
-    (serverText?: string) => {
-      const { key, values } = uploadRefusal(serverText);
+    (serverText?: string, options?: UploadRefusalOptions) => {
+      const { key, values } = uploadRefusal(serverText, options);
       return t(key, values);
     },
     [t],
