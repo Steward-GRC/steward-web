@@ -4,15 +4,19 @@
 /**
  * An image upload that didn't store. `gatewayText` is the gateway's own refusal text (too large,
  * not an allowed image) when it gave one, for the image card to show; without it the card shows
- * its own "couldn't upload" line.
+ * its own "couldn't upload" line. `unavailable` is set when the gateway's object store is off or
+ * down (HTTP 503, or the code `uploads_unavailable`): retrying will not help, so the card says
+ * uploads are unavailable instead of "try again".
  */
 export class ImageUploadError extends Error {
   readonly gatewayText: string | undefined;
+  readonly unavailable: boolean;
 
-  constructor(gatewayText?: string) {
+  constructor(gatewayText?: string, unavailable = false) {
     super(gatewayText ?? "image upload failed");
     this.name = "ImageUploadError";
     this.gatewayText = gatewayText;
+    this.unavailable = unavailable;
   }
 }
 
@@ -34,7 +38,11 @@ export const uploadEditorImage = async (file: File): Promise<string> => {
   const body: unknown = await answer.json().catch(() => ({}));
   const record = typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
   if (!answer.ok) {
-    throw new ImageUploadError(typeof record.error === "string" ? record.error : undefined);
+    const unavailable = answer.status === 503 || record.code === "uploads_unavailable";
+    throw new ImageUploadError(
+      typeof record.error === "string" ? record.error : undefined,
+      unavailable,
+    );
   }
   if (typeof record.url !== "string" || record.url === "") throw new ImageUploadError();
   return record.url;

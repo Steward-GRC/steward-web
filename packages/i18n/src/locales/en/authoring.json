@@ -226,7 +226,9 @@
       "mismatch": "The contents of \"{{name}}\" don't match its file type. Check the file and try again.",
       "notAllowed": "This kind of file can't be uploaded here. Use a PDF, Word, Excel, PowerPoint, text, image or video file.",
       "tooLarge": "That file is too large. The most you can upload is {{limit}}.",
-      "tooLargeAny": "That file is too large. Choose a smaller one."
+      "tooLargeAny": "That file is too large. Choose a smaller one.",
+      "unavailable": "Uploads are unavailable right now. Ask an administrator to check the file store.",
+      "unavailableImage": "Uploads are unavailable right now. Ask an administrator to check the file store, or paste an image link with /image instead."
     },
     "imageUploadUnavailable": "Image uploads aren't available here yet. Paste an image link with /image instead.",
     "loading": "Loading the editor",

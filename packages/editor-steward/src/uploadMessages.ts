@@ -10,8 +10,22 @@ export interface UploadRefusal {
   values: Record<string, string>;
 }
 
+export interface UploadRefusalOptions {
+  /** Which card sent the file; the image card also points at the /image link. */
+  kind?: "file" | "image";
+  /** The object store is off or down (HTTP 503): not a "try again" case. */
+  unavailable?: boolean;
+}
+
 /** The sentence for a refusal, from what the server said (nothing, for a failure with no text). */
-export const uploadRefusal = (text = ""): UploadRefusal => {
+export const uploadRefusal = (text = "", options: UploadRefusalOptions = {}): UploadRefusal => {
+  if (options.unavailable) {
+    return {
+      key:
+        options.kind === "image" ? "editor.upload.unavailableImage" : "editor.upload.unavailable",
+      values: {},
+    };
+  }
   const tooLarge = /too large/i.test(text);
   if (tooLarge) {
     const limit = /max upload size is ([\d.]+\s?[KMG]B)/i.exec(text)?.[1];
