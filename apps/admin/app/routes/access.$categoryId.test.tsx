@@ -316,6 +316,59 @@ describe("the category access page (A5)", () => {
     expect(screen.queryByText("All staff")).not.toBeInTheDocument();
   });
 
+  it("resets the draft to the saved rules and hides Reset again", async () => {
+    renderAccess();
+    expect(screen.queryByRole("button", { name: "Reset" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Edit rules" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove rule 3" }));
+    await userEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(screen.queryByText("All staff")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByText("All staff")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reset" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save rules" })).not.toBeInTheDocument();
+  });
+
+  it("undoes and redoes the changes one step at a time", async () => {
+    renderAccess();
+    await userEvent.click(screen.getByRole("button", { name: "Edit rules" }));
+    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: "Remove rule 3" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove rule 2" }));
+    expect(rows().filter((row) => within(row).queryByText("Erin"))).toHaveLength(0);
+
+    await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(screen.getByText("Erin")).toBeInTheDocument();
+    expect(screen.queryByText("All staff")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(screen.getByText("All staff")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Redo" }));
+    expect(screen.queryByText("All staff")).not.toBeInTheDocument();
+  });
+
+  it("is clean again once undo returns the draft to the saved rules", async () => {
+    renderAccess();
+    await userEvent.click(screen.getByRole("button", { name: "Edit rules" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove rule 3" }));
+    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(screen.queryByRole("button", { name: "Reset" })).not.toBeInTheDocument();
+  });
+
+  it("posts the rules as they stand after an undo", async () => {
+    const { posted } = renderAccess();
+    await userEvent.click(screen.getByRole("button", { name: "Edit rules" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove rule 3" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove rule 2" }));
+    await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save rules" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    expect(JSON.parse(String(posted[0]!.get("rules")))).toHaveLength(2);
+  });
+
   it("says default deny applies when the category has no rules of its own", () => {
     renderAccess({ ...VIEW, rules: [] });
     expect(screen.getByText("No rules — default deny applies to everyone.")).toBeInTheDocument();
