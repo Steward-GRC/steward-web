@@ -31,6 +31,8 @@ export type AiConfig = {
   readonly deployment: Scalars["String"]["output"];
   readonly enabled: Scalars["Boolean"]["output"];
   readonly model: Scalars["String"]["output"];
+  /** Provider requests allowed per calendar month (UTC); 0 means no limit. */
+  readonly monthlyLimit: Scalars["Int"]["output"];
   readonly provider?: Maybe<AiProvider>;
   readonly region: Scalars["String"]["output"];
   readonly topK: Scalars["Int"]["output"];
@@ -56,7 +58,9 @@ export type AiHealth = {
   /**
    * Why the model provider is unavailable, as the ai service reports it:
    * "auth_failed" (the provider refused the credential), "provider_error" (the
-   * provider call failed) or "not_configured" (no provider is set up). Set only
+   * provider call failed), "not_configured" (no provider is set up) or
+   * "jobs_unavailable" (the ai service has no Kubernetes API, so it can neither
+   * create nor read a job). Set only
    * when reason is "provider_unavailable" and the ai service gave a reason;
    * null otherwise.
    */
@@ -64,9 +68,11 @@ export type AiHealth = {
   /**
    * Populated only when available is false: "ai_service_unavailable" (the ai
    * service is unreachable), "disabled_by_admin" (the module switch is off; ai
-   * refuses every intake call while it is, site admins included), or
+   * refuses every intake call while it is, site admins included),
    * "provider_unavailable" (the configured model provider is failing or not
-   * configured). Null when available is true.
+   * configured) or "limit_reached" (the organisation's monthly AI limit or the
+   * caller's own daily limit is reached; clears when the period resets). Null
+   * when available is true.
    */
   readonly reason?: Maybe<Scalars["String"]["output"]>;
 };
@@ -187,7 +193,9 @@ export type AckRoster = {
 export type AckRosterEntry = {
   readonly __typename?: "AckRosterEntry";
   readonly ackedAt?: Maybe<Scalars["String"]["output"]>;
+  readonly dueAt?: Maybe<Scalars["String"]["output"]>;
   readonly email: Scalars["String"]["output"];
+  readonly groups: ReadonlyArray<Scalars["String"]["output"]>;
   readonly userId: Scalars["ID"]["output"];
   readonly userName?: Maybe<Scalars["String"]["output"]>;
 };
@@ -311,6 +319,33 @@ export enum ApprovalStatus {
   ApprovalStatusWithdrawn = "APPROVAL_STATUS_WITHDRAWN",
 }
 
+/** One switch of the setting: a kind of file the File card may accept. */
+export type AssetKindSetting = {
+  readonly __typename?: "AssetKindSetting";
+  readonly enabled: Scalars["Boolean"]["output"];
+  /** The extensions the kind covers, without the dot. */
+  readonly extensions: ReadonlyArray<Scalars["String"]["output"]>;
+  /** pdf, image, video, word, text, markdown or office. */
+  readonly kind: Scalars["String"]["output"];
+  readonly label: Scalars["String"]["output"];
+  /** The hard size cap for the kind, in bytes. */
+  readonly maxBytes: Scalars["Int"]["output"];
+};
+
+export type AssetSettings = {
+  readonly __typename?: "AssetSettings";
+  /** Every kind that has a switch, in display order. */
+  readonly kinds: ReadonlyArray<AssetKindSetting>;
+  /** The largest cap of any kind, in bytes (the upload limit). */
+  readonly maxFileBytes: Scalars["Int"]["output"];
+  /** Extensions that are always refused and have no switch. */
+  readonly refusedExtensions: ReadonlyArray<Scalars["String"]["output"]>;
+  /** RFC 3339; empty until first changed. */
+  readonly updatedAt: Scalars["String"]["output"];
+  /** The user id of the admin who last changed it; empty until first changed. */
+  readonly updatedBy: Scalars["String"]["output"];
+};
+
 export type AssignmentHistoryEntry = {
   readonly __typename?: "AssignmentHistoryEntry";
   readonly actorName?: Maybe<Scalars["String"]["output"]>;
@@ -336,6 +371,12 @@ export enum AssistOperation {
   AssistOperationSummarize = "ASSIST_OPERATION_SUMMARIZE",
   AssistOperationUnspecified = "ASSIST_OPERATION_UNSPECIFIED",
 }
+
+export type AuditActionInfo = {
+  readonly __typename?: "AuditActionInfo";
+  readonly code: Scalars["String"]["output"];
+  readonly label: Scalars["String"]["output"];
+};
 
 export type AuditChainVerification = {
   readonly __typename?: "AuditChainVerification";
@@ -387,6 +428,7 @@ export type AuditRecord = {
   readonly subject: Scalars["String"]["output"];
   readonly subjectLabel?: Maybe<Scalars["String"]["output"]>;
   readonly tier: Scalars["String"]["output"];
+  readonly versionNumber?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type AuditSegment = {
@@ -627,6 +669,17 @@ export type CorrectiveActionInput = {
   readonly policyId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
+export type DecidedApproval = {
+  readonly __typename?: "DecidedApproval";
+  readonly currentStageIdx: Scalars["Int"]["output"];
+  readonly decidedAt: Scalars["String"]["output"];
+  readonly decision: Scalars["String"]["output"];
+  readonly policyTitle: Scalars["String"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly runId: Scalars["String"]["output"];
+  readonly stageCount: Scalars["Int"]["output"];
+};
+
 export type DecisionInput = {
   readonly comment: Scalars["String"]["input"];
   readonly decision: DecisionType;
@@ -730,6 +783,21 @@ export type DomainVerification = {
   readonly token: Scalars["String"]["output"];
 };
 
+/**
+ * How a generated or revised draft should read. Omitting the framing keeps the
+ * default formal, clear tone of organizational policy documents.
+ */
+export enum DraftFraming {
+  /** The author's own wording, in customFraming. */
+  Custom = "CUSTOM",
+  /** A formal, legal register. */
+  Formal = "FORMAL",
+  /** Plain language at about a 5th-grade reading level. */
+  Plain = "PLAIN",
+  /** A professional, standard business register. */
+  Professional = "PROFESSIONAL",
+}
+
 export type EffectiveGovernance = {
   readonly __typename?: "EffectiveGovernance";
   readonly ackAudienceGroups?: Maybe<ReadonlyArray<Scalars["String"]["output"]>>;
@@ -748,6 +816,7 @@ export type EffectiveWorkflow = {
   readonly __typename?: "EffectiveWorkflow";
   readonly firstUnstaffedStage?: Maybe<Scalars["String"]["output"]>;
   readonly hasWorkflow: Scalars["Boolean"]["output"];
+  readonly name?: Maybe<Scalars["String"]["output"]>;
   readonly usable: Scalars["Boolean"]["output"];
   readonly workflowDefId?: Maybe<Scalars["ID"]["output"]>;
 };
@@ -853,6 +922,8 @@ export type HealthStatus = {
 
 export type ImpersonationSession = {
   readonly __typename?: "ImpersonationSession";
+  readonly actorName: Scalars["String"]["output"];
+  readonly actorUserId: Scalars["ID"]["output"];
   readonly expiresAt: Scalars["String"]["output"];
   readonly reason: Scalars["String"]["output"];
   readonly startedAt: Scalars["String"]["output"];
@@ -905,6 +976,26 @@ export type MagicLink = {
   readonly __typename?: "MagicLink";
   readonly expiresAt: Scalars["String"]["output"];
   readonly token: Scalars["String"]["output"];
+};
+
+export type MagicLinkInfo = {
+  readonly __typename?: "MagicLinkInfo";
+  readonly createdAt: Scalars["String"]["output"];
+  readonly createdByUserId: Scalars["ID"]["output"];
+  readonly expiresAt: Scalars["String"]["output"];
+  readonly fingerprint: Scalars["String"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly revokedAt?: Maybe<Scalars["String"]["output"]>;
+  readonly revokedByUserId?: Maybe<Scalars["ID"]["output"]>;
+  readonly sensitive: Scalars["Boolean"]["output"];
+  readonly status: Scalars["String"]["output"];
+  readonly token: Scalars["String"]["output"];
+};
+
+export type MagicLinkPage = {
+  readonly __typename?: "MagicLinkPage";
+  readonly links: ReadonlyArray<MagicLinkInfo>;
+  readonly nextPageToken?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type Maintenance = {
@@ -1038,6 +1129,7 @@ export type Mutation = {
    */
   readonly bulkDecide: BulkDecideResult;
   readonly cancelHardReset: HardResetRequest;
+  readonly changeMyPassword: Scalars["Boolean"]["output"];
   readonly changeOrgProtocol: Organization;
   readonly checkReport: ReporterView;
   readonly closeCase: ReportCase;
@@ -1079,7 +1171,12 @@ export type Mutation = {
   readonly forceRotateSpCertificate: SpCertificate;
   readonly grantGroupManager: User;
   readonly grantRole: User;
-  readonly grantRoot: User;
+  /**
+   * Issue a short-lived websocket token for one appendix's own co-editing room
+   * (appendix:<id>), away from the policy's draft room. The caller must be able
+   * to edit the policy the appendix belongs to; a retired appendix has no draft
+   * to edit and is refused.
+   */
   readonly issueAppendixCollabToken: AppendixCollabToken;
   /**
    * Issue a short-lived websocket token for the Collaboration service.
@@ -1087,6 +1184,8 @@ export type Mutation = {
    * the edit grant again before minting).
    */
   readonly issueCollabToken: IssueCollabTokenPayload;
+  readonly markAllNotificationsRead: Scalars["Int"]["output"];
+  readonly markNotificationRead: Notification;
   readonly markVersionReviewed: Scalars["Boolean"]["output"];
   readonly mergeAccounts: MergeAccountsResult;
   readonly moveCategory: Category;
@@ -1098,12 +1197,22 @@ export type Mutation = {
   readonly publishTemplateVersion: TemplateVersion;
   readonly reassignUserPolicies: ReassignUserPoliciesResult;
   readonly recordAck: Acknowledgment;
+  readonly recordPolicyExport: Scalars["Boolean"]["output"];
   readonly recordRiskAssessment: RiskAssessment;
   readonly recordView: Scalars["Boolean"]["output"];
+  /**
+   * Regenerate one version's stored summary as an async job and return
+   * immediately with a jobId; the new summary replaces the stored one and the
+   * result says cached: false. Needs the same read of the version as
+   * policyVersionSummary (real content). When AI is off or down it fails and
+   * the stored summary stays.
+   */
+  readonly regenerateVersionSummary: SubmitDraftGenerationResult;
   readonly reindexPolicy: ReindexResult;
   readonly reindexPolicyVersion: ReindexResult;
   readonly releaseAuditLegalHold: AuditLegalHold;
   readonly removeFactor: Scalars["Boolean"]["output"];
+  readonly removeMagicLink: Scalars["Boolean"]["output"];
   readonly removeUserFromGroup: User;
   readonly removeUserMfaFactor: Scalars["Boolean"]["output"];
   readonly removeWebauthnCredential: Scalars["Boolean"]["output"];
@@ -1129,9 +1238,9 @@ export type Mutation = {
   readonly retireTemplate: Template;
   readonly revokeGroupManager: User;
   readonly revokeMagicLink: Scalars["Boolean"]["output"];
+  readonly revokeMySession: Scalars["Int"]["output"];
   readonly revokeMySessions: Scalars["Int"]["output"];
   readonly revokeRole: User;
-  readonly revokeRoot: User;
   readonly revokeUserSessions: Scalars["Int"]["output"];
   readonly saveAppendixDraft: PolicyAppendix;
   readonly saveDraft: PolicyVersion;
@@ -1145,6 +1254,13 @@ export type Mutation = {
    * continuing to retry. DB-backed (Redis-cached).
    */
   readonly setAIEnabled: Scalars["Boolean"]["output"];
+  /**
+   * Site-admin only. Sets the organisation's monthly limit on provider requests
+   * (calendar month, UTC). Pass 0 to remove the limit; a negative value is
+   * refused. Returns the limit now in force. The web locks this card on an
+   * appliance (diagnostics.appliance), which configures AI on its own box.
+   */
+  readonly setAIMonthlyLimit: Scalars["Int"]["output"];
   /**
    * Site-admin only. Sets the generative provider and its non-secret settings.
    * An empty model uses the provider's default. A model change affects jobs
@@ -1166,6 +1282,11 @@ export type Mutation = {
    * actually applied.
    */
   readonly setAIRetrievalConfig: AiRetrievalConfig;
+  /**
+   * Site-admin only. Replaces the set of allowed kinds; an empty list turns every
+   * kind off. An unknown kind is refused. Returns the settings now in force.
+   */
+  readonly setAssetSettings: AssetSettings;
   readonly setCaseDiscoveryDate: ReportCase;
   readonly setCaseStatus: ReportCase;
   readonly setCategoryCadence: NotificationSettings;
@@ -1197,6 +1318,7 @@ export type Mutation = {
   readonly setPolicyReferences: ReadonlyArray<Reference>;
   readonly setPolicySensitivity: Policy;
   readonly setPolicyTemplate: Policy;
+  readonly setQuietHours: NotificationSettings;
   readonly setReferenceArchived: Reference;
   readonly setRelatedPolicies: ReadonlyArray<RelatedPolicy>;
   readonly setReviewThreadResolved: ReviewThread;
@@ -1275,6 +1397,17 @@ export type Mutation = {
    */
   readonly submitWorkflow: WorkflowSubmitResult;
   /**
+   * Summarise the changes between two versions of a policy as an async job and
+   * return immediately with a jobId. The caller must be able to read both
+   * versions with their real content (an unreadable version is NotFound, an
+   * obfuscated read is PermissionDenied). A repeat request for the same pair
+   * and diff is answered from the stored summary (cached: true in the result)
+   * unless regenerate is true. Versions with no differences are refused
+   * (FailedPrecondition). When AI is off or down the submit fails, with the
+   * reasons aiHealth reports.
+   */
+  readonly summarizeChanges: SubmitDraftGenerationResult;
+  /**
    * Swap the active approver on a stage. Audited swap; the
    * initiator role is server-derived from the signed-in user (admin /
    * self-delegate / workflow-author). outOfEligibilityAck must be true
@@ -1301,6 +1434,7 @@ export type Mutation = {
    * stored credential and reports the outcome.
    */
   readonly testAIProvider: AiProviderTestResult;
+  readonly transferRoot: User;
   readonly updateAppendix: Appendix;
   readonly updateCaseNotice: CaseNotice;
   readonly updateContactBlock: ContactBlock;
@@ -1309,6 +1443,7 @@ export type Mutation = {
   readonly updateMyProfile: User;
   readonly updateReference: Reference;
   readonly updateTemplateVersionSections: TemplateVersion;
+  readonly updateUserPreferences: User;
   readonly updateUserProfile: User;
   readonly updateWorkflowDef: WorkflowDef;
   /** @deprecated Use setNotificationChannels */
@@ -1393,6 +1528,11 @@ export type MutationBulkDecideArgs = {
 
 export type MutationCancelHardResetArgs = {
   requestId: Scalars["ID"]["input"];
+};
+
+export type MutationChangeMyPasswordArgs = {
+  currentPassword: Scalars["String"]["input"];
+  newPassword: Scalars["String"]["input"];
 };
 
 export type MutationChangeOrgProtocolArgs = {
@@ -1588,17 +1728,16 @@ export type MutationGrantRoleArgs = {
   userId: Scalars["ID"]["input"];
 };
 
-export type MutationGrantRootArgs = {
-  otp: Scalars["String"]["input"];
-  userId: Scalars["ID"]["input"];
-};
-
 export type MutationIssueAppendixCollabTokenArgs = {
   appendixId: Scalars["ID"]["input"];
 };
 
 export type MutationIssueCollabTokenArgs = {
   input: IssueCollabTokenInput;
+};
+
+export type MutationMarkNotificationReadArgs = {
+  id: Scalars["ID"]["input"];
 };
 
 export type MutationMarkVersionReviewedArgs = {
@@ -1653,6 +1792,12 @@ export type MutationRecordAckArgs = {
   policyVersionId: Scalars["ID"]["input"];
 };
 
+export type MutationRecordPolicyExportArgs = {
+  includeHistory: Scalars["Boolean"]["input"];
+  kind: PolicyExportKind;
+  policyId: Scalars["ID"]["input"];
+};
+
 export type MutationRecordRiskAssessmentArgs = {
   caseId: Scalars["ID"]["input"];
   decision: BreachDecision;
@@ -1662,6 +1807,10 @@ export type MutationRecordRiskAssessmentArgs = {
 
 export type MutationRecordViewArgs = {
   policyVersionId: Scalars["ID"]["input"];
+};
+
+export type MutationRegenerateVersionSummaryArgs = {
+  versionId: Scalars["ID"]["input"];
 };
 
 export type MutationReindexPolicyArgs = {
@@ -1678,6 +1827,10 @@ export type MutationReleaseAuditLegalHoldArgs = {
 
 export type MutationRemoveFactorArgs = {
   kind: Scalars["String"]["input"];
+};
+
+export type MutationRemoveMagicLinkArgs = {
+  token: Scalars["String"]["input"];
 };
 
 export type MutationRemoveUserFromGroupArgs = {
@@ -1795,14 +1948,13 @@ export type MutationRevokeMagicLinkArgs = {
   token: Scalars["String"]["input"];
 };
 
+export type MutationRevokeMySessionArgs = {
+  sessionId: Scalars["ID"]["input"];
+};
+
 export type MutationRevokeRoleArgs = {
   category?: InputMaybe<Scalars["String"]["input"]>;
   role: Scalars["String"]["input"];
-  userId: Scalars["ID"]["input"];
-};
-
-export type MutationRevokeRootArgs = {
-  otp: Scalars["String"]["input"];
   userId: Scalars["ID"]["input"];
 };
 
@@ -1827,6 +1979,10 @@ export type MutationSetAiEnabledArgs = {
   enabled: Scalars["Boolean"]["input"];
 };
 
+export type MutationSetAiMonthlyLimitArgs = {
+  limit: Scalars["Int"]["input"];
+};
+
 export type MutationSetAiProviderConfigArgs = {
   input: AiProviderConfigInput;
 };
@@ -1837,6 +1993,10 @@ export type MutationSetAiProviderCredentialArgs = {
 
 export type MutationSetAiRetrievalConfigArgs = {
   topK: Scalars["Int"]["input"];
+};
+
+export type MutationSetAssetSettingsArgs = {
+  allowedKinds: ReadonlyArray<Scalars["String"]["input"]>;
 };
 
 export type MutationSetCaseDiscoveryDateArgs = {
@@ -1949,6 +2109,12 @@ export type MutationSetPolicyTemplateArgs = {
   none: Scalars["Boolean"]["input"];
   policyId: Scalars["ID"]["input"];
   templateId?: InputMaybe<Scalars["ID"]["input"]>;
+};
+
+export type MutationSetQuietHoursArgs = {
+  end?: InputMaybe<Scalars["Int"]["input"]>;
+  start?: InputMaybe<Scalars["Int"]["input"]>;
+  timezone?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MutationSetReferenceArchivedArgs = {
@@ -2064,8 +2230,19 @@ export type MutationSubmitWorkflowArgs = {
   policyVersionId: Scalars["ID"]["input"];
 };
 
+export type MutationSummarizeChangesArgs = {
+  fromVersionId: Scalars["ID"]["input"];
+  regenerate?: InputMaybe<Scalars["Boolean"]["input"]>;
+  toVersionId: Scalars["ID"]["input"];
+};
+
 export type MutationSwapAssigneeArgs = {
   input: SwapAssigneeInput;
+};
+
+export type MutationTransferRootArgs = {
+  otp: Scalars["String"]["input"];
+  userId: Scalars["ID"]["input"];
 };
 
 export type MutationUpdateAppendixArgs = {
@@ -2113,6 +2290,11 @@ export type MutationUpdateReferenceArgs = {
 export type MutationUpdateTemplateVersionSectionsArgs = {
   id: Scalars["ID"]["input"];
   sections: ReadonlyArray<SectionInput>;
+};
+
+export type MutationUpdateUserPreferencesArgs = {
+  locale?: InputMaybe<Scalars["String"]["input"]>;
+  userId: Scalars["ID"]["input"];
 };
 
 export type MutationUpdateUserProfileArgs = {
@@ -2202,6 +2384,44 @@ export type NotifTypeDef = {
   readonly mandatory: Scalars["Boolean"]["output"];
 };
 
+export type Notification = {
+  readonly __typename?: "Notification";
+  readonly category: NotifCategory;
+  readonly createdAt: Scalars["String"]["output"];
+  readonly id: Scalars["ID"]["output"];
+  readonly kind: Scalars["String"]["output"];
+  readonly line: Scalars["String"]["output"];
+  readonly link?: Maybe<NotificationLink>;
+  readonly needsAction: Scalars["Boolean"]["output"];
+  readonly readAt?: Maybe<Scalars["String"]["output"]>;
+  readonly title: Scalars["String"]["output"];
+};
+
+export type NotificationFilter = {
+  readonly category?: InputMaybe<NotifCategory>;
+  readonly needsAction?: InputMaybe<Scalars["Boolean"]["input"]>;
+  readonly unread?: InputMaybe<Scalars["Boolean"]["input"]>;
+};
+
+export type NotificationLink = {
+  readonly __typename?: "NotificationLink";
+  readonly kind: NotificationLinkKind;
+  readonly ref: Scalars["String"]["output"];
+};
+
+export enum NotificationLinkKind {
+  Approval = "APPROVAL",
+  Case = "CASE",
+  Policy = "POLICY",
+}
+
+export type NotificationPage = {
+  readonly __typename?: "NotificationPage";
+  readonly endCursor?: Maybe<Scalars["String"]["output"]>;
+  readonly hasMore: Scalars["Boolean"]["output"];
+  readonly items: ReadonlyArray<Notification>;
+};
+
 export type NotificationPref = {
   readonly __typename?: "NotificationPref";
   readonly email: Scalars["Boolean"]["output"];
@@ -2222,10 +2442,12 @@ export type NotificationSettings = {
   readonly channels: NotificationPref;
   readonly digest: DigestWindow;
   readonly overrides: ReadonlyArray<TypePref>;
+  readonly quietHours?: Maybe<QuietHours>;
 };
 
 export type Obligation = {
   readonly __typename?: "Obligation";
+  readonly dueAt?: Maybe<Scalars["String"]["output"]>;
   readonly number: Scalars["String"]["output"];
   readonly policyId: Scalars["ID"]["output"];
   readonly policyVersionId: Scalars["ID"]["output"];
@@ -2251,6 +2473,7 @@ export type Organization = {
 
 export type OverdueEntry = {
   readonly __typename?: "OverdueEntry";
+  readonly dueAt?: Maybe<Scalars["String"]["output"]>;
   readonly email: Scalars["String"]["output"];
   readonly userId: Scalars["ID"]["output"];
   readonly userName?: Maybe<Scalars["String"]["output"]>;
@@ -2336,6 +2559,11 @@ export type PolicyDiff = {
   readonly sections: ReadonlyArray<SectionDiff>;
 };
 
+export enum PolicyExportKind {
+  Pdf = "PDF",
+  Print = "PRINT",
+}
+
 export type PolicyOverride = {
   readonly __typename?: "PolicyOverride";
   readonly effect: OverrideEffect;
@@ -2347,6 +2575,25 @@ export type PolicyRevisionSectionInput = {
   readonly key: Scalars["String"]["input"];
   readonly order: Scalars["Int"]["input"];
   readonly title: Scalars["String"]["input"];
+};
+
+export type PolicySearchHit = {
+  readonly __typename?: "PolicySearchHit";
+  readonly policy: Policy;
+  readonly rank: Scalars["Float"]["output"];
+  readonly snippet?: Maybe<PolicySearchSnippet>;
+};
+
+export type PolicySearchPage = {
+  readonly __typename?: "PolicySearchPage";
+  readonly hits: ReadonlyArray<PolicySearchHit>;
+  readonly nextPageToken: Scalars["String"]["output"];
+};
+
+export type PolicySearchSnippet = {
+  readonly __typename?: "PolicySearchSnippet";
+  readonly matches: ReadonlyArray<TextSpan>;
+  readonly text: Scalars["String"]["output"];
 };
 
 export type PolicySummaryResult = {
@@ -2382,6 +2629,7 @@ export type PolicyViewerCan = {
   readonly __typename?: "PolicyViewerCan";
   readonly ack: Scalars["Boolean"]["output"];
   readonly approve: Scalars["Boolean"]["output"];
+  readonly breakGlassUntil?: Maybe<Scalars["String"]["output"]>;
   readonly canBreakGlass: Scalars["Boolean"]["output"];
   readonly contentObfuscated: Scalars["Boolean"]["output"];
   readonly edit: Scalars["Boolean"]["output"];
@@ -2435,12 +2683,15 @@ export type Query = {
    */
   readonly aiRetrievalConfig: AiRetrievalConfig;
   readonly appendixDiff: ReadonlyArray<SectionDiff>;
+  /** Readable by any signed-in user, so the editor can follow it. */
+  readonly assetSettings: AssetSettings;
   /**
    * Append-only audit history for one stage of one policy version's approval
    * run. Workflow authorizes it (admin, auditor, the policy's author, or a current
    * or past assignee on the stage).
    */
   readonly assignmentHistory: ReadonlyArray<AssignmentHistoryEntry>;
+  readonly auditActions: ReadonlyArray<AuditActionInfo>;
   readonly auditLegalHolds: ReadonlyArray<AuditLegalHold>;
   readonly auditLog: AuditQueryPage;
   readonly auditSegment: AuditSegment;
@@ -2453,6 +2704,15 @@ export type Query = {
   readonly categoryTree: ReadonlyArray<Category>;
   readonly completionReport: CompletionReport;
   readonly contactBlocks: ReadonlyArray<ContactBlock>;
+  /**
+   * The approvals the authenticated user has already decided, on runs still in
+   * review: the "In progress" group of the approvals inbox. A run drops out once
+   * it resolves (published, rejected or withdrawn). Only the caller's own
+   * decisions are listed; the user id is bound from the signed-in user and is
+   * never client-supplied. An entry whose policy the caller can no longer read,
+   * or that core no longer holds, is left out.
+   */
+  readonly decidedApprovals: ReadonlyArray<DecidedApproval>;
   readonly definitions: ReadonlyArray<DefinitionEntry>;
   /** Build and version facts for a bug report. Any signed-in user. */
   readonly diagnostics: Diagnostics;
@@ -2482,15 +2742,20 @@ export type Query = {
   readonly impersonationStatus?: Maybe<ImpersonationSession>;
   readonly latestTemplateVersion?: Maybe<TemplateVersion>;
   readonly listUserSessions: ReadonlyArray<Session>;
+  readonly magicLinks: MagicLinkPage;
   readonly managedGroupMembers: ReadonlyArray<User>;
   readonly me: User;
   readonly myAckSummary: AckSummary;
+  readonly myAcknowledgments: ReadonlyArray<RecentAcknowledgment>;
   readonly myDrafts: ReadonlyArray<Policy>;
   readonly myFactors: ReadonlyArray<UserFactor>;
   readonly myManagedGroups: ReadonlyArray<PlatformGroup>;
+  readonly myNotifications: NotificationPage;
   readonly myObligations: ReadonlyArray<Obligation>;
   readonly myReport: ReporterView;
   readonly myReports: ReadonlyArray<MyReport>;
+  readonly mySessions: ReadonlyArray<Session>;
+  readonly myUnreadNotificationCount: Scalars["Int"]["output"];
   readonly myWebauthnCredentials: ReadonlyArray<WebauthnCredentialInfo>;
   /** @deprecated Use notificationSettings.channels */
   readonly notificationPref: NotificationPref;
@@ -2516,6 +2781,7 @@ export type Query = {
   readonly policyDefinitionCandidates: ReadonlyArray<DefinitionEntry>;
   readonly policyDefinitionEntries: ReadonlyArray<DefinitionEntry>;
   readonly policyDiff: PolicyDiff;
+  readonly policyHistory: AuditQueryPage;
   readonly policyReferences: ReadonlyArray<Reference>;
   readonly policyVersion?: Maybe<PolicyVersion>;
   readonly policyVersionLinks: PolicyVersionLinks;
@@ -2560,6 +2826,7 @@ export type Query = {
    * caller reads (PermissionDenied otherwise).
    */
   readonly searchAndAnswer: SearchAndAnswerResult;
+  readonly searchPolicies: PolicySearchPage;
   readonly searchUsers: ReadonlyArray<UserLabel>;
   readonly simulateCategory: RaciDecision;
   readonly spCertificate: SpCertificate;
@@ -2643,6 +2910,7 @@ export type QueryAiJobArgs = {
 };
 
 export type QueryAiJobResultContentArgs = {
+  jobId?: InputMaybe<Scalars["ID"]["input"]>;
   resultRef: Scalars["String"]["input"];
 };
 
@@ -2661,11 +2929,14 @@ export type QueryAuditLegalHoldsArgs = {
 };
 
 export type QueryAuditLogArgs = {
+  actions?: InputMaybe<ReadonlyArray<Scalars["String"]["input"]>>;
+  actorGroupId?: InputMaybe<Scalars["ID"]["input"]>;
   actorUserId?: InputMaybe<Scalars["ID"]["input"]>;
   groupId?: InputMaybe<Scalars["ID"]["input"]>;
   pageSize?: InputMaybe<Scalars["Int"]["input"]>;
   pageToken?: InputMaybe<Scalars["String"]["input"]>;
   subject?: InputMaybe<Scalars["String"]["input"]>;
+  subjectType?: InputMaybe<Scalars["String"]["input"]>;
   tier?: InputMaybe<Scalars["String"]["input"]>;
 };
 
@@ -2754,8 +3025,24 @@ export type QueryListUserSessionsArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type QueryMagicLinksArgs = {
+  pageSize?: InputMaybe<Scalars["Int"]["input"]>;
+  pageToken?: InputMaybe<Scalars["String"]["input"]>;
+  policyVersionIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
+};
+
 export type QueryManagedGroupMembersArgs = {
   groupId: Scalars["ID"]["input"];
+};
+
+export type QueryMyAcknowledgmentsArgs = {
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+};
+
+export type QueryMyNotificationsArgs = {
+  after?: InputMaybe<Scalars["String"]["input"]>;
+  filter?: InputMaybe<NotificationFilter>;
+  first?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type QueryMyReportArgs = {
@@ -2822,6 +3109,12 @@ export type QueryPolicyDefinitionEntriesArgs = {
 export type QueryPolicyDiffArgs = {
   fromVersionId: Scalars["ID"]["input"];
   toVersionId: Scalars["ID"]["input"];
+};
+
+export type QueryPolicyHistoryArgs = {
+  pageSize?: InputMaybe<Scalars["Int"]["input"]>;
+  pageToken?: InputMaybe<Scalars["String"]["input"]>;
+  policyId: Scalars["ID"]["input"];
 };
 
 export type QueryPolicyReferencesArgs = {
@@ -2906,6 +3199,13 @@ export type QuerySearchAndAnswerArgs = {
   question: Scalars["String"]["input"];
 };
 
+export type QuerySearchPoliciesArgs = {
+  after?: InputMaybe<Scalars["String"]["input"]>;
+  documentType?: InputMaybe<DocumentType>;
+  first?: InputMaybe<Scalars["Int"]["input"]>;
+  query: Scalars["String"]["input"];
+};
+
 export type QuerySearchUsersArgs = {
   limit?: InputMaybe<Scalars["Int"]["input"]>;
   query: Scalars["String"]["input"];
@@ -2962,6 +3262,13 @@ export type QueryWorkflowStatusArgs = {
   policyVersionId: Scalars["ID"]["input"];
 };
 
+export type QuietHours = {
+  readonly __typename?: "QuietHours";
+  readonly end: Scalars["Int"]["output"];
+  readonly start: Scalars["Int"]["output"];
+  readonly timezone: Scalars["String"]["output"];
+};
+
 export type RaciDecision = {
   readonly __typename?: "RaciDecision";
   readonly ack: Scalars["Boolean"]["output"];
@@ -3010,6 +3317,16 @@ export type ReassignUserPoliciesResult = {
   readonly reassignedAuthorGrants: Scalars["Int"]["output"];
   readonly reassignedOwnerCount: Scalars["Int"]["output"];
   readonly reassignedPolicyIds: ReadonlyArray<Scalars["ID"]["output"]>;
+};
+
+export type RecentAcknowledgment = {
+  readonly __typename?: "RecentAcknowledgment";
+  readonly ackedAt: Scalars["String"]["output"];
+  readonly number: Scalars["String"]["output"];
+  readonly policyId: Scalars["ID"]["output"];
+  readonly policyVersionId: Scalars["ID"]["output"];
+  readonly title: Scalars["String"]["output"];
+  readonly versionNo: Scalars["Int"]["output"];
 };
 
 export type Reference = {
@@ -3337,6 +3654,7 @@ export type Session = {
   readonly active: Scalars["Boolean"]["output"];
   readonly authenticatedAt: Scalars["String"]["output"];
   readonly clientIp?: Maybe<Scalars["String"]["output"]>;
+  readonly current: Scalars["Boolean"]["output"];
   readonly expiresAt: Scalars["String"]["output"];
   readonly issuedAt: Scalars["String"]["output"];
   readonly lastSeenAt?: Maybe<Scalars["String"]["output"]>;
@@ -3383,6 +3701,15 @@ export type StageEligibleAssignees = {
   readonly stageName: Scalars["String"]["output"];
 };
 
+export type StageProgress = {
+  readonly __typename?: "StageProgress";
+  readonly approvals: Scalars["Int"]["output"];
+  readonly dueAt?: Maybe<Scalars["String"]["output"]>;
+  readonly quorum: Scalars["String"]["output"];
+  readonly quorumN: Scalars["Int"]["output"];
+  readonly required: Scalars["Int"]["output"];
+};
+
 export type StageUnitProgress = {
   readonly __typename?: "StageUnitProgress";
   readonly approvals: Scalars["Int"]["output"];
@@ -3398,7 +3725,9 @@ export type StageUnitProgress = {
 export type SubmitDraftGenerationInput = {
   readonly brief: Scalars["String"]["input"];
   readonly categoryId?: InputMaybe<Scalars["ID"]["input"]>;
+  readonly customFraming?: InputMaybe<Scalars["String"]["input"]>;
   readonly enrichmentOptOut?: InputMaybe<EnrichmentOptOutInput>;
+  readonly framing?: InputMaybe<DraftFraming>;
   readonly referenceDocuments?: InputMaybe<ReadonlyArray<ReferenceDocumentInput>>;
   readonly referenceHints?: InputMaybe<ReadonlyArray<Scalars["String"]["input"]>>;
   readonly sections: ReadonlyArray<SubmitDraftGenerationSectionInput>;
@@ -3455,7 +3784,9 @@ export type SubmitPolicyReviewSectionInput = {
 };
 
 export type SubmitPolicyRevisionInput = {
+  readonly customFraming?: InputMaybe<Scalars["String"]["input"]>;
   readonly enrichmentOptOut?: InputMaybe<EnrichmentOptOutInput>;
+  readonly framing?: InputMaybe<DraftFraming>;
   readonly instruction: Scalars["String"]["input"];
   readonly policyId: Scalars["ID"]["input"];
   readonly sections: ReadonlyArray<PolicyRevisionSectionInput>;
@@ -3543,6 +3874,12 @@ export type TemplateVersion = {
   readonly status: Scalars["String"]["output"];
   readonly templateId: Scalars["ID"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
+};
+
+export type TextSpan = {
+  readonly __typename?: "TextSpan";
+  readonly length: Scalars["Int"]["output"];
+  readonly start: Scalars["Int"]["output"];
 };
 
 export type ThreadMessage = {
@@ -3721,8 +4058,11 @@ export type WorkflowStatus = {
   readonly runId: Scalars["String"]["output"];
   readonly stageAssignees: ReadonlyArray<ReadonlyArray<StageAssignee>>;
   readonly stageNames: ReadonlyArray<Scalars["String"]["output"]>;
+  readonly stageProgress: ReadonlyArray<StageProgress>;
   readonly stageUnitProgress: ReadonlyArray<ReadonlyArray<StageUnitProgress>>;
   readonly status: ApprovalStatus;
+  readonly submittedAt?: Maybe<Scalars["String"]["output"]>;
+  readonly submittedBy?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type WorkflowSubmitResult = {

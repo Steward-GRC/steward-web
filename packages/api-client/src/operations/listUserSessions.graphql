@@ -9,5 +9,6 @@ query ListUserSessions($userId: ID!) {
     userAgent
     clientIp
     lastSeenAt
+    current
   }
 }

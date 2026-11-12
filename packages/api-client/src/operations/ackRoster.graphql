@@ -5,12 +5,16 @@ query AckRoster($policyVersionId: ID!, $groupId: ID) {
       email
       userName
       ackedAt
+      dueAt
+      groups
     }
     pending {
       userId
       email
       userName
       ackedAt
+      dueAt
+      groups
     }
   }
 }
