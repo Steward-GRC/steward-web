@@ -5,12 +5,13 @@ import type { RaciRule } from "@steward-web/api-client";
 import { AckTrigger } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { Badge, Banner, Button, Card, CardHeader, cn, type Failure, notify } from "@steward-web/ui";
-import { Check, Lock, X } from "lucide-react";
+import { Check, Lock, Redo2, RotateCcw, Undo2, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 
 import type { AccessView } from "./access.server";
 
+import { differs, record, redo, startHistory, undo } from "./accessHistory";
 import {
   type AccessAction,
   draftOf,
@@ -45,8 +46,10 @@ export const CategoryAccess = ({ view }: { view: AccessView }) => {
   const rulesTitleId = useId();
   const ackTitleId = useId();
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<readonly DraftRule[]>(() => draftOf(view.rules));
-  const [dirty, setDirty] = useState(false);
+  const [saved, setSaved] = useState<readonly DraftRule[]>(() => draftOf(view.rules));
+  const [history, setHistory] = useState(() => startHistory(saved));
+  const draft = history.present;
+  const dirty = differs(draft, saved);
   const nextKey = useRef(view.rules.length);
 
   const save = useFetcher<AccessActionResult>({ key: `access-save-${view.categoryId}` });
@@ -56,18 +59,21 @@ export const CategoryAccess = ({ view }: { view: AccessView }) => {
   const live = canEdit && editing;
 
   // A saved draft comes back as the stored rules: the moved marks clear and it's clean again.
-  const saved = save.state === "idle" ? save.data : undefined;
+  const answered = save.state === "idle" ? save.data : undefined;
   useEffect(() => {
-    if (saved?.ok && saved.rules) {
-      setDraft(draftOf(saved.rules));
-      setDirty(false);
+    if (answered?.ok && answered.rules) {
+      const stored = draftOf(answered.rules);
+      setSaved(stored);
+      setHistory(startHistory(stored));
       notify.success(t("access.saved"));
     }
-  }, [saved, t]);
+  }, [answered, t]);
 
   const change = (next: readonly DraftRule[]) => {
-    setDraft(next);
-    setDirty(true);
+    setHistory((current) => record(current, next));
+  };
+  const reset = () => {
+    setHistory(startHistory(saved));
   };
   const cycle = (key: string, action: AccessAction) => {
     const rule = draft.find((entry) => entry.key === key);
@@ -119,6 +125,34 @@ export const CategoryAccess = ({ view }: { view: AccessView }) => {
                 {t("access.edit")}
               </Button>
             )}
+            {editing || dirty ? (
+              <>
+                <Button
+                  aria-label={t("access.undo")}
+                  className="h-[38px] px-3 text-base"
+                  disabled={history.past.length === 0}
+                  onClick={() => setHistory(undo)}
+                  variant="secondary"
+                >
+                  <Undo2 aria-hidden="true" />
+                </Button>
+                <Button
+                  aria-label={t("access.redo")}
+                  className="h-[38px] px-3 text-base"
+                  disabled={history.future.length === 0}
+                  onClick={() => setHistory(redo)}
+                  variant="secondary"
+                >
+                  <Redo2 aria-hidden="true" />
+                </Button>
+              </>
+            ) : null}
+            {dirty ? (
+              <Button className="h-[38px] px-3.5 text-base" onClick={reset} variant="secondary">
+                <RotateCcw aria-hidden="true" />
+                {t("access.reset")}
+              </Button>
+            ) : null}
             {editing || dirty ? (
               <save.Form method="post">
                 <input name="intent" type="hidden" value="save-rules" />
