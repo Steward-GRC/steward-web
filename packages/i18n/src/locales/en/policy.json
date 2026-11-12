@@ -23,6 +23,7 @@
       },
       "status": "Status"
     },
+    "nothing": "Empty",
     "phone": {
       "all": "All",
       "category": "Category"

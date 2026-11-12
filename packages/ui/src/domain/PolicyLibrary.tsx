@@ -222,6 +222,17 @@ export const PolicyLibrary = ({
   );
 
   const heading = title ?? t(`library.${copy.nounPlural}.title`);
+  // Nothing at all to browse (#370): no categories and no documents. One plain "Empty" in place
+  // of the tiles, chips and table; categories without documents still show their tiles.
+  const nothingToBrowse = categories.length === 0 && policies.length === 0;
+  if (phone && nothingToBrowse) {
+    return (
+      <div className="flex flex-col gap-3 px-4 py-[18px] text-base text-ink">
+        <h1 className="text-[26px] font-semibold">{heading}</h1>
+        <EmptyState title={t("library.nothing")} />
+      </div>
+    );
+  }
   if (phone) {
     return (
       // U3m: the title, a row of category chips, then every document as a card.
@@ -345,7 +356,9 @@ export const PolicyLibrary = ({
         title={heading}
       />
 
-      {chips.length === 0 ? (
+      {nothingToBrowse ? <EmptyState framed title={t("library.nothing")} /> : null}
+
+      {chips.length === 0 && !nothingToBrowse ? (
         <CategoryTiles
           categories={categories.map((c) => ({
             count: policies.filter((p) => p.category === c.name).length,
@@ -374,7 +387,7 @@ export const PolicyLibrary = ({
         />
       ) : null}
 
-      {chips.length === 0 ? null : filtered.length === 0 ? (
+      {chips.length === 0 || nothingToBrowse ? null : filtered.length === 0 ? (
         <EmptyState
           description={t("library.empty.description")}
           title={t("library.empty.title", { noun: copy.nounPlural })}
