@@ -42,6 +42,7 @@ const answers: Record<string, unknown> = {
       targetUserId: "mock-user-erin",
     },
   },
+  TransferRoot: { transferRoot: { ...ERIN, isRoot: true } },
   Users: { users: { nextPageToken: "", users: [ERIN] } },
 };
 
@@ -74,5 +75,37 @@ describe("acting as a user (D19)", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("https://steward.example/");
     expect(response.headers.get("X-Remix-Reload-Document")).toBe("true");
+  });
+});
+
+describe("transferring root (D22)", () => {
+  it("passes the picked user and the emailed code to transferRoot", async () => {
+    const operations: { operation: string; variables: Record<string, unknown> }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        const { query, variables } = JSON.parse(init.body as string) as {
+          query: string;
+          variables: Record<string, unknown>;
+        };
+        const operation = /(?:query|mutation) (\w+)/.exec(query)![1]!;
+        operations.push({ operation, variables });
+        return Response.json({ data: answers[operation] });
+      }),
+    );
+    const form = new FormData();
+    form.set("intent", "make-root");
+    form.set("otp", "482113");
+    await action({
+      params: { userId: "mock-user-erin" },
+      request: new Request("https://steward.example/admin/users/mock-user-erin", {
+        body: form,
+        method: "POST",
+      }),
+    } as never);
+    expect(operations.at(-1)).toEqual({
+      operation: "TransferRoot",
+      variables: { otp: "482113", userId: "mock-user-erin" },
+    });
   });
 });

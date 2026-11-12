@@ -83,7 +83,6 @@ import {
   ForceRotateSpCertificateDocument,
   GlobalSettingsDocument,
   GrantRoleDocument,
-  GrantRootDocument,
   GroupMappingsDocument,
   ImpersonationStatusDocument,
   IssueAppendixCollabTokenDocument,
@@ -202,6 +201,7 @@ import {
   TemplatesDocument,
   TemplateVersionsDocument,
   TopPolicyQuestionsDocument,
+  TransferRootDocument,
   UpcomingApprovalsDocument,
   UpdateAppendixDocument,
   UpdateCaseNoticeDocument,
@@ -1257,10 +1257,6 @@ export const liveEdge: Edge = {
     const data = await gatewayFetch(GrantRoleDocument, { role, userId }, "GrantRole", { cookie });
     return data.grantRole;
   },
-  async grantRoot(userId, otp, cookie) {
-    const data = await gatewayFetch(GrantRootDocument, { otp, userId }, "GrantRoot", { cookie });
-    return data.grantRoot;
-  },
   async groupChildren(parentId, cookie) {
     return categoryChildren(parentId, cookie);
   },
@@ -2134,6 +2130,12 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.topPolicyQuestions;
+  },
+  async transferRoot(userId, otp, cookie) {
+    const data = await gatewayFetch(TransferRootDocument, { otp, userId }, "TransferRoot", {
+      cookie,
+    });
+    return data.transferRoot;
   },
   async upcomingApprovals(cookie) {
     const data = await gatewayFetch(UpcomingApprovalsDocument, {}, "UpcomingApprovals", {

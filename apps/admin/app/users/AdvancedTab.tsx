@@ -179,7 +179,11 @@ const Sessions = ({ sessions, user }: { sessions: readonly Session[]; user: User
   );
 };
 
-/** "Make this user the root" (D22), then the emailed code (D18). Only the current root. */
+/**
+ * "Make this user the root" (D22), then the emailed code (D18). A transfer: there is one root,
+ * so the picked user takes the seat and the viewer stays a site admin. Only the current root
+ * sees the action.
+ */
 const MakeRoot = ({
   rootName,
   user,
@@ -191,7 +195,7 @@ const MakeRoot = ({
 }) => {
   const { t } = useTranslation("admin");
   const send = useFetcher<UserActionResult>();
-  const grant = useFetcher<UserActionResult>();
+  const transfer = useFetcher<UserActionResult>();
   const [confirming, setConfirming] = useState(false);
   const [code, setCode] = useState(false);
 
@@ -199,10 +203,10 @@ const MakeRoot = ({
   useEffect(() => {
     if (codeSent) setCode(true);
   }, [codeSent]);
-  const granted = succeeded(grant);
+  const transferred = succeeded(transfer);
   useEffect(() => {
-    if (granted) setCode(false);
-  }, [granted]);
+    if (transferred) setCode(false);
+  }, [transferred]);
 
   const sendCode = () => void send.submit({ intent: "send-step-up" }, { method: "post" });
 
@@ -214,49 +218,53 @@ const MakeRoot = ({
           <p className="text-sm text-muted">
             {user.isRoot
               ? t("users.advanced.root.alreadyRoot")
-              : t("users.advanced.root.onlyRoot", { name: rootName })}
+              : viewerIsRoot
+                ? t("users.advanced.root.transferHint")
+                : t("users.advanced.root.onlyRoot", { name: rootName })}
           </p>
         </div>
-        <Dialog onOpenChange={setConfirming} open={confirming}>
-          <DialogTrigger asChild>
-            <button
-              className="flex h-[34px] items-center rounded-md px-3 text-sm font-semibold text-danger shadow-[inset_0_0_0_1.5px_var(--danger)] hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!viewerIsRoot || user.isRoot || Boolean(user.deletedAt)}
-              type="button"
-            >
-              {t("users.advanced.root.action")}
-            </button>
-          </DialogTrigger>
-          <DialogContent
-            description={t("users.advanced.root.dialogDescription", { name: user.name })}
-            title={t("users.advanced.root.dialogTitle", { name: user.name })}
-            tone="danger"
-          >
-            <DialogBody>
-              <DialogNote>{t("users.advanced.root.next")}</DialogNote>
-            </DialogBody>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="secondary">{t("users.advanced.root.cancel")}</Button>
-              </DialogClose>
-              <Button
-                onClick={() => {
-                  setConfirming(false);
-                  sendCode();
-                }}
-                variant="danger"
+        {viewerIsRoot ? (
+          <Dialog onOpenChange={setConfirming} open={confirming}>
+            <DialogTrigger asChild>
+              <button
+                className="flex h-[34px] items-center rounded-md px-3 text-sm font-semibold text-danger shadow-[inset_0_0_0_1.5px_var(--danger)] hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={user.isRoot || Boolean(user.deletedAt)}
+                type="button"
               >
-                {t("users.advanced.root.confirm")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                {t("users.advanced.root.action")}
+              </button>
+            </DialogTrigger>
+            <DialogContent
+              description={t("users.advanced.root.dialogDescription", { name: user.name })}
+              title={t("users.advanced.root.dialogTitle", { name: user.name })}
+              tone="danger"
+            >
+              <DialogBody>
+                <DialogNote>{t("users.advanced.root.next")}</DialogNote>
+              </DialogBody>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="secondary">{t("users.advanced.root.cancel")}</Button>
+                </DialogClose>
+                <Button
+                  onClick={() => {
+                    setConfirming(false);
+                    sendCode();
+                  }}
+                  variant="danger"
+                >
+                  {t("users.advanced.root.confirm")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        ) : null}
       </div>
       <StepUpDialog
-        busy={grant.state !== "idle"}
-        error={failureOf(grant) ? t("users.advanced.root.wrongCode") : undefined}
+        busy={transfer.state !== "idle"}
+        error={failureOf(transfer) ? t("users.advanced.root.wrongCode") : undefined}
         note={t("users.advanced.root.stepUpNote")}
-        onConfirm={(otp) => void grant.submit({ intent: "make-root", otp }, { method: "post" })}
+        onConfirm={(otp) => void transfer.submit({ intent: "make-root", otp }, { method: "post" })}
         onOpenChange={setCode}
         onResend={sendCode}
         open={code}

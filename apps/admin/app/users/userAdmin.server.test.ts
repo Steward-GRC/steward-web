@@ -7,7 +7,6 @@ import {
   actAsUser,
   generatePassword,
   listUserFactors,
-  makeRoot,
   reassignPolicies,
   removeUserFactor,
   renameUserFactor,
@@ -15,6 +14,7 @@ import {
   resetPassword,
   sendStepUpCode,
   setPolicyException,
+  transferRoot,
 } from "./userAdmin.server";
 
 const ALICE = {
@@ -128,16 +128,16 @@ describe("the user detail's admin actions", () => {
     await expect(actAsUser(request(), "mock-user-erin", " ")).rejects.toThrow();
   });
 
-  it("emails a step-up code, then makes the user root with it (D22, D18)", async () => {
+  it("emails a step-up code, then transfers root to the user with it (D22, D18)", async () => {
     const calls = gateway(ALICE, {
-      GrantRoot: { grantRoot: { userId: "mock-user-grace" } },
+      TransferRoot: { transferRoot: { userId: "mock-user-grace" } },
       RequestStepUpOtp: { requestStepUpOtp: true },
     });
     await sendStepUpCode(request());
-    await makeRoot(request(), "mock-user-grace", "482113");
+    await transferRoot(request(), "mock-user-grace", "482113");
     expect(calls.slice(-2)).toEqual([
       { operation: "RequestStepUpOtp", variables: {} },
-      { operation: "GrantRoot", variables: { otp: "482113", userId: "mock-user-grace" } },
+      { operation: "TransferRoot", variables: { otp: "482113", userId: "mock-user-grace" } },
     ]);
   });
 

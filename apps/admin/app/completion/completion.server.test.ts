@@ -67,7 +67,14 @@ describe("getAckRoster", () => {
   it("returns the acked/pending roster", async () => {
     const roster: AckRoster = {
       acked: [
-        { ackedAt: "2026-09-01T00:00:00Z", email: "a@example.org", userId: "u-1", userName: "A" },
+        {
+          ackedAt: "2026-09-01T00:00:00Z",
+          dueAt: null,
+          email: "a@example.org",
+          groups: [],
+          userId: "u-1",
+          userName: "A",
+        },
       ],
       pending: [],
     };

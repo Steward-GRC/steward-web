@@ -1858,3 +1858,16 @@ describe("liveEdge.policyDetail: related items read with their relationship (bug
     expect(detail?.related).toEqual([{ number: "FIN-009", policyId: "p-9", title: "Plain link" }]);
   });
 });
+
+describe("liveEdge.transferRoot", () => {
+  it("hands the root seat to the user with the emailed code and answers the new root", async () => {
+    const calls = routeGateway({
+      TransferRoot: () => ({ transferRoot: { isRoot: true, userId: "mock-user-grace" } }),
+    });
+    const user = await liveEdge.transferRoot("mock-user-grace", "482113");
+    expect(calls).toEqual([
+      { operation: "TransferRoot", variables: { otp: "482113", userId: "mock-user-grace" } },
+    ]);
+    expect(user).toMatchObject({ isRoot: true, userId: "mock-user-grace" });
+  });
+});

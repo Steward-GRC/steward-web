@@ -308,8 +308,18 @@ describe("Advanced (A20)", () => {
 
   it("lets only the current root transfer root, through an emailed code (D22, D18)", async () => {
     const posted = openDetail("advanced");
+    expect(
+      await screen.findByText(
+        "There is only one root. Making this user the root moves the seat from you, and you stay a site admin.",
+      ),
+    ).toBeInTheDocument();
     await userEvent.click(await screen.findByRole("button", { name: "Make this user the root" }));
-    const dialog = screen.getByRole("dialog", { name: "Make Erin the root site-admin?" });
+    const dialog = screen.getByRole("dialog", { name: "Transfer root to Erin?" });
+    expect(
+      within(dialog).getByText(
+        "There is only one root. Erin takes the seat and you stop being root in the same step. You stay a site admin.",
+      ),
+    ).toBeInTheDocument();
     expect(within(dialog).getByText("Next: confirm with an email code.")).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole("button", { name: "Transfer root" }));
     await vi.waitFor(() => expect(last(posted).get("intent")).toBe("send-step-up"));
@@ -326,7 +336,7 @@ describe("Advanced (A20)", () => {
     expect(
       await screen.findByText("Only the current root (Alice) can do this."),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Make this user the root" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Make this user the root" })).toBeNull();
   });
 
   it("deletes after the preview, the reassignment and the typed email (D20, D17)", async () => {

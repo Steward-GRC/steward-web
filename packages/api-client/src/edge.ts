@@ -599,9 +599,6 @@ export interface Edge {
   globalSettings(cookie?: string): Promise<GlobalSettings>;
   /** Grants a GLOBAL role (no category). Site-admin only. */
   grantRole(userId: string, role: string, cookie?: string): Promise<User>;
-  /** Makes another user the root site-admin, demoting the current root (D22). Only the current
-   *  root, with the emailed step-up code from `requestStepUpOtp`. */
-  grantRoot(userId: string, otp: string, cookie?: string): Promise<User>;
   /** A group's direct children. A null parentId lists the root groups. Site-admin only. */
   groupChildren(parentId: null | string, cookie?: string): Promise<readonly Group[]>;
   /** An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only. */
@@ -1053,6 +1050,9 @@ export interface Edge {
   /** Ask's "Try asking": the questions asked most, most-frequent first (default 6). Empty
    *  when AI is unavailable. */
   topPolicyQuestions(limit?: number, cookie?: string): Promise<readonly string[]>;
+  /** Hands the single root seat to another user (D22). The caller stops being root and stays a
+   *  site admin. Only the current root, with the emailed step-up code from `requestStepUpOtp`. */
+  transferRoot(userId: string, otp: string, cookie?: string): Promise<User>;
   upcomingApprovals(cookie?: string): Promise<readonly UpcomingApproval[]>;
   /** Edits a library appendix. */
   updateAppendix(

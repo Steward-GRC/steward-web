@@ -93,10 +93,14 @@ export const sendStepUpCode = async (request: Request): Promise<void> => {
   await edge.requestStepUpOtp(cookieOf(request));
 };
 
-/** "Make this user the root" (D22): only the current root, with the emailed code. */
-export const makeRoot = async (request: Request, userId: string, otp: string): Promise<User> => {
+/** "Make this user the root" (D22): moves the single root seat; only the current root, with the emailed code. */
+export const transferRoot = async (
+  request: Request,
+  userId: string,
+  otp: string,
+): Promise<User> => {
   await requireUserManage(request);
-  return edge.grantRoot(userId, otp, cookieOf(request));
+  return edge.transferRoot(userId, otp, cookieOf(request));
 };
 
 /** D20's "Re-assign all to": moves the user's owned policies and author grants first. */

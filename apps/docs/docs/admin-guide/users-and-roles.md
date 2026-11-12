@@ -33,8 +33,9 @@ followed by how many policies an exception takes away or adds. Open a user to se
     be acted as.
   - **Sessions** lists each sign-in with its browser, address and when it was last used. **Log
     out user** signs them out everywhere; they can simply sign in again.
-  - **Make this user the root** hands the root administrator role to them. Only the current root
-    can do it, and it asks for a code emailed to you.
+  - **Make this user the root** transfers the root seat to them. There is only one root, so they
+    take the seat and you stop being root in the same step; you stay a site admin. Only the
+    current root sees this action, and it asks for a code emailed to you.
   - **Delete user** previews what the deletion would affect. Re-assign their policies to someone
     first, clear anything that blocks it, then type their email to confirm.
 

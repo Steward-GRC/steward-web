@@ -19,7 +19,6 @@ import {
   actAsUser,
   listPolicyChoices,
   listUserFactors,
-  makeRoot,
   reassignPolicies,
   removeUserFactor,
   renameUserFactor,
@@ -27,6 +26,7 @@ import {
   resetPassword,
   sendStepUpCode,
   setPolicyException,
+  transferRoot,
 } from "../users/userAdmin.server";
 import {
   deleteUser,
@@ -103,7 +103,7 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         return redirect("/users");
       }
       case "make-root": {
-        await makeRoot(request, user.userId, field("otp"));
+        await transferRoot(request, user.userId, field("otp"));
         break;
       }
       case "reassign": {

@@ -22,5 +22,14 @@ query WorkflowStatus($policyVersionId: ID!) {
       roster
       status
     }
+    submittedBy
+    submittedAt
+    stageProgress {
+      dueAt
+      quorum
+      quorumN
+      approvals
+      required
+    }
   }
 }
