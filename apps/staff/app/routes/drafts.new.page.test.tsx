@@ -14,12 +14,13 @@ const loaderData = {
     {
       id: "w",
       name: "Workplace",
+      slug: "workplace",
       subcategories: [
-        { id: "f", name: "Facilities" },
-        { id: "t", name: "Travel" },
+        { id: "f", name: "Facilities", path: ["facilities"] },
+        { id: "t", name: "Travel", path: ["travel"] },
       ],
     },
-    { id: "p", name: "People", subcategories: [] },
+    { id: "p", name: "People", slug: "people", subcategories: [] },
   ],
   templates: [
     { code: "STD", id: "tpl-1", name: "Standard Policy", ownerCategoryId: null, retiredAt: null },
@@ -52,6 +53,15 @@ const openForm = (path = "/drafts/new", data: object = loaderData) => {
       loader: () => data,
       path: "/drafts/new/:type",
     },
+    ...[
+      "category/:category",
+      "category/:category/:subcategory",
+      "category/:category/:subcategory/:deeper",
+    ].map((tail) => ({
+      Component: Page,
+      loader: () => data,
+      path: `/drafts/new/:type/${tail}`,
+    })),
   ]);
   render(<Stub initialEntries={[path]} />);
   return posted;
@@ -188,20 +198,36 @@ describe("New policy (U20)", () => {
     expect(await screen.findByRole("combobox", { name: "Template" })).toHaveValue("tpl-1");
   });
 
-  it("defaults the category and subcategory to the folder it started from (#148)", async () => {
-    openForm("/drafts/new/policy?category=Workplace&subcategory=Travel");
+  it("defaults the category and subcategory to the slug path it started from (#377)", async () => {
+    openForm("/drafts/new/policy/category/workplace/travel");
     expect(await screen.findByLabelText("Category")).toHaveValue("w");
     expect(screen.getByLabelText("Subcategory")).toHaveValue("t");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("defaults to the category alone when the folder has no subcategory chosen (#148)", async () => {
-    openForm("/drafts/new/procedure?category=People");
+  it("defaults to the category alone when only its slug is in the path (#377)", async () => {
+    openForm("/drafts/new/procedure/category/people");
     expect(await screen.findByLabelText("Category")).toHaveValue("p");
   });
 
-  it("ignores a folder it doesn't know (#148)", async () => {
-    openForm("/drafts/new/policy?category=Nowhere");
+  it("opens with nothing chosen and says so for a slug it doesn't know (#377)", async () => {
+    openForm("/drafts/new/policy/category/nowhere");
     expect(await screen.findByLabelText("Category")).toHaveValue("");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "There is no category at this address. Choose one below.",
+    );
+  });
+
+  it("does the same when only the subcategory slug is unknown (#377)", async () => {
+    openForm("/drafts/new/policy/category/workplace/nope");
+    expect(await screen.findByLabelText("Category")).toHaveValue("");
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
+  it("no longer reads a category name from the query (#377)", async () => {
+    openForm("/drafts/new/policy?category=Workplace&subcategory=Travel");
+    expect(await screen.findByLabelText("Category")).toHaveValue("");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
 

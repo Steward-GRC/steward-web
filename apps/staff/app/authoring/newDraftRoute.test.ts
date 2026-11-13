@@ -22,19 +22,65 @@ describe("the new draft route (#147, #148)", () => {
     expect(go("/drafts/new?type=memo")).toBeNull();
   });
 
-  it("finds a folder's category and subcategory by name", () => {
-    const categories = [
-      { id: "w", name: "Workplace", subcategories: [{ id: "f", name: "Facilities" }] },
-    ];
-    expect(folderChoice(categories, "Workplace", "Facilities")).toEqual({
-      groupId: "w",
-      subcategoryId: "f",
-    });
-    expect(folderChoice(categories, "Workplace", "Nope")).toEqual({
-      groupId: "w",
+  it("does not carry a category name from an old link (#377)", () => {
+    expect(go("/drafts/new?type=POLICY&category=IT+Security&subcategory=Travel")).toBe(
+      "/drafts/new/policy",
+    );
+    expect(go("/drafts/new?type=PROCEDURE&category=IT+Security&template=t1")).toBe(
+      "/drafts/new/procedure?template=t1",
+    );
+  });
+});
+
+const categories = [
+  {
+    id: "it",
+    slug: "it-security",
+    subcategories: [
+      { id: "it-travel", path: ["travel"] },
+      { id: "it-desks", path: ["facilities", "desks"] },
+    ],
+  },
+  { id: "hr", slug: "human-resources", subcategories: [{ id: "hr-travel", path: ["travel"] }] },
+];
+
+describe("folderChoice by slug (#377)", () => {
+  it("finds a category by its slug", () => {
+    expect(folderChoice(categories, ["it-security"])).toEqual({
+      groupId: "it",
       subcategoryId: "",
     });
-    expect(folderChoice(categories, "Nowhere", null)).toBeNull();
-    expect(folderChoice(categories, null, null)).toBeNull();
+  });
+
+  it("finds a subcategory under its category", () => {
+    expect(folderChoice(categories, ["it-security", "travel"])).toEqual({
+      groupId: "it",
+      subcategoryId: "it-travel",
+    });
+  });
+
+  it("tells the same slug under two parents apart by the parent", () => {
+    expect(folderChoice(categories, ["human-resources", "travel"])).toEqual({
+      groupId: "hr",
+      subcategoryId: "hr-travel",
+    });
+  });
+
+  it("finds a deeper subcategory by the whole path", () => {
+    expect(folderChoice(categories, ["it-security", "facilities", "desks"])).toEqual({
+      groupId: "it",
+      subcategoryId: "it-desks",
+    });
+  });
+
+  it("gives nothing for an unknown category, an unknown subcategory or no slug", () => {
+    expect(folderChoice(categories, ["nowhere"])).toBeNull();
+    expect(folderChoice(categories, ["it-security", "nope"])).toBeNull();
+    expect(folderChoice(categories, ["it-security", "desks"])).toBeNull();
+    expect(folderChoice(categories, [])).toBeNull();
+  });
+
+  it("does not match a display name", () => {
+    expect(folderChoice(categories, ["IT Security"])).toBeNull();
   });
 });

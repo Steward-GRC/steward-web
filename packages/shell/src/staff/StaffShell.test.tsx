@@ -215,7 +215,15 @@ describe("StaffShell sidebar (H1)", () => {
   it("browses by category, opening a category to its subcategories", async () => {
     renderShell(bob, {
       categories: [
-        { id: "c1", name: "Workplace", slug: "workplace", subcategories: ["Facilities", "Travel"] },
+        {
+          id: "c1",
+          name: "Workplace",
+          slug: "workplace",
+          subcategories: [
+            { name: "Facilities", slug: "facilities" },
+            { name: "Travel", slug: "travel" },
+          ],
+        },
         { id: "c2", name: "Finance", slug: "finance", subcategories: [] },
       ],
     });

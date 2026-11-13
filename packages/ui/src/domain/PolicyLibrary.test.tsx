@@ -13,8 +13,21 @@ import type { Category, Policy } from "./policy";
 import { PolicyLibrary } from "./PolicyLibrary";
 
 const categories: Category[] = [
-  { id: "cat-1", name: "Finance", slug: "finance", subcategories: ["Reimbursement"] },
-  { id: "cat-2", name: "IT Security", slug: "it-security", subcategories: ["Usage", "Operations"] },
+  {
+    id: "cat-1",
+    name: "Finance",
+    slug: "finance",
+    subcategories: [{ name: "Reimbursement", slug: "reimbursement" }],
+  },
+  {
+    id: "cat-2",
+    name: "IT Security",
+    slug: "it-security",
+    subcategories: [
+      { name: "Usage", slug: "usage" },
+      { name: "Operations", slug: "operations" },
+    ],
+  },
 ];
 
 /** Every authoring-only field (added once the editor extended `Policy`) shares this

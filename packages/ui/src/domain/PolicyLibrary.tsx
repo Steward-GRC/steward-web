@@ -363,7 +363,7 @@ export const PolicyLibrary = ({
           categories={categories.map((c) => ({
             count: policies.filter((p) => p.category === c.name).length,
             name: c.name,
-            subcategories: c.subcategories,
+            subcategories: c.subcategories.map((s) => s.name),
           }))}
           onCategory={(name) => update({ category: name, subcategory: "" })}
           onSubcategory={(name, sub) => update({ category: name, subcategory: sub })}

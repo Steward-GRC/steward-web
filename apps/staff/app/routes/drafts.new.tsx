@@ -111,14 +111,22 @@ const Labelled = ({ children, id, label }: { children: ReactNode; id: string; la
  * to the form, with no type to pick (#149); bare `/drafts/new` is a stepper: step 1 chooses the
  * type as radio cards with their hints, step 2 is the form (title, category and subcategory,
  * template, sensitivity, then Cancel and Create). It opens on the template Use this template
- * chose (`?template=`) and the folder the person started from (`?category=`, #148), and keeps an
+ * chose (`?template=`) and the folder the person started from (the `/category/<slug>` part of the
+ * address, #148, #377), and keeps an
  * unsent form in this browser so it can be resumed.
  */
 export default function NewDraft({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("authoring");
   const fetcher = useFetcher<typeof action>();
   const [parameters] = useSearchParams();
-  const fixedType = documentTypeOfSlug(useParams().type);
+  const { category: categorySlug, deeper, subcategory: subcategorySlug, type } = useParams();
+  const fixedType = documentTypeOfSlug(type);
+  // The folder the address names, by slug: /category/<category>[/<subcategory>[/<deeper>]] (#377).
+  const folderSlugs = [categorySlug, subcategorySlug, deeper].filter(
+    (slug): slug is string => slug !== undefined,
+  );
+  const folder = folderSlugs.length > 0 ? folderChoice(loaderData.categories, folderSlugs) : null;
+  const unknownFolder = folderSlugs.length > 0 && folder === null;
   const [step, setStep] = useState<1 | 2>(1);
   // "Use this template" (U23) opens the form with that template chosen.
   const askedTemplate = parameters.get("template");
@@ -129,11 +137,6 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
       askedTemplate && loaderData.templates.some((template) => template.id === askedTemplate)
         ? { ...typed, templateId: askedTemplate }
         : typed;
-    const folder = folderChoice(
-      loaderData.categories,
-      parameters.get("category"),
-      parameters.get("subcategory"),
-    );
     return folder ? { ...withTemplate, ...folder } : withTemplate;
   });
   const ids = { category: useId(), subcategory: useId(), template: useId(), title: useId() };
@@ -289,6 +292,11 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
         </>
       ) : (
         <fetcher.Form className="flex flex-col gap-3.5" method="post">
+          {unknownFolder ? (
+            <p className="text-sm text-muted" role="alert">
+              {t("new.unknownFolder")}
+            </p>
+          ) : null}
           {failure ? (
             <Banner
               title={"validationError" in failure ? t("new.required") : refusalMessage}

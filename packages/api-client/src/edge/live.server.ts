@@ -957,7 +957,9 @@ export const liveEdge: Edge = {
       id: root.id,
       name: root.name,
       slug: root.slug,
-      subcategories: all.filter((c) => c.parentId === root.id).map((c) => c.name),
+      subcategories: all
+        .filter((c) => c.parentId === root.id)
+        .map((c) => ({ name: c.name, slug: c.slug })),
     }));
   },
   async categoryDocumentCounts(categoryId, cookie) {

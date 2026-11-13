@@ -1,5 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { Category } from "@steward-web/api-client";
+
 import { PERMISSIONS, useCan } from "@steward-web/auth";
 import { useTranslation } from "@steward-web/i18n";
 import { newDraftPath } from "@steward-web/shell";
@@ -8,11 +10,19 @@ import { DocumentType } from "@steward-web/ui/domain";
 import { Upload } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
+import { folderSlugs } from "./folderSlugs";
+
 /**
  * The library header's author actions (U3, U4): Import (U21, CSV) and New policy or New
  * procedure. Someone without the author role gets nothing: no button, no message.
  */
-export const LibraryActions = ({ documentType }: { documentType: DocumentType }) => {
+export const LibraryActions = ({
+  categories,
+  documentType,
+}: {
+  categories: readonly Category[];
+  documentType: DocumentType;
+}) => {
   const { t } = useTranslation("policy");
   const author = useCan(PERMISSIONS.PolicyAuthor);
   // A new draft started from a folder view opens on that category (#148).
@@ -30,10 +40,14 @@ export const LibraryActions = ({ documentType }: { documentType: DocumentType })
       </Button>
       <Button asChild className="h-[38px] px-4">
         <Link
-          to={newDraftPath(documentType, {
-            category: parameters.get("category") ?? "",
-            subcategory: parameters.get("subcategory") ?? "",
-          })}
+          to={newDraftPath(
+            documentType,
+            folderSlugs(
+              categories,
+              parameters.get("category") ?? "",
+              parameters.get("subcategory") ?? "",
+            ),
+          )}
         >
           {t(procedure ? "library.actions.newProcedure" : "library.actions.newPolicy")}
         </Link>

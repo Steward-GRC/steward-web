@@ -45,6 +45,16 @@ export default [
   route("drafts", "routes/drafts.tsx"),
   route("drafts/new", "routes/drafts.new.tsx"),
   route("drafts/new/:type", "routes/drafts.new.tsx", { id: "drafts-new-typed" }),
+  // The folder a new draft starts from, by slug: a category, then up to two levels below it (#377).
+  route("drafts/new/:type/category/:category", "routes/drafts.new.tsx", {
+    id: "drafts-new-category",
+  }),
+  route("drafts/new/:type/category/:category/:subcategory", "routes/drafts.new.tsx", {
+    id: "drafts-new-subcategory",
+  }),
+  route("drafts/new/:type/category/:category/:subcategory/:deeper", "routes/drafts.new.tsx", {
+    id: "drafts-new-deeper",
+  }),
   route("drafts/import", "routes/drafts.import.tsx"),
   route("templates", "routes/templates.tsx"),
   route("templates/:templateId", "routes/templates.$templateId.tsx"),
