@@ -2,20 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 // The workflow editor's stage cards (A9). Presentational: the route owns the save, through a
 // hidden field that mirrors `onChange`'s latest stage list.
-import type { GroupUnitInput, WorkCalendar, WorkflowStageInput } from "@steward-web/api-client";
+import type { WorkCalendar, WorkflowStageInput } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
-import { Card, type ChipItem, ChipPicker, cn, Field, Select } from "@steward-web/ui";
+import { Card, type ChipItem, ChipPicker, cn, Field } from "@steward-web/ui";
 import { GripVertical, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
 
 import { calendarSummary } from "../settings/workCalendar";
+import { type ApproverCandidatesView, ApproverPicker } from "./ApproverPicker";
 import { moveDown, moveUp } from "./stageOutline";
 import { approverPool, pruneVetoes } from "./stageVeto";
 
 export interface StageEditorProps {
+  /** Who may approve, from the gateway; null when it could not say. */
+  approverCandidates: ApproverCandidatesView | null;
   /** The site work calendar the due box counts on; null when it could not be read. */
   calendar?: null | WorkCalendar;
+  /** Platform group id to its members' ids, for adding a group as an approver. */
+  groupMembers: Record<string, readonly string[]>;
   /** Platform group names, for group approvers. */
   groupNames: Record<string, string>;
   onChange: (stages: readonly WorkflowStageInput[]) => void;
@@ -31,22 +36,14 @@ export interface StagePerson {
 
 const QUORUMS = ["one", "majority", "all"] as const;
 
-/** How many of a group's members its internal quorum needs. */
-const needed = (unit: GroupUnitInput) => {
-  const total = unit.memberUserIds.length;
-  if (unit.internalQuorum === "all") return total;
-  if (unit.internalQuorum === "majority") return Math.floor(total / 2) + 1;
-  return Math.min(1, total);
-};
-
 /** A stage card's identity for notes about it: its id, or its place while it has none. */
 const keyOf = (stage: WorkflowStageInput, index: number) => stage.id ?? `new-${index}`;
 
-const CHIP = "flex h-7 items-center gap-1.5 rounded-full px-2.5";
-
 /** One stage card: grip, number and name, Always last, the quorum, approvers and due date. */
 const StageCard = ({
+  approverCandidates,
   calendar,
+  groupMembers,
   groupNames,
   index,
   onDragStart,
@@ -58,7 +55,9 @@ const StageCard = ({
   stage,
   vetoNote,
 }: {
+  approverCandidates: ApproverCandidatesView | null;
   calendar: null | undefined | WorkCalendar;
+  groupMembers: Record<string, readonly string[]>;
   groupNames: Record<string, string>;
   index: number;
   onDragStart: () => void;
@@ -183,52 +182,15 @@ const StageCard = ({
       </div>
 
       <div className="flex flex-col gap-2 px-3.5 py-3 text-sm">
-        <ul
-          aria-label={t("workflows.editor.approvers", { number })}
-          className="flex flex-wrap items-center gap-1.5"
-        >
-          {stage.approvers.map((id) => {
-            const who = person(id);
-            const name = who?.name ?? id;
-            const disabled = who !== undefined && !who.enabled;
-            return (
-              <li className={cn(CHIP, disabled ? "bg-warn-soft text-warn" : "bg-sunken")} key={id}>
-                {disabled ? t("workflows.editor.disabled", { name }) : name}
-                <button
-                  aria-label={t("workflows.editor.removeApprover", { name, number })}
-                  className="flex rounded-full opacity-70 hover:opacity-100"
-                  onClick={() =>
-                    onUpdate({ approvers: stage.approvers.filter((entry) => entry !== id) })
-                  }
-                  type="button"
-                >
-                  <X aria-hidden="true" className="size-4" />
-                </button>
-              </li>
-            );
-          })}
-          {(stage.groupUnits ?? []).map((unit) => (
-            <li className={cn(CHIP, "bg-sunken")} key={unit.groupId}>
-              {t("workflows.editor.group", {
-                name: groupNames[unit.groupId] ?? unit.groupId,
-                need: needed(unit),
-                total: unit.memberUserIds.length,
-              })}
-            </li>
-          ))}
-          <li>
-            <Select
-              aria-label={t("workflows.editor.addApprover")}
-              className="h-7 w-auto rounded-full border-0 px-2.5 text-sm font-semibold text-primary shadow-[inset_0_0_0_1px_var(--border-strong)]"
-              onValueChange={(id) => onUpdate({ approvers: [...stage.approvers, id] })}
-              options={people
-                .filter((entry) => entry.enabled && !stage.approvers.includes(entry.id))
-                .map((entry) => ({ label: entry.name, value: entry.id }))}
-              placeholder={t("workflows.editor.addApprover")}
-              value=""
-            />
-          </li>
-        </ul>
+        <ApproverPicker
+          candidates={approverCandidates}
+          groupMembers={groupMembers}
+          groupNames={groupNames}
+          number={number}
+          onChange={(next) => onUpdate(next)}
+          people={people}
+          value={stage}
+        />
         <span className="text-muted">{explain}</span>
         <Field hint={t("workflows.editor.veto.hint")} label={t("workflows.editor.veto.label")}>
           <ChipPicker
@@ -284,7 +246,9 @@ const StageCard = ({
  * disabled one asks to be replaced, a group shows "As a group · 2 of 3") and its due date.
  */
 export const StageEditor = ({
+  approverCandidates,
   calendar,
+  groupMembers,
   groupNames,
   onChange,
   people,
@@ -319,7 +283,9 @@ export const StageEditor = ({
     <div className="flex flex-col gap-3.5">
       {stages.map((stage, index) => (
         <StageCard
+          approverCandidates={approverCandidates}
           calendar={calendar}
+          groupMembers={groupMembers}
           groupNames={groupNames}
           index={index}
           key={stage.id ?? `new-${index}`}

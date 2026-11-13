@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { WorkflowApproverCandidates } from "./approverCandidates";
 import type {
   AccountMergePreview,
   AckActivityDay,
@@ -1138,6 +1139,11 @@ export interface Edge {
   /** One version's body and appendices as the reader draws them, for the review page's
    *  "Upcoming version" (U25). Null when the caller can't read it. */
   versionDocument(versionId: string, cookie?: string): Promise<null | VersionDocument>;
+  /** Who may approve on one workflow, from its categories' rows; never a site-wide user list. */
+  workflowApproverCandidates(
+    workflowId: string,
+    cookie?: string,
+  ): Promise<WorkflowApproverCandidates>;
   /** One workflow definition's full detail (its approval stages), for admin management. Null
    *  when it doesn't exist (or was archived). Site-admin only. */
   workflowDef(id: string, cookie?: string): Promise<null | WorkflowDef>;

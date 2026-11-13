@@ -1041,6 +1041,14 @@
       "required": "A name is required.",
       "failed": "Couldn't save this workflow",
       "copyName": "{{name}} (copy)",
+      "approverPicker": {
+        "group": "Group",
+        "notAttached": "Attach this workflow to a category first.",
+        "notAttachedLink": "Open categories",
+        "person": "Person",
+        "placeholder": "Type a name to add an approver",
+        "unavailable": "Couldn't load who can approve this workflow."
+      },
       "notFound": {
         "title": "Workflow not found",
         "description": "No workflow matches that address.",
