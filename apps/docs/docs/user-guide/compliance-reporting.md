@@ -9,6 +9,10 @@ title: Compliance reporting
 Compliance reporting comes in a later release. In this release the case pages are turned off unless the install sets `STEWARD_REPORTING=true`, and their redesign is still to come.
 :::
 
+If a site admin has switched the Compliance module off, the queue and the case pages show
+**Reporting is turned off** instead of cases. Nothing has been deleted; the cases come back when
+a site admin turns the module on again in Settings.
+
 This page is for reporting officers — the people who triage and work compliance cases, such as a
 possible data incident. It shows how to move a case from intake to close.
 

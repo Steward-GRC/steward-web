@@ -1846,3 +1846,80 @@ describe("liveEdge.transferRoot", () => {
     expect(user).toMatchObject({ isRoot: true, userId: "mock-user-grace" });
   });
 });
+
+const REQUEST = {
+  approvalExpiresAt: null,
+  approvedAt: null,
+  approvedBy: null,
+  cancelledAt: null,
+  consumedAt: null,
+  consumedBy: null,
+  expiresAt: "2026-11-14T10:00:00Z",
+  id: "req-1",
+  module: "compliance",
+  reason: "End of the pilot",
+  requestedAt: "2026-11-13T10:00:00Z",
+  requestedBy: "mock-user-root",
+  state: "pending",
+};
+
+describe("liveEdge compliance module and hard reset", () => {
+  it("reads and sets the module switch", async () => {
+    const calls = routeGateway({
+      ComplianceSettings: () => ({ complianceSettings: { moduleEnabled: true } }),
+      SetComplianceModule: () => ({ setComplianceModule: { moduleEnabled: false } }),
+    });
+    expect(await liveEdge.complianceSettings()).toEqual({ moduleEnabled: true });
+    expect(await liveEdge.setComplianceModule(false)).toEqual({ moduleEnabled: false });
+    expect(calls).toEqual([
+      { operation: "ComplianceSettings", variables: {} },
+      { operation: "SetComplianceModule", variables: { enabled: false } },
+    ]);
+  });
+
+  it("lists, requests, approves and cancels hard reset requests", async () => {
+    const calls = routeGateway({
+      ApproveHardReset: () => ({ approveHardReset: { ...REQUEST, state: "approved" } }),
+      CancelHardReset: () => ({ cancelHardReset: { ...REQUEST, state: "cancelled" } }),
+      HardResetRequests: () => ({ hardResetRequests: [REQUEST] }),
+      RequestHardReset: () => ({ requestHardReset: REQUEST }),
+    });
+    expect(await liveEdge.hardResetRequests("compliance")).toEqual([REQUEST]);
+    expect(await liveEdge.requestHardReset("compliance", "End of the pilot")).toEqual(REQUEST);
+    const approved = await liveEdge.approveHardReset("req-1");
+    const cancelled = await liveEdge.cancelHardReset("req-1");
+    expect(approved.state).toBe("approved");
+    expect(cancelled.state).toBe("cancelled");
+    expect(calls.map((call) => call.operation)).toEqual([
+      "HardResetRequests",
+      "RequestHardReset",
+      "ApproveHardReset",
+      "CancelHardReset",
+    ]);
+    expect(calls[0]?.variables).toEqual({ module: "compliance" });
+    expect(calls[1]?.variables).toEqual({ module: "compliance", reason: "End of the pilot" });
+  });
+
+  it("executes a hard reset and answers the count", async () => {
+    const calls = routeGateway({
+      ExecuteHardReset: () => ({
+        executeHardReset: {
+          approvedBy: "mock-user-ada",
+          casesDeleted: 42,
+          requestedBy: "mock-user-root",
+        },
+      }),
+    });
+    expect(await liveEdge.executeHardReset("req-1", "RESET COMPLIANCE DATA")).toEqual({
+      approvedBy: "mock-user-ada",
+      casesDeleted: 42,
+      requestedBy: "mock-user-root",
+    });
+    expect(calls).toEqual([
+      {
+        operation: "ExecuteHardReset",
+        variables: { confirmation: "RESET COMPLIANCE DATA", requestId: "req-1" },
+      },
+    ]);
+  });
+});

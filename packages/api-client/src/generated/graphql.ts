@@ -323,6 +323,28 @@ export type AppendixVersionFieldsFragment = {
   readonly publishedBy: string | null;
 };
 
+export type ApproveHardResetMutationVariables = Exact<{
+  requestId: string | number;
+}>;
+
+export type ApproveHardResetMutation = {
+  readonly approveHardReset: {
+    readonly id: string;
+    readonly module: string;
+    readonly reason: string;
+    readonly state: string;
+    readonly requestedBy: string;
+    readonly requestedAt: string;
+    readonly expiresAt: string;
+    readonly approvedBy: string | null;
+    readonly approvedAt: string | null;
+    readonly approvalExpiresAt: string | null;
+    readonly cancelledAt: string | null;
+    readonly consumedAt: string | null;
+    readonly consumedBy: string | null;
+  };
+};
+
 export type ArchiveWorkflowDefMutationVariables = Exact<{
   id: string | number;
 }>;
@@ -497,6 +519,28 @@ export type BreakGlassRevealMutationVariables = Exact<{
 
 export type BreakGlassRevealMutation = {
   readonly breakGlassReveal: { readonly grantedUntil: string };
+};
+
+export type CancelHardResetMutationVariables = Exact<{
+  requestId: string | number;
+}>;
+
+export type CancelHardResetMutation = {
+  readonly cancelHardReset: {
+    readonly id: string;
+    readonly module: string;
+    readonly reason: string;
+    readonly state: string;
+    readonly requestedBy: string;
+    readonly requestedAt: string;
+    readonly expiresAt: string;
+    readonly approvedBy: string | null;
+    readonly approvedAt: string | null;
+    readonly approvalExpiresAt: string | null;
+    readonly cancelledAt: string | null;
+    readonly consumedAt: string | null;
+    readonly consumedBy: string | null;
+  };
 };
 
 export type CategoryQueryVariables = Exact<{
@@ -819,6 +863,12 @@ export type CompletionReportQuery = {
       readonly userName: string | null;
     }>;
   };
+};
+
+export type ComplianceSettingsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ComplianceSettingsQuery = {
+  readonly complianceSettings: { readonly moduleEnabled: boolean };
 };
 
 export type ContactBlocksQueryVariables = Exact<{
@@ -1411,6 +1461,19 @@ export type EnrollTotpConfirmMutationVariables = Exact<{
 
 export type EnrollTotpConfirmMutation = { readonly enrollTotpConfirm: boolean };
 
+export type ExecuteHardResetMutationVariables = Exact<{
+  requestId: string | number;
+  confirmation: string;
+}>;
+
+export type ExecuteHardResetMutation = {
+  readonly executeHardReset: {
+    readonly casesDeleted: number;
+    readonly requestedBy: string;
+    readonly approvedBy: string;
+  };
+};
+
 export type ExportAcksQueryVariables = Exact<{
   policyVersionId: string | number;
   format: string;
@@ -1489,6 +1552,44 @@ export type GroupMappingsQuery = {
     readonly id: string;
     readonly idpGroupClaimValue: string;
     readonly targetGroupId: string;
+  }>;
+};
+
+export type HardResetRequestFieldsFragment = {
+  readonly id: string;
+  readonly module: string;
+  readonly reason: string;
+  readonly state: string;
+  readonly requestedBy: string;
+  readonly requestedAt: string;
+  readonly expiresAt: string;
+  readonly approvedBy: string | null;
+  readonly approvedAt: string | null;
+  readonly approvalExpiresAt: string | null;
+  readonly cancelledAt: string | null;
+  readonly consumedAt: string | null;
+  readonly consumedBy: string | null;
+};
+
+export type HardResetRequestsQueryVariables = Exact<{
+  module?: string | null | undefined;
+}>;
+
+export type HardResetRequestsQuery = {
+  readonly hardResetRequests: ReadonlyArray<{
+    readonly id: string;
+    readonly module: string;
+    readonly reason: string;
+    readonly state: string;
+    readonly requestedBy: string;
+    readonly requestedAt: string;
+    readonly expiresAt: string;
+    readonly approvedBy: string | null;
+    readonly approvedAt: string | null;
+    readonly approvalExpiresAt: string | null;
+    readonly cancelledAt: string | null;
+    readonly consumedAt: string | null;
+    readonly consumedBy: string | null;
   }>;
 };
 
@@ -2985,6 +3086,29 @@ export type ReportCasesQuery = {
   };
 };
 
+export type RequestHardResetMutationVariables = Exact<{
+  module: string;
+  reason: string;
+}>;
+
+export type RequestHardResetMutation = {
+  readonly requestHardReset: {
+    readonly id: string;
+    readonly module: string;
+    readonly reason: string;
+    readonly state: string;
+    readonly requestedBy: string;
+    readonly requestedAt: string;
+    readonly expiresAt: string;
+    readonly approvedBy: string | null;
+    readonly approvedAt: string | null;
+    readonly approvalExpiresAt: string | null;
+    readonly cancelledAt: string | null;
+    readonly consumedAt: string | null;
+    readonly consumedBy: string | null;
+  };
+};
+
 export type RequestPdfExportMutationVariables = Exact<{
   policyVersionId: string | number;
 }>;
@@ -3732,6 +3856,14 @@ export type SetCategoryTemplateLockMutation = {
     readonly id: string;
     readonly defaultTemplateLocked: boolean;
   };
+};
+
+export type SetComplianceModuleMutationVariables = Exact<{
+  enabled: boolean;
+}>;
+
+export type SetComplianceModuleMutation = {
+  readonly setComplianceModule: { readonly moduleEnabled: boolean };
 };
 
 export type SetContactBlockArchivedMutationVariables = Exact<{
@@ -5126,6 +5258,34 @@ export const CategoryFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<CategoryFieldsFragment, unknown>;
+export const HardResetRequestFieldsFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "HardResetRequestFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "HardResetRequest" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "module" } },
+          { kind: "Field", name: { kind: "Name", value: "reason" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvalExpiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "cancelledAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedBy" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<HardResetRequestFieldsFragment, unknown>;
 export const NotificationSettingsFieldsFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -7050,6 +7210,71 @@ export const AppendixDiffDocument = {
     },
   ],
 } as unknown as DocumentNode<AppendixDiffQuery, AppendixDiffQueryVariables>;
+export const ApproveHardResetDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ApproveHardReset" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "requestId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "approveHardReset" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "requestId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "requestId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "HardResetRequestFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "HardResetRequestFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "HardResetRequest" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "module" } },
+          { kind: "Field", name: { kind: "Name", value: "reason" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvalExpiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "cancelledAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedBy" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApproveHardResetMutation, ApproveHardResetMutationVariables>;
 export const ArchiveWorkflowDefDocument = {
   kind: "Document",
   definitions: [
@@ -7490,6 +7715,71 @@ export const BreakGlassRevealDocument = {
     },
   ],
 } as unknown as DocumentNode<BreakGlassRevealMutation, BreakGlassRevealMutationVariables>;
+export const CancelHardResetDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "CancelHardReset" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "requestId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "cancelHardReset" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "requestId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "requestId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "HardResetRequestFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "HardResetRequestFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "HardResetRequest" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "module" } },
+          { kind: "Field", name: { kind: "Name", value: "reason" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvalExpiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "cancelledAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedBy" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CancelHardResetMutation, CancelHardResetMutationVariables>;
 export const CategoryDocument = {
   kind: "Document",
   definitions: [
@@ -8456,6 +8746,29 @@ export const CompletionReportDocument = {
     },
   ],
 } as unknown as DocumentNode<CompletionReportQuery, CompletionReportQueryVariables>;
+export const ComplianceSettingsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "ComplianceSettings" },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "complianceSettings" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "moduleEnabled" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ComplianceSettingsQuery, ComplianceSettingsQueryVariables>;
 export const ContactBlocksDocument = {
   kind: "Document",
   definitions: [
@@ -10534,6 +10847,63 @@ export const EnrollTotpConfirmDocument = {
     },
   ],
 } as unknown as DocumentNode<EnrollTotpConfirmMutation, EnrollTotpConfirmMutationVariables>;
+export const ExecuteHardResetDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ExecuteHardReset" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "requestId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "confirmation" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "executeHardReset" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "requestId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "requestId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "confirmation" },
+                value: { kind: "Variable", name: { kind: "Name", value: "confirmation" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "casesDeleted" } },
+                { kind: "Field", name: { kind: "Name", value: "requestedBy" } },
+                { kind: "Field", name: { kind: "Name", value: "approvedBy" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ExecuteHardResetMutation, ExecuteHardResetMutationVariables>;
 export const ExportAcksDocument = {
   kind: "Document",
   definitions: [
@@ -10835,6 +11205,68 @@ export const GroupMappingsDocument = {
     },
   ],
 } as unknown as DocumentNode<GroupMappingsQuery, GroupMappingsQueryVariables>;
+export const HardResetRequestsDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "HardResetRequests" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "module" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "hardResetRequests" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "module" },
+                value: { kind: "Variable", name: { kind: "Name", value: "module" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "HardResetRequestFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "HardResetRequestFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "HardResetRequest" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "module" } },
+          { kind: "Field", name: { kind: "Name", value: "reason" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvalExpiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "cancelledAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedBy" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<HardResetRequestsQuery, HardResetRequestsQueryVariables>;
 export const ImpersonationStatusDocument = {
   kind: "Document",
   definitions: [
@@ -14914,6 +15346,84 @@ export const ReportCasesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReportCasesQuery, ReportCasesQueryVariables>;
+export const RequestHardResetDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "RequestHardReset" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "module" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "requestHardReset" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "module" },
+                value: { kind: "Variable", name: { kind: "Name", value: "module" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "reason" },
+                value: { kind: "Variable", name: { kind: "Name", value: "reason" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "HardResetRequestFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "HardResetRequestFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "HardResetRequest" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "module" } },
+          { kind: "Field", name: { kind: "Name", value: "reason" } },
+          { kind: "Field", name: { kind: "Name", value: "state" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "expiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedBy" } },
+          { kind: "Field", name: { kind: "Name", value: "approvedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "approvalExpiresAt" } },
+          { kind: "Field", name: { kind: "Name", value: "cancelledAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "consumedBy" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RequestHardResetMutation, RequestHardResetMutationVariables>;
 export const RequestPdfExportDocument = {
   kind: "Document",
   definitions: [
@@ -17291,6 +17801,46 @@ export const SetCategoryTemplateLockDocument = {
   SetCategoryTemplateLockMutation,
   SetCategoryTemplateLockMutationVariables
 >;
+export const SetComplianceModuleDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "SetComplianceModule" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "enabled" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "setComplianceModule" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "enabled" },
+                value: { kind: "Variable", name: { kind: "Name", value: "enabled" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [{ kind: "Field", name: { kind: "Name", value: "moduleEnabled" } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetComplianceModuleMutation, SetComplianceModuleMutationVariables>;
 export const SetContactBlockArchivedDocument = {
   kind: "Document",
   definitions: [

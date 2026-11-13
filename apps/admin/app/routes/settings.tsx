@@ -1,15 +1,14 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { WorkCalendarInput } from "@steward-web/api-client";
+import type { HardResetResult, WorkCalendarInput } from "@steward-web/api-client";
 
 import { GatewayError } from "@steward-web/api-client";
+import { identityFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, SiteBanners } from "@steward-web/shell";
 import {
   Banner,
   Button,
-  Card,
-  cn,
   type Failure,
   Field,
   Input,
@@ -17,35 +16,52 @@ import {
   Switch,
   Textarea,
 } from "@steward-web/ui";
-import { type ReactNode, useId, useState } from "react";
+import { useId, useState } from "react";
 import { data, useFetcher } from "react-router";
 
 import type { Route } from "./+types/settings";
 
+import { complianceErrorCode, HARD_RESET_PHRASE } from "../settings/complianceErrors";
+import { ComplianceModuleCard } from "../settings/ComplianceModuleCard";
+import { HardResetCard } from "../settings/HardResetCard";
 import {
+  approveComplianceHardReset,
+  cancelComplianceHardReset,
+  executeComplianceHardReset,
   getAiSettings,
   getAppliance,
+  getComplianceSettings,
   getEmailServiceConfig,
   getGlobalSettings,
+  getHardReset,
+  requestComplianceHardReset,
   saveEmailServiceConfig,
   saveGlobalSettings,
   saveWorkCalendar,
   setAiEnabled,
   setAiToken,
   setAiTopK,
+  setComplianceModule,
 } from "../settings/settings.server";
+import { SettingsCard } from "../settings/SettingsCard";
 import { calendarSummary, parseWorkCalendar } from "../settings/workCalendar";
 import { WorkCalendarForm } from "../settings/WorkCalendarForm";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const [globalSettings, emailServiceConfig, ai, appliance] = await Promise.all([
-    getGlobalSettings(request),
-    getEmailServiceConfig(request),
-    // The AI cards show only when the AI module answers.
-    getAiSettings(request).catch(() => null),
-    getAppliance(request),
-  ]);
-  return { ai, appliance, emailServiceConfig, globalSettings };
+  const identity = await identityFromRequest(request);
+  const [globalSettings, emailServiceConfig, ai, appliance, compliance, hardReset] =
+    await Promise.all([
+      getGlobalSettings(request),
+      getEmailServiceConfig(request),
+      // The AI cards show only when the AI module answers.
+      getAiSettings(request).catch(() => null),
+      getAppliance(request),
+      // The Compliance card shows only to those who may manage it and only when it answers.
+      getComplianceSettings(request).catch(() => null),
+      // The hard reset card is for site admins; a refusal or an outage hides it, not the page.
+      identity.isSiteAdmin ? getHardReset(request).catch(() => null) : Promise.resolve(null),
+    ]);
+  return { ai, appliance, compliance, emailServiceConfig, globalSettings, hardReset };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -71,6 +87,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
         await setAiTopK(request, Number(field("topK")) || 0);
         break;
       }
+      case "compliance-module": {
+        await setComplianceModule(request, field("enabled") === "true");
+        break;
+      }
       case "email-clear-key":
       case "save-email": {
         const apiKey = String(form.get("apiKey") ?? "");
@@ -83,6 +103,41 @@ export const action = async ({ request }: Route.ActionArgs) => {
           provider: field("provider"),
           region: field("region"),
         });
+        break;
+      }
+      case "hard-reset-approve": {
+        await approveComplianceHardReset(request, field("requestId"));
+        break;
+      }
+      case "hard-reset-cancel": {
+        await cancelComplianceHardReset(request, field("requestId"));
+        break;
+      }
+      case "hard-reset-execute": {
+        // The screen asks for both; a request that skips them is turned back here too.
+        if (field("exportAcknowledged") !== "true") {
+          return data({ intent, invalid: true, ok: false } as const, { status: 400 });
+        }
+        const confirmation = String(form.get("confirmation") ?? "");
+        if (confirmation !== HARD_RESET_PHRASE) {
+          return data(
+            {
+              complianceError: "HARD_RESET_CONFIRMATION",
+              failure: {},
+              intent,
+              ok: false,
+            } as const,
+            { status: 400 },
+          );
+        }
+        const result = await executeComplianceHardReset(request, field("requestId"), confirmation);
+        return { intent, ok: true, result } as const;
+      }
+      case "hard-reset-request": {
+        const reason = field("reason");
+        if (reason === "")
+          return data({ intent, invalid: true, ok: false } as const, { status: 400 });
+        await requestComplianceHardReset(request, reason);
         break;
       }
       case "save-global": {
@@ -122,22 +177,30 @@ export const action = async ({ request }: Route.ActionArgs) => {
         { status: 400 },
       );
     }
+    // Reporting's own refusals (the module is off, a hard reset step) are worded on screen from
+    // the code; the server's text is never shown.
+    const complianceError = complianceErrorCode(
+      error instanceof GatewayError ? error.code : undefined,
+    );
+    if (complianceError) {
+      return data({ complianceError, failure: refusalOf(error), intent, ok: false } as const, {
+        status: 400,
+      });
+    }
     return data({ failure: refusalOf(error), intent, ok: false } as const, { status: 400 });
   }
 };
 
 type Result =
-  | { calendarError?: string; failure: Failure; intent: string; ok: false }
+  | {
+      calendarError?: string;
+      complianceError?: string;
+      failure: Failure;
+      intent: string;
+      ok: false;
+    }
   | { intent: string; invalid: true; ok: false }
-  | { intent: string; ok: true };
-
-type Tone = "neutral" | "ok" | "warn";
-
-const PILL: Record<Tone, string> = {
-  neutral: "bg-neutral-soft text-neutral",
-  ok: "bg-ok-soft text-ok",
-  warn: "bg-warn-soft text-warn",
-};
+  | { intent: string; ok: true; result?: HardResetResult };
 
 const failureOf = (fetcher: { data?: Result; state: string }) =>
   fetcher.state === "idle" && fetcher.data && !fetcher.data.ok && "failure" in fetcher.data
@@ -150,45 +213,14 @@ const calendarErrorOf = (fetcher: { data?: Result; state: string }) =>
     ? fetcher.data.calendarError
     : undefined;
 
+/** The known compliance refusal code of a settled fetcher's last answer. */
+const complianceErrorOf = (fetcher: { data?: Result; state: string }) =>
+  fetcher.state === "idle" && fetcher.data && !fetcher.data.ok && "complianceError" in fetcher.data
+    ? fetcher.data.complianceError
+    : undefined;
+
 const savedOf = (fetcher: { data?: Result; state: string }) =>
   fetcher.state === "idle" && fetcher.data?.ok === true;
-
-/** One settings card: a heading with its status pill, a line about it, then its controls. */
-const SettingsCard = ({
-  children,
-  description,
-  pill,
-  title,
-  tone,
-}: {
-  children?: ReactNode;
-  description: ReactNode;
-  pill: string;
-  title: string;
-  tone: Tone;
-}) => {
-  const titleId = useId();
-  return (
-    <Card aria-labelledby={titleId} className="flex flex-col gap-2 px-4 py-3.5">
-      <div className="flex items-center gap-2.5">
-        <b className="flex-1" id={titleId}>
-          {title}
-        </b>
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-2xs leading-[15px] font-semibold",
-            PILL[tone],
-          )}
-          data-testid="status-pill"
-        >
-          {pill}
-        </span>
-      </div>
-      <p className="text-sm leading-normal text-muted">{description}</p>
-      {children}
-    </Card>
-  );
-};
 
 /** D36: the inline "are you sure" row before a token or key is cleared. */
 const ClearConfirm = ({
@@ -219,11 +251,12 @@ const ClearConfirm = ({
 /**
  * Settings (A28): seven cards, each a heading with its status pill: the AI provider token, AI
  * features, AI retrieval, outbound email, the working days calendar, the global announcement
- * with its live preview, and the maintenance notice. Full width, as every admin page is.
+ * with its live preview, and the maintenance notice. Full width, as every admin page is. Below
+ * them sit the Compliance module switch and the hard reset, for the people who may use them.
  */
 export default function Settings({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
-  const { ai, appliance, emailServiceConfig, globalSettings } = loaderData;
+  const { ai, appliance, compliance, emailServiceConfig, globalSettings, hardReset } = loaderData;
   // An appliance configures AI on its own box; here the cards only show what is set (#113).
   const locked = appliance !== null && appliance !== undefined;
   const token = useFetcher<Result>();
@@ -232,6 +265,8 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
   const email = useFetcher<Result>();
   const banners = useFetcher<Result>();
   const calendar = useFetcher<Result>();
+  const switchModule = useFetcher<Result>();
+  const reset = useFetcher<Result>();
   const [clearingToken, setClearingToken] = useState(false);
   const [clearingKey, setClearingKey] = useState(false);
   const [announcement, setAnnouncement] = useState(globalSettings.announcement);
@@ -265,6 +300,11 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
   const failure = [token, enabled, retrieval, email, banners, calendar]
     .map((fetcher) => (fetcher === calendar && calendarError ? undefined : failureOf(fetcher)))
     .find(Boolean);
+
+  const post = (fetcher: typeof reset, fields: Record<string, string>) =>
+    void fetcher.submit(fields, { method: "post" });
+  const resetResult =
+    reset.state === "idle" && reset.data?.ok === true ? reset.data.result : undefined;
 
   return (
     <div className="flex w-full flex-col gap-3 p-4 md:p-6">
@@ -563,6 +603,42 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
           </Button>
         </div>
       </SettingsCard>
+
+      {compliance ? (
+        <ComplianceModuleCard
+          busy={switchModule.state !== "idle"}
+          enabled={compliance.moduleEnabled}
+          errorCode={complianceErrorOf(switchModule)}
+          failure={complianceErrorOf(switchModule) ? undefined : failureOf(switchModule)}
+          onChange={(enabled) =>
+            post(switchModule, { enabled: String(enabled), intent: "compliance-module" })
+          }
+        />
+      ) : null}
+
+      {hardReset ? (
+        <HardResetCard
+          busy={reset.state !== "idle"}
+          errorCode={complianceErrorOf(reset)}
+          failure={complianceErrorOf(reset) ? undefined : failureOf(reset)}
+          moduleEnabled={compliance ? compliance.moduleEnabled : null}
+          names={hardReset.names}
+          onApprove={(requestId) => post(reset, { intent: "hard-reset-approve", requestId })}
+          onCancel={(requestId) => post(reset, { intent: "hard-reset-cancel", requestId })}
+          onExecute={(requestId, confirmation) =>
+            post(reset, {
+              confirmation,
+              exportAcknowledged: "true",
+              intent: "hard-reset-execute",
+              requestId,
+            })
+          }
+          onRequest={(reason) => post(reset, { intent: "hard-reset-request", reason })}
+          requests={hardReset.requests}
+          result={resetResult}
+          viewer={hardReset.viewer}
+        />
+      ) : null}
     </div>
   );
 }

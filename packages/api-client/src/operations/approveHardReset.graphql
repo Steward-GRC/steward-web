@@ -1,0 +1,5 @@
+mutation ApproveHardReset($requestId: ID!) {
+  approveHardReset(requestId: $requestId) {
+    ...HardResetRequestFields
+  }
+}

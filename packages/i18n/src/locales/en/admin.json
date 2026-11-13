@@ -309,6 +309,94 @@
       "description": "Locks the staff app behind the maintenance screen with your message. Site admins keep the admin console, so they can turn it off.",
       "switch": "Turn maintenance on",
       "message": "Message"
+    },
+    "compliance": {
+      "title": "Compliance module",
+      "description": "Compliance reporting takes in reports and manages cases. Turn it off to stop all reporting. Every case is kept, and nothing can be submitted or read until you turn it back on.",
+      "switch": "Compliance module on",
+      "failed": "Couldn't change the Compliance module",
+      "turnOff": {
+        "title": "Turn the Compliance module off?",
+        "description": "Reporting stops for everyone. Nobody can submit a report or open a case until you turn it on again. Existing cases are kept.",
+        "confirm": "Turn off"
+      },
+      "turnOn": {
+        "title": "Turn the Compliance module on?",
+        "description": "Reporting opens again. People can submit reports and compliance staff can open cases.",
+        "confirm": "Turn on"
+      },
+      "cancel": "Cancel"
+    },
+    "hardReset": {
+      "title": "Hard reset of compliance data",
+      "description": "Permanently deletes every compliance case and everything that belongs to one. It cannot be undone.",
+      "pill": {
+        "open": "{{count}} open",
+        "none": "None open"
+      },
+      "rules": {
+        "heading": "Before you start",
+        "off": "The Compliance module must be off first, so no report arrives while the data is deleted.",
+        "hold": "A legal hold on any case blocks the whole reset. Nothing is deleted until every hold is released.",
+        "kept": "The Compliance settings and the module's off switch are kept.",
+        "record": "One audit record is kept. It holds no case and no reporter information.",
+        "people": "Two people are needed: the root admin asks, a different site admin approves, and the root admin then runs it."
+      },
+      "rootOnly": "Only the root admin can ask for a hard reset or run one. As a site admin you can approve or cancel a request.",
+      "moduleOn": "The Compliance module is on. Turn it off above before a reset can run.",
+      "request": {
+        "heading": "Ask for a hard reset",
+        "reason": "Reason",
+        "reasonHint": "Why the compliance data is being deleted. Approvers read this.",
+        "submit": "Request hard reset",
+        "open": "A request is already open. Cancel it or finish it before asking again."
+      },
+      "requests": {
+        "heading": "Requests",
+        "empty": "No hard reset requests.",
+        "asked": "Asked by {{name}} on {{date}}",
+        "approved": "Approved by {{name}} on {{date}}",
+        "expires": "Open until {{date}}",
+        "approvalExpires": "Approval can be used until {{date}}",
+        "unknownUser": "Unknown user",
+        "state": {
+          "pending": "Waiting for approval",
+          "approved": "Approved",
+          "cancelled": "Cancelled",
+          "consumed": "Done",
+          "expired": "Expired"
+        },
+        "waitOther": "Waiting for a different site admin to approve it. You asked for it, so you cannot approve it.",
+        "waitRoot": "Approved. Only the root admin can run it.",
+        "approve": "Approve",
+        "cancel": "Cancel request",
+        "run": "Run the reset"
+      },
+      "dialog": {
+        "title": "Delete all compliance data?",
+        "description": "This deletes every case and everything that belongs to one. It cannot be undone.",
+        "exportHeading": "Export first",
+        "exportBody": "Steward cannot export from this window. Open the reports screen in the staff app and export every case you need to keep before you continue.",
+        "ack": "I have exported what I need to keep, or I accept that it will be lost.",
+        "cancel": "Cancel",
+        "confirm": "Delete all compliance data",
+        "failed": "The reset did not run"
+      },
+      "done": {
+        "title": "Hard reset complete",
+        "body_one": "{{count}} case was deleted. Asked by {{requestedBy}}, approved by {{approvedBy}}.",
+        "body_other": "{{count}} cases were deleted. Asked by {{requestedBy}}, approved by {{approvedBy}}.",
+        "kept": "The Compliance module stays off. Turn it on above when you are ready."
+      },
+      "failed": "Couldn't update the hard reset"
+    },
+    "complianceErrors": {
+      "MODULE_OFF": "The Compliance module is off, so this was refused.",
+      "HARD_RESET_CONFIRMATION": "The confirmation phrase did not match. Type RESET COMPLIANCE DATA exactly.",
+      "HARD_RESET_MODULE_ON": "The Compliance module is still on. Turn it off first, then run the reset.",
+      "HARD_RESET_LEGAL_HOLD": "At least one case is under a legal hold, so nothing was deleted. Release every hold and try again.",
+      "HARD_RESET_NOT_APPROVED": "There is no approved request that can still be used. It may have expired, been used or been cancelled, or the asker and approver are the same person. Ask again.",
+      "HARD_RESET_ROOT_REQUIRED": "Only the root admin can run a hard reset."
     }
   },
   "setup": {

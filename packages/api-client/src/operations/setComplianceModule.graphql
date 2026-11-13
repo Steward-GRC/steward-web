@@ -1,0 +1,5 @@
+mutation SetComplianceModule($enabled: Boolean!) {
+  setComplianceModule(enabled: $enabled) {
+    moduleEnabled
+  }
+}

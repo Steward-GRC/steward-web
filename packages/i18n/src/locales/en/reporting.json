@@ -182,5 +182,9 @@
       "cancel": "Cancel",
       "closedOn": "Closed on {{date}}"
     }
+  },
+  "off": {
+    "title": "Reporting is turned off",
+    "description": "The Compliance module is off, so reports and cases can't be opened right now. Nothing has been deleted. A site admin can turn it on in Settings."
   }
 }

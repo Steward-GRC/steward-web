@@ -1,0 +1,15 @@
+fragment HardResetRequestFields on HardResetRequest {
+  id
+  module
+  reason
+  state
+  requestedBy
+  requestedAt
+  expiresAt
+  approvedBy
+  approvedAt
+  approvalExpiresAt
+  cancelledAt
+  consumedAt
+  consumedBy
+}

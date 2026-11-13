@@ -10,7 +10,9 @@ import type { Route } from "./+types/reporting.cases";
 
 import { sortQueueByUrgency, statusLabelKey, statusTone } from "../reporting/caseStatus";
 import { requireReporting } from "../reporting/enabled.server";
+import { isModuleOff } from "../reporting/moduleOff";
 import { listReportCases } from "../reporting/reporting.server";
+import { ReportingOff } from "../reporting/ReportingOff";
 
 /** The table's own search, sort and page changes don't load the page again. */
 export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
@@ -29,11 +31,21 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     filter === "open"
       ? (Object.values(CaseStatus).filter((s) => s !== CaseStatus.Closed) as CaseStatus[])
       : undefined;
-  const queue = await listReportCases(request, statuses);
-  return { filter, queue };
+  try {
+    const queue = await listReportCases(request, statuses);
+    return { filter, moduleOff: false, queue };
+  } catch (error) {
+    // A site admin switched the Compliance module off: say so, rather than failing the page.
+    if (isModuleOff(error)) return { filter, moduleOff: true, queue: { cases: [], counts: [] } };
+    throw error;
+  }
 };
 
-export default function ReportingCasesRoute({ loaderData }: Route.ComponentProps) {
+export default function ReportingCasesRoute(props: Route.ComponentProps) {
+  return props.loaderData.moduleOff ? <ReportingOff /> : <ReportingQueue {...props} />;
+}
+
+const ReportingQueue = ({ loaderData }: Route.ComponentProps) => {
   const { t } = useTranslation("reporting");
   const identity = useIdentity();
   const [, setSearchParameters] = useSearchParams();
@@ -142,4 +154,4 @@ export default function ReportingCasesRoute({ loaderData }: Route.ComponentProps
       )}
     </div>
   );
-}
+};

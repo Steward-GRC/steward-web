@@ -1,0 +1,5 @@
+query HardResetRequests($module: String) {
+  hardResetRequests(module: $module) {
+    ...HardResetRequestFields
+  }
+}
