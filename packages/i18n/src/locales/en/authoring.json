@@ -397,6 +397,7 @@
       "templateLocked": "Set by the category: authors use this template."
     },
     "noCategories": {
+      "action": "Create a category",
       "body": "An admin needs to create category groups in the Admin console first.",
       "title": "No categories available"
     },

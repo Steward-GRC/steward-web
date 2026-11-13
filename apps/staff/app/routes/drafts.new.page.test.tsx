@@ -170,6 +170,17 @@ describe("New policy (U20)", () => {
       screen.getByText("An admin needs to create category groups in the Admin console first."),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create policy" })).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it("links an admin from the empty state to the new-category page", async () => {
+    openForm("/drafts/new", {
+      ...loaderData,
+      categories: [],
+      newCategoryUrl: "/admin/categories/new",
+    });
+    const link = await screen.findByRole("link", { name: "Create a category" });
+    expect(link).toHaveAttribute("href", "/admin/categories/new");
   });
 
   it("opens with the template chosen from Use this template", async () => {

@@ -6,18 +6,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const createPolicy = vi.hoisted(() => vi.fn());
+const listAuthorableGroups = vi.hoisted(() => vi.fn());
+const requireRoleFromRequest = vi.hoisted(() => vi.fn());
 
 vi.mock("../authoring/authoring.server", () => ({
   createPolicy,
-  listAuthorableGroups: vi.fn(),
+  listAuthorableGroups,
   listAuthorableTemplates: vi.fn(),
 }));
 vi.mock("@steward-web/auth/server", () => ({
   requirePermissionFromRequest: vi.fn(async () => null),
-  requireRoleFromRequest: vi.fn(async () => null),
+  requireRoleFromRequest,
 }));
 
-const { action } = await import("./drafts.new");
+const { action, loader } = await import("./drafts.new");
 
 type ActionArguments = Parameters<typeof action>[0];
 
@@ -32,7 +34,10 @@ const submit = (fields: Record<string, string>) => {
   } as unknown as ActionArguments);
 };
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.unstubAllEnvs();
+});
 
 describe("drafts.new action", () => {
   it("sends the author to the new draft by redirect", async () => {
@@ -71,5 +76,40 @@ describe("drafts.new action", () => {
       expect.anything(),
       expect.objectContaining({ freeform: false, templateId: "template-1" }),
     );
+  });
+});
+
+const open = () =>
+  loader({
+    params: { type: "policy" },
+    request: new Request("https://staff.steward.example/drafts/new/policy"),
+  } as unknown as Parameters<typeof loader>[0]) as Promise<{
+    categories: unknown[];
+    newCategoryUrl: null | string;
+  }>;
+const as = (permissions: string[]) =>
+  requireRoleFromRequest.mockResolvedValue({ id: "u-1", permissions: new Set(permissions) });
+
+describe("drafts.new loader: the way to add a category", () => {
+  it("links someone who manages categories to the admin app's new-category page when there are none", async () => {
+    listAuthorableGroups.mockResolvedValue([]);
+    as(["group.manage", "policy.author"]);
+    const page = await open();
+    expect(page.newCategoryUrl).toBe("/admin/categories/new");
+  });
+
+  it("builds the link from the configured admin address", async () => {
+    vi.stubEnv("STEWARD_ADMIN_URL", "https://admin.steward.example/");
+    listAuthorableGroups.mockResolvedValue([]);
+    as(["group.manage", "policy.author"]);
+    const page = await open();
+    expect(page.newCategoryUrl).toBe("https://admin.steward.example/categories/new");
+  });
+
+  it("gives no link to someone who cannot manage categories", async () => {
+    listAuthorableGroups.mockResolvedValue([]);
+    as(["policy.author"]);
+    const page = await open();
+    expect(page.newCategoryUrl).toBeNull();
   });
 });

@@ -8,12 +8,13 @@ import {
   refusalKey,
   Sensitivity,
 } from "@steward-web/api-client";
-import { PERMISSIONS } from "@steward-web/auth";
+import { can, PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, useRefusalMessage } from "@steward-web/shell";
+import { shellConfigFromEnvironment } from "@steward-web/shell/server";
 import { Banner, Button, Card, cn, EmptyState } from "@steward-web/ui";
-import { draftPath } from "@steward-web/ui/domain";
+import { draftPath, newCategoryPath } from "@steward-web/ui/domain";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { data, Link, redirect, useFetcher, useParams, useSearchParams } from "react-router";
 
@@ -38,7 +39,7 @@ import { useResumableDraft } from "../authoring/useResumableDraft";
 const NO_TEMPLATE = "__no_template__";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
+  const identity = await requireRoleFromRequest(request, PERMISSIONS.PolicyAuthor, "author");
   const slug = (params as Record<string, string | undefined>).type;
   // An old /drafts/new?type=POLICY link moves into the path (#147); an unknown type is a 404.
   if (slug === undefined) {
@@ -51,7 +52,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     listAuthorableGroups(request),
     listAuthorableTemplates(request),
   ]);
-  return { categories: categoryChoices(groups), templates };
+  const categories = categoryChoices(groups);
+  // With nothing to file a draft under, someone who manages categories gets the way to add one:
+  // the admin app's new-category page. Everyone else is told to ask an admin.
+  const newCategoryUrl =
+    categories.length === 0 && can(identity, PERMISSIONS.GroupManage)
+      ? `${shellConfigFromEnvironment().adminUrl.replace(/\/+$/, "")}${newCategoryPath()}`
+      : null;
+  return { categories, newCategoryUrl, templates };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -212,7 +220,17 @@ export default function NewDraft({ loaderData }: Route.ComponentProps) {
       ) : null}
 
       {loaderData.categories.length === 0 ? (
-        <EmptyState description={t("new.noCategories.body")} title={t("new.noCategories.title")} />
+        <EmptyState
+          action={
+            loaderData.newCategoryUrl ? (
+              <Button asChild>
+                <a href={loaderData.newCategoryUrl}>{t("new.noCategories.action")}</a>
+              </Button>
+            ) : undefined
+          }
+          description={t("new.noCategories.body")}
+          title={t("new.noCategories.title")}
+        />
       ) : choosing ? (
         <>
           <Card className="flex flex-col gap-3.5 p-[18px]">
