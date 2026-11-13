@@ -30,7 +30,7 @@ export const Field = ({ children, className, error, hint, label, optional }: Fie
       })
     : children;
   return (
-    <div className={cn("grid gap-1.5", className)}>
+    <div className={cn("grid content-start gap-1.5", className)}>
       <label className="text-sm font-semibold text-ink" htmlFor={controlId}>
         {label}
         {optional ? <span className="ml-1 font-normal text-muted">{optional}</span> : null}
