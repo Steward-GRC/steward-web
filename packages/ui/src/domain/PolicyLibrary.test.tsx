@@ -395,6 +395,59 @@ describe("PolicyLibrary on a phone (U3m)", () => {
   });
 });
 
+/** The library for an org with nothing in it (#370): no categories, no documents. */
+const renderEmpty = (documentType: DocumentType) => {
+  const Stub = createRoutesStub([
+    {
+      Component: () => <PolicyLibrary categories={[]} documentType={documentType} policies={[]} />,
+      path: "/library",
+    },
+  ]);
+  render(<Stub initialEntries={["/library"]} />);
+};
+
+describe.each([
+  [DocumentType.Policy, "Policies"],
+  [DocumentType.Procedure, "Procedures"],
+])("PolicyLibrary with no categories (%s, #370)", (documentType, heading) => {
+  const restore = globalThis.matchMedia;
+  afterEach(() => {
+    globalThis.matchMedia = restore;
+  });
+
+  it("says Empty and keeps the page heading", () => {
+    renderEmpty(documentType);
+    expect(screen.getByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
+    expect(screen.getByTestId("empty-state")).toHaveTextContent(/^Empty$/);
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.queryByRole("table")).toBeNull();
+  });
+
+  it("says Empty on a phone too, without the category chips", async () => {
+    asPhone();
+    renderEmpty(documentType);
+    expect(await screen.findByTestId("empty-state")).toHaveTextContent(/^Empty$/);
+    expect(screen.queryByRole("group", { name: "Category" })).toBeNull();
+    expect(screen.queryByRole("list")).toBeNull();
+  });
+});
+
+describe("PolicyLibrary with categories but no documents (#370)", () => {
+  it("keeps the category tiles rather than saying Empty", () => {
+    const Stub = createRoutesStub([
+      {
+        Component: () => (
+          <PolicyLibrary categories={categories} documentType={DocumentType.Policy} policies={[]} />
+        ),
+        path: "/policies",
+      },
+    ]);
+    render(<Stub initialEntries={["/policies"]} />);
+    expect(screen.getByRole("listitem", { name: "Finance" })).toBeInTheDocument();
+    expect(screen.queryByTestId("empty-state")).toBeNull();
+  });
+});
+
 const bodyRows = () =>
   screen.getAllByRole("row").filter((row) => within(row).queryAllByRole("cell").length > 0);
 
