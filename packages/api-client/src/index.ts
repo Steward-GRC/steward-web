@@ -150,6 +150,7 @@ export type {
   UserDeletionPreview,
   UserLabel,
   UserPage,
+  VersionChangeInfo,
   VersionDocument,
   VersionLinks,
   WorkCalendar,
@@ -413,4 +414,13 @@ export {
   type UserDeletionPreviewItem,
   type UserDeletionWarning,
 } from "./generated/schema";
-export { nextVersion, semanticVersion, type VersionChange } from "./semanticVersion";
+export {
+  type ChangePick,
+  changeTypeFrom,
+  changeTypeToGateway,
+  isLowering,
+  nextVersion,
+  semanticVersion,
+  type VersionChange,
+  versionOf,
+} from "./semanticVersion";

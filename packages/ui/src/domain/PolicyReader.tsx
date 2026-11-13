@@ -35,6 +35,7 @@ import { scrollBehavior } from "#ui/lib/motion";
 
 import { AckBanner } from "./AckBanner";
 import { AiSummaryCard } from "./AiSummaryCard";
+import { ChangeTypeSummary } from "./ChangeTypeSummary";
 import { CompareVersions } from "./CompareVersions";
 import { DocumentStatusPill } from "./DocumentStatusPill";
 import { readingMinutes, wordsInBlocks } from "./documentWords";
@@ -688,6 +689,11 @@ export const PolicyReader = ({
         </DetailCell>
         <DetailCell label={t("reader.metadata.version")}>
           <span className="font-mono">{t("reader.versionValue", { version: detail.version })}</span>
+          {detail.versionNo === undefined ? null : (
+            <span className="ml-1.5 text-muted">
+              {t("reader.history.ordinal", { n: detail.versionNo })}
+            </span>
+          )}
         </DetailCell>
         <DetailCell label={t("reader.metadata.published")}>
           {formatDate(detail.published, { fallback: t("reader.metadata.none") })}
@@ -835,6 +841,9 @@ export const PolicyReader = ({
         </>
       )}
 
+      {detail.versionChange ? (
+        <ChangeTypeSummary change={detail.versionChange} names={detail.versionChangeNames} />
+      ) : null}
       <div id={HISTORY_ID}>
         <PolicyReaderHistory history={detail.history} />
       </div>

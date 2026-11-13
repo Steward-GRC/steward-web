@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { useTranslation } from "@steward-web/i18n";
+import { formatDate, useTranslation } from "@steward-web/i18n";
 import {
   Badge,
   Button,
@@ -14,6 +14,7 @@ import {
   ListPage,
   ResponsiveTable,
 } from "@steward-web/ui";
+import { versionLabel } from "@steward-web/ui/domain";
 import { Link, useFetcher } from "react-router";
 
 import type { Route } from "./+types/templates";
@@ -37,7 +38,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       const latest = versions[0];
       return {
         categoryName: groups.find((g) => g.id === template.ownerCategoryId)?.name ?? null,
-        latest: latest ? { status: latest.status, versionNo: latest.versionNo } : null,
+        latest: latest
+          ? {
+              semanticVersion: latest.semanticVersion,
+              status: latest.status,
+              versionNo: latest.versionNo,
+            }
+          : null,
         template,
         versionCount: versions.length,
       };
@@ -142,7 +149,7 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
                     status: t(`templates.status.${latest.status}`, {
                       defaultValue: latest.status,
                     }),
-                    version: latest.versionNo,
+                    version: versionLabel("template", latest.versionNo, latest.semanticVersion),
                   })}
                 </span>
               ) : (
@@ -151,6 +158,14 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
             header: t("templates.columns.latest"),
             key: "latest",
             value: ({ latest }) => latest?.versionNo ?? 0,
+          },
+          {
+            // The template's own last change; the card leaves it for the detail page.
+            card: "hidden",
+            cell: ({ template }) => formatDate(template.updatedAt),
+            header: t("templates.columns.updated"),
+            key: "updated",
+            value: ({ template }) => template.updatedAt ?? "",
           },
         ]}
         empty={

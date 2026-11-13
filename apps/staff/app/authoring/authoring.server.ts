@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   ApprovalStatus,
+  type ChangePick,
+  changeTypeFrom,
   type CreatePolicyInput,
   DocumentType,
+  GatewayError,
   type Group,
+  isLowering,
   type Policy,
   type PolicyVersion,
   SignalType,
@@ -88,18 +92,45 @@ export const saveDraft = (
  * Sends the policy's working draft for review (#110): the gateway's `submitWorkflow` starts
  * the approval run of the workflow its home category carries or inherits. The gateway decides
  * whether one applies and refuses when none does; this only names the draft and the category.
+ *
+ * `pick` is what the author chose in the dialog (#390). Core suggests the change type; a pick is
+ * sent only when it differs from the suggestion, because leaving it out keeps the suggestion.
+ * A first version has no suggestion and takes no pick. A pick below the suggestion needs a
+ * reason and is refused here without one, before the gateway is called.
  */
 export const submitDraftForReview = async (
   request: Request,
   policyId: string,
+  pick?: { change: ChangePick["change"] | null; reason: string },
 ): Promise<{ runId: string }> => {
   const policy = await edge.policy(policyId, cookieOf(request));
   if (!policy?.currentDraftVersionId) throw new Response("Not Found", { status: 404 });
+  let send: ChangePick | undefined;
+  if (pick?.change) {
+    const draft = await edge.draftVersion(policy.id, cookieOf(request));
+    const suggested = changeTypeFrom(draft?.suggestedChangeType);
+    if (suggested && pick.change !== suggested) {
+      const reason = pick.reason.trim();
+      if (isLowering(pick.change, suggested)) {
+        if (reason === "") {
+          throw new GatewayError(
+            "SubmitWorkflow",
+            "a change type below the suggestion needs a reason",
+            { code: "INVALID_ARGUMENT" },
+          );
+        }
+        send = { change: pick.change, reason };
+      } else {
+        send = { change: pick.change };
+      }
+    }
+  }
   return edge.submitWorkflow(
     policy.currentDraftVersionId,
     policy.id,
     policy.homeGroupId,
     cookieOf(request),
+    send,
   );
 };
 

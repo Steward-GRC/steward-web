@@ -2,6 +2,13 @@ fragment PolicyVersionFields on PolicyVersion {
   id
   policyId
   versionNo
+  semanticVersion
+  suggestedChangeType
+  changeType
+  requestedChangeType
+  changeTypeReason
+  changeTypeSetByUserId
+  changeTypeAgreedByUserIds
   status
   templateVersionId
   contentJson

@@ -4,6 +4,17 @@
     "major": "Major",
     "minor": "Minor"
   },
+  "changeSummary": {
+    "agreedBy": "Agreed by",
+    "applied": "Applied",
+    "nobodyYet": "Nobody yet",
+    "reason": "Reason",
+    "requested": "Requested",
+    "setBy": "Set by",
+    "suggested": "Suggested",
+    "title": "Change type",
+    "waiting": "Waiting for the first approval stage to agree."
+  },
   "library": {
     "actions": {
       "import": "Import",
@@ -259,6 +270,7 @@
         "workflowSubmitNoWorkflow": "Submitted, but no workflow applies",
         "workflowUserReassigned": "Approver reassigned"
       },
+      "ordinal": "Version {{n}}",
       "title": "History & approvals"
     },
     "metadata": {

@@ -26,6 +26,7 @@ import type {
   Sensitivity,
   StageAssignee,
 } from "./generated/schema";
+import type { VersionChange } from "./semanticVersion";
 
 /**
  * The web's own view types: shapes the apps render that the gateway's schema has no single
@@ -179,6 +180,8 @@ export interface HistoryEntry {
   readonly kind: string;
   readonly stage?: null | string;
   readonly versionLabel: string;
+  /** The ordinal of the version the event belongs to, shown beside a semantic label. */
+  readonly versionNo?: number;
 }
 
 /** The caller's "act as" session (H9), or null when they aren't acting as anyone. */
@@ -339,6 +342,13 @@ export interface PolicyDetail {
   readonly title: string;
   readonly updated: null | string;
   readonly version: string;
+  /** What decided the published version's change type: core's suggestion, the author's pick,
+   *  the reason, and who agreed to a lowering. Absent when there is no published version. */
+  readonly versionChange?: null | VersionChangeInfo;
+  /** The name for each user id in `versionChange`, where the labels resolved. */
+  readonly versionChangeNames?: Readonly<Record<string, string>>;
+  /** The published version's ordinal (1, 2, 3 ...), which the semantic `version` sits beside. */
+  readonly versionNo?: number;
   /** Every version the caller can read, oldest first, for the compare pickers (U19). */
   readonly versions?: readonly PolicyVersionOption[];
 }
@@ -365,6 +375,7 @@ export interface PolicyVersionOption {
   /** The gateway's status word ("published", "superseded", "draft", "in_review"). */
   readonly status: string;
   readonly version: string;
+  readonly versionNo?: number;
 }
 
 /** The current version against the one it superseded. */
@@ -459,6 +470,9 @@ export interface Template {
   readonly name: string;
   readonly ownerCategoryId: null | string;
   readonly retiredAt: null | string;
+  /** The latest of a rename and any version of the template being created or published
+   *  (RFC 3339); null when the service has no time for it. */
+  readonly updatedAt?: null | string;
 }
 
 /** A template's newest version with its section outline, as the editor scaffolds from it. */
@@ -476,6 +490,22 @@ export interface UserPage {
   readonly users: readonly User[];
 }
 
+/**
+ * How a version's change type came about (#390). The suggestion is core's; the pick is the
+ * author's. A pick below the suggestion waits for the first approval stage, so `requested`
+ * shows until it applies, and `agreedByUserIds` names the approvers who agreed.
+ */
+export interface VersionChangeInfo {
+  readonly agreedByUserIds: readonly string[];
+  /** What the version publishes as; for a draft, what it would publish as now. */
+  readonly changeType: null | VersionChange;
+  readonly reason: null | string;
+  /** A lowering the approvers have not yet agreed to. */
+  readonly requestedChangeType: null | VersionChange;
+  readonly setByUserId: null | string;
+  readonly suggestedChangeType: null | VersionChange;
+}
+
 /** One version's body and appendices, as the reader draws them. */
 export interface VersionDocument {
   readonly appendices: readonly PolicyAppendix[];
@@ -483,6 +513,11 @@ export interface VersionDocument {
   /** The version's stored editor document, for the review page's commenting view. */
   readonly contentJson: string;
   readonly version: string;
+  /** How the version's change type came about (#390), with the name for each user id in it. */
+  readonly versionChange?: VersionChangeInfo;
+  readonly versionChangeNames?: Readonly<Record<string, string>>;
+  /** The version's ordinal, which the semantic `version` sits beside. */
+  readonly versionNo?: number;
 }
 
 /**

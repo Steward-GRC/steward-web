@@ -84,40 +84,6 @@ describe("Submit for approval (D37)", () => {
     expect(screen.getByRole("dialog")).toHaveAccessibleDescription(/goes to Finance sign-off\./);
   });
 
-  it("shows the version Steward worked out, why, and the change type, when the gateway sends it", async () => {
-    inRouter(
-      <SubmitForApproval
-        document={document}
-        missing={[]}
-        version={{
-          change: "major",
-          from: "2.0.0",
-          reacknowledge: true,
-          reasons: ["A deadline changed in 2. Making a claim"],
-          to: "3.0.0",
-        }}
-      />,
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
-    const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByText("v2.0.0")).toHaveClass("line-through");
-    expect(within(dialog).getByText("v3.0.0")).toBeInTheDocument();
-    expect(within(dialog).getByText("Worked out by Steward")).toBeInTheDocument();
-    expect(within(dialog).getByText("Why Major")).toBeInTheDocument();
-    expect(within(dialog).getByText("A deadline changed in 2. Making a claim")).toBeInTheDocument();
-    expect(
-      within(dialog).getByText("Everyone in the audience will be asked to acknowledge again."),
-    ).toBeInTheDocument();
-    expect(within(dialog).getByRole("radio", { name: "Major" })).toBeChecked();
-    expect(within(dialog).getByText("Lowering it needs a reason")).toBeInTheDocument();
-  });
-
-  it("leaves the version out when the gateway doesn't send it", async () => {
-    inRouter(<SubmitForApproval document={document} missing={[]} />);
-    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
-    expect(screen.queryByText("Worked out by Steward")).toBeNull();
-  });
-
   it("says which required sections are empty instead of submitting", async () => {
     inRouter(<SubmitForApproval document={document} missing={["3. Visitor records"]} />);
     await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
@@ -303,11 +269,23 @@ describe("the AI actions inside the Actions menu (U27, bug log 220)", () => {
   });
 });
 
-describe("Submit for approval: the author picks the change (#156)", () => {
-  it("offers Major, Minor and Fix and shows the version each one gives", async () => {
-    inRouter(<SubmitForApproval document={document} missing={[]} published="1.2.3" />);
-    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
-    const dialog = screen.getByRole("dialog", { name: "Submit for approval?" });
+const openPicker = async (props: Partial<React.ComponentProps<typeof SubmitForApproval>> = {}) => {
+  const posted = inRouter(
+    <SubmitForApproval
+      document={document}
+      missing={[]}
+      published="1.2.3"
+      suggested="minor"
+      {...props}
+    />,
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+  return { dialog: screen.getByRole("dialog", { name: "Submit for approval?" }), posted };
+};
+
+describe("Submit for approval: the author picks the change (#390)", () => {
+  it("shows what Steward suggests and starts on it", async () => {
+    const { dialog } = await openPicker();
     const kinds = within(dialog).getByRole("radiogroup", { name: "Change type" });
     expect(
       within(kinds)
@@ -315,29 +293,92 @@ describe("Submit for approval: the author picks the change (#156)", () => {
         .map((radio) => radio.getAttribute("value")),
     ).toEqual(["major", "minor", "fix"]);
     expect(within(kinds).getByRole("radio", { name: "Minor" })).toBeChecked();
-    expect(within(dialog).getByText("v1.3.0")).toBeInTheDocument();
-    await userEvent.click(within(kinds).getByRole("radio", { name: "Major" }));
-    expect(within(dialog).getByText("v2.0.0")).toBeInTheDocument();
-    await userEvent.click(within(kinds).getByRole("radio", { name: "Fix" }));
-    expect(within(dialog).getByText("v1.2.4")).toBeInTheDocument();
+    expect(within(dialog).getByText("Steward suggests Minor")).toBeInTheDocument();
+    expect(within(dialog).getByText("v1.2.3")).toHaveClass("line-through");
+    expect(within(dialog).getByTestId("next-version")).toHaveTextContent("v1.3.0");
+    expect(within(dialog).queryByRole("textbox")).toBeNull();
   });
 
-  it("sends the pick with the submit", async () => {
-    const posted = inRouter(
-      <SubmitForApproval document={document} missing={[]} published="1.2.3" />,
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
-    const dialog = screen.getByRole("dialog", { name: "Submit for approval?" });
-    await userEvent.click(within(dialog).getByRole("radio", { name: "Fix" }));
+  it("raises the version freely, with no reason", async () => {
+    const { dialog, posted } = await openPicker();
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Major" }));
+    expect(within(dialog).getByTestId("next-version")).toHaveTextContent("v2.0.0");
+    expect(within(dialog).queryByRole("textbox")).toBeNull();
     await userEvent.click(within(dialog).getByRole("button", { name: "Submit for approval" }));
     await vi.waitFor(() =>
-      expect(posted).toHaveBeenCalledWith({ changeType: "fix", intent: "submit-review" }),
+      expect(posted).toHaveBeenCalledWith({ changeType: "major", intent: "submit-review" }),
     );
+  });
+
+  it("needs a reason to go lower, says the first stage must agree, and sends both", async () => {
+    const { dialog, posted } = await openPicker();
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Fix" }));
+    const submit = within(dialog).getByRole("button", { name: "Submit for approval" });
+    expect(
+      within(dialog).getByText(
+        "The first approval stage has to agree before a lower type applies. Until then it publishes as Minor.",
+      ),
+    ).toBeInTheDocument();
+    // the version does not drop until the approvers agree
+    expect(within(dialog).getByTestId("next-version")).toHaveTextContent("v1.3.0");
+    expect(submit).toBeDisabled();
+    await userEvent.type(
+      within(dialog).getByRole("textbox", { name: "Why is it lower?" }),
+      "Only a typo moved.",
+    );
+    expect(submit).toBeEnabled();
+    await userEvent.click(submit);
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith({
+        changeType: "fix",
+        changeTypeReason: "Only a typo moved.",
+        intent: "submit-review",
+      }),
+    );
+  });
+
+  it("does not take a blank reason", async () => {
+    const { dialog } = await openPicker();
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Fix" }));
+    await userEvent.type(
+      within(dialog).getByRole("textbox", { name: "Why is it lower?" }),
+      " ".repeat(3),
+    );
+    expect(within(dialog).getByRole("button", { name: "Submit for approval" })).toBeDisabled();
+  });
+
+  it("goes back to no reason when the pick comes back up to the suggestion", async () => {
+    const { dialog } = await openPicker({ suggested: "major" });
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Minor" }));
+    expect(within(dialog).getByRole("textbox", { name: "Why is it lower?" })).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Major" }));
+    expect(within(dialog).queryByRole("textbox")).toBeNull();
+    expect(within(dialog).getByRole("button", { name: "Submit for approval" })).toBeEnabled();
   });
 
   it("has no picker for a first publish, which is always v1.0.0", async () => {
-    inRouter(<SubmitForApproval document={document} missing={[]} />);
+    inRouter(<SubmitForApproval document={document} missing={[]} suggested="minor" />);
     await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
     expect(screen.queryByRole("radiogroup", { name: "Change type" })).toBeNull();
+  });
+
+  it("has no picker when core sent no suggestion", async () => {
+    inRouter(<SubmitForApproval document={document} missing={[]} published="1.2.3" />);
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    expect(screen.queryByRole("radiogroup", { name: "Change type" })).toBeNull();
+  });
+
+  it("says what is wrong when the service refuses the pick", async () => {
+    const posted = inRouter(
+      <SubmitForApproval document={document} missing={[]} published="1.2.3" suggested="minor" />,
+      () => ({ error: { code: "INVALID_ARGUMENT", operation: "SubmitWorkflow" }, ok: false }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    const dialog = screen.getByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Submit for approval" }));
+    await vi.waitFor(() => expect(posted).toHaveBeenCalled());
+    expect(
+      await within(dialog).findByText("That change type could not be used."),
+    ).toBeInTheDocument();
   });
 });

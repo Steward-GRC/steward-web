@@ -78,6 +78,7 @@ import type {
   UserDeletionPreview,
   WebauthnRegistration,
 } from "./generated/schema";
+import type { ChangePick } from "./semanticVersion";
 import type {
   AckStatus,
   AckSummary,
@@ -267,6 +268,7 @@ export type {
   TemplateVersion,
   User,
   UserPage,
+  VersionChangeInfo,
   VersionDocument,
   VersionLinks,
   Workflow,
@@ -1060,13 +1062,16 @@ export interface Edge {
    * attached to (or inherited by) the policy's category. The submitter is bound server-side,
    * and the gateway walks the category lineage itself from `categoryId`. Refused with
    * `GatewayError` when no workflow applies, a stage has no approver, or the caller isn't an
-   * author of the policy.
+   * author of the policy. `pick` is the author's change type with its reason (#390); leave it
+   * out to keep the suggestion core made. A pick below the suggestion needs a reason and waits
+   * for the first stage's approvers to agree.
    */
   submitWorkflow(
     policyVersionId: string,
     policyId: string,
     categoryId: string,
     cookie?: string,
+    pick?: ChangePick,
   ): Promise<{ runId: string }>;
   /** The templates selectable as a group's default. Site-admin only. */
   templates(cookie?: string): Promise<readonly Template[]>;

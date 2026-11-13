@@ -4,4 +4,5 @@ fragment TemplateFields on Template {
   name
   ownerCategoryId
   retiredAt
+  updatedAt
 }

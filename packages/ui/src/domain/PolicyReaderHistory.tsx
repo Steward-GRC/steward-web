@@ -75,6 +75,8 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
   const { t } = useTranslation("policy");
   const groups: VersionHistoryGroup[] = groupHistoryByVersion(history).map((group, index) => {
     const label = versionLabel("policy", group.version);
+    // the ordinal core keeps beside the semantic version (#390)
+    const ordinal = group.events.find((event) => event.versionNo !== undefined)?.versionNo;
     return {
       current: index === 0,
       events: group.events.toReversed().map((event) => ({
@@ -87,6 +89,7 @@ export const PolicyReaderHistory = ({ history }: { history: readonly HistoryEntr
         tone: TONE_OF_EVENT[event.kind] ?? "neutral",
       })),
       label,
+      note: ordinal === undefined ? undefined : t("reader.history.ordinal", { n: ordinal }),
       status: statusOfVersion(group.events),
     };
   });

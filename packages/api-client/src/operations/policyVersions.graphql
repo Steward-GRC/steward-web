@@ -2,6 +2,8 @@ query PolicyVersions($policyId: ID!) {
   policyVersions(policyId: $policyId) {
     id
     versionNo
+    semanticVersion
+    changeType
     status
     publishedAt
   }
