@@ -22,6 +22,12 @@ stage names its **approvers** and a **quorum**:
 An approver is a person or a group. A group approves **as a group**: it needs as many of its
 members as its own quorum asks for, shown as "As a group · 2 of 3".
 
+A stage can also name **veto people**. If any one of them rejects, the run ends as rejected, even when
+the stage's quorum would have been met. A veto person must already be one of the stage's approvers,
+as a person or as a member of a group on that stage; there are no veto-only seats, and a site
+administrator or root does not count unless they are an approver. There is no workflow-wide switch:
+a stage with veto people applies them, and a stage with none has no veto.
+
 A workflow is a **Draft**, and a category can't use it, until it has at least one stage and every
 stage has at least one approver.
 
@@ -34,9 +40,10 @@ account is disabled and needs replacing.
 1. Select **+ New workflow**, give it a name and an optional description.
 2. Each stage is a card. Name it, choose **One**, **Quorum** or **All**, and add approvers with
    **+ Add approver**; the cross on a chip removes one. A disabled approver shows as "disabled —
-   replace". **Due within** sets how many
-   working days the stage has. It counts whole working days on the site calendar (set under
-   **Settings**, **Working days**), skipping weekends and holidays.
+   replace". **Veto people** picks who can end the run with a single reject; it offers only that
+   stage's approvers, and removing an approver also removes them from the veto people, with a note.
+   **Due within** sets how many working days the stage has. It counts whole working days on the site
+   calendar (set under **Settings**, **Working days**), skipping weekends and holidays.
 3. Drag a card by its grip to reorder the stages, or focus the grip and use the up and down arrow
    keys. The order is the approval sequence, so put the earliest reviewer first and the final
    sign-off last. **+ Add stage** adds one at the end.

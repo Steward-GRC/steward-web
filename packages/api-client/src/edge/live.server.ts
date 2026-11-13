@@ -187,7 +187,6 @@ import {
   SetVersionDefinitionsDocument,
   SetVersionReferencesDocument,
   SetVersionRelatedDocument,
-  SetWorkflowVetoEnabledDocument,
   SignalWorkflowDocument,
   SimulateCategoryDocument,
   SpCertificateDocument,
@@ -223,7 +222,6 @@ import {
   WorkflowDefDocument,
   WorkflowDefsDocument,
   WorkflowStatusDocument,
-  WorkflowVetoesDocument,
 } from "../generated/graphql";
 import {
   type CategoryDocumentTypes,
@@ -2362,23 +2360,6 @@ export const liveEdge: Edge = {
       return data.workflowStatus.stageAssignees.map((seats) =>
         seats.filter((seat) => seat.veto).map((seat) => seat.userId),
       );
-    } catch {
-      return [];
-    }
-  },
-  async setWorkflowVetoEnabled(id, enabled, cookie) {
-    const data = await gatewayFetch(
-      SetWorkflowVetoEnabledDocument,
-      { enabled, id },
-      "SetWorkflowVetoEnabled",
-      { cookie },
-    );
-    return data.setWorkflowVetoEnabled.vetoEnabled;
-  },
-  async workflowVetoes(cookie) {
-    try {
-      const data = await gatewayFetch(WorkflowVetoesDocument, {}, "WorkflowVetoes", { cookie });
-      return data.workflowDefs;
     } catch {
       return [];
     }

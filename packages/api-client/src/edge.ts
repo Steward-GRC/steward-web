@@ -105,7 +105,6 @@ import type {
   Workflow,
   WorkflowDef,
   WorkflowStatus,
-  WorkflowVeto,
 } from "./views";
 
 import { DocumentType } from "./generated/schema";
@@ -264,7 +263,6 @@ export type {
   Workflow,
   WorkflowDef,
   WorkflowStageDef,
-  WorkflowVeto,
 } from "./views";
 export { PolicyStatus } from "./views";
 
@@ -971,8 +969,6 @@ export interface Edge {
     links: readonly RelatedLinkChoice[],
     cookie?: string,
   ): Promise<VersionLinks>;
-  /** Opts a workflow in or out of veto approvers. Template admins and above. */
-  setWorkflowVetoEnabled(id: string, enabled: boolean, cookie?: string): Promise<boolean>;
   /**
    * Delivers the calling user's approve/reject decision to an active approval run. The actor
    * is bound server-side; runId/taskId are advisory (a stale cached inbox row refuses with
@@ -1154,8 +1150,6 @@ export interface Edge {
    * the workflow service has no record (the policy was published without an approval flow).
    */
   workflowStatus(policyVersionId: string, cookie?: string): Promise<WorkflowStatus>;
-  /** Which workflows opt in to veto approvers and who holds one; empty when the gateway has none. */
-  workflowVetoes(cookie?: string): Promise<readonly WorkflowVeto[]>;
 }
 
 /** A group that approves a workflow stage as a whole: its members hold seats, the group is
@@ -1306,8 +1300,9 @@ export interface WorkflowStageInput {
   quorum: string;
   rejectOnSlaBreach?: boolean | null;
   slaDays?: null | number;
-  /** Users who hold a veto on this stage; sent only when there are some. */
-  vetoApproverIds?: readonly string[];
-  /** Group seats (by group id) whose members hold a veto on this stage. */
-  vetoGroupIds?: readonly string[];
+  /**
+   * The people whose single reject ends the run. Each must be one of the stage's approvers (there
+   * are no veto-only seats); an empty list means no veto.
+   */
+  vetoUserIds?: readonly string[];
 }

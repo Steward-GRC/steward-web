@@ -511,14 +511,3 @@ export type WorkflowStageDef = WorkflowDef["stages"][number];
 export type WorkflowStatus = {
   readonly stageAssignees: readonly (readonly Omit<StageAssignee, "veto">[])[];
 } & Omit<GeneratedWorkflowStatus, "stageAssignees">;
-
-/** Who holds a veto on a workflow's stages, and whether the workflow opts in (steward-web#256). */
-export interface WorkflowVeto {
-  readonly id: string;
-  readonly stages: readonly {
-    readonly id: string;
-    readonly vetoApproverIds: readonly string[];
-    readonly vetoGroupIds: readonly string[];
-  }[];
-  readonly vetoEnabled: boolean;
-}

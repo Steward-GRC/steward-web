@@ -1354,6 +1354,7 @@ export type Mutation = {
   readonly setVersionDefinitions: PolicyVersionLinks;
   readonly setVersionReferences: PolicyVersionLinks;
   readonly setVersionRelated: PolicyVersionLinks;
+  /** @deprecated A stage's vetoUserIds apply on their own. */
   readonly setWorkflowVetoEnabled: WorkflowDef;
   readonly shredAuditSubject: AuditShredResult;
   /**
@@ -4117,6 +4118,7 @@ export type WorkflowDef = {
   readonly name: Scalars["String"]["output"];
   readonly stages: ReadonlyArray<WorkflowStageDef>;
   readonly version: Scalars["Int"]["output"];
+  /** @deprecated A stage's vetoUserIds apply on their own; this gates nothing. */
   readonly vetoEnabled: Scalars["Boolean"]["output"];
 };
 
@@ -4131,8 +4133,11 @@ export type WorkflowStageDef = {
   readonly quorum: Scalars["String"]["output"];
   readonly rejectOnSlaBreach?: Maybe<Scalars["Boolean"]["output"]>;
   readonly slaDays?: Maybe<Scalars["Int"]["output"]>;
+  /** @deprecated Use vetoUserIds. */
   readonly vetoApproverIds: ReadonlyArray<Scalars["ID"]["output"]>;
+  /** @deprecated Use vetoUserIds. */
   readonly vetoGroupIds: ReadonlyArray<Scalars["ID"]["output"]>;
+  readonly vetoUserIds: ReadonlyArray<Scalars["ID"]["output"]>;
 };
 
 export type WorkflowStageInput = {
@@ -4145,8 +4150,11 @@ export type WorkflowStageInput = {
   readonly quorum: Scalars["String"]["input"];
   readonly rejectOnSlaBreach?: InputMaybe<Scalars["Boolean"]["input"]>;
   readonly slaDays?: InputMaybe<Scalars["Int"]["input"]>;
+  /** @deprecated Use vetoUserIds. */
   readonly vetoApproverIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
+  /** @deprecated Use vetoUserIds. */
   readonly vetoGroupIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
+  readonly vetoUserIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
 };
 
 export type WorkflowStatus = {

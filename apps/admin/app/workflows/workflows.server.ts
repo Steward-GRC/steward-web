@@ -71,18 +71,3 @@ export const archiveWorkflowDef = async (request: Request, id: string): Promise<
   await requireGroupManage(request);
   await edge.archiveWorkflowDef(id, cookieOf(request));
 };
-
-/** Which workflows opt in to veto approvers and who holds one; empty where the gateway has none. */
-export const listWorkflowVetoes = async (request: Request) => {
-  await requireGroupManage(request);
-  return edge.workflowVetoes(cookieOf(request));
-};
-
-export const setWorkflowVetoEnabled = async (
-  request: Request,
-  id: string,
-  enabled: boolean,
-): Promise<boolean> => {
-  await requireGroupManage(request);
-  return edge.setWorkflowVetoEnabled(id, enabled, cookieOf(request));
-};
