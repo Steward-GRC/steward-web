@@ -46,4 +46,26 @@ describe("New category (A4)", () => {
     expect(posted[0]!.get("slug")).toBe("travel-claims");
     expect(posted[0]!.get("reviewCadence")).toBe("NONE");
   });
+
+  it("lays the Name and Slug fields out in the same shared Field wrapper and control size", async () => {
+    const loaderData = { parentOptions: [], templates: [], workflows: [] };
+    const Stub = createRoutesStub([
+      {
+        Component: () => <NewCategory {...({ loaderData } as unknown as NewProps)} />,
+        path: "/categories/new",
+      },
+    ]);
+    render(<Stub initialEntries={["/categories/new"]} />);
+    const form = await screen.findByRole("form", { name: "New category" });
+    const name = within(form).getByLabelText("Name");
+    const slug = within(form).getByLabelText("Slug");
+    // The Slug field carries a hint; the two wrappers must still align their controls (#372).
+    expect(slug).toHaveAccessibleDescription(/\S/);
+    // oxlint-disable-next-line testing-library/no-node-access -- the wrapper has no role to query
+    const [nameField, slugField] = [name.parentElement, slug.parentElement];
+    expect(nameField).toHaveClass("grid", "content-start", "gap-1.5");
+    expect(slugField?.className).toBe(nameField?.className);
+    expect(name).toHaveClass("h-[38px]");
+    expect(slug).toHaveClass("h-[38px]");
+  });
 });
