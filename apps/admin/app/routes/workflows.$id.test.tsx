@@ -22,6 +22,7 @@ const WORKFLOW = {
       quorum: "majority",
       rejectOnSlaBreach: false,
       slaDays: 3,
+      vetoUserIds: ["mock-user-grace"],
     },
     {
       approvers: [],
@@ -39,6 +40,7 @@ const WORKFLOW = {
       quorum: "one",
       rejectOnSlaBreach: false,
       slaDays: null,
+      vetoUserIds: [],
     },
   ],
   version: 2,
@@ -58,6 +60,9 @@ const BASE = {
     { enabled: true, id: "mock-user-grace", name: "Grace" },
     { enabled: false, id: "mock-user-carol", name: "Carol" },
     { enabled: true, id: "mock-user-erin", name: "Erin" },
+    { enabled: true, id: "mock-user-a", name: "Alice" },
+    { enabled: true, id: "mock-user-b", name: "Bob" },
+    { enabled: true, id: "mock-user-c", name: "Cara" },
   ],
   usedBy: 1,
   workflow: WORKFLOW,
@@ -243,57 +248,105 @@ describe("The workflow editor (A9)", () => {
   });
 });
 
-describe("Veto approvers in the workflow editor (steward-web#256)", () => {
-  it("is off by default, with nothing to mark until it is turned on", async () => {
+const vetoBox = (number: number) =>
+  within(stage(number)).getByRole("combobox", { name: "Veto people" });
+const optionNames = () => screen.queryAllByRole("option").map((option) => option.textContent);
+const savedVetoes = (form: FormData) =>
+  JSON.parse(String(form.get("stagesJson"))) as Record<string, unknown>[];
+
+describe("Veto people in the workflow editor (bug log 17)", () => {
+  it("has no workflow-wide veto switch", async () => {
     openEditor();
-    const toggle = await screen.findByRole("checkbox", { name: "Allow veto approvers" });
-    expect(toggle).not.toBeChecked();
-    expect(screen.queryByRole("checkbox", { name: /^Can veto/ })).toBeNull();
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByRole("checkbox", { name: /veto/i })).toBeNull();
+    expect(screen.queryByText("Allow veto approvers")).toBeNull();
   });
 
-  it("marks a user and a group seat once it is on, and saves them with the stages", async () => {
+  it("labels the picker per stage and explains that one veto ends the run", async () => {
+    openEditor();
+    await screen.findByRole("heading", { level: 1 });
+    const box = vetoBox(1);
+    const helper = within(stage(1)).getByText(/If any one of them rejects/);
+    expect(helper).toHaveTextContent("must be one of this stage's approvers");
+    expect(helper).toHaveTextContent("the run ends as rejected");
+    expect(box).toHaveAccessibleDescription(helper.textContent!);
+  });
+
+  it("shows the people who already hold a veto as chips", async () => {
+    openEditor();
+    await screen.findByRole("heading", { level: 1 });
+    const held = within(stage(1)).getByRole("list", { name: "Selected: Veto people" });
+    expect(within(held).getByText("Grace")).toBeInTheDocument();
+    expect(
+      within(stage(2)).getByRole("list", { name: "Selected: Veto people" }),
+    ).toBeEmptyDOMElement();
+  });
+
+  it("offers only people who are currently among the stage's approvers", async () => {
+    openEditor();
+    await screen.findByRole("heading", { level: 1 });
+    await userEvent.click(vetoBox(1));
+    // Grace already holds it; Carol is a disabled approver; Erin is not an approver at all.
+    expect(optionNames()).toEqual(["Dave"]);
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(vetoBox(2));
+    // A group seat's members count, resolved to people.
+    expect(optionNames()).toEqual(["Alice", "Bob", "Cara"]);
+  });
+
+  it("saves vetoUserIds on each stage and none of the old veto fields", async () => {
     const posted = openEditor();
-    await userEvent.click(await screen.findByRole("checkbox", { name: "Allow veto approvers" }));
-    await userEvent.click(
-      screen.getByRole("checkbox", { name: "Can veto: Dave (Finance review)" }),
-    );
-    await userEvent.click(
-      screen.getByRole("checkbox", { name: "Can veto: Approvers group (Final approval)" }),
-    );
+    await screen.findByRole("heading", { level: 1 });
+    await userEvent.click(vetoBox(1));
+    await userEvent.click(await screen.findByRole("option", { name: "Dave" }));
+    await userEvent.click(vetoBox(2));
+    await userEvent.click(await screen.findByRole("option", { name: "Bob" }));
     await userEvent.click(screen.getByRole("button", { name: "Save workflow" }));
     await vi.waitFor(() => expect(posted).toHaveLength(1));
     const form = posted[0]!;
-    expect(form.get("vetoEnabled")).toBe("on");
-    const stages = JSON.parse(String(form.get("stagesJson"))) as {
-      vetoApproverIds?: string[];
-      vetoGroupIds?: string[];
-    }[];
-    expect(stages[0]?.vetoApproverIds).toEqual(["mock-user-dave"]);
-    expect(stages[1]?.vetoGroupIds).toEqual(["g-approvers"]);
+    const stages = savedVetoes(form);
+    expect(stages[0]?.vetoUserIds).toEqual(["mock-user-grace", "mock-user-dave"]);
+    expect(stages[1]?.vetoUserIds).toEqual(["mock-user-b"]);
+    for (const entry of stages) {
+      expect(entry).not.toHaveProperty("vetoApproverIds");
+      expect(entry).not.toHaveProperty("vetoGroupIds");
+    }
+    expect(form.has("vetoEnabled")).toBe(false);
   });
 
-  it("shows what the workflow already holds", async () => {
-    openEditor({
-      veto: {
-        enabled: true,
-        stages: { "s-1": { vetoApproverIds: ["mock-user-grace"], vetoGroupIds: [] } },
-      },
-    });
-    expect(await screen.findByRole("checkbox", { name: "Allow veto approvers" })).toBeChecked();
-    expect(
-      screen.getByRole("checkbox", { name: "Can veto: Grace (Finance review)" }),
-    ).toBeChecked();
-    expect(
-      screen.getByRole("checkbox", { name: "Can veto: Dave (Finance review)" }),
-    ).not.toBeChecked();
-  });
-
-  it("sends no veto lists when none are marked", async () => {
+  it("sends an empty vetoUserIds when a stage's last veto person is removed", async () => {
     const posted = openEditor();
-    await userEvent.click(await screen.findByRole("button", { name: "Save workflow" }));
+    await screen.findByRole("heading", { level: 1 });
+    await userEvent.click(within(stage(1)).getByRole("button", { name: "Remove Grace" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save workflow" }));
     await vi.waitFor(() => expect(posted).toHaveLength(1));
-    expect(posted[0]!.get("vetoEnabled")).toBeNull();
-    const stages = JSON.parse(String(posted[0]!.get("stagesJson"))) as Record<string, unknown>[];
-    expect(stages.every((stage) => !("vetoApproverIds" in stage))).toBe(true);
+    expect(savedVetoes(posted[0]!)[0]?.vetoUserIds).toEqual([]);
+  });
+
+  it("drops a veto person when they leave the approver pool, and says so", async () => {
+    const posted = openEditor();
+    await screen.findByRole("heading", { level: 1 });
+    await userEvent.click(
+      within(stage(1)).getByRole("button", { name: "Remove Grace from stage 1" }),
+    );
+    const note = within(stage(1)).getByText(/Grace is no longer an approver of this stage/);
+    expect(note).toHaveTextContent("so was removed from its veto people");
+    expect(note).toHaveAttribute("role", "status");
+    const held = within(stage(1)).getByRole("list", { name: "Selected: Veto people" });
+    expect(within(held).queryByText("Grace")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Save workflow" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    expect(savedVetoes(posted[0]!)[0]?.vetoUserIds).toEqual([]);
+  });
+
+  it("keeps the veto people when someone else leaves the pool", async () => {
+    openEditor();
+    await screen.findByRole("heading", { level: 1 });
+    await userEvent.click(
+      within(stage(1)).getByRole("button", { name: "Remove Dave from stage 1" }),
+    );
+    const held = within(stage(1)).getByRole("list", { name: "Selected: Veto people" });
+    expect(within(held).getByText("Grace")).toBeInTheDocument();
+    expect(within(stage(1)).queryByText(/no longer an approver/)).toBeNull();
   });
 });

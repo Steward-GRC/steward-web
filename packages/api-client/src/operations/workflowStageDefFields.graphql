@@ -15,4 +15,5 @@ fragment WorkflowStageDefFields on WorkflowStageDef {
   slaDays
   rejectOnSlaBreach
   pinnedLast
+  vetoUserIds
 }

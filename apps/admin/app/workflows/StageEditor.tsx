@@ -5,12 +5,13 @@
 import type { GroupUnitInput, WorkCalendar, WorkflowStageInput } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
-import { Card, cn, Select } from "@steward-web/ui";
+import { Card, type ChipItem, ChipPicker, cn, Field, Select } from "@steward-web/ui";
 import { GripVertical, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
 
 import { calendarSummary } from "../settings/workCalendar";
 import { moveDown, moveUp } from "./stageOutline";
+import { approverPool, pruneVetoes } from "./stageVeto";
 
 export interface StageEditorProps {
   /** The site work calendar the due box counts on; null when it could not be read. */
@@ -38,6 +39,9 @@ const needed = (unit: GroupUnitInput) => {
   return Math.min(1, total);
 };
 
+/** A stage card's identity for notes about it: its id, or its place while it has none. */
+const keyOf = (stage: WorkflowStageInput, index: number) => stage.id ?? `new-${index}`;
+
 const CHIP = "flex h-7 items-center gap-1.5 rounded-full px-2.5";
 
 /** One stage card: grip, number and name, Always last, the quorum, approvers and due date. */
@@ -52,6 +56,7 @@ const StageCard = ({
   onUpdate,
   people,
   stage,
+  vetoNote,
 }: {
   calendar: null | undefined | WorkCalendar;
   groupNames: Record<string, string>;
@@ -63,6 +68,8 @@ const StageCard = ({
   onUpdate: (patch: Partial<WorkflowStageInput>) => void;
   people: readonly StagePerson[];
   stage: WorkflowStageInput;
+  /** Who was just dropped from the veto people because they left the approver pool. */
+  vetoNote?: readonly string[];
 }) => {
   const { t } = useTranslation("admin");
   const number = index + 1;
@@ -87,6 +94,13 @@ const StageCard = ({
     });
   };
   const person = (id: string) => people.find((entry) => entry.id === id);
+  const named = (id: string) => person(id)?.name ?? id;
+  // Only people currently in this stage's approver pool, as users, can be offered as veto people.
+  const vetoItem = (id: string): ChipItem => ({ id, kind: "user", label: named(id) });
+  const vetoChosen = (stage.vetoUserIds ?? []).map((id) => vetoItem(id));
+  const vetoOffers = approverPool(stage)
+    .filter((id) => person(id)?.enabled !== false)
+    .map((id) => vetoItem(id));
 
   const onGripKey = (event: KeyboardEvent) => {
     if (event.key === "ArrowUp") {
@@ -216,6 +230,23 @@ const StageCard = ({
           </li>
         </ul>
         <span className="text-muted">{explain}</span>
+        <Field hint={t("workflows.editor.veto.hint")} label={t("workflows.editor.veto.label")}>
+          <ChipPicker
+            items={vetoOffers}
+            label={t("workflows.editor.veto.label")}
+            onChange={(next) => onUpdate({ vetoUserIds: next.map((item) => item.id) })}
+            placeholder={t("workflows.editor.veto.placeholder")}
+            value={vetoChosen}
+          />
+        </Field>
+        {vetoNote && vetoNote.length > 0 ? (
+          <p className="text-sm text-warn" role="status">
+            {t("workflows.editor.veto.dropped", {
+              count: vetoNote.length,
+              names: vetoNote.map((id) => named(id)).join(", "),
+            })}
+          </p>
+        ) : null}
         <span className="flex flex-wrap items-center gap-2">
           <label className="text-muted" htmlFor={dueId}>
             {t("workflows.editor.due")}
@@ -260,8 +291,19 @@ export const StageEditor = ({
   stages,
 }: StageEditorProps) => {
   const [dragging, setDragging] = useState<null | number>(null);
-  const update = (index: number, patch: Partial<WorkflowStageInput>) =>
-    onChange(stages.map((stage, at) => (at === index ? { ...stage, ...patch } : stage)));
+  // Veto people dropped from a stage because they left its approver pool, by stage, until the
+  // next change to that stage's veto people.
+  const [dropped, setDropped] = useState<Record<string, readonly string[]>>({});
+  const update = (index: number, patch: Partial<WorkflowStageInput>) => {
+    const current = stages[index];
+    if (!current) return;
+    // A veto person must stay one of the stage's approvers: when the pool changes, prune them.
+    const next = pruneVetoes({ ...current, ...patch });
+    const key = keyOf(current, index);
+    if (patch.vetoUserIds) setDropped(({ [key]: _gone, ...rest }) => rest);
+    else if (next.dropped.length > 0) setDropped((now) => ({ ...now, [key]: next.dropped }));
+    onChange(stages.map((stage, at) => (at === index ? next.stage : stage)));
+  };
   const move = (index: number, delta: -1 | 1) =>
     onChange(delta === -1 ? moveUp(stages, index) : moveDown(stages, index));
   const drop = (to: number) => {
@@ -288,6 +330,7 @@ export const StageEditor = ({
           onUpdate={(patch) => update(index, patch)}
           people={people}
           stage={stage}
+          vetoNote={dropped[keyOf(stage, index)]}
         />
       ))}
     </div>

@@ -1,6 +1,0 @@
-mutation SetWorkflowVetoEnabled($id: ID!, $enabled: Boolean!) {
-  setWorkflowVetoEnabled(id: $id, enabled: $enabled) {
-    id
-    vetoEnabled
-  }
-}

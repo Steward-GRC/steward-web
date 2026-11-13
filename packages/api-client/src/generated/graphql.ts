@@ -1151,6 +1151,7 @@ export type CreateWorkflowDefMutation = {
       readonly slaDays: number | null;
       readonly rejectOnSlaBreach: boolean | null;
       readonly pinnedLast: boolean | null;
+      readonly vetoUserIds: ReadonlyArray<string>;
       readonly approversByCategory: ReadonlyArray<{
         readonly categoryId: string;
         readonly approverIds: ReadonlyArray<string>;
@@ -4222,15 +4223,6 @@ export type SetVersionRelatedMutation = {
   };
 };
 
-export type SetWorkflowVetoEnabledMutationVariables = Exact<{
-  id: string | number;
-  enabled: boolean;
-}>;
-
-export type SetWorkflowVetoEnabledMutation = {
-  readonly setWorkflowVetoEnabled: { readonly id: string; readonly vetoEnabled: boolean };
-};
-
 export type SignalWorkflowMutationVariables = Exact<{
   policyVersionId: string | number;
   runId: string | number;
@@ -4672,6 +4664,7 @@ export type UpdateWorkflowDefMutation = {
       readonly slaDays: number | null;
       readonly rejectOnSlaBreach: boolean | null;
       readonly pinnedLast: boolean | null;
+      readonly vetoUserIds: ReadonlyArray<string>;
       readonly approversByCategory: ReadonlyArray<{
         readonly categoryId: string;
         readonly approverIds: ReadonlyArray<string>;
@@ -4877,6 +4870,7 @@ export type WorkflowDefQuery = {
       readonly slaDays: number | null;
       readonly rejectOnSlaBreach: boolean | null;
       readonly pinnedLast: boolean | null;
+      readonly vetoUserIds: ReadonlyArray<string>;
       readonly approversByCategory: ReadonlyArray<{
         readonly categoryId: string;
         readonly approverIds: ReadonlyArray<string>;
@@ -4903,6 +4897,7 @@ export type WorkflowDefFieldsFragment = {
     readonly slaDays: number | null;
     readonly rejectOnSlaBreach: boolean | null;
     readonly pinnedLast: boolean | null;
+    readonly vetoUserIds: ReadonlyArray<string>;
     readonly approversByCategory: ReadonlyArray<{
       readonly categoryId: string;
       readonly approverIds: ReadonlyArray<string>;
@@ -4931,6 +4926,7 @@ export type WorkflowDefsQuery = {
       readonly slaDays: number | null;
       readonly rejectOnSlaBreach: boolean | null;
       readonly pinnedLast: boolean | null;
+      readonly vetoUserIds: ReadonlyArray<string>;
       readonly approversByCategory: ReadonlyArray<{
         readonly categoryId: string;
         readonly approverIds: ReadonlyArray<string>;
@@ -4952,6 +4948,7 @@ export type WorkflowStageDefFieldsFragment = {
   readonly slaDays: number | null;
   readonly rejectOnSlaBreach: boolean | null;
   readonly pinnedLast: boolean | null;
+  readonly vetoUserIds: ReadonlyArray<string>;
   readonly approversByCategory: ReadonlyArray<{
     readonly categoryId: string;
     readonly approverIds: ReadonlyArray<string>;
@@ -5005,20 +5002,6 @@ export type WorkflowStatusQuery = {
       readonly required: number;
     }>;
   };
-};
-
-export type WorkflowVetoesQueryVariables = Exact<{ [key: string]: never }>;
-
-export type WorkflowVetoesQuery = {
-  readonly workflowDefs: ReadonlyArray<{
-    readonly id: string;
-    readonly vetoEnabled: boolean;
-    readonly stages: ReadonlyArray<{
-      readonly id: string;
-      readonly vetoApproverIds: ReadonlyArray<string>;
-      readonly vetoGroupIds: ReadonlyArray<string>;
-    }>;
-  }>;
 };
 
 export const AuditRecordFieldsFragmentDoc = {
@@ -5870,6 +5853,7 @@ export const WorkflowStageDefFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+          { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
       },
     },
@@ -5939,6 +5923,7 @@ export const WorkflowDefFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+          { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
       },
     },
@@ -9532,6 +9517,7 @@ export const CreateWorkflowDefDocument = {
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+          { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
       },
     },
@@ -18915,65 +18901,6 @@ export const SetVersionRelatedDocument = {
     },
   ],
 } as unknown as DocumentNode<SetVersionRelatedMutation, SetVersionRelatedMutationVariables>;
-export const SetWorkflowVetoEnabledDocument = {
-  kind: "Document",
-  definitions: [
-    {
-      kind: "OperationDefinition",
-      operation: "mutation",
-      name: { kind: "Name", value: "SetWorkflowVetoEnabled" },
-      variableDefinitions: [
-        {
-          kind: "VariableDefinition",
-          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
-          type: {
-            kind: "NonNullType",
-            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
-          },
-        },
-        {
-          kind: "VariableDefinition",
-          variable: { kind: "Variable", name: { kind: "Name", value: "enabled" } },
-          type: {
-            kind: "NonNullType",
-            type: { kind: "NamedType", name: { kind: "Name", value: "Boolean" } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: "SelectionSet",
-        selections: [
-          {
-            kind: "Field",
-            name: { kind: "Name", value: "setWorkflowVetoEnabled" },
-            arguments: [
-              {
-                kind: "Argument",
-                name: { kind: "Name", value: "id" },
-                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
-              },
-              {
-                kind: "Argument",
-                name: { kind: "Name", value: "enabled" },
-                value: { kind: "Variable", name: { kind: "Name", value: "enabled" } },
-              },
-            ],
-            selectionSet: {
-              kind: "SelectionSet",
-              selections: [
-                { kind: "Field", name: { kind: "Name", value: "id" } },
-                { kind: "Field", name: { kind: "Name", value: "vetoEnabled" } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  SetWorkflowVetoEnabledMutation,
-  SetWorkflowVetoEnabledMutationVariables
->;
 export const SignalWorkflowDocument = {
   kind: "Document",
   definitions: [
@@ -20685,6 +20612,7 @@ export const UpdateWorkflowDefDocument = {
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+          { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
       },
     },
@@ -21203,6 +21131,7 @@ export const WorkflowDefDocument = {
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+          { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
       },
     },
@@ -21292,6 +21221,7 @@ export const WorkflowDefsDocument = {
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
+          { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
       },
     },
@@ -21414,41 +21344,3 @@ export const WorkflowStatusDocument = {
     },
   ],
 } as unknown as DocumentNode<WorkflowStatusQuery, WorkflowStatusQueryVariables>;
-export const WorkflowVetoesDocument = {
-  kind: "Document",
-  definitions: [
-    {
-      kind: "OperationDefinition",
-      operation: "query",
-      name: { kind: "Name", value: "WorkflowVetoes" },
-      selectionSet: {
-        kind: "SelectionSet",
-        selections: [
-          {
-            kind: "Field",
-            name: { kind: "Name", value: "workflowDefs" },
-            selectionSet: {
-              kind: "SelectionSet",
-              selections: [
-                { kind: "Field", name: { kind: "Name", value: "id" } },
-                { kind: "Field", name: { kind: "Name", value: "vetoEnabled" } },
-                {
-                  kind: "Field",
-                  name: { kind: "Name", value: "stages" },
-                  selectionSet: {
-                    kind: "SelectionSet",
-                    selections: [
-                      { kind: "Field", name: { kind: "Name", value: "id" } },
-                      { kind: "Field", name: { kind: "Name", value: "vetoApproverIds" } },
-                      { kind: "Field", name: { kind: "Name", value: "vetoGroupIds" } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<WorkflowVetoesQuery, WorkflowVetoesQueryVariables>;
