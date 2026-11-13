@@ -497,6 +497,7 @@ export type AuthoringPolicyFieldsFragment = {
   readonly currentDraftVersionId: string | null;
   readonly currentPublishedVersionId: string | null;
   readonly currentVersionNo: number | null;
+  readonly currentSemanticVersion: string | null;
   readonly currentVersionStatus: string | null;
   readonly updatedAt: string | null;
   readonly retiredAt: string | null;
@@ -1038,6 +1039,7 @@ export type CreatePolicyMutation = {
     readonly currentDraftVersionId: string | null;
     readonly currentPublishedVersionId: string | null;
     readonly currentVersionNo: number | null;
+    readonly currentSemanticVersion: string | null;
     readonly currentVersionStatus: string | null;
     readonly updatedAt: string | null;
     readonly retiredAt: string | null;
@@ -1861,6 +1863,7 @@ export type MyDraftsQuery = {
     readonly currentDraftVersionId: string | null;
     readonly currentPublishedVersionId: string | null;
     readonly currentVersionNo: number | null;
+    readonly currentSemanticVersion: string | null;
     readonly currentVersionStatus: string | null;
     readonly updatedAt: string | null;
     readonly retiredAt: string | null;
@@ -2053,6 +2056,7 @@ export type PoliciesQuery = {
     readonly currentDraftVersionId: string | null;
     readonly currentPublishedVersionId: string | null;
     readonly currentVersionNo: number | null;
+    readonly currentSemanticVersion: string | null;
     readonly currentVersionStatus: string | null;
     readonly updatedAt: string | null;
     readonly retiredAt: string | null;
@@ -2090,6 +2094,7 @@ export type PolicyQuery = {
     readonly currentDraftVersionId: string | null;
     readonly currentPublishedVersionId: string | null;
     readonly currentVersionNo: number | null;
+    readonly currentSemanticVersion: string | null;
     readonly currentVersionStatus: string | null;
     readonly updatedAt: string | null;
     readonly retiredAt: string | null;
@@ -2292,6 +2297,7 @@ export type PolicyByNumberQuery = {
     readonly currentDraftVersionId: string | null;
     readonly currentPublishedVersionId: string | null;
     readonly currentVersionNo: number | null;
+    readonly currentSemanticVersion: string | null;
     readonly currentVersionStatus: string | null;
     readonly updatedAt: string | null;
     readonly retiredAt: string | null;
@@ -4073,6 +4079,7 @@ export type SetPolicyTemplateMutation = {
     readonly currentDraftVersionId: string | null;
     readonly currentPublishedVersionId: string | null;
     readonly currentVersionNo: number | null;
+    readonly currentSemanticVersion: string | null;
     readonly currentVersionStatus: string | null;
     readonly updatedAt: string | null;
     readonly retiredAt: string | null;
@@ -5286,6 +5293,7 @@ export const AuthoringPolicyFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentSemanticVersion" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
           { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
@@ -9444,6 +9452,7 @@ export const CreatePolicyDocument = {
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentSemanticVersion" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
           { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
@@ -12297,6 +12306,7 @@ export const MyDraftsDocument = {
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentSemanticVersion" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
           { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
@@ -12771,6 +12781,7 @@ export const PoliciesDocument = {
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentSemanticVersion" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
           { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
@@ -12858,6 +12869,7 @@ export const PolicyDocument = {
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentSemanticVersion" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
           { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
@@ -13194,6 +13206,7 @@ export const PolicyByNumberDocument = {
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentSemanticVersion" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
           { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
@@ -18648,6 +18661,7 @@ export const SetPolicyTemplateDocument = {
           { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentSemanticVersion" } },
           { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
           { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },

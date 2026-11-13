@@ -139,6 +139,8 @@ export const SubmitForApproval = ({
   incompleteButtons = 0,
   missing,
   published,
+  reacknowledge,
+  reacknowledgeFor,
   suggested,
   workflow,
 }: {
@@ -151,6 +153,12 @@ export const SubmitForApproval = ({
   missing: readonly string[];
   /** The published version this revision follows; absent for a first publish. */
   published?: string;
+  /** The gateway's answer to whether publishing asks readers to acknowledge again (#397);
+   *  absent when it sent none. It is worked out for one change type only. */
+  reacknowledge?: boolean;
+  /** The change type `reacknowledge` was worked out for: the version's own, else the suggested
+   *  one. Defaults to the suggestion. */
+  reacknowledgeFor?: ChangeType;
   /** The change type core suggested for this revision; absent for a first publish or when core
    *  sent none, and then there is nothing to pick. */
   suggested?: ChangeType;
@@ -165,6 +173,12 @@ export const SubmitForApproval = ({
   // a pick below the suggestion waits on a reason (#390)
   const needsReason =
     picking && isLowering(change ?? suggested ?? "minor", suggested) && !reason.trim();
+  // the answer holds for one change type, so it is shown only while the pick is that type: the
+  // gateway is not asked again as the author moves the pick, and a guess would be wrong (#397)
+  const showReacknowledge =
+    picking &&
+    reacknowledge !== undefined &&
+    (change ?? suggested) === (reacknowledgeFor ?? suggested);
   const busy = fetcher.state !== "idle";
   const refusal = fetcher.data && !fetcher.data.ok ? fetcher.data.error : undefined;
   return (
@@ -219,6 +233,13 @@ export const SubmitForApproval = ({
                     reason={reason}
                     suggested={suggested}
                   />
+                ) : null}
+                {showReacknowledge ? (
+                  <p className="text-sm text-muted">
+                    {reacknowledge
+                      ? t("editor.submit.reacknowledgeYes")
+                      : t("editor.submit.reacknowledgeNo")}
+                  </p>
                 ) : null}
                 {refusal ? (
                   <DialogNote tone="danger">

@@ -303,7 +303,7 @@ export const toPolicyView = (
   templateNone: policy.templateNone,
   title: policy.title,
   updated: policy.updatedAt,
-  version: semanticVersion(policy.currentVersionNo),
+  version: semanticVersion(policy.currentSemanticVersion || policy.currentVersionNo),
   viewerCan: policy.viewerCan,
 });
 
