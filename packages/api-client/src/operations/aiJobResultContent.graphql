@@ -1,5 +1,5 @@
-query AiJobResultContent($resultRef: String!) {
-  aiJobResultContent(resultRef: $resultRef) {
+query AiJobResultContent($resultRef: String!, $jobId: ID) {
+  aiJobResultContent(resultRef: $resultRef, jobId: $jobId) {
     operation
     resultJson
   }

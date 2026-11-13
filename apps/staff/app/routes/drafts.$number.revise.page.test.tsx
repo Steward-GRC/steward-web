@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useLoaderData, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -115,6 +115,8 @@ describe("Revise with AI (U31)", () => {
     await askFor("add a rollback section");
     await vi.waitFor(() =>
       expect(posted).toHaveBeenCalledWith({
+        customFraming: "",
+        framing: "",
         instruction: "add a rollback section",
         intent: "revise",
         sectionsJson: JSON.stringify(sections),
@@ -122,6 +124,50 @@ describe("Revise with AI (U31)", () => {
       }),
     );
     expect(await screen.findByRole("status")).toHaveTextContent("Generating");
+  });
+
+  it("sends the framing picked for the revision", async () => {
+    const posted = open();
+    await userEvent.click(await screen.findByRole("radio", { name: /Plain language/ }));
+    await askFor("simplify it");
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith(
+        expect.objectContaining({ customFraming: "", framing: "PLAIN" }),
+      ),
+    );
+  });
+
+  it("sends Your own wording, and holds the request until it is valid", async () => {
+    const posted = open();
+    await userEvent.click(await screen.findByRole("radio", { name: /Your own wording/ }));
+    await userEvent.type(
+      await screen.findByRole("textbox", { name: "What should change?" }),
+      "simplify it",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Generate change set" }));
+    const wording = screen.getByRole("textbox", { name: "Your wording" });
+    expect(wording).toBeInvalid();
+    expect(screen.getByText("Describe how the draft should read.")).toBeInTheDocument();
+    expect(posted).not.toHaveBeenCalled();
+
+    await userEvent.type(wording, "Warm, direct");
+    await userEvent.click(screen.getByRole("button", { name: "Generate change set" }));
+    await vi.waitFor(() =>
+      expect(posted).toHaveBeenCalledWith(
+        expect.objectContaining({ customFraming: "Warm, direct", framing: "CUSTOM" }),
+      ),
+    );
+  });
+
+  it("refuses wording over 500 characters", async () => {
+    const posted = open();
+    await userEvent.click(await screen.findByRole("radio", { name: /Your own wording/ }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Your wording" }), {
+      target: { value: "a".repeat(501) },
+    });
+    await askFor("simplify it");
+    expect(screen.getByText("Keep it to 500 characters or fewer.")).toBeInTheDocument();
+    expect(posted).not.toHaveBeenCalled();
   });
 
   it("reviews the change set: counts, a card per change, unchanged folded away", async () => {

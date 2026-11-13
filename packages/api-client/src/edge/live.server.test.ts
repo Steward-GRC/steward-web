@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CategoryDocumentTypes,
   DocumentType,
+  DraftFraming,
   NotifCadence,
   NotifCategory,
 } from "../generated/schema";
@@ -1621,6 +1622,72 @@ describe("liveEdge: AI drafting", () => {
     };
     expect(await liveEdge.submitPolicyRevision(input)).toEqual({ jobId: "job-2" });
     expect(calls[0]).toEqual({ operation: "SubmitPolicyRevision", variables: { input } });
+  });
+
+  it("passes the framing and the author's own wording on to draft generation", async () => {
+    const calls = routeGateway({
+      SubmitDraftGeneration: () => ({ submitDraftGeneration: { jobId: "job-3" } }),
+    });
+    await liveEdge.submitDraftGeneration({
+      brief: "How visitors sign in",
+      customFraming: "Warm and direct, for new hires",
+      framing: DraftFraming.Custom,
+      sections: [{ key: "purpose", order: 0, title: "Purpose" }],
+    });
+    expect(calls[0]?.variables).toMatchObject({
+      input: { customFraming: "Warm and direct, for new hires", framing: "CUSTOM" },
+    });
+  });
+
+  it("sends no framing to draft generation when the author keeps the default", async () => {
+    const calls = routeGateway({
+      SubmitDraftGeneration: () => ({ submitDraftGeneration: { jobId: "job-3" } }),
+    });
+    await liveEdge.submitDraftGeneration({
+      brief: "How visitors sign in",
+      sections: [{ key: "purpose", order: 0, title: "Purpose" }],
+    });
+    const input = (calls[0]?.variables.input ?? {}) as Record<string, unknown>;
+    expect(input).not.toHaveProperty("framing");
+    expect(input).not.toHaveProperty("customFraming");
+  });
+
+  it("passes the framing on to a revision", async () => {
+    const calls = routeGateway({
+      SubmitPolicyRevision: () => ({ submitPolicyRevision: { jobId: "job-4" } }),
+    });
+    const input = {
+      framing: DraftFraming.Plain,
+      instruction: "simplify it",
+      policyId: "p-1",
+      sections: [{ content: "Tell the desk.", key: "report", order: 0, title: "Report it" }],
+      versionId: "v-9",
+    };
+    await liveEdge.submitPolicyRevision(input);
+    expect(calls[0]).toEqual({ operation: "SubmitPolicyRevision", variables: { input } });
+  });
+
+  it("fetches a result's content by its reference alone when no job id is given", async () => {
+    const calls = routeGateway({
+      AiJobResultContent: () => ({
+        aiJobResultContent: { operation: "DRAFT", resultJson: "{}" },
+      }),
+    });
+    await liveEdge.aiJobResultContent("ref-1");
+    expect(calls[0]).toEqual({
+      operation: "AiJobResultContent",
+      variables: { resultRef: "ref-1" },
+    });
+  });
+
+  it("names the job when it fetches a result's content, so a stored result still loads", async () => {
+    const calls = routeGateway({
+      AiJobResultContent: () => ({
+        aiJobResultContent: { operation: "DRAFT", resultJson: "{}" },
+      }),
+    });
+    await liveEdge.aiJobResultContent("ref-1", undefined, "job-7");
+    expect(calls[0]?.variables).toEqual({ jobId: "job-7", resultRef: "ref-1" });
   });
 });
 

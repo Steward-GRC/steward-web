@@ -112,7 +112,7 @@ import type {
   WorkflowStatus,
 } from "./views";
 
-import { DocumentType } from "./generated/schema";
+import { DocumentType, DraftFraming } from "./generated/schema";
 
 export type {
   AccountMergePreview,
@@ -200,6 +200,7 @@ export {
   CaseStatus,
   CategoryDocumentTypes,
   DocumentType,
+  DraftFraming,
   InformationKind,
   MergeItemKind,
   MergeStatus,
@@ -415,8 +416,16 @@ export interface Edge {
    * subscription opened. `signal` cancels the wait.
    */
   aiJobResult(jobId: string, cookie?: string, signal?: AbortSignal): Promise<AiJobResult>;
-  /** Fetches a completed async AI job's content by `AIJobStatus.resultRef`. */
-  aiJobResultContent(resultRef: string, cookie?: string): Promise<AIJobResultContent>;
+  /**
+   * Fetches a completed async AI job's content by `AIJobStatus.resultRef`. `jobId` is the
+   * gateway's fallback for a result whose cache entry has expired: it reads the stored result
+   * instead. Always pass it when the job is known.
+   */
+  aiJobResultContent(
+    resultRef: string,
+    cookie?: string,
+    jobId?: string,
+  ): Promise<AIJobResultContent>;
   appendixDiff(id: string, cookie?: string): Promise<readonly PolicySectionDiff[]>;
   /** A draft appendix against what is published, for its edit page. Authors, site admins and compliance only. */
   /** Approves a pending hard reset request. Any site admin except the requester; the approval
@@ -1270,6 +1279,11 @@ export interface SectionInput {
 
 export interface SubmitDraftGenerationInput {
   brief: string;
+  /** The author's own wording, for `DraftFraming.Custom`: at most 500 characters. The gateway
+   *  ignores it with any other framing. */
+  customFraming?: null | string;
+  /** How the draft should read. Unset keeps the default tone. */
+  framing?: DraftFraming | null;
   homeGroupId?: null | string;
   /** Uploaded reference documents, as text (`extractDocument`). */
   referenceDocuments?: readonly { content: string; title: string }[];
@@ -1287,6 +1301,11 @@ export interface SubmitPolicyReviewInput {
 }
 
 export interface SubmitPolicyRevisionInput {
+  /** The author's own wording, for `DraftFraming.Custom`: at most 500 characters. The gateway
+   *  ignores it with any other framing. */
+  customFraming?: null | string;
+  /** How the revised text should read. Unset keeps the default tone. */
+  framing?: DraftFraming | null;
   /** The change, in the author's own words. */
   instruction: string;
   policyId: string;

@@ -1,6 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { File as NodeFile } from "node:buffer";
 import { createRoutesStub, useLoaderData, useLocation } from "react-router";
@@ -131,14 +131,21 @@ const drafted = {
   ],
 };
 
-/** Steps 1 and 2 with a brief, then the first draft. */
+/** Past the Framing step, leaving it on the default, to Output format. */
+const toFormat = async () => {
+  await userEvent.click(screen.getByRole("button", { name: "Next" }));
+  await screen.findByRole("group", { name: "How should it read?" });
+  await userEvent.click(screen.getByRole("button", { name: "Next" }));
+};
+
+/** The steps up to the first draft, with a brief. */
 const generateFirstDraft = async () => {
   const posted = open();
   await userEvent.type(
     await screen.findByRole("textbox", { name: "Brief" }),
     "How visitors sign in and what we keep.",
   );
-  await userEvent.click(screen.getByRole("button", { name: "Next" }));
+  await toFormat();
   await userEvent.click(screen.getByRole("button", { name: "Generate draft" }));
   await screen.findByText("Drafting…");
   finish(drafted);
@@ -146,8 +153,21 @@ const generateFirstDraft = async () => {
   return posted;
 };
 
+const toFraming = async (brief = "Visitors") => {
+  const posted = open();
+  await userEvent.type(await screen.findByRole("textbox", { name: "Brief" }), brief);
+  await userEvent.click(screen.getByRole("button", { name: "Next" }));
+  await screen.findByRole("group", { name: "How should it read?" });
+  return posted;
+};
+const pick = (name: RegExp) => userEvent.click(screen.getByRole("radio", { name }));
+const sentFirst = async (posted: ReturnType<typeof vi.fn>) => {
+  await vi.waitFor(() => expect(posted).toHaveBeenCalled());
+  return posted.mock.calls[0]![0] as Record<string, string>;
+};
+
 describe("Generate with AI (U30)", () => {
-  it("names the policy and shows the steps, without Framing until the gateway takes one", async () => {
+  it("names the policy and shows the steps, Framing among them", async () => {
     open();
     expect(
       await screen.findByRole("heading", {
@@ -158,8 +178,9 @@ describe("Generate with AI (U30)", () => {
     const steps = within(screen.getByRole("list", { name: "Steps" })).getAllByRole("listitem");
     expect(steps.map((step) => step.textContent)).toEqual([
       "1 Sources & brief",
-      "2 Output format",
-      "3 Draft & refine",
+      "2 Framing",
+      "3 Output format",
+      "4 Draft & refine",
     ]);
     expect(steps[0]).toHaveAttribute("aria-current", "step");
   });
@@ -196,10 +217,121 @@ describe("Generate with AI (U30)", () => {
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Sources");
   });
 
+  describe("framing (U30.2)", () => {
+    it("offers the default and the four framings, with the default chosen", async () => {
+      await toFraming();
+      const group = screen.getByRole("group", { name: "How should it read?" });
+      expect(
+        within(group)
+          .getAllByRole("radio")
+          .map((radio) => (radio as HTMLInputElement).labels?.[0]?.textContent),
+      ).toEqual([
+        expect.stringContaining("Standard"),
+        expect.stringContaining("Plain language"),
+        expect.stringContaining("Professional"),
+        expect.stringContaining("Formal"),
+        expect.stringContaining("Your own wording"),
+      ]);
+      expect(screen.getByRole("radio", { name: /Standard/ })).toBeChecked();
+      expect(screen.queryByRole("textbox", { name: "Your wording" })).not.toBeInTheDocument();
+      expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Framing");
+    });
+
+    it("goes back to the sources and forward again", async () => {
+      await toFraming();
+      await userEvent.click(screen.getByRole("button", { name: "Back" }));
+      expect(screen.getByRole("textbox", { name: "Brief" })).toHaveValue("Visitors");
+    });
+
+    it("sends the chosen framing with the draft, and no wording for it", async () => {
+      const posted = await toFraming();
+      await pick(/Plain language/);
+      await userEvent.click(screen.getByRole("button", { name: "Next" }));
+      await userEvent.click(screen.getByRole("button", { name: "Generate draft" }));
+      const sent = await sentFirst(posted);
+      expect(sent.framing).toBe("PLAIN");
+      expect(sent.customFraming).toBe("");
+    });
+
+    it("sends no framing when the default is kept", async () => {
+      const posted = await toFraming();
+      await userEvent.click(screen.getByRole("button", { name: "Next" }));
+      await userEvent.click(screen.getByRole("button", { name: "Generate draft" }));
+      const sent = await sentFirst(posted);
+      expect(sent.framing).toBe("");
+    });
+
+    it("asks for wording when Your own is chosen, and counts it", async () => {
+      await toFraming();
+      await pick(/Your own wording/);
+      const wording = screen.getByRole("textbox", { name: "Your wording" });
+      await userEvent.type(wording, "Warm and direct");
+      expect(screen.getByText("15 of 500 characters")).toBeInTheDocument();
+    });
+
+    it("holds the author on Framing until Your own has wording", async () => {
+      await toFraming();
+      await pick(/Your own wording/);
+      await userEvent.click(screen.getByRole("button", { name: "Next" }));
+      const wording = screen.getByRole("textbox", { name: "Your wording" });
+      expect(wording).toBeInvalid();
+      expect(screen.getByText("Describe how the draft should read.")).toBeInTheDocument();
+      expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Framing");
+      await userEvent.type(wording, "Warm and direct");
+      expect(wording).toBeValid();
+      await userEvent.click(screen.getByRole("button", { name: "Next" }));
+      expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Output format");
+    });
+
+    it("refuses wording over 500 characters, counted as characters", async () => {
+      await toFraming();
+      await pick(/Your own wording/);
+      const wording = screen.getByRole("textbox", { name: "Your wording" });
+      fireEvent.change(wording, { target: { value: "\u{1F600}".repeat(500) } });
+      expect(screen.getByText("500 of 500 characters")).toBeInTheDocument();
+      expect(wording).toBeValid();
+      fireEvent.change(wording, { target: { value: "a".repeat(501) } });
+      expect(screen.getByText("501 of 500 characters")).toBeInTheDocument();
+      expect(wording).toBeInvalid();
+      expect(screen.getByText("Keep it to 500 characters or fewer.")).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Next" }));
+      expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Framing");
+    });
+
+    it("sends Your own wording with the draft", async () => {
+      const posted = await toFraming();
+      await pick(/Your own wording/);
+      await userEvent.type(screen.getByRole("textbox", { name: "Your wording" }), "Warm, direct");
+      await userEvent.click(screen.getByRole("button", { name: "Next" }));
+      await userEvent.click(screen.getByRole("button", { name: "Generate draft" }));
+      const sent = await sentFirst(posted);
+      expect(sent.framing).toBe("CUSTOM");
+      expect(sent.customFraming).toBe("Warm, direct");
+    });
+
+    it("keeps the framing on the turns after the first draft", async () => {
+      const posted = await toFraming();
+      await pick(/Formal/);
+      await userEvent.click(screen.getByRole("button", { name: "Next" }));
+      await userEvent.click(screen.getByRole("button", { name: "Generate draft" }));
+      await screen.findByText("Drafting…");
+      finish(drafted);
+      await screen.findByRole("article", { name: "1. Purpose" });
+      await userEvent.click(screen.getByRole("radio", { name: "Improve" }));
+      await userEvent.type(screen.getByRole("textbox", { name: "Ask for a change…" }), "Shorter.");
+      await userEvent.click(screen.getByRole("button", { name: "Send" }));
+      await vi.waitFor(() =>
+        expect(posted).toHaveBeenLastCalledWith(
+          expect.objectContaining({ framing: "FORMAL", intent: "revise" }),
+        ),
+      );
+    });
+  });
+
   it("locks required sections and lets optional ones be left out (U30.3)", async () => {
     const posted = open();
     await userEvent.type(await screen.findByRole("textbox", { name: "Brief" }), "Visitors");
-    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    await toFormat();
     const format = screen.getByRole("region", { name: "Output format" });
     expect(within(format).getAllByText("Required")).toHaveLength(3);
     const exceptions = within(format).getByRole("switch", { name: "3.1 Exceptions" });
@@ -224,7 +356,7 @@ describe("Generate with AI (U30)", () => {
       sections: [{ key: "content", text: "", title: "Content" }],
     });
     await userEvent.type(await screen.findByRole("textbox", { name: "Brief" }), "Visitors");
-    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    await toFormat();
     expect(screen.getByText("No template attached")).toBeInTheDocument();
   });
 
@@ -309,7 +441,7 @@ describe("Generate with AI (U30)", () => {
     health = { available: false, reason: "disabled_by_admin" };
     open({ ...loaderData, aiHealth: { available: false, reason: "disabled_by_admin" } });
     await userEvent.type(await screen.findByRole("textbox", { name: "Brief" }), "Visitors");
-    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    await toFormat();
     expect(screen.getByText("AI turned off by an administrator")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Generate draft" })).toBeDisabled();
   });

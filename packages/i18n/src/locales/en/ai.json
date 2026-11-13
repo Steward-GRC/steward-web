@@ -35,6 +35,39 @@
     "note": "Note",
     "warning": "Warning"
   },
+  "framing": {
+    "count": "{{used}} of {{max}} characters",
+    "error": {
+      "missing": "Describe how the draft should read.",
+      "tooLong": "Keep it to {{max}} characters or fewer.",
+      "unknown": "Pick one of the framings."
+    },
+    "legend": "How should it read?",
+    "option": {
+      "custom": {
+        "hint": "Describe the tone yourself.",
+        "label": "Your own wording"
+      },
+      "default": {
+        "hint": "Clear, formal policy wording.",
+        "label": "Standard"
+      },
+      "formal": {
+        "hint": "A formal, legal register.",
+        "label": "Formal"
+      },
+      "plain": {
+        "hint": "About a 5th-grade reading level.",
+        "label": "Plain language"
+      },
+      "professional": {
+        "hint": "A standard business register.",
+        "label": "Professional"
+      }
+    },
+    "wording": "Your wording",
+    "wordingHint": "e.g. warm and direct, for new hires"
+  },
   "generate": {
     "addUrl": "Add URL",
     "apply": "Apply draft",
@@ -80,6 +113,7 @@
     "start": "Generate draft",
     "step": {
       "format": "Output format",
+      "framing": "Framing",
       "refine": "Draft & refine",
       "sources": "Sources & brief"
     },

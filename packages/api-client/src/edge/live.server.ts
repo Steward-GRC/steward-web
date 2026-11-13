@@ -235,6 +235,7 @@ import {
 import {
   type CategoryDocumentTypes,
   DocumentType,
+  DraftFraming,
   SuggestionOutcome as WireOutcome,
 } from "../generated/schema";
 import { changeTypeToGateway, versionOf } from "../semanticVersion";
@@ -925,10 +926,10 @@ export const liveEdge: Edge = {
   aiJobResult(jobId, cookie, signal) {
     return awaitAiJobResult(jobId, cookie, signal);
   },
-  async aiJobResultContent(resultRef, cookie) {
+  async aiJobResultContent(resultRef, cookie, jobId) {
     const data = await gatewayFetch(
       AiJobResultContentDocument,
-      { resultRef },
+      jobId ? { jobId, resultRef } : { resultRef },
       "AiJobResultContent",
       { cookie },
     );
@@ -2183,6 +2184,10 @@ export const liveEdge: Edge = {
         input: {
           brief: input.brief,
           categoryId: input.homeGroupId,
+          ...(input.framing ? { framing: input.framing } : {}),
+          ...(input.framing === DraftFraming.Custom && input.customFraming
+            ? { customFraming: input.customFraming }
+            : {}),
           ...(input.referenceDocuments?.length
             ? { referenceDocuments: input.referenceDocuments }
             : {}),

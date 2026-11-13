@@ -19,6 +19,8 @@ import { submitPolicyRevision } from "../authoring/ai.server";
 import { aiOffReason, aiRefusalKey } from "../authoring/ai/aiOff";
 import { loadDraftForAi } from "../authoring/ai/aiPage.server";
 import { ChangeCard } from "../authoring/ai/ChangeCard";
+import { framingOf, framingProblem } from "../authoring/ai/framing";
+import { FramingPicker, type FramingValue, NO_FRAMING } from "../authoring/ai/FramingPicker";
 import { changeSetOf, parseRevisionResult } from "../authoring/ai/results";
 import { useAiJob } from "../authoring/ai/useAiJob";
 import { policyIdOfNumber } from "../authoring/authoring.server";
@@ -37,8 +39,13 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
   const form = await request.formData();
   if (form.get("intent") !== "revise") throw new Response("Bad Request", { status: 400 });
   const sections = JSON.parse(String(form.get("sectionsJson") ?? "[]")) as SectionText[];
+  const framing = framingOf(form);
+  if ("problem" in framing) {
+    return data({ framingProblem: framing.problem, ok: false as const }, { status: 400 });
+  }
   try {
     const { jobId } = await submitPolicyRevision(request, {
+      ...framing,
       instruction: String(form.get("instruction") ?? ""),
       policyId,
       sections: sections.map((section, order) => ({
@@ -69,6 +76,8 @@ export default function Revise({ loaderData }: Route.ComponentProps) {
 
   const [instruction, setInstruction] = useState("");
   const [showUnchanged, setShowUnchanged] = useState(false);
+  const [framing, setFraming] = useState<FramingValue>(NO_FRAMING);
+  const [framingTried, setFramingTried] = useState(false);
   const fetcher = useFetcher<typeof action>();
   const [attempt, setAttempt] = useState(0);
   const jobId =
@@ -78,10 +87,14 @@ export default function Revise({ loaderData }: Route.ComponentProps) {
     job.stage === "done" ? changeSetOf(sections, parseRevisionResult(job.resultJson)) : null;
 
   const generate = () => {
+    setFramingTried(true);
+    if (framingProblem(framing.framing, framing.wording) !== null) return;
     setAttempt((value) => value + 1);
     setShowUnchanged(false);
     void fetcher.submit(
       {
+        customFraming: framing.wording,
+        framing: framing.framing,
         instruction: instruction.trim(),
         intent: "revise",
         sectionsJson: JSON.stringify(sections),
@@ -99,7 +112,12 @@ export default function Revise({ loaderData }: Route.ComponentProps) {
     void navigate(draftPath(policy.number), { state: { aiApply: { entries: changes.entries } } });
   };
 
-  const refused = fetcher.data && !fetcher.data.ok ? fetcher.data.error : null;
+  const refused =
+    fetcher.data && !fetcher.data.ok && "error" in fetcher.data ? fetcher.data.error : null;
+  const badFraming =
+    fetcher.data && !fetcher.data.ok && "framingProblem" in fetcher.data
+      ? fetcher.data.framingProblem
+      : null;
   const visible = changes?.entries.filter((entry) => entry.kind !== "unchanged") ?? [];
   const unchanged = changes?.entries.filter((entry) => entry.kind === "unchanged") ?? [];
 
@@ -144,8 +162,12 @@ export default function Revise({ loaderData }: Route.ComponentProps) {
             {t("revise.generate")}
           </Button>
         </div>
+        <FramingPicker onChange={setFraming} tried={framingTried} value={framing} />
       </form>
       {refused ? <Banner title={t(aiRefusalKey(refused))} tone="danger" /> : null}
+      {badFraming ? (
+        <Banner title={t(`framing.error.${badFraming}`, { max: 500 })} tone="danger" />
+      ) : null}
 
       {job.stage && job.stage !== "done" ? (
         <Card className="p-[18px]">
