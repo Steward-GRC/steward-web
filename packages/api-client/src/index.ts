@@ -6,6 +6,7 @@ export {
   onApiError,
   reportApiError,
 } from "./apiErrorReporter";
+export type { WorkflowApproverCandidates } from "./approverCandidates";
 export {
   acceptsDocumentType,
   documentTypesOf,

@@ -53,7 +53,16 @@ const CALENDAR = {
 };
 
 const BASE = {
+  approverCandidates: {
+    attached: true,
+    users: [
+      { id: "mock-user-dave", name: "Dave" },
+      { id: "mock-user-grace", name: "Grace" },
+      { id: "mock-user-erin", name: "Erin" },
+    ],
+  },
   calendar: CALENDAR,
+  groupMembers: {},
   groupNames: { "g-approvers": "Approvers" },
   people: [
     { enabled: true, id: "mock-user-dave", name: "Dave" },
@@ -141,7 +150,7 @@ describe("The workflow editor (A9)", () => {
   it("shows approvers as chips: a disabled one asks to be replaced, a group shows its quorum", async () => {
     openEditor();
     await screen.findByRole("heading", { level: 1 });
-    const approvers = within(stage(1)).getByRole("list", { name: "Stage 1 approvers" });
+    const approvers = within(stage(1)).getByRole("list", { name: "Selected: Stage 1 approvers" });
     expect(within(approvers).getByText("Dave")).toBeInTheDocument();
     expect(within(approvers).getByText("Carol · disabled — replace")).toBeInTheDocument();
     expect(
@@ -153,9 +162,11 @@ describe("The workflow editor (A9)", () => {
     const posted = openEditor();
     await screen.findByRole("heading", { level: 1 });
     const first = stage(1);
-    await userEvent.click(within(first).getByRole("button", { name: "Remove Carol from stage 1" }));
-    await userEvent.click(within(first).getByRole("combobox", { name: "+ Add approver" }));
-    await userEvent.click(await screen.findByRole("option", { name: "Erin" }));
+    await userEvent.click(
+      within(first).getByRole("button", { name: "Remove Carol · disabled — replace" }),
+    );
+    await userEvent.type(within(first).getByRole("combobox", { name: "Stage 1 approvers" }), "eri");
+    await userEvent.click(await screen.findByRole("option", { name: /Erin/ }));
     const due = within(first).getByRole("spinbutton", { name: "Stage 1 due within" });
     await userEvent.clear(due);
     await userEvent.type(due, "5");
@@ -196,6 +207,39 @@ describe("The workflow editor (A9)", () => {
     await screen.findByRole("heading", { level: 1 });
     const helper = within(stage(1)).getByText(/Counts whole working days from the site calendar/);
     expect(helper).not.toHaveTextContent("Europe/London");
+  });
+
+  it("saves a picked group as a unit in the same payload shape (bug 15)", async () => {
+    const posted = openEditor({
+      approverCandidates: {
+        attached: true,
+        users: [{ id: "mock-user-dave", name: "Dave" }],
+      },
+      groupMembers: { "g-approvers": ["mock-user-dave", "mock-user-root"] },
+    });
+    await screen.findByRole("heading", { level: 1 });
+    await userEvent.type(
+      within(stage(1)).getByRole("combobox", { name: "Stage 1 approvers" }),
+      "appr",
+    );
+    await userEvent.click(await screen.findByRole("option", { name: /Approvers/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Save workflow" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    const [saved] = JSON.parse(String(posted[0]!.get("stagesJson"))) as {
+      approvers: string[];
+      groupUnits: { groupId: string; internalQuorum: string; memberUserIds: string[] }[];
+    }[];
+    expect(saved!.approvers).toEqual(["mock-user-dave", "mock-user-grace", "mock-user-carol"]);
+    expect(saved!.groupUnits).toEqual([
+      { groupId: "g-approvers", internalQuorum: "one", memberUserIds: ["mock-user-dave"] },
+    ]);
+  });
+
+  it("asks to attach an unattached workflow to a category and offers no approvers (bug 15)", async () => {
+    openEditor({ approverCandidates: { attached: false, users: [] } });
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.getAllByText("Attach this workflow to a category first.")).toHaveLength(2);
+    expect(screen.queryByRole("combobox", { name: "Stage 1 approvers" })).not.toBeInTheDocument();
   });
 
   it("reorders stages from the keyboard on the grip", async () => {
@@ -317,7 +361,8 @@ describe("Veto people in the workflow editor (bug log 17)", () => {
   it("sends an empty vetoUserIds when a stage's last veto person is removed", async () => {
     const posted = openEditor();
     await screen.findByRole("heading", { level: 1 });
-    await userEvent.click(within(stage(1)).getByRole("button", { name: "Remove Grace" }));
+    const held = within(stage(1)).getByRole("list", { name: "Selected: Veto people" });
+    await userEvent.click(within(held).getByRole("button", { name: "Remove Grace" }));
     await userEvent.click(screen.getByRole("button", { name: "Save workflow" }));
     await vi.waitFor(() => expect(posted).toHaveLength(1));
     expect(savedVetoes(posted[0]!)[0]?.vetoUserIds).toEqual([]);
@@ -327,7 +372,10 @@ describe("Veto people in the workflow editor (bug log 17)", () => {
     const posted = openEditor();
     await screen.findByRole("heading", { level: 1 });
     await userEvent.click(
-      within(stage(1)).getByRole("button", { name: "Remove Grace from stage 1" }),
+      within(within(stage(1)).getByRole("list", { name: "Selected: Stage 1 approvers" })).getByRole(
+        "button",
+        { name: "Remove Grace" },
+      ),
     );
     const note = within(stage(1)).getByText(/Grace is no longer an approver of this stage/);
     expect(note).toHaveTextContent("so was removed from its veto people");
@@ -343,7 +391,10 @@ describe("Veto people in the workflow editor (bug log 17)", () => {
     openEditor();
     await screen.findByRole("heading", { level: 1 });
     await userEvent.click(
-      within(stage(1)).getByRole("button", { name: "Remove Dave from stage 1" }),
+      within(within(stage(1)).getByRole("list", { name: "Selected: Stage 1 approvers" })).getByRole(
+        "button",
+        { name: "Remove Dave" },
+      ),
     );
     const held = within(stage(1)).getByRole("list", { name: "Selected: Veto people" });
     expect(within(held).getByText("Grace")).toBeInTheDocument();

@@ -28,6 +28,7 @@ import type { Route } from "./+types/workflows.$id";
 import { listGroups } from "../categories/categories.server";
 import { listPlatformGroups } from "../groups/platformGroups.server";
 import { listUsers } from "../users/users.server";
+import { getApproverCandidates, groupMembersOf } from "../workflows/approverCandidates.server";
 import { StageEditor } from "../workflows/StageEditor";
 import { stageInput } from "../workflows/stageInput";
 import { newStage } from "../workflows/stageOutline";
@@ -43,6 +44,7 @@ import {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const workflow = await getWorkflowDef(request, params.id);
   if (!workflow) return data({ workflow: null }, { status: 404 });
+  const approverCandidates = await getApproverCandidates(request, workflow.id);
   const [users, groups, categories, calendar] = await Promise.all([
     // People and group names are a courtesy: without them the chips show ids.
     listUsers(request).catch(() => []),
@@ -51,7 +53,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     getWorkCalendar(request),
   ]);
   return {
+    approverCandidates,
     calendar,
+    groupMembers: groupMembersOf(users),
     groupNames: Object.fromEntries(groups.map((g) => [g.id, g.name])),
     people: users
       .filter((u) => !u.deletedAt)
@@ -189,7 +193,9 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
       </fieldset>
 
       <StageEditor
+        approverCandidates={loaderData.approverCandidates}
         calendar={calendar}
+        groupMembers={loaderData.groupMembers}
         groupNames={groupNames}
         onChange={setStages}
         people={people}

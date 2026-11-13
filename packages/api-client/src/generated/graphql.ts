@@ -4852,6 +4852,19 @@ export type WebauthnRegisterFinishMutationVariables = Exact<{
 
 export type WebauthnRegisterFinishMutation = { readonly webauthnRegisterFinish: boolean };
 
+export type WorkflowApproverCandidatesQueryVariables = Exact<{
+  workflowId: string | number;
+}>;
+
+export type WorkflowApproverCandidatesQuery = {
+  readonly workflowApproverCandidates: {
+    readonly workflowId: string;
+    readonly attached: boolean;
+    readonly categoryIds: ReadonlyArray<string>;
+    readonly users: ReadonlyArray<{ readonly userId: string; readonly name: string }>;
+  };
+};
+
 export type WorkflowDefQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -21053,6 +21066,64 @@ export const WebauthnRegisterFinishDocument = {
 } as unknown as DocumentNode<
   WebauthnRegisterFinishMutation,
   WebauthnRegisterFinishMutationVariables
+>;
+export const WorkflowApproverCandidatesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "WorkflowApproverCandidates" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "workflowId" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "workflowApproverCandidates" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "workflowId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "workflowId" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "workflowId" } },
+                { kind: "Field", name: { kind: "Name", value: "attached" } },
+                { kind: "Field", name: { kind: "Name", value: "categoryIds" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "users" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "userId" } },
+                      { kind: "Field", name: { kind: "Name", value: "name" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  WorkflowApproverCandidatesQuery,
+  WorkflowApproverCandidatesQueryVariables
 >;
 export const WorkflowDefDocument = {
   kind: "Document",

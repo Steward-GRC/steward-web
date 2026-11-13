@@ -219,6 +219,7 @@ import {
   VersionChangesSinceReviewDocument,
   WebauthnRegisterBeginDocument,
   WebauthnRegisterFinishDocument,
+  WorkflowApproverCandidatesDocument,
   WorkflowDefDocument,
   WorkflowDefsDocument,
   WorkflowStatusDocument,
@@ -2363,6 +2364,15 @@ export const liveEdge: Edge = {
     } catch {
       return [];
     }
+  },
+  async workflowApproverCandidates(workflowId, cookie) {
+    const data = await gatewayFetch(
+      WorkflowApproverCandidatesDocument,
+      { workflowId },
+      "WorkflowApproverCandidates",
+      { cookie },
+    );
+    return data.workflowApproverCandidates;
   },
   async workflowDef(id, cookie) {
     const data = await gatewayFetch(WorkflowDefDocument, { id }, "WorkflowDef", { cookie });

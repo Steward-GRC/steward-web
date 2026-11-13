@@ -1,0 +1,14 @@
+# Who may be named as an approver on a workflow: only the people the workflow's category rows let
+# approve, so there is no site-wide user list here. attached is false while no category uses the
+# workflow; users is then empty.
+query WorkflowApproverCandidates($workflowId: ID!) {
+  workflowApproverCandidates(workflowId: $workflowId) {
+    workflowId
+    attached
+    categoryIds
+    users {
+      userId
+      name
+    }
+  }
+}

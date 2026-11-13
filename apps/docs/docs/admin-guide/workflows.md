@@ -38,8 +38,8 @@ account is disabled and needs replacing.
 ## ➕ Create and edit a workflow
 
 1. Select **+ New workflow**, give it a name and an optional description.
-2. Each stage is a card. Name it, choose **One**, **Quorum** or **All**, and add approvers with
-   **+ Add approver**; the cross on a chip removes one. A disabled approver shows as "disabled —
+2. Each stage is a card. Name it, choose **One**, **Quorum** or **All**, and add approvers by
+   typing in the stage's approver box (see below); the cross on a chip removes one. A disabled approver shows as "disabled —
    replace". **Veto people** picks who can end the run with a single reject; it offers only that
    stage's approvers, and removing an approver also removes them from the veto people, with a note.
    **Due within** sets how many working days the stage has. It counts whole working days on the site
@@ -48,6 +48,14 @@ account is disabled and needs replacing.
    keys. The order is the approval sequence, so put the earliest reviewer first and the final
    sign-off last. **+ Add stage** adds one at the end.
 4. Select **Save workflow**.
+
+## 🔎 Choose approvers
+
+Type a name in a stage's approver box to find a person or a group. Only people who can approve
+in the categories that use the workflow are offered, so the site administrator never appears. A
+workflow that no category uses yet offers nobody: it says to attach the workflow to a category
+first, which you do on the category's **Details & Defaults**. A group is offered when at least one
+of its members can approve, and it approves as a group with one of those members needed.
 
 **Duplicate workflow** makes a copy to start from. A category picks its default workflow on its
 **Details & Defaults** (see [Groups](/admin-guide/groups)).
