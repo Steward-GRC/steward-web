@@ -618,6 +618,11 @@ export type CompletionReport = {
   readonly viewedNotAckedCount: Scalars["Int"]["output"];
 };
 
+export type ComplianceSettings = {
+  readonly __typename?: "ComplianceSettings";
+  readonly moduleEnabled: Scalars["Boolean"]["output"];
+};
+
 export enum ComponentStatus {
   Ok = "OK",
   Unavailable = "UNAVAILABLE",
@@ -919,6 +924,13 @@ export type HardResetRequest = {
   readonly state: Scalars["String"]["output"];
 };
 
+export type HardResetResult = {
+  readonly __typename?: "HardResetResult";
+  readonly approvedBy: Scalars["ID"]["output"];
+  readonly casesDeleted: Scalars["Int"]["output"];
+  readonly requestedBy: Scalars["ID"]["output"];
+};
+
 export type HealthStatus = {
   readonly __typename?: "HealthStatus";
   readonly status: Scalars["String"]["output"];
@@ -1185,6 +1197,7 @@ export type Mutation = {
   readonly enableUser: User;
   readonly enrollTotpBegin: TotpEnrollment;
   readonly enrollTotpConfirm: Scalars["Boolean"]["output"];
+  readonly executeHardReset: HardResetResult;
   readonly forceRotateSpCertificate: SpCertificate;
   readonly grantGroupManager: User;
   readonly grantRole: User;
@@ -1322,6 +1335,7 @@ export type Mutation = {
   readonly setCategoryGovernance: Category;
   readonly setCategoryRuleset: CategoryRuleset;
   readonly setCategoryTemplateLock: Category;
+  readonly setComplianceModule: ComplianceSettings;
   readonly setContactBlockArchived: ContactBlock;
   readonly setDefinitionArchived: DefinitionEntry;
   readonly setDigestWindow: NotificationSettings;
@@ -1354,8 +1368,6 @@ export type Mutation = {
   readonly setVersionDefinitions: PolicyVersionLinks;
   readonly setVersionReferences: PolicyVersionLinks;
   readonly setVersionRelated: PolicyVersionLinks;
-  /** @deprecated A stage's vetoUserIds apply on their own. */
-  readonly setWorkflowVetoEnabled: WorkflowDef;
   readonly shredAuditSubject: AuditShredResult;
   /**
    * Deliver an approver decision to an active run. The actor is bound from
@@ -1735,6 +1747,11 @@ export type MutationEnrollTotpConfirmArgs = {
   code: Scalars["String"]["input"];
 };
 
+export type MutationExecuteHardResetArgs = {
+  confirmation: Scalars["String"]["input"];
+  requestId: Scalars["ID"]["input"];
+};
+
 export type MutationGrantGroupManagerArgs = {
   groupId: Scalars["ID"]["input"];
   userId: Scalars["ID"]["input"];
@@ -2065,6 +2082,10 @@ export type MutationSetCategoryTemplateLockArgs = {
   locked: Scalars["Boolean"]["input"];
 };
 
+export type MutationSetComplianceModuleArgs = {
+  enabled: Scalars["Boolean"]["input"];
+};
+
 export type MutationSetContactBlockArchivedArgs = {
   archived: Scalars["Boolean"]["input"];
   id: Scalars["ID"]["input"];
@@ -2184,11 +2205,6 @@ export type MutationSetVersionReferencesArgs = {
 export type MutationSetVersionRelatedArgs = {
   links: ReadonlyArray<RelatedLinkInput>;
   policyVersionId: Scalars["ID"]["input"];
-};
-
-export type MutationSetWorkflowVetoEnabledArgs = {
-  enabled: Scalars["Boolean"]["input"];
-  id: Scalars["ID"]["input"];
 };
 
 export type MutationShredAuditSubjectArgs = {
@@ -2722,6 +2738,7 @@ export type Query = {
   readonly categoryRuleset: CategoryRuleset;
   readonly categoryTree: ReadonlyArray<Category>;
   readonly completionReport: CompletionReport;
+  readonly complianceSettings: ComplianceSettings;
   readonly contactBlocks: ReadonlyArray<ContactBlock>;
   /**
    * The approvals the authenticated user has already decided, on runs still in
@@ -4118,8 +4135,6 @@ export type WorkflowDef = {
   readonly name: Scalars["String"]["output"];
   readonly stages: ReadonlyArray<WorkflowStageDef>;
   readonly version: Scalars["Int"]["output"];
-  /** @deprecated A stage's vetoUserIds apply on their own; this gates nothing. */
-  readonly vetoEnabled: Scalars["Boolean"]["output"];
 };
 
 export type WorkflowStageDef = {
@@ -4133,10 +4148,6 @@ export type WorkflowStageDef = {
   readonly quorum: Scalars["String"]["output"];
   readonly rejectOnSlaBreach?: Maybe<Scalars["Boolean"]["output"]>;
   readonly slaDays?: Maybe<Scalars["Int"]["output"]>;
-  /** @deprecated Use vetoUserIds. */
-  readonly vetoApproverIds: ReadonlyArray<Scalars["ID"]["output"]>;
-  /** @deprecated Use vetoUserIds. */
-  readonly vetoGroupIds: ReadonlyArray<Scalars["ID"]["output"]>;
   readonly vetoUserIds: ReadonlyArray<Scalars["ID"]["output"]>;
 };
 
@@ -4150,10 +4161,6 @@ export type WorkflowStageInput = {
   readonly quorum: Scalars["String"]["input"];
   readonly rejectOnSlaBreach?: InputMaybe<Scalars["Boolean"]["input"]>;
   readonly slaDays?: InputMaybe<Scalars["Int"]["input"]>;
-  /** @deprecated Use vetoUserIds. */
-  readonly vetoApproverIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
-  /** @deprecated Use vetoUserIds. */
-  readonly vetoGroupIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
   readonly vetoUserIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
 };
 

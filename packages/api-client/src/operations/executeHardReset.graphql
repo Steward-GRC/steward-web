@@ -1,0 +1,7 @@
+mutation ExecuteHardReset($requestId: ID!, $confirmation: String!) {
+  executeHardReset(requestId: $requestId, confirmation: $confirmation) {
+    casesDeleted
+    requestedBy
+    approvedBy
+  }
+}

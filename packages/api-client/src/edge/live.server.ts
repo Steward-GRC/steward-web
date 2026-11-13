@@ -26,12 +26,14 @@ import {
   AiJobDocument,
   AiJobResultContentDocument,
   AppendixDiffDocument,
+  ApproveHardResetDocument,
   ArchiveWorkflowDefDocument,
   AssignCaseDocument,
   AuditLogDocument,
   AuthoringAssistDocument,
   type AuthoringPolicyFieldsFragment,
   BreakGlassRevealDocument,
+  CancelHardResetDocument,
   CategoryChildrenDocument,
   CategoryDocument,
   CategoryDocumentCountsDocument,
@@ -45,6 +47,7 @@ import {
   CloseReviewSuggestionDocument,
   CompleteOnboardingDocument,
   CompletionReportDocument,
+  ComplianceSettingsDocument,
   ContactBlocksDocument,
   CounterReviewSuggestionDocument,
   CreateCategoryDocument,
@@ -79,11 +82,13 @@ import {
   EnableUserDocument,
   EnrollTotpBeginDocument,
   EnrollTotpConfirmDocument,
+  ExecuteHardResetDocument,
   ExportAcksDocument,
   ForceRotateSpCertificateDocument,
   GlobalSettingsDocument,
   GrantRoleDocument,
   GroupMappingsDocument,
+  HardResetRequestsDocument,
   ImpersonationStatusDocument,
   IssueAppendixCollabTokenDocument,
   IssueCollabTokenDocument,
@@ -141,6 +146,7 @@ import {
   ReplyReviewThreadDocument,
   ReportCaseDocument,
   ReportCasesDocument,
+  RequestHardResetDocument,
   RequestPdfExportDocument,
   RequestStepUpOtpDocument,
   ResendWelcomeEmailDocument,
@@ -171,6 +177,7 @@ import {
   SetCategoryGovernanceDocument,
   SetCategoryRulesetDocument,
   SetCategoryTemplateLockDocument,
+  SetComplianceModuleDocument,
   SetContactBlockArchivedDocument,
   SetDefinitionArchivedDocument,
   SetDigestWindowDocument,
@@ -1645,6 +1652,60 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.setCategoryTemplateLock.defaultTemplateLocked;
+  },
+  async approveHardReset(requestId, cookie) {
+    const data = await gatewayFetch(ApproveHardResetDocument, { requestId }, "ApproveHardReset", {
+      cookie,
+    });
+    return data.approveHardReset;
+  },
+  async cancelHardReset(requestId, cookie) {
+    const data = await gatewayFetch(CancelHardResetDocument, { requestId }, "CancelHardReset", {
+      cookie,
+    });
+    return data.cancelHardReset;
+  },
+  async complianceSettings(cookie) {
+    const data = await gatewayFetch(ComplianceSettingsDocument, {}, "ComplianceSettings", {
+      cookie,
+    });
+    return data.complianceSettings;
+  },
+  async executeHardReset(requestId, confirmation, cookie) {
+    const data = await gatewayFetch(
+      ExecuteHardResetDocument,
+      { confirmation, requestId },
+      "ExecuteHardReset",
+      { cookie },
+    );
+    return data.executeHardReset;
+  },
+  async hardResetRequests(module, cookie) {
+    const data = await gatewayFetch(
+      HardResetRequestsDocument,
+      { module: module ?? null },
+      "HardResetRequests",
+      { cookie },
+    );
+    return data.hardResetRequests;
+  },
+  async requestHardReset(module, reason, cookie) {
+    const data = await gatewayFetch(
+      RequestHardResetDocument,
+      { module, reason },
+      "RequestHardReset",
+      { cookie },
+    );
+    return data.requestHardReset;
+  },
+  async setComplianceModule(enabled, cookie) {
+    const data = await gatewayFetch(
+      SetComplianceModuleDocument,
+      { enabled },
+      "SetComplianceModule",
+      { cookie },
+    );
+    return data.setComplianceModule;
   },
   async setAiEnabled(enabled, cookie) {
     const data = await gatewayFetch(SetAiEnabledDocument, { enabled }, "SetAiEnabled", { cookie });

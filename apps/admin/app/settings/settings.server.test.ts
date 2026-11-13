@@ -5,15 +5,22 @@ import type { EmailServiceConfigStatus, GlobalSettings } from "@steward-web/api-
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  approveComplianceHardReset,
+  cancelComplianceHardReset,
+  executeComplianceHardReset,
   getAiSettings,
+  getComplianceSettings,
   getEmailServiceConfig,
   getGlobalSettings,
+  getHardReset,
+  requestComplianceHardReset,
   saveEmailServiceConfig,
   saveGlobalSettings,
   saveWorkCalendar,
   setAiEnabled,
   setAiToken,
   setAiTopK,
+  setComplianceModule,
 } from "./settings.server";
 
 const siteAdminMe = {
@@ -250,6 +257,125 @@ describe("the AI settings (A28)", () => {
       { credential: "sk-live-key" },
       { credential: "" },
       { topK: 12 },
+    ]);
+  });
+});
+
+/** Answers each operation by name; the caller is `me`. */
+const gateway = (me: unknown, answers: Record<string, unknown>) => {
+  const seen: { operation: string; variables: Record<string, unknown> }[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation((_url: unknown, init: { body: string }) => {
+      const body = JSON.parse(init.body) as {
+        operationName?: string;
+        query: string;
+        variables: Record<string, unknown>;
+      };
+      const operation = /(?:query|mutation)\s+(\w+)/.exec(body.query)?.[1] ?? "";
+      seen.push({ operation, variables: body.variables });
+      return Promise.resolve(jsonOnce(operation === "Me" ? { me } : answers));
+    }),
+  );
+  return seen;
+};
+
+describe("the Compliance module and hard reset", () => {
+  const complianceMe = { ...siteAdminMe, permissions: ["compliance.manage"], roles: ["reporting"] };
+  const asAdmin = {
+    ...siteAdminMe,
+    permissions: ["settings.manage", "user.manage"],
+    userId: "u-admin",
+  };
+  const asRoot = { ...asAdmin, userId: "u-root" };
+
+  const USERS = {
+    users: {
+      nextPageToken: "",
+      users: [
+        { isRoot: true, name: "Rosa Root", userId: "u-root" },
+        { isRoot: false, name: "Ada Admin", userId: "u-admin" },
+      ],
+    },
+  };
+  const ROW = {
+    approvalExpiresAt: null,
+    approvedAt: null,
+    approvedBy: null,
+    cancelledAt: null,
+    consumedAt: null,
+    consumedBy: null,
+    expiresAt: "2026-11-14T10:00:00Z",
+    id: "req-1",
+    module: "compliance",
+    reason: "End of the pilot",
+    requestedAt: "2026-11-13T10:00:00Z",
+    requestedBy: "u-root",
+    state: "pending",
+  };
+
+  it("reads and sets the module switch for a compliance manager", async () => {
+    const seen = gateway(complianceMe, {
+      complianceSettings: { moduleEnabled: true },
+      setComplianceModule: { moduleEnabled: false },
+    });
+    expect(await getComplianceSettings(request())).toEqual({ moduleEnabled: true });
+    expect(await setComplianceModule(request(), false)).toEqual({ moduleEnabled: false });
+    expect(seen.map((call) => call.operation)).toContain("SetComplianceModule");
+  });
+
+  it("redirects a caller who cannot manage compliance", async () => {
+    gateway(readerMe, {});
+    const thrown: unknown = await getComplianceSettings(request()).catch((error: unknown) => error);
+    expect(thrown).toBeInstanceOf(Response);
+  });
+
+  it("refuses the hard reset steps to anyone who is not a site admin", async () => {
+    gateway(complianceMe, {});
+    const thrown = (await getHardReset(request()).catch((error: unknown) => error)) as {
+      init: { status: number };
+    };
+    expect(thrown.init.status).toBe(403);
+  });
+
+  it("lists the requests with names and finds root from the user list", async () => {
+    gateway(asRoot, { hardResetRequests: [ROW], ...USERS });
+    const view = await getHardReset(request());
+    expect(view.viewer).toEqual({ id: "u-root", isRoot: true });
+    expect(view.names).toEqual({ "u-admin": "Ada Admin", "u-root": "Rosa Root" });
+    expect(view.requests).toEqual([ROW]);
+  });
+
+  it("does not take a site admin who is not root for root", async () => {
+    gateway(asAdmin, { hardResetRequests: [], ...USERS });
+    const view = await getHardReset(request());
+    expect(view.viewer).toEqual({ id: "u-admin", isRoot: false });
+  });
+
+  it("asks, approves, cancels and executes through the gateway", async () => {
+    const seen = gateway(asRoot, {
+      approveHardReset: { ...ROW, state: "approved" },
+      cancelHardReset: { ...ROW, state: "cancelled" },
+      executeHardReset: { approvedBy: "u-admin", casesDeleted: 7, requestedBy: "u-root" },
+      requestHardReset: ROW,
+    });
+    await requestComplianceHardReset(request(), "End of the pilot");
+    await approveComplianceHardReset(request(), "req-1");
+    await cancelComplianceHardReset(request(), "req-1");
+    const result = await executeComplianceHardReset(request(), "req-1", "RESET COMPLIANCE DATA");
+    expect(result.casesDeleted).toBe(7);
+    const calls = seen.filter((call) => call.operation !== "Me");
+    expect(calls).toEqual([
+      {
+        operation: "RequestHardReset",
+        variables: { module: "compliance", reason: "End of the pilot" },
+      },
+      { operation: "ApproveHardReset", variables: { requestId: "req-1" } },
+      { operation: "CancelHardReset", variables: { requestId: "req-1" } },
+      {
+        operation: "ExecuteHardReset",
+        variables: { confirmation: "RESET COMPLIANCE DATA", requestId: "req-1" },
+      },
     ]);
   });
 });

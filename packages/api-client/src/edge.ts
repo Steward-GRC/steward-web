@@ -26,6 +26,7 @@ import type {
   CategoryDocumentCounts,
   CategoryDocumentTypes,
   CompletionReport,
+  ComplianceSettings,
   ContactBlock,
   ContactBlockInput,
   CorrectiveActionInput,
@@ -39,6 +40,8 @@ import type {
   GlobalSettings,
   GlobalSettingsInput,
   GroupMapping,
+  HardResetRequest,
+  HardResetResult,
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
@@ -131,6 +134,7 @@ export type {
   CaseStatusCount,
   CaseSummary,
   CompletionReport,
+  ComplianceSettings,
   ContactBlock,
   ContactBlockInput,
   CorrectiveAction,
@@ -145,6 +149,8 @@ export type {
   GlobalSettings,
   GlobalSettingsInput,
   GroupMapping,
+  HardResetRequest,
+  HardResetResult,
   Holiday,
   HolidayInput,
   IssueCollabTokenInput,
@@ -410,8 +416,11 @@ export interface Edge {
   aiJobResult(jobId: string, cookie?: string, signal?: AbortSignal): Promise<AiJobResult>;
   /** Fetches a completed async AI job's content by `AIJobStatus.resultRef`. */
   aiJobResultContent(resultRef: string, cookie?: string): Promise<AIJobResultContent>;
-  /** A draft appendix against what is published, for its edit page. Authors, site admins and compliance only. */
   appendixDiff(id: string, cookie?: string): Promise<readonly PolicySectionDiff[]>;
+  /** A draft appendix against what is published, for its edit page. Authors, site admins and compliance only. */
+  /** Approves a pending hard reset request. Any site admin except the requester; the approval
+   *  can be used once, within its window. */
+  approveHardReset(requestId: string, cookie?: string): Promise<HardResetRequest>;
   /** Archives a workflow definition. Site-admin only. */
   archiveWorkflowDef(id: string, cookie?: string): Promise<boolean>;
   /** Sets or clears (null) a case's assignee. Officers only. */
@@ -430,6 +439,9 @@ export interface Edge {
   beginMyTotpEnrolment(cookie?: string): Promise<TotpEnrollment>;
   /** A site admin's time-boxed, audited reveal of a sensitive policy's real content. Rejects with `GatewayError` when signed out or refused. */
   breakGlassReveal(policyId: string, reason: string, cookie?: string): Promise<BreakGlassGrant>;
+  /** Turns AI features on or off for everyone (A28). Site-admin only. */
+  /** Withdraws a pending or approved hard reset request. Only the requester may. */
+  cancelHardReset(requestId: string, cookie?: string): Promise<HardResetRequest>;
   /** The library's category tree. Rejects with `GatewayError` when signed out. */
   categories(cookie?: string): Promise<readonly Category[]>;
   /** How many policies and procedures a category holds now, for the settings form's check before it narrows what the category accepts. Site admins. */
@@ -478,6 +490,8 @@ export interface Edge {
     groupId?: null | string,
     cookie?: string,
   ): Promise<CompletionReport>;
+  /** The Compliance settings (the module switch). Compliance managers and root. */
+  complianceSettings(cookie?: string): Promise<ComplianceSettings>;
   /** Activates the caller's pending authenticator app with a current code. */
   confirmMyTotpEnrolment(code: string, cookie?: string): Promise<boolean>;
   /** The reusable contact-block library (admin), active only unless includeArchived. */
@@ -566,17 +580,25 @@ export interface Edge {
   /** Disables an organisation's SSO connection. Does not clear its gates. Site-admin only. */
   disableOrganization(domain: string, cookie?: string): Promise<Organization>;
   disableUser(userId: string, cookie?: string): Promise<User>;
+
   /** Discards a policy's working draft, leaving any published version untouched. */
   discardDraft(policyId: string, cookie?: string): Promise<boolean>;
   /** Discards (deletes) a draft template version. Published versions can't be discarded. Site-admin only. */
   discardTemplateVersion(id: string, cookie?: string): Promise<boolean>;
-
   /** The working draft version of a policy's content, for the editor. Null when there is no draft. */
   draftVersion(policyId: string, cookie?: string): Promise<null | PolicyVersion>;
   /** The platform email transport's non-secret configuration and whether a sending key is
    *  stored; never the key itself. Site-admin only. */
   emailServiceConfig(cookie?: string): Promise<EmailServiceConfigStatus>;
   enableUser(userId: string, cookie?: string): Promise<User>;
+
+  /** Deletes every case and what belongs to one. Root only, after a different site admin
+   *  approved `requestId` (module "compliance") and with the exact confirmation phrase. */
+  executeHardReset(
+    requestId: string,
+    confirmation: string,
+    cookie?: string,
+  ): Promise<HardResetResult>;
   /** The acknowledgement roster for a policy version, as a downloadable export (CSV today;
    *  `format` is forwarded to the gateway as-is). */
   exportAcks(policyVersionId: string, format: string, cookie?: string): Promise<AckExport>;
@@ -586,7 +608,6 @@ export interface Edge {
     file: { name?: string } & Blob,
     cookie?: string,
   ): Promise<{ content: string; title: string }>;
-
   /** Fetches an IdP signing certificate by URL (SSRF-guarded) and returns it as PEM. Site-admin only. */
   fetchIdpCert(url: string, cookie?: string): Promise<string>;
   /** Finishes registering a passkey, with the browser's credential and a name for it. */
@@ -606,6 +627,8 @@ export interface Edge {
   groupChildren(parentId: null | string, cookie?: string): Promise<readonly Group[]>;
   /** An organisation's IdP-group-claim-to-platform-group mappings. Site-admin only. */
   groupMappings(connectionId: string, cookie?: string): Promise<readonly GroupMapping[]>;
+  /** Hard reset requests, newest first; `module` narrows them. Site admins and root. */
+  hardResetRequests(module?: string, cookie?: string): Promise<readonly HardResetRequest[]>;
   /** The caller's active "act as" session (H9), or null. Drives the acting-as banner. */
   impersonationStatus(cookie?: string): Promise<ImpersonationStatus>;
   /** Fetches a SAML IdP's metadata document by URL (SSRF-guarded) and extracts the fields
@@ -822,6 +845,8 @@ export interface Edge {
     assigneeUserId?: string,
     cookie?: string,
   ): Promise<CaseQueue>;
+  /** The root admin asks for a hard reset of a module; a different site admin must approve. */
+  requestHardReset(module: string, reason: string, cookie?: string): Promise<HardResetRequest>;
   /** Starts rendering a policy version to PDF (D16); poll `pdfDownloadLink` with the job id. */
   requestPdfExport(policyVersionId: string, cookie?: string): Promise<{ jobId: string }>;
   /** Emails the signed-in admin a step-up code (D18) for a high-risk action. */
@@ -873,7 +898,6 @@ export interface Edge {
   /** A lightweight typeahead: any authenticated caller, id+name(+email) pairs for users whose
    *  email contains `query`. Never enumerates the full directory. */
   searchUsers(query: string, limit?: number, cookie?: string): Promise<readonly UserLabel[]>;
-  /** Turns AI features on or off for everyone (A28). Site-admin only. */
   setAiEnabled(enabled: boolean, cookie?: string): Promise<boolean>;
   /** Stores the AI provider's token, write-only; an empty value clears it (A28). */
   setAiProviderCredential(
@@ -900,6 +924,8 @@ export interface Edge {
   ): Promise<readonly RaciRule[]>;
   /** Locks (or unlocks) the template a category names, so authors must use it. Site admin only. */
   setCategoryTemplateLock(id: string, locked: boolean, cookie?: string): Promise<boolean>;
+  /** Switches the Compliance module off or on; the cases are kept while it is off. */
+  setComplianceModule(enabled: boolean, cookie?: string): Promise<ComplianceSettings>;
   /** Archive (true) or restore (false) a contact-block library entry. */
   setContactBlockArchived(id: string, archived: boolean, cookie?: string): Promise<ContactBlock>;
   /** Archive (true) or restore (false) a definitions-library entry. */

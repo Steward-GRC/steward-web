@@ -7,6 +7,7 @@ import {
   InformationKind,
   NoticeRecipient,
   NoticeStatus,
+  type ReportCase,
   RiskMitigation,
   RiskRecipient,
   RiskViewed,
@@ -37,13 +38,14 @@ import {
   TH,
   THead,
 } from "@steward-web/ui";
-import { data, Link, useFetcher } from "react-router";
+import { data, Link, redirect, useFetcher } from "react-router";
 
 import type { Route } from "./+types/reporting.cases.$caseId";
 
 import { OPEN_SETTABLE_STATUSES, statusTone } from "../reporting/caseStatus";
 import { requireReporting } from "../reporting/enabled.server";
 import { enumLabelKey } from "../reporting/enumLabel";
+import { isModuleOff } from "../reporting/moduleOff";
 import {
   addCaseNote,
   addCaseNotice,
@@ -56,13 +58,16 @@ import {
   setCaseStatus,
   updateCaseNotice,
 } from "../reporting/reporting.server";
+import { ReportingOff } from "../reporting/ReportingOff";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   requireReporting();
   try {
     const reportCase = await getReportCase(request, params.caseId);
-    return { reportCase };
-  } catch {
+    return { moduleOff: false as const, reportCase };
+  } catch (error) {
+    // The Compliance module is switched off: a notice, not Not found.
+    if (isModuleOff(error)) return { moduleOff: true as const, reportCase: null };
     throw new Response("Not Found", { status: 404 });
   }
 };
@@ -147,11 +152,23 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
       }
     }
   } catch (error) {
+    // The module was switched off while this page was open. A 4xx answer would not reload the
+    // page, so send it back to itself: the loader then shows the Reporting is turned off notice.
+    if (isModuleOff(error)) throw redirect(new URL(request.url).pathname);
     return data({ error: refusalOf(error), intent, ok: false } as const, { status: 400 });
   }
 };
 
-export default function ReportingCaseDetailRoute({ loaderData }: Route.ComponentProps) {
+export default function ReportingCaseDetailRoute(props: Route.ComponentProps) {
+  const { loaderData } = props;
+  return loaderData.reportCase ? (
+    <ReportingCaseDetail loaderData={{ reportCase: loaderData.reportCase }} />
+  ) : (
+    <ReportingOff />
+  );
+}
+
+const ReportingCaseDetail = ({ loaderData }: { loaderData: { reportCase: ReportCase } }) => {
   const { t } = useTranslation("reporting");
   const identity = useIdentity();
   const { reportCase } = loaderData;
@@ -657,4 +674,4 @@ export default function ReportingCaseDetailRoute({ loaderData }: Route.Component
       )}
     </div>
   );
-}
+};

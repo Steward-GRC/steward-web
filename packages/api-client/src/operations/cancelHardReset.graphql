@@ -1,0 +1,5 @@
+mutation CancelHardReset($requestId: ID!) {
+  cancelHardReset(requestId: $requestId) {
+    ...HardResetRequestFields
+  }
+}

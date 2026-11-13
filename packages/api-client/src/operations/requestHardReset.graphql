@@ -1,0 +1,5 @@
+mutation RequestHardReset($module: String!, $reason: String!) {
+  requestHardReset(module: $module, reason: $reason) {
+    ...HardResetRequestFields
+  }
+}
