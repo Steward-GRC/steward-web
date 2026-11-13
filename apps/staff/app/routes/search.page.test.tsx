@@ -28,7 +28,7 @@ const groupsFor = (q: string): Data =>
           {
             id: "categories",
             items: [
-              { icon: "folder", id: "c1", label: "Desk services", to: "/policies?category=Desk" },
+              { icon: "folder", id: "c1", label: "Desk services", to: "/policies/category/desk" },
             ],
           },
         ]

@@ -35,6 +35,20 @@ export const documentTypeBasePath = (documentType: DocumentType): string =>
   documentType === "PROCEDURE" ? "/procedures" : "/policies";
 
 /**
+ * The library filtered to a category, by slug: `/policies/category/it-security` and, for a
+ * subcategory, `/policies/category/it-security/travel`. Each slug is one encoded path segment.
+ * No slugs gives the library's own path.
+ */
+export const libraryCategoryPath = (
+  documentType: DocumentType,
+  slugs: readonly string[] = [],
+): string => {
+  const base = documentTypeBasePath(documentType);
+  if (slugs.length === 0) return base;
+  return `${base}/category/${slugs.map((slug) => encodeURIComponent(slug)).join("/")}`;
+};
+
+/**
  * A policy's canonical detail-page path: always the human-readable number, URL-encoded, never
  * a backend id, under its document type's own base path. `documentType` is optional (defaults
  * to POLICY) for a caller that only has a number on hand, such as a related-policy reference.

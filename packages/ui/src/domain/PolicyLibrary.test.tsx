@@ -55,12 +55,14 @@ const policies: Policy[] = [
   {
     ...authoringDefaults,
     category: "Finance",
+    categorySlug: "finance",
     documentType: DocumentType.Policy,
     id: "pol-1",
     number: "POL-FINANCE-001",
     sensitivity: Sensitivity.Standard,
     status: PolicyStatus.Published,
     subcategory: "Reimbursement",
+    subcategorySlug: "reimbursement",
     title: "Expense Claims",
     updated: "2026-09-01",
     version: "2.0.0",
@@ -68,12 +70,14 @@ const policies: Policy[] = [
   {
     ...authoringDefaults,
     category: "IT Security",
+    categorySlug: "it-security",
     documentType: DocumentType.Policy,
     id: "pol-2",
     number: "POL-ITSEC-004",
     sensitivity: Sensitivity.Sensitive,
     status: PolicyStatus.Draft,
     subcategory: "Usage",
+    subcategorySlug: "usage",
     title: "Acceptable Use",
     updated: "2026-09-15",
     version: "1.0.0",
@@ -85,13 +89,14 @@ const renderAt = (
   actions?: React.ReactNode,
   heading: { subtitle?: string; title?: string } = {},
   columnOptions?: boolean,
+  shown: Category[] = categories,
 ) => {
   const Stub = createRoutesStub([
     {
       Component: () => (
         <PolicyLibrary
           actions={actions}
-          categories={categories}
+          categories={shown}
           columnOptions={columnOptions}
           documentType={DocumentType.Policy}
           policies={policies}
@@ -101,6 +106,24 @@ const renderAt = (
       ),
       path: "/policies",
     },
+    ...[
+      "/policies/category/:category",
+      "/policies/category/:category/:subcategory",
+      "/policies/category/:category/:subcategory/:deeper",
+    ].map((path) => ({
+      Component: () => (
+        <PolicyLibrary
+          actions={actions}
+          categories={shown}
+          columnOptions={columnOptions}
+          documentType={DocumentType.Policy}
+          policies={policies}
+          subtitle={heading.subtitle}
+          title={heading.title}
+        />
+      ),
+      path,
+    })),
   ]);
   render(<Stub initialEntries={initialEntries} />);
 };
@@ -223,12 +246,73 @@ describe("PolicyLibrary", () => {
   });
 
   it("removes one filter from its chip, and Clear goes back to the tiles", async () => {
-    renderAt(["/policies?category=IT+Security&subcategory=Usage"]);
+    renderAt(["/policies/category/it-security/usage"]);
     await userEvent.click(screen.getByRole("button", { name: "Remove Usage" }));
     expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("IT Security");
     await userEvent.click(screen.getByRole("button", { name: "Clear" }));
     expect(screen.queryByRole("region", { name: "Filtered by" })).toBeNull();
     expect(screen.getByRole("listitem", { name: "Finance" })).toBeInTheDocument();
+  });
+
+  it("filters by the category slug in the path (#378)", () => {
+    renderAt(["/policies/category/it-security"]);
+    expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("IT Security");
+    expect(rowTitles()).toEqual(["Acceptable Use"]);
+  });
+
+  it("keeps the other filters when it filters by the path", () => {
+    renderAt(["/policies/category/it-security?status=published"]);
+    const bar = screen.getByRole("region", { name: "Filtered by" });
+    expect(bar).toHaveTextContent("IT Security");
+    expect(bar).toHaveTextContent("Published");
+    expect(screen.queryByRole("table")).toBeNull();
+  });
+
+  describe("the same subcategory slug under two parents (#378)", () => {
+    const twins: Category[] = [
+      { ...categories[0]!, subcategories: [{ name: "Usage", slug: "usage" }] },
+      categories[1]!,
+    ];
+
+    it("resolves under the first parent", () => {
+      renderAt(["/policies/category/finance/usage"], undefined, {}, undefined, twins);
+      const bar = screen.getByRole("region", { name: "Filtered by" });
+      expect(bar).toHaveTextContent("Finance");
+      expect(bar).toHaveTextContent("Usage");
+      expect(screen.queryByRole("table")).toBeNull();
+    });
+
+    it("resolves under the second parent", () => {
+      renderAt(["/policies/category/it-security/usage"], undefined, {}, undefined, twins);
+      expect(rowTitles()).toEqual(["Acceptable Use"]);
+    });
+  });
+
+  it("finds a category whose slug needs encoding (#378)", () => {
+    const odd: Category[] = [{ ...categories[1]!, slug: "it security/ops" }];
+    renderAt(["/policies/category/it%20security%2Fops"], undefined, {}, undefined, odd);
+    expect(screen.getByRole("region", { name: "Filtered by" })).toHaveTextContent("IT Security");
+    expect(rowTitles()).toEqual(["Acceptable Use"]);
+  });
+
+  it("says so for a slug it doesn't know, and shows the tiles unfiltered (#378)", () => {
+    renderAt(["/policies/category/nowhere"]);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "There is no category at this address. Choose one below.",
+    );
+    expect(screen.queryByRole("region", { name: "Filtered by" })).toBeNull();
+    expect(screen.getByRole("listitem", { name: "Finance" })).toBeInTheDocument();
+  });
+
+  it("says so for an unknown subcategory or a path deeper than it knows (#378)", () => {
+    renderAt(["/policies/category/it-security/nope"]);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
+  it("no longer reads a category name from the query (#378)", () => {
+    renderAt(["/policies?category=IT+Security"]);
+    expect(screen.queryByRole("region", { name: "Filtered by" })).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("sorts by title first and by any column from its header", async () => {

@@ -30,6 +30,7 @@ export {
   type DocumentTypeCopy,
   hasWorkingDraft,
   isProcedure,
+  libraryCategoryPath,
   type Policy,
   policyPath,
   PolicyStatus,

@@ -39,8 +39,24 @@ export default [
   route("search", "routes/search.tsx"),
   route("ask", "routes/ask.tsx"),
   route("policies", "routes/policies.tsx"),
+  // The library filtered to a category, by slug: a category, then up to two levels below it (#378).
+  route("policies/category/:category", "routes/policies.tsx", { id: "policies-category" }),
+  route("policies/category/:category/:subcategory", "routes/policies.tsx", {
+    id: "policies-subcategory",
+  }),
+  route("policies/category/:category/:subcategory/:deeper", "routes/policies.tsx", {
+    id: "policies-deeper",
+  }),
   route("policies/:number", "routes/policy.tsx"),
   route("procedures", "routes/procedures.tsx"),
+  // The library filtered to a category, by slug: a category, then up to two levels below it (#378).
+  route("procedures/category/:category", "routes/procedures.tsx", { id: "procedures-category" }),
+  route("procedures/category/:category/:subcategory", "routes/procedures.tsx", {
+    id: "procedures-subcategory",
+  }),
+  route("procedures/category/:category/:subcategory/:deeper", "routes/procedures.tsx", {
+    id: "procedures-deeper",
+  }),
   route("procedures/:number", "routes/procedure.tsx"),
   route("drafts", "routes/drafts.tsx"),
   route("drafts/new", "routes/drafts.new.tsx"),

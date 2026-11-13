@@ -12,7 +12,12 @@
  */
 import type { Category, Group, Policy, Template } from "@steward-web/api-client";
 
-import { categoryPath, policyPath } from "@steward-web/ui/domain";
+import {
+  categoryPath,
+  DocumentType,
+  libraryCategoryPath,
+  policyPath,
+} from "@steward-web/ui/domain";
 
 import { compileQuery, type SearchRecord } from "./compileQuery";
 
@@ -66,10 +71,10 @@ export const buildSearchIndex = (
       id: c.id,
       label: c.name,
       rec: { category: lc(c.name), text: lc(c.name) },
-      // The library filters by category NAME through its own `?category=` query param
-      // (there is no dedicated category path); categories aren't document-type-specific, so
-      // this always points at the policy library, same as the original.
-      to: `/policies?category=${encodeURIComponent(c.name)}`,
+      // The catalog filtered to the category, at its slug path (`/policies/category/<slug>`, an
+      // admin route like the staff one). Categories aren't document-type-specific, so this
+      // always points at the policy catalog, same as the original.
+      to: libraryCategoryPath(DocumentType.Policy, [c.slug]),
       type: "Category",
     });
   }

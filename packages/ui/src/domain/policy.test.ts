@@ -8,6 +8,7 @@ import {
   documentTypeBasePath,
   documentTypeCopy,
   isProcedure,
+  libraryCategoryPath,
   policyPath,
 } from "./policy";
 
@@ -78,5 +79,27 @@ describe("isProcedure", () => {
   it("is true only for PROCEDURE rows", () => {
     expect(isProcedure({ documentType: DocumentType.Procedure })).toBe(true);
     expect(isProcedure({ documentType: DocumentType.Policy })).toBe(false);
+  });
+});
+
+describe("libraryCategoryPath (#378)", () => {
+  it("is the library's own path with no category", () => {
+    expect(libraryCategoryPath(DocumentType.Policy, [])).toBe("/policies");
+    expect(libraryCategoryPath(DocumentType.Procedure)).toBe("/procedures");
+  });
+
+  it("puts the category slug, then the subcategory slug, in the path", () => {
+    expect(libraryCategoryPath(DocumentType.Policy, ["it-security"])).toBe(
+      "/policies/category/it-security",
+    );
+    expect(libraryCategoryPath(DocumentType.Procedure, ["it-security", "travel"])).toBe(
+      "/procedures/category/it-security/travel",
+    );
+  });
+
+  it("encodes each segment: spaces, slashes and unicode", () => {
+    expect(libraryCategoryPath(DocumentType.Policy, ["a b", "x/y", "caf\u00E9"])).toBe(
+      "/policies/category/a%20b/x%2Fy/caf%C3%A9",
+    );
   });
 });

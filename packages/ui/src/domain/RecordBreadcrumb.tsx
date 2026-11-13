@@ -6,12 +6,14 @@ import { useTranslation } from "@steward-web/i18n";
 
 import { Breadcrumb, type Crumb } from "#ui/components/Breadcrumb";
 
-import { DocumentType, documentTypeBasePath } from "./policy";
+import { DocumentType, documentTypeBasePath, libraryCategoryPath } from "./policy";
 import { recordPath } from "./routes";
 
 type RecordTrail = {
   category?: string;
+  categorySlug?: string;
   subcategory?: string;
+  subcategorySlug?: string;
 } & Pick<Policy, "documentType" | "number" | "title">;
 
 /**
@@ -26,14 +28,19 @@ export const recordCrumbs = (
 ): Crumb[] => {
   const base = documentTypeBasePath(record.documentType);
   const crumbs: Crumb[] = [{ href: base, label: libraryLabel }];
+  // Each level links to the library filtered to it, at its slug path (#378). A level whose slug
+  // is not known is shown without a link.
   if (record.category) {
+    const slugs = record.categorySlug ? [record.categorySlug] : [];
     crumbs.push({
-      href: `${base}?${new URLSearchParams({ category: record.category })}`,
+      ...(slugs.length > 0 ? { href: libraryCategoryPath(record.documentType, slugs) } : {}),
       label: record.category,
     });
     if (record.subcategory) {
+      const below =
+        slugs.length > 0 && record.subcategorySlug ? [...slugs, record.subcategorySlug] : [];
       crumbs.push({
-        href: `${base}?${new URLSearchParams({ category: record.category, subcategory: record.subcategory })}`,
+        ...(below.length > 0 ? { href: libraryCategoryPath(record.documentType, below) } : {}),
         label: record.subcategory,
       });
     }

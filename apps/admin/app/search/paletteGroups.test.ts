@@ -32,7 +32,7 @@ describe("paletteGroupsOf (admin)", () => {
     const groups = paletteGroupsOf([desk], [deskCategory], [deskTemplate], [deskGroup], "desk");
     expect(groups.map((g) => [g.id, g.items.map((index) => index.to)])).toEqual([
       ["policies", ["/policies/POL-FACILITIES-000001"]],
-      ["categories", ["/policies?category=Desk%20services"]],
+      ["categories", ["/policies/category/desk"]],
       ["templates", ["/templates/TPL-DESK"]],
       ["groups", ["/categories/g1"]],
     ]);

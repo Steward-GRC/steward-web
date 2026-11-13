@@ -9,6 +9,7 @@ import { buildSearchIndex, searchHits } from "./searchIndex";
 
 const policy = (overrides: Partial<Policy> & Pick<Policy, "id" | "number" | "title">): Policy => ({
   category: "IT Security",
+  categorySlug: "it-security",
   currentDraftVersionId: null,
   currentPublishedVersionId: "v-1",
   documentType: DocumentType.Policy,
@@ -18,6 +19,7 @@ const policy = (overrides: Partial<Policy> & Pick<Policy, "id" | "number" | "tit
   sensitivity: Sensitivity.Standard,
   status: PolicyStatus.Published,
   subcategory: "Access",
+  subcategorySlug: "access",
   templateId: null,
   templateNone: false,
   updated: "2026-01-01T00:00:00Z",
@@ -58,12 +60,12 @@ describe("buildSearchIndex", () => {
     expect(hit!.to).toBe("/policies/POL-0001");
   });
 
-  it("links a category hit at the library filtered to that category", () => {
+  it("links a category hit at the library filtered to that category, by slug", () => {
     const [hit] = buildSearchIndex(
       [],
       [category({ id: "c-1", name: "IT Security", slug: "it-security" })],
     );
-    expect(hit!.to).toBe("/policies?category=IT+Security");
+    expect(hit!.to).toBe("/policies/category/it-security");
   });
 });
 

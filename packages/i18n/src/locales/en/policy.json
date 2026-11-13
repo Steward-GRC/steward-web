@@ -24,6 +24,7 @@
       "status": "Status"
     },
     "nothing": "Empty",
+    "unknownCategory": "There is no category at this address. Choose one below.",
     "phone": {
       "all": "All",
       "category": "Category"

@@ -4,6 +4,7 @@ import type { Category } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
 import { cn, CountBadge, Tooltip } from "@steward-web/ui";
+import { DocumentType, libraryCategoryPath } from "@steward-web/ui/domain";
 import { ChevronRight, Folder, PanelLeft } from "lucide-react";
 import { Fragment, type ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -17,11 +18,8 @@ const BROWSE_RAIL_GROUP = 3;
 const isCurrent = (to: string, pathname: string) =>
   to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
 
-const browseHref = (category: string, subcategory?: string) => {
-  const query = new URLSearchParams({ category });
-  if (subcategory) query.set("subcategory", subcategory);
-  return `/policies?${query.toString()}`;
-};
+const browseHref = (category: string, subcategory?: string) =>
+  libraryCategoryPath(DocumentType.Policy, subcategory ? [category, subcategory] : [category]);
 
 const Badge = ({ count }: { count: number }) => (
   <CountBadge aria-hidden="true" className="ml-auto rail:hidden">
@@ -124,7 +122,7 @@ const CategoryRow = ({ category }: { category: Category }) => {
         )}
         <Link
           className="flex min-w-0 flex-1 items-center gap-2 text-ink hover:text-ink hover:underline"
-          to={browseHref(category.name)}
+          to={browseHref(category.slug)}
         >
           <Folder aria-hidden="true" className="size-4 flex-none" />
           <span className="truncate">{category.name}</span>
@@ -135,7 +133,7 @@ const CategoryRow = ({ category }: { category: Category }) => {
             <Link
               className="flex h-8 items-center truncate pr-2.5 pl-[58px] text-ink hover:text-ink hover:underline"
               key={subcategory.slug}
-              to={browseHref(category.name, subcategory.name)}
+              to={browseHref(category.slug, subcategory.slug)}
             >
               {subcategory.name}
             </Link>

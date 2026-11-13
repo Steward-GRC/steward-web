@@ -28,6 +28,7 @@ const makeGroup = (overrides: Partial<Group> = {}): Group => ({
 
 const makePolicy = (overrides: Partial<Policy> = {}): Policy => ({
   category: "IT Security",
+  categorySlug: "it-security",
   documentType: DocumentType.Policy,
   homeGroupId: "group-1",
   id: "pol-1",
@@ -36,6 +37,7 @@ const makePolicy = (overrides: Partial<Policy> = {}): Policy => ({
   sensitivity: Sensitivity.Standard,
   status: PolicyStatus.Published,
   subcategory: "",
+  subcategorySlug: "",
   templateNone: true,
   title: "Code of Conduct",
   updated: null,

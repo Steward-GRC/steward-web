@@ -209,9 +209,11 @@ describe("liveEdge.policies", () => {
     expect(rows).toEqual([
       expect.objectContaining({
         category: "Finance",
+        categorySlug: "finance",
         homeGroupId: "c-travel",
         status: PolicyStatus.Published,
         subcategory: "Travel",
+        subcategorySlug: "travel",
         updated: "2026-09-02T00:00:00Z",
         version: "2.0.0",
       }),

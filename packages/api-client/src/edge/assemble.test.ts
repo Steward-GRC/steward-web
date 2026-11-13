@@ -24,9 +24,9 @@ import {
 } from "./assemble";
 
 const tree: CategoryNode[] = [
-  { id: "root", name: "Finance", parentId: null },
-  { id: "child", name: "Travel", parentId: "root" },
-  { id: "leaf", name: "Per diem", parentId: "child" },
+  { id: "root", name: "Finance", parentId: null, slug: "finance-ops" },
+  { id: "child", name: "Travel", parentId: "root", slug: "travel" },
+  { id: "leaf", name: "Per diem", parentId: "child", slug: "per-diem" },
 ];
 
 describe("bodyTextFromContent", () => {
@@ -176,16 +176,32 @@ describe("categoryNames", () => {
   const index = new Map(tree.map((n) => [n.id, n]));
 
   it("names a root home category with no subcategory", () => {
-    expect(categoryNames(index, "root")).toEqual({ category: "Finance", subcategory: "" });
+    expect(categoryNames(index, "root")).toEqual({
+      category: "Finance",
+      categorySlug: "finance-ops",
+      subcategory: "",
+      subcategorySlug: "",
+    });
   });
 
   it("names the root and the level below it for a deeper home category", () => {
-    expect(categoryNames(index, "child")).toEqual({ category: "Finance", subcategory: "Travel" });
-    expect(categoryNames(index, "leaf")).toEqual({ category: "Finance", subcategory: "Travel" });
+    const travel = {
+      category: "Finance",
+      categorySlug: "finance-ops",
+      subcategory: "Travel",
+      subcategorySlug: "travel",
+    };
+    expect(categoryNames(index, "child")).toEqual(travel);
+    expect(categoryNames(index, "leaf")).toEqual(travel);
   });
 
   it("returns empty names for a category outside the tree", () => {
-    expect(categoryNames(index, "missing")).toEqual({ category: "", subcategory: "" });
+    expect(categoryNames(index, "missing")).toEqual({
+      category: "",
+      categorySlug: "",
+      subcategory: "",
+      subcategorySlug: "",
+    });
   });
 });
 
@@ -236,10 +252,17 @@ describe("toPolicyView", () => {
           submit: false,
         },
       },
-      { category: "Finance", subcategory: "Travel" },
+      {
+        category: "Finance",
+        categorySlug: "finance-ops",
+        subcategory: "Travel",
+        subcategorySlug: "travel",
+      },
     );
     expect(view).toMatchObject({
       category: "Finance",
+      categorySlug: "finance-ops",
+      subcategorySlug: "travel",
       homeGroupId: "child",
       status: PolicyStatus.Published,
       subcategory: "Travel",
@@ -278,7 +301,7 @@ describe("toPolicyView", () => {
           submit: true,
         },
       },
-      { category: "Finance", subcategory: "" },
+      { category: "Finance", categorySlug: "finance-ops", subcategory: "", subcategorySlug: "" },
     );
     expect(view.version).toBe("");
     expect(view.status).toBe(PolicyStatus.Draft);

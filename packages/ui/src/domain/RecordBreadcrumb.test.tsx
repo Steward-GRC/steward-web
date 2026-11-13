@@ -9,9 +9,11 @@ import { RecordBreadcrumb, recordCrumbs } from "./RecordBreadcrumb";
 
 const record = {
   category: "Finance",
+  categorySlug: "finance",
   documentType: DocumentType.Policy,
   number: "POL-EXPENSES-000002",
   subcategory: "Expenses",
+  subcategorySlug: "expenses",
   title: "Expense Claims",
 };
 
@@ -22,8 +24,8 @@ describe("recordCrumbs", () => {
   it("goes library, category, subcategory, then the record", () => {
     expect(recordCrumbs(record, "Policies")).toEqual([
       { href: "/policies", label: "Policies" },
-      { href: "/policies?category=Finance", label: "Finance" },
-      { href: "/policies?category=Finance&subcategory=Expenses", label: "Expenses" },
+      { href: "/policies/category/finance", label: "Finance" },
+      { href: "/policies/category/finance/expenses", label: "Expenses" },
       { label: "Expense Claims" },
     ]);
   });
@@ -32,6 +34,25 @@ describe("recordCrumbs", () => {
     expect(
       recordCrumbs({ ...record, documentType: DocumentType.Procedure }, "Procedures")[0],
     ).toEqual({ href: "/procedures", label: "Procedures" });
+  });
+
+  it("links a procedure's category under the procedures library, with encoded slugs", () => {
+    expect(
+      recordCrumbs(
+        {
+          ...record,
+          categorySlug: "a b",
+          documentType: DocumentType.Procedure,
+          subcategorySlug: "x/y",
+        },
+        "Procedures",
+      ).map((c) => c.href),
+    ).toEqual([
+      "/procedures",
+      "/procedures/category/a%20b",
+      "/procedures/category/a%20b/x%2Fy",
+      undefined,
+    ]);
   });
 
   it("leaves out a missing subcategory or category", () => {
