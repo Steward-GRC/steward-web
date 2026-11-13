@@ -47,6 +47,7 @@ import {
   listPendingTasks,
   listUpcomingApprovals,
 } from "../approvals/approvals.server";
+import { isFinalApproval, publishTargetOf } from "../approvals/publishTarget";
 import { stepperStagesOf } from "../approvals/stepperStages";
 import { ReviewerDocument } from "../authoring/DraftDocumentEditor";
 import { listChangesSinceReview, listReviewThreads } from "../review/reviewThreads.server";
@@ -270,6 +271,15 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
   const inReview = statusOf(workflow.status) === IN_REVIEW;
   const current = workflow.stageNames[workflow.currentStageIdx] ?? "";
   const submitted = submittedFrom(review.history);
+  // What this run publishes as; with no version from the gateway nothing new is shown.
+  const target = publishTargetOf(workflow);
+  const targetChange = target?.changeType ? t(`policy:change.${target.changeType}`) : null;
+  const publishNote =
+    target && isFinalApproval(workflow)
+      ? targetChange
+        ? t("review.decision.finalNoteChange", { change: targetChange, version: target.version })
+        : t("review.decision.finalNote", { version: target.version })
+      : undefined;
   const deciding = Boolean(task) && inReview && !decided;
   // The version as the editor, for the commenting view; the plain reader when it can't open.
   const commentable =
@@ -305,7 +315,11 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
     );
   } else if (deciding && task) {
     aside = (
-      <DecisionPanel className="md:static" error={refusal ? refusalMessage : undefined}>
+      <DecisionPanel
+        className="md:static"
+        error={refusal ? refusalMessage : undefined}
+        note={publishNote}
+      >
         {comments.threads.length > 0 ? (
           <p className="text-sm text-muted">
             {t("review.comments.withDecision", { count: comments.threads.length })}
@@ -385,6 +399,11 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
 
       <FlowView
         end={{
+          description: target
+            ? targetChange
+              ? t("flow.publishAsChange", { change: targetChange, version: target.version })
+              : t("flow.publishAs", { version: target.version })
+            : undefined,
           id: "publish",
           state: statusOf(workflow.status) === "PUBLISHED" ? "done" : "upcoming",
           title: t("flow.publish"),

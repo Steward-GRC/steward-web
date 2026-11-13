@@ -5206,6 +5206,8 @@ export type WorkflowStatusQuery = {
     readonly runId: string;
     readonly currentStageIdx: number;
     readonly stageNames: ReadonlyArray<string>;
+    readonly targetChangeType: Types.ChangeType | null;
+    readonly targetSemanticVersion: string | null;
     readonly submittedBy: string | null;
     readonly submittedAt: string | null;
     readonly stageAssignees: ReadonlyArray<
@@ -5216,6 +5218,7 @@ export type WorkflowStatusQuery = {
         readonly comment: string | null;
         readonly decidedAt: string | null;
         readonly groupId: string | null;
+        readonly roleLabel: string | null;
       }>
     >;
     readonly stageUnitProgress: ReadonlyArray<
@@ -22164,6 +22167,7 @@ export const WorkflowStatusDocument = {
                       { kind: "Field", name: { kind: "Name", value: "comment" } },
                       { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
                       { kind: "Field", name: { kind: "Name", value: "groupId" } },
+                      { kind: "Field", name: { kind: "Name", value: "roleLabel" } },
                     ],
                   },
                 },
@@ -22184,6 +22188,8 @@ export const WorkflowStatusDocument = {
                     ],
                   },
                 },
+                { kind: "Field", name: { kind: "Name", value: "targetChangeType" } },
+                { kind: "Field", name: { kind: "Name", value: "targetSemanticVersion" } },
                 { kind: "Field", name: { kind: "Name", value: "submittedBy" } },
                 { kind: "Field", name: { kind: "Name", value: "submittedAt" } },
                 {

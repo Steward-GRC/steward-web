@@ -121,6 +121,26 @@ describe("flowStepsOf", () => {
     expect(step!.nodes[0]).toMatchObject({ state: "upcoming", title: "Legal", who: null });
     expect(step!.nodes[0]!.members).toBeUndefined();
   });
+
+  it("titles a box with the role label after the name, and nothing when there is none", () => {
+    const [step] = flowStepsOf(
+      [
+        stage("Review", "current", [
+          who("Alice", "pending", { role: "Approver" }),
+          who("Bob", "pending", { role: "Category owner", isYou: true }),
+          who("Carol", "pending", { role: null }),
+          who("Dave", "pending"),
+        ]),
+      ],
+      options,
+    );
+    expect(step!.nodes.map((n) => n.title)).toEqual([
+      "Alice · Approver",
+      "Bob · Category owner · you",
+      "Carol",
+      "Dave",
+    ]);
+  });
 });
 
 const seat = (

@@ -17,6 +17,8 @@ interface Seat {
   decidedAt?: null | string;
   groupId?: null | string;
   name?: null | string;
+  /** Why the person holds the seat ("Approver", "Category owner"); null when not recorded. */
+  roleLabel?: null | string;
   state: string;
   userId: string;
 }
@@ -41,6 +43,7 @@ const approverOf = (seat: Seat, meId: string, veto: boolean): StepperApprover =>
   groupId: seat.groupId ?? null,
   isYou: seat.userId === meId,
   name: seat.name ?? seat.userId,
+  ...(seat.roleLabel ? { role: seat.roleLabel } : {}),
   state: seat.state as StepperApprover["state"],
   ...(veto ? { veto: true } : {}),
 });

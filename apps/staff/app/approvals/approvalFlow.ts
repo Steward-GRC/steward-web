@@ -17,6 +17,10 @@ export interface FlowTexts {
   youLabel: string;
 }
 
+/** "Dave · Approver · you": the name, then the role when the gateway names one, then you. */
+const seatTitle = (seat: StepperApprover, youLabel: string): string =>
+  [seat.name, seat.role, seat.isYou ? youLabel : null].filter(Boolean).join(" · ");
+
 const nodeState = (seat: StepperApprover, stage: StepperStage): FlowNodeState => {
   if (stage.state === "upcoming") return "upcoming";
   if (seat.state === "approved") return "done";
@@ -60,7 +64,7 @@ export const flowStepsOf = (
         description: stage.name,
         id: `${id}-u${index_}`,
         state,
-        title: seat.isYou ? `${seat.name} · ${youLabel}` : seat.name,
+        title: seatTitle(seat, youLabel),
         when:
           seat.state === "pending"
             ? // The due date is the viewer's own task's, so only their box carries it.
@@ -90,7 +94,7 @@ export const flowStepsOf = (
           id: `${id}-g${index_}`,
           members: seats.map((seat, m) => ({
             id: `${id}-g${index_}-m${m}`,
-            name: seat.isYou ? `${seat.name} · ${youLabel}` : seat.name,
+            name: seatTitle(seat, youLabel),
             state: nodeState(seat, stage),
             when: seat.decidedAt ? formatDayMonth(seat.decidedAt) : null,
           })),

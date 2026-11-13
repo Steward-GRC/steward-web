@@ -11,6 +11,7 @@ query WorkflowStatus($policyVersionId: ID!) {
       comment
       decidedAt
       groupId
+      roleLabel
     }
     stageUnitProgress {
       groupId
@@ -22,6 +23,8 @@ query WorkflowStatus($policyVersionId: ID!) {
       roster
       status
     }
+    targetChangeType
+    targetSemanticVersion
     submittedBy
     submittedAt
     stageProgress {
