@@ -6,6 +6,7 @@ import type {
   EmailServiceConfigStatus,
   GlobalSettings,
   GlobalSettingsInput,
+  WorkCalendarInput,
 } from "@steward-web/api-client";
 
 import { PERMISSIONS } from "@steward-web/auth";
@@ -28,6 +29,22 @@ export const saveGlobalSettings = async (
 ): Promise<GlobalSettings> => {
   await requireSettingsManage(request);
   return edge.setGlobalSettings(input, cookieOf(request));
+};
+
+/**
+ * Saves the site work calendar through setGlobalSettings. The input needs the announcement and
+ * the maintenance notice too, so the stored ones are read first and sent back unchanged.
+ */
+export const saveWorkCalendar = async (
+  request: Request,
+  workCalendar: WorkCalendarInput,
+): Promise<GlobalSettings> => {
+  await requireSettingsManage(request);
+  const current = await edge.globalSettings(cookieOf(request));
+  return edge.setGlobalSettings(
+    { announcement: current.announcement, maintenance: current.maintenance, workCalendar },
+    cookieOf(request),
+  );
 };
 
 export const getEmailServiceConfig = async (

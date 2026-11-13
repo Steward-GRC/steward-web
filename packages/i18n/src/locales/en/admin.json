@@ -258,6 +258,44 @@
       "clear": "Clear key",
       "confirm": "Clear the key? Outbound email falls back to the SMTP relay until a new key is set."
     },
+    "workCalendar": {
+      "title": "Working days",
+      "description": "Workflow stage deadlines count whole working days on this calendar. Weekends and the holidays listed here do not count.",
+      "pill": "{{days}} · {{timezone}}",
+      "days": "Days that count as working days",
+      "timezone": "Time zone",
+      "holidays": "Holidays",
+      "noHolidays": "No holidays.",
+      "add": "Add holiday",
+      "dateLabel": "Holiday date {{number}}",
+      "labelLabel": "Holiday label {{number}}",
+      "labelPlaceholder": "Label (optional)",
+      "remove": "Remove holiday {{number}}",
+      "weekday": {
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday",
+        "7": "Sunday"
+      },
+      "short": {
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat",
+        "7": "Sun"
+      },
+      "errors": {
+        "days": "Pick at least one working day.",
+        "date": "Pick a date.",
+        "duplicate": "This date is already in the list.",
+        "label": "A label is at most 80 characters."
+      }
+    },
     "announcement": {
       "title": "Global announcement",
       "description": "Shown in both apps and on sign-in.",
@@ -979,9 +1017,15 @@
       "members": "Group: {{name}} · Members",
       "removeApprover": "Remove {{name}} from stage {{number}}",
       "addApprover": "+ Add approver",
-      "due": "Due",
+      "due": "Due within",
       "dueLabel": "Stage {{number}} due within",
-      "workingDays": "working days",
+      "workingDays_one": "working day",
+      "workingDays_other": "working days",
+      "dueHelp": "Counts whole working days from the site calendar, starting the day after the stage opens. Weekends and holidays are skipped.",
+      "dueCalendar": "Now: {{days}}, {{holidays}}, {{timezone}}.",
+      "dueHolidays_one": "{{count}} holiday",
+      "dueHolidays_other": "{{count}} holidays",
+      "dueNoHolidays": "no holidays",
       "noDue": "No due date",
       "addStage": "+ Add stage",
       "duplicate": "Duplicate workflow",

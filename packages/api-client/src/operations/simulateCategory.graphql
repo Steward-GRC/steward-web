@@ -2,11 +2,24 @@ query SimulateCategory($categoryId: ID!, $userId: ID!, $draftRules: [RaciRuleInp
   simulateCategory(categoryId: $categoryId, userId: $userId, draftRules: $draftRules) {
     read
     readReason
+    readCode
     ack
     ackReason
+    ackCode
     approve
     approveReason
+    approveCode
     author
     authorReason
+    authorCode
+    manage
+    manageReason
+    manageCode
+    configuredBlock {
+      action
+      categoryId
+      subjectKind
+      subjectRef
+    }
   }
 }

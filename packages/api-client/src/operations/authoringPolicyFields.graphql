@@ -25,5 +25,6 @@ fragment AuthoringPolicyFields on Policy {
     contentObfuscated
     canBreakGlass
     ack
+    manage
   }
 }

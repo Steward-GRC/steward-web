@@ -34,6 +34,9 @@ const ruleInputOf = (rule: RaciRule | RaciRuleInput): RaciRuleInput => ({
   ack: rule.ack,
   approve: rule.approve,
   author: rule.author,
+  // Carried through so saving the rules never clears a stored Manage grant; the table has no
+  // Manage column yet.
+  manage: rule.manage,
   read: rule.read,
   subjectKind: rule.subjectKind,
   subjectRef: rule.subjectKind === RaciSubjectKind.Everyone ? "" : rule.subjectRef,

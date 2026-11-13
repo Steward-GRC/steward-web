@@ -31,6 +31,7 @@ const policy = (overrides: Partial<Policy> & Pick<Policy, "id" | "number" | "tit
   updated: "2026-01-01T00:00:00Z",
   version: "1.0",
   viewerCan: {
+    manage: false,
     ack: false,
     approve: false,
     canBreakGlass: false,

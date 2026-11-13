@@ -1,5 +1,8 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import type { WorkCalendarInput } from "@steward-web/api-client";
+
+import { GatewayError } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import { refusalOf, SiteBanners } from "@steward-web/shell";
 import {
@@ -26,10 +29,13 @@ import {
   getGlobalSettings,
   saveEmailServiceConfig,
   saveGlobalSettings,
+  saveWorkCalendar,
   setAiEnabled,
   setAiToken,
   setAiTopK,
 } from "../settings/settings.server";
+import { calendarSummary, parseWorkCalendar } from "../settings/workCalendar";
+import { WorkCalendarForm } from "../settings/WorkCalendarForm";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [globalSettings, emailServiceConfig, ai, appliance] = await Promise.all([
@@ -93,6 +99,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
         });
         break;
       }
+      case "save-work-calendar": {
+        const calendar = parseWorkCalendar(String(form.get("workCalendar") ?? ""));
+        if (!calendar) {
+          return data({ intent, invalid: true, ok: false } as const, { status: 400 });
+        }
+        await saveWorkCalendar(request, calendar);
+        break;
+      }
       default: {
         throw data("unrecognized intent", { status: 400 });
       }
@@ -100,11 +114,22 @@ export const action = async ({ request }: Route.ActionArgs) => {
     return { intent, ok: true } as const;
   } catch (error) {
     if (error instanceof Response) throw error;
+    // The gateway words what is wrong with a calendar (an unknown zone, a repeated date) in
+    // terms of the calendar's own fields, so it is shown as it comes (INVALID_WORK_CALENDAR).
+    if (error instanceof GatewayError && error.code === "INVALID_WORK_CALENDAR") {
+      return data(
+        { calendarError: error.message, failure: refusalOf(error), intent, ok: false } as const,
+        { status: 400 },
+      );
+    }
     return data({ failure: refusalOf(error), intent, ok: false } as const, { status: 400 });
   }
 };
 
-type Result = { failure: Failure; intent: string; ok: false } | { intent: string; ok: true };
+type Result =
+  | { calendarError?: string; failure: Failure; intent: string; ok: false }
+  | { intent: string; invalid: true; ok: false }
+  | { intent: string; ok: true };
 
 type Tone = "neutral" | "ok" | "warn";
 
@@ -115,7 +140,15 @@ const PILL: Record<Tone, string> = {
 };
 
 const failureOf = (fetcher: { data?: Result; state: string }) =>
-  fetcher.state === "idle" && fetcher.data && !fetcher.data.ok ? fetcher.data.failure : undefined;
+  fetcher.state === "idle" && fetcher.data && !fetcher.data.ok && "failure" in fetcher.data
+    ? fetcher.data.failure
+    : undefined;
+
+/** The gateway's own words for a refused work calendar, shown inside its card. */
+const calendarErrorOf = (fetcher: { data?: Result; state: string }) =>
+  fetcher.state === "idle" && fetcher.data && !fetcher.data.ok && "calendarError" in fetcher.data
+    ? fetcher.data.calendarError
+    : undefined;
 
 const savedOf = (fetcher: { data?: Result; state: string }) =>
   fetcher.state === "idle" && fetcher.data?.ok === true;
@@ -184,9 +217,9 @@ const ClearConfirm = ({
 };
 
 /**
- * Settings (A28): six cards, each a heading with its status pill: the AI provider token, AI
- * features, AI retrieval, outbound email, the global announcement with its live preview, and
- * the maintenance notice. Full width, as every admin page is.
+ * Settings (A28): seven cards, each a heading with its status pill: the AI provider token, AI
+ * features, AI retrieval, outbound email, the working days calendar, the global announcement
+ * with its live preview, and the maintenance notice. Full width, as every admin page is.
  */
 export default function Settings({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
@@ -198,6 +231,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
   const retrieval = useFetcher<Result>();
   const email = useFetcher<Result>();
   const banners = useFetcher<Result>();
+  const calendar = useFetcher<Result>();
   const [clearingToken, setClearingToken] = useState(false);
   const [clearingKey, setClearingKey] = useState(false);
   const [announcement, setAnnouncement] = useState(globalSettings.announcement);
@@ -219,8 +253,17 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
       },
       { method: "post" },
     );
-  const failure = [token, enabled, retrieval, email, banners]
-    .map((fetcher) => failureOf(fetcher))
+  const saveCalendar = (workCalendar: WorkCalendarInput) =>
+    void calendar.submit(
+      { intent: "save-work-calendar", workCalendar: JSON.stringify(workCalendar) },
+      { method: "post" },
+    );
+  const summary = calendarSummary(globalSettings.workCalendar, (day) =>
+    t(`settings.workCalendar.short.${day}`),
+  );
+  const calendarError = calendarErrorOf(calendar);
+  const failure = [token, enabled, retrieval, email, banners, calendar]
+    .map((fetcher) => (fetcher === calendar && calendarError ? undefined : failureOf(fetcher)))
     .find(Boolean);
 
   return (
@@ -407,6 +450,25 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
       </SettingsCard>
 
       <SettingsCard
+        description={t("settings.workCalendar.description")}
+        pill={t("settings.workCalendar.pill", {
+          days: summary.days,
+          timezone: globalSettings.workCalendar.timezone,
+        })}
+        title={t("settings.workCalendar.title")}
+        tone="ok"
+      >
+        <WorkCalendarForm
+          busy={calendar.state !== "idle"}
+          calendar={globalSettings.workCalendar}
+          key={JSON.stringify(globalSettings.workCalendar)}
+          onSave={saveCalendar}
+          saved={savedOf(calendar)}
+          serverError={calendarError}
+        />
+      </SettingsCard>
+
+      <SettingsCard
         description={t("settings.announcement.description")}
         pill={
           announcement.enabled
@@ -457,6 +519,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
               settings={{
                 announcement: { ...announcement, enabled: true },
                 maintenance: { enabled: false, message: "" },
+                workCalendar: globalSettings.workCalendar,
               }}
             />
           </div>

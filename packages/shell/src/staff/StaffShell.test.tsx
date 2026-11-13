@@ -277,6 +277,7 @@ describe("StaffShell banners and footer", () => {
       banners: {
         announcement: { enabled: true, level: "info", message: "Welcome to Steward." },
         maintenance: { enabled: true, message: "Read-only tonight." },
+        workCalendar: { holidays: [], timezone: "UTC", weekdays: [1, 2, 3, 4, 5] },
       },
     });
     expect(

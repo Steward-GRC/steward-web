@@ -5,4 +5,5 @@ fragment RaciRuleFields on RaciRule {
   ack
   approve
   author
+  manage
 }

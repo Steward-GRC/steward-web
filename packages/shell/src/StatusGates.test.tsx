@@ -31,6 +31,7 @@ const person = (roles: string[], permissions: string[]) =>
 const locked = {
   announcement: { enabled: false, level: "info", message: "" },
   maintenance: { enabled: true, message: "Back at 18:00." },
+  workCalendar: { holidays: [], timezone: "UTC", weekdays: [1, 2, 3, 4, 5] },
 };
 const open = { ...locked, maintenance: { enabled: false, message: "" } };
 
