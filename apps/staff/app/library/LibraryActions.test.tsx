@@ -15,24 +15,23 @@ const person = (permissions: string[]): Identity => ({
   permissions: new Set(permissions),
 });
 
-const categories = [
-  {
-    id: "w",
-    name: "Workplace",
-    slug: "workplace-services",
-    subcategories: [{ name: "Facilities", slug: "facilities" }],
-  },
-];
-
 const renderFor = (identity: Identity, documentType: DocumentType, at = "/") => {
   const Stub = createRoutesStub([
     {
       Component: () => (
         <IdentityProvider identity={identity}>
-          <LibraryActions categories={categories} documentType={documentType} />
+          <LibraryActions documentType={documentType} />
         </IdentityProvider>
       ),
       path: "/",
+    },
+    {
+      Component: () => (
+        <IdentityProvider identity={identity}>
+          <LibraryActions documentType={documentType} />
+        </IdentityProvider>
+      ),
+      path: "/policies/category/:category/:subcategory?",
     },
   ]);
   render(<Stub initialEntries={[at]} />);
@@ -48,11 +47,11 @@ describe("the library's header actions (U3, U4)", () => {
     );
   });
 
-  it("starts a new draft in the category of the folder being viewed, by slug (#148, #377)", () => {
+  it("starts a new draft in the category of the folder being viewed, by slug (#148, #378)", () => {
     renderFor(
       person(["policy.read", "policy.author"]),
       DocumentType.Policy,
-      "/?category=Workplace&subcategory=Facilities",
+      "/policies/category/workplace-services/facilities",
     );
     expect(screen.getByRole("link", { name: "New policy" })).toHaveAttribute(
       "href",
@@ -60,15 +59,15 @@ describe("the library's header actions (U3, U4)", () => {
     );
   });
 
-  it("opens a plain form for a folder it doesn't know (#377)", () => {
+  it("passes a category-only folder through as just the category (#378)", () => {
     renderFor(
       person(["policy.read", "policy.author"]),
-      DocumentType.Policy,
-      "/?category=Nowhere&subcategory=Facilities",
+      DocumentType.Procedure,
+      "/policies/category/workplace-services",
     );
-    expect(screen.getByRole("link", { name: "New policy" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "New procedure" })).toHaveAttribute(
       "href",
-      "/drafts/new/policy",
+      "/drafts/new/procedure/category/workplace-services",
     );
   });
 

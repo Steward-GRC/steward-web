@@ -26,6 +26,8 @@ export interface CategoryNode {
   readonly parentId?: null | string;
   /** When the category's documents are next due for review (RFC 3339), if it sets one. */
   readonly reviewDate?: null | string;
+  /** The category's address segment, unique under its parent. */
+  readonly slug: string;
 }
 
 interface StoredSection {
@@ -236,18 +238,30 @@ export const nextReviewOf = (
   return null;
 };
 
-/** The library's category (root ancestor) and subcategory (the level below it) names. */
+export interface CategoryNames {
+  category: string;
+  categorySlug: string;
+  subcategory: string;
+  subcategorySlug: string;
+}
+
+/** The library's category (root ancestor) and subcategory (the level below it): names and slugs. */
 export const categoryNames = (
   index: ReadonlyMap<string, CategoryNode>,
   homeCategoryId: string,
-): { category: string; subcategory: string } => {
+): CategoryNames => {
   const chain: CategoryNode[] = [];
   let node = index.get(homeCategoryId);
   while (node && chain.length <= index.size) {
     chain.unshift(node);
     node = node.parentId ? index.get(node.parentId) : undefined;
   }
-  return { category: chain[0]?.name ?? "", subcategory: chain[1]?.name ?? "" };
+  return {
+    category: chain[0]?.name ?? "",
+    categorySlug: chain[0]?.slug ?? "",
+    subcategory: chain[1]?.name ?? "",
+    subcategorySlug: chain[1]?.slug ?? "",
+  };
 };
 
 const statuses = new Set<string>(Object.values(PolicyStatus));
@@ -263,11 +277,12 @@ export const policyStatusOf = (hasPublished: boolean, versionStatus?: string): P
  *  number and status come straight off the policy row, with no extra version read. */
 export const toPolicyView = (
   policy: Omit<AuthoringPolicyFieldsFragment, "ownerName">,
-  names: { category: string; subcategory: string },
+  names: CategoryNames,
 ): Policy => ({
   ackAudienceOverride: policy.ackAudienceOverride,
   ackTriggers: policy.ackTriggers,
   category: names.category,
+  categorySlug: names.categorySlug,
   currentDraftVersionId: policy.currentDraftVersionId,
   currentPublishedVersionId: policy.currentPublishedVersionId,
   documentType: policy.documentType,
@@ -282,6 +297,7 @@ export const toPolicyView = (
     policy.currentVersionStatus ?? undefined,
   ),
   subcategory: names.subcategory,
+  subcategorySlug: names.subcategorySlug,
   templateId: policy.templateId,
   templateNone: policy.templateNone,
   title: policy.title,

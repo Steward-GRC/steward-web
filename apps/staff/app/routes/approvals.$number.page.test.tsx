@@ -13,9 +13,11 @@ import ApprovalReviewRoute from "./approvals.$number";
 const loaderData = {
   match: {
     category: "Finance",
+    categorySlug: "finance",
     documentType: "POLICY",
     number: "POL-EXPENSES-000002",
     subcategory: "Expenses",
+    subcategorySlug: "expenses",
     title: "Expense Claims Policy",
     version: "3",
   },
@@ -480,9 +482,11 @@ describe("the approval review page for a procedure (bug log 213)", () => {
     match: {
       ...loaderData.match,
       category: "Travel",
+      categorySlug: "travel",
       documentType: "PROCEDURE",
       number: "PRC-TRAVEL-000003",
       subcategory: "Booking",
+      subcategorySlug: "booking",
       title: "Travel Booking",
       version: "4",
     },

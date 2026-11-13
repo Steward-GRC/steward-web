@@ -13,7 +13,7 @@
  */
 import type { Category, Policy } from "@steward-web/api-client";
 
-import { policyPath } from "@steward-web/ui/domain";
+import { DocumentType, libraryCategoryPath, policyPath } from "@steward-web/ui/domain";
 
 import { compileQuery, type SearchRecord } from "./compileQuery";
 
@@ -63,10 +63,10 @@ export const buildSearchIndex = (
       id: c.id,
       label: c.name,
       rec: { category: lc(c.name), text: lc(c.name) },
-      // The library filtered to the category, the same `?category=<name>` filter its own
-      // category tiles set. Categories aren't document-type-specific, but the original search
-      // page only ever indexed the Policy library, never Procedures — carried as-is.
-      to: `/policies?${new URLSearchParams({ category: c.name }).toString()}`,
+      // The library filtered to the category, at its slug path (`/policies/category/<slug>`).
+      // Categories aren't document-type-specific, but the original search page only ever indexed
+      // the Policy library, never Procedures — carried as-is.
+      to: libraryCategoryPath(DocumentType.Policy, [c.slug]),
       type: "Category",
     });
   }

@@ -9,6 +9,7 @@ import { paletteGroupsOf } from "./paletteGroups";
 
 const policy = (overrides: Partial<Policy> & Pick<Policy, "id" | "number" | "title">): Policy => ({
   category: "Workplace",
+  categorySlug: "workplace",
   currentDraftVersionId: null,
   currentPublishedVersionId: "v-1",
   documentType: DocumentType.Policy,
@@ -18,6 +19,7 @@ const policy = (overrides: Partial<Policy> & Pick<Policy, "id" | "number" | "tit
   sensitivity: Sensitivity.Standard,
   status: PolicyStatus.Published,
   subcategory: "Facilities",
+  subcategorySlug: "facilities",
   templateId: null,
   templateNone: false,
   updated: "2026-01-01T00:00:00Z",
@@ -65,7 +67,7 @@ describe("paletteGroupsOf", () => {
     expect(groups[1]!.items[0]!.to).toBe("/procedures/PRC-FACILITIES-000002");
     expect(groups[2]!.items[0]).toMatchObject({
       icon: "folder",
-      to: "/policies?category=Desk+services",
+      to: "/policies/category/desk",
     });
   });
 

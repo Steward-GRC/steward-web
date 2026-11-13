@@ -44,6 +44,7 @@ const baseDetail: PolicyDetail = {
   bodyUnreadable: false,
   canBreakGlass: false,
   category: "Finance",
+  categorySlug: "finance",
   contacts: [],
   contentObfuscated: false,
   currentVersionId: "version-1",
@@ -72,6 +73,7 @@ const baseDetail: PolicyDetail = {
   sensitivity: Sensitivity.Standard,
   status: PolicyStatus.Published,
   subcategory: "Reimbursement",
+  subcategorySlug: "reimbursement",
   summary: null,
   title: "Expense Claims",
   updated: "2026-08-14T00:00:00Z",
@@ -147,8 +149,8 @@ describe("PolicyReader", () => {
     expect(crumbs.getAllByRole("link").map((a) => [a.textContent, a.getAttribute("href")])).toEqual(
       [
         ["Policies", "/policies"],
-        ["Finance", "/policies?category=Finance"],
-        ["Reimbursement", "/policies?category=Finance&subcategory=Reimbursement"],
+        ["Finance", "/policies/category/finance"],
+        ["Reimbursement", "/policies/category/finance/reimbursement"],
       ],
     );
     expect(crumbs.getByText("Expense Claims")).toHaveAttribute("aria-current", "page");

@@ -230,7 +230,7 @@ describe("StaffShell sidebar (H1)", () => {
     const nav = sidebar();
     expect(within(nav).getByRole("link", { name: "Workplace" })).toHaveAttribute(
       "href",
-      "/policies?category=Workplace",
+      "/policies/category/workplace",
     );
     expect(within(nav).queryByRole("link", { name: "Facilities" })).toBeNull();
     await userEvent.click(
@@ -238,7 +238,7 @@ describe("StaffShell sidebar (H1)", () => {
     );
     expect(within(nav).getByRole("link", { name: "Facilities" })).toHaveAttribute(
       "href",
-      "/policies?category=Workplace&subcategory=Facilities",
+      "/policies/category/workplace/facilities",
     );
   });
 

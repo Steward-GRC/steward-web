@@ -3,7 +3,7 @@
 import { useTranslation } from "@steward-web/i18n";
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
 import { Fragment, type ReactNode, useId, useMemo } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 
 import { Button } from "#ui/components/Button";
 import { Card, Table, TD, TH, THead } from "#ui/components/Display";
@@ -29,7 +29,7 @@ import {
   matchesColumnFilters,
   useColumnPreferences,
 } from "./libraryColumns";
-import { documentTypeCopy, policyPath } from "./policy";
+import { documentTypeCopy, libraryCategoryPath, policyPath } from "./policy";
 
 /** A category chip on a phone (U3m): plum when it's the one shown. */
 const chip = (active: boolean) =>
@@ -121,8 +121,34 @@ export const PolicyLibrary = ({
   const headingId = useId();
   const [parameters, setParameters] = useSearchParams();
 
-  const category = parameters.get("category") ?? "";
-  const subcategory = parameters.get("subcategory") ?? "";
+  const navigate = useNavigate();
+  // The category filter is in the path, by slug: /category/<category>[/<subcategory>[/<deeper>]]
+  // (#378). Slugs are unique per parent, so the subcategory is looked up under its category.
+  const { category: categorySlug, deeper, subcategory: subcategorySlug } = useParams();
+  const folderSlugs = [categorySlug, subcategorySlug, deeper].filter(
+    (slug): slug is string => slug !== undefined,
+  );
+  const folderRoot =
+    categorySlug === undefined ? undefined : categories.find((c) => c.slug === categorySlug);
+  const folderChild =
+    subcategorySlug === undefined
+      ? undefined
+      : folderRoot?.subcategories.find((s) => s.slug === subcategorySlug);
+  const unknownFolder =
+    folderSlugs.length > 0 &&
+    (!folderRoot || (subcategorySlug !== undefined && !folderChild) || deeper !== undefined);
+  const category = unknownFolder ? "" : (folderRoot?.name ?? "");
+  const subcategory = unknownFolder ? "" : (folderChild?.name ?? "");
+  // The page's other filters (status, words, sort) ride along when the category changes.
+  const showFolder = (slugs: readonly string[]) => {
+    const next = new URLSearchParams(parameters);
+    next.delete("page");
+    const search = next.toString();
+    void navigate(
+      { pathname: libraryCategoryPath(documentType, slugs), search: search ? `?${search}` : "" },
+      { preventScrollReset: true },
+    );
+  };
   const statusParameter = parameters.get("status") ?? "";
   const statuses = useMemo(() => selectedStatuses(statusParameter), [statusParameter]);
   const q = parameters.get("q") ?? "";
@@ -222,6 +248,12 @@ export const PolicyLibrary = ({
   );
 
   const heading = title ?? t(`library.${copy.nounPlural}.title`);
+  // An address whose category slug names nothing: no filter, and a plain word about it.
+  const unknownNote = unknownFolder ? (
+    <p className="text-sm text-muted" role="alert">
+      {t("library.unknownCategory")}
+    </p>
+  ) : null;
   // Nothing at all to browse (#370): no categories and no documents. One plain "Empty" in place
   // of the tiles, chips and table; categories without documents still show their tiles.
   const nothingToBrowse = categories.length === 0 && policies.length === 0;
@@ -240,6 +272,7 @@ export const PolicyLibrary = ({
         <h1 className="text-[26px] font-semibold" id={headingId}>
           {heading}
         </h1>
+        {unknownNote}
         <div
           aria-label={t("library.phone.category")}
           className="-mx-4 flex gap-2 overflow-x-auto px-4"
@@ -248,7 +281,7 @@ export const PolicyLibrary = ({
           <button
             aria-pressed={!category}
             className={chip(!category)}
-            onClick={() => update({ category: "", subcategory: "" })}
+            onClick={() => showFolder([])}
             type="button"
           >
             {t("library.phone.all")}
@@ -258,7 +291,7 @@ export const PolicyLibrary = ({
               aria-pressed={category === c.name}
               className={chip(category === c.name)}
               key={c.id}
-              onClick={() => update({ category: c.name, subcategory: "" })}
+              onClick={() => showFolder([c.slug])}
               type="button"
             >
               {c.name}
@@ -356,6 +389,8 @@ export const PolicyLibrary = ({
         title={heading}
       />
 
+      {unknownNote}
+
       {nothingToBrowse ? <EmptyState framed title={t("library.nothing")} /> : null}
 
       {chips.length === 0 && !nothingToBrowse ? (
@@ -365,8 +400,15 @@ export const PolicyLibrary = ({
             name: c.name,
             subcategories: c.subcategories.map((s) => s.name),
           }))}
-          onCategory={(name) => update({ category: name, subcategory: "" })}
-          onSubcategory={(name, sub) => update({ category: name, subcategory: sub })}
+          onCategory={(name) => {
+            const root = categories.find((c) => c.name === name);
+            if (root) showFolder([root.slug]);
+          }}
+          onSubcategory={(name, sub) => {
+            const root = categories.find((c) => c.name === name);
+            const child = root?.subcategories.find((s) => s.name === sub);
+            if (root && child) showFolder([root.slug, child.slug]);
+          }}
         />
       ) : null}
 
@@ -374,16 +416,16 @@ export const PolicyLibrary = ({
         <FilterBar
           chips={chips}
           count={filtered.length}
-          onClear={() => setParameters(new URLSearchParams(), { preventScrollReset: true })}
-          onRemove={(id) =>
-            update(
-              id === "category"
-                ? { category: "", subcategory: "" }
-                : id.startsWith("status:")
-                  ? { status: toggleStatus(statuses, id.slice("status:".length)) }
-                  : { [id]: "" },
-            )
+          onClear={() =>
+            void navigate(libraryCategoryPath(documentType), { preventScrollReset: true })
           }
+          onRemove={(id) => {
+            if (id === "category") showFolder([]);
+            else if (id === "subcategory") showFolder(folderRoot ? [folderRoot.slug] : []);
+            else if (id.startsWith("status:")) {
+              update({ status: toggleStatus(statuses, id.slice("status:".length)) });
+            } else update({ [id]: "" });
+          }}
         />
       ) : null}
 

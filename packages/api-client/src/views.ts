@@ -245,6 +245,8 @@ export interface Policy {
   /** The policy's own ack trigger; undefined/null inherits the owning group's. */
   readonly ackTriggers?: AckTrigger | null;
   readonly category: string;
+  /** The category's slug, for the library's address (`/policies/category/<slug>`). */
+  readonly categorySlug: string;
   readonly currentDraftVersionId?: null | string;
   readonly currentPublishedVersionId?: null | string;
   readonly documentType: DocumentType;
@@ -256,6 +258,8 @@ export interface Policy {
   readonly sensitivity: Sensitivity;
   readonly status: PolicyStatus;
   readonly subcategory: string;
+  /** The subcategory's slug ("" when there is none). */
+  readonly subcategorySlug: string;
   readonly templateId?: null | string;
   readonly templateNone: boolean;
   readonly title: string;
@@ -307,6 +311,7 @@ export interface PolicyDetail {
   /** The viewer may edit this document (the reader's Edit action, in the staff app). */
   readonly canEdit?: boolean;
   readonly category: string;
+  readonly categorySlug: string;
   readonly contacts: readonly PolicyContact[];
   readonly contentObfuscated: boolean;
   /** The current published version's id, for `acknowledgePolicy`. Null before the first publish. */
@@ -328,6 +333,7 @@ export interface PolicyDetail {
   readonly sensitivity: Sensitivity;
   readonly status: PolicyStatus;
   readonly subcategory: string;
+  readonly subcategorySlug: string;
   /** The stored publish-time AI summary of the published version, when there is one. */
   readonly summary?: { readonly generatedAt: string; readonly text: string } | null;
   readonly title: string;
