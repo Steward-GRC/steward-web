@@ -1153,6 +1153,7 @@ export type CreateTemplateMutation = {
     readonly name: string;
     readonly ownerCategoryId: string | null;
     readonly retiredAt: string | null;
+    readonly updatedAt: string | null;
   };
 };
 
@@ -1166,6 +1167,10 @@ export type CreateTemplateVersionMutation = {
     readonly id: string;
     readonly templateId: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly changeType: Types.ChangeType | null;
+    readonly createdAt: string | null;
+    readonly publishedAt: string | null;
     readonly status: string;
     readonly sections: ReadonlyArray<{
       readonly key: string;
@@ -1647,6 +1652,10 @@ export type LatestTemplateVersionQuery = {
     readonly id: string;
     readonly templateId: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly changeType: Types.ChangeType | null;
+    readonly createdAt: string | null;
+    readonly publishedAt: string | null;
     readonly status: string;
     readonly sections: ReadonlyArray<{
       readonly key: string;
@@ -2308,12 +2317,18 @@ export type PolicyVersionQuery = {
     readonly id: string;
     readonly policyId: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly suggestedChangeType: Types.ChangeType | null;
+    readonly changeType: Types.ChangeType | null;
+    readonly requestedChangeType: Types.ChangeType | null;
+    readonly changeTypeReason: string | null;
+    readonly changeTypeSetByUserId: string | null;
+    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
     readonly status: string;
     readonly templateVersionId: string;
     readonly contentJson: string;
     readonly createdAt: string | null;
     readonly publishedAt: string | null;
-    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
     readonly reacknowledge: boolean;
     readonly appendices: ReadonlyArray<{
       readonly id: string;
@@ -2330,12 +2345,18 @@ export type PolicyVersionFieldsFragment = {
   readonly id: string;
   readonly policyId: string;
   readonly versionNo: number;
+  readonly semanticVersion: string | null;
+  readonly suggestedChangeType: Types.ChangeType | null;
+  readonly changeType: Types.ChangeType | null;
+  readonly requestedChangeType: Types.ChangeType | null;
+  readonly changeTypeReason: string | null;
+  readonly changeTypeSetByUserId: string | null;
+  readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
   readonly status: string;
   readonly templateVersionId: string;
   readonly contentJson: string;
   readonly createdAt: string | null;
   readonly publishedAt: string | null;
-  readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
   readonly reacknowledge: boolean;
   readonly appendices: ReadonlyArray<{
     readonly id: string;
@@ -2418,6 +2439,8 @@ export type PolicyVersionsQuery = {
   readonly policyVersions: ReadonlyArray<{
     readonly id: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly changeType: Types.ChangeType | null;
     readonly status: string;
     readonly publishedAt: string | null;
   }>;
@@ -2591,12 +2614,18 @@ export type PublishDraftMutation = {
     readonly id: string;
     readonly policyId: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly suggestedChangeType: Types.ChangeType | null;
+    readonly changeType: Types.ChangeType | null;
+    readonly requestedChangeType: Types.ChangeType | null;
+    readonly changeTypeReason: string | null;
+    readonly changeTypeSetByUserId: string | null;
+    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
     readonly status: string;
     readonly templateVersionId: string;
     readonly contentJson: string;
     readonly createdAt: string | null;
     readonly publishedAt: string | null;
-    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
     readonly reacknowledge: boolean;
     readonly appendices: ReadonlyArray<{
       readonly id: string;
@@ -2618,6 +2647,10 @@ export type PublishTemplateVersionMutation = {
     readonly id: string;
     readonly templateId: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly changeType: Types.ChangeType | null;
+    readonly createdAt: string | null;
+    readonly publishedAt: string | null;
     readonly status: string;
     readonly sections: ReadonlyArray<{
       readonly key: string;
@@ -2806,6 +2839,7 @@ export type RenameTemplateMutation = {
     readonly name: string;
     readonly ownerCategoryId: string | null;
     readonly retiredAt: string | null;
+    readonly updatedAt: string | null;
   };
 };
 
@@ -3309,6 +3343,7 @@ export type RetireTemplateMutation = {
     readonly name: string;
     readonly ownerCategoryId: string | null;
     readonly retiredAt: string | null;
+    readonly updatedAt: string | null;
   };
 };
 
@@ -3518,12 +3553,18 @@ export type SaveDraftMutation = {
     readonly id: string;
     readonly policyId: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly suggestedChangeType: Types.ChangeType | null;
+    readonly changeType: Types.ChangeType | null;
+    readonly requestedChangeType: Types.ChangeType | null;
+    readonly changeTypeReason: string | null;
+    readonly changeTypeSetByUserId: string | null;
+    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
     readonly status: string;
     readonly templateVersionId: string;
     readonly contentJson: string;
     readonly createdAt: string | null;
     readonly publishedAt: string | null;
-    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
     readonly reacknowledge: boolean;
     readonly appendices: ReadonlyArray<{
       readonly id: string;
@@ -4485,6 +4526,8 @@ export type SubmitWorkflowMutationVariables = Exact<{
   policyId: string | number;
   categoryId: string | number;
   ancestorCategoryIds: ReadonlyArray<string | number> | string | number;
+  changeType?: Types.ChangeType | null | undefined;
+  changeTypeReason?: string | null | undefined;
 }>;
 
 export type SubmitWorkflowMutation = { readonly submitWorkflow: { readonly runId: string } };
@@ -4495,12 +4538,17 @@ export type TemplateFieldsFragment = {
   readonly name: string;
   readonly ownerCategoryId: string | null;
   readonly retiredAt: string | null;
+  readonly updatedAt: string | null;
 };
 
 export type TemplateVersionFieldsFragment = {
   readonly id: string;
   readonly templateId: string;
   readonly versionNo: number;
+  readonly semanticVersion: string | null;
+  readonly changeType: Types.ChangeType | null;
+  readonly createdAt: string | null;
+  readonly publishedAt: string | null;
   readonly status: string;
   readonly sections: ReadonlyArray<{
     readonly key: string;
@@ -4521,6 +4569,10 @@ export type TemplateVersionsQuery = {
     readonly id: string;
     readonly templateId: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly changeType: Types.ChangeType | null;
+    readonly createdAt: string | null;
+    readonly publishedAt: string | null;
     readonly status: string;
     readonly sections: ReadonlyArray<{
       readonly key: string;
@@ -4547,6 +4599,7 @@ export type TemplatesQuery = {
     readonly name: string;
     readonly ownerCategoryId: string | null;
     readonly retiredAt: string | null;
+    readonly updatedAt: string | null;
   }>;
 };
 
@@ -4746,6 +4799,10 @@ export type UpdateTemplateVersionSectionsMutation = {
     readonly id: string;
     readonly templateId: string;
     readonly versionNo: number;
+    readonly semanticVersion: string | null;
+    readonly changeType: Types.ChangeType | null;
+    readonly createdAt: string | null;
+    readonly publishedAt: string | null;
     readonly status: string;
     readonly sections: ReadonlyArray<{
       readonly key: string;
@@ -5554,6 +5611,13 @@ export const PolicyVersionFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "policyId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "suggestedChangeType" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedChangeType" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeReason" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeSetByUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeAgreedByUserIds" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           { kind: "Field", name: { kind: "Name", value: "templateVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "contentJson" } },
@@ -5828,6 +5892,7 @@ export const TemplateFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
         ],
       },
     },
@@ -5846,6 +5911,10 @@ export const TemplateVersionFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           {
             kind: "Field",
@@ -9664,6 +9733,7 @@ export const CreateTemplateDocument = {
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
         ],
       },
     },
@@ -9738,6 +9808,10 @@ export const CreateTemplateVersionDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           {
             kind: "Field",
@@ -11541,6 +11615,10 @@ export const LatestTemplateVersionDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           {
             kind: "Field",
@@ -13207,6 +13285,13 @@ export const PolicyVersionDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "policyId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "suggestedChangeType" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedChangeType" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeReason" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeSetByUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeAgreedByUserIds" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           { kind: "Field", name: { kind: "Name", value: "templateVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "contentJson" } },
@@ -13430,6 +13515,8 @@ export const PolicyVersionsDocument = {
               selections: [
                 { kind: "Field", name: { kind: "Name", value: "id" } },
                 { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+                { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+                { kind: "Field", name: { kind: "Name", value: "changeType" } },
                 { kind: "Field", name: { kind: "Name", value: "status" } },
                 { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
               ],
@@ -13952,6 +14039,13 @@ export const PublishDraftDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "policyId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "suggestedChangeType" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedChangeType" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeReason" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeSetByUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeAgreedByUserIds" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           { kind: "Field", name: { kind: "Name", value: "templateVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "contentJson" } },
@@ -14024,6 +14118,10 @@ export const PublishTemplateVersionDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           {
             kind: "Field",
@@ -14757,6 +14855,7 @@ export const RenameTemplateDocument = {
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
         ],
       },
     },
@@ -16037,6 +16136,7 @@ export const RetireTemplateDocument = {
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
         ],
       },
     },
@@ -16634,6 +16734,13 @@ export const SaveDraftDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "policyId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "suggestedChangeType" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "requestedChangeType" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeReason" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeSetByUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeAgreedByUserIds" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           { kind: "Field", name: { kind: "Name", value: "templateVersionId" } },
           { kind: "Field", name: { kind: "Name", value: "contentJson" } },
@@ -20053,6 +20160,16 @@ export const SubmitWorkflowDocument = {
             },
           },
         },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "changeType" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ChangeType" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "changeTypeReason" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
       ],
       selectionSet: {
         kind: "SelectionSet",
@@ -20080,6 +20197,16 @@ export const SubmitWorkflowDocument = {
                 kind: "Argument",
                 name: { kind: "Name", value: "ancestorCategoryIds" },
                 value: { kind: "Variable", name: { kind: "Name", value: "ancestorCategoryIds" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "changeType" },
+                value: { kind: "Variable", name: { kind: "Name", value: "changeType" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "changeTypeReason" },
+                value: { kind: "Variable", name: { kind: "Name", value: "changeTypeReason" } },
               },
             ],
             selectionSet: {
@@ -20142,6 +20269,10 @@ export const TemplateVersionsDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           {
             kind: "Field",
@@ -20222,6 +20353,7 @@ export const TemplatesDocument = {
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "ownerCategoryId" } },
           { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
         ],
       },
     },
@@ -20986,6 +21118,10 @@ export const UpdateTemplateVersionSectionsDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "templateId" } },
           { kind: "Field", name: { kind: "Name", value: "versionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "semanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "changeType" } },
+          { kind: "Field", name: { kind: "Name", value: "createdAt" } },
+          { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
           { kind: "Field", name: { kind: "Name", value: "status" } },
           {
             kind: "Field",

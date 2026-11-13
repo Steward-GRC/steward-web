@@ -237,7 +237,7 @@ import {
   DocumentType,
   SuggestionOutcome as WireOutcome,
 } from "../generated/schema";
-import { semanticVersion } from "../semanticVersion";
+import { changeTypeToGateway, versionOf } from "../semanticVersion";
 import { awaitAiJobResult } from "./aiJobResult.server";
 import {
   appendixText,
@@ -254,6 +254,7 @@ import {
   policyStatusOf,
   readableContent,
   toPolicyView,
+  versionChangeOf,
 } from "./assemble";
 import { watchLiveEvents } from "./liveEvents.server";
 
@@ -517,7 +518,8 @@ const assembleDetail = async (
   const history = auditPage
     ? historyFromAuditLog(
         auditPage.auditLog.records,
-        version ? semanticVersion(version.versionNo) : "",
+        version ? versionOf(version) : "",
+        version?.versionNo,
       )
     : historyFromVersions(versions);
 
@@ -588,14 +590,14 @@ const assembleDetail = async (
             diff,
             fromVersionId: prior.id,
             toVersionId: publishedId,
-            version: semanticVersion(prior.versionNo),
+            version: versionOf(prior),
           }
         : null,
     published: publishedId ? (version?.publishedAt ?? null) : null,
     references: attachments.policyReferences,
     related,
     revision: draft
-      ? { status: policyStatusOf(false, draft.status), version: semanticVersion(draft.versionNo) }
+      ? { status: policyStatusOf(false, draft.status), version: versionOf(draft) }
       : null,
     sensitivity: policy.sensitivity,
     status: policyStatusOf(publishedId !== null, version?.status ?? draft?.status),
@@ -604,11 +606,14 @@ const assembleDetail = async (
     summary: summary ? { generatedAt: summary.generatedAt, text: summary.summaryText } : null,
     title: policy.title,
     updated: policy.updatedAt,
-    version: version ? semanticVersion(version.versionNo) : "",
+    version: version ? versionOf(version) : "",
+    ...(version ? await changeSummaryOf(version, cookie) : { versionChange: null }),
+    versionNo: version?.versionNo,
     versions: versions.map((v) => ({
       id: v.id,
       status: v.status,
-      version: semanticVersion(v.versionNo),
+      version: versionOf(v),
+      versionNo: v.versionNo,
     })),
   };
 };
@@ -624,6 +629,38 @@ const RecordPolicyExportDocument =
 
 /** Set once the gateway answers that it has no `recordPolicyExport` (steward-gateway#78). */
 let exportAuditMissing = false;
+
+/**
+ * How a version's change type came about, with a name for each user it mentions (#390). The names
+ * come from the same label resolution the admin screens use; when that fails, or there is nobody
+ * to name, the change type still shows and the ids stand in for the names.
+ */
+const changeSummaryOf = async (
+  version: Parameters<typeof versionChangeOf>[0],
+  cookie: string | undefined,
+): Promise<{
+  versionChange: ReturnType<typeof versionChangeOf>;
+  versionChangeNames: Record<string, string>;
+}> => {
+  const versionChange = versionChangeOf(version);
+  const ids = [
+    ...new Set([
+      ...versionChange.agreedByUserIds,
+      ...(versionChange.setByUserId ? [versionChange.setByUserId] : []),
+    ]),
+  ];
+  if (ids.length === 0) return { versionChange, versionChangeNames: {} };
+  const labels = await gatewayFetch(ResolveUserLabelsDocument, { ids }, "ResolveUserLabels", {
+    cookie,
+  }).then(
+    (d) => d.resolveUserLabels,
+    () => [],
+  );
+  return {
+    versionChange,
+    versionChangeNames: Object.fromEntries(labels.map((label) => [label.id, label.name])),
+  };
+};
 
 export const liveEdge: Edge = {
   async ackActivity(policyVersionId, groupId, days, cookie) {
@@ -1762,7 +1799,9 @@ export const liveEdge: Edge = {
       })),
       blocks: documentBlocksFromContent(policyVersion.contentJson),
       contentJson: policyVersion.contentJson,
-      version: semanticVersion(policyVersion.versionNo),
+      version: versionOf(policyVersion),
+      ...(await changeSummaryOf(policyVersion, cookie)),
+      versionNo: policyVersion.versionNo,
     };
   },
   async markVersionReviewed(policyVersionId, cookie) {
@@ -2172,12 +2211,23 @@ export const liveEdge: Edge = {
     );
     return data.submitPolicyRevision;
   },
-  async submitWorkflow(policyVersionId, policyId, categoryId, cookie) {
+  async submitWorkflow(policyVersionId, policyId, categoryId, cookie, pick) {
     // ancestorCategoryIds stays empty: the gateway rebuilds the lineage from categoryId and
     // falls back to the client's list only when it finds none.
     const data = await gatewayFetch(
       SubmitWorkflowDocument,
-      { ancestorCategoryIds: [], categoryId, policyId, policyVersionId },
+      {
+        ancestorCategoryIds: [],
+        categoryId,
+        policyId,
+        policyVersionId,
+        ...(pick
+          ? {
+              changeType: changeTypeToGateway(pick.change),
+              ...(pick.reason ? { changeTypeReason: pick.reason } : {}),
+            }
+          : {}),
+      },
       "SubmitWorkflow",
       { cookie },
     );

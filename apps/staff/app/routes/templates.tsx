@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@steward-web/auth";
 import { requireRoleFromRequest } from "@steward-web/auth/server";
 import { useTranslation } from "@steward-web/i18n";
 import { EmptyState, ResponsiveTable } from "@steward-web/ui";
+import { versionLabel } from "@steward-web/ui/domain";
 import { Link } from "react-router";
 
 import type { Route } from "./+types/templates";
@@ -27,6 +28,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       id: template.id,
       name: template.name,
       sections: versions[index]?.sections.length ?? 0,
+      semanticVersion: versions[index]?.semanticVersion ?? null,
       versionNo: versions[index]?.versionNo ?? null,
     })),
   };
@@ -67,7 +69,10 @@ export default function Templates({ loaderData }: Route.ComponentProps) {
             },
             {
               card: "meta",
-              cell: (template) => (template.versionNo === null ? "" : `v${template.versionNo}`),
+              cell: (template) =>
+                template.versionNo === null
+                  ? ""
+                  : versionLabel("template", template.versionNo, template.semanticVersion),
               className: "font-mono",
               header: t("templates.headers.version"),
               key: "version",

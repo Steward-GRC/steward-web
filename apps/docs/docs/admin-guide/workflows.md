@@ -62,6 +62,19 @@ account is disabled and needs replacing.
    sign-off last. **+ Add stage** adds one at the end.
 4. Select **Save workflow**.
 
+## 🏷️ Change types and the first stage
+
+When an author submits a new version of a published policy or procedure, Steward suggests how big
+the change is: **Major**, **Minor** or **Fix**. A different template, a changed required section,
+or a changed number, date, amount or obligation is Major. A change to an optional section, or more
+than ten changed words, is Minor. Anything smaller is a Fix. The author can raise the type freely.
+
+The author can also pick a type **lower** than the suggestion, but only with a reason, and the
+lower type applies only once the **first stage** of the workflow agrees. Until then the version
+keeps the suggested type. The approval page shows the suggested type, what it applies as, the
+author's requested type and reason, and who agreed. Put the people who should judge the size of a
+change in the first stage. A workflow needs no setting for this.
+
 ## 🔎 Choose approvers
 
 Type a name in a stage's approver box to find a person or a group. Only people who can approve

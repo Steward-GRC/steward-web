@@ -2,7 +2,7 @@ import type { AiJobStage } from "@steward-web/ui/domain";
 
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { AssistOperation } from "@steward-web/api-client";
+import { AssistOperation, changeTypeFrom, type VersionChange } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
 import {
@@ -116,14 +116,16 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const threads = draft ? await listReviewThreads(request, draft.id) : [];
   const approvers = draft && inReview ? await reviewApprovers(request, draft) : [];
   // The published text the live diff compares with; none for a first publish, or if it can't be read.
-  const published = policy.currentPublishedVersionId
+  const publishedRead = policy.currentPublishedVersionId
     ? await getVersionDocument(
         policy.currentPublishedVersionId,
         request.headers.get("cookie") ?? undefined,
-      )
-        .then((version) => version?.contentJson ?? null)
-        .catch(() => null)
+      ).catch(() => null)
     : null;
+  const published = publishedRead?.contentJson ?? null;
+  // the published version's own number, as core stored it (#390); the policy row only has the
+  // ordinal, so this is what "v1.2.3 to v1.3.0" starts from
+  const publishedLabel = publishedRead?.version || policy.version;
   // What the draft links to from the libraries (bug log 227); none when it can't be read.
   const linkState = draft ? await getVersionLinkState(request, draft.id) : null;
   return {
@@ -134,8 +136,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     inReview,
     linkState,
     meId: identity.id,
-    policy,
+    // the row only has the ordinal, so a published document's number comes from its version
+    policy: publishedRead?.version ? { ...policy, version: publishedRead.version } : policy,
     published,
+    publishedLabel,
     templateVersion,
     threads,
   };
@@ -265,7 +269,11 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         return data({ intent, ok: true } as const);
       }
       case "submit-review": {
-        const { runId } = await submitDraftForReview(request, policyId);
+        const pick = String(form.get("changeType") ?? "");
+        const { runId } = await submitDraftForReview(request, policyId, {
+          change: (["fix", "major", "minor"].includes(pick) ? pick : null) as null | VersionChange,
+          reason: String(form.get("changeTypeReason") ?? ""),
+        });
         return data({ intent, ok: true, runId } as const);
       }
       case "withdraw": {
@@ -319,6 +327,7 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
     meId,
     policy,
     published,
+    publishedLabel,
     templateVersion,
     threads,
   } = loaderData;
@@ -667,7 +676,8 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
                 empty={!documentHasText(content)}
                 incompleteButtons={incompleteButtons(content)}
                 missing={missing}
-                published={firstPublish ? undefined : policy.version}
+                published={firstPublish ? undefined : publishedLabel}
+                suggested={changeTypeFrom(draft.suggestedChangeType) ?? undefined}
               />
             ) : null}
             <ActionsMenu
@@ -691,7 +701,7 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
                 status: aiStatus,
               }}
               inReview={inReview}
-              published={firstPublish ? undefined : policy.version}
+              published={firstPublish ? undefined : publishedLabel}
             />
           </>
         }
@@ -797,7 +807,7 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
           />
           <NextVersion
             firstPublish={firstPublish}
-            published={firstPublish ? undefined : policy.version}
+            published={firstPublish ? undefined : publishedLabel}
           />
         </div>
       </div>

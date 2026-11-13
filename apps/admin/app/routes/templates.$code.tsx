@@ -1,8 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { SectionInput } from "@steward-web/api-client";
-
-import { useTranslation } from "@steward-web/i18n";
+import { changeTypeFrom, type SectionInput } from "@steward-web/api-client";
+import { formatDate, useTranslation } from "@steward-web/i18n";
 import { refusalOf } from "@steward-web/shell";
 import {
   Banner,
@@ -121,6 +120,10 @@ const failureOf = (fetcher: { data?: Result; state: string }) =>
     ? fetcher.data.failure
     : undefined;
 
+// the semantic version core stored sits beside the number (#390)
+const labelOf = (version: { semanticVersion?: null | string; versionNo: number }) =>
+  versionLabel("template", version.versionNo, version.semanticVersion);
+
 const STEPS = ["sections", "review", "publish"] as const;
 type Step = (typeof STEPS)[number];
 
@@ -214,6 +217,8 @@ const ConfirmDialog = ({
 export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
   const { template, versions } = loaderData;
+  const changeWord = (change: Parameters<typeof changeTypeFrom>[0]) =>
+    t(`change.${changeTypeFrom(change) ?? "fix"}`, { ns: "policy" });
   const draft = versions.find((v) => v.status === "draft");
   const active = versions.find((v) => v.status === "published");
   const [sections, setSections] = useState<readonly SectionInput[]>(() =>
@@ -257,11 +262,11 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
 
   const versionLine =
     active && draft
-      ? t("templates.detail.versions", { active: active.versionNo, draft: draft.versionNo })
+      ? t("templates.detail.versions", { active: labelOf(active), draft: labelOf(draft) })
       : active
-        ? t("templates.detail.activeOnly", { active: active.versionNo })
+        ? t("templates.detail.activeOnly", { active: labelOf(active) })
         : draft
-          ? t("templates.detail.draftOnly", { draft: draft.versionNo })
+          ? t("templates.detail.draftOnly", { draft: labelOf(draft) })
           : t("templates.detail.noVersions");
   const changes = sectionChanges(active?.sections ?? [], sections);
   const failure = [save, publish, create, rename]
@@ -275,6 +280,14 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
           <p className="text-xs font-medium text-muted">{t("templates.detail.eyebrow")}</p>
           <h1 className="text-[26px] leading-[1.3] font-semibold">{template.name}</h1>
           <p className="font-mono text-sm text-muted">{versionLine}</p>
+          <p className="text-sm text-muted">
+            {active?.publishedAt
+              ? t("templates.detail.dates", {
+                  published: formatDate(active.publishedAt),
+                  updated: formatDate(template.updatedAt),
+                })
+              : t("templates.detail.datesUnpublished", { updated: formatDate(template.updatedAt) })}
+          </p>
         </div>
         {draft ? (
           <Button
@@ -340,7 +353,7 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
             <Card className="flex flex-col gap-2 p-4">
               <b>
                 {active
-                  ? t("templates.detail.review.title", { version: active.versionNo })
+                  ? t("templates.detail.review.title", { version: labelOf(active).slice(1) })
                   : t("templates.detail.review.titleFirst")}
               </b>
               {changes.length === 0 ? (
@@ -364,7 +377,7 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
           ) : null}
           {step === "publish" ? (
             <Card className="flex flex-col gap-2 p-4">
-              <b>{t("templates.detail.publish.title", { version: draft.versionNo })}</b>
+              <b>{t("templates.detail.publish.title", { version: labelOf(draft).slice(1) })}</b>
               <p className="text-sm text-muted">{t("templates.detail.publish.description")}</p>
               <div className="flex justify-end gap-2">
                 <Button onClick={() => setStep("review")} variant="secondary">
@@ -398,11 +411,15 @@ export default function TemplateDetail({ loaderData }: Route.ComponentProps) {
           current: version.id === (active?.id ?? versions[0]?.id),
           events: [
             {
+              at: version.publishedAt ?? version.createdAt ?? undefined,
+              detail: version.changeType
+                ? t("templates.detail.historyChange", { change: changeWord(version.changeType) })
+                : undefined,
               title: t("templates.detail.historyItem", { count: version.sections.length }),
               tone: version.status === "published" ? "published" : "neutral",
             },
           ],
-          label: versionLabel("template", version.versionNo),
+          label: labelOf(version),
           status:
             version.status === "published"
               ? "published"

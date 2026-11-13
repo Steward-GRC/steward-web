@@ -138,3 +138,18 @@ describe("the history timeline (U18)", () => {
     expect(screen.getByText("No approval activity yet.")).toBeInTheDocument();
   });
 });
+
+describe("PolicyReaderHistory: the ordinal beside the semantic version (#390)", () => {
+  it("notes the ordinal under a semantic label, and nothing when the event has none", () => {
+    render(
+      <PolicyReaderHistory
+        history={[
+          { ...entry("published"), versionLabel: "1.1.0", versionNo: 2 },
+          { ...entry("published"), versionLabel: "2.0.0" },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Version 2")).toBeInTheDocument();
+    expect(screen.queryByText("Version 1")).toBeNull();
+  });
+});

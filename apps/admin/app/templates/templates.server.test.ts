@@ -50,7 +50,11 @@ const makeTemplate = (overrides: Partial<Template> & Pick<Template, "id" | "name
 const makeVersion = (
   overrides: Partial<TemplateVersion> & Pick<TemplateVersion, "id" | "templateId">,
 ): TemplateVersion => ({
+  changeType: null,
+  createdAt: null,
+  publishedAt: null,
   sections: [],
+  semanticVersion: null,
   status: "draft",
   versionNo: 1,
   ...overrides,

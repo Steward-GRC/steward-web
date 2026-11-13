@@ -3,12 +3,16 @@ mutation SubmitWorkflow(
   $policyId: ID!
   $categoryId: ID!
   $ancestorCategoryIds: [ID!]!
+  $changeType: ChangeType
+  $changeTypeReason: String
 ) {
   submitWorkflow(
     policyVersionId: $policyVersionId
     policyId: $policyId
     categoryId: $categoryId
     ancestorCategoryIds: $ancestorCategoryIds
+    changeType: $changeType
+    changeTypeReason: $changeTypeReason
   ) {
     runId
   }

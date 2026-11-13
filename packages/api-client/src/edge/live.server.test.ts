@@ -376,6 +376,121 @@ describe("liveEdge.policyDetail", () => {
     });
   });
 
+  it("reads the semantic version core stored for the header, the versions, the history and the revision (#390)", async () => {
+    routeGateway({
+      ...readerHandlers(() => ({
+        auditLog: {
+          nextPageToken: "",
+          records: [
+            {
+              action: "policy.published",
+              actorName: "Bob Author",
+              occurredAt: "2026-08-12T00:00:00Z",
+            },
+          ],
+        },
+      })),
+      PolicyByNumber: () => ({ policyByNumber: policy({ currentDraftVersionId: "v-3" }) }),
+      ResolveUserLabels: (v) => ({
+        resolveUserLabels: (v.ids as string[]).map((id) => ({
+          email: `${id}@example.org`,
+          id,
+          name: `Name of ${id}`,
+        })),
+      }),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          changeType: "MINOR",
+          changeTypeAgreedByUserIds: ["u-7", "u-8"],
+          changeTypeReason: "Only wording moved.",
+          changeTypeSetByUserId: "u-1",
+          contentJson: JSON.stringify([{ sectionKey: "purpose", text: "Why.", title: "Purpose" }]),
+          createdAt: "2026-08-05T00:00:00Z",
+          id: "v-2",
+          policyId: "p-1",
+          publishedAt: "2026-08-12T00:00:00Z",
+          requestedChangeType: null,
+          semanticVersion: "1.1.0",
+          status: "published",
+          suggestedChangeType: "MAJOR",
+          templateVersionId: "",
+          versionNo: 2,
+        },
+      }),
+      PolicyVersions: () => ({
+        policyVersions: [
+          { id: "v-1", semanticVersion: "1.0.0", status: "superseded", versionNo: 1 },
+          { id: "v-2", semanticVersion: "1.1.0", status: "published", versionNo: 2 },
+          { id: "v-3", semanticVersion: "1.1.1", status: "draft", versionNo: 3 },
+        ],
+      }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail).toMatchObject({
+      history: [{ kind: "published", versionLabel: "1.1.0", versionNo: 2 }],
+      priorVersion: { version: "1.0.0" },
+      revision: { version: "1.1.1" },
+      version: "1.1.0",
+      versionChange: {
+        agreedByUserIds: ["u-7", "u-8"],
+        changeType: "minor",
+        reason: "Only wording moved.",
+        requestedChangeType: null,
+        setByUserId: "u-1",
+        suggestedChangeType: "major",
+      },
+      versionChangeNames: {
+        "u-1": "Name of u-1",
+        "u-7": "Name of u-7",
+        "u-8": "Name of u-8",
+      },
+      versionNo: 2,
+      versions: [
+        { version: "1.0.0", versionNo: 1 },
+        { version: "1.1.0", versionNo: 2 },
+        { version: "1.1.1", versionNo: 3 },
+      ],
+    });
+  });
+
+  it("still shows the change type when the user labels cannot be resolved (#390)", async () => {
+    routeGateway({
+      ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          changeType: "FIX",
+          changeTypeAgreedByUserIds: ["u-7"],
+          contentJson: "[]",
+          id: "v-2",
+          policyId: "p-1",
+          status: "published",
+          templateVersionId: "",
+          versionNo: 2,
+        },
+      }),
+      ResolveUserLabels: () => ({ errors: [{ message: "unavailable" }] }),
+    });
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail?.versionChange?.agreedByUserIds).toEqual(["u-7"]);
+    expect(detail?.versionChangeNames).toEqual({});
+  });
+
+  it("falls back to the ordinal when core has no semantic version (#390)", async () => {
+    routeGateway(readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })));
+    const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
+    expect(detail).toMatchObject({ version: "2.0.0", versionNo: 2 });
+    expect(detail?.versionChange).toEqual({
+      agreedByUserIds: [],
+      changeType: null,
+      reason: null,
+      requestedChangeType: null,
+      setByUserId: null,
+      suggestedChangeType: null,
+    });
+  });
+
   it("lists the versions to compare, the pair it diffed, and whether AI is up", async () => {
     routeGateway({
       ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
@@ -648,6 +763,7 @@ describe("liveEdge.policyDetail", () => {
         kind: "published",
         stage: null,
         versionLabel: "1.0.0",
+        versionNo: 1,
       },
       {
         actorName: null,
@@ -656,6 +772,7 @@ describe("liveEdge.policyDetail", () => {
         kind: "published",
         stage: null,
         versionLabel: "2.0.0",
+        versionNo: 2,
       },
     ]);
   });
@@ -1128,6 +1245,20 @@ describe("liveEdge.submitWorkflow", () => {
     ]);
   });
 
+  it("sends the author's pick and reason when there is one (#390)", async () => {
+    const calls = routeGateway({
+      SubmitWorkflow: () => ({ submitWorkflow: { runId: "run-1" } }),
+    });
+    await liveEdge.submitWorkflow("v-9", "p-1", "c-travel", undefined, {
+      change: "fix",
+      reason: "Only a typo moved.",
+    });
+    expect(calls[0]?.variables).toMatchObject({
+      changeType: "FIX",
+      changeTypeReason: "Only a typo moved.",
+    });
+  });
+
   it("passes the gateway's refusal through, code and all", async () => {
     routeGateway({
       SubmitWorkflow: () => ({
@@ -1217,8 +1348,59 @@ describe("liveEdge.versionDocument", () => {
       ],
       contentJson: expect.stringContaining("A photo is enough."),
       version: "3.0.0",
+      versionChange: {
+        agreedByUserIds: [],
+        changeType: null,
+        reason: null,
+        requestedChangeType: null,
+        setByUserId: null,
+        suggestedChangeType: null,
+      },
+      versionChangeNames: {},
+      versionNo: 3,
     });
+    // nobody to name, so no label call
     expect(calls).toEqual([{ operation: "PolicyVersion", variables: { id: "v-3" } }]);
+  });
+
+  it("carries the version's semantic version and how its change type came about (#390)", async () => {
+    const calls = routeGateway({
+      PolicyVersion: () => ({
+        policyVersion: {
+          appendices: [],
+          changeType: "MAJOR",
+          changeTypeAgreedByUserIds: [],
+          changeTypeReason: "Only a typo moved.",
+          changeTypeSetByUserId: "u-1",
+          contentJson: "[]",
+          id: "v-3",
+          policyId: "p-1",
+          requestedChangeType: "FIX",
+          semanticVersion: "2.0.0",
+          status: "draft",
+          suggestedChangeType: "MAJOR",
+          templateVersionId: "",
+          versionNo: 3,
+        },
+      }),
+      ResolveUserLabels: (v) => ({
+        resolveUserLabels: (v.ids as string[]).map((id) => ({ email: "", id, name: "Bob Author" })),
+      }),
+    });
+    expect(await liveEdge.versionDocument("v-3")).toMatchObject({
+      version: "2.0.0",
+      versionChange: {
+        changeType: "major",
+        reason: "Only a typo moved.",
+        requestedChangeType: "fix",
+        setByUserId: "u-1",
+        suggestedChangeType: "major",
+      },
+      versionChangeNames: { "u-1": "Bob Author" },
+    });
+    expect(calls.find((c) => c.operation === "ResolveUserLabels")?.variables).toEqual({
+      ids: ["u-1"],
+    });
   });
 
   it("is null for a version the caller can't read", async () => {

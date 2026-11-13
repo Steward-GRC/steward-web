@@ -29,6 +29,12 @@ describe("versionLabel (#89)", () => {
     expect(versionLabel("template", "3")).toBe("v3");
   });
 
+  it("puts a template's semantic version beside its number, or the number alone without one (#390)", () => {
+    expect(versionLabel("template", 3, "2.1.0")).toBe("v3 (2.1.0)");
+    expect(versionLabel("template", 3, null)).toBe("v3");
+    expect(versionLabel("template", 3, "")).toBe("v3");
+  });
+
   it("shows a policy or procedure version as a semantic version", () => {
     expect(versionLabel("policy", "1.0.1")).toBe("v1.0.1");
     expect(versionLabel("procedure", "v2.1.0")).toBe("v2.1.0");
@@ -36,6 +42,16 @@ describe("versionLabel (#89)", () => {
 });
 
 describe("VersionHistory", () => {
+  it("shows a note beside a version's label, such as its ordinal (#390)", () => {
+    render(
+      <VersionHistory
+        groups={[{ ...groups[0]!, label: "v2.1.0", note: "Version 4" }]}
+        title="Version history"
+      />,
+    );
+    expect(screen.getByText("Version 4")).toBeInTheDocument();
+  });
+
   it("draws one card with a group per version, the current one open", () => {
     render(<VersionHistory groups={groups} title="Version history" />);
     expect(screen.getByRole("heading", { name: "Version history" })).toBeInTheDocument();

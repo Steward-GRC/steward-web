@@ -160,6 +160,36 @@ describe("PolicyReader", () => {
     expect(screen.getByText("POL-FINANCE-001 · v2.0.0")).toHaveClass("font-mono");
   });
 
+  it("shows the ordinal beside the semantic version in the details (#390)", () => {
+    renderAt({ ...baseDetail, version: "1.1.0", versionNo: 2 });
+    const details = within(screen.getByRole("list", { name: "Details" }));
+    expect(details.getByText("v1.1.0")).toBeInTheDocument();
+    expect(details.getByText("Version 2")).toBeInTheDocument();
+  });
+
+  it("shows how the change type came about, names resolved (#390)", () => {
+    renderAt({
+      ...baseDetail,
+      versionChange: {
+        agreedByUserIds: ["u-7"],
+        changeType: "fix",
+        reason: "Only a typo moved.",
+        requestedChangeType: null,
+        setByUserId: "u-1",
+        suggestedChangeType: "major",
+      },
+      versionChangeNames: { "u-1": "Bob Author", "u-7": "Dana Approver" },
+    });
+    const card = screen.getByRole("region", { name: "Change type" });
+    expect(within(card).getByText("Dana Approver")).toBeInTheDocument();
+    expect(within(card).getByText("Bob Author")).toBeInTheDocument();
+  });
+
+  it("leaves the change type out when the version has none (#390)", () => {
+    renderAt(baseDetail);
+    expect(screen.queryByRole("region", { name: "Change type" })).toBeNull();
+  });
+
   it("says how many words the policy has and how long it takes to read (bug log 172)", () => {
     renderAt(baseDetail);
     // the fixture's body: 20 words, so under one reading speed's minute

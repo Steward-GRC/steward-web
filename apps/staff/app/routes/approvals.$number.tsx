@@ -17,6 +17,7 @@ import {
   TabsTrigger,
 } from "@steward-web/ui";
 import {
+  ChangeTypeSummary,
   DecisionPanel,
   DiffView,
   DocumentType,
@@ -408,6 +409,13 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           youLabel: t("flow.you"),
         })}
       />
+
+      {review.upcoming?.versionChange ? (
+        <ChangeTypeSummary
+          change={review.upcoming.versionChange}
+          names={review.upcoming.versionChangeNames}
+        />
+      ) : null}
 
       <div className="grid items-start gap-6">
         <Tabs onValueChange={setView} value={view}>

@@ -1196,9 +1196,10 @@
       "name": "Name",
       "category": "Category",
       "versions": "Versions",
-      "latest": "Latest"
+      "latest": "Latest",
+      "updated": "Updated"
     },
-    "latest": "v{{version}} · {{status}}",
+    "latest": "{{version}} · {{status}}",
     "status": {
       "draft": "draft",
       "published": "published",
@@ -1213,9 +1214,12 @@
     },
     "detail": {
       "eyebrow": "Templates",
-      "versions": "v{{active}} active · v{{draft}} draft",
-      "activeOnly": "v{{active}} active",
-      "draftOnly": "v{{draft}} draft",
+      "versions": "{{active}} active · {{draft}} draft",
+      "activeOnly": "{{active}} active",
+      "draftOnly": "{{draft}} draft",
+      "dates": "Published {{published}} · Updated {{updated}}",
+      "datesUnpublished": "Not published yet · Updated {{updated}}",
+      "historyChange": "{{change}} change",
       "noVersions": "No versions yet",
       "discard": "Discard draft",
       "createVersion": "Create version",

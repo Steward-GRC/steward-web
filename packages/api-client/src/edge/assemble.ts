@@ -10,13 +10,14 @@ import {
 import type { AuthoringPolicyFieldsFragment } from "../generated/graphql";
 
 import { GatewayError } from "../gatewayFetch";
-import { semanticVersion } from "../semanticVersion";
+import { changeTypeFrom, semanticVersion, versionOf } from "../semanticVersion";
 import {
   type DocumentBlock,
   type HistoryEntry,
   type InlineRun,
   type Policy,
   PolicyStatus,
+  type VersionChangeInfo,
 } from "../views";
 
 /** The part of a gateway `Category` the library's names are built from. */
@@ -359,6 +360,7 @@ const historyKindOf = (action: string): string =>
 export const historyFromAuditLog = (
   records: readonly { action: string; actorName?: null | string; occurredAt: string }[],
   versionLabel: string,
+  versionNo?: number,
 ): HistoryEntry[] =>
   records.toReversed().map((r) => ({
     actorName: r.actorName ?? null,
@@ -367,6 +369,7 @@ export const historyFromAuditLog = (
     kind: historyKindOf(r.action),
     stage: null,
     versionLabel,
+    versionNo,
   }));
 
 /**
@@ -375,7 +378,11 @@ export const historyFromAuditLog = (
  * under its own version number. Actor, comment and stage are null: a version row has none.
  */
 export const historyFromVersions = (
-  versions: readonly { publishedAt?: null | string; versionNo: number }[],
+  versions: readonly {
+    publishedAt?: null | string;
+    semanticVersion?: null | string;
+    versionNo: number;
+  }[],
 ): HistoryEntry[] =>
   versions
     .toSorted((a, b) => a.versionNo - b.versionNo)
@@ -388,8 +395,30 @@ export const historyFromVersions = (
               comment: null,
               kind: "published",
               stage: null,
-              versionLabel: semanticVersion(v.versionNo),
+              versionLabel: versionOf(v),
+              versionNo: v.versionNo,
             },
           ]
         : [],
     );
+
+/**
+ * How a version's change type came about, from the gateway's version row (#390): core's
+ * suggestion, what it publishes as, the author's pending lowering and reason, and who set and
+ * agreed to it. Every missing value reads as null, so a gateway that sends none shows nothing.
+ */
+export const versionChangeOf = (version: {
+  changeType?: Parameters<typeof changeTypeFrom>[0];
+  changeTypeAgreedByUserIds?: null | readonly string[];
+  changeTypeReason?: null | string;
+  changeTypeSetByUserId?: null | string;
+  requestedChangeType?: Parameters<typeof changeTypeFrom>[0];
+  suggestedChangeType?: Parameters<typeof changeTypeFrom>[0];
+}): VersionChangeInfo => ({
+  agreedByUserIds: version.changeTypeAgreedByUserIds ?? [],
+  changeType: changeTypeFrom(version.changeType),
+  reason: version.changeTypeReason || null,
+  requestedChangeType: changeTypeFrom(version.requestedChangeType),
+  setByUserId: version.changeTypeSetByUserId ?? null,
+  suggestedChangeType: changeTypeFrom(version.suggestedChangeType),
+});

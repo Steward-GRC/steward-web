@@ -137,6 +137,64 @@ describe("the approval review page (U25)", () => {
   });
 });
 
+const withChange = (change: Record<string, unknown>, names: Record<string, string> = {}) => ({
+  ...loaderData,
+  review: {
+    ...loaderData.review,
+    upcoming: { ...loaderData.review.upcoming, versionChange: change, versionChangeNames: names },
+  },
+});
+
+describe("the change type on the review page (#390)", () => {
+  const none = {
+    agreedByUserIds: [],
+    changeType: null,
+    reason: null,
+    requestedChangeType: null,
+    setByUserId: null,
+    suggestedChangeType: null,
+  };
+
+  it("shows what was suggested, the author's lowering and reason, for the first stage to agree to", () => {
+    renderReview(
+      () => {},
+      withChange(
+        {
+          ...none,
+          changeType: "major",
+          reason: "Only a typo moved.",
+          requestedChangeType: "fix",
+          setByUserId: "u-1",
+          suggestedChangeType: "major",
+        },
+        { "u-1": "Bob Author" },
+      ),
+    );
+    const card = screen.getByRole("region", { name: "Change type" });
+    expect(within(card).getByText("Waiting for the first approval stage to agree.")).toBeVisible();
+    expect(within(card).getByText("Only a typo moved.")).toBeVisible();
+    expect(within(card).getByText("Bob Author")).toBeVisible();
+  });
+
+  it("names who agreed once the lowering applied", () => {
+    renderReview(
+      () => {},
+      withChange(
+        { ...none, agreedByUserIds: ["u-4"], changeType: "fix", suggestedChangeType: "major" },
+        { "u-4": "Dave" },
+      ),
+    );
+    expect(
+      within(screen.getByRole("region", { name: "Change type" })).getByText("Dave"),
+    ).toBeVisible();
+  });
+
+  it("shows nothing when the version carries no change type", () => {
+    renderReview(() => {}, withChange(none));
+    expect(screen.queryByRole("region", { name: "Change type" })).toBeNull();
+  });
+});
+
 describe("the review page's head and tabs (U25)", () => {
   it("puts the Your decision box at the bottom of the page, below the tabs and the changes", () => {
     renderReview(vi.fn());

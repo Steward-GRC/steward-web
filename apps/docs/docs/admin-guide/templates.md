@@ -14,8 +14,27 @@ required section must be filled before the policy can be submitted.
 ## 🗂️ The Templates list
 
 **Templates** under **Structure** lists each template's ID, name, owning category, how many
-versions it has and its latest version. **+ New template** asks for a name and, optionally, the
-top-level category that owns it.
+versions it has, its latest version and when the template last changed. **+ New template** asks for
+a name and, optionally, the top-level category that owns it.
+
+## 🔢 Version numbers
+
+Each template version has a number (v1, v2, v3) and a **semantic version** beside it, such as
+`v3 (1.2.0)`. Steward writes the semantic version when you publish, from what changed against the
+version before:
+
+| Change against the active version                            | Raises                     |
+| ------------------------------------------------------------ | -------------------------- |
+| A required section added, removed or made required           | **Major** (1.0.0 to 2.0.0) |
+| An optional section added or removed, or changed boilerplate | **Minor** (1.0.0 to 1.1.0) |
+| Titles, order or heading level only                          | **Fix** (1.0.0 to 1.0.1)   |
+
+The first published version is always 1.0.0. A draft shows the number a publish would give it now.
+If Steward has no semantic version for a version, only its number shows.
+
+The template page shows **Published** (when the active version went live) and **Updated** (the
+latest of a rename and any version being created or published). **Version history** dates each
+version and says how big its change was.
 
 ## ✏️ Change a template
 

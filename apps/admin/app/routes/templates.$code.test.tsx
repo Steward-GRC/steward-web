@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { formatDate, formatDateTime } from "@steward-web/i18n";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
@@ -43,11 +44,12 @@ const TEMPLATE = {
   name: "Standard Policy",
   ownerCategoryId: null,
   retiredAt: null,
+  updatedAt: "2026-11-03T09:00:00Z",
 };
 
 type DetailProps = Parameters<typeof TemplateDetail>[0];
 
-const openTemplate = (versions: object[] = VERSIONS) => {
+const openTemplate = (versions: object[] = VERSIONS, template: object = TEMPLATE) => {
   const posted: FormData[] = [];
   const Stub = createRoutesStub([
     {
@@ -57,9 +59,7 @@ const openTemplate = (versions: object[] = VERSIONS) => {
         return { intent: form.get("intent"), ok: true };
       },
       Component: () => (
-        <TemplateDetail
-          {...({ loaderData: { template: TEMPLATE, versions } } as unknown as DetailProps)}
-        />
+        <TemplateDetail {...({ loaderData: { template, versions } } as unknown as DetailProps)} />
       ),
       path: "/templates/:code",
     },
@@ -70,6 +70,75 @@ const openTemplate = (versions: object[] = VERSIONS) => {
 
 const last = (posted: FormData[]) => posted.at(-1)!;
 const rows = () => within(screen.getByRole("list", { name: "Sections" })).getAllByRole("listitem");
+
+const SEMANTIC_VERSIONS = [
+  {
+    changeType: null,
+    createdAt: "2026-10-30T09:00:00Z",
+    id: "v-3",
+    publishedAt: null,
+    sections: DRAFT,
+    semanticVersion: "1.2.0",
+    status: "draft",
+    templateId: "t-1",
+    versionNo: 3,
+  },
+  {
+    changeType: "MINOR",
+    createdAt: "2026-09-01T09:00:00Z",
+    id: "v-2",
+    publishedAt: "2026-09-02T09:00:00Z",
+    sections: PUBLISHED,
+    semanticVersion: "1.1.0",
+    status: "published",
+    templateId: "t-1",
+    versionNo: 2,
+  },
+  {
+    changeType: "MAJOR",
+    createdAt: "2026-08-01T09:00:00Z",
+    id: "v-1",
+    publishedAt: "2026-08-02T09:00:00Z",
+    sections: PUBLISHED.slice(0, 2),
+    semanticVersion: "1.0.0",
+    status: "superseded",
+    templateId: "t-1",
+    versionNo: 1,
+  },
+];
+
+describe("Template detail: semantic versions and dates (#390)", () => {
+  it("puts the semantic version beside each version number", async () => {
+    openTemplate(SEMANTIC_VERSIONS);
+    expect(await screen.findByText("v2 (1.1.0) active · v3 (1.2.0) draft")).toBeInTheDocument();
+    const history = await screen.findByRole("region", { name: "Version history" });
+    expect(within(history).getByRole("button", { name: /v2 \(1\.1\.0\)/ })).toBeInTheDocument();
+    expect(within(history).getByRole("button", { name: /v1 \(1\.0\.0\)/ })).toBeInTheDocument();
+  });
+
+  it("shows when the template was published and last updated", async () => {
+    openTemplate(SEMANTIC_VERSIONS);
+    expect(
+      await screen.findByText(
+        `Published ${formatDate("2026-09-02T09:00:00Z")} · Updated ${formatDate("2026-11-03T09:00:00Z")}`,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says so when nothing is published or updated yet", async () => {
+    openTemplate([SEMANTIC_VERSIONS[0]!], { ...TEMPLATE, updatedAt: null });
+    expect(await screen.findByText("Not published yet · Updated —")).toBeInTheDocument();
+  });
+
+  it("dates each version in the history, and says how big its change was", async () => {
+    openTemplate(SEMANTIC_VERSIONS);
+    const history = await screen.findByRole("region", { name: "Version history" });
+    await userEvent.click(within(history).getByRole("button", { name: /v1 \(1\.0\.0\)/ }));
+    const events = within(within(history).getByRole("list", { name: /v1 \(1\.0\.0\)/ }));
+    expect(events.getByText("Major change")).toBeInTheDocument();
+    expect(events.getByText(formatDateTime("2026-08-02T09:00:00Z"))).toBeInTheDocument();
+  });
+});
 
 describe("Template detail, the draft wizard (A7)", () => {
   it("opens with the name, the active and draft versions, and Discard draft", async () => {

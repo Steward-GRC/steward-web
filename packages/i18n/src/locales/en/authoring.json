@@ -263,6 +263,7 @@
     "review": {
       "inReview": "Sent for review. Its approvers see it in Approvals, and it publishes when the last stage approves. You can keep editing: each approver sees what changed since they last reviewed.",
       "publishFailed": "The draft wasn't published",
+      "submitChangeRefused": "That change type could not be used.",
       "submitFailed": "The draft wasn't sent for review",
       "submitRefused": "This draft can't go for review yet",
       "submitRefusedDetail": "No approval workflow applies to its group, or a stage has no approver. Ask an administrator to attach one."
@@ -296,11 +297,10 @@
       "fillButtons": "Give every button a label and a link before submitting.",
       "fillRequired": "Fill every required section before submitting.",
       "keepEditing": "Keep editing",
-      "lowering": "Lowering it needs a reason",
-      "reacknowledge": "Everyone in the audience will be asked to acknowledge again.",
-      "title": "Submit for approval?",
-      "why": "Why {{change}}",
-      "workedOut": "Worked out by Steward"
+      "loweringHint": "The first approval stage has to agree before a lower type applies. Until then it publishes as {{change}}.",
+      "loweringReason": "Why is it lower?",
+      "suggests": "Steward suggests {{change}}",
+      "title": "Submit for approval?"
     },
     "appendix": {
       "back": "Back to the {{title}} draft",

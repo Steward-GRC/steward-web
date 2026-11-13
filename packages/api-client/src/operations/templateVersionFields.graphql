@@ -2,6 +2,10 @@ fragment TemplateVersionFields on TemplateVersion {
   id
   templateId
   versionNo
+  semanticVersion
+  changeType
+  createdAt
+  publishedAt
   status
   sections {
     key

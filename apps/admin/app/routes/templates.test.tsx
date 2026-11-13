@@ -1,5 +1,6 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
+import { formatDate } from "@steward-web/i18n";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
@@ -11,8 +12,14 @@ import Templates from "./templates";
 const ROWS = [
   {
     categoryName: "Finance",
-    latest: { status: "draft", versionNo: 3 },
-    template: { code: "TPL-001", id: "t-1", name: "Standard Policy", retiredAt: null },
+    latest: { semanticVersion: "1.2.0", status: "draft", versionNo: 3 },
+    template: {
+      code: "TPL-001",
+      id: "t-1",
+      name: "Standard Policy",
+      retiredAt: null,
+      updatedAt: "2026-11-03T09:00:00Z",
+    },
     versionCount: 3,
   },
   {
@@ -61,6 +68,7 @@ describe("Templates (A6)", () => {
       "Category",
       "Versions",
       "Latest",
+      "Updated",
     ]);
     const [, standard, short] = screen.getAllByRole("row");
     expect(within(standard!).getByText("TPL-001")).toBeInTheDocument();
@@ -68,8 +76,16 @@ describe("Templates (A6)", () => {
       "href",
       "/templates/TPL-001",
     );
-    expect(within(standard!).getByText("v3 · draft")).toBeInTheDocument();
+    expect(within(standard!).getByText("v3 (1.2.0) · draft")).toBeInTheDocument();
+    expect(within(standard!).getByText(formatDate("2026-11-03T09:00:00Z"))).toBeInTheDocument();
     expect(within(short!).getByText("Retired")).toBeInTheDocument();
+  });
+
+  it("shows the number alone for a version core has no semantic version for (#390)", async () => {
+    openTemplates([
+      { ...ROWS[0]!, latest: { semanticVersion: null, status: "published", versionNo: 2 } },
+    ]);
+    expect(await screen.findByText("v2 · published")).toBeInTheDocument();
   });
 
   it("creates a template from the dialog (D25)", async () => {
@@ -99,7 +115,7 @@ describe("Templates on a phone (7-responsive.s3)", () => {
       "href",
       "/templates/TPL-001",
     );
-    expect(standard!.textContent).toBe("Standard PolicyTPL-001 · Finance · v3 · draft");
+    expect(standard!.textContent).toBe("Standard PolicyTPL-001 · Finance · v3 (1.2.0) · draft");
     expect(short!.textContent).toBe("Short noticeRetiredTPL-002 · — · —");
   });
 

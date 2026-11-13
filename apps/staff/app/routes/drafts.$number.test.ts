@@ -192,6 +192,16 @@ describe("drafts.$number action: edit (from the reader)", () => {
   });
 });
 
+const withSuggestion = (suggestedChangeType: null | string) => ({
+  ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+  PolicyVersion: () => ({
+    policyVersion: { ...draftVersion("draft"), semanticVersion: "1.1.0", suggestedChangeType },
+  }),
+  SubmitWorkflow: () => ({ submitWorkflow: { runId: "run-1" } }),
+});
+const sent = (calls: { operation: string; variables: Record<string, unknown> }[]) =>
+  calls.find((c) => c.operation === "SubmitWorkflow")?.variables;
+
 describe("drafts.$number action: submit-review", () => {
   it("starts the approval run on the policy's working draft and home category", async () => {
     const calls = routeGateway({
@@ -207,6 +217,56 @@ describe("drafts.$number action: submit-review", () => {
       categoryId: "c-travel",
       policyId: "p-1",
       policyVersionId: "v-9",
+    });
+  });
+
+  describe("the author's change type pick (#390)", () => {
+    it("sends a pick above core's suggestion", async () => {
+      const calls = routeGateway(withSuggestion("MINOR"));
+      const result = await runAction({ changeType: "major", intent: "submit-review" });
+      expect(result.data).toMatchObject({ ok: true });
+      expect(sent(calls)).toMatchObject({ changeType: "MAJOR" });
+      expect(sent(calls)).not.toHaveProperty("changeTypeReason");
+    });
+
+    it("sends nothing when the pick is the suggestion, so the suggestion stands", async () => {
+      const calls = routeGateway(withSuggestion("MINOR"));
+      await runAction({ changeType: "minor", intent: "submit-review" });
+      expect(sent(calls)).not.toHaveProperty("changeType");
+    });
+
+    it("sends nothing for a first version, which is always 1.0.0 and takes no pick", async () => {
+      const calls = routeGateway(withSuggestion(null));
+      await runAction({ changeType: "major", intent: "submit-review" });
+      expect(sent(calls)).not.toHaveProperty("changeType");
+    });
+
+    it("sends a lowering with its reason", async () => {
+      const calls = routeGateway(withSuggestion("MAJOR"));
+      await runAction({
+        changeType: "fix",
+        changeTypeReason: "  Only a typo moved.  ",
+        intent: "submit-review",
+      });
+      expect(sent(calls)).toMatchObject({
+        changeType: "FIX",
+        changeTypeReason: "Only a typo moved.",
+      });
+    });
+
+    it("refuses a lowering without a reason before calling the gateway", async () => {
+      const calls = routeGateway(withSuggestion("MAJOR"));
+      const result = await runAction({
+        changeType: "minor",
+        changeTypeReason: " ".repeat(3),
+        intent: "submit-review",
+      });
+      expect(result.init?.status).toBe(400);
+      expect(result.data).toMatchObject({
+        error: { code: "INVALID_ARGUMENT", operation: "SubmitWorkflow" },
+        ok: false,
+      });
+      expect(calls.map((c) => c.operation)).not.toContain("SubmitWorkflow");
     });
   });
 
@@ -453,6 +513,28 @@ describe("drafts.$number loader: the published text for the live diff (bug log 2
     routeGateway(handlers());
     const result = await runLoader();
     expect(result.published).toBe(published);
+  });
+
+  it("starts the next version from the published version's own number, not the ordinal (#390)", async () => {
+    routeGateway({
+      ...handlers(),
+      PolicyVersion: (variables) => ({
+        policyVersion:
+          variables.id === "v-3"
+            ? {
+                ...draftVersion("PUBLISHED"),
+                contentJson: published,
+                id: "v-3",
+                semanticVersion: "1.4.2",
+                versionNo: 7,
+              }
+            : { ...draftVersion("draft"), suggestedChangeType: "MINOR" },
+      }),
+    });
+    const result = await runLoader();
+    expect(result.publishedLabel).toBe("1.4.2");
+    expect(result.policy.version).toBe("1.4.2");
+    expect(result.draft?.suggestedChangeType).toBe("MINOR");
   });
 
   it("has none for a document never published", async () => {

@@ -1,8 +1,3 @@
-// Copyright 2026 The Steward Authors
-// SPDX-License-Identifier: Apache-2.0
-// The policy/procedure domain surface, imported as `@steward-web/ui/domain`: client-safe
-// components and logic both apps' library screens share. Server-only data fetching is the
-// separate `@steward-web/ui/domain/server` entry (see index.server.ts).
 export { AckBanner, type AckBannerProps } from "./AckBanner";
 export { AiJobProgress, type AiJobProgressProps, type AiJobStage } from "./AiJobProgress";
 export { AiSummaryCard, type AiSummaryCardProps } from "./AiSummaryCard";
@@ -15,6 +10,12 @@ export {
   type StepperRule,
   type StepperStage,
 } from "./ApprovalStepper";
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+// The policy/procedure domain surface, imported as `@steward-web/ui/domain`: client-safe
+// components and logic both apps' library screens share. Server-only data fetching is the
+// separate `@steward-web/ui/domain/server` entry (see index.server.ts).
+export { ChangeTypeSummary } from "./ChangeTypeSummary";
 export { CompareVersions, type CompareVersionsProps, VERSION_DIFF_PATH } from "./CompareVersions";
 export { DecisionPanel, type DecisionPanelProps } from "./DecisionPanel";
 export { DocumentStatusPill } from "./DocumentStatusPill";

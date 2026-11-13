@@ -48,8 +48,16 @@ export type VersionHistoryKind = "policy" | "procedure" | "template";
  * A version as the history shows it. Templates keep plain versions (v1, v2, v3); policies and
  * procedures show semantic ones (v1.0.1). Only the label differs between the three (#89).
  */
-export const versionLabel = (kind: VersionHistoryKind, version: number | string): string => {
-  if (kind === "template") return `v${String(version).replace(/^v/, "").split(".", 1)[0]}`;
+export const versionLabel = (
+  kind: VersionHistoryKind,
+  version: number | string,
+  semantic?: null | string,
+): string => {
+  if (kind === "template") {
+    const ordinal = `v${String(version).replace(/^v/, "").split(".", 1)[0]}`;
+    // the semantic version sits beside the number core keeps (#390)
+    return semantic ? `${ordinal} (${semantic})` : ordinal;
+  }
   return withV(String(version));
 };
 
@@ -65,6 +73,8 @@ export interface VersionHistoryGroup {
   events: readonly VersionHistoryEvent[];
   /** The label as shown ("v2", "v1.0.1"); build it with `versionLabel`. */
   label: string;
+  /** Muted words beside the label, such as the version's ordinal under a semantic label. */
+  note?: string;
   status: HistoryStatus;
 }
 
@@ -72,7 +82,7 @@ export type { DotTone, HistoryStatus };
 
 const VersionGroup = ({ group }: { group: VersionHistoryGroup }) => {
   const { t } = useTranslation("policy");
-  const { current, events, label, status } = group;
+  const { current, events, label, note, status } = group;
   const [open, setOpen] = useState(current);
   const panelId = useId();
   const Chevron = open ? ChevronDown : ChevronRight;
@@ -87,6 +97,7 @@ const VersionGroup = ({ group }: { group: VersionHistoryGroup }) => {
       >
         <Chevron aria-hidden="true" className="size-4 shrink-0" />
         <span className="font-mono">{label}</span>
+        {note ? <span className="font-normal text-muted">{note}</span> : null}
         <span
           className="rounded-full px-2 py-0.5 text-xs font-semibold hc:outline hc:outline-1"
           style={{ background: `var(--status-${status}-soft)`, color: `var(--status-${status})` }}

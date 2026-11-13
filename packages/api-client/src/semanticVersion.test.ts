@@ -2,7 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { nextVersion, semanticVersion } from "./semanticVersion";
+import { ChangeType } from "./generated/schema";
+import {
+  changeTypeFrom,
+  changeTypeToGateway,
+  isLowering,
+  nextVersion,
+  semanticVersion,
+  versionOf,
+} from "./semanticVersion";
 
 describe("semanticVersion (#150)", () => {
   it("writes the service's plain version number as major.minor.patch", () => {
@@ -39,5 +47,41 @@ describe("nextVersion (#156)", () => {
   it("is 1.0.0 for a first publish, whatever was picked", () => {
     expect(nextVersion(undefined, "fix")).toBe("1.0.0");
     expect(nextVersion("", "major")).toBe("1.0.0");
+  });
+});
+
+describe("versionOf (#390)", () => {
+  it("shows the semantic version the service stored", () => {
+    expect(versionOf({ semanticVersion: "2.1.0", versionNo: 4 })).toBe("2.1.0");
+  });
+
+  it("falls back to the ordinal alone when the service has no semantic version", () => {
+    expect(versionOf({ semanticVersion: null, versionNo: 4 })).toBe("4.0.0");
+    expect(versionOf({ versionNo: 4 })).toBe("4.0.0");
+    expect(versionOf({ semanticVersion: "", versionNo: 2 })).toBe("2.0.0");
+  });
+});
+
+describe("change types (#390)", () => {
+  it("reads the gateway's enum as the app's lowercase type", () => {
+    expect(changeTypeFrom(ChangeType.Major)).toBe("major");
+    expect(changeTypeFrom(ChangeType.Minor)).toBe("minor");
+    expect(changeTypeFrom(ChangeType.Fix)).toBe("fix");
+    expect(changeTypeFrom(null)).toBeNull();
+    expect(changeTypeFrom()).toBeNull();
+  });
+
+  it("writes the app's type back as the gateway's enum", () => {
+    expect(changeTypeToGateway("major")).toBe(ChangeType.Major);
+    expect(changeTypeToGateway("fix")).toBe(ChangeType.Fix);
+  });
+
+  it("calls a pick below the suggestion a lowering, and no other", () => {
+    expect(isLowering("minor", "major")).toBe(true);
+    expect(isLowering("fix", "major")).toBe(true);
+    expect(isLowering("fix", "minor")).toBe(true);
+    expect(isLowering("minor", "minor")).toBe(false);
+    expect(isLowering("major", "minor")).toBe(false);
+    expect(isLowering("fix", null)).toBe(false);
   });
 });

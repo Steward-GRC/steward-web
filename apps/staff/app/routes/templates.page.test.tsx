@@ -38,8 +38,14 @@ describe("Templates (U22)", () => {
   it("lists each template with its sections and version, linked to its structure", async () => {
     show("/templates", {
       templates: [
-        { id: "t1", name: "Standard Policy", sections: 4, versionNo: 2 },
-        { id: "t2", name: "Step-by-step Procedure", sections: 5, versionNo: 1 },
+        { id: "t1", name: "Standard Policy", sections: 4, semanticVersion: "1.1.0", versionNo: 2 },
+        {
+          id: "t2",
+          name: "Step-by-step Procedure",
+          sections: 5,
+          semanticVersion: null,
+          versionNo: 1,
+        },
       ],
     });
     expect(await screen.findByRole("heading", { level: 1, name: "Templates" })).toBeInTheDocument();
@@ -51,7 +57,7 @@ describe("Templates (U22)", () => {
     const rows = within(screen.getByRole("table")).getAllByRole("row");
     expect(rows.map((row) => row.textContent)).toEqual([
       "NameSectionsVersion",
-      "Standard Policy4v2",
+      "Standard Policy4v2 (1.1.0)",
       "Step-by-step Procedure5v1",
     ]);
     expect(screen.getByRole("link", { name: "Standard Policy" })).toHaveAttribute(

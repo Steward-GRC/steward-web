@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // The editor's header actions (U11): the AI menu (U27), Submit for approval (D37) and the
 // Actions menu with Discard draft (D3).
-import { nextVersion, type VersionChange } from "@steward-web/api-client";
+import { isLowering, nextVersion } from "@steward-web/api-client";
 import { useTranslation } from "@steward-web/i18n";
 import {
   Button,
@@ -15,6 +15,7 @@ import {
   DialogFooter,
   DialogNote,
   type Failure,
+  Field,
   Menu,
   MenuContent,
   MenuItem,
@@ -22,109 +23,43 @@ import {
   MenuTrigger,
   notify,
   Spinner,
+  Textarea,
 } from "@steward-web/ui";
-import { Check, ChevronDown, Dot, FileText, PencilLine, Sparkles } from "lucide-react";
+import { Check, ChevronDown, FileText, PencilLine, Sparkles } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useFetcher } from "react-router";
 
 import { aiOffReason } from "./ai/aiOff";
 
-/** What the gateway works out on submit (steward-gateway#52): shown only once it sends it. */
-export interface VersionPreview {
-  change: ChangeType;
-  /** The published version it follows; absent for a first publish. */
-  from?: string;
-  reacknowledge: boolean;
-  reasons: readonly string[];
-  to: string;
-}
-
 type Answer = { error: Failure; ok: false } | { ok: true };
 
 const CHANGES: ChangeType[] = ["major", "minor", "fix"];
 
-/** D37's version block: "v2.0.0 → v3.0.0 Major · Worked out by Steward", why, and the type. */
-const VersionBlock = ({ version }: { version: VersionPreview }) => {
-  const { t } = useTranslation(["authoring", "policy"]);
-  const name = useId();
-  const [change, setChange] = useState(version.change);
-  return (
-    <div className="overflow-hidden rounded-lg shadow-[inset_0_0_0_1px_var(--border)]">
-      <div className="flex flex-wrap items-center gap-3 bg-primary-soft px-4 py-3.5">
-        {version.from ? (
-          <>
-            <span className="font-mono text-[15px] font-medium text-muted line-through">
-              v{version.from}
-            </span>
-            <span className="text-muted">→</span>
-          </>
-        ) : null}
-        <span className="font-mono text-xl font-semibold text-on-primary-soft">v{version.to}</span>
-        <span className="rounded-sm bg-primary px-[9px] py-[3px] text-xs font-semibold text-on-primary">
-          {t(`change.${version.change}`, { ns: "policy" })}
-        </span>
-        <span className="ml-auto text-xs font-medium text-on-primary-soft">
-          {t("editor.submit.workedOut")}
-        </span>
-      </div>
-      <div className="flex flex-col gap-1.5 px-4 py-3 text-sm">
-        <b>{t("editor.submit.why", { change: t(`change.${version.change}`, { ns: "policy" }) })}</b>
-        {version.reasons.map((reason) => (
-          <span className="flex gap-2" key={reason}>
-            <Dot aria-hidden="true" className="size-4 shrink-0" />
-            <span>{reason}</span>
-          </span>
-        ))}
-        {version.reacknowledge ? (
-          <span className="mt-1 rounded-md bg-sunken px-2.5 py-2">
-            {t("editor.submit.reacknowledge")}
-          </span>
-        ) : null}
-      </div>
-      <div className="flex flex-wrap items-center gap-2.5 border-t border-border px-4 py-2.5 text-sm">
-        <span className="text-muted" id={name}>
-          {t("editor.submit.changeType")}
-        </span>
-        <span
-          aria-labelledby={name}
-          className="flex gap-0.5 rounded-md bg-sunken p-[3px]"
-          role="radiogroup"
-        >
-          {CHANGES.map((value) => (
-            <label
-              className={cn(
-                "cursor-pointer rounded-sm px-2.5 py-1 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus",
-                change === value ? "bg-surface font-bold shadow-[var(--shadow-1)]" : "text-muted",
-              )}
-              key={value}
-            >
-              <input
-                checked={change === value}
-                className="sr-only"
-                name="changeType"
-                onChange={() => setChange(value)}
-                type="radio"
-                value={value}
-              />
-              {t(`change.${value}`, { ns: "policy" })}
-            </label>
-          ))}
-        </span>
-        <span className="text-muted">{t("editor.submit.lowering")}</span>
-      </div>
-    </div>
-  );
-};
-
 /**
- * The author's pick for a revision of a published document (#156): Major, Minor or Fix, and the
- * version it gives. The service keeps no pick, so this is only worked out here and sent with the
- * submit; later screens still read the service's plain number.
+ * The author's pick for a revision of a published document (#390): Major, Minor or Fix, starting
+ * on what core suggested. Raising it is free. Going below the suggestion needs a reason, and the
+ * first approval stage has to agree before it applies, so the version shown stays the suggested
+ * one until then. The pick and the reason go with the submit; core works out the version.
  */
-const ChangePicker = ({ published }: { published: string }) => {
+const ChangePicker = ({
+  change,
+  onChange,
+  onReason,
+  published,
+  reason,
+  suggested,
+}: {
+  change: ChangeType;
+  onChange: (change: ChangeType) => void;
+  onReason: (reason: string) => void;
+  published: string;
+  reason: string;
+  suggested: ChangeType;
+}) => {
   const { t } = useTranslation(["authoring", "policy"]);
   const name = useId();
-  const [change, setChange] = useState<VersionChange>("minor");
+  const lowering = isLowering(change, suggested);
+  const kind = (value: ChangeType) => t(`change.${value}`, { ns: "policy" });
   return (
     <div className="flex flex-col gap-3 rounded-lg px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--border)]">
       <div className="flex flex-wrap items-center gap-3">
@@ -135,7 +70,10 @@ const ChangePicker = ({ published }: { published: string }) => {
           →
         </span>
         <span className="font-mono text-xl font-semibold" data-testid="next-version">
-          v{nextVersion(published, change)}
+          v{nextVersion(published, lowering ? suggested : change)}
+        </span>
+        <span className="text-xs font-medium text-muted">
+          {t("editor.submit.suggests", { change: kind(suggested) })}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-2.5 text-sm">
@@ -159,15 +97,29 @@ const ChangePicker = ({ published }: { published: string }) => {
                 checked={change === value}
                 className="sr-only"
                 name="changeType"
-                onChange={() => setChange(value)}
+                onChange={() => onChange(value)}
                 type="radio"
                 value={value}
               />
-              {t(`change.${value}`, { ns: "policy" })}
+              {kind(value)}
             </label>
           ))}
         </span>
       </div>
+      {lowering ? (
+        <Field
+          hint={t("editor.submit.loweringHint", { change: kind(suggested) })}
+          label={t("editor.submit.loweringReason")}
+        >
+          <Textarea
+            className="min-h-14"
+            name="changeTypeReason"
+            onChange={(event) => onReason(event.target.value)}
+            required
+            value={reason}
+          />
+        </Field>
+      ) : null}
     </div>
   );
 };
@@ -187,7 +139,7 @@ export const SubmitForApproval = ({
   incompleteButtons = 0,
   missing,
   published,
-  version,
+  suggested,
   workflow,
 }: {
   disabled?: boolean;
@@ -199,12 +151,20 @@ export const SubmitForApproval = ({
   missing: readonly string[];
   /** The published version this revision follows; absent for a first publish. */
   published?: string;
-  version?: VersionPreview;
+  /** The change type core suggested for this revision; absent for a first publish or when core
+   *  sent none, and then there is nothing to pick. */
+  suggested?: ChangeType;
   workflow?: string;
 }) => {
   const { t } = useTranslation(["authoring", "common"]);
   const fetcher = useFetcher<Answer>();
   const [open, setOpen] = useState(false);
+  const [change, setChange] = useState<ChangeType | undefined>();
+  const [reason, setReason] = useState("");
+  const picking = Boolean(published && suggested);
+  // a pick below the suggestion waits on a reason (#390)
+  const needsReason =
+    picking && isLowering(change ?? suggested ?? "minor", suggested) && !reason.trim();
   const busy = fetcher.state !== "idle";
   const refusal = fetcher.data && !fetcher.data.ok ? fetcher.data.error : undefined;
   return (
@@ -243,21 +203,31 @@ export const SubmitForApproval = ({
             title: document.title,
             workflow: workflow ?? t("editor.submit.approvers"),
           })}
-          size={version ? "wide" : "standard"}
+          size="standard"
           title={t("editor.submit.title")}
         >
           <fetcher.Form method="post">
             <input name="intent" type="hidden" value="submit-review" />
-            {version || published || refusal ? (
+            {picking || refusal ? (
               <DialogBody>
-                {version ? <VersionBlock version={version} /> : null}
-                {!version && published ? <ChangePicker published={published} /> : null}
+                {picking && published && suggested ? (
+                  <ChangePicker
+                    change={change ?? suggested}
+                    onChange={setChange}
+                    onReason={setReason}
+                    published={published}
+                    reason={reason}
+                    suggested={suggested}
+                  />
+                ) : null}
                 {refusal ? (
                   <DialogNote tone="danger">
                     <b className="block">
                       {refusal.code === "FAILED_PRECONDITION"
                         ? t("editor.review.submitRefused")
-                        : t("editor.review.submitFailed")}
+                        : refusal.code === "INVALID_ARGUMENT"
+                          ? t("editor.review.submitChangeRefused")
+                          : t("editor.review.submitFailed")}
                     </b>
                     {refusal.code === "FAILED_PRECONDITION"
                       ? t("editor.review.submitRefusedDetail")
@@ -272,7 +242,7 @@ export const SubmitForApproval = ({
                   {t("editor.submit.keepEditing")}
                 </Button>
               </DialogClose>
-              <Button busy={busy} type="submit">
+              <Button busy={busy} disabled={needsReason} type="submit">
                 {t("editor.submit.action")}
               </Button>
             </DialogFooter>
