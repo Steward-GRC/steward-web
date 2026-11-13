@@ -1200,6 +1200,8 @@ export type CreateWorkflowDefMutation = {
       readonly quorum: string;
       readonly slaDays: number | null;
       readonly rejectOnSlaBreach: boolean | null;
+      readonly remindEveryDays: number;
+      readonly escalateAfterDays: number;
       readonly pinnedLast: boolean | null;
       readonly vetoUserIds: ReadonlyArray<string>;
       readonly approversByCategory: ReadonlyArray<{
@@ -4809,6 +4811,8 @@ export type UpdateWorkflowDefMutation = {
       readonly quorum: string;
       readonly slaDays: number | null;
       readonly rejectOnSlaBreach: boolean | null;
+      readonly remindEveryDays: number;
+      readonly escalateAfterDays: number;
       readonly pinnedLast: boolean | null;
       readonly vetoUserIds: ReadonlyArray<string>;
       readonly approversByCategory: ReadonlyArray<{
@@ -5028,6 +5032,8 @@ export type WorkflowDefQuery = {
       readonly quorum: string;
       readonly slaDays: number | null;
       readonly rejectOnSlaBreach: boolean | null;
+      readonly remindEveryDays: number;
+      readonly escalateAfterDays: number;
       readonly pinnedLast: boolean | null;
       readonly vetoUserIds: ReadonlyArray<string>;
       readonly approversByCategory: ReadonlyArray<{
@@ -5055,6 +5061,8 @@ export type WorkflowDefFieldsFragment = {
     readonly quorum: string;
     readonly slaDays: number | null;
     readonly rejectOnSlaBreach: boolean | null;
+    readonly remindEveryDays: number;
+    readonly escalateAfterDays: number;
     readonly pinnedLast: boolean | null;
     readonly vetoUserIds: ReadonlyArray<string>;
     readonly approversByCategory: ReadonlyArray<{
@@ -5084,6 +5092,8 @@ export type WorkflowDefsQuery = {
       readonly quorum: string;
       readonly slaDays: number | null;
       readonly rejectOnSlaBreach: boolean | null;
+      readonly remindEveryDays: number;
+      readonly escalateAfterDays: number;
       readonly pinnedLast: boolean | null;
       readonly vetoUserIds: ReadonlyArray<string>;
       readonly approversByCategory: ReadonlyArray<{
@@ -5106,6 +5116,8 @@ export type WorkflowStageDefFieldsFragment = {
   readonly quorum: string;
   readonly slaDays: number | null;
   readonly rejectOnSlaBreach: boolean | null;
+  readonly remindEveryDays: number;
+  readonly escalateAfterDays: number;
   readonly pinnedLast: boolean | null;
   readonly vetoUserIds: ReadonlyArray<string>;
   readonly approversByCategory: ReadonlyArray<{
@@ -6041,6 +6053,8 @@ export const WorkflowStageDefFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "quorum" } },
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "remindEveryDays" } },
+          { kind: "Field", name: { kind: "Name", value: "escalateAfterDays" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
           { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
@@ -6111,6 +6125,8 @@ export const WorkflowDefFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "quorum" } },
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "remindEveryDays" } },
+          { kind: "Field", name: { kind: "Name", value: "escalateAfterDays" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
           { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
@@ -9858,6 +9874,8 @@ export const CreateWorkflowDefDocument = {
           { kind: "Field", name: { kind: "Name", value: "quorum" } },
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "remindEveryDays" } },
+          { kind: "Field", name: { kind: "Name", value: "escalateAfterDays" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
           { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
@@ -21232,6 +21250,8 @@ export const UpdateWorkflowDefDocument = {
           { kind: "Field", name: { kind: "Name", value: "quorum" } },
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "remindEveryDays" } },
+          { kind: "Field", name: { kind: "Name", value: "escalateAfterDays" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
           { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
@@ -21809,6 +21829,8 @@ export const WorkflowDefDocument = {
           { kind: "Field", name: { kind: "Name", value: "quorum" } },
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "remindEveryDays" } },
+          { kind: "Field", name: { kind: "Name", value: "escalateAfterDays" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
           { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],
@@ -21899,6 +21921,8 @@ export const WorkflowDefsDocument = {
           { kind: "Field", name: { kind: "Name", value: "quorum" } },
           { kind: "Field", name: { kind: "Name", value: "slaDays" } },
           { kind: "Field", name: { kind: "Name", value: "rejectOnSlaBreach" } },
+          { kind: "Field", name: { kind: "Name", value: "remindEveryDays" } },
+          { kind: "Field", name: { kind: "Name", value: "escalateAfterDays" } },
           { kind: "Field", name: { kind: "Name", value: "pinnedLast" } },
           { kind: "Field", name: { kind: "Name", value: "vetoUserIds" } },
         ],

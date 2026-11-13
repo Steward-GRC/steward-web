@@ -58,7 +58,6 @@ import type {
   OverrideEffect,
   PendingTask,
   PlatformGroup,
-  PolicyVersion,
   RaciDecision,
   RaciRule,
   RaciRuleInput,
@@ -68,6 +67,7 @@ import type {
   ReviewCadence,
   RiskAssessment,
   RiskFactorsInput,
+  PolicyVersion as SchemaPolicyVersion,
   Sensitivity,
   Session,
   SignalType,
@@ -167,7 +167,6 @@ export type {
   OverdueEntry,
   PendingTask,
   PlatformGroup,
-  PolicyVersion,
   RaciDecision,
   RaciRule,
   RaciRuleInput,
@@ -225,6 +224,9 @@ export {
 } from "./generated/schema";
 export type { CategoryDocumentCounts, MovePolicyItem } from "./generated/schema";
 export type { WorkflowStatus } from "./views";
+
+/** `AiJobResultContent` is renamed on export only to avoid colliding with the `Edge` method of the same name. */
+export type AIJobResultContent = AiJobResultContentSchema;
 export type { NotificationPreferences, Passkey, UserLabel } from "./views";
 export type {
   AckStatus,
@@ -272,9 +274,6 @@ export type {
   WorkflowStageDef,
 } from "./views";
 export { PolicyStatus } from "./views";
-
-/** `AiJobResultContent` is renamed on export only to avoid colliding with the `Edge` method of the same name. */
-export type AIJobResultContent = AiJobResultContentSchema;
 
 /** The AI module's settings as the admin Settings page reads them (A28). */
 export interface AiSettings {
@@ -1236,6 +1235,15 @@ export interface OrgClientSecret {
   secretRef?: string;
 }
 
+/**
+ * A policy version as the edge returns it: the schema type without `reacknowledge` and
+ * `changeTypeAgreedByUserIds`, the two newer gateway fields no operation selects yet.
+ */
+export type PolicyVersion = Omit<
+  SchemaPolicyVersion,
+  "changeTypeAgreedByUserIds" | "reacknowledge"
+>;
+
 /** `POST /documents/validate-url`: whether a reference URL can be read. */
 export interface ReferenceUrlCheck {
   finalUrl?: string;
@@ -1326,6 +1334,11 @@ export interface UpdateMyProfileInput {
 export interface WorkflowStageInput {
   approvers: readonly string[];
   approversByCategory?: readonly CategoryApproversInput[];
+  /**
+   * Whole working days after the due date when the category owners are told once; 0 or absent is
+   * off. Needs `slaDays` and cannot be combined with `rejectOnSlaBreach`. It only notifies.
+   */
+  escalateAfterDays?: null | number;
   groupUnits?: readonly GroupUnitInput[];
   id?: string;
   name: string;
@@ -1334,6 +1347,11 @@ export interface WorkflowStageInput {
   pinnedLast?: boolean | null;
   quorum: string;
   rejectOnSlaBreach?: boolean | null;
+  /**
+   * Whole working days between reminders to each approver still pending once the stage is past
+   * due; 0 or absent is off. Same rules as `escalateAfterDays`. A reminder never approves.
+   */
+  remindEveryDays?: null | number;
   slaDays?: null | number;
   /**
    * The people whose single reject ends the run. Each must be one of the stage's approvers (there

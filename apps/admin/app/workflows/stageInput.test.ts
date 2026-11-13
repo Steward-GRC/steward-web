@@ -7,12 +7,14 @@ import { stageInput } from "./stageInput";
 const STAGE = {
   approvers: ["u-1", "u-2"],
   approversByCategory: [{ approverIds: ["u-3"], categoryId: "c-1" }],
+  escalateAfterDays: 4,
   groupUnits: [{ groupId: "g-1", internalQuorum: "one", memberUserIds: ["u-4"] }],
   id: "s-1",
   name: "Review",
   pinnedLast: false,
   quorum: "majority",
   rejectOnSlaBreach: false,
+  remindEveryDays: 2,
   slaDays: 2,
   vetoUserIds: ["u-2"],
 };
@@ -26,6 +28,13 @@ describe("stageInput", () => {
     const sent = stageInput({ ...STAGE, vetoApproverIds: ["u-1"], vetoGroupIds: ["g-1"] } as never);
     expect(sent).not.toHaveProperty("vetoApproverIds");
     expect(sent).not.toHaveProperty("vetoGroupIds");
+  });
+
+  it("carries the reminder and escalation days, so a duplicate keeps them", () => {
+    const sent = stageInput(STAGE);
+    expect(sent.remindEveryDays).toBe(2);
+    expect(sent.escalateAfterDays).toBe(4);
+    expect(sent.rejectOnSlaBreach).toBe(false);
   });
 
   it("sends an empty list for a stage with no veto people", () => {

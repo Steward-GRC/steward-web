@@ -5,13 +5,14 @@
 import type { WorkCalendar, WorkflowStageInput } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
-import { Card, type ChipItem, ChipPicker, cn, Field } from "@steward-web/ui";
+import { Card, type ChipItem, ChipPicker, cn, Field, Switch } from "@steward-web/ui";
 import { GripVertical, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
 
 import { calendarSummary } from "../settings/workCalendar";
 import { type ApproverCandidatesView, ApproverPicker } from "./ApproverPicker";
 import { moveDown, moveUp } from "./stageOutline";
+import { MAX_REMINDER_DAYS, parseReminderDays, withReminderRules } from "./stageReminders";
 import { approverPool, pruneVetoes } from "./stageVeto";
 
 export interface StageEditorProps {
@@ -75,6 +76,12 @@ const StageCard = ({
   const dueId = useId();
   const hintId = useId();
   const dueHelpId = useId();
+  const rejectId = useId();
+  const rejectHelpId = useId();
+  const remindId = useId();
+  const remindHelpId = useId();
+  const escalateId = useId();
+  const escalateHelpId = useId();
   const quorum = QUORUMS.find((entry) => entry === stage.quorum);
   const explain = quorum
     ? t(`workflows.editor.explain.${quorum}`)
@@ -92,6 +99,13 @@ const StageCard = ({
       timezone: site.timezone,
     });
   };
+  const hasDue = (stage.slaDays ?? 0) > 0;
+  const rejects = Boolean(stage.rejectOnSlaBreach);
+  // Reminders and escalation need a due date and cannot run while the stage rejects at it.
+  const daysOff = !hasDue || rejects;
+  const daysOffHint = rejects
+    ? t("workflows.editor.reminders.offRejects")
+    : t("workflows.editor.reminders.offNoDue");
   const person = (id: string) => people.find((entry) => entry.id === id);
   const named = (id: string) => person(id)?.name ?? id;
   // Only people currently in this stage's approver pool, as users, can be offered as veto people.
@@ -235,6 +249,58 @@ const StageCard = ({
           {t("workflows.editor.dueHelp")}
           {calendar ? ` ${calendarNote(calendar)}` : ""}
         </span>
+        <span className="flex items-center gap-2.5">
+          <Switch
+            aria-describedby={rejectHelpId}
+            aria-label={t("workflows.editor.reminders.rejectLabel", { number })}
+            checked={rejects}
+            id={rejectId}
+            onCheckedChange={(checked) => onUpdate({ rejectOnSlaBreach: checked })}
+          />
+          <label className="text-muted" htmlFor={rejectId}>
+            {t("workflows.editor.reminders.reject")}
+          </label>
+        </span>
+        <span className="basis-full text-xs text-muted" id={rejectHelpId}>
+          {t("workflows.editor.reminders.rejectHelp")}
+        </span>
+        {(
+          [
+            ["remind", remindId, remindHelpId, "remindEveryDays"],
+            ["escalate", escalateId, escalateHelpId, "escalateAfterDays"],
+          ] as const
+        ).map(([key, id, helpId, field]) => (
+          <div className="flex flex-col gap-1" key={key}>
+            <span className="flex flex-wrap items-center gap-2">
+              <label className="text-muted" htmlFor={id}>
+                {t(`workflows.editor.reminders.${key}`)}
+              </label>
+              <input
+                aria-describedby={helpId}
+                aria-label={t(`workflows.editor.reminders.${key}Label`, { number })}
+                className="h-[30px] w-16 rounded-md border border-control bg-surface px-2.5 disabled:opacity-50"
+                disabled={daysOff}
+                id={id}
+                inputMode="numeric"
+                max={MAX_REMINDER_DAYS}
+                min={0}
+                onChange={(event) => onUpdate({ [field]: parseReminderDays(event.target.value) })}
+                placeholder="—"
+                type="number"
+                value={daysOff ? "" : stage[field] || ""}
+              />
+              <span className="text-muted">
+                {t("workflows.editor.reminders.afterDue", {
+                  count: daysOff ? 0 : stage[field] || 0,
+                })}
+              </span>
+            </span>
+            <span className="text-xs text-muted" id={helpId}>
+              {t(`workflows.editor.reminders.${key}Help`)}
+              {daysOff ? ` ${daysOffHint}` : ""}
+            </span>
+          </div>
+        ))}
       </div>
     </Card>
   );
@@ -262,7 +328,7 @@ export const StageEditor = ({
     const current = stages[index];
     if (!current) return;
     // A veto person must stay one of the stage's approvers: when the pool changes, prune them.
-    const next = pruneVetoes({ ...current, ...patch });
+    const next = pruneVetoes(withReminderRules({ ...current, ...patch }));
     const key = keyOf(current, index);
     if (patch.vetoUserIds) setDropped(({ [key]: _gone, ...rest }) => rest);
     else if (next.dropped.length > 0) setDropped((now) => ({ ...now, [key]: next.dropped }));

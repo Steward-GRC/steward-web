@@ -17,11 +17,13 @@ export const stageInput = (stage: WorkflowDef["stages"][number]): WorkflowStageI
     internalQuorum,
     memberUserIds,
   })),
+  escalateAfterDays: stage.escalateAfterDays,
   id: stage.id,
   name: stage.name,
   pinnedLast: stage.pinnedLast,
   quorum: stage.quorum,
   rejectOnSlaBreach: stage.rejectOnSlaBreach,
+  remindEveryDays: stage.remindEveryDays,
   slaDays: stage.slaDays,
   vetoUserIds: stage.vetoUserIds,
 });

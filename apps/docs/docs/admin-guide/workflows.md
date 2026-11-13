@@ -44,6 +44,19 @@ account is disabled and needs replacing.
    stage's approvers, and removing an approver also removes them from the veto people, with a note.
    **Due within** sets how many working days the stage has. It counts whole working days on the site
    calendar (set under **Settings**, **Working days**), skipping weekends and holidays.
+   Three settings sit under it:
+   - **Reject if the due date passes** rejects the stage when nobody has decided by the due date,
+     and the run ends as rejected. It never approves by itself.
+   - **Remind approvers every N working days after the due date** reminds each approver who has
+     not decided when the stage is due, then every N working days until they decide.
+   - **Tell the category owners N working days after the due date** tells the category owners once
+     if the stage is still undecided that long after the due date.
+
+   The two day settings are whole working days, from 1 to 365; empty or 0 turns one off. They need
+   **Due within**, and they are off while **Reject if the due date passes** is on, because the stage
+   is rejected at the due date and there would be nothing left to remind about. Reminders and
+   escalation only notify: they never approve a stage and never add an approver.
+
 3. Drag a card by its grip to reorder the stages, or focus the grip and use the up and down arrow
    keys. The order is the approval sequence, so put the earliest reviewer first and the final
    sign-off last. **+ Add stage** adds one at the end.
