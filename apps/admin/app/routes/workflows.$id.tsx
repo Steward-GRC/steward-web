@@ -262,7 +262,11 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
       ) : null}
 
       {failure ? (
-        <Banner failure={failure} title={t("workflows.editor.failed")} tone="danger" />
+        <Banner failure={failure} title={t("workflows.editor.failed")} tone="danger">
+          {failure.code === "INVALID_ARGUMENT" || failure.code === "InvalidArgument"
+            ? t("workflows.editor.reminders.refused")
+            : null}
+        </Banner>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">

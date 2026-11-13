@@ -14,6 +14,8 @@ fragment WorkflowStageDefFields on WorkflowStageDef {
   quorum
   slaDays
   rejectOnSlaBreach
+  remindEveryDays
+  escalateAfterDays
   pinnedLast
   vetoUserIds
 }
