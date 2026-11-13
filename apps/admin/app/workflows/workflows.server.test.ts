@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   archiveWorkflowDef,
   createWorkflowDef,
+  deleteWorkflowDef,
   getWorkflowDef,
   listWorkflowDefs,
   listWorkflows,
@@ -134,5 +135,31 @@ describe("archiveWorkflowDef", () => {
     vi.stubGlobal("fetch", fetchSpy);
 
     await expect(archiveWorkflowDef(request(), "w-1")).resolves.toBeUndefined();
+  });
+});
+
+describe("deleteWorkflowDef", () => {
+  it("posts the delete mutation", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(jsonOnce({ deleteWorkflowDef: true }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await expect(deleteWorkflowDef(request(), "w-1")).resolves.toBeUndefined();
+    const [, init] = fetchSpy.mock.calls[1] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as { query: string; variables: unknown };
+    expect(body.query).toContain("deleteWorkflowDef");
+    expect(body.variables).toEqual({ id: "w-1" });
+  });
+
+  it("redirects a caller who lacks group.manage without calling the gateway", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(jsonOnce({ me: readerMe }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const thrown: unknown = await deleteWorkflowDef(request(), "w-1").catch(
+      (error: unknown) => error,
+    );
+    expect(thrown).toBeInstanceOf(Response);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });

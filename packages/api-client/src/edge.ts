@@ -575,6 +575,9 @@ export interface Edge {
   deleteTemplate(id: string, cookie?: string): Promise<boolean>;
   /** Soft-deletes a user. Rejects with `GatewayError` while the preview reports `blocksDelete`. */
   deleteUser(userId: string, cookie?: string): Promise<DeleteUserResult>;
+  /** Deletes a workflow definition for good. Site-admin only. Rejects with `GatewayError`
+   *  (`WORKFLOW_DEF_IN_USE_BY_CATEGORY`, `WORKFLOW_DEF_IN_USE`, `WORKFLOW_DEF_NOT_FOUND`). */
+  deleteWorkflowDef(id: string, cookie?: string): Promise<boolean>;
   /** The gateway's own diagnostics read. Rejects with `GatewayError` when signed out. */
   diagnostics(cookie?: string): Promise<Diagnostics>;
   /** Disables an organisation's SSO connection. Does not clear its gates. Site-admin only. */

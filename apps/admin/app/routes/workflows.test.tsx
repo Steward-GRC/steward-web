@@ -30,10 +30,12 @@ const ROWS = [
 
 type WorkflowsProps = Parameters<typeof Workflows>[0];
 
-const openWorkflows = (rows: object[] = ROWS) => {
+const openWorkflows = (rows: object[] = ROWS, notice: object = {}) => {
   const Stub = createRoutesStub([
     {
-      Component: () => <Workflows {...({ loaderData: { rows } } as unknown as WorkflowsProps)} />,
+      Component: () => (
+        <Workflows {...({ loaderData: { notice, rows } } as unknown as WorkflowsProps)} />
+      ),
       path: "/workflows",
     },
   ]);
@@ -98,5 +100,26 @@ describe("Workflows on a phone (7-responsive.s3)", () => {
       "/workflows/w-finance",
     );
     expect(screen.queryByRole("table")).toBeNull();
+  });
+
+  it("says a workflow was deleted, archived or already gone", async () => {
+    openWorkflows(ROWS, { deleted: "Finance sign-off" });
+    expect(await screen.findByText("Deleted Finance sign-off.")).toBeInTheDocument();
+  });
+
+  it("says a workflow was archived", async () => {
+    openWorkflows(ROWS, { archived: "Legacy" });
+    expect(await screen.findByText("Archived Legacy.")).toBeInTheDocument();
+  });
+
+  it("says a workflow no longer exists", async () => {
+    openWorkflows(ROWS, { gone: true });
+    expect(await screen.findByText("This workflow no longer exists")).toBeInTheDocument();
+  });
+
+  it("shows no notice by default", async () => {
+    openWorkflows();
+    await screen.findByRole("heading", { level: 1, name: "Workflows" });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });

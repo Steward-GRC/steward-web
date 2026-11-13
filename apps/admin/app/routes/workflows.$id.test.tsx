@@ -79,7 +79,10 @@ const BASE = {
 
 type EditorProps = Parameters<typeof WorkflowEditor>[0];
 
-const openEditor = (overrides: Record<string, unknown> = {}) => {
+const openEditor = (
+  overrides: Record<string, unknown> = {},
+  reply?: (form: FormData) => unknown,
+) => {
   const posted: FormData[] = [];
   const loaderData = { ...BASE, ...overrides };
   const Stub = createRoutesStub([
@@ -87,7 +90,7 @@ const openEditor = (overrides: Record<string, unknown> = {}) => {
       action: async ({ request }) => {
         const form = await request.formData();
         posted.push(form);
-        return { intent: form.get("intent"), ok: true };
+        return reply?.(form) ?? { intent: form.get("intent"), ok: true };
       },
       Component: () => <WorkflowEditor {...({ loaderData } as unknown as EditorProps)} />,
       path: "/workflows/:id",
@@ -105,6 +108,16 @@ const savedStages = (form: FormData) =>
     quorum: string;
     slaDays: null | number;
   }[];
+
+const refuse = async (refusal: unknown) => {
+  const posted = openEditor({ usedBy: 0 }, (form) =>
+    form.get("intent") === "delete" ? { intent: "delete", ok: false, refusal } : undefined,
+  );
+  await userEvent.click(await screen.findByRole("button", { name: "Delete workflow" }));
+  const dialog = screen.getByRole("dialog", { name: "Delete Finance sign-off?" });
+  await userEvent.click(within(dialog).getByRole("button", { name: "Delete workflow" }));
+  return posted;
+};
 
 describe("The workflow editor (A9)", () => {
   it("opens with the name, the sequential line and no draft pill when usable", async () => {
@@ -289,6 +302,53 @@ describe("The workflow editor (A9)", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Delete workflow" }));
     await vi.waitFor(() => expect(posted).toHaveLength(1));
     expect(posted[0]!.get("intent")).toBe("delete");
+  });
+
+  it("names the workflow in the confirm and cancels without posting", async () => {
+    const posted = openEditor({ usedBy: 0 });
+    await userEvent.click(await screen.findByRole("button", { name: "Delete workflow" }));
+    const dialog = screen.getByRole("dialog", { name: "Delete Finance sign-off?" });
+    expect(within(dialog).getByText(/can't be undone/)).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(posted).toHaveLength(0);
+  });
+
+  it("explains a refusal because groups use it, and offers no Archive", async () => {
+    await refuse({ count: 2, kind: "categories" });
+    expect(
+      await screen.findByText("In use by 2 groups: change those categories first"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Archive workflow" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("uses the singular for one group", async () => {
+    await refuse({ count: 1, kind: "categories" });
+    expect(
+      await screen.findByText("In use by 1 group: change those categories first"),
+    ).toBeInTheDocument();
+  });
+
+  it("explains a refusal because runs or overrides used it and offers Archive", async () => {
+    const posted = await refuse({ count: 6, kind: "used" });
+    expect(
+      await screen.findByText(
+        "This workflow has been used by 6 runs or policy overrides and cannot be deleted. Archive it instead.",
+      ),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Archive workflow" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(2));
+    expect(posted[1]!.get("intent")).toBe("archive");
+  });
+
+  it("clears the refusal when the dialog is opened again", async () => {
+    await refuse({ count: 2, kind: "categories" });
+    await screen.findByText("In use by 2 groups: change those categories first");
+    await userEvent.click(screen.getByRole("button", { name: "Delete workflow" }));
+    expect(
+      screen.queryByText("In use by 2 groups: change those categories first"),
+    ).not.toBeInTheDocument();
   });
 });
 

@@ -1060,6 +1060,11 @@
       "description": "Create the first workflow to start building approval chains."
     },
     "notInUse": "Not in use",
+    "notice": {
+      "archived": "Archived {{name}}.",
+      "deleted": "Deleted {{name}}.",
+      "gone": "This workflow no longer exists"
+    },
     "search": "Search workflows",
     "columns": {
       "appliesTo": "Applies to",
@@ -1121,8 +1126,15 @@
       "inUse_one": "In use by {{count}} group",
       "inUse_other": "In use by {{count}} groups",
       "deleteTitle": "Delete {{name}}?",
-      "deleteDescription": "It's archived: it stops appearing where a workflow is chosen, and its history is kept.",
+      "deleteDescription": "This removes the workflow for good and can't be undone. It's refused while a group uses it, or if a run or policy override has used it; archive it instead.",
       "deleteConfirm": "Delete workflow",
+      "archive": "Archive workflow",
+      "refused": {
+        "categories_one": "In use by {{count}} group: change those categories first",
+        "categories_other": "In use by {{count}} groups: change those categories first",
+        "used_one": "This workflow has been used by {{count}} run or policy override and cannot be deleted. Archive it instead.",
+        "used_other": "This workflow has been used by {{count}} runs or policy overrides and cannot be deleted. Archive it instead."
+      },
       "cancel": "Cancel",
       "save": "Save workflow",
       "saved": "Saved!",

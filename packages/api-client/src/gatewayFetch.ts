@@ -18,6 +18,7 @@ export interface GatewayRequest {
 }
 
 interface GraphQLErrorExtensions {
+  [key: string]: unknown;
   code?: string;
   reason?: string;
   requestId?: string;
@@ -36,6 +37,12 @@ interface GraphQLResponseBody<T> {
  */
 export class GatewayError extends Error {
   code?: string;
+  /**
+   * The refusal's `*_count` extensions (such as `category_count` or `run_count`) as decimal
+   * strings. They are plain numbers about how much uses something, never policy content, so a
+   * screen may show them; the shared `Failure` still drops them.
+   */
+  counts?: Record<string, string>;
   operation: string;
   reason?: string;
   requestId?: string;
@@ -45,18 +52,32 @@ export class GatewayError extends Error {
   constructor(
     operation: string,
     message: string,
-    fields: Pick<GatewayError, "code" | "reason" | "requestId" | "status" | "traceId"> = {},
+    fields: Pick<
+      GatewayError,
+      "code" | "counts" | "reason" | "requestId" | "status" | "traceId"
+    > = {},
   ) {
     super(message);
     this.name = "GatewayError";
     this.operation = operation;
     this.code = fields.code;
+    this.counts = fields.counts;
     this.reason = fields.reason;
     this.requestId = fields.requestId;
     this.status = fields.status;
     this.traceId = fields.traceId;
   }
 }
+
+const countsOf = (extensions?: GraphQLErrorExtensions): Record<string, string> | undefined => {
+  if (!extensions) return undefined;
+  const counts: Record<string, string> = {};
+  for (const [key, value] of Object.entries(extensions)) {
+    if (!key.endsWith("_count")) continue;
+    if (typeof value === "string" || typeof value === "number") counts[key] = String(value);
+  }
+  return Object.keys(counts).length > 0 ? counts : undefined;
+};
 
 const defaultUrl = () => process.env.GATEWAY_URL ?? "http://localhost:8080/query";
 
@@ -111,6 +132,7 @@ const callGateway = async <TResult, TVariables extends Record<string, unknown>>(
   if (firstError) {
     throw new GatewayError(operation, firstError.message, {
       code: firstError.extensions?.code,
+      counts: countsOf(firstError.extensions),
       reason: firstError.extensions?.reason,
       requestId: firstError.extensions?.requestId,
       status: response.status,

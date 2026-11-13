@@ -1294,6 +1294,12 @@ export type DeleteUserMutation = {
   readonly deleteUser: { readonly userId: string; readonly revokedSessions: number };
 };
 
+export type DeleteWorkflowDefMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+export type DeleteWorkflowDefMutation = { readonly deleteWorkflowDef: boolean };
+
 export type DiagnosticsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type DiagnosticsQuery = {
@@ -2305,6 +2311,8 @@ export type PolicyVersionQuery = {
     readonly contentJson: string;
     readonly createdAt: string | null;
     readonly publishedAt: string | null;
+    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
+    readonly reacknowledge: boolean;
     readonly appendices: ReadonlyArray<{
       readonly id: string;
       readonly policyVersionId: string;
@@ -2325,6 +2333,8 @@ export type PolicyVersionFieldsFragment = {
   readonly contentJson: string;
   readonly createdAt: string | null;
   readonly publishedAt: string | null;
+  readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
+  readonly reacknowledge: boolean;
   readonly appendices: ReadonlyArray<{
     readonly id: string;
     readonly policyVersionId: string;
@@ -2584,6 +2594,8 @@ export type PublishDraftMutation = {
     readonly contentJson: string;
     readonly createdAt: string | null;
     readonly publishedAt: string | null;
+    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
+    readonly reacknowledge: boolean;
     readonly appendices: ReadonlyArray<{
       readonly id: string;
       readonly policyVersionId: string;
@@ -3509,6 +3521,8 @@ export type SaveDraftMutation = {
     readonly contentJson: string;
     readonly createdAt: string | null;
     readonly publishedAt: string | null;
+    readonly changeTypeAgreedByUserIds: ReadonlyArray<string>;
+    readonly reacknowledge: boolean;
     readonly appendices: ReadonlyArray<{
       readonly id: string;
       readonly policyVersionId: string;
@@ -5533,6 +5547,8 @@ export const PolicyVersionFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "contentJson" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeAgreedByUserIds" } },
+          { kind: "Field", name: { kind: "Name", value: "reacknowledge" } },
           {
             kind: "Field",
             name: { kind: "Name", value: "appendices" },
@@ -10295,6 +10311,42 @@ export const DeleteUserDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteUserMutation, DeleteUserMutationVariables>;
+export const DeleteWorkflowDefDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "DeleteWorkflowDef" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "id" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "deleteWorkflowDef" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "id" },
+                value: { kind: "Variable", name: { kind: "Name", value: "id" } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteWorkflowDefMutation, DeleteWorkflowDefMutationVariables>;
 export const DiagnosticsDocument = {
   kind: "Document",
   definitions: [
@@ -13142,6 +13194,8 @@ export const PolicyVersionDocument = {
           { kind: "Field", name: { kind: "Name", value: "contentJson" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeAgreedByUserIds" } },
+          { kind: "Field", name: { kind: "Name", value: "reacknowledge" } },
           {
             kind: "Field",
             name: { kind: "Name", value: "appendices" },
@@ -13885,6 +13939,8 @@ export const PublishDraftDocument = {
           { kind: "Field", name: { kind: "Name", value: "contentJson" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeAgreedByUserIds" } },
+          { kind: "Field", name: { kind: "Name", value: "reacknowledge" } },
           {
             kind: "Field",
             name: { kind: "Name", value: "appendices" },
@@ -16565,6 +16621,8 @@ export const SaveDraftDocument = {
           { kind: "Field", name: { kind: "Name", value: "contentJson" } },
           { kind: "Field", name: { kind: "Name", value: "createdAt" } },
           { kind: "Field", name: { kind: "Name", value: "publishedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "changeTypeAgreedByUserIds" } },
+          { kind: "Field", name: { kind: "Name", value: "reacknowledge" } },
           {
             kind: "Field",
             name: { kind: "Name", value: "appendices" },

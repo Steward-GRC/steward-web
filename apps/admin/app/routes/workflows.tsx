@@ -1,7 +1,7 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 import { useTranslation } from "@steward-web/i18n";
-import { Badge, Button, EmptyState, ListPage, ResponsiveTable } from "@steward-web/ui";
+import { Badge, Banner, Button, EmptyState, ListPage, ResponsiveTable } from "@steward-web/ui";
 import { AlertTriangle } from "lucide-react";
 import { Link } from "react-router";
 
@@ -22,6 +22,16 @@ interface WorkflowRow {
   version: number;
 }
 
+/** What the editor just did, from its redirect: `?deleted=<name>`, `?archived=<name>`, `?gone=1`. */
+const noticeOf = (request: Request) => {
+  const parameters = new URL(request.url).searchParams;
+  return {
+    archived: parameters.get("archived") || undefined,
+    deleted: parameters.get("deleted") || undefined,
+    gone: parameters.get("gone") === "1",
+  };
+};
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [workflows, categories, users] = await Promise.all([
     listWorkflowDefs(request),
@@ -38,13 +48,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     usable: !notUsable(workflow),
     version: workflow.version,
   }));
-  return { rows };
+  return { notice: noticeOf(request), rows };
 };
 
 /** Workflows (A8, #90): approval workflows in the common list page, as a table. */
 export default function Workflows({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("admin");
-  const { rows } = loaderData;
+  const { notice, rows } = loaderData;
   const names = (row: WorkflowRow) =>
     row.categories.length > 0 ? row.categories.join(", ") : t("workflows.notInUse");
   return (
@@ -57,6 +67,13 @@ export default function Workflows({ loaderData }: Route.ComponentProps) {
       subtitle={t("workflows.subtitle")}
       title={t("workflows.title")}
     >
+      {notice.deleted ? (
+        <Banner title={t("workflows.notice.deleted", { name: notice.deleted })} tone="ok" />
+      ) : null}
+      {notice.archived ? (
+        <Banner title={t("workflows.notice.archived", { name: notice.archived })} tone="ok" />
+      ) : null}
+      {notice.gone ? <Banner title={t("workflows.notice.gone")} tone="info" /> : null}
       <ResponsiveTable
         columns={[
           {
