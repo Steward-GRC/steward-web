@@ -165,7 +165,12 @@ describe("the staff shell's data", () => {
     const result = await load();
     expect(result.shell.counts).toEqual({ approvals: 2 });
     expect(result.shell.categories).toEqual([
-      { id: "c1", name: "Workplace", slug: "workplace", subcategories: ["Facilities"] },
+      {
+        id: "c1",
+        name: "Workplace",
+        slug: "workplace",
+        subcategories: [{ name: "Facilities", slug: "facilities" }],
+      },
     ]);
   });
 

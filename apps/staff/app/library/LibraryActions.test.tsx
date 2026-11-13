@@ -15,12 +15,21 @@ const person = (permissions: string[]): Identity => ({
   permissions: new Set(permissions),
 });
 
+const categories = [
+  {
+    id: "w",
+    name: "Workplace",
+    slug: "workplace-services",
+    subcategories: [{ name: "Facilities", slug: "facilities" }],
+  },
+];
+
 const renderFor = (identity: Identity, documentType: DocumentType, at = "/") => {
   const Stub = createRoutesStub([
     {
       Component: () => (
         <IdentityProvider identity={identity}>
-          <LibraryActions documentType={documentType} />
+          <LibraryActions categories={categories} documentType={documentType} />
         </IdentityProvider>
       ),
       path: "/",
@@ -39,7 +48,7 @@ describe("the library's header actions (U3, U4)", () => {
     );
   });
 
-  it("starts a new draft in the category of the folder being viewed (#148)", () => {
+  it("starts a new draft in the category of the folder being viewed, by slug (#148, #377)", () => {
     renderFor(
       person(["policy.read", "policy.author"]),
       DocumentType.Policy,
@@ -47,7 +56,19 @@ describe("the library's header actions (U3, U4)", () => {
     );
     expect(screen.getByRole("link", { name: "New policy" })).toHaveAttribute(
       "href",
-      "/drafts/new/policy?category=Workplace&subcategory=Facilities",
+      "/drafts/new/policy/category/workplace-services/facilities",
+    );
+  });
+
+  it("opens a plain form for a folder it doesn't know (#377)", () => {
+    renderFor(
+      person(["policy.read", "policy.author"]),
+      DocumentType.Policy,
+      "/?category=Nowhere&subcategory=Facilities",
+    );
+    expect(screen.getByRole("link", { name: "New policy" })).toHaveAttribute(
+      "href",
+      "/drafts/new/policy",
     );
   });
 

@@ -132,10 +132,15 @@ const SENSITIVITIES: Record<string, Sensitivity> = {
   standard: Sensitivity.Standard,
 };
 
+/** The categories a row is checked against: matched by name, so no address slugs are needed. */
+type ImportCategory = {
+  subcategories: readonly Omit<CategoryChoice["subcategories"][number], "path">[];
+} & Omit<CategoryChoice, "slug" | "subcategories">;
+
 /** Each row checked against the categories and templates the author may use. */
 export const checkRows = (
   rows: readonly ImportRow[],
-  categories: readonly CategoryChoice[],
+  categories: readonly ImportCategory[],
   templates: readonly { id: string; name: string }[],
 ): CheckedRow[] => {
   const seen = new Set<string>();

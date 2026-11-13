@@ -5,10 +5,10 @@ import { describe, expect, it } from "vitest";
 import { categoryChoices } from "./categoryChoices";
 
 const group = (id: string, name: string, parentId: null | string = null) =>
-  ({ id, name, parentId }) as never;
+  ({ id, name, parentId, slug: name.toLowerCase() }) as never;
 
 const typed = (id: string, name: string, parentId: null | string, documentTypes: string) =>
-  ({ documentTypes, id, name, parentId }) as never;
+  ({ documentTypes, id, name, parentId, slug: name.toLowerCase() }) as never;
 
 describe("categoryChoices document types (#87)", () => {
   it("carries what each group holds, on categories and subcategories", () => {
@@ -22,7 +22,10 @@ describe("categoryChoices document types (#87)", () => {
         documentTypes: "NONE",
         id: "w",
         name: "Workplace",
-        subcategories: [{ documentTypes: "POLICIES", id: "f", name: "Facilities" }],
+        slug: "workplace",
+        subcategories: [
+          { documentTypes: "POLICIES", id: "f", name: "Facilities", path: ["facilities"] },
+        ],
       },
     ]);
   });
@@ -41,18 +44,19 @@ describe("categoryChoices", () => {
       {
         id: "w",
         name: "Workplace",
+        slug: "workplace",
         subcategories: [
-          { id: "f", name: "Facilities" },
-          { id: "t", name: "Travel" },
+          { id: "f", name: "Facilities", path: ["facilities"] },
+          { id: "t", name: "Travel", path: ["travel"] },
         ],
       },
-      { id: "p", name: "People", subcategories: [] },
+      { id: "p", name: "People", slug: "people", subcategories: [] },
     ]);
   });
 
   it("treats a group whose parent the author can't use as a category of its own", () => {
     expect(categoryChoices([group("f", "Facilities", "hidden")])).toEqual([
-      { id: "f", name: "Facilities", subcategories: [] },
+      { id: "f", name: "Facilities", slug: "facilities", subcategories: [] },
     ]);
   });
 
@@ -63,8 +67,21 @@ describe("categoryChoices", () => {
       group("d", "Desks", "f"),
     ]);
     expect(choices[0]!.subcategories).toEqual([
-      { id: "f", name: "Facilities" },
-      { id: "d", name: "Facilities › Desks" },
+      { id: "f", name: "Facilities", path: ["facilities"] },
+      { id: "d", name: "Facilities › Desks", path: ["facilities", "desks"] },
+    ]);
+  });
+
+  it("carries each group's slug, and a subcategory's slug path below its category (#377)", () => {
+    const [workplace] = categoryChoices([
+      { ...(group("w", "Workplace") as object), slug: "workplace-it" } as never,
+      { ...(group("f", "Facilities", "w") as object), slug: "facilities" } as never,
+      { ...(group("d", "Desks", "f") as object), slug: "desks" } as never,
+    ]);
+    expect(workplace?.slug).toBe("workplace-it");
+    expect(workplace?.subcategories.map((s) => s.path)).toEqual([
+      ["facilities"],
+      ["facilities", "desks"],
     ]);
   });
 });

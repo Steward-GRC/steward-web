@@ -183,10 +183,15 @@ describe("liveEdge: the caller's acknowledgements", () => {
 });
 
 describe("liveEdge.categories", () => {
-  it("lists the root categories with their direct children's names, in one call", async () => {
+  it("lists the root categories with their direct children's names and slugs, in one call", async () => {
     const calls = routeGateway(treeHandlers);
     expect(await liveEdge.categories()).toEqual([
-      { id: "c-fin", name: "Finance", slug: "finance", subcategories: ["Travel"] },
+      {
+        id: "c-fin",
+        name: "Finance",
+        slug: "finance",
+        subcategories: [{ name: "Travel", slug: "travel" }],
+      },
     ]);
     expect(calls.map((c) => c.operation)).toEqual(["CategoryTree"]);
   });

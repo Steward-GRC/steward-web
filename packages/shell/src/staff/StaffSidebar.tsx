@@ -134,10 +134,10 @@ const CategoryRow = ({ category }: { category: Category }) => {
         ? category.subcategories.map((subcategory) => (
             <Link
               className="flex h-8 items-center truncate pr-2.5 pl-[58px] text-ink hover:text-ink hover:underline"
-              key={subcategory}
-              to={browseHref(category.name, subcategory)}
+              key={subcategory.slug}
+              to={browseHref(category.name, subcategory.name)}
             >
-              {subcategory}
+              {subcategory.name}
             </Link>
           ))
         : null}

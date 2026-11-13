@@ -110,7 +110,7 @@ export interface Category {
   readonly id: string;
   readonly name: string;
   readonly slug: string;
-  readonly subcategories: readonly string[];
+  readonly subcategories: readonly Subcategory[];
 }
 
 /**
@@ -425,6 +425,12 @@ export interface ReviewThread {
 
 /** One of the caller's second factors: kind is "totp", "email" or "passkey". */
 export type SecondFactor = MyFactorsQuery["myFactors"][number];
+
+/** A direct child of a root category: its display name and its slug (unique under the parent). */
+export interface Subcategory {
+  readonly name: string;
+  readonly slug: string;
+}
 
 /** How a suggestion ended. */
 export type SuggestionOutcome = "AGREED" | "CHANGED" | "NOT_AGREED" | "REMOVED" | "WITHDRAWN";

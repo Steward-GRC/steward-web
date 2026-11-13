@@ -8,10 +8,14 @@ export interface CategoryChoice extends TemplateDefault {
   documentTypes?: CategoryDocumentTypes;
   id: string;
   name: string;
+  /** The address segment for this category (`/drafts/new/policy/category/<slug>`). */
+  slug: string;
   subcategories: ({
     documentTypes?: CategoryDocumentTypes;
     id: string;
     name: string;
+    /** The slugs from just under the category down to this subcategory, one per level. */
+    path: readonly string[];
   } & TemplateDefault)[];
 }
 
@@ -24,6 +28,7 @@ type ChoiceGroup = Pick<
   | "id"
   | "name"
   | "parentId"
+  | "slug"
 >;
 
 /** What a new policy starts from here, when the category or one above it sets it. */
@@ -70,12 +75,17 @@ export const categoryChoices = (groups: readonly ChoiceGroup[]): CategoryChoice[
       children.set(g.parentId, [...(children.get(g.parentId) ?? []), g]);
     }
   }
-  const below = (id: string, prefix: string): CategoryChoice["subcategories"] =>
+  const below = (
+    id: string,
+    prefix: string,
+    above: readonly string[],
+  ): CategoryChoice["subcategories"] =>
     (children.get(id) ?? []).flatMap((child) => {
       const name = prefix ? `${prefix} › ${child.name}` : child.name;
+      const path = [...above, child.slug];
       return [
-        { ...typed(child), ...templateDefault(child), id: child.id, name },
-        ...below(child.id, name),
+        { ...typed(child), ...templateDefault(child), id: child.id, name, path },
+        ...below(child.id, name, path),
       ];
     });
   return groups
@@ -85,6 +95,7 @@ export const categoryChoices = (groups: readonly ChoiceGroup[]): CategoryChoice[
       ...templateDefault(g),
       id: g.id,
       name: g.name,
-      subcategories: below(g.id, ""),
+      slug: g.slug,
+      subcategories: below(g.id, "", []),
     }));
 };

@@ -431,7 +431,8 @@
         "hint": "Steps for doing something. Never needs acknowledgement.",
         "label": "Procedure"
       }
-    }
+    },
+    "unknownFolder": "There is no category at this address. Choose one below."
   },
   "templates": {
     "description": "Reusable section structures policies can be drafted against. Templates are created and managed in the admin console.",

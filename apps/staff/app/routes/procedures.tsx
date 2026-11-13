@@ -22,7 +22,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function ProceduresRoute({ loaderData }: Route.ComponentProps) {
   return (
     <PolicyLibrary
-      actions={<LibraryActions documentType={DocumentType.Procedure} />}
+      actions={
+        <LibraryActions categories={loaderData.categories} documentType={DocumentType.Procedure} />
+      }
       categories={loaderData.categories}
       documentType={DocumentType.Procedure}
       policies={loaderData.policies}
