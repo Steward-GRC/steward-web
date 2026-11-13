@@ -34,6 +34,7 @@ import { notUsable } from "../workflows/workflowRules";
 import {
   archiveWorkflowDef,
   createWorkflowDef,
+  getWorkCalendar,
   getWorkflowDef,
   listWorkflowVetoes,
   setWorkflowVetoEnabled,
@@ -43,15 +44,17 @@ import {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const workflow = await getWorkflowDef(request, params.id);
   if (!workflow) return data({ workflow: null }, { status: 404 });
-  const [users, groups, categories, vetoes] = await Promise.all([
+  const [users, groups, categories, vetoes, calendar] = await Promise.all([
     // People and group names are a courtesy: without them the chips show ids.
     listUsers(request).catch(() => []),
     listPlatformGroups(request).catch(() => []),
     listGroups(request),
     listWorkflowVetoes(request),
+    getWorkCalendar(request),
   ]);
   const held = vetoes.find((entry) => entry.id === workflow.id);
   return {
+    calendar,
     groupNames: Object.fromEntries(groups.map((g) => [g.id, g.name])),
     people: users
       .filter((u) => !u.deletedAt)
@@ -195,7 +198,7 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  const { groupNames, people, usedBy } = loaderData;
+  const { calendar, groupNames, people, usedBy } = loaderData;
   const draft = notUsable({ stages });
   const failure =
     [save, copy, remove]
@@ -301,7 +304,13 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
           : null}
       </fieldset>
 
-      <StageEditor groupNames={groupNames} onChange={setStages} people={people} stages={stages} />
+      <StageEditor
+        calendar={calendar}
+        groupNames={groupNames}
+        onChange={setStages}
+        people={people}
+        stages={stages}
+      />
 
       {failure ? (
         <Banner failure={failure} title={t("workflows.editor.failed")} tone="danger" />

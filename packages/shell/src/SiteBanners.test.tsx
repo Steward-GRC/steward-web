@@ -11,6 +11,7 @@ import { SiteBanners } from "./SiteBanners";
 const settings = (overrides: Partial<GlobalSettings> = {}): GlobalSettings => ({
   announcement: { enabled: false, level: "info", message: "" },
   maintenance: { enabled: false, message: "" },
+  workCalendar: { holidays: [], timezone: "UTC", weekdays: [1, 2, 3, 4, 5] },
   ...overrides,
 });
 

@@ -9,5 +9,13 @@ mutation SetGlobalSettings($input: GlobalSettingsInput!) {
       enabled
       message
     }
+    workCalendar {
+      weekdays
+      timezone
+      holidays {
+        date
+        label
+      }
+    }
   }
 }

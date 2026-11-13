@@ -10,6 +10,7 @@ import {
   getGlobalSettings,
   saveEmailServiceConfig,
   saveGlobalSettings,
+  saveWorkCalendar,
   setAiEnabled,
   setAiToken,
   setAiTopK,
@@ -55,6 +56,7 @@ describe("getGlobalSettings", () => {
     const settings: GlobalSettings = {
       announcement: { enabled: true, level: "info", message: "Hello" },
       maintenance: { enabled: false, message: "" },
+      workCalendar: { holidays: [], timezone: "UTC", weekdays: [1, 2, 3, 4, 5] },
     };
     const fetchSpy = vi
       .fn()
@@ -71,6 +73,7 @@ describe("saveGlobalSettings", () => {
     const settings: GlobalSettings = {
       announcement: { enabled: true, level: "warning", message: "Maintenance tonight" },
       maintenance: { enabled: false, message: "" },
+      workCalendar: { holidays: [], timezone: "UTC", weekdays: [1, 2, 3, 4, 5] },
     };
     const fetchSpy = vi
       .fn()
@@ -84,6 +87,61 @@ describe("saveGlobalSettings", () => {
         maintenance: settings.maintenance,
       }),
     ).toEqual(settings);
+  });
+});
+
+describe("saveWorkCalendar", () => {
+  const stored: GlobalSettings = {
+    announcement: { enabled: true, level: "warning", message: "Maintenance tonight" },
+    maintenance: { enabled: true, message: "Back at nine" },
+    workCalendar: { holidays: [], timezone: "UTC", weekdays: [1, 2, 3, 4, 5] },
+  };
+  const calendar = {
+    holidays: [{ date: "2026-12-25", label: "" }],
+    timezone: "Europe/London",
+    weekdays: [1, 2, 3, 4],
+  };
+
+  it("sends the stored announcement and maintenance along with the calendar", async () => {
+    const bodies: { query: string; variables: Record<string, unknown> }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((_url: unknown, init: { body: string }) => {
+        const body = JSON.parse(init.body) as (typeof bodies)[number];
+        bodies.push(body);
+        if (body.query.includes("setGlobalSettings")) {
+          return Promise.resolve(
+            jsonOnce({ setGlobalSettings: { ...stored, workCalendar: calendar } }),
+          );
+        }
+        if (body.query.includes("globalSettings")) {
+          return Promise.resolve(jsonOnce({ globalSettings: stored }));
+        }
+        return Promise.resolve(jsonOnce({ me: siteAdminMe }));
+      }),
+    );
+
+    const saved = await saveWorkCalendar(request(), calendar);
+
+    expect(saved.workCalendar).toEqual(calendar);
+    const mutation = bodies.find((body) => body.query.includes("setGlobalSettings"));
+    expect(mutation?.variables).toEqual({
+      input: {
+        announcement: stored.announcement,
+        maintenance: stored.maintenance,
+        workCalendar: calendar,
+      },
+    });
+  });
+
+  it("redirects a caller who lacks settings.manage without writing", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(jsonOnce({ me: readerMe }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const thrown: unknown = await saveWorkCalendar(request(), calendar).catch(
+      (error: unknown) => error,
+    );
+    expect(thrown).toBeInstanceOf(Response);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
 

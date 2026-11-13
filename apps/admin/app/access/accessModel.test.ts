@@ -9,6 +9,7 @@ const rule = (subjectRef: string, read = RaciGrant.Allow) => ({
   ack: RaciGrant.Blank,
   approve: RaciGrant.Blank,
   author: RaciGrant.Blank,
+  manage: RaciGrant.Blank,
   read,
   subjectKind: RaciSubjectKind.Group,
   subjectRef,
@@ -43,6 +44,11 @@ describe("reordering", () => {
     expect(moveRule(draft, draft[0]!.key, 1)[1]!.moved).toBe("down");
     expect(moveRule(draft, draft[0]!.key, -1)).toBe(draft);
     expect(moveRule(draft, draft[1]!.key, 1)).toBe(draft);
+  });
+
+  it("carries a stored Manage grant through, so saving the rules never clears it", () => {
+    const stored = { ...rule("A"), manage: RaciGrant.Allow };
+    expect(rulesInputOf(draftOf([stored]))).toEqual([stored]);
   });
 
   it("sends the rules back without the editor's own fields", () => {

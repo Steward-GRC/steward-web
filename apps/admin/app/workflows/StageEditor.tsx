@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // The workflow editor's stage cards (A9). Presentational: the route owns the save, through a
 // hidden field that mirrors `onChange`'s latest stage list.
-import type { GroupUnitInput, WorkflowStageInput } from "@steward-web/api-client";
+import type { GroupUnitInput, WorkCalendar, WorkflowStageInput } from "@steward-web/api-client";
 
 import { useTranslation } from "@steward-web/i18n";
 import { Card, cn, Select } from "@steward-web/ui";
 import { GripVertical, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
 
+import { calendarSummary } from "../settings/workCalendar";
 import { moveDown, moveUp } from "./stageOutline";
 
 export interface StageEditorProps {
+  /** The site work calendar the due box counts on; null when it could not be read. */
+  calendar?: null | WorkCalendar;
   /** Platform group names, for group approvers. */
   groupNames: Record<string, string>;
   onChange: (stages: readonly WorkflowStageInput[]) => void;
@@ -39,6 +42,7 @@ const CHIP = "flex h-7 items-center gap-1.5 rounded-full px-2.5";
 
 /** One stage card: grip, number and name, Always last, the quorum, approvers and due date. */
 const StageCard = ({
+  calendar,
   groupNames,
   index,
   onDragStart,
@@ -49,6 +53,7 @@ const StageCard = ({
   people,
   stage,
 }: {
+  calendar: null | undefined | WorkCalendar;
   groupNames: Record<string, string>;
   index: number;
   onDragStart: () => void;
@@ -63,10 +68,24 @@ const StageCard = ({
   const number = index + 1;
   const dueId = useId();
   const hintId = useId();
+  const dueHelpId = useId();
   const quorum = QUORUMS.find((entry) => entry === stage.quorum);
   const explain = quorum
     ? t(`workflows.editor.explain.${quorum}`)
     : t("workflows.editor.explain.count", { count: Number(stage.quorum) || 0 });
+  const calendarNote = (site: WorkCalendar) => {
+    const { days, holidays } = calendarSummary(site, (day) =>
+      t(`settings.workCalendar.short.${day}`),
+    );
+    return t("workflows.editor.dueCalendar", {
+      days,
+      holidays:
+        holidays === 0
+          ? t("workflows.editor.dueNoHolidays")
+          : t("workflows.editor.dueHolidays", { count: holidays }),
+      timezone: site.timezone,
+    });
+  };
   const person = (id: string) => people.find((entry) => entry.id === id);
 
   const onGripKey = (event: KeyboardEvent) => {
@@ -202,6 +221,7 @@ const StageCard = ({
             {t("workflows.editor.due")}
           </label>
           <input
+            aria-describedby={dueHelpId}
             aria-label={t("workflows.editor.dueLabel", { number })}
             className="h-[30px] w-16 rounded-md border border-control bg-surface px-2.5"
             id={dueId}
@@ -214,7 +234,13 @@ const StageCard = ({
             type="number"
             value={stage.slaDays ?? ""}
           />
-          <span className="text-muted">{t("workflows.editor.workingDays")}</span>
+          <span className="text-muted">
+            {t("workflows.editor.workingDays", { count: stage.slaDays ?? 0 })}
+          </span>
+        </span>
+        <span className="basis-full text-xs text-muted" id={dueHelpId}>
+          {t("workflows.editor.dueHelp")}
+          {calendar ? ` ${calendarNote(calendar)}` : ""}
         </span>
       </div>
     </Card>
@@ -226,7 +252,13 @@ const StageCard = ({
  * has its quorum (One, Quorum or All, with a line explaining it), its approvers as chips (a
  * disabled one asks to be replaced, a group shows "As a group · 2 of 3") and its due date.
  */
-export const StageEditor = ({ groupNames, onChange, people, stages }: StageEditorProps) => {
+export const StageEditor = ({
+  calendar,
+  groupNames,
+  onChange,
+  people,
+  stages,
+}: StageEditorProps) => {
   const [dragging, setDragging] = useState<null | number>(null);
   const update = (index: number, patch: Partial<WorkflowStageInput>) =>
     onChange(stages.map((stage, at) => (at === index ? { ...stage, ...patch } : stage)));
@@ -245,6 +277,7 @@ export const StageEditor = ({ groupNames, onChange, people, stages }: StageEdito
     <div className="flex flex-col gap-3.5">
       {stages.map((stage, index) => (
         <StageCard
+          calendar={calendar}
           groupNames={groupNames}
           index={index}
           key={stage.id ?? `new-${index}`}

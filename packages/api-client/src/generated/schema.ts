@@ -864,11 +864,15 @@ export type GlobalSettings = {
   readonly __typename?: "GlobalSettings";
   readonly announcement: Announcement;
   readonly maintenance: Maintenance;
+  /** The site work calendar. Always present: Monday to Friday, UTC, no holidays until a site admin sets one. */
+  readonly workCalendar: WorkCalendar;
 };
 
 export type GlobalSettingsInput = {
   readonly announcement: AnnouncementInput;
   readonly maintenance: MaintenanceInput;
+  /** Omit to leave the stored calendar unchanged. */
+  readonly workCalendar?: InputMaybe<WorkCalendarInput>;
 };
 
 export type GroupMapping = {
@@ -918,6 +922,19 @@ export type HardResetRequest = {
 export type HealthStatus = {
   readonly __typename?: "HealthStatus";
   readonly status: Scalars["String"]["output"];
+};
+
+export type Holiday = {
+  readonly __typename?: "Holiday";
+  /** A real calendar date, YYYY-MM-DD. */
+  readonly date: Scalars["String"]["output"];
+  /** A name for the day, 0 to 80 characters; it may be empty. */
+  readonly label: Scalars["String"]["output"];
+};
+
+export type HolidayInput = {
+  readonly date: Scalars["String"]["input"];
+  readonly label: Scalars["String"]["input"];
 };
 
 export type ImpersonationSession = {
@@ -2633,6 +2650,7 @@ export type PolicyViewerCan = {
   readonly canBreakGlass: Scalars["Boolean"]["output"];
   readonly contentObfuscated: Scalars["Boolean"]["output"];
   readonly edit: Scalars["Boolean"]["output"];
+  readonly manage: Scalars["Boolean"]["output"];
   readonly read: Scalars["Boolean"]["output"];
   readonly submit: Scalars["Boolean"]["output"];
 };
@@ -2826,6 +2844,7 @@ export type Query = {
    * caller reads (PermissionDenied otherwise).
    */
   readonly searchAndAnswer: SearchAndAnswerResult;
+  readonly searchPlatformGroups: ReadonlyArray<PlatformGroup>;
   readonly searchPolicies: PolicySearchPage;
   readonly searchUsers: ReadonlyArray<UserLabel>;
   readonly simulateCategory: RaciDecision;
@@ -2874,6 +2893,7 @@ export type Query = {
    * category (rule-granted or owner); drives the staff Approvals-section eligibility.
    */
   readonly viewerIsApprover: Scalars["Boolean"]["output"];
+  readonly workflowApproverCandidates: WorkflowApproverCandidates;
   readonly workflowDef?: Maybe<WorkflowDef>;
   readonly workflowDefs: ReadonlyArray<WorkflowDef>;
   /**
@@ -3199,6 +3219,11 @@ export type QuerySearchAndAnswerArgs = {
   question: Scalars["String"]["input"];
 };
 
+export type QuerySearchPlatformGroupsArgs = {
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  query: Scalars["String"]["input"];
+};
+
 export type QuerySearchPoliciesArgs = {
   after?: InputMaybe<Scalars["String"]["input"]>;
   documentType?: InputMaybe<DocumentType>;
@@ -3254,6 +3279,10 @@ export type QueryVersionChangesSinceReviewArgs = {
   policyVersionId: Scalars["ID"]["input"];
 };
 
+export type QueryWorkflowApproverCandidatesArgs = {
+  workflowId: Scalars["ID"]["input"];
+};
+
 export type QueryWorkflowDefArgs = {
   id: Scalars["ID"]["input"];
 };
@@ -3269,15 +3298,39 @@ export type QuietHours = {
   readonly timezone: Scalars["String"]["output"];
 };
 
+export enum RaciAction {
+  Ack = "ACK",
+  Approve = "APPROVE",
+  Author = "AUTHOR",
+  Manage = "MANAGE",
+  Read = "READ",
+}
+
+export type RaciConfiguredBlock = {
+  readonly __typename?: "RaciConfiguredBlock";
+  readonly action: RaciAction;
+  readonly categoryId: Scalars["ID"]["output"];
+  readonly subjectKind: RaciSubjectKind;
+  readonly subjectRef: Scalars["String"]["output"];
+};
+
 export type RaciDecision = {
   readonly __typename?: "RaciDecision";
   readonly ack: Scalars["Boolean"]["output"];
+  readonly ackCode: RaciReasonCode;
   readonly ackReason: Scalars["String"]["output"];
   readonly approve: Scalars["Boolean"]["output"];
+  readonly approveCode: RaciReasonCode;
   readonly approveReason: Scalars["String"]["output"];
   readonly author: Scalars["Boolean"]["output"];
+  readonly authorCode: RaciReasonCode;
   readonly authorReason: Scalars["String"]["output"];
+  readonly configuredBlock: ReadonlyArray<RaciConfiguredBlock>;
+  readonly manage: Scalars["Boolean"]["output"];
+  readonly manageCode: RaciReasonCode;
+  readonly manageReason: Scalars["String"]["output"];
   readonly read: Scalars["Boolean"]["output"];
+  readonly readCode: RaciReasonCode;
   readonly readReason: Scalars["String"]["output"];
 };
 
@@ -3287,11 +3340,20 @@ export enum RaciGrant {
   Deny = "DENY",
 }
 
+export enum RaciReasonCode {
+  DefaultDeny = "DEFAULT_DENY",
+  Entry = "ENTRY",
+  Owner = "OWNER",
+  Requires = "REQUIRES",
+  Root = "ROOT",
+}
+
 export type RaciRule = {
   readonly __typename?: "RaciRule";
   readonly ack: RaciGrant;
   readonly approve: RaciGrant;
   readonly author: RaciGrant;
+  readonly manage: RaciGrant;
   readonly read: RaciGrant;
   readonly subjectKind: RaciSubjectKind;
   readonly subjectRef: Scalars["String"]["output"];
@@ -3301,6 +3363,7 @@ export type RaciRuleInput = {
   readonly ack: RaciGrant;
   readonly approve: RaciGrant;
   readonly author: RaciGrant;
+  readonly manage?: RaciGrant;
   readonly read: RaciGrant;
   readonly subjectKind: RaciSubjectKind;
   readonly subjectRef: Scalars["String"]["input"];
@@ -4011,6 +4074,40 @@ export type WebauthnRegistration = {
   readonly __typename?: "WebauthnRegistration";
   readonly optionsJson: Scalars["String"]["output"];
   readonly sessionId: Scalars["ID"]["output"];
+};
+
+/**
+ * The one site-wide calendar that says which days count as working days. A workflow
+ * stage's slaDays is counted on it.
+ */
+export type WorkCalendar = {
+  readonly __typename?: "WorkCalendar";
+  /** Dates that are not working days even when the weekday is. */
+  readonly holidays: ReadonlyArray<Holiday>;
+  /** An IANA time zone name, for example Europe/London. */
+  readonly timezone: Scalars["String"]["output"];
+  /** ISO weekday numbers that are working days: 1 Monday to 7 Sunday. */
+  readonly weekdays: ReadonlyArray<Scalars["Int"]["output"]>;
+};
+
+/**
+ * The calendar to store. Core refuses an invalid one with InvalidArgument and the
+ * code INVALID_WORK_CALENDAR: at least one weekday and no repeats, a known IANA
+ * zone, real unique YYYY-MM-DD holiday dates (at most 366), labels of at most 80
+ * characters.
+ */
+export type WorkCalendarInput = {
+  readonly holidays: ReadonlyArray<HolidayInput>;
+  readonly timezone: Scalars["String"]["input"];
+  readonly weekdays: ReadonlyArray<Scalars["Int"]["input"]>;
+};
+
+export type WorkflowApproverCandidates = {
+  readonly __typename?: "WorkflowApproverCandidates";
+  readonly attached: Scalars["Boolean"]["output"];
+  readonly categoryIds: ReadonlyArray<Scalars["ID"]["output"]>;
+  readonly users: ReadonlyArray<User>;
+  readonly workflowId: Scalars["ID"]["output"];
 };
 
 export type WorkflowDef = {

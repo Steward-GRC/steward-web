@@ -145,6 +145,8 @@ export type {
   GlobalSettings,
   GlobalSettingsInput,
   GroupMapping,
+  Holiday,
+  HolidayInput,
   IssueCollabTokenInput,
   IssueCollabTokenPayload,
   KeyValueInput,
@@ -179,6 +181,8 @@ export type {
   ThreadMessage,
   UpcomingApproval,
   UserDeletionPreview,
+  WorkCalendar,
+  WorkCalendarInput,
 } from "./generated/schema";
 export {
   AckTrigger,

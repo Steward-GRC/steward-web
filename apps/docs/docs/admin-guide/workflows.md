@@ -34,7 +34,9 @@ account is disabled and needs replacing.
 1. Select **+ New workflow**, give it a name and an optional description.
 2. Each stage is a card. Name it, choose **One**, **Quorum** or **All**, and add approvers with
    **+ Add approver**; the cross on a chip removes one. A disabled approver shows as "disabled —
-   replace". **Due** sets how many working days the stage has.
+   replace". **Due within** sets how many
+   working days the stage has. It counts whole working days on the site calendar (set under
+   **Settings**, **Working days**), skipping weekends and holidays.
 3. Drag a card by its grip to reorder the stages, or focus the grip and use the up and down arrow
    keys. The order is the approval sequence, so put the earliest reviewer first and the final
    sign-off last. **+ Add stage** adds one at the end.

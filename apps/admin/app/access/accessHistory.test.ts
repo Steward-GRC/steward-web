@@ -10,6 +10,7 @@ const rule = (subjectRef: string) => ({
   ack: RaciGrant.Blank,
   approve: RaciGrant.Blank,
   author: RaciGrant.Blank,
+  manage: RaciGrant.Blank,
   read: RaciGrant.Allow,
   subjectKind: RaciSubjectKind.Group,
   subjectRef,

@@ -9,5 +9,13 @@ query GlobalSettings {
       enabled
       message
     }
+    workCalendar {
+      weekdays
+      timezone
+      holidays {
+        date
+        label
+      }
+    }
   }
 }

@@ -486,6 +486,7 @@ export type AuthoringPolicyFieldsFragment = {
     readonly contentObfuscated: boolean;
     readonly canBreakGlass: boolean;
     readonly ack: boolean;
+    readonly manage: boolean;
   };
 };
 
@@ -595,6 +596,7 @@ export type CategoryRulesetQuery = {
       readonly ack: Types.RaciGrant;
       readonly approve: Types.RaciGrant;
       readonly author: Types.RaciGrant;
+      readonly manage: Types.RaciGrant;
     }>;
   };
 };
@@ -997,6 +999,7 @@ export type CreatePolicyMutation = {
       readonly contentObfuscated: boolean;
       readonly canBreakGlass: boolean;
       readonly ack: boolean;
+      readonly manage: boolean;
     };
   };
 };
@@ -1438,6 +1441,11 @@ export type GlobalSettingsQuery = {
       readonly message: string;
     };
     readonly maintenance: { readonly enabled: boolean; readonly message: string };
+    readonly workCalendar: {
+      readonly weekdays: ReadonlyArray<number>;
+      readonly timezone: string;
+      readonly holidays: ReadonlyArray<{ readonly date: string; readonly label: string }>;
+    };
   };
 };
 
@@ -1745,6 +1753,7 @@ export type MyDraftsQuery = {
       readonly contentObfuscated: boolean;
       readonly canBreakGlass: boolean;
       readonly ack: boolean;
+      readonly manage: boolean;
     };
   }>;
 };
@@ -1936,6 +1945,7 @@ export type PoliciesQuery = {
       readonly contentObfuscated: boolean;
       readonly canBreakGlass: boolean;
       readonly ack: boolean;
+      readonly manage: boolean;
     };
   }>;
 };
@@ -1972,6 +1982,7 @@ export type PolicyQuery = {
       readonly contentObfuscated: boolean;
       readonly canBreakGlass: boolean;
       readonly ack: boolean;
+      readonly manage: boolean;
     };
   } | null;
 };
@@ -2173,6 +2184,7 @@ export type PolicyByNumberQuery = {
       readonly contentObfuscated: boolean;
       readonly canBreakGlass: boolean;
       readonly ack: boolean;
+      readonly manage: boolean;
     };
   } | null;
 };
@@ -2512,6 +2524,7 @@ export type RaciRuleFieldsFragment = {
   readonly ack: Types.RaciGrant;
   readonly approve: Types.RaciGrant;
   readonly author: Types.RaciGrant;
+  readonly manage: Types.RaciGrant;
 };
 
 export type ReassignUserPoliciesMutationVariables = Exact<{
@@ -3703,6 +3716,7 @@ export type SetCategoryRulesetMutation = {
       readonly ack: Types.RaciGrant;
       readonly approve: Types.RaciGrant;
       readonly author: Types.RaciGrant;
+      readonly manage: Types.RaciGrant;
     }>;
   };
 };
@@ -3808,6 +3822,11 @@ export type SetGlobalSettingsMutation = {
       readonly message: string;
     };
     readonly maintenance: { readonly enabled: boolean; readonly message: string };
+    readonly workCalendar: {
+      readonly weekdays: ReadonlyArray<number>;
+      readonly timezone: string;
+      readonly holidays: ReadonlyArray<{ readonly date: string; readonly label: string }>;
+    };
   };
 };
 
@@ -3875,6 +3894,7 @@ export type SetPolicyTemplateMutation = {
       readonly contentObfuscated: boolean;
       readonly canBreakGlass: boolean;
       readonly ack: boolean;
+      readonly manage: boolean;
     };
   };
 };
@@ -4231,12 +4251,25 @@ export type SimulateCategoryQuery = {
   readonly simulateCategory: {
     readonly read: boolean;
     readonly readReason: string;
+    readonly readCode: Types.RaciReasonCode;
     readonly ack: boolean;
     readonly ackReason: string;
+    readonly ackCode: Types.RaciReasonCode;
     readonly approve: boolean;
     readonly approveReason: string;
+    readonly approveCode: Types.RaciReasonCode;
     readonly author: boolean;
     readonly authorReason: string;
+    readonly authorCode: Types.RaciReasonCode;
+    readonly manage: boolean;
+    readonly manageReason: string;
+    readonly manageCode: Types.RaciReasonCode;
+    readonly configuredBlock: ReadonlyArray<{
+      readonly action: Types.RaciAction;
+      readonly categoryId: string;
+      readonly subjectKind: Types.RaciSubjectKind;
+      readonly subjectRef: string;
+    }>;
   };
 };
 
@@ -5058,6 +5091,7 @@ export const AuthoringPolicyFieldsFragmentDoc = {
                 { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
                 { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
               ],
             },
           },
@@ -5390,6 +5424,7 @@ export const RaciRuleFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "ack" } },
           { kind: "Field", name: { kind: "Name", value: "approve" } },
           { kind: "Field", name: { kind: "Name", value: "author" } },
+          { kind: "Field", name: { kind: "Name", value: "manage" } },
         ],
       },
     },
@@ -7720,6 +7755,7 @@ export const CategoryRulesetDocument = {
           { kind: "Field", name: { kind: "Name", value: "ack" } },
           { kind: "Field", name: { kind: "Name", value: "approve" } },
           { kind: "Field", name: { kind: "Name", value: "author" } },
+          { kind: "Field", name: { kind: "Name", value: "manage" } },
         ],
       },
     },
@@ -9012,6 +9048,7 @@ export const CreatePolicyDocument = {
                 { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
                 { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
               ],
             },
           },
@@ -10625,6 +10662,28 @@ export const GlobalSettingsDocument = {
                     ],
                   },
                 },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "workCalendar" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "weekdays" } },
+                      { kind: "Field", name: { kind: "Name", value: "timezone" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "holidays" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            { kind: "Field", name: { kind: "Name", value: "date" } },
+                            { kind: "Field", name: { kind: "Name", value: "label" } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -11675,6 +11734,7 @@ export const MyDraftsDocument = {
                 { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
                 { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
               ],
             },
           },
@@ -12148,6 +12208,7 @@ export const PoliciesDocument = {
                 { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
                 { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
               ],
             },
           },
@@ -12234,6 +12295,7 @@ export const PolicyDocument = {
                 { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
                 { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
               ],
             },
           },
@@ -12569,6 +12631,7 @@ export const PolicyByNumberDocument = {
                 { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
                 { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
               ],
             },
           },
@@ -17164,6 +17227,7 @@ export const SetCategoryRulesetDocument = {
           { kind: "Field", name: { kind: "Name", value: "ack" } },
           { kind: "Field", name: { kind: "Name", value: "approve" } },
           { kind: "Field", name: { kind: "Name", value: "author" } },
+          { kind: "Field", name: { kind: "Name", value: "manage" } },
         ],
       },
     },
@@ -17577,6 +17641,28 @@ export const SetGlobalSettingsDocument = {
                     ],
                   },
                 },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "workCalendar" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "weekdays" } },
+                      { kind: "Field", name: { kind: "Name", value: "timezone" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "holidays" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            { kind: "Field", name: { kind: "Name", value: "date" } },
+                            { kind: "Field", name: { kind: "Name", value: "label" } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -17846,6 +17932,7 @@ export const SetPolicyTemplateDocument = {
                 { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
                 { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
               ],
             },
           },
@@ -19039,12 +19126,32 @@ export const SimulateCategoryDocument = {
               selections: [
                 { kind: "Field", name: { kind: "Name", value: "read" } },
                 { kind: "Field", name: { kind: "Name", value: "readReason" } },
+                { kind: "Field", name: { kind: "Name", value: "readCode" } },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
                 { kind: "Field", name: { kind: "Name", value: "ackReason" } },
+                { kind: "Field", name: { kind: "Name", value: "ackCode" } },
                 { kind: "Field", name: { kind: "Name", value: "approve" } },
                 { kind: "Field", name: { kind: "Name", value: "approveReason" } },
+                { kind: "Field", name: { kind: "Name", value: "approveCode" } },
                 { kind: "Field", name: { kind: "Name", value: "author" } },
                 { kind: "Field", name: { kind: "Name", value: "authorReason" } },
+                { kind: "Field", name: { kind: "Name", value: "authorCode" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
+                { kind: "Field", name: { kind: "Name", value: "manageReason" } },
+                { kind: "Field", name: { kind: "Name", value: "manageCode" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "configuredBlock" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "action" } },
+                      { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                      { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+                      { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+                    ],
+                  },
+                },
               ],
             },
           },

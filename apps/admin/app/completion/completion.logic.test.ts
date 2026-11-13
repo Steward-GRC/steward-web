@@ -43,6 +43,7 @@ const makePolicy = (overrides: Partial<Policy> = {}): Policy => ({
   updated: null,
   version: "1.0.0",
   viewerCan: {
+    manage: false,
     ack: false,
     approve: false,
     canBreakGlass: false,

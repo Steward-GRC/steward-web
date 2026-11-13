@@ -42,6 +42,7 @@ describe("GateShell", () => {
             message: "Policies move to the new library on Monday.",
           },
           maintenance: { enabled: false, message: "" },
+          workCalendar: { holidays: [], timezone: "UTC", weekdays: [1, 2, 3, 4, 5] },
         }}
         environment="test"
       >

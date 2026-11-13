@@ -1,6 +1,11 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Workflow, WorkflowDef, WorkflowStageInput } from "@steward-web/api-client";
+import type {
+  WorkCalendar,
+  Workflow,
+  WorkflowDef,
+  WorkflowStageInput,
+} from "@steward-web/api-client";
 
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
@@ -21,6 +26,19 @@ export const listWorkflows = async (request: Request): Promise<readonly Workflow
 export const listWorkflowDefs = async (request: Request): Promise<readonly WorkflowDef[]> => {
   await requireGroupManage(request);
   return edge.workflowDefs(cookieOf(request));
+};
+
+/**
+ * The site work calendar, for the stage box's helper text. Any signed-in user may read it, and
+ * the helper is a courtesy: a failed read answers null and the box shows its generic line.
+ */
+export const getWorkCalendar = async (request: Request): Promise<null | WorkCalendar> => {
+  try {
+    const settings = await edge.globalSettings(cookieOf(request));
+    return settings.workCalendar;
+  } catch {
+    return null;
+  }
 };
 
 export const getWorkflowDef = async (request: Request, id: string): Promise<null | WorkflowDef> => {

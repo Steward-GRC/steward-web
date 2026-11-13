@@ -35,6 +35,7 @@ const rule = (
   ack: grants[1],
   approve: grants[2],
   author: grants[3],
+  manage: RaciGrant.Blank,
   read: grants[0],
   subjectKind,
   subjectRef,

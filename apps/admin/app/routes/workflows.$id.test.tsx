@@ -44,7 +44,14 @@ const WORKFLOW = {
   version: 2,
 };
 
+const CALENDAR = {
+  holidays: [{ date: "2026-12-25", label: "Christmas Day" }],
+  timezone: "Europe/London",
+  weekdays: [1, 2, 3, 4, 5],
+};
+
 const BASE = {
+  calendar: CALENDAR,
   groupNames: { "g-approvers": "Approvers" },
   people: [
     { enabled: true, id: "mock-user-dave", name: "Dave" },
@@ -154,6 +161,36 @@ describe("The workflow editor (A9)", () => {
     expect(saved!.approvers).toEqual(["mock-user-dave", "mock-user-grace", "mock-user-erin"]);
     expect(saved!.quorum).toBe("majority");
     expect(saved!.slaDays).toBe(5);
+  });
+
+  it("words the due box as working days and counts the number (A9, working days)", async () => {
+    openEditor();
+    await screen.findByRole("heading", { level: 1 });
+    const first = stage(1);
+    expect(within(first).getByText("Due within")).toBeInTheDocument();
+    expect(within(first).getByText("working days")).toBeInTheDocument();
+    const due = within(first).getByRole("spinbutton", { name: "Stage 1 due within" });
+    await userEvent.clear(due);
+    await userEvent.type(due, "1");
+    expect(within(first).getByText("working day")).toBeInTheDocument();
+    expect(within(first).queryByText("working days")).not.toBeInTheDocument();
+  });
+
+  it("explains the count from the site calendar under the box", async () => {
+    openEditor();
+    await screen.findByRole("heading", { level: 1 });
+    const first = stage(1);
+    const due = within(first).getByRole("spinbutton", { name: "Stage 1 due within" });
+    const helper = within(first).getByText(/Counts whole working days from the site calendar/);
+    expect(due).toHaveAccessibleDescription(helper.textContent!);
+    expect(helper).toHaveTextContent("Mon–Fri, 1 holiday, Europe/London");
+  });
+
+  it("still explains the count when the calendar could not be read", async () => {
+    openEditor({ calendar: null });
+    await screen.findByRole("heading", { level: 1 });
+    const helper = within(stage(1)).getByText(/Counts whole working days from the site calendar/);
+    expect(helper).not.toHaveTextContent("Europe/London");
   });
 
   it("reorders stages from the keyboard on the grip", async () => {

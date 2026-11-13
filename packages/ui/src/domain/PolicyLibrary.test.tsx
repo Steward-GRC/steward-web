@@ -41,6 +41,7 @@ const authoringDefaults = {
   templateId: null,
   templateNone: true,
   viewerCan: {
+    manage: false,
     ack: true,
     approve: true,
     canBreakGlass: false,

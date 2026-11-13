@@ -27,6 +27,11 @@ const BASE = {
   globalSettings: {
     announcement: { enabled: true, level: "info", message: "New: the Visitor Sign-in Policy." },
     maintenance: { enabled: false, message: "" },
+    workCalendar: {
+      holidays: [{ date: "2026-12-25", label: "Christmas Day" }],
+      timezone: "Europe/London",
+      weekdays: [1, 2, 3, 4, 5],
+    },
   },
 };
 
@@ -55,7 +60,7 @@ const pill = (name: string) => within(card(name)).getByTestId("status-pill");
 const last = (posted: FormData[]) => posted.at(-1)!;
 
 describe("Settings (A28)", () => {
-  it("has the six cards with their status pills", async () => {
+  it("has the seven cards with their status pills", async () => {
     openSettings();
     expect(await screen.findByRole("heading", { level: 1, name: "Settings" })).toBeInTheDocument();
     expect(pill("AI provider token")).toHaveTextContent("Set");
@@ -70,6 +75,20 @@ describe("Settings (A28)", () => {
         "Locks the staff app behind the maintenance screen with your message. Site admins keep the admin console, so they can turn it off.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("has a Working days card that summarises the calendar and posts it as JSON", async () => {
+    const posted = openSettings();
+    const working = await screen.findByRole("region", { name: "Working days" });
+    expect(within(working).getByTestId("status-pill")).toHaveTextContent("Mon–Fri · Europe/London");
+    await userEvent.click(within(working).getByRole("checkbox", { name: "Friday" }));
+    await userEvent.click(within(working).getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => expect(last(posted).get("intent")).toBe("save-work-calendar"));
+    expect(JSON.parse(String(last(posted).get("workCalendar")))).toEqual({
+      holidays: [{ date: "2026-12-25", label: "Christmas Day" }],
+      timezone: "Europe/London",
+      weekdays: [1, 2, 3, 4],
+    });
   });
 
   it("replaces the token, and clears it only after the inline confirm (D36)", async () => {
