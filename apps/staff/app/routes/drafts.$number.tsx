@@ -677,6 +677,12 @@ const DraftEditor = ({ loaderData }: Route.ComponentProps) => {
                 incompleteButtons={incompleteButtons(content)}
                 missing={missing}
                 published={firstPublish ? undefined : publishedLabel}
+                reacknowledge={draft.reacknowledge}
+                reacknowledgeFor={
+                  changeTypeFrom(draft.changeType) ??
+                  changeTypeFrom(draft.suggestedChangeType) ??
+                  undefined
+                }
                 suggested={changeTypeFrom(draft.suggestedChangeType) ?? undefined}
               />
             ) : null}

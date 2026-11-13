@@ -299,6 +299,8 @@
       "keepEditing": "Keep editing",
       "loweringHint": "The first approval stage has to agree before a lower type applies. Until then it publishes as {{change}}.",
       "loweringReason": "Why is it lower?",
+      "reacknowledgeNo": "Publishing does not ask people to acknowledge this again.",
+      "reacknowledgeYes": "Publishing asks people to acknowledge this again.",
       "suggests": "Steward suggests {{change}}",
       "title": "Submit for approval?"
     },

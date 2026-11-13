@@ -382,3 +382,51 @@ describe("Submit for approval: the author picks the change (#390)", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("Submit for approval: whether people acknowledge again (#397)", () => {
+  it("says publishing asks people to acknowledge again when the gateway says so", async () => {
+    const { dialog } = await openPicker({ reacknowledge: true, suggested: "major" });
+    expect(
+      within(dialog).getByText("Publishing asks people to acknowledge this again."),
+    ).toBeInTheDocument();
+  });
+
+  it("says it does not when the gateway says so", async () => {
+    const { dialog } = await openPicker({ reacknowledge: false });
+    expect(
+      within(dialog).getByText("Publishing does not ask people to acknowledge this again."),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing when the gateway sent no answer", async () => {
+    const { dialog } = await openPicker();
+    expect(within(dialog).queryByText(/acknowledge this again/)).toBeNull();
+  });
+
+  it("says nothing for a first publish, where there is nothing to acknowledge again", async () => {
+    inRouter(
+      <SubmitForApproval document={document} missing={[]} reacknowledge suggested="major" />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Submit for approval" }));
+    expect(screen.queryByText(/acknowledge this again/)).toBeNull();
+  });
+
+  it("hides the answer once the pick moves off the type it was worked out for", async () => {
+    const { dialog } = await openPicker({ reacknowledge: false });
+    expect(within(dialog).getByText(/acknowledge this again/)).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Major" }));
+    expect(within(dialog).queryByText(/acknowledge this again/)).toBeNull();
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Minor" }));
+    expect(within(dialog).getByText(/acknowledge this again/)).toBeInTheDocument();
+  });
+
+  it("reads the answer against the version's own change type when it has one", async () => {
+    const { dialog } = await openPicker({ reacknowledge: true, reacknowledgeFor: "major" });
+    // the picker starts on the suggestion (minor), not the type the answer is for
+    expect(within(dialog).queryByText(/acknowledge this again/)).toBeNull();
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Major" }));
+    expect(
+      within(dialog).getByText("Publishing asks people to acknowledge this again."),
+    ).toBeInTheDocument();
+  });
+});

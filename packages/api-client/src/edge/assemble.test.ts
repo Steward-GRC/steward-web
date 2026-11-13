@@ -229,6 +229,7 @@ describe("toPolicyView", () => {
         ackTriggers: null,
         currentDraftVersionId: null,
         currentPublishedVersionId: "v2",
+        currentSemanticVersion: null,
         currentVersionNo: 3,
         currentVersionStatus: "published",
         documentType: DocumentType.Policy,
@@ -272,6 +273,57 @@ describe("toPolicyView", () => {
     });
   });
 
+  const row = {
+    ackAudienceOverride: null,
+    ackTriggers: null,
+    currentDraftVersionId: null,
+    currentPublishedVersionId: "v2",
+    currentSemanticVersion: null,
+    currentVersionNo: 3,
+    currentVersionStatus: "published",
+    documentType: DocumentType.Policy,
+    homeCategoryId: "root",
+    id: "p1",
+    number: "FIN-001",
+    ownerUserId: "u1",
+    retiredAt: null,
+    sensitivity: Sensitivity.Standard,
+    templateId: null,
+    templateNone: true,
+    title: "Travel",
+    updatedAt: null,
+    viewerCan: {
+      ack: false,
+      approve: false,
+      canBreakGlass: false,
+      contentObfuscated: false,
+      edit: true,
+      manage: false,
+      read: true,
+      submit: true,
+    },
+  };
+  const names = {
+    category: "Finance",
+    categorySlug: "finance-ops",
+    subcategory: "",
+    subcategorySlug: "",
+  };
+
+  it("shows the semantic version core sent for the current version (#397)", () => {
+    expect(toPolicyView({ ...row, currentSemanticVersion: "2.1.0" }, names).version).toBe("2.1.0");
+  });
+
+  it("falls back to the ordinal as before when core sent no semantic version (#397)", () => {
+    expect(toPolicyView(row, names).version).toBe("3.0.0");
+  });
+
+  it("shows nothing when core sent neither (#397)", () => {
+    expect(
+      toPolicyView({ ...row, currentSemanticVersion: null, currentVersionNo: null }, names).version,
+    ).toBe("");
+  });
+
   it("shows an empty version before the first version exists", () => {
     const view = toPolicyView(
       {
@@ -279,6 +331,7 @@ describe("toPolicyView", () => {
         ackTriggers: null,
         currentDraftVersionId: "d1",
         currentPublishedVersionId: null,
+        currentSemanticVersion: null,
         currentVersionNo: null,
         currentVersionStatus: null,
         documentType: DocumentType.Procedure,

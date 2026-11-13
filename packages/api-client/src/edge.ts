@@ -1241,13 +1241,11 @@ export interface OrgClientSecret {
 }
 
 /**
- * A policy version as the edge returns it: the schema type without `reacknowledge` and
- * `changeTypeAgreedByUserIds`, the two newer gateway fields no operation selects yet.
+ * A policy version as the edge returns it: the schema type without `changeTypeAgreedByUserIds`,
+ * which no operation selects. `reacknowledge` is kept (#397): the version's own answer to whether
+ * publishing asks readers to acknowledge again.
  */
-export type PolicyVersion = Omit<
-  SchemaPolicyVersion,
-  "changeTypeAgreedByUserIds" | "reacknowledge"
->;
+export type PolicyVersion = Omit<SchemaPolicyVersion, "changeTypeAgreedByUserIds">;
 
 /** `POST /documents/validate-url`: whether a reference URL can be read. */
 export interface ReferenceUrlCheck {
