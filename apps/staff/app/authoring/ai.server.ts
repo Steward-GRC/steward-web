@@ -70,7 +70,10 @@ export const awaitAiJobResult = (
   signal?: AbortSignal,
 ): Promise<AiJobResult> => edge.aiJobResult(jobId, cookieOf(request), signal);
 
+/** A finished job's content. `jobId` lets the gateway fall back to the stored result when the
+ *  cached one has expired. */
 export const getAiJobResultContent = (
   request: Request,
   resultRef: string,
-): Promise<AIJobResultContent> => edge.aiJobResultContent(resultRef, cookieOf(request));
+  jobId?: string,
+): Promise<AIJobResultContent> => edge.aiJobResultContent(resultRef, cookieOf(request), jobId);

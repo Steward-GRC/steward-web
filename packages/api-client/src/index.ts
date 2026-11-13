@@ -171,6 +171,7 @@ export {
   CaseStatus,
   CategoryDocumentTypes,
   DocumentType,
+  DraftFraming,
   InformationKind,
   MergeItemKind,
   MergeStatus,

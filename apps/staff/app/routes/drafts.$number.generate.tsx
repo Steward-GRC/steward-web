@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Generate with AI (Authoring U30, Flow 7): sources and a brief, the output format, then a
 // first draft to refine turn by turn in a chat beside a live preview, and Apply draft to put it
-// in the editor. The Framing step (U30.2) waits for steward-gateway#63; until then there are
-// three steps.
+// in the editor. The Framing step (U30.2, #399) sits between the sources and the output format:
+// how the text should read, kept for every turn after the first draft.
 import { AssistOperation } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest, requireRoleFromRequest } from "@steward-web/auth/server";
@@ -26,6 +26,8 @@ import {
 import { aiOffReason, aiRefusalKey } from "../authoring/ai/aiOff";
 import { loadDraftForAi } from "../authoring/ai/aiPage.server";
 import { ChangeCard } from "../authoring/ai/ChangeCard";
+import { framingOf, type FramingProblem, framingProblem } from "../authoring/ai/framing";
+import { FramingPicker, type FramingValue, NO_FRAMING } from "../authoring/ai/FramingPicker";
 import {
   type ChangeEntry,
   parseDraftResult,
@@ -45,6 +47,11 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 const sectionsOf = (form: FormData): SectionText[] =>
   JSON.parse(String(form.get("sectionsJson") ?? "[]")) as SectionText[];
 
+/** A framing that breaks the rules gets no job: the page already holds the author back, so
+ *  this is for a request that did not come from it. */
+const badFraming = (intent: FormDataEntryValue | null, framingProblem: FramingProblem) =>
+  data({ framingProblem, intent, ok: false as const }, { status: 400 });
+
 export const action = async ({ params, request }: Route.ActionArgs) => {
   await requirePermissionFromRequest(request, PERMISSIONS.PolicyAuthor);
   const form = await request.formData();
@@ -54,7 +61,10 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
   try {
     switch (intent) {
       case "draft": {
+        const framing = framingOf(form);
+        if ("problem" in framing) return badFraming(intent, framing.problem);
         const { jobId } = await submitDraftGeneration(request, {
+          ...framing,
           brief: String(form.get("brief") ?? ""),
           homeGroupId: String(form.get("homeGroupId") ?? "") || null,
           referenceDocuments: JSON.parse(String(form.get("documentsJson") ?? "[]")) as {
@@ -80,7 +90,10 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
         return data({ intent, jobId, ok: true as const });
       }
       case "revise": {
+        const framing = framingOf(form);
+        if ("problem" in framing) return badFraming(intent, framing.problem);
         const { jobId } = await submitPolicyRevision(request, {
+          ...framing,
           instruction: String(form.get("instruction") ?? ""),
           policyId,
           sections: sectionsOf(form).map((s, order) => ({
@@ -145,7 +158,7 @@ interface Turn {
   text: string;
 }
 
-const STEPS = ["sources", "format", "refine"] as const;
+const STEPS = ["sources", "framing", "format", "refine"] as const;
 
 const FINDING_LABEL = { blocker: "blocker", info: "note", warn: "warning" } as const;
 
@@ -168,6 +181,8 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
   const [urlDraft, setUrlDraft] = useState("");
   const [urls, setUrls] = useState<Record<string, Reference>>({});
   const [leftOut, setLeftOut] = useState<ReadonlySet<string>>(new Set());
+  const [framing, setFraming] = useState<FramingValue>(NO_FRAMING);
+  const [framingTried, setFramingTried] = useState(false);
 
   const [preview, setPreview] = useState<PreviewSection[]>([]);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -242,7 +257,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
           ...current,
           { role: "ai", text: t("generate.turn.drafted", { count: drafted.length }) },
         ]);
-        setStep(2);
+        setStep(3);
         setMode("improve");
 
         break;
@@ -324,9 +339,13 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
       title: s.title,
     }));
 
+  /** The framing rides every turn that writes text, so the tone holds after the first draft. */
+  const framingFields = { customFraming: framing.wording, framing: framing.framing };
+
   const startDraft = (extra?: string) =>
     void ai.submit(
       {
+        ...framingFields,
         brief: extra ? `${brief}\n\n${extra}` : brief,
         documentsJson: JSON.stringify(document ? [document] : []),
         hintsJson: JSON.stringify([
@@ -357,6 +376,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
     const intent = mode === "improve" || mode === "rewrite" ? "revise" : mode;
     void ai.submit(
       {
+        ...(intent === "revise" ? framingFields : {}),
         instruction:
           mode === "rewrite" ? `${t("generate.rewritePrefix")} ${instruction}` : instruction,
         intent,
@@ -425,10 +445,16 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
   };
 
   const working = job.stage === "queued" || job.stage === "generating";
-  const refused = ai.data && !ai.data.ok ? ai.data.error : null;
+  const refused = ai.data && !ai.data.ok && "error" in ai.data ? ai.data.error : null;
+  const badFramingAnswer =
+    ai.data && !ai.data.ok && "framingProblem" in ai.data ? ai.data.framingProblem : null;
   const next = () => {
     setBriefTried(true);
     if (brief.trim()) setStep(1);
+  };
+  const nextFromFraming = () => {
+    setFramingTried(true);
+    if (framingProblem(framing.framing, framing.wording) === null) setStep(2);
   };
 
   return (
@@ -451,7 +477,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
 
       <ol
         aria-label={t("generate.steps")}
-        className="grid grid-cols-3 gap-1.5 text-[13px] font-semibold"
+        className="grid grid-cols-2 gap-1.5 text-[13px] font-semibold sm:grid-cols-4"
       >
         {STEPS.map((name, index) => (
           <li
@@ -473,6 +499,9 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
         <Banner title={tAuthoring(aiOffReason(aiHealth.reason))} tone="warn" />
       )}
       {refused ? <Banner title={t(aiRefusalKey(refused))} tone="danger" /> : null}
+      {badFramingAnswer ? (
+        <Banner title={t(`framing.error.${badFramingAnswer}`, { max: 500 })} tone="danger" />
+      ) : null}
 
       {step === 0 ? (
         <Card className="flex flex-col gap-3 p-4">
@@ -602,6 +631,21 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
       ) : null}
 
       {step === 1 ? (
+        <Card aria-labelledby={`${ids}-framing`} className="flex flex-col gap-3 p-4">
+          <h2 className="font-bold" id={`${ids}-framing`}>
+            {t("generate.step.framing")}
+          </h2>
+          <FramingPicker onChange={setFraming} tried={framingTried} value={framing} />
+          <div className="flex justify-between">
+            <Button onClick={() => setStep(0)} variant="secondary">
+              {t("generate.back")}
+            </Button>
+            <Button onClick={nextFromFraming}>{t("generate.next")}</Button>
+          </div>
+        </Card>
+      ) : null}
+
+      {step === 2 ? (
         <Card aria-labelledby={`${ids}-format`} className="flex flex-col gap-2 p-4">
           <h2 className="font-bold" id={`${ids}-format`}>
             {t("generate.step.format")}
@@ -650,7 +694,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
             )
           )}
           <div className="flex justify-between">
-            <Button onClick={() => setStep(0)} variant="secondary">
+            <Button onClick={() => setStep(1)} variant="secondary">
               {t("generate.back")}
             </Button>
             <Button disabled={!aiHealth.available || working} onClick={() => startDraft()}>
@@ -661,7 +705,7 @@ export default function Generate({ loaderData }: Route.ComponentProps) {
         </Card>
       ) : null}
 
-      {step === 2 ? (
+      {step === 3 ? (
         <div className="grid items-stretch gap-4 lg:grid-cols-[420px_minmax(0,1fr)]">
           <Card className="flex min-h-[500px] flex-col">
             <div className="flex flex-col gap-2 border-b border-border px-3.5 py-3">

@@ -34,7 +34,8 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
         const result = await awaitAiJobResult(request, jobId, request.signal);
         let resultJson: null | string = null;
         if (result.phase === "AI_JOB_PHASE_SUCCEEDED" && result.resultRef) {
-          const content = await getAiJobResultContent(request, result.resultRef);
+          // The job id lets the gateway read the stored result once the cached one expires.
+          const content = await getAiJobResultContent(request, result.resultRef, jobId);
           resultJson = content.resultJson;
         }
         poll = { error: result.error ?? null, phase: result.phase, resultJson };

@@ -282,6 +282,7 @@ export type AiJobResultSubscription = {
 
 export type AiJobResultContentQueryVariables = Exact<{
   resultRef: string;
+  jobId?: string | number | null | undefined;
 }>;
 
 export type AiJobResultContentQuery = {
@@ -7247,6 +7248,11 @@ export const AiJobResultContentDocument = {
             type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
           },
         },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "jobId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
       ],
       selectionSet: {
         kind: "SelectionSet",
@@ -7259,6 +7265,11 @@ export const AiJobResultContentDocument = {
                 kind: "Argument",
                 name: { kind: "Name", value: "resultRef" },
                 value: { kind: "Variable", name: { kind: "Name", value: "resultRef" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "jobId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "jobId" } },
               },
             ],
             selectionSet: {
