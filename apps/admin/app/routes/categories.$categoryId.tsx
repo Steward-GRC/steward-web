@@ -8,6 +8,8 @@ import { refusalOf } from "@steward-web/shell";
 import {
   Banner,
   Button,
+  type ChipItem,
+  ChipPicker,
   Dialog,
   DialogClose,
   DialogContent,
@@ -23,12 +25,13 @@ import {
   TypeToConfirm,
 } from "@steward-web/ui";
 import { categoriesPath, moveDocumentsPath } from "@steward-web/ui/domain";
-import { Lock, X } from "lucide-react";
-import { useId, useState } from "react";
+import { Lock } from "lucide-react";
+import { useCallback, useId, useState } from "react";
 import { data, Link, redirect, useFetcher } from "react-router";
 
 import type { Route } from "./+types/categories.$categoryId";
 
+import { useSubjectSearch } from "../access/useSubjectSearch";
 import {
   categoryDocumentCounts,
   deleteGroup,
@@ -90,6 +93,12 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const chain = chainOf(groups, group);
   const owns = ownsOwners(groups, group);
   const nameOf = (id: string) => users.find((u) => u.userId === id)?.name ?? id;
+  // The picker searches the directory on the server; the page only needs names for who owns now.
+  const ownerItems: ChipItem[] = group.owners.map((id) => ({
+    description: users.find((u) => u.userId === id)?.email,
+    id,
+    label: nameOf(id),
+  }));
   // Below a top-level department the owners are that department's, read-only.
   const department = chain[1];
 
@@ -104,6 +113,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     documentCounts,
     moved,
     group,
+    ownerItems,
     inheritedOwners: owns
       ? []
       : effectiveOwners(groups, group).map((id) => ({
@@ -113,9 +123,6 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     owns,
     path: chain.map((g) => g.name),
     templates: templates.map(({ id, name }) => ({ id, name })),
-    userOptions: users
-      .filter((u) => !u.deletedAt)
-      .map((u) => ({ email: u.email, label: u.name, value: u.userId })),
     workflows: workflows.map(({ id, name }) => ({ id, name })),
   };
 };
@@ -237,8 +244,20 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
   const [cadence, setCadence] = useState<string>(
     loaderData.group ? loaderData.group.reviewCadence : "NONE",
   );
-  const [owners, setOwners] = useState<readonly string[]>(
-    loaderData.group ? loaderData.group.owners : [],
+  const [owners, setOwners] = useState<readonly ChipItem[]>(
+    loaderData.group ? loaderData.ownerItems : [],
+  );
+  const searchPeople = useSubjectSearch("user");
+  const findOwners = useCallback(
+    async (query: string): Promise<ChipItem[]> => {
+      const options = await searchPeople(query);
+      return options.map((option) => ({
+        description: option.detail,
+        id: option.id,
+        label: option.label,
+      }));
+    },
+    [searchPeople],
   );
   const [documentTypes, setDocumentTypes] = useState<CategoryDocumentTypes>(
     loaderData.group ? documentTypesOf(loaderData.group) : CategoryDocumentTypes.Both,
@@ -265,9 +284,7 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  const { candidates, group, inheritedOwners, owns, path, templates, userOptions, workflows } =
-    loaderData;
-  const nameOf = (id: string) => userOptions.find((u) => u.value === id)?.label ?? id;
+  const { candidates, group, inheritedOwners, owns, path, templates, workflows } = loaderData;
   // The form's own check, or the service's when it refused anyway.
   const refused =
     documentTypesFetcher.state === "idle" &&
@@ -383,47 +400,33 @@ export default function CategoryDetail({ loaderData }: Route.ComponentProps) {
           />
         </Field>
 
-        <div className="flex flex-col gap-1.5 md:col-span-2">
-          <span className="text-sm font-semibold">{t("categories.owners")}</span>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {owns
-              ? owners.map((id) => (
-                  <span className={CHIP} key={id}>
-                    <input name="owners" type="hidden" value={id} />
-                    {nameOf(id)}
-                    <button
-                      aria-label={t("categories.removeOwner", { name: nameOf(id) })}
-                      className="flex rounded-full text-muted hover:text-ink"
-                      onClick={() => setOwners(owners.filter((owner) => owner !== id))}
-                      type="button"
-                    >
-                      <X aria-hidden="true" className="size-4" />
-                    </button>
-                  </span>
-                ))
-              : inheritedOwners.map((owner) => (
-                  <span className={`${CHIP} text-muted`} key={owner.name}>
-                    <Lock aria-hidden="true" className="size-3.5" />
-                    {t("categories.ownersInherited", owner)}
-                  </span>
-                ))}
-            {(owns ? owners.length : inheritedOwners.length) === 0 ? (
-              <span className="text-sm text-muted">{t("categories.noOwners")}</span>
-            ) : null}
-            {owns ? (
-              <Select
-                aria-label={t("categories.addOwner")}
-                className="h-7 w-auto rounded-full px-2.5 text-sm font-semibold text-primary"
-                onValueChange={(id) => setOwners([...owners, id])}
-                options={userOptions
-                  .filter((u) => !owners.includes(u.value))
-                  .map((u) => ({ label: u.label, value: u.value }))}
-                placeholder={t("categories.addOwner")}
-                value=""
-              />
-            ) : null}
+        {owns ? (
+          <Field className="md:col-span-2" label={t("categories.owners")}>
+            <ChipPicker
+              label={t("categories.owners")}
+              name="owners"
+              onChange={setOwners}
+              placeholder={t("categories.ownersPlaceholder")}
+              search={findOwners}
+              value={owners}
+            />
+          </Field>
+        ) : (
+          <div className="flex flex-col gap-1.5 md:col-span-2">
+            <span className="text-sm font-semibold">{t("categories.owners")}</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {inheritedOwners.map((owner) => (
+                <span className={`${CHIP} text-muted`} key={owner.name}>
+                  <Lock aria-hidden="true" className="size-3.5" />
+                  {t("categories.ownersInherited", owner)}
+                </span>
+              ))}
+              {inheritedOwners.length === 0 ? (
+                <span className="text-sm text-muted">{t("categories.noOwners")}</span>
+              ) : null}
+            </div>
           </div>
-        </div>
+        )}
 
         {failureOf(save) ? (
           <Banner

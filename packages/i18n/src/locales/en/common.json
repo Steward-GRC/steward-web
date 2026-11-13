@@ -75,6 +75,12 @@
   "search": {
     "clear": "Clear search"
   },
+  "chipPicker": {
+    "added": "{{name}} added.",
+    "remove": "Remove {{name}}",
+    "removed": "{{name}} removed.",
+    "selected": "Selected: {{label}}"
+  },
   "picker": {
     "capped": "Showing the first {{count}}. Keep typing to narrow it down.",
     "failed": "Search isn't available right now.",

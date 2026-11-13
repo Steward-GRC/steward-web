@@ -36,10 +36,7 @@ const BASE = {
   owns: true,
   path: ["Finance", "Expenses"],
   templates: [{ id: "t-standard", name: "Standard Policy" }],
-  userOptions: [
-    { email: "dave@example.org", label: "Dave", value: "mock-user-dave" },
-    { email: "grace@example.org", label: "Grace", value: "mock-user-grace" },
-  ],
+  ownerItems: [{ description: "dave@example.org", id: "mock-user-dave", label: "Dave" }],
   workflows: [{ id: "w-finance", name: "Finance sign-off" }],
 };
 
@@ -129,15 +126,47 @@ describe("Category directory, Details & Defaults (A3)", () => {
     ).toBeChecked();
   });
 
-  it("adds and removes owners as chips", async () => {
+  it("shows each owner as a chip inside the Owners search bar", async () => {
+    openCategory();
+    const card = await screen.findByRole("form", { name: "Details & Defaults" });
+    const bar = within(card).getByRole("list", { name: "Selected: Owners" });
+    expect(within(bar).getByText("Dave")).toBeInTheDocument();
+    expect(within(card).getByRole("combobox", { name: "Owners" })).toBeInTheDocument();
+    expect(within(card).queryByRole("combobox", { name: "Add owner…" })).not.toBeInTheDocument();
+  });
+
+  it("finds people by typing, adds them as chips and removes by the X", async () => {
+    const asked: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        asked.push(url);
+        return Response.json({
+          options: [{ detail: "grace@example.org", id: "mock-user-grace", label: "Grace" }],
+        });
+      }),
+    );
     const posted = openCategory();
     const card = await screen.findByRole("form", { name: "Details & Defaults" });
-    await userEvent.click(within(card).getByRole("button", { name: "Remove Dave as an owner" }));
-    await userEvent.click(within(card).getByRole("combobox", { name: "Add owner…" }));
-    await userEvent.click(await screen.findByRole("option", { name: "Grace" }));
+    await userEvent.click(within(card).getByRole("button", { name: "Remove Dave" }));
+    await userEvent.type(within(card).getByRole("combobox", { name: "Owners" }), "gr");
+    await userEvent.click(await screen.findByRole("option", { name: /Grace/ }));
+    expect(asked[0]).toContain("kind=user");
+    expect(asked[0]).toContain("q=gr");
     await userEvent.click(within(card).getByRole("button", { name: "Save" }));
     await vi.waitFor(() => expect(posted).toHaveLength(1));
     expect(last(posted).getAll("owners")).toEqual(["mock-user-grace"]);
+    vi.unstubAllGlobals();
+  });
+
+  it("removes the last owner with Backspace and posts none", async () => {
+    const posted = openCategory();
+    const card = await screen.findByRole("form", { name: "Details & Defaults" });
+    await userEvent.click(within(card).getByRole("combobox", { name: "Owners" }));
+    await userEvent.keyboard("{Backspace}");
+    await userEvent.click(within(card).getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => expect(posted).toHaveLength(1));
+    expect(last(posted).getAll("owners")).toEqual([]);
   });
 
   it("shows inherited owners read-only below a top-level department", async () => {
@@ -148,7 +177,7 @@ describe("Category directory, Details & Defaults (A3)", () => {
     expect(
       await screen.findByText("Grace · Inherited from Finance (read-only)."),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("combobox", { name: "Add owner…" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Owners" })).not.toBeInTheDocument();
   });
 
   it("deletes after the typed name (D17)", async () => {

@@ -36,6 +36,7 @@ export {
 } from "./components/Badges";
 export { Breadcrumb, type Crumb } from "./components/Breadcrumb";
 export { Button, type ButtonProps, buttonVariants } from "./components/Button";
+export { type ChipItem, ChipPicker, type ChipPickerProps } from "./components/ChipPicker";
 export { CodeInput, type CodeInputProps, digitsOnly } from "./components/CodeInput";
 export {
   Command,
