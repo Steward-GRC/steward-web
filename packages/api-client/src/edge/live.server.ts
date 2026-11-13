@@ -72,6 +72,7 @@ import {
   DeleteReviewThreadDocument,
   DeleteTemplateDocument,
   DeleteUserDocument,
+  DeleteWorkflowDefDocument,
   DiagnosticsDocument,
   DiffVersionsDocument,
   DisableOrganizationDocument,
@@ -1172,6 +1173,12 @@ export const liveEdge: Edge = {
   async deleteUser(userId, cookie) {
     const data = await gatewayFetch(DeleteUserDocument, { userId }, "DeleteUser", { cookie });
     return data.deleteUser;
+  },
+  async deleteWorkflowDef(id, cookie) {
+    const data = await gatewayFetch(DeleteWorkflowDefDocument, { id }, "DeleteWorkflowDef", {
+      cookie,
+    });
+    return data.deleteWorkflowDef;
   },
   async diagnostics(cookie) {
     const data = await gatewayFetch(DiagnosticsDocument, {}, "Diagnostics", { cookie });

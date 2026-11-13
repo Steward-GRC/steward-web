@@ -100,6 +100,33 @@ describe("gatewayFetch", () => {
     });
   });
 
+  it("keeps the *_count extensions of a refusal as strings on GatewayError.counts", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(200, {
+          errors: [
+            {
+              extensions: {
+                category_count: "3",
+                code: "WORKFLOW_DEF_IN_USE_BY_CATEGORY",
+                id: "def-1",
+                kind: "business",
+                run_count: 4,
+              },
+              message: "in use",
+            },
+          ],
+        }),
+      ),
+    );
+
+    await expect(gatewayFetch(PingDocument, {}, "Ping", { url: "x" })).rejects.toMatchObject({
+      code: "WORKFLOW_DEF_IN_USE_BY_CATEGORY",
+      counts: { category_count: "3", run_count: "4" },
+    });
+  });
+
   it("throws GatewayError when the response carries no data and no error", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, {})));
 

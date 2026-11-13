@@ -71,3 +71,13 @@ export const archiveWorkflowDef = async (request: Request, id: string): Promise<
   await requireGroupManage(request);
   await edge.archiveWorkflowDef(id, cookieOf(request));
 };
+
+/**
+ * Deletes a workflow for good (steward-gateway#236). The gateway refuses while a category uses
+ * it as its default or any run or override ever used it; those refusals reach the caller as a
+ * `GatewayError` with the code and counts, for the editor to explain.
+ */
+export const deleteWorkflowDef = async (request: Request, id: string): Promise<void> => {
+  await requireGroupManage(request);
+  await edge.deleteWorkflowDef(id, cookieOf(request));
+};

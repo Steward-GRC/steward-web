@@ -29,6 +29,7 @@ import { listGroups } from "../categories/categories.server";
 import { listPlatformGroups } from "../groups/platformGroups.server";
 import { listUsers } from "../users/users.server";
 import { getApproverCandidates, groupMembersOf } from "../workflows/approverCandidates.server";
+import { type DeleteRefusal, deleteRefusalOf } from "../workflows/deleteRefusal";
 import { StageEditor } from "../workflows/StageEditor";
 import { stageInput } from "../workflows/stageInput";
 import { newStage } from "../workflows/stageOutline";
@@ -36,6 +37,7 @@ import { notUsable } from "../workflows/workflowRules";
 import {
   archiveWorkflowDef,
   createWorkflowDef,
+  deleteWorkflowDef,
   getWorkCalendar,
   getWorkflowDef,
   updateWorkflowDef,
@@ -73,11 +75,16 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
 
   try {
     switch (intent) {
-      case "delete": {
-        // The gateway can only archive a workflow for now (steward-gateway#62): it leaves every
-        // picker and keeps its history.
+      case "archive": {
+        // Archiving leaves every picker and keeps the history: what to do when a delete is
+        // refused because runs or overrides used the workflow.
         await archiveWorkflowDef(request, workflow.id);
-        return redirect("/workflows");
+        return redirect(`/workflows?archived=${encodeURIComponent(workflow.name)}`);
+      }
+      case "delete": {
+        // steward-gateway#62 and #236: a hard delete, refused while a category or any run uses it.
+        await deleteWorkflowDef(request, workflow.id);
+        return redirect(`/workflows?deleted=${encodeURIComponent(workflow.name)}`);
       }
       case "duplicate": {
         const copy = await createWorkflowDef(
@@ -104,12 +111,25 @@ export const action = async ({ params, request }: Route.ActionArgs) => {
     }
   } catch (error) {
     if (error instanceof Response) throw error;
+    if (intent === "delete") {
+      const refusal = deleteRefusalOf(error);
+      // Someone else removed it first: the editor has nothing left to show.
+      if (refusal?.kind === "gone") return redirect("/workflows?gone=1");
+      if (refusal) {
+        return data({ failure: refusalOf(error), intent, ok: false, refusal } as const, {
+          status: 409,
+        });
+      }
+    }
     return data({ failure: refusalOf(error), intent, ok: false } as const, { status: 400 });
   }
 };
 
+const refusalFailure = (result: Result | undefined): Failure | undefined =>
+  result && "failure" in result ? result.failure : undefined;
+
 type Result =
-  | { failure: Failure; intent: string; ok: false }
+  | { failure: Failure; intent: string; ok: false; refusal?: DeleteRefusal }
   | { intent: string; invalid: true; ok: false }
   | { intent: string; ok: true };
 
@@ -123,6 +143,9 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
   const save = useFetcher<Result>();
   const copy = useFetcher<Result>();
   const remove = useFetcher<Result>();
+  const archive = useFetcher<Result>();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [refusalSeen, setRefusalSeen] = useState(false);
   const workflow = loaderData.workflow;
   const [stages, setStages] = useState<readonly WorkflowStageInput[]>(
     () => workflow?.stages.map((stage) => stageInput(stage)) ?? [],
@@ -148,13 +171,25 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
   const { calendar, groupNames, people, usedBy } = loaderData;
   const draft = notUsable({ stages });
   const failure =
-    [save, copy, remove]
+    [save, copy, remove, archive]
       .map((fetcher) =>
-        fetcher.state === "idle" && fetcher.data && !fetcher.data.ok && "failure" in fetcher.data
+        fetcher.state === "idle" &&
+        fetcher.data &&
+        !fetcher.data.ok &&
+        "failure" in fetcher.data &&
+        !("refusal" in fetcher.data)
           ? fetcher.data.failure
           : undefined,
       )
       .find(Boolean) ?? undefined;
+  const refusal =
+    refusalSeen &&
+    remove.state === "idle" &&
+    remove.data &&
+    !remove.data.ok &&
+    "refusal" in remove.data
+      ? remove.data.refusal
+      : undefined;
   const invalid = save.state === "idle" && save.data && !save.data.ok && "invalid" in save.data;
 
   return (
@@ -202,6 +237,30 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
         stages={stages}
       />
 
+      {refusal?.kind === "categories" ? (
+        <Banner
+          failure={refusalFailure(remove.data)}
+          title={t("workflows.editor.refused.categories", { count: refusal.count })}
+          tone="warn"
+        />
+      ) : null}
+      {refusal?.kind === "used" ? (
+        <Banner
+          actions={
+            <Button
+              busy={archive.state !== "idle"}
+              onClick={() => void archive.submit({ intent: "archive" }, { method: "post" })}
+              variant="secondary"
+            >
+              {t("workflows.editor.archive")}
+            </Button>
+          }
+          failure={refusalFailure(remove.data)}
+          title={t("workflows.editor.refused.used", { count: refusal.count })}
+          tone="warn"
+        />
+      ) : null}
+
       {failure ? (
         <Banner failure={failure} title={t("workflows.editor.failed")} tone="danger" />
       ) : null}
@@ -225,7 +284,13 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
         >
           {t("workflows.editor.duplicate")}
         </Button>
-        <Dialog>
+        <Dialog
+          onOpenChange={(open) => {
+            setDeleteOpen(open);
+            if (open) setRefusalSeen(false);
+          }}
+          open={deleteOpen}
+        >
           <DialogTrigger asChild>
             <Button
               disabled={usedBy > 0}
@@ -246,7 +311,11 @@ export default function WorkflowEditor({ loaderData }: Route.ComponentProps) {
               </DialogClose>
               <Button
                 busy={remove.state !== "idle"}
-                onClick={() => void remove.submit({ intent: "delete" }, { method: "post" })}
+                onClick={() => {
+                  setRefusalSeen(true);
+                  setDeleteOpen(false);
+                  void remove.submit({ intent: "delete" }, { method: "post" });
+                }}
                 variant="danger"
               >
                 {t("workflows.editor.deleteConfirm")}

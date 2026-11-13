@@ -608,6 +608,12 @@ export type CategoryRuleset = {
   readonly rules: ReadonlyArray<RaciRule>;
 };
 
+export enum ChangeType {
+  Fix = "FIX",
+  Major = "MAJOR",
+  Minor = "MINOR",
+}
+
 export type CompletionReport = {
   readonly __typename?: "CompletionReport";
   readonly avgDaysToAck: Scalars["Float"]["output"];
@@ -1190,6 +1196,17 @@ export type Mutation = {
   readonly deleteReviewThread: Scalars["Boolean"]["output"];
   readonly deleteTemplate: Scalars["Boolean"]["output"];
   readonly deleteUser: DeleteUserResult;
+  /**
+   * Deletes a workflow nothing uses, and returns true. Needs workflow.manage. Refused, with
+   * extensions { code, codeNum, domain, kind: "business" }:
+   * - WORKFLOW_DEF_IN_USE_BY_CATEGORY (gateway, 1247): categories use it as their default;
+   *   extensions carry id and category_count (a decimal string). Nothing is deleted and the
+   *   workflow service is not called.
+   * - WORKFLOW_DEF_IN_USE (workflow, 6013): a run ever used it; extensions carry id, run_count
+   *   and override_count (decimal strings). Archive it instead.
+   * - WORKFLOW_DEF_NOT_FOUND (workflow, 6014): no such workflow; extensions carry id.
+   */
+  readonly deleteWorkflowDef: Scalars["Boolean"]["output"];
   readonly disableOrganization: Organization;
   readonly disableUser: User;
   readonly discardDraft: Scalars["Boolean"]["output"];
@@ -1424,6 +1441,12 @@ export type Mutation = {
    * from the signed-in user; ancestorCategoryIds is the policy's category lineage leaf→root
    * so the workflow service can resolve the effective workflow without a
    * cross-service call back into policy-core.
+   *
+   * changeType is the author's pick of the change type, with changeTypeReason for it.
+   * Leave both out to keep the suggestion core made. A pick at or above the suggestion
+   * applies at once; a pick below it needs a reason (refused with INVALID_ARGUMENT
+   * without one, and the version stays a draft) and waits for the first stage's approvers
+   * to agree. The first version of a document is always 1.0.0 and takes no pick.
    */
   readonly submitWorkflow: WorkflowSubmitResult;
   /**
@@ -1721,6 +1744,10 @@ export type MutationDeleteTemplateArgs = {
 
 export type MutationDeleteUserArgs = {
   userId: Scalars["ID"]["input"];
+};
+
+export type MutationDeleteWorkflowDefArgs = {
+  id: Scalars["ID"]["input"];
 };
 
 export type MutationDisableOrganizationArgs = {
@@ -2260,6 +2287,8 @@ export type MutationSubmitPolicyRevisionArgs = {
 export type MutationSubmitWorkflowArgs = {
   ancestorCategoryIds: ReadonlyArray<Scalars["ID"]["input"]>;
   categoryId: Scalars["ID"]["input"];
+  changeType?: InputMaybe<ChangeType>;
+  changeTypeReason?: InputMaybe<Scalars["String"]["input"]>;
   policyId: Scalars["ID"]["input"];
   policyVersionId: Scalars["ID"]["input"];
 };
@@ -2553,6 +2582,7 @@ export type Policy = {
   readonly createdAt?: Maybe<Scalars["String"]["output"]>;
   readonly currentDraftVersionId?: Maybe<Scalars["ID"]["output"]>;
   readonly currentPublishedVersionId?: Maybe<Scalars["ID"]["output"]>;
+  readonly currentSemanticVersion?: Maybe<Scalars["String"]["output"]>;
   readonly currentVersionNo?: Maybe<Scalars["Int"]["output"]>;
   readonly currentVersionStatus?: Maybe<Scalars["String"]["output"]>;
   readonly documentType: DocumentType;
@@ -2639,14 +2669,26 @@ export type PolicySummaryResult = {
 export type PolicyVersion = {
   readonly __typename?: "PolicyVersion";
   readonly appendices: ReadonlyArray<Appendix>;
+  readonly changeType?: Maybe<ChangeType>;
+  readonly changeTypeAgreedByUserIds: ReadonlyArray<Scalars["ID"]["output"]>;
+  readonly changeTypeReason?: Maybe<Scalars["String"]["output"]>;
+  readonly changeTypeSetByUserId?: Maybe<Scalars["ID"]["output"]>;
   readonly contentJson: Scalars["String"]["output"];
   readonly createdAt?: Maybe<Scalars["String"]["output"]>;
   readonly id: Scalars["ID"]["output"];
   readonly policyId: Scalars["ID"]["output"];
   readonly publishedAt?: Maybe<Scalars["String"]["output"]>;
+  readonly reacknowledge: Scalars["Boolean"]["output"];
+  readonly requestedChangeType?: Maybe<ChangeType>;
+  readonly semanticVersion?: Maybe<Scalars["String"]["output"]>;
   readonly status: Scalars["String"]["output"];
+  readonly suggestedChangeType?: Maybe<ChangeType>;
   readonly templateVersionId: Scalars["ID"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
+};
+
+export type PolicyVersionReacknowledgeArgs = {
+  changeType?: InputMaybe<ChangeType>;
 };
 
 export type PolicyVersionLinks = {
@@ -3946,12 +3988,17 @@ export type Template = {
   readonly name: Scalars["String"]["output"];
   readonly ownerCategoryId?: Maybe<Scalars["ID"]["output"]>;
   readonly retiredAt?: Maybe<Scalars["String"]["output"]>;
+  readonly updatedAt?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type TemplateVersion = {
   readonly __typename?: "TemplateVersion";
+  readonly changeType?: Maybe<ChangeType>;
+  readonly createdAt?: Maybe<Scalars["String"]["output"]>;
   readonly id: Scalars["ID"]["output"];
+  readonly publishedAt?: Maybe<Scalars["String"]["output"]>;
   readonly sections: ReadonlyArray<Section>;
+  readonly semanticVersion?: Maybe<Scalars["String"]["output"]>;
   readonly status: Scalars["String"]["output"];
   readonly templateId: Scalars["ID"]["output"];
   readonly versionNo: Scalars["Int"]["output"];
@@ -4141,12 +4188,14 @@ export type WorkflowStageDef = {
   readonly __typename?: "WorkflowStageDef";
   readonly approvers: ReadonlyArray<Scalars["ID"]["output"]>;
   readonly approversByCategory: ReadonlyArray<CategoryApprovers>;
+  readonly escalateAfterDays: Scalars["Int"]["output"];
   readonly groupUnits: ReadonlyArray<GroupUnit>;
   readonly id: Scalars["ID"]["output"];
   readonly name: Scalars["String"]["output"];
   readonly pinnedLast?: Maybe<Scalars["Boolean"]["output"]>;
   readonly quorum: Scalars["String"]["output"];
   readonly rejectOnSlaBreach?: Maybe<Scalars["Boolean"]["output"]>;
+  readonly remindEveryDays: Scalars["Int"]["output"];
   readonly slaDays?: Maybe<Scalars["Int"]["output"]>;
   readonly vetoUserIds: ReadonlyArray<Scalars["ID"]["output"]>;
 };
@@ -4154,12 +4203,14 @@ export type WorkflowStageDef = {
 export type WorkflowStageInput = {
   readonly approvers: ReadonlyArray<Scalars["ID"]["input"]>;
   readonly approversByCategory?: InputMaybe<ReadonlyArray<CategoryApproversInput>>;
+  readonly escalateAfterDays?: InputMaybe<Scalars["Int"]["input"]>;
   readonly groupUnits?: InputMaybe<ReadonlyArray<GroupUnitInput>>;
   readonly id?: InputMaybe<Scalars["ID"]["input"]>;
   readonly name: Scalars["String"]["input"];
   readonly pinnedLast?: InputMaybe<Scalars["Boolean"]["input"]>;
   readonly quorum: Scalars["String"]["input"];
   readonly rejectOnSlaBreach?: InputMaybe<Scalars["Boolean"]["input"]>;
+  readonly remindEveryDays?: InputMaybe<Scalars["Int"]["input"]>;
   readonly slaDays?: InputMaybe<Scalars["Int"]["input"]>;
   readonly vetoUserIds?: InputMaybe<ReadonlyArray<Scalars["ID"]["input"]>>;
 };

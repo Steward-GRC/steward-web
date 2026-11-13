@@ -7,6 +7,8 @@ fragment PolicyVersionFields on PolicyVersion {
   contentJson
   createdAt
   publishedAt
+  changeTypeAgreedByUserIds
+  reacknowledge
   appendices {
     ...AppendixFields
   }

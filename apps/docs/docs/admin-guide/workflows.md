@@ -62,6 +62,17 @@ of its members can approve, and it approves as a group with one of those members
 
 ## 🗑️ Delete a workflow
 
-**Delete workflow** is off while any category uses the workflow. Otherwise it takes the workflow
-out of every list where one is chosen. Its history is kept, and no policy already moving through
-it changes.
+**Delete workflow** removes the workflow for good, after a confirmation that names it. You land
+back on the workflow list with a note that it was deleted. Deleting is refused in three cases, and
+the editor says which:
+
+- **A group uses it.** The button is off while a category uses the workflow as its default, and a
+  refusal reads "In use by N groups: change those categories first". Change the default workflow on
+  those categories, then delete.
+- **It has been used.** Once a policy run or a policy override has used the workflow, it can't be
+  deleted: "This workflow has been used by N runs or policy overrides and cannot be deleted. Archive
+  it instead." The message carries an **Archive workflow** button. Archiving takes the workflow out
+  of every list where one is chosen, keeps its history, and changes no policy already moving through
+  it.
+- **It is already gone.** If another administrator deleted it first, the editor says "This workflow
+  no longer exists" and returns you to the list.
