@@ -13,6 +13,7 @@ import type {
   SpCertificate,
 } from "@steward-web/api-client";
 
+import { GatewayError } from "@steward-web/api-client";
 import { PERMISSIONS } from "@steward-web/auth";
 import { requirePermissionFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
@@ -181,6 +182,31 @@ export const deleteGroupMapping = async (request: Request, mappingId: string): P
 export const getSpCertificate = async (request: Request): Promise<SpCertificate> => {
   await requireSettingsManage(request);
   return edge.spCertificate(cookieOf(request));
+};
+
+/** The gateway codes that mean the certificate service is not there: the identity service
+ *  answers Unavailable ("sp certificate service not enabled") when single sign-on is off, and
+ *  the gateway relays an Unavailable status as its generic INTERNAL fault (or, when the status
+ *  passes through untouched, as the gRPC name). Auth, permission and not-found codes are not
+ *  in this list, so they still surface. */
+const SERVICE_OFF_CODES: ReadonlySet<string | undefined> = new Set([
+  "INTERNAL",
+  "UNAVAILABLE",
+  "Unavailable",
+]);
+
+/** The SP certificate, or `null` when single sign-on is not set up on this server, so a page
+ *  that only shows it as one section does not fail with it. Permission redirects, auth
+ *  refusals, gateway HTTP failures and network errors are not swallowed. */
+export const getSpCertificateIfEnabled = async (
+  request: Request,
+): Promise<null | SpCertificate> => {
+  try {
+    return await getSpCertificate(request);
+  } catch (error) {
+    if (error instanceof GatewayError && SERVICE_OFF_CODES.has(error.code)) return null;
+    throw error;
+  }
 };
 
 /** Mints a new SP signing certificate and activates it, superseding the previous one. */

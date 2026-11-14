@@ -26,7 +26,7 @@ import type { Route } from "./+types/organisations";
 
 import {
   forceRotateSpCertificate,
-  getSpCertificate,
+  getSpCertificateIfEnabled,
   listOrganizations,
 } from "../organisations/organisations.server";
 
@@ -36,7 +36,7 @@ export { shouldRevalidateTable as shouldRevalidate } from "@steward-web/ui";
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [organisations, spCertificate] = await Promise.all([
     listOrganizations(request),
-    getSpCertificate(request),
+    getSpCertificateIfEnabled(request),
   ]);
   return { organisations, spCertificate };
 };
@@ -73,6 +73,18 @@ const CopyButton = ({ label, value }: { label: string; value: string }) => {
     >
       {copied ? t("organizations.cert.copied") : label}
     </Button>
+  );
+};
+
+/** The SP certificate panel when single sign-on is not set up: nothing to show or rotate. */
+const SpCertificateOff = () => {
+  const { t } = useTranslation("admin");
+  const titleId = useId();
+  return (
+    <Card aria-labelledby={titleId} className="flex flex-col gap-2.5 p-4">
+      <b id={titleId}>{t("organizations.cert.title")}</b>
+      <p className="text-sm text-muted">{t("organizations.cert.notSetUp")}</p>
+    </Card>
   );
 };
 
@@ -229,7 +241,7 @@ export default function Organizations({ loaderData }: Route.ComponentProps) {
         }}
       />
 
-      <SpCertificateCard certificate={spCertificate} />
+      {spCertificate ? <SpCertificateCard certificate={spCertificate} /> : <SpCertificateOff />}
     </ListPage>
   );
 }
