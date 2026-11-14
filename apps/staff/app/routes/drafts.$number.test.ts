@@ -437,6 +437,22 @@ describe("drafts.$number loader: the address", () => {
   });
 });
 
+describe("drafts.$number loader: the template outline", () => {
+  it("opens the draft without an outline when the template read is refused (gateway#248)", async () => {
+    routeGateway({
+      ...editorHandlers("draft", "APPROVAL_STATUS_UNSPECIFIED"),
+      Policy: () => ({ policy: { ...gatewayPolicy, templateId: "t-1" } }),
+      PolicyByNumber: () => ({ policyByNumber: { ...gatewayPolicy, templateId: "t-1" } }),
+      LatestTemplateVersion: () => ({
+        errors: [{ message: "not an author for this template's category" }],
+      }),
+    });
+    const result = await runLoader();
+    expect(result.templateVersion).toBeNull();
+    expect(result.draft).not.toBeNull();
+  });
+});
+
 describe("drafts.$number loader: review state", () => {
   it("reports a draft whose approval run is open as in review", async () => {
     routeGateway(editorHandlers("draft", "APPROVAL_STATUS_IN_REVIEW"));

@@ -108,7 +108,11 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   if (!policy?.viewerCan.edit) throw new Response("Not Found", { status: 404 });
   const [draft, templateVersion] = await Promise.all([
     getDraftVersion(request, policy.id),
-    policy.templateId ? getLatestTemplateVersion(request, policy.templateId) : null,
+    // The template's outline is a help. A refused or failed read (an author of another category than
+    // the template's owner is refused, gateway#248) leaves the draft open without it, not a 500.
+    policy.templateId
+      ? getLatestTemplateVersion(request, policy.templateId).catch(() => null)
+      : null,
   ]);
   const inReview = draft ? await isDraftInReview(request, draft) : false;
   const appendices = await listAppendices(request, policy.id).catch(() => []);
