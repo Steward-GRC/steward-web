@@ -87,6 +87,7 @@ import type {
   BreakGlassGrant,
   Category,
   Group,
+  IdpGroupNames,
   ImpersonationStatus,
   Me,
   NotificationPreferences,
@@ -171,6 +172,7 @@ export type {
   RaciDecision,
   RaciRule,
   RaciRuleInput,
+  RaciVerdictReason,
   Reference,
   ReferenceInput,
   RelatedPolicy,
@@ -211,8 +213,10 @@ export {
   NotifCadence,
   NotifCategory,
   OverrideEffect,
+  RaciAction,
   RaciGrant,
   RaciSubjectKind,
+  RaciVerdictCode,
   ReferenceKind,
   ReportAnswer,
   ReportKind,
@@ -229,7 +233,7 @@ export type { WorkflowStatus } from "./views";
 
 /** `AiJobResultContent` is renamed on export only to avoid colliding with the `Edge` method of the same name. */
 export type AIJobResultContent = AiJobResultContentSchema;
-export type { NotificationPreferences, Passkey, UserLabel } from "./views";
+export type { IdpGroupNames, NotificationPreferences, Passkey, UserLabel } from "./views";
 export type {
   AckStatus,
   AckSummary,
@@ -642,6 +646,8 @@ export interface Edge {
   groupMappings(connectionId: string, cookie?: string): Promise<readonly GroupMapping[]>;
   /** Hard reset requests, newest first; `module` narrows them. Site admins and root. */
   hardResetRequests(module?: string, cookie?: string): Promise<readonly HardResetRequest[]>;
+  /** The directory (identity provider) group names a category group rule can match, by prefix. */
+  idpGroupNames(prefix: string, limit?: number, cookie?: string): Promise<IdpGroupNames>;
   /** The caller's active "act as" session (H9), or null. Drives the acting-as banner. */
   impersonationStatus(cookie?: string): Promise<ImpersonationStatus>;
   /** Fetches a SAML IdP's metadata document by URL (SSRF-guarded) and extracts the fields

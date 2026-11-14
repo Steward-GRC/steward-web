@@ -1,13 +1,15 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
 // The category access editor's model (A5): the rule list being edited, its tri-state cells and
-// its reordering, and the simulator's reasons read out of the gateway's words. Plain data, so
+// its reordering, and the simulator's reasons read out of the gateway's verdicts. Plain data, so
 // the rule table, the simulator and the route action share one shape.
 import {
   RaciGrant,
   type RaciRule,
   type RaciRuleInput,
   RaciSubjectKind,
+  RaciVerdictCode,
+  type RaciVerdictReason,
 } from "@steward-web/api-client";
 
 /** The four actions, in the table's column order (RACI: Read, Acknowledge, Approve, Author). */
@@ -87,7 +89,7 @@ export const newRule = (
   subjectRef: subjectKind === RaciSubjectKind.Everyone ? "" : subjectRef.trim(),
 });
 
-/** Why the simulator decided as it did, read out of the gateway's reason. */
+/** Why the simulator decided as it did, read out of the gateway's structured verdict. */
 export type Reason =
   | {
       /** The ancestor whose rule decided, or null for this category's own rule. */
@@ -102,59 +104,41 @@ export type Reason =
   | { kind: "approverImpliesRead" }
   | { kind: "authorImpliesRead" }
   | { kind: "defaultDeny" }
-  | { kind: "other"; text: string }
+  | { kind: "manageImpliesAuthor" }
+  | { kind: "manageImpliesRead" }
   | { kind: "owner" }
   | { kind: "requiresRead" }
   | { kind: "siteAdmin" };
 
-const BUILT_IN: Record<string, Reason> = {
-  "approver implies read": { kind: "approverImpliesRead" },
-  "author implies read": { kind: "authorImpliesRead" },
-  "no rule → default deny": { kind: "defaultDeny" },
-  "owner (auto read/approve/author)": { kind: "owner" },
-  "requires read": { kind: "requiresRead" },
-  "site-admin reads all": { kind: "siteAdmin" },
+const PLAIN: Partial<Record<RaciVerdictCode, Reason>> = {
+  [RaciVerdictCode.ApproverImpliesRead]: { kind: "approverImpliesRead" },
+  [RaciVerdictCode.AuthorImpliesRead]: { kind: "authorImpliesRead" },
+  [RaciVerdictCode.DefaultDeny]: { kind: "defaultDeny" },
+  [RaciVerdictCode.ManageImpliesAuthor]: { kind: "manageImpliesAuthor" },
+  [RaciVerdictCode.ManageImpliesRead]: { kind: "manageImpliesRead" },
+  [RaciVerdictCode.Owner]: { kind: "owner" },
+  [RaciVerdictCode.RequiresRead]: { kind: "requiresRead" },
+  [RaciVerdictCode.SiteAdminAuthor]: { kind: "siteAdmin" },
+  [RaciVerdictCode.SiteAdminManage]: { kind: "siteAdmin" },
+  [RaciVerdictCode.SiteAdminRead]: { kind: "siteAdmin" },
 };
-
-const KINDS: Record<string, RaciSubjectKind> = {
-  everyone: RaciSubjectKind.Everyone,
-  group: RaciSubjectKind.Group,
-  user: RaciSubjectKind.User,
-};
-
-const OWN_RULE = /^rule #(\d+) (allow|deny) (everyone|group|user)(?: (.+))?$/;
-const ANCESTOR_RULE = /^↳ (.+?) #(\d+) (allow|deny) (everyone|group|user)(?: (.+))?$/;
 
 /**
- * The gateway explains each verdict in steward-authz's words ("rule #1 allow group Finance
- * team", "↳ Finance #2 deny everyone", "no rule → default deny"). They are read back into
- * parts here so the simulator can say them in the reader's language and show a person's name
- * instead of their id. Anything else is kept as it came.
+ * The gateway says why each action was decided as a code and, when a rule decided, which rule
+ * (its category, how far up it lives, its row number and its subject). The simulator turns that
+ * into words in the reader's language and shows a person's name instead of their id.
  */
-export const parseReason = (reason: string): Reason => {
-  const builtIn = BUILT_IN[reason];
-  if (builtIn) return builtIn;
-  const own = OWN_RULE.exec(reason);
-  if (own) {
-    return {
-      category: null,
-      effect: own[2] as "allow" | "deny",
-      kind: "rule",
-      name: own[4] ?? "",
-      number: Number(own[1]),
-      subjectKind: KINDS[own[3]!]!,
-    };
-  }
-  const inherited = ANCESTOR_RULE.exec(reason);
-  if (inherited) {
-    return {
-      category: inherited[1]!,
-      effect: inherited[3] as "allow" | "deny",
-      kind: "rule",
-      name: inherited[5] ?? "",
-      number: Number(inherited[2]),
-      subjectKind: KINDS[inherited[4]!]!,
-    };
-  }
-  return { kind: "other", text: reason };
+export const reasonOf = (verdict: RaciVerdictReason): Reason => {
+  const plain = PLAIN[verdict.code];
+  if (plain) return plain;
+  const rule = verdict.rule;
+  if (!rule) return { kind: "defaultDeny" };
+  return {
+    category: rule.depth === 0 ? null : rule.categoryName,
+    effect: verdict.code === RaciVerdictCode.RuleDeny ? "deny" : "allow",
+    kind: "rule",
+    name: rule.subjectRef,
+    number: rule.ruleNumber,
+    subjectKind: rule.subjectKind,
+  };
 };

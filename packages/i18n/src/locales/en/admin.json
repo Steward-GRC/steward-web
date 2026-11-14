@@ -127,6 +127,8 @@
         "defaultDeny": "no rule matched · default deny",
         "authorImpliesRead": "authors can read",
         "approverImpliesRead": "approvers can read",
+        "manageImpliesRead": "managers can read",
+        "manageImpliesAuthor": "managers can author",
         "requiresRead": "needs Read first",
         "rule": "rule #{{number}}",
         "ancestorRule": "{{category}} rule #{{number}}",

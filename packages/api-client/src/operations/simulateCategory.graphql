@@ -3,18 +3,78 @@ query SimulateCategory($categoryId: ID!, $userId: ID!, $draftRules: [RaciRuleInp
     read
     readReason
     readCode
+    readVerdict {
+      code
+      rule {
+        categoryId
+        categoryName
+        depth
+        ruleNumber
+        subjectKind
+        subjectRef
+        action
+      }
+    }
     ack
     ackReason
     ackCode
+    ackVerdict {
+      code
+      rule {
+        categoryId
+        categoryName
+        depth
+        ruleNumber
+        subjectKind
+        subjectRef
+        action
+      }
+    }
     approve
     approveReason
     approveCode
+    approveVerdict {
+      code
+      rule {
+        categoryId
+        categoryName
+        depth
+        ruleNumber
+        subjectKind
+        subjectRef
+        action
+      }
+    }
     author
     authorReason
     authorCode
+    authorVerdict {
+      code
+      rule {
+        categoryId
+        categoryName
+        depth
+        ruleNumber
+        subjectKind
+        subjectRef
+        action
+      }
+    }
     manage
     manageReason
     manageCode
+    manageVerdict {
+      code
+      rule {
+        categoryId
+        categoryName
+        depth
+        ruleNumber
+        subjectKind
+        subjectRef
+        action
+      }
+    }
     configuredBlock {
       action
       categoryId

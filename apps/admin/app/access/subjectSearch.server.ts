@@ -7,7 +7,6 @@ import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import edge from "@steward-web/edge.server";
 
 import { fetchAllGroups, orderedWithPaths } from "../categories/categories.server";
-import { listPlatformGroups } from "../groups/platformGroups.server";
 
 /** The most results a search sends back; the picker says to keep typing past it. */
 export const SUBJECT_SEARCH_LIMIT = 10;
@@ -103,12 +102,11 @@ export const searchSubjects = async (
       needle,
     ).slice(0, SUBJECT_SEARCH_LIMIT);
   }
-  // Groups come from the identity directory, which only a user manager may list.
-  const groups = await listPlatformGroups(request).catch(() => []);
-  const lowered = needle.toLowerCase();
-  const matches = groups
-    // A rule names a group by its name, so the name is what the option carries.
-    .map((group) => ({ detail: group.path, id: group.name, label: group.name }))
-    .filter((group) => group.label.toLowerCase().includes(lowered));
-  return rankByPrefix(matches, needle).slice(0, SUBJECT_SEARCH_LIMIT);
+  // A group rule matches a directory (identity provider) group by its name, so the picker offers
+  // the names that exist rather than letting a typo that never matches through. The gateway
+  // matches by prefix, sorted, and caps the page; past the cap the person types a longer prefix.
+  const page = await edge
+    .idpGroupNames(needle, SUBJECT_SEARCH_LIMIT, cookieOf(request))
+    .catch(() => ({ names: [] as readonly string[], truncated: false }));
+  return page.names.map((name) => ({ id: name, label: name }));
 };

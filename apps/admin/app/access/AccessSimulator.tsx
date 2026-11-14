@@ -8,7 +8,7 @@ import { useFetcher } from "react-router";
 
 import type { AccessPerson } from "./access.server";
 
-import { type AccessAction, ACTIONS, parseReason, type Reason } from "./accessModel";
+import { type AccessAction, ACTIONS, type Reason, reasonOf } from "./accessModel";
 import { GrantIcon } from "./RuleTable";
 
 /** Radix's Select can't hold an empty value, so the baseline has a stand-in of its own. */
@@ -59,9 +59,6 @@ export const AccessSimulator = ({ categoryId, draft, names, people }: AccessSimu
 
   const why = (reason: Reason): string => {
     switch (reason.kind) {
-      case "other": {
-        return reason.text;
-      }
       case "rule": {
         const rule =
           reason.category === null
@@ -90,7 +87,7 @@ export const AccessSimulator = ({ categoryId, draft, names, people }: AccessSimu
   const verdict = (action: AccessAction) => {
     if (!decision) return null;
     const allowed = decision[action];
-    const reason = parseReason(decision[`${action}Reason`]);
+    const reason = reasonOf(decision[`${action}Verdict`]);
     const tone = allowed ? (reason.kind === "owner" ? "owner" : "allowed") : "denied";
     const name = t(`access.simulator.actions.${action}`);
     return (

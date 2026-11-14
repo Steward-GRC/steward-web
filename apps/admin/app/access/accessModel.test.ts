@@ -1,9 +1,9 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { RaciGrant, RaciSubjectKind } from "@steward-web/api-client";
+import { RaciAction, RaciGrant, RaciSubjectKind, RaciVerdictCode } from "@steward-web/api-client";
 import { describe, expect, it } from "vitest";
 
-import { draftOf, moveRule, nextGrant, parseReason, rulesInputOf, setGrant } from "./accessModel";
+import { draftOf, moveRule, nextGrant, reasonOf, rulesInputOf, setGrant } from "./accessModel";
 
 const rule = (subjectRef: string, read = RaciGrant.Allow) => ({
   ack: RaciGrant.Blank,
@@ -57,9 +57,19 @@ describe("reordering", () => {
   });
 });
 
-describe("the gateway's reasons", () => {
+const verdictRule = (over: Partial<{ categoryName: string; depth: number }> = {}) => ({
+  action: RaciAction.Read,
+  categoryId: "c1",
+  categoryName: over.categoryName ?? "Finance",
+  depth: over.depth ?? 0,
+  ruleNumber: 2,
+  subjectKind: RaciSubjectKind.User,
+  subjectRef: "u-erin",
+});
+
+describe("the gateway's verdicts", () => {
   it("reads a rule in this category", () => {
-    expect(parseReason("rule #2 deny user u-erin")).toEqual({
+    expect(reasonOf({ code: RaciVerdictCode.RuleDeny, rule: verdictRule() })).toEqual({
       category: null,
       effect: "deny",
       kind: "rule",
@@ -70,30 +80,24 @@ describe("the gateway's reasons", () => {
   });
 
   it("reads a rule an ancestor passed down", () => {
-    expect(parseReason("↳ Finance #1 allow everyone")).toEqual({
-      category: "Finance",
-      effect: "allow",
-      kind: "rule",
-      name: "",
-      number: 1,
-      subjectKind: RaciSubjectKind.Everyone,
-    });
-    expect(parseReason("↳ Shared services #3 allow group Finance team")).toMatchObject({
-      category: "Shared services",
-      name: "Finance team",
-    });
+    expect(
+      reasonOf({
+        code: RaciVerdictCode.RuleAllow,
+        rule: verdictRule({ categoryName: "Shared", depth: 1 }),
+      }),
+    ).toMatchObject({ category: "Shared", effect: "allow", kind: "rule" });
   });
 
   it("reads the built-in outcomes", () => {
-    expect(parseReason("owner (auto read/approve/author)")).toEqual({ kind: "owner" });
-    expect(parseReason("no rule → default deny")).toEqual({ kind: "defaultDeny" });
-    expect(parseReason("site-admin reads all")).toEqual({ kind: "siteAdmin" });
-    expect(parseReason("author implies read")).toEqual({ kind: "authorImpliesRead" });
-    expect(parseReason("approver implies read")).toEqual({ kind: "approverImpliesRead" });
-    expect(parseReason("requires read")).toEqual({ kind: "requiresRead" });
-  });
-
-  it("keeps a reason it doesn't know as it came", () => {
-    expect(parseReason("something new")).toEqual({ kind: "other", text: "something new" });
+    expect(reasonOf({ code: RaciVerdictCode.Owner })).toEqual({ kind: "owner" });
+    expect(reasonOf({ code: RaciVerdictCode.DefaultDeny })).toEqual({ kind: "defaultDeny" });
+    expect(reasonOf({ code: RaciVerdictCode.SiteAdminManage })).toEqual({ kind: "siteAdmin" });
+    expect(reasonOf({ code: RaciVerdictCode.AuthorImpliesRead, rule: verdictRule() })).toEqual({
+      kind: "authorImpliesRead",
+    });
+    expect(reasonOf({ code: RaciVerdictCode.ManageImpliesRead, rule: verdictRule() })).toEqual({
+      kind: "manageImpliesRead",
+    });
+    expect(reasonOf({ code: RaciVerdictCode.RequiresRead })).toEqual({ kind: "requiresRead" });
   });
 });
