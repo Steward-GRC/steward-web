@@ -58,6 +58,8 @@ export interface StepperRule {
 
 export interface StepperStage {
   approvers: readonly StepperApprover[];
+  /** When the stage is due (an ISO date); absent when the stage has no date yet. */
+  dueAt?: null | string;
   groups?: readonly StepperGroup[];
   name: string;
   rule?: StepperRule;
@@ -92,6 +94,13 @@ const RuleBadge = ({ className, rule }: { className?: string; rule?: StepperRule
       {t(`stepper.rule.${rule.kind}`, { approvals: rule.approvals, required: rule.required })}
     </span>
   );
+};
+
+/** "Due 12 Oct", or nothing when the stage has no due date. */
+const DueDate = ({ className, dueAt }: { className?: string; dueAt?: null | string }) => {
+  const { t } = useTranslation("approvals");
+  if (!dueAt) return null;
+  return <span className={className}>{t("stepper.due", { date: formatDayMonth(dueAt) })}</span>;
 };
 
 /** One approver: initials, name, role, state with date, and the comment in the reading face. */
@@ -327,12 +336,18 @@ const VerticalStage = ({
             {stage.name}
           </b>
           <span className="text-muted">{t("stepper.stageOf", { n: index + 1, total })}</span>
+          {stage.rule ? (
+            <span aria-hidden="true" className="-mx-1 text-muted">
+              ·
+            </span>
+          ) : null}
           <RuleBadge className="py-px pr-1.5 pl-1.5" rule={stage.rule} />
           <Chevron aria-hidden="true" className="ml-auto size-4 shrink-0 text-muted" />
         </button>
         <span className="text-sm text-muted">
           <StageLine stage={stage} />
         </span>
+        <DueDate className="text-sm text-muted" dueAt={stage.dueAt} />
         {open ? (
           <div className="mt-1 flex flex-col gap-2" id={panelId}>
             {stage.groups && stage.groups.length > 0 ? (
@@ -531,6 +546,7 @@ const HorizontalStage = ({
           <RuleBadge className="ml-auto" rule={stage.rule} />
         )}
       </div>
+      <DueDate className="-mt-1 text-xs text-muted" dueAt={stage.dueAt} />
       {stage.approvers.map((approver, seat) => (
         <Fragment key={`${approver.name}-${seat}`}>
           <ApproverRow
