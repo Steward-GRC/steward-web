@@ -23,6 +23,8 @@
     "due": "Due {{date}}",
     "label": "Approval flow",
     "publish": "Publish",
+    "publishAs": "as v{{version}}",
+    "publishAsChange": "as v{{version}} · {{change}}",
     "state": {
       "current": "Waiting",
       "done": "Done",
@@ -178,6 +180,8 @@
           "title": "Reject this version"
         }
       },
+      "finalNote": "One more approval publishes this as v{{version}}.",
+      "finalNoteChange": "One more approval publishes this as v{{version}} ({{change}}).",
       "phoneNote": "Approve is enabled once you've written a comment.",
       "recorded": "Your decision and comment are recorded against your name.",
       "reject": "Reject",

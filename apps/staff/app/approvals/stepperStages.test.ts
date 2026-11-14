@@ -155,4 +155,30 @@ describe("stepperStagesOf veto seats (steward-web#256)", () => {
     const [stage] = stepperStagesOf(run, "u-1");
     expect(stage?.approvers.every((a) => !a.veto)).toBe(true);
   });
+
+  it("carries each seat's role label, and none when the gateway has none", () => {
+    const [stage] = stepperStagesOf(
+      {
+        currentStageIdx: 0,
+        stageAssignees: [
+          [
+            seat("u-1", "Alice", "pending", { roleLabel: "Approver" }),
+            seat("u-2", "Bob", "pending", { roleLabel: "Category owner" }),
+            seat("u-3", "Carol", "pending", { roleLabel: null }),
+            seat("u-4", "Dave", "pending"),
+          ],
+        ],
+        stageNames: ["Review"],
+        stageUnitProgress: [[]],
+        status: "APPROVAL_STATUS_IN_REVIEW",
+      },
+      "u-9",
+    );
+    expect(stage!.approvers.map((a) => a.role)).toEqual([
+      "Approver",
+      "Category owner",
+      undefined,
+      undefined,
+    ]);
+  });
 });

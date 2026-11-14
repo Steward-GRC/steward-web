@@ -137,6 +137,78 @@ describe("the approval review page (U25)", () => {
   });
 });
 
+const withRun = (extra: Record<string, unknown>) => ({
+  ...loaderData,
+  workflow: {
+    ...loaderData.workflow,
+    stageProgress: [
+      { approvals: 1, required: 1 },
+      { approvals: 1, required: 2 },
+    ],
+    ...extra,
+  },
+});
+
+describe("the publish target and approver roles (#401)", () => {
+  it("ends the flow with the version and change type it publishes as", () => {
+    renderReview(() => {}, withRun({ targetChangeType: "MAJOR", targetSemanticVersion: "3.0.0" }));
+    const flow = screen.getByRole("list", { name: "Approval flow" });
+    expect(within(flow).getAllByRole("listitem").at(-1)).toHaveTextContent(
+      "Publish, as v3.0.0 · Major: Not started",
+    );
+  });
+
+  it("says one more approval publishes it, on the last approval", () => {
+    renderReview(() => {}, withRun({ targetChangeType: "MAJOR", targetSemanticVersion: "3.0.0" }));
+    expect(
+      within(screen.getByRole("region", { name: "Your decision" })).getByText(
+        "One more approval publishes this as v3.0.0 (Major).",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the note off when more than one approval is left", () => {
+    renderReview(
+      () => {},
+      withRun({
+        stageProgress: [
+          { approvals: 1, required: 1 },
+          { approvals: 0, required: 2 },
+        ],
+        targetChangeType: "MAJOR",
+        targetSemanticVersion: "3.0.0",
+      }),
+    );
+    expect(screen.queryByText(/One more approval/)).not.toBeInTheDocument();
+  });
+
+  it("adds nothing when the gateway has no version", () => {
+    renderReview(() => {}, withRun({ targetChangeType: null, targetSemanticVersion: null }));
+    const flow = screen.getByRole("list", { name: "Approval flow" });
+    expect(within(flow).getAllByRole("listitem").at(-1)).toHaveTextContent("Publish: Not started");
+    expect(screen.queryByText(/One more approval/)).not.toBeInTheDocument();
+  });
+
+  it("names each approver's role, and no suffix when there is none", () => {
+    renderReview(
+      () => {},
+      withRun({
+        stageAssignees: [
+          loaderData.workflow.stageAssignees[0],
+          [
+            { name: "Carol", roleLabel: "Category owner", state: "pending", userId: "u-3" },
+            { name: "Alice", roleLabel: null, state: "pending", userId: "u-1" },
+          ],
+        ],
+      }),
+    );
+    const flow = screen.getByRole("list", { name: "Approval flow" });
+    const items = within(flow).getAllByRole("listitem");
+    expect(items[2]).toHaveTextContent(/Carol · Category owner · you, Final approval/);
+    expect(items[3]).toHaveTextContent(/^Alice, Final approval/);
+  });
+});
+
 const withChange = (change: Record<string, unknown>, names: Record<string, string> = {}) => ({
   ...loaderData,
   review: {

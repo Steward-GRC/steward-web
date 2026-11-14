@@ -3812,6 +3812,7 @@ export type StageAssignee = {
   readonly decidedAt?: Maybe<Scalars["String"]["output"]>;
   readonly groupId?: Maybe<Scalars["ID"]["output"]>;
   readonly name?: Maybe<Scalars["String"]["output"]>;
+  readonly roleLabel?: Maybe<Scalars["String"]["output"]>;
   readonly state: Scalars["String"]["output"];
   readonly userId: Scalars["String"]["output"];
   readonly veto: Scalars["Boolean"]["output"];
@@ -4226,6 +4227,8 @@ export type WorkflowStatus = {
   readonly status: ApprovalStatus;
   readonly submittedAt?: Maybe<Scalars["String"]["output"]>;
   readonly submittedBy?: Maybe<Scalars["String"]["output"]>;
+  readonly targetChangeType?: Maybe<ChangeType>;
+  readonly targetSemanticVersion?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type WorkflowSubmitResult = {
