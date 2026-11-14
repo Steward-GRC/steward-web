@@ -1,6 +1,12 @@
 // Copyright 2026 The Steward Authors
 // SPDX-License-Identifier: Apache-2.0
-import { AckTrigger, RaciGrant, RaciSubjectKind } from "@steward-web/api-client";
+import {
+  AckTrigger,
+  RaciAction,
+  RaciGrant,
+  RaciSubjectKind,
+  RaciVerdictCode,
+} from "@steward-web/api-client";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
@@ -68,15 +74,42 @@ const VIEW: AccessView = {
   ],
 };
 
+const verdictRule = (
+  depth: number,
+  categoryName: string,
+  subjectKind: RaciSubjectKind,
+  subjectRef: string,
+) => ({
+  action: RaciAction.Read,
+  categoryId: "c-1",
+  categoryName,
+  depth,
+  ruleNumber: 1,
+  subjectKind,
+  subjectRef,
+});
+
+const FINANCE_GROUP = {
+  code: RaciVerdictCode.RuleAllow,
+  rule: verdictRule(0, "Expenses", RaciSubjectKind.Group, "Finance team"),
+};
+
 const DECISION = {
   ack: true,
   ackReason: "rule #1 allow group Finance team",
+  ackVerdict: FINANCE_GROUP,
   approve: false,
   approveReason: "↳ Finance #1 deny user mock-user-erin",
+  approveVerdict: {
+    code: RaciVerdictCode.RuleDeny,
+    rule: verdictRule(1, "Finance", RaciSubjectKind.User, "mock-user-erin"),
+  },
   author: true,
   authorReason: "owner (auto read/approve/author)",
+  authorVerdict: { code: RaciVerdictCode.Owner, rule: null },
   read: true,
   readReason: "rule #1 allow group Finance team",
+  readVerdict: FINANCE_GROUP,
 };
 
 type RouteProps = Parameters<typeof CategoryAccessRoute>[0];

@@ -90,6 +90,7 @@ import {
   GrantRoleDocument,
   GroupMappingsDocument,
   HardResetRequestsDocument,
+  IdpGroupNamesDocument,
   ImpersonationStatusDocument,
   IssueAppendixCollabTokenDocument,
   IssueCollabTokenDocument,
@@ -1320,6 +1321,15 @@ export const liveEdge: Edge = {
       cookie,
     });
     return data.groupMappings;
+  },
+  async idpGroupNames(prefix, limit, cookie) {
+    const data = await gatewayFetch(
+      IdpGroupNamesDocument,
+      { limit: limit ?? null, prefix },
+      "IdpGroupNames",
+      { cookie },
+    );
+    return data.idpGroupNames;
   },
   async impersonationStatus(cookie) {
     const data = await gatewayFetch(ImpersonationStatusDocument, {}, "ImpersonationStatus", {

@@ -1609,6 +1609,15 @@ export type HardResetRequestsQuery = {
   }>;
 };
 
+export type IdpGroupNamesQueryVariables = Exact<{
+  prefix?: string | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+export type IdpGroupNamesQuery = {
+  readonly idpGroupNames: { readonly names: ReadonlyArray<string>; readonly truncated: boolean };
+};
+
 export type ImpersonationStatusQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ImpersonationStatusQuery = {
@@ -4453,6 +4462,66 @@ export type SimulateCategoryQuery = {
     readonly manage: boolean;
     readonly manageReason: string;
     readonly manageCode: Types.RaciReasonCode;
+    readonly readVerdict: {
+      readonly code: Types.RaciVerdictCode;
+      readonly rule: {
+        readonly categoryId: string;
+        readonly categoryName: string;
+        readonly depth: number;
+        readonly ruleNumber: number;
+        readonly subjectKind: Types.RaciSubjectKind;
+        readonly subjectRef: string;
+        readonly action: Types.RaciAction;
+      } | null;
+    };
+    readonly ackVerdict: {
+      readonly code: Types.RaciVerdictCode;
+      readonly rule: {
+        readonly categoryId: string;
+        readonly categoryName: string;
+        readonly depth: number;
+        readonly ruleNumber: number;
+        readonly subjectKind: Types.RaciSubjectKind;
+        readonly subjectRef: string;
+        readonly action: Types.RaciAction;
+      } | null;
+    };
+    readonly approveVerdict: {
+      readonly code: Types.RaciVerdictCode;
+      readonly rule: {
+        readonly categoryId: string;
+        readonly categoryName: string;
+        readonly depth: number;
+        readonly ruleNumber: number;
+        readonly subjectKind: Types.RaciSubjectKind;
+        readonly subjectRef: string;
+        readonly action: Types.RaciAction;
+      } | null;
+    };
+    readonly authorVerdict: {
+      readonly code: Types.RaciVerdictCode;
+      readonly rule: {
+        readonly categoryId: string;
+        readonly categoryName: string;
+        readonly depth: number;
+        readonly ruleNumber: number;
+        readonly subjectKind: Types.RaciSubjectKind;
+        readonly subjectRef: string;
+        readonly action: Types.RaciAction;
+      } | null;
+    };
+    readonly manageVerdict: {
+      readonly code: Types.RaciVerdictCode;
+      readonly rule: {
+        readonly categoryId: string;
+        readonly categoryName: string;
+        readonly depth: number;
+        readonly ruleNumber: number;
+        readonly subjectKind: Types.RaciSubjectKind;
+        readonly subjectRef: string;
+        readonly action: Types.RaciAction;
+      } | null;
+    };
     readonly configuredBlock: ReadonlyArray<{
       readonly action: Types.RaciAction;
       readonly categoryId: string;
@@ -11434,6 +11503,56 @@ export const HardResetRequestsDocument = {
     },
   ],
 } as unknown as DocumentNode<HardResetRequestsQuery, HardResetRequestsQueryVariables>;
+export const IdpGroupNamesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "IdpGroupNames" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "prefix" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "limit" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "idpGroupNames" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "prefix" },
+                value: { kind: "Variable", name: { kind: "Name", value: "prefix" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "limit" },
+                value: { kind: "Variable", name: { kind: "Name", value: "limit" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "names" } },
+                { kind: "Field", name: { kind: "Name", value: "truncated" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<IdpGroupNamesQuery, IdpGroupNamesQueryVariables>;
 export const ImpersonationStatusDocument = {
   kind: "Document",
   definitions: [
@@ -19828,18 +19947,148 @@ export const SimulateCategoryDocument = {
                 { kind: "Field", name: { kind: "Name", value: "read" } },
                 { kind: "Field", name: { kind: "Name", value: "readReason" } },
                 { kind: "Field", name: { kind: "Name", value: "readCode" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "readVerdict" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "code" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "rule" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                            { kind: "Field", name: { kind: "Name", value: "categoryName" } },
+                            { kind: "Field", name: { kind: "Name", value: "depth" } },
+                            { kind: "Field", name: { kind: "Name", value: "ruleNumber" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+                            { kind: "Field", name: { kind: "Name", value: "action" } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
                 { kind: "Field", name: { kind: "Name", value: "ack" } },
                 { kind: "Field", name: { kind: "Name", value: "ackReason" } },
                 { kind: "Field", name: { kind: "Name", value: "ackCode" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "ackVerdict" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "code" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "rule" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                            { kind: "Field", name: { kind: "Name", value: "categoryName" } },
+                            { kind: "Field", name: { kind: "Name", value: "depth" } },
+                            { kind: "Field", name: { kind: "Name", value: "ruleNumber" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+                            { kind: "Field", name: { kind: "Name", value: "action" } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
                 { kind: "Field", name: { kind: "Name", value: "approve" } },
                 { kind: "Field", name: { kind: "Name", value: "approveReason" } },
                 { kind: "Field", name: { kind: "Name", value: "approveCode" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "approveVerdict" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "code" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "rule" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                            { kind: "Field", name: { kind: "Name", value: "categoryName" } },
+                            { kind: "Field", name: { kind: "Name", value: "depth" } },
+                            { kind: "Field", name: { kind: "Name", value: "ruleNumber" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+                            { kind: "Field", name: { kind: "Name", value: "action" } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
                 { kind: "Field", name: { kind: "Name", value: "author" } },
                 { kind: "Field", name: { kind: "Name", value: "authorReason" } },
                 { kind: "Field", name: { kind: "Name", value: "authorCode" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "authorVerdict" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "code" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "rule" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                            { kind: "Field", name: { kind: "Name", value: "categoryName" } },
+                            { kind: "Field", name: { kind: "Name", value: "depth" } },
+                            { kind: "Field", name: { kind: "Name", value: "ruleNumber" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+                            { kind: "Field", name: { kind: "Name", value: "action" } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
                 { kind: "Field", name: { kind: "Name", value: "manage" } },
                 { kind: "Field", name: { kind: "Name", value: "manageReason" } },
                 { kind: "Field", name: { kind: "Name", value: "manageCode" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "manageVerdict" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "code" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "rule" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            { kind: "Field", name: { kind: "Name", value: "categoryId" } },
+                            { kind: "Field", name: { kind: "Name", value: "categoryName" } },
+                            { kind: "Field", name: { kind: "Name", value: "depth" } },
+                            { kind: "Field", name: { kind: "Name", value: "ruleNumber" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectKind" } },
+                            { kind: "Field", name: { kind: "Name", value: "subjectRef" } },
+                            { kind: "Field", name: { kind: "Name", value: "action" } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
                 {
                   kind: "Field",
                   name: { kind: "Name", value: "configuredBlock" },

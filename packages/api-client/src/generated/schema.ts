@@ -955,6 +955,12 @@ export type HolidayInput = {
   readonly label: Scalars["String"]["input"];
 };
 
+export type IdpGroupNames = {
+  readonly __typename?: "IdpGroupNames";
+  readonly names: ReadonlyArray<Scalars["String"]["output"]>;
+  readonly truncated: Scalars["Boolean"]["output"];
+};
+
 export type ImpersonationSession = {
   readonly __typename?: "ImpersonationSession";
   readonly actorName: Scalars["String"]["output"];
@@ -2817,6 +2823,7 @@ export type Query = {
   readonly groupMappings: ReadonlyArray<GroupMapping>;
   readonly hardResetRequests: ReadonlyArray<HardResetRequest>;
   readonly health: HealthStatus;
+  readonly idpGroupNames: IdpGroupNames;
   readonly impersonationStatus?: Maybe<ImpersonationSession>;
   readonly latestTemplateVersion?: Maybe<TemplateVersion>;
   readonly listUserSessions: ReadonlyArray<Session>;
@@ -2907,6 +2914,12 @@ export type Query = {
   readonly searchPlatformGroups: ReadonlyArray<PlatformGroup>;
   readonly searchPolicies: PolicySearchPage;
   readonly searchUsers: ReadonlyArray<UserLabel>;
+  /**
+   * simulateCategory decides every action for a person (userId), for the members of
+   * one directory group (groupName: a subject whose only membership is that group),
+   * or, with both empty, for the Everyone baseline. userId and groupName together
+   * are refused with InvalidArgument.
+   */
   readonly simulateCategory: RaciDecision;
   readonly spCertificate: SpCertificate;
   readonly spCertificates: ReadonlyArray<SpCertificate>;
@@ -3095,6 +3108,11 @@ export type QueryGroupMappingsArgs = {
 
 export type QueryHardResetRequestsArgs = {
   module?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type QueryIdpGroupNamesArgs = {
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  prefix?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type QueryLatestTemplateVersionArgs = {
@@ -3299,6 +3317,7 @@ export type QuerySearchUsersArgs = {
 export type QuerySimulateCategoryArgs = {
   categoryId: Scalars["ID"]["input"];
   draftRules?: InputMaybe<ReadonlyArray<RaciRuleInput>>;
+  groupName?: InputMaybe<Scalars["String"]["input"]>;
   userId: Scalars["ID"]["input"];
 };
 
@@ -3374,24 +3393,40 @@ export type RaciConfiguredBlock = {
   readonly subjectRef: Scalars["String"]["output"];
 };
 
+export type RaciDecidingRule = {
+  readonly __typename?: "RaciDecidingRule";
+  readonly action: RaciAction;
+  readonly categoryId: Scalars["ID"]["output"];
+  readonly categoryName: Scalars["String"]["output"];
+  readonly depth: Scalars["Int"]["output"];
+  readonly ruleNumber: Scalars["Int"]["output"];
+  readonly subjectKind: RaciSubjectKind;
+  readonly subjectRef: Scalars["String"]["output"];
+};
+
 export type RaciDecision = {
   readonly __typename?: "RaciDecision";
   readonly ack: Scalars["Boolean"]["output"];
   readonly ackCode: RaciReasonCode;
   readonly ackReason: Scalars["String"]["output"];
+  readonly ackVerdict: RaciVerdictReason;
   readonly approve: Scalars["Boolean"]["output"];
   readonly approveCode: RaciReasonCode;
   readonly approveReason: Scalars["String"]["output"];
+  readonly approveVerdict: RaciVerdictReason;
   readonly author: Scalars["Boolean"]["output"];
   readonly authorCode: RaciReasonCode;
   readonly authorReason: Scalars["String"]["output"];
+  readonly authorVerdict: RaciVerdictReason;
   readonly configuredBlock: ReadonlyArray<RaciConfiguredBlock>;
   readonly manage: Scalars["Boolean"]["output"];
   readonly manageCode: RaciReasonCode;
   readonly manageReason: Scalars["String"]["output"];
+  readonly manageVerdict: RaciVerdictReason;
   readonly read: Scalars["Boolean"]["output"];
   readonly readCode: RaciReasonCode;
   readonly readReason: Scalars["String"]["output"];
+  readonly readVerdict: RaciVerdictReason;
 };
 
 export enum RaciGrant {
@@ -3434,6 +3469,27 @@ export enum RaciSubjectKind {
   Group = "GROUP",
   User = "USER",
 }
+
+export enum RaciVerdictCode {
+  ApproverImpliesRead = "APPROVER_IMPLIES_READ",
+  AuthorImpliesRead = "AUTHOR_IMPLIES_READ",
+  DefaultDeny = "DEFAULT_DENY",
+  ManageImpliesAuthor = "MANAGE_IMPLIES_AUTHOR",
+  ManageImpliesRead = "MANAGE_IMPLIES_READ",
+  Owner = "OWNER",
+  RequiresRead = "REQUIRES_READ",
+  RuleAllow = "RULE_ALLOW",
+  RuleDeny = "RULE_DENY",
+  SiteAdminAuthor = "SITE_ADMIN_AUTHOR",
+  SiteAdminManage = "SITE_ADMIN_MANAGE",
+  SiteAdminRead = "SITE_ADMIN_READ",
+}
+
+export type RaciVerdictReason = {
+  readonly __typename?: "RaciVerdictReason";
+  readonly code: RaciVerdictCode;
+  readonly rule?: Maybe<RaciDecidingRule>;
+};
 
 export type ReassignUserPoliciesResult = {
   readonly __typename?: "ReassignUserPoliciesResult";

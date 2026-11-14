@@ -1,0 +1,6 @@
+query IdpGroupNames($prefix: String, $limit: Int) {
+  idpGroupNames(prefix: $prefix, limit: $limit) {
+    names
+    truncated
+  }
+}

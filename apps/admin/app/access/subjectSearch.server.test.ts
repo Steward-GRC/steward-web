@@ -79,6 +79,24 @@ describe("searchSubjects (#88)", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
+  it("offers directory group names by prefix, the name being the option's id", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me }))
+      .mockResolvedValueOnce(
+        jsonOnce({
+          idpGroupNames: { names: ["Facilities team", "Finance team"], truncated: false },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchSpy);
+    expect(await searchSubjects(request(), "group", "fa")).toEqual([
+      { id: "Facilities team", label: "Facilities team" },
+      { id: "Finance team", label: "Finance team" },
+    ]);
+    const body = JSON.parse(String((fetchSpy.mock.calls[1]![1] as RequestInit).body));
+    expect(body.variables).toEqual({ limit: SUBJECT_SEARCH_LIMIT, prefix: "fa" });
+  });
+
   it("finds people server-side with a cap, keeping the user id as the option's id", async () => {
     const people = Array.from({ length: 14 }, (_, index) => ({
       email: `p${index}@example.org`,
