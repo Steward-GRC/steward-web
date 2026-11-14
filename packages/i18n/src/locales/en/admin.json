@@ -732,6 +732,7 @@
       "copyCertificate": "Copy certificate",
       "copyMetadata": "Copy SP metadata",
       "copied": "Copied",
+      "notSetUp": "Single sign-on is not set up on this server.",
       "rotate": "Force rotate",
       "rotateTitle": "Force-rotate the SP certificate?",
       "rotateDescription": "…any IdP that pins the current certificate's fingerprint… will need the new metadata re-uploaded…",

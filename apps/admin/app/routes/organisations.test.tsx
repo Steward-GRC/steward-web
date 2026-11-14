@@ -37,7 +37,7 @@ const CERT = {
 
 type OrganizationsProps = Parameters<typeof Organizations>[0];
 
-const openOrganizations = (organisations: object[] = ORGS) => {
+const openOrganizations = (organisations: object[] = ORGS, spCertificate: null | object = CERT) => {
   const posted: FormData[] = [];
   const Stub = createRoutesStub([
     {
@@ -48,7 +48,7 @@ const openOrganizations = (organisations: object[] = ORGS) => {
       Component: () => (
         <Organizations
           {...({
-            loaderData: { organisations, spCertificate: CERT },
+            loaderData: { organisations, spCertificate },
           } as unknown as OrganizationsProps)}
         />
       ),
@@ -58,6 +58,16 @@ const openOrganizations = (organisations: object[] = ORGS) => {
   render(<Stub initialEntries={["/organisations"]} />);
   return posted;
 };
+
+describe("Organizations (A23) with single sign-on not set up", () => {
+  it("still lists the organisations and says single sign-on is not set up", async () => {
+    openOrganizations(ORGS, null);
+    expect(await screen.findByText("Partner Org")).toBeInTheDocument();
+    expect(screen.getByText("SP certificate")).toBeInTheDocument();
+    expect(screen.getByText("Single sign-on is not set up on this server.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Force rotate" })).not.toBeInTheDocument();
+  });
+});
 
 describe("Organizations (A23)", () => {
   it("has the title, the subtitle and + New organization", async () => {

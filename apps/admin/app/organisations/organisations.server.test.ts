@@ -14,6 +14,7 @@ import {
   disableOrganization,
   fetchIdpCertFromUrl,
   findOrganization,
+  getSpCertificateIfEnabled,
   importIdpMetadataFromUrl,
   listOrganizations,
   mintSsoTestLink,
@@ -351,5 +352,98 @@ describe("canActivate / canDelete", () => {
   it("canDelete requires the connection to be disabled", () => {
     expect(canDelete(makeOrg({ domain: "d", enabled: false }))).toBe(true);
     expect(canDelete(makeOrg({ domain: "d", enabled: true }))).toBe(false);
+  });
+});
+
+const gatewayError = (code: string, message: string) =>
+  Response.json({ data: null, errors: [{ extensions: { code, kind: "reach" }, message }] });
+
+describe("getSpCertificateIfEnabled", () => {
+  const cert = {
+    active: true,
+    certPem: "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----",
+    notAfter: "2027-10-02T12:00:00Z",
+    serial: "4F:2A:91",
+    spMetadataXml: "<EntityDescriptor/>",
+  };
+
+  it("returns the certificate when single sign-on is set up", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+        .mockResolvedValueOnce(jsonOnce({ spCertificate: cert })),
+    );
+    expect(await getSpCertificateIfEnabled(request())).toEqual(cert);
+  });
+
+  it("returns null for the fault the gateway relays when the service is not enabled", async () => {
+    // The identity service answers Unavailable "sp certificate service not enabled"; the
+    // gateway's presenter turns that into INTERNAL with its generic message.
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+        .mockResolvedValueOnce(
+          gatewayError("INTERNAL", "Something went wrong on our side. Please try again."),
+        ),
+    );
+    expect(await getSpCertificateIfEnabled(request())).toBeNull();
+  });
+
+  it("returns null for a relayed Unavailable status", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+        .mockResolvedValueOnce(gatewayError("Unavailable", "sp certificate service not enabled")),
+    );
+    expect(await getSpCertificateIfEnabled(request())).toBeNull();
+  });
+
+  it("still redirects a caller who lacks settings.manage", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonOnce({ me: readerMe })));
+    const thrown: unknown = await getSpCertificateIfEnabled(request()).catch(
+      (error: unknown) => error,
+    );
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).headers.get("location")).toBe("/");
+  });
+
+  it.each(["Unauthenticated", "UNAUTHENTICATED", "PermissionDenied", "NOT_FOUND"])(
+    "still surfaces a %s refusal",
+    async (code) => {
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+          .mockResolvedValueOnce(gatewayError(code, "refused")),
+      );
+      await expect(getSpCertificateIfEnabled(request())).rejects.toMatchObject({ code });
+    },
+  );
+
+  it("still surfaces a gateway HTTP failure and a network error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+        .mockResolvedValueOnce(new Response("bad gateway", { status: 502 })),
+    );
+    await expect(getSpCertificateIfEnabled(request())).rejects.toMatchObject({ status: 502 });
+
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+        .mockRejectedValueOnce(new TypeError("fetch failed")),
+    );
+    await expect(getSpCertificateIfEnabled(request())).rejects.toThrow("fetch failed");
   });
 });
