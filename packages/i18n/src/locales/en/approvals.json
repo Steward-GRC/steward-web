@@ -235,6 +235,7 @@
   "stepper": {
     "approvedBy": "Approved by {{names}} · {{date}}",
     "approvedOn": "Approved {{date}}",
+    "due": "Due {{date}}",
     "group": {
       "approved": "Approved: {{names}}",
       "pending": "Pending: {{names}}",

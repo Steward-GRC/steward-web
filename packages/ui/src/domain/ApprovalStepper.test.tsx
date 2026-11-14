@@ -224,4 +224,35 @@ describe("ApprovalStepper veto seats (steward-web#256)", () => {
     expect(screen.getByText(/Rejected by Dave/)).toBeInTheDocument();
     expect(screen.getByText(/by veto/)).toBeInTheDocument();
   });
+
+  describe("the stage's due date", () => {
+    const due: StepperStage[] = [
+      {
+        approvers: [{ name: "Carol", state: "pending" }],
+        dueAt: "2026-10-12T00:00:00Z",
+        name: "Finance review",
+        rule: { approvals: 0, kind: "all", required: 2 },
+        state: "current",
+      },
+      { approvers: [{ name: "Dave", state: "pending" }], name: "Sign-off", state: "upcoming" },
+    ];
+
+    it("shows it on a horizontal stage, and nothing on one without", () => {
+      render(<ApprovalStepper orientation="horizontal" stages={due} />);
+      const [finance, signOff] = screen.getAllByRole("listitem").slice(1, 3);
+      expect(finance).toHaveTextContent(`Due ${formatDayMonth("2026-10-12T00:00:00Z")}`);
+      expect(finance).toHaveTextContent("all · 0 of 2");
+      expect(signOff).not.toHaveTextContent(/Due/);
+    });
+
+    it("shows it on the collapsed vertical row beside the stage count and rule", () => {
+      render(<ApprovalStepper orientation="vertical" stages={due} />);
+      const row = screen.getByRole("button", { name: /Finance review/ });
+      expect(row).toHaveTextContent(/Finance review.*stage 1 of 2.*all · 0 of 2/);
+      expect(screen.getAllByRole("listitem")[0]).toHaveTextContent(
+        `Due ${formatDayMonth("2026-10-12T00:00:00Z")}`,
+      );
+      expect(screen.getAllByRole("listitem")[1]).not.toHaveTextContent(/Due/);
+    });
+  });
 });

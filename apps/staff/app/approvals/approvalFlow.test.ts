@@ -18,12 +18,61 @@ const who = (
 ): StepperStage["approvers"][number] => ({ name, state, ...extra });
 
 const options = {
+  dueOf: (iso: string) => `Due ${iso.slice(5, 10)}`,
   dueText: "Due 9 Oct",
+  ruleOf: (rule: { approvals: number; kind: string; required: number }) =>
+    `${rule.kind} · ${rule.approvals} of ${rule.required}`,
   voteLabel: (approved: number, needed: number) => `${approved} of ${needed} approved`,
   youLabel: "you",
 };
 
 describe("flowStepsOf", () => {
+  it("draws each stage's rule on its boxes and its due date on the ones still waiting", () => {
+    const steps = flowStepsOf(
+      [
+        {
+          ...stage("Legal", "done", [
+            who("Carol", "approved", { decidedAt: "2026-10-02T10:00:00Z" }),
+          ]),
+          dueAt: "2026-10-03T00:00:00Z",
+        },
+        {
+          ...stage("Finance", "current", [who("Dave", "pending"), who("Erin", "pending")]),
+          dueAt: "2026-10-12T00:00:00Z",
+          rule: { approvals: 0, kind: "all", required: 2 },
+        },
+        { ...stage("CEO", "upcoming", [who("Frank", "pending")]), dueAt: "2026-10-20T00:00:00Z" },
+      ],
+      options,
+    );
+    expect(steps[0]!.nodes[0]!.description).toBe("Legal");
+    expect(steps[0]!.nodes[0]!.when).toMatch(/Oct/);
+    expect(steps[1]!.nodes.map((n) => [n.description, n.when])).toEqual([
+      ["Finance · all · 0 of 2", "Due 10-12"],
+      ["Finance · all · 0 of 2", "Due 10-12"],
+    ]);
+    expect(steps[2]!.nodes[0]!.when).toBe("Due 10-20");
+  });
+
+  it("keeps the viewer's own task due date on their box", () => {
+    const [step] = flowStepsOf(
+      [
+        {
+          ...stage("Finance", "current", [who("Dave", "pending", { isYou: true })]),
+          dueAt: "2026-10-12T00:00:00Z",
+        },
+      ],
+      options,
+    );
+    expect(step!.nodes[0]!.when).toBe("Due 9 Oct");
+  });
+
+  it("adds nothing when a stage has no due date or rule", () => {
+    const [step] = flowStepsOf([stage("Finance", "current", [who("Dave", "pending")])], options);
+    expect(step!.nodes[0]!.description).toBe("Finance");
+    expect(step!.nodes[0]!.when).toBeNull();
+  });
+
   it("makes a step per stage, each box titled by the user and described by the stage, with when", () => {
     const steps = flowStepsOf(
       [

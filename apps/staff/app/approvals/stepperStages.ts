@@ -2,12 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // The approval run (WorkflowStatus) as the approval stepper's stages (U25). Pure, so the
 // mapping is unit-tested without the route.
-import type { StepperApprover, StepperGroup, StepperStage } from "@steward-web/ui/domain";
+import type {
+  StepperApprover,
+  StepperGroup,
+  StepperRule,
+  StepperStage,
+} from "@steward-web/ui/domain";
 
 interface Run {
   currentStageIdx: number;
   stageAssignees: readonly (readonly Seat[])[];
   stageNames: readonly string[];
+  /** Each stage's due date and rule; absent or short where the gateway sent none. */
+  stageProgress?: readonly StageProgress[];
   stageUnitProgress: readonly (readonly Unit[])[];
   status: string;
 }
@@ -23,6 +30,13 @@ interface Seat {
   userId: string;
 }
 
+interface StageProgress {
+  approvals: number;
+  dueAt?: null | string;
+  quorum?: null | string;
+  required: number;
+}
+
 interface Unit {
   approvals?: number;
   groupId: string;
@@ -36,6 +50,15 @@ interface Unit {
 
 const SEAT_STATES = new Set(["approved", "pending", "rejected"]);
 const QUORUMS = new Set(["all", "majority", "one"]);
+
+/** "one" (and anything unknown) has no badge; "all" and the majority and n-of-m rules do. */
+const ruleOf = (progress: StageProgress | undefined): StepperRule | undefined => {
+  const quorum = progress?.quorum?.toLowerCase();
+  if (!progress || !quorum) return undefined;
+  const kind =
+    quorum === "all" ? "all" : quorum === "majority" || quorum === "nofm" ? "quorum" : null;
+  return kind ? { approvals: progress.approvals, kind, required: progress.required } : undefined;
+};
 
 const approverOf = (seat: Seat, meId: string, veto: boolean): StepperApprover => ({
   comment: seat.comment ?? null,
@@ -84,12 +107,16 @@ export const stepperStagesOf = (
   run.stageNames.map((name, index) => {
     const seats = run.stageAssignees[index] ?? [];
     const units = run.stageUnitProgress[index] ?? [];
+    const progress = run.stageProgress?.[index];
+    const rule = ruleOf(progress);
     return {
+      ...(progress?.dueAt ? { dueAt: progress.dueAt } : {}),
       approvers: seats
         .filter((s) => SEAT_STATES.has(s.state))
         .map((s) => approverOf(s, meId, vetoes[index]?.includes(s.userId) ?? false)),
       groups: units.map((unit) => groupOf(unit, seats)),
       name,
+      ...(rule ? { rule } : {}),
       state: stateOf(run, index),
     };
   });

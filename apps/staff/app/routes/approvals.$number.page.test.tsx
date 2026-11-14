@@ -687,3 +687,26 @@ describe("the appendices on the approval page (bug log 224, 225)", () => {
     expect(screen.getAllByRole("separator")).toHaveLength(1);
   });
 });
+
+describe("each stage's due date and rule (#403)", () => {
+  const progress = [
+    { approvals: 1, dueAt: "2026-10-03T00:00:00Z", quorum: "one", quorumN: 0, required: 1 },
+    { approvals: 1, dueAt: "2026-10-12T00:00:00Z", quorum: "majority", quorumN: 0, required: 2 },
+  ];
+
+  it("draws the rule and due date on the boxes of the stage being waited on", () => {
+    renderReview(() => {}, withRun({ stageProgress: progress }));
+    const flow = screen.getByRole("list", { name: "Approval flow" });
+    const items = within(flow).getAllByRole("listitem");
+    expect(items[1]).not.toHaveTextContent(/quorum/);
+    expect(items[2]).toHaveTextContent("Final approval · quorum · 1 of 2");
+    expect(items[3]).toHaveTextContent(`Due ${formatDayMonth("2026-10-12T00:00:00Z")}`);
+  });
+
+  it("draws neither when the gateway sent no stage progress", () => {
+    renderReview(() => {}, withRun({ stageProgress: [] }));
+    const flow = screen.getByRole("list", { name: "Approval flow" });
+    expect(flow).not.toHaveTextContent(/quorum/);
+    expect(within(flow).getAllByRole("listitem")[3]).not.toHaveTextContent(/Due/);
+  });
+});

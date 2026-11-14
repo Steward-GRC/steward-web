@@ -14,6 +14,15 @@ const seat = (userId: string, name: string, state: string, extra: object = {}) =
   ...extra,
 });
 
+const run = (stageProgress: object[] | undefined) => ({
+  currentStageIdx: 1,
+  stageAssignees: [[seat("u-1", "Alice", "approved")], [seat("u-3", "Carol", "pending")], []],
+  stageNames: ["Legal", "Finance", "CEO"],
+  stageProgress: stageProgress as never,
+  stageUnitProgress: [[], [], []],
+  status: "APPROVAL_STATUS_IN_REVIEW",
+});
+
 describe("stepperStagesOf", () => {
   it("marks stages done, current and upcoming around the run's current stage", () => {
     const stages = stepperStagesOf(
@@ -180,5 +189,50 @@ describe("stepperStagesOf veto seats (steward-web#256)", () => {
       undefined,
       undefined,
     ]);
+  });
+});
+
+describe("the stage's due date and rule (stageProgress)", () => {
+  it("carries each stage's due date and a rule badge for quorum and all", () => {
+    const stages = stepperStagesOf(
+      run([
+        { approvals: 1, dueAt: "2026-10-09T00:00:00Z", quorum: "one", quorumN: 0, required: 1 },
+        {
+          approvals: 1,
+          dueAt: "2026-10-12T00:00:00Z",
+          quorum: "majority",
+          quorumN: 0,
+          required: 2,
+        },
+        { approvals: 0, dueAt: null, quorum: "all", quorumN: 0, required: 2 },
+      ]),
+      "u-3",
+    );
+    expect(stages.map((s) => s.dueAt)).toEqual([
+      "2026-10-09T00:00:00Z",
+      "2026-10-12T00:00:00Z",
+      undefined,
+    ]);
+    expect(stages.map((s) => s.rule)).toEqual([
+      undefined,
+      { approvals: 1, kind: "quorum", required: 2 },
+      { approvals: 0, kind: "all", required: 2 },
+    ]);
+  });
+
+  it("reads an n-of-m rule as a quorum", () => {
+    const [stage] = stepperStagesOf(
+      run([{ approvals: 0, dueAt: null, quorum: "nofm", quorumN: 2, required: 2 }]),
+      "u-3",
+    );
+    expect(stage!.rule).toEqual({ approvals: 0, kind: "quorum", required: 2 });
+  });
+
+  it("adds neither when the run has no stage progress or an unknown rule", () => {
+    for (const progress of [undefined, [], [{ approvals: 0, quorum: "mystery", required: 1 }]]) {
+      const [stage] = stepperStagesOf(run(progress as never), "u-3");
+      expect(stage).not.toHaveProperty("rule");
+      expect(stage).not.toHaveProperty("dueAt");
+    }
   });
 });

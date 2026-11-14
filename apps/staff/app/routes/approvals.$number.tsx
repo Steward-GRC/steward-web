@@ -423,7 +423,10 @@ export default function ApprovalReviewRoute({ actionData, loaderData }: Route.Co
           upcoming: t("flow.state.upcoming"),
         }}
         steps={flowStepsOf(stepperStagesOf(workflow, meId, vetoes), {
+          dueOf: (iso) => t("flow.due", { date: formatDayMonth(iso) }),
           dueText: task?.dueAt ? t("flow.due", { date: formatDayMonth(task.dueAt) }) : null,
+          ruleOf: (rule) =>
+            t(`stepper.rule.${rule.kind}`, { approvals: rule.approvals, required: rule.required }),
           voteLabel: (approved, needed) => t("flow.vote", { approved, needed }),
           youLabel: t("flow.you"),
         })}

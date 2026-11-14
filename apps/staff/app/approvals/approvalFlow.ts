@@ -4,13 +4,22 @@
 // the mapping is unit-tested without the route.
 import type { HistoryEntry } from "@steward-web/api-client";
 import type { FlowNode, FlowNodeState, FlowStep } from "@steward-web/ui";
-import type { StepperApprover, StepperGroup, StepperStage } from "@steward-web/ui/domain";
+import type {
+  StepperApprover,
+  StepperGroup,
+  StepperRule,
+  StepperStage,
+} from "@steward-web/ui/domain";
 
 import { formatDayMonth } from "@steward-web/i18n";
 
 export interface FlowTexts {
+  /** "Due 12 Oct", for a stage's own due date; a stage with no date shows none. */
+  dueOf?: (iso: string) => string;
   /** "Due 9 Oct", for the box being waited on; null when the viewer's due date isn't known. */
   dueText?: null | string;
+  /** "quorum · 1 of 2", a stage's rule; a plain one-approver stage has none. */
+  ruleOf?: (rule: StepperRule) => string;
   /** "2 of 4 approved", for a screen reader. */
   voteLabel?: (approved: number, needed: number) => string;
   /** "you", beside the viewer's own name. */
@@ -42,10 +51,16 @@ const groupState = (group: StepperGroup, stage: StepperStage): FlowNodeState => 
  */
 export const flowStepsOf = (
   stages: readonly StepperStage[],
-  { dueText = null, voteLabel, youLabel }: FlowTexts,
+  { dueOf, dueText = null, ruleOf, voteLabel, youLabel }: FlowTexts,
 ): FlowStep[] =>
   stages.map((stage, index) => {
     const id = `stage-${index}`;
+    // The stage's line under each box: its name, then its rule when it has one.
+    const described = [stage.name, stage.rule && ruleOf ? ruleOf(stage.rule) : null]
+      .filter(Boolean)
+      .join(" · ");
+    // The stage's own due date, for a box still waiting; a decided box shows its decision date.
+    const stageDue = stage.dueAt && dueOf && stage.state !== "done" ? dueOf(stage.dueAt) : null;
     const done = stage.state === "done";
     const units = stage.groups ?? [];
     const unitIds = new Set(units.flatMap((u) => (u.id ? [u.id] : [])));
@@ -61,16 +76,16 @@ export const flowStepsOf = (
       const state = nodeState(seat, stage);
       return {
         comment: seat.comment ?? null,
-        description: stage.name,
+        description: described,
         id: `${id}-u${index_}`,
         state,
         title: seatTitle(seat, youLabel),
         when:
           seat.state === "pending"
-            ? // The due date is the viewer's own task's, so only their box carries it.
-              state === "current" && seat.isYou
+            ? // The viewer's own task due date wins on their box; the others show the stage's.
+              state === "current" && seat.isYou && dueText
               ? dueText
-              : null
+              : stageDue
             : seat.decidedAt
               ? formatDayMonth(seat.decidedAt)
               : null,
@@ -90,7 +105,7 @@ export const flowStepsOf = (
       needed += unit.required;
       return [
         {
-          description: stage.name,
+          description: described,
           id: `${id}-g${index_}`,
           members: seats.map((seat, m) => ({
             id: `${id}-g${index_}-m${m}`,
@@ -101,6 +116,7 @@ export const flowStepsOf = (
           state,
           tally: `${votes}/${unit.required}`,
           title: unit.name,
+          when: state === "done" || state === "rejected" ? null : stageDue,
         },
       ];
     });
