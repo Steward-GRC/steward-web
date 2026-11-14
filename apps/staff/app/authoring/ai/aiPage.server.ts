@@ -16,7 +16,10 @@ export const loadDraftForAi = async (request: Request, number: string) => {
   if (!policy?.viewerCan.edit) throw new Response("Not Found", { status: 404 });
   const [draft, templateVersion] = await Promise.all([
     getDraftVersion(request, policy.id),
-    policy.templateId ? getLatestTemplateVersion(request, policy.templateId) : null,
+    // a refused or failed template read leaves the page without the outline, not a 500 (gateway#248)
+    policy.templateId
+      ? getLatestTemplateVersion(request, policy.templateId).catch(() => null)
+      : null,
   ]);
   if (!draft) throw new Response("Not Found", { status: 404 });
   const outline = templateVersion?.sections ?? [];
