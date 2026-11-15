@@ -3619,6 +3619,50 @@ export type SearchAndAnswerQuery = {
   };
 };
 
+export type SearchPoliciesQueryVariables = Exact<{
+  query: string;
+  documentType?: Types.DocumentType | null | undefined;
+  first?: number | null | undefined;
+}>;
+
+export type SearchPoliciesQuery = {
+  readonly searchPolicies: {
+    readonly hits: ReadonlyArray<{
+      readonly policy: {
+        readonly id: string;
+        readonly number: string;
+        readonly title: string;
+        readonly documentType: Types.DocumentType;
+        readonly sensitivity: Types.Sensitivity;
+        readonly ownerUserId: string;
+        readonly ownerName: string | null;
+        readonly homeCategoryId: string;
+        readonly ackTriggers: Types.AckTrigger | null;
+        readonly ackAudienceOverride: ReadonlyArray<string> | null;
+        readonly templateId: string | null;
+        readonly templateNone: boolean;
+        readonly currentDraftVersionId: string | null;
+        readonly currentPublishedVersionId: string | null;
+        readonly currentVersionNo: number | null;
+        readonly currentSemanticVersion: string | null;
+        readonly currentVersionStatus: string | null;
+        readonly updatedAt: string | null;
+        readonly retiredAt: string | null;
+        readonly viewerCan: {
+          readonly read: boolean;
+          readonly edit: boolean;
+          readonly submit: boolean;
+          readonly approve: boolean;
+          readonly contentObfuscated: boolean;
+          readonly canBreakGlass: boolean;
+          readonly ack: boolean;
+          readonly manage: boolean;
+        };
+      };
+    }>;
+  };
+};
+
 export type SearchUsersQueryVariables = Exact<{
   query: string;
   limit?: number | null | undefined;
@@ -17000,6 +17044,135 @@ export const SearchAndAnswerDocument = {
     },
   ],
 } as unknown as DocumentNode<SearchAndAnswerQuery, SearchAndAnswerQueryVariables>;
+export const SearchPoliciesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "SearchPolicies" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "query" } },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "String" } },
+          },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "documentType" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "DocumentType" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "first" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "Int" } },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "searchPolicies" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "query" },
+                value: { kind: "Variable", name: { kind: "Name", value: "query" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "documentType" },
+                value: { kind: "Variable", name: { kind: "Name", value: "documentType" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "first" },
+                value: { kind: "Variable", name: { kind: "Name", value: "first" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "hits" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "policy" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            {
+                              kind: "FragmentSpread",
+                              name: { kind: "Name", value: "AuthoringPolicyFields" },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AuthoringPolicyFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Policy" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "number" } },
+          { kind: "Field", name: { kind: "Name", value: "title" } },
+          { kind: "Field", name: { kind: "Name", value: "documentType" } },
+          { kind: "Field", name: { kind: "Name", value: "sensitivity" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerUserId" } },
+          { kind: "Field", name: { kind: "Name", value: "ownerName" } },
+          { kind: "Field", name: { kind: "Name", value: "homeCategoryId" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackAudienceOverride" } },
+          { kind: "Field", name: { kind: "Name", value: "templateId" } },
+          { kind: "Field", name: { kind: "Name", value: "templateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "currentDraftVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentPublishedVersionId" } },
+          { kind: "Field", name: { kind: "Name", value: "currentVersionNo" } },
+          { kind: "Field", name: { kind: "Name", value: "currentSemanticVersion" } },
+          { kind: "Field", name: { kind: "Name", value: "currentVersionStatus" } },
+          { kind: "Field", name: { kind: "Name", value: "updatedAt" } },
+          { kind: "Field", name: { kind: "Name", value: "retiredAt" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "viewerCan" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "read" } },
+                { kind: "Field", name: { kind: "Name", value: "edit" } },
+                { kind: "Field", name: { kind: "Name", value: "submit" } },
+                { kind: "Field", name: { kind: "Name", value: "approve" } },
+                { kind: "Field", name: { kind: "Name", value: "contentObfuscated" } },
+                { kind: "Field", name: { kind: "Name", value: "canBreakGlass" } },
+                { kind: "Field", name: { kind: "Name", value: "ack" } },
+                { kind: "Field", name: { kind: "Name", value: "manage" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SearchPoliciesQuery, SearchPoliciesQueryVariables>;
 export const SearchUsersDocument = {
   kind: "Document",
   definitions: [

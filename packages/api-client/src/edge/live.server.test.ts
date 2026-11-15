@@ -227,6 +227,28 @@ describe("liveEdge.policies", () => {
   });
 });
 
+describe("liveEdge.searchPolicyText", () => {
+  it("asks the gateway to search policy text and names each hit's category (#26)", async () => {
+    const calls = routeGateway({
+      ...treeHandlers,
+      SearchPolicies: () => ({
+        searchPolicies: { hits: [{ policy: policy({}), rank: 1, snippet: null }] },
+      }),
+    });
+
+    const rows = await liveEdge.searchPolicyText("travel rules");
+
+    expect(rows).toEqual([
+      expect.objectContaining({ category: "Finance", subcategory: "Travel", version: "2.0.0" }),
+    ]);
+    expect(calls.find((c) => c.operation === "SearchPolicies")?.variables).toEqual({
+      documentType: null,
+      first: 20,
+      query: "travel rules",
+    });
+  });
+});
+
 /** A reader's view of FIN-001: two published versions, and an audit log the caller may not read. */
 const readerHandlers = (auditLog: Handler): Record<string, Handler> => ({
   ...treeHandlers,
