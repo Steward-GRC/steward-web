@@ -15,21 +15,32 @@ import {
   Select,
 } from "@steward-web/ui";
 import { categoryPath } from "@steward-web/ui/domain";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronRight } from "lucide-react";
 import { type DragEvent, useMemo, useState } from "react";
 import { Link, useFetcher } from "react-router";
 
-import { checkMove, descendantIds, MAX_GROUP_DEPTH, type MoveVerdict, TOP_LEVEL } from "./tree";
+import {
+  checkMove,
+  descendantIds,
+  MAX_GROUP_DEPTH,
+  type MoveVerdict,
+  shiftSibling,
+  siblingIds,
+  TOP_LEVEL,
+} from "./tree";
 
 /** What the route's move action answers. */
 export type MoveResult =
   | { failure?: Failure; id: string; ok: false; verdict?: MoveVerdict }
-  | { id: string; ok: true; parentId: null | string };
+  | { id: string; ok: true; parentId: null | string }
+  | { id: string; ok: true; reordered: true };
 
 /** A category as the tree draws it. */
 export interface TreeRow {
   id: string;
   name: string;
+  /** Position among its siblings (lower first). */
+  order?: number;
   owners: number;
   parentId: null | string;
 }
@@ -58,7 +69,17 @@ export const CategoryTree = ({ rows }: { rows: readonly TreeRow[] }) => {
   const byId = useMemo(() => new Map(rows.map((row) => [row.id, row])), [rows]);
   const childrenOf = useMemo(() => {
     const map = new Map<null | string, TreeRow[]>();
+    const rank = new Map(
+      [...new Set(rows.map((row) => row.parentId))].flatMap((parentId) =>
+        siblingIds(rows, parentId).map((id, index) => [id, index] as const),
+      ),
+    );
     for (const row of rows) map.set(row.parentId, [...(map.get(row.parentId) ?? []), row]);
+    for (const [parentId, siblings] of map)
+      map.set(
+        parentId,
+        siblings.toSorted((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0)),
+      );
     return map;
   }, [rows]);
   /** The rows as the tree lists them: each category, then its sub-categories. */
@@ -111,6 +132,21 @@ export const CategoryTree = ({ rows }: { rows: readonly TreeRow[] }) => {
     );
   };
 
+  const shift = (id: string, delta: -1 | 1) => {
+    const next = shiftSibling(rows, id, delta);
+    if (!next) return;
+    setRefused(null);
+    void fetcher.submit(
+      {
+        groupId: id,
+        intent: "reorder",
+        orderedIds: next.orderedIds.join(","),
+        parentId: next.parentId ?? TOP_LEVEL,
+      },
+      { method: "post" },
+    );
+  };
+
   const dropOn = (parentId: null | string) => {
     const id = dragging;
     setDragging(null);
@@ -155,6 +191,7 @@ export const CategoryTree = ({ rows }: { rows: readonly TreeRow[] }) => {
     }
     if (!result || fetcher.state !== "idle") return null;
     if (result.ok) {
+      if ("reordered" in result) return t("categories.tree.reordered", { name: nameOf(result.id) });
       return result.parentId === null
         ? t("categories.tree.movedTop", { name: nameOf(result.id) })
         : t("categories.tree.moved", { name: nameOf(result.id), parent: nameOf(result.parentId) });
@@ -167,7 +204,9 @@ export const CategoryTree = ({ rows }: { rows: readonly TreeRow[] }) => {
     if (level_.length === 0) return null;
     return (
       <ul className="flex flex-col gap-0.5">
-        {level_.map((row) => {
+        {level_.map((row, position) => {
+          const first = position === 0;
+          const last = position === level_.length - 1;
           const kids = childrenOf.get(row.id) ?? [];
           const expanded = shown ? true : open.has(row.id);
           const dropState = over === row.id ? "ring-2 ring-primary bg-primary-soft" : "";
@@ -228,9 +267,29 @@ export const CategoryTree = ({ rows }: { rows: readonly TreeRow[] }) => {
                   <span>{t("categories.tree.owners", { count: row.owners })}</span>
                   <span>{t("categories.tree.children", { count: kids.length })}</span>
                 </span>
+                {first ? null : (
+                  <Button
+                    aria-label={t("categories.tree.upLabel", { name: row.name })}
+                    className="ml-auto size-8 p-0"
+                    onClick={() => shift(row.id, -1)}
+                    variant="ghost"
+                  >
+                    <ArrowUp aria-hidden="true" className="size-4" />
+                  </Button>
+                )}
+                {last ? null : (
+                  <Button
+                    aria-label={t("categories.tree.downLabel", { name: row.name })}
+                    className={first ? "ml-auto size-8 p-0" : "size-8 p-0"}
+                    onClick={() => shift(row.id, 1)}
+                    variant="ghost"
+                  >
+                    <ArrowDown aria-hidden="true" className="size-4" />
+                  </Button>
+                )}
                 <Button
                   aria-label={t("categories.tree.moveLabel", { name: row.name })}
-                  className="ml-auto h-8 px-2.5"
+                  className={first && last ? "ml-auto h-8 px-2.5" : "h-8 px-2.5"}
                   onClick={() => openMove(row)}
                   variant="ghost"
                 >

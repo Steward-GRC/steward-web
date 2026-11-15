@@ -166,6 +166,8 @@ export interface Group {
    *  `exclusionGroupIds`. */
   readonly idpGroupIds?: null | readonly string[];
   readonly name: string;
+  /** Position among its siblings (lower first), as the gateway orders the tree. */
+  readonly order?: number;
   readonly owners: readonly string[];
   readonly parentId?: null | string;
   readonly reviewCadence: ReviewCadence;

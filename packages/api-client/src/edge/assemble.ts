@@ -267,6 +267,25 @@ export const categoryNames = (
 
 const statuses = new Set<string>(Object.values(PolicyStatus));
 
+const PROVIDER_REASONS = new Set(["auth_failed", "not_configured", "provider_error"]);
+
+/**
+ * Why AI is off, as one string. When the provider is what is unavailable and the gateway says
+ * why (`providerReason`), the reason becomes `provider_<that reason>` so the screen can say it;
+ * otherwise the gateway's own reason stands.
+ */
+export const aiReasonOf = (health: {
+  providerReason?: null | string;
+  reason?: null | string;
+}): null | string => {
+  const reason = health.reason ?? null;
+  return reason === "provider_unavailable" &&
+    health.providerReason &&
+    PROVIDER_REASONS.has(health.providerReason)
+    ? `provider_${health.providerReason}`
+    : reason;
+};
+
 /** A policy row's status: published once any version is, else its working draft's own. */
 export const policyStatusOf = (hasPublished: boolean, versionStatus?: string): PolicyStatus => {
   if (hasPublished) return PolicyStatus.Published;

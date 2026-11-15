@@ -144,6 +144,7 @@ import {
   RenameTemplateDocument,
   RenameUserMfaFactorDocument,
   ReorderAppendicesDocument,
+  ReorderCategoriesDocument,
   ReorderPolicyAppendicesDocument,
   ReplyReviewThreadDocument,
   ReportCaseDocument,
@@ -243,6 +244,7 @@ import {
 import { changeTypeToGateway, versionOf } from "../semanticVersion";
 import { awaitAiJobResult } from "./aiJobResult.server";
 import {
+  aiReasonOf,
   appendixText,
   bodyTextFromContent,
   categoryNames,
@@ -493,7 +495,7 @@ const assembleDetail = async (
       // aiHealth answers a down service as unavailable rather than failing; a failed call reads
       // the same way, so the reader's AI pieces say so instead of breaking the page.
       gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie }).then(
-        (d) => ({ available: d.aiHealth.available, reason: d.aiHealth.reason ?? null }),
+        (d) => ({ available: d.aiHealth.available, reason: aiReasonOf(d.aiHealth) }),
         () => ({ available: false, reason: "ai_service_unavailable" }),
       ),
       // What the published version links to, for how each related policy relates (bug log 227);
@@ -919,7 +921,7 @@ export const liveEdge: Edge = {
   },
   async aiHealth(cookie) {
     const data = await gatewayFetch(AiHealthDocument, {}, "AiHealth", { cookie });
-    return data.aiHealth;
+    return { ...data.aiHealth, reason: aiReasonOf(data.aiHealth) };
   },
   async aiJob(jobId, cookie) {
     const data = await gatewayFetch(AiJobDocument, { jobId }, "AiJob", { cookie });
@@ -1923,6 +1925,15 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.removeUserMfaFactor;
+  },
+  async reorderGroups(parentId, orderedIds, cookie) {
+    const data = await gatewayFetch(
+      ReorderCategoriesDocument,
+      { orderedIds: [...orderedIds], parentId },
+      "ReorderCategories",
+      { cookie },
+    );
+    return data.reorderCategories;
   },
   async renameGroup(id, name, slug, cookie) {
     const data = await gatewayFetch(RenameCategoryDocument, { id, name, slug }, "RenameCategory", {

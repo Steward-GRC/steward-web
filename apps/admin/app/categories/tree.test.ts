@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 
-import { checkMove, depthOf, descendantIds, subtreeHeight } from "./tree";
+import { checkMove, depthOf, descendantIds, shiftSibling, siblingIds, subtreeHeight } from "./tree";
 
 // Finance > Expenses > Travel, and a separate IT, and Legal.
 const groups = [
@@ -42,5 +42,40 @@ describe("checkMove", () => {
     expect(checkMove(groups, "exp", "fin")).toBe("same");
     expect(checkMove(groups, "fin", null)).toBe("same");
     expect(checkMove(groups, "legal", null)).toBe("same");
+  });
+});
+
+// Three top-level categories whose gateway order differs from the list order, and two children.
+const ordered = [
+  { id: "b", order: 2, parentId: null },
+  { id: "a", order: 1, parentId: null },
+  { id: "c", order: 7, parentId: null },
+  { id: "a2", order: 2, parentId: "a" },
+  { id: "a1", order: 1, parentId: "a" },
+];
+
+describe("siblingIds", () => {
+  it("lists the siblings under one parent by their order", () => {
+    expect(siblingIds(ordered, null)).toEqual(["a", "b", "c"]);
+    expect(siblingIds(ordered, "a")).toEqual(["a1", "a2"]);
+    expect(siblingIds(ordered, "none")).toEqual([]);
+  });
+
+  it("keeps the list order for siblings that carry no order", () => {
+    expect(siblingIds([{ id: "x" }, { id: "y" }], null)).toEqual(["x", "y"]);
+  });
+});
+
+describe("shiftSibling", () => {
+  it("moves a category one place up or down among its siblings", () => {
+    expect(shiftSibling(ordered, "b", -1)).toEqual({ orderedIds: ["b", "a", "c"], parentId: null });
+    expect(shiftSibling(ordered, "b", 1)).toEqual({ orderedIds: ["a", "c", "b"], parentId: null });
+    expect(shiftSibling(ordered, "a2", -1)).toEqual({ orderedIds: ["a2", "a1"], parentId: "a" });
+  });
+
+  it("answers null at either end, and for an unknown id", () => {
+    expect(shiftSibling(ordered, "a", -1)).toBeNull();
+    expect(shiftSibling(ordered, "c", 1)).toBeNull();
+    expect(shiftSibling(ordered, "nope", 1)).toBeNull();
   });
 });

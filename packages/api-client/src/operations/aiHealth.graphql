@@ -2,5 +2,6 @@ query AiHealth {
   aiHealth {
     available
     reason
+    providerReason
   }
 }

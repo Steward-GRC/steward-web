@@ -8,6 +8,8 @@ export const MAX_GROUP_DEPTH = 3;
 /** What the tree helpers need of a category: its id and where it hangs. */
 export interface TreeNode {
   readonly id: string;
+  /** The gateway's sibling order (lower first); absent keeps the list order. */
+  readonly order?: number;
   readonly parentId?: null | string;
 }
 
@@ -70,3 +72,31 @@ export const checkMove = (
 
 /** The "no parent" choice in a parent picker (a select option can't carry an empty value). */
 export const TOP_LEVEL = "__top__";
+
+/** The ids of the categories under `parentId`, in their sibling order (the list order breaks ties). */
+export const siblingIds = (groups: readonly TreeNode[], parentId: null | string): string[] =>
+  groups
+    .filter((g) => (g.parentId ?? null) === parentId)
+    .map((g, index) => ({ id: g.id, index, order: g.order ?? 0 }))
+    .toSorted((a, b) => a.order - b.order || a.index - b.index)
+    .map((g) => g.id);
+
+/**
+ * The full sibling list `reorderCategories` takes after `groupId` moves one place (-1 up, 1
+ * down) among its siblings; null when it is already at that end or is unknown.
+ */
+export const shiftSibling = (
+  groups: readonly TreeNode[],
+  groupId: string,
+  delta: -1 | 1,
+): { orderedIds: string[]; parentId: null | string } | null => {
+  const group = groups.find((g) => g.id === groupId);
+  if (!group) return null;
+  const parentId = group.parentId ?? null;
+  const orderedIds = siblingIds(groups, parentId);
+  const from = orderedIds.indexOf(groupId);
+  const to = from + delta;
+  if (to < 0 || to >= orderedIds.length) return null;
+  [orderedIds[from], orderedIds[to]] = [orderedIds[to] as string, orderedIds[from] as string];
+  return { orderedIds, parentId };
+};

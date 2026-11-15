@@ -848,6 +848,14 @@ export interface Edge {
     orderedIds: readonly string[],
     cookie?: string,
   ): Promise<readonly Appendix[]>;
+  /** Sets the order of one parent's direct sub-categories (null parent: the top level). `orderedIds`
+   *  must name every sibling exactly once; the gateway refuses anything else and changes nothing.
+   *  Site-admin only. */
+  reorderGroups(
+    parentId: null | string,
+    orderedIds: readonly string[],
+    cookie?: string,
+  ): Promise<readonly Group[]>;
   /** Puts the appendices of a policy in a new order, which re-letters them. */
   reorderPolicyAppendices(
     policyId: string,

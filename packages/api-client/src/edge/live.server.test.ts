@@ -517,11 +517,17 @@ describe("liveEdge.policyDetail", () => {
   it("lists the versions to compare, the pair it diffed, and whether AI is up", async () => {
     routeGateway({
       ...readerHandlers(() => ({ auditLog: { nextPageToken: "", records: [] } })),
-      AiHealth: () => ({ aiHealth: { available: false, reason: "provider_unavailable" } }),
+      AiHealth: () => ({
+        aiHealth: {
+          available: false,
+          providerReason: "auth_failed",
+          reason: "provider_unavailable",
+        },
+      }),
     });
     const detail = await liveEdge.policyDetail(DocumentType.Policy, "FIN-001");
     expect(detail).toMatchObject({
-      ai: { available: false, reason: "provider_unavailable" },
+      ai: { available: false, reason: "provider_auth_failed" },
       priorVersion: { fromVersionId: "v-1", toVersionId: "v-2", version: "1.0.0" },
       versions: [
         { id: "v-1", status: "superseded", version: "1.0.0" },

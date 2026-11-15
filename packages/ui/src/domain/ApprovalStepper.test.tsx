@@ -255,4 +255,31 @@ describe("ApprovalStepper veto seats (steward-web#256)", () => {
       expect(screen.getAllByRole("listitem")[1]).not.toHaveTextContent(/Due/);
     });
   });
+  it("shows what a pending seat asked to change, with the day it asked", () => {
+    render(
+      <ApprovalStepper
+        stages={[
+          {
+            approvers: [
+              {
+                changesRequested: "Tighten section 2.",
+                changesRequestedAt: "2026-10-03T08:00:00Z",
+                name: "Carol",
+                state: "pending",
+              },
+              { name: "Alice", state: "pending" },
+            ],
+            name: "Finance review",
+            state: "current",
+          },
+        ]}
+      />,
+    );
+    const stage = screen.getByRole("listitem", { name: "Finance review" });
+    expect(
+      within(stage).getByText(`Asked for changes ${formatDayMonth("2026-10-03T08:00:00Z")}`),
+    ).toBeInTheDocument();
+    expect(within(stage).getByText("“Tighten section 2.”")).toBeInTheDocument();
+    expect(within(stage).getAllByText("Asked for changes", { exact: false })).toHaveLength(1);
+  });
 });

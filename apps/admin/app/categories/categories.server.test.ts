@@ -19,6 +19,7 @@ import {
   orderedWithPaths,
   ownsOwners,
   renameGroup,
+  reorderGroups,
   slugify,
   subtreeHeight,
   updateGroupSettings,
@@ -187,6 +188,23 @@ describe("moveGroup", () => {
 
     const result = await moveGroup(request(), "g-1", "g-2");
     expect(result).toEqual(moved);
+  });
+});
+
+describe("reorderGroups", () => {
+  it("posts the reorder mutation with the parent and the full sibling order", async () => {
+    const first = makeGroup({ id: "g-2", name: "B" });
+    const second = makeGroup({ id: "g-1", name: "A" });
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonOnce({ me: siteAdminMe }))
+      .mockResolvedValueOnce(jsonOnce({ reorderCategories: [first, second] }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const result = await reorderGroups(request(), null, ["g-2", "g-1"]);
+    expect(result).toEqual([first, second]);
+    const body = JSON.parse(String((fetchSpy.mock.calls[1]?.[1] as RequestInit).body));
+    expect(body.variables).toEqual({ orderedIds: ["g-2", "g-1"], parentId: null });
   });
 });
 

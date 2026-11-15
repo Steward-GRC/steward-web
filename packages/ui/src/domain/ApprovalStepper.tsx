@@ -22,6 +22,9 @@ export interface ApprovalStepperProps {
 }
 
 export interface StepperApprover {
+  /** What a pending seat asked to change; the decision `comment` stays empty until it decides. */
+  changesRequested?: null | string;
+  changesRequestedAt?: null | string;
   comment?: null | string;
   decidedAt?: null | string;
   /** The group whose seat this is; null or absent for an individual seat. */
@@ -159,6 +162,18 @@ const ApproverRow = ({
             {t("stepper.pending")}
           </span>
         )}
+        {approver.state === "pending" && approver.changesRequested ? (
+          <>
+            <span className="text-warn">
+              {t("stepper.changesRequestedOn", {
+                date: formatDayMonth(approver.changesRequestedAt),
+              })}
+            </span>
+            <span className="font-serif text-base text-muted italic">
+              “{approver.changesRequested}”
+            </span>
+          </>
+        ) : null}
         {approver.comment ? (
           <span className="font-serif text-base text-muted italic">“{approver.comment}”</span>
         ) : null}

@@ -20,6 +20,9 @@ interface Run {
 }
 
 interface Seat {
+  /** What this pending seat asked to change; the decision `comment` stays null until it decides. */
+  changesRequested?: null | string;
+  changesRequestedAt?: null | string;
   comment?: null | string;
   decidedAt?: null | string;
   groupId?: null | string;
@@ -61,6 +64,12 @@ const ruleOf = (progress: StageProgress | undefined): StepperRule | undefined =>
 };
 
 const approverOf = (seat: Seat, meId: string, veto: boolean): StepperApprover => ({
+  ...(seat.changesRequested
+    ? {
+        changesRequested: seat.changesRequested,
+        changesRequestedAt: seat.changesRequestedAt ?? null,
+      }
+    : {}),
   comment: seat.comment ?? null,
   decidedAt: seat.decidedAt ?? null,
   groupId: seat.groupId ?? null,

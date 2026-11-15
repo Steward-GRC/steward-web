@@ -214,6 +214,15 @@ export const moveGroup = async (
   return edge.moveGroup(groupId, newParentId, cookieOf(request));
 };
 
+export const reorderGroups = async (
+  request: Request,
+  parentId: null | string,
+  orderedIds: readonly string[],
+): Promise<readonly Group[]> => {
+  await requireGroupManage(request);
+  return edge.reorderGroups(parentId, orderedIds, cookieOf(request));
+};
+
 export interface GroupSettingsPatch {
   ackEveryone: boolean;
   ackTriggers: AckTrigger;
