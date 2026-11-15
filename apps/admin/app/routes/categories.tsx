@@ -8,16 +8,17 @@ import { data, Link } from "react-router";
 
 import type { Route } from "./+types/categories";
 
-import { listGroups, moveGroup } from "../categories/categories.server";
+import { listGroups, moveGroup, reorderGroups } from "../categories/categories.server";
 import { CategoryTree } from "../categories/CategoryTree";
-import { checkMove, TOP_LEVEL } from "../categories/tree";
+import { checkMove, siblingIds, TOP_LEVEL } from "../categories/tree";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const groups = await listGroups(request);
   return {
-    rows: groups.map(({ id, name, owners, parentId }) => ({
+    rows: groups.map(({ id, name, order, owners, parentId }) => ({
       id,
       name,
+      order: order ?? 0,
       owners: owners.length,
       parentId: parentId ?? null,
     })),
@@ -33,6 +34,25 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const id = String(form.get("groupId") ?? "");
   const parent = String(form.get("parentId") ?? "");
   const parentId = parent === "" || parent === TOP_LEVEL ? null : parent;
+  if (form.get("intent") === "reorder") {
+    const orderedIds = String(form.get("orderedIds") ?? "")
+      .split(",")
+      .filter(Boolean);
+    if (orderedIds.length === 0) return data({ id, ok: false } as const, { status: 400 });
+    try {
+      // The gateway refuses a missing, repeated, extra or foreign id, but the siblings are read
+      // again so a stale tree is turned away here with a plain refusal.
+      const current = siblingIds(await listGroups(request), parentId);
+      const same =
+        current.length === orderedIds.length &&
+        current.every((sibling) => orderedIds.includes(sibling));
+      if (!same) return data({ id, ok: false } as const, { status: 400 });
+      await reorderGroups(request, parentId, orderedIds);
+      return data({ id, ok: true, reordered: true } as const);
+    } catch (error) {
+      return data({ failure: refusalOf(error), id, ok: false } as const, { status: 400 });
+    }
+  }
   if (form.get("intent") !== "move" || !id) {
     return data({ id, ok: false } as const, { status: 400 });
   }

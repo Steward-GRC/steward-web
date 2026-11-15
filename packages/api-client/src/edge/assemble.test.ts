@@ -11,6 +11,7 @@ import { GatewayError } from "../gatewayFetch";
 import { DocumentType, Sensitivity } from "../generated/schema";
 import { PolicyStatus } from "../views";
 import {
+  aiReasonOf,
   appendixText,
   bodyTextFromContent,
   categoryNames,
@@ -510,5 +511,32 @@ describe("isPermissionDenied", () => {
     expect(isPermissionDenied(new GatewayError("AuditLog", "x", { code: "INTERNAL" }))).toBe(false);
     expect(isPermissionDenied(new GatewayError("AuditLog", "x", { status: 403 }))).toBe(false);
     expect(isPermissionDenied(new Error("PermissionDenied"))).toBe(false);
+  });
+});
+
+describe("aiReasonOf", () => {
+  it("names the provider's own reason when the provider is the one that is unavailable", () => {
+    expect(aiReasonOf({ providerReason: "auth_failed", reason: "provider_unavailable" })).toBe(
+      "provider_auth_failed",
+    );
+    expect(aiReasonOf({ providerReason: "provider_error", reason: "provider_unavailable" })).toBe(
+      "provider_provider_error",
+    );
+    expect(aiReasonOf({ providerReason: "not_configured", reason: "provider_unavailable" })).toBe(
+      "provider_not_configured",
+    );
+  });
+
+  it("keeps the gateway's reason when there is no provider reason or it is not unavailable", () => {
+    expect(aiReasonOf({ providerReason: null, reason: "provider_unavailable" })).toBe(
+      "provider_unavailable",
+    );
+    expect(aiReasonOf({ providerReason: "auth_failed", reason: "limit_reached" })).toBe(
+      "limit_reached",
+    );
+    expect(aiReasonOf({ providerReason: "something_new", reason: "provider_unavailable" })).toBe(
+      "provider_unavailable",
+    );
+    expect(aiReasonOf({ reason: null })).toBeNull();
   });
 });

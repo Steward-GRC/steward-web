@@ -250,7 +250,11 @@ export type AiConfigQuery = {
 export type AiHealthQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AiHealthQuery = {
-  readonly aiHealth: { readonly available: boolean; readonly reason: string | null };
+  readonly aiHealth: {
+    readonly available: boolean;
+    readonly reason: string | null;
+    readonly providerReason: string | null;
+  };
 };
 
 export type AiJobQueryVariables = Exact<{
@@ -554,6 +558,7 @@ export type CategoryQuery = {
     readonly id: string;
     readonly name: string;
     readonly slug: string;
+    readonly order: number;
     readonly parentId: string | null;
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
@@ -578,6 +583,7 @@ export type CategoryChildrenQuery = {
     readonly id: string;
     readonly name: string;
     readonly slug: string;
+    readonly order: number;
     readonly parentId: string | null;
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
@@ -614,6 +620,7 @@ export type CategoryFieldsFragment = {
   readonly id: string;
   readonly name: string;
   readonly slug: string;
+  readonly order: number;
   readonly parentId: string | null;
   readonly defaultTemplateId: string | null;
   readonly defaultTemplateNone: boolean;
@@ -665,6 +672,7 @@ export type CategoryTreeQuery = {
     readonly id: string;
     readonly name: string;
     readonly slug: string;
+    readonly order: number;
     readonly parentId: string | null;
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
@@ -942,6 +950,7 @@ export type CreateCategoryMutation = {
     readonly id: string;
     readonly name: string;
     readonly slug: string;
+    readonly order: number;
     readonly parentId: string | null;
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
@@ -1807,6 +1816,7 @@ export type MoveCategoryMutation = {
     readonly id: string;
     readonly name: string;
     readonly slug: string;
+    readonly order: number;
     readonly parentId: string | null;
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
@@ -2821,6 +2831,7 @@ export type RenameCategoryMutation = {
     readonly id: string;
     readonly name: string;
     readonly slug: string;
+    readonly order: number;
     readonly parentId: string | null;
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
@@ -2880,6 +2891,32 @@ export type ReorderAppendicesMutation = {
     readonly contentJson: string;
     readonly orderIndex: number;
     readonly letter: string;
+  }>;
+};
+
+export type ReorderCategoriesMutationVariables = Exact<{
+  parentId?: string | number | null | undefined;
+  orderedIds: ReadonlyArray<string | number> | string | number;
+}>;
+
+export type ReorderCategoriesMutation = {
+  readonly reorderCategories: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly slug: string;
+    readonly order: number;
+    readonly parentId: string | null;
+    readonly defaultTemplateId: string | null;
+    readonly defaultTemplateNone: boolean;
+    readonly defaultWorkflowId: string | null;
+    readonly owners: ReadonlyArray<string>;
+    readonly idpGroupIds: ReadonlyArray<string> | null;
+    readonly exclusionGroupIds: ReadonlyArray<string> | null;
+    readonly ackTriggers: Types.AckTrigger;
+    readonly ackEveryone: boolean;
+    readonly ackEveryoneSet: boolean;
+    readonly reviewCadence: Types.ReviewCadence;
+    readonly reviewDate: string | null;
   }>;
 };
 
@@ -3885,6 +3922,7 @@ export type SetCategoryDefaultsMutation = {
     readonly id: string;
     readonly name: string;
     readonly slug: string;
+    readonly order: number;
     readonly parentId: string | null;
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
@@ -3928,6 +3966,7 @@ export type SetCategoryGovernanceMutation = {
     readonly id: string;
     readonly name: string;
     readonly slug: string;
+    readonly order: number;
     readonly parentId: string | null;
     readonly defaultTemplateId: string | null;
     readonly defaultTemplateNone: boolean;
@@ -5329,6 +5368,8 @@ export type WorkflowStatusQuery = {
         readonly name: string | null;
         readonly state: string;
         readonly comment: string | null;
+        readonly changesRequested: string | null;
+        readonly changesRequestedAt: string | null;
         readonly decidedAt: string | null;
         readonly groupId: string | null;
         readonly roleLabel: string | null;
@@ -5449,6 +5490,7 @@ export const CategoryFieldsFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -7249,6 +7291,7 @@ export const AiHealthDocument = {
               selections: [
                 { kind: "Field", name: { kind: "Name", value: "available" } },
                 { kind: "Field", name: { kind: "Name", value: "reason" } },
+                { kind: "Field", name: { kind: "Name", value: "providerReason" } },
               ],
             },
           },
@@ -8066,6 +8109,7 @@ export const CategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -8130,6 +8174,7 @@ export const CategoryChildrenDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -8358,6 +8403,7 @@ export const CategoryTreeDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -9244,6 +9290,7 @@ export const CreateCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -12265,6 +12312,7 @@ export const MoveCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -14914,6 +14962,7 @@ export const RenameCategoryDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -15190,6 +15239,90 @@ export const ReorderAppendicesDocument = {
     },
   ],
 } as unknown as DocumentNode<ReorderAppendicesMutation, ReorderAppendicesMutationVariables>;
+export const ReorderCategoriesDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "mutation",
+      name: { kind: "Name", value: "ReorderCategories" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "parentId" } },
+          type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+        },
+        {
+          kind: "VariableDefinition",
+          variable: { kind: "Variable", name: { kind: "Name", value: "orderedIds" } },
+          type: {
+            kind: "NonNullType",
+            type: {
+              kind: "ListType",
+              type: {
+                kind: "NonNullType",
+                type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "reorderCategories" },
+            arguments: [
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "parentId" },
+                value: { kind: "Variable", name: { kind: "Name", value: "parentId" } },
+              },
+              {
+                kind: "Argument",
+                name: { kind: "Name", value: "orderedIds" },
+                value: { kind: "Variable", name: { kind: "Name", value: "orderedIds" } },
+              },
+            ],
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "FragmentSpread", name: { kind: "Name", value: "CategoryFields" } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "CategoryFields" },
+      typeCondition: { kind: "NamedType", name: { kind: "Name", value: "Category" } },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
+          { kind: "Field", name: { kind: "Name", value: "parentId" } },
+          { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
+          { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
+          { kind: "Field", name: { kind: "Name", value: "defaultWorkflowId" } },
+          { kind: "Field", name: { kind: "Name", value: "owners" } },
+          { kind: "Field", name: { kind: "Name", value: "idpGroupIds" } },
+          { kind: "Field", name: { kind: "Name", value: "exclusionGroupIds" } },
+          { kind: "Field", name: { kind: "Name", value: "ackTriggers" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryone" } },
+          { kind: "Field", name: { kind: "Name", value: "ackEveryoneSet" } },
+          { kind: "Field", name: { kind: "Name", value: "reviewCadence" } },
+          { kind: "Field", name: { kind: "Name", value: "reviewDate" } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReorderCategoriesMutation, ReorderCategoriesMutationVariables>;
 export const ReorderPolicyAppendicesDocument = {
   kind: "Document",
   definitions: [
@@ -17916,6 +18049,7 @@ export const SetCategoryDefaultsDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -18139,6 +18273,7 @@ export const SetCategoryGovernanceDocument = {
           { kind: "Field", name: { kind: "Name", value: "id" } },
           { kind: "Field", name: { kind: "Name", value: "name" } },
           { kind: "Field", name: { kind: "Name", value: "slug" } },
+          { kind: "Field", name: { kind: "Name", value: "order" } },
           { kind: "Field", name: { kind: "Name", value: "parentId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateId" } },
           { kind: "Field", name: { kind: "Name", value: "defaultTemplateNone" } },
@@ -22587,6 +22722,8 @@ export const WorkflowStatusDocument = {
                       { kind: "Field", name: { kind: "Name", value: "name" } },
                       { kind: "Field", name: { kind: "Name", value: "state" } },
                       { kind: "Field", name: { kind: "Name", value: "comment" } },
+                      { kind: "Field", name: { kind: "Name", value: "changesRequested" } },
+                      { kind: "Field", name: { kind: "Name", value: "changesRequestedAt" } },
                       { kind: "Field", name: { kind: "Name", value: "decidedAt" } },
                       { kind: "Field", name: { kind: "Name", value: "groupId" } },
                       { kind: "Field", name: { kind: "Name", value: "roleLabel" } },

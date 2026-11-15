@@ -1,0 +1,5 @@
+mutation ReorderCategories($parentId: ID, $orderedIds: [ID!]!) {
+  reorderCategories(parentId: $parentId, orderedIds: $orderedIds) {
+    ...CategoryFields
+  }
+}

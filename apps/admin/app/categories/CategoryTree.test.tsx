@@ -130,4 +130,32 @@ describe("dragging a category", () => {
     ).toBeInTheDocument();
     expect(posts).toHaveLength(0);
   });
+  describe("sibling order", () => {
+    const ordered: TreeRow[] = [
+      { id: "b", name: "Beta", order: 2, owners: 0, parentId: null },
+      { id: "a", name: "Alpha", order: 1, owners: 0, parentId: null },
+      { id: "c", name: "Gamma", order: 3, owners: 0, parentId: null },
+    ];
+
+    it("lists siblings by their order and offers Up and Down only where they apply", async () => {
+      open(ordered);
+      const links = await screen.findAllByRole("link");
+      const names = links.map((link) => link.textContent);
+      expect(names).toEqual(["Alpha", "Beta", "Gamma"]);
+      expect(screen.queryByRole("button", { name: "Move Alpha up" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Move Alpha down" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Move Gamma up" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Move Gamma down" })).toBeNull();
+    });
+
+    it("posts the whole sibling order with the parent when one moves up", async () => {
+      open(ordered);
+      await userEvent.click(await screen.findByRole("button", { name: "Move Gamma up" }));
+      await waitFor(() =>
+        expect(posts).toEqual([
+          { groupId: "c", intent: "reorder", orderedIds: "a,c,b", parentId: "__top__" },
+        ]),
+      );
+    });
+  });
 });

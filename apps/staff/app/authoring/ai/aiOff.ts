@@ -7,7 +7,13 @@ export const aiOffReason = (reason: null | string | undefined): string =>
     ? "editor.aiMenu.offByAdmin"
     : reason === "limit_reached"
       ? "editor.aiMenu.limitReached"
-      : "editor.aiMenu.unavailable";
+      : reason === "provider_auth_failed"
+        ? "editor.aiMenu.providerAuthFailed"
+        : reason === "provider_provider_error"
+          ? "editor.aiMenu.providerError"
+          : reason === "provider_not_configured"
+            ? "editor.aiMenu.providerNotConfigured"
+            : "editor.aiMenu.unavailable";
 
 /**
  * The ai string for a refused start. A fault on the gateway's side (its ai service not

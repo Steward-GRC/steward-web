@@ -9,6 +9,8 @@ query WorkflowStatus($policyVersionId: ID!) {
       name
       state
       comment
+      changesRequested
+      changesRequestedAt
       decidedAt
       groupId
       roleLabel

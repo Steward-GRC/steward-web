@@ -235,4 +235,30 @@ describe("the stage's due date and rule (stageProgress)", () => {
       expect(stage).not.toHaveProperty("dueAt");
     }
   });
+  it("carries the request-changes comment on the pending seat that asked, apart from the decision comment", () => {
+    const stages = stepperStagesOf(
+      {
+        currentStageIdx: 0,
+        stageAssignees: [
+          [
+            seat("u-3", "Carol", "pending", {
+              changesRequested: "Tighten section 2.",
+              changesRequestedAt: "2026-10-03T08:00:00Z",
+            }),
+            seat("u-1", "Alice", "pending"),
+          ],
+        ],
+        stageNames: ["Finance review"],
+        stageUnitProgress: [[]],
+        status: "APPROVAL_STATUS_IN_REVIEW",
+      },
+      "u-9",
+    );
+    expect(stages[0]!.approvers[0]).toMatchObject({
+      changesRequested: "Tighten section 2.",
+      changesRequestedAt: "2026-10-03T08:00:00Z",
+      comment: null,
+    });
+    expect(stages[0]!.approvers[1]).not.toHaveProperty("changesRequested");
+  });
 });
