@@ -7,6 +7,8 @@ shared `packages/*` (`ui`, `i18n`, `auth`, `shell`, `api-client`, `vite-config`)
 only install step; `--ignore-scripts` keeps a `prepare` hook from resetting the commit hooks.
 
 ```bash
+# Node 25 and later no longer ship corepack: install it first (skip on Node 24)
+npm i -g corepack
 corepack enable pnpm
 pnpm install --ignore-scripts
 pnpm run check     # schema check, lint, typecheck, unit tests, build, leak checks

@@ -8,6 +8,8 @@ This repo holds its web front ends, one pnpm workspace with a separate server im
 ## 🛠️ Develop
 
 ```bash
+# Node 25 and later no longer ship corepack: install it first (skip on Node 24)
+npm i -g corepack
 corepack enable pnpm
 pnpm install --ignore-scripts
 pnpm run check     # lint, typecheck, unit tests and builds
