@@ -5,7 +5,7 @@ import { useTranslation } from "@steward-web/i18n";
 import { type CommandPaletteResults, refusalOf } from "@steward-web/shell";
 import { ClearSearchButton, PageHeader, ReachError } from "@steward-web/ui";
 import { DocumentType } from "@steward-web/ui/domain";
-import { listCategories, listPolicies } from "@steward-web/ui/domain/server";
+import { listCategories, listPolicies, searchPolicyText } from "@steward-web/ui/domain/server";
 import { Folder, Search } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigation, useSearchParams } from "react-router";
@@ -25,12 +25,15 @@ export const loader = async ({
   if (!q.trim()) return { groups: [], q };
   const cookie = request.headers.get("cookie") ?? undefined;
   try {
-    const [policies, procedures, categories] = await Promise.all([
+    const [policies, procedures, categories, textHits] = await Promise.all([
       listPolicies(DocumentType.Policy, cookie),
       listPolicies(DocumentType.Procedure, cookie),
       listCategories(cookie),
+      // A word found only in a policy's text: the title index can't see it (#26). A failed
+      // text search leaves the title and category matches standing.
+      searchPolicyText(q, cookie).catch(() => []),
     ]);
-    return { groups: paletteGroupsOf(policies, procedures, categories, q), q };
+    return { groups: paletteGroupsOf(policies, procedures, categories, q, textHits), q };
   } catch (error) {
     return { failure: refusalOf(error), groups: [], q };
   }

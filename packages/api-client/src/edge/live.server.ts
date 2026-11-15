@@ -167,6 +167,7 @@ import {
   SaveAppendixDraftDocument,
   SaveDraftDocument,
   SearchAndAnswerDocument,
+  SearchPoliciesDocument,
   SearchUsersDocument,
   SetAiEnabledDocument,
   SetAiProviderCredentialDocument,
@@ -2056,6 +2057,18 @@ export const liveEdge: Edge = {
       { cookie },
     );
     return data.searchAndAnswer;
+  },
+  async searchPolicyText(query, cookie) {
+    const data = await gatewayFetch(
+      SearchPoliciesDocument,
+      { documentType: null, first: 20, query },
+      "SearchPolicies",
+      { cookie },
+    );
+    const index = await categoryIndex(cookie);
+    return Promise.all(
+      data.searchPolicies.hits.map((hit) => policyView(hit.policy, cookie, index)),
+    );
   },
   async searchUsers(query, limit, cookie) {
     const data = await gatewayFetch(

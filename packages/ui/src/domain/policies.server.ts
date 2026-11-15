@@ -13,3 +13,7 @@ export const listPolicies = (
   documentType: DocumentType,
   cookie?: string,
 ): Promise<readonly Policy[]> => edge.policies(documentType, cookie);
+
+/** The policies and procedures whose published text matches the words, best first. */
+export const searchPolicyText = (query: string, cookie?: string): Promise<readonly Policy[]> =>
+  edge.searchPolicyText(query, cookie);

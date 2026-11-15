@@ -4,7 +4,7 @@
 import { requireIdentityFromRequest } from "@steward-web/auth/server";
 import { refusalOf } from "@steward-web/shell";
 import { DocumentType } from "@steward-web/ui/domain";
-import { listCategories, listPolicies } from "@steward-web/ui/domain/server";
+import { listCategories, listPolicies, searchPolicyText } from "@steward-web/ui/domain/server";
 
 import type { Route } from "./+types/resources.command-palette";
 
@@ -18,12 +18,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // A failed read comes back as a failure for the palette's reach error, never as a thrown
   // error: a fetcher's thrown error would replace the whole page with the error boundary.
   try {
-    const [policies, procedures, categories] = await Promise.all([
+    const [policies, procedures, categories, textHits] = await Promise.all([
       listPolicies(DocumentType.Policy, cookie),
       listPolicies(DocumentType.Procedure, cookie),
       listCategories(cookie),
+      searchPolicyText(query, cookie).catch(() => []),
     ]);
-    return { groups: paletteGroupsOf(policies, procedures, categories, query) };
+    return { groups: paletteGroupsOf(policies, procedures, categories, query, textHits) };
   } catch (error) {
     return { failure: refusalOf(error), groups: [] };
   }

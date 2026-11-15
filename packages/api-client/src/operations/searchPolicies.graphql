@@ -1,0 +1,9 @@
+query SearchPolicies($query: String!, $documentType: DocumentType, $first: Int) {
+  searchPolicies(query: $query, documentType: $documentType, first: $first) {
+    hits {
+      policy {
+        ...AuthoringPolicyFields
+      }
+    }
+  }
+}
