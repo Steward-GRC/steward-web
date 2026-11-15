@@ -914,6 +914,9 @@ export interface Edge {
   /** Ask (U6): a grounded answer from the policies the caller can read, with its citations. The
    *  read scope is the gateway's own. Fails while AI is unavailable (see `aiHealth`). */
   searchAndAnswer(question: string, cookie?: string): Promise<AskAnswer>;
+  /** The policies and procedures whose published text matches `query`, best first, as the
+   *  caller may read them (gateway `searchPolicies`). A word in a title only is found too. */
+  searchPolicyText(query: string, cookie?: string): Promise<readonly Policy[]>;
   /** A lightweight typeahead: any authenticated caller, id+name(+email) pairs for users whose
    *  email contains `query`. Never enumerates the full directory. */
   searchUsers(query: string, limit?: number, cookie?: string): Promise<readonly UserLabel[]>;

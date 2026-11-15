@@ -79,4 +79,26 @@ describe("paletteGroupsOf", () => {
     expect(paletteGroupsOf(many, [], [], "desk")[0]!.items).toHaveLength(5);
     expect(paletteGroupsOf(many, [], [], " ")).toEqual([]);
   });
+
+  it("adds the policies and procedures the gateway found by their text (#26)", () => {
+    const expense = policy({ id: "p9", number: "POL-FINANCE-000009", title: "Expense Claims" });
+    const onboarding = policy({
+      documentType: DocumentType.Procedure,
+      id: "r9",
+      number: "PRC-PEOPLE-000009",
+      title: "New Starter Onboarding",
+    });
+    // "policy" is in neither title, so the title index alone finds nothing.
+    expect(paletteGroupsOf([expense], [onboarding], [], "policy")).toEqual([]);
+    const groups = paletteGroupsOf([expense], [onboarding], [], "policy", [expense, onboarding]);
+    expect(groups.map((g) => [g.id, g.items.map((index) => index.label)])).toEqual([
+      ["policies", ["Expense Claims"]],
+      ["procedures", ["New Starter Onboarding"]],
+    ]);
+  });
+
+  it("lists a policy found both ways once", () => {
+    const groups = paletteGroupsOf([desk], [], [], "desk", [desk]);
+    expect(groups[0]!.items.map((index) => index.id)).toEqual(["p1"]);
+  });
 });
