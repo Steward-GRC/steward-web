@@ -21,6 +21,9 @@ const comparable = (node: SerializedNode): SerializedNode => {
   const out: SerializedNode = { type: node.type };
   for (const [key, value] of Object.entries(node)) {
     if (key === "children" || key === "type" || key === "version" || isDefault(value)) continue;
+    // the editor numbers every top-level block (node-koenig-editor 1.6.0 saves it under `$`);
+    // an id is bookkeeping, not content, so opening an older document is not an edit
+    if (key === "$") continue;
     out[key] = value;
   }
   if (node.type === "code") {

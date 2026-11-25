@@ -107,6 +107,17 @@ describe("sameContent", () => {
     expect(sameContent(plain, highlighted.replace('"1"', '"2"'))).toBe(false);
   });
 
+  it("does not count the block ids the editor adds on load as an edit", () => {
+    // the editor numbers every top-level block (saved under "$") when it opens a document
+    const withIds = reported.replaceAll(
+      /"type":"(heading|paragraph)","version":1\}/g,
+      (match, type) => match.replace(`"type":"${type}"`, `"$":{"id":"a1b2"},"type":"${type}"`),
+    );
+    expect(withIds).toContain('"$":{"id":"a1b2"}');
+    expect(sameContent(stored, withIds)).toBe(true);
+    expect(sameContent(stored, withIds.replace("Why.", "Why?"))).toBe(false);
+  });
+
   it("falls back to exact text when either side is not a document", () => {
     expect(sameContent("not json", "not json")).toBe(true);
     expect(sameContent("not json", stored)).toBe(false);
